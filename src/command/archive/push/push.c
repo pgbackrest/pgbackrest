@@ -229,7 +229,7 @@ archivePushCheck(bool pgPathSet)
                 storageRepoIdx(repoIdx);
 
                 // Get cipher type
-                CipherType repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+                CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
 
                 // Attempt to load the archive info file
                 InfoArchive *info = infoArchiveLoadFile(
@@ -345,7 +345,7 @@ cmdArchivePush(void)
             {
                 // Check if the WAL segment has been pushed.  Errors will not be thrown on the first try to allow the async process
                 // a chance to fix them.
-                pushed = archiveAsyncStatus(archiveModePush, archiveFile, throwOnError);
+                pushed = archiveAsyncStatus(archiveModePush, archiveFile, throwOnError, true);
 
                 // If the WAL segment has not already been pushed then start the async process to push it.  There's no point in
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
@@ -358,8 +358,8 @@ cmdArchivePush(void)
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
 
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("off"));
 
                     // Generate command options
                     StringList *commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
@@ -390,7 +390,7 @@ cmdArchivePush(void)
             {
                 THROW_FMT(
                     ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %s second(s)",
-                    strZ(archiveFile), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)));
+                    strZ(archiveFile), strZ(cfgOptionDisplay(cfgOptArchiveTimeout)));
             }
 
             // Log success
@@ -460,7 +460,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
         jobData->walFileIdx++;
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
         protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile))));
         protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptArchiveHeaderCheck)));
         protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.pgVersion));
@@ -478,7 +478,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
 
             protocolCommandParamAdd(command, VARUINT(data->repoIdx));
             protocolCommandParamAdd(command, VARSTR(data->archiveId));
-            protocolCommandParamAdd(command, VARUINT(data->cipherType));
+            protocolCommandParamAdd(command, VARUINT64(data->cipherType));
             protocolCommandParamAdd(command, VARSTR(data->cipherPass));
         }
 

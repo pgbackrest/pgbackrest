@@ -172,7 +172,7 @@ verifyFileLoad(const String *pathFileName, const String *cipherPass)
     // *read points to a location within result so update result with contents based on necessary filters
     IoRead *read = storageReadIo(result);
     cipherBlockFilterGroupAdd(
-        ioReadFilterGroup(read), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt, cipherPass);
+        ioReadFilterGroup(read), cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt, cipherPass);
     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
 
     // If the file is compressed, add a decompression filter
@@ -226,7 +226,7 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
         CATCH_ANY()
         {
             result.errorCode = errorCode();
-            String *errorMsg = strNew(errorMessage());
+            String *errorMsg = strNewZ(errorMessage());
 
             if (result.errorCode == errorTypeCode(&ChecksumError))
                 strCat(errorMsg, strNewFmt(" %s", strZ(pathFileName)));
@@ -498,7 +498,7 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
         unsigned int archiveInfoHistoryTotal = infoPgDataTotal(archiveInfoPg);
         unsigned int backupInfoHistoryTotal = infoPgDataTotal(backupInfoPg);
 
-        String *errMsg = strNew("archive and backup history lists do not match");
+        String *errMsg = strNewZ("archive and backup history lists do not match");
 
         if (archiveInfoHistoryTotal != backupInfoHistoryTotal)
             THROW(FormatError, strZ(errMsg));
@@ -754,7 +754,7 @@ verifyArchive(void *data)
                         String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
                         // Set up the job
-                        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
+                        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
                         protocolCommandParamAdd(command, VARSTR(filePathName));
                         protocolCommandParamAdd(command, VARSTR(checksum));
                         protocolCommandParamAdd(command, VARUINT64(archiveResult->pgWalInfo.size));
@@ -977,7 +977,7 @@ verifyBackup(void *data)
                 if (filePathName != NULL)
                 {
                     // Set up the job
-                    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
+                    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
                     protocolCommandParamAdd(command, VARSTR(filePathName));
 
                     // If the checksum is not present in the manifest, it will be calculated by manifest load
@@ -1083,7 +1083,7 @@ verifyErrorMsg(VerifyResult verifyResult)
         FUNCTION_TEST_PARAM(ENUM, verifyResult);                    // Result code from the verifyFile() function
     FUNCTION_TEST_END();
 
-    String *result = strNew("");
+    String *result = strNew();
 
     if (verifyResult == verifyFileMissing)
         result = strCatZ(result, "file missing");
@@ -1177,7 +1177,7 @@ verifySetBackupCheckArchive(
             // Sort the history list
             strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc);
 
-            String *missingFromHistory = strNew("");
+            String *missingFromHistory = strNew();
 
             // Check if the archiveId on disk exists in the archive.info history list and report it if not
             for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(archiveIdList); archiveIdx++)
@@ -1207,7 +1207,7 @@ verifySetBackupCheckArchive(
 Add the file to the invalid file list for the range in which it exists
 ***********************************************************************************************************************************/
 static void
-verifyAddInvalidWalFile(List *walRangeList, VerifyResult fileResult, String *fileName, String *walSegment)
+verifyAddInvalidWalFile(List *walRangeList, VerifyResult fileResult, const String *fileName, const String *walSegment)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, walRangeList);                    // List of WAL ranges for an archive Id
@@ -1255,7 +1255,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
     ASSERT(archiveIdResultList != NULL);
     ASSERT(backupResultList != NULL);
 
-    String *result = strNew("Results:");
+    String *result = strNewZ("Results:");
 
     // Render archive results
     if (lstEmpty(archiveIdResultList))
@@ -1324,25 +1324,25 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
             {
                 case backupValid:
                 {
-                    status = strNew("valid");
+                    status = strNewZ("valid");
                     break;
                 }
 
                 case backupInvalid:
                 {
-                    status = strNew("invalid");
+                    status = strNewZ("invalid");
                     break;
                 }
 
                 case backupMissingManifest:
                 {
-                    status = strNew("manifest missing");
+                    status = strNewZ("manifest missing");
                     break;
                 }
 
                 case backupInProgress:
                 {
-                    status = strNew("in-progress");
+                    status = strNewZ("in-progress");
                     break;
                 }
             }
@@ -1396,7 +1396,7 @@ verifyProcess(unsigned int *errorTotal)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *resultStr = strNew("");
+        String *resultStr = strNew();
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         const Storage *storage = storageRepo();

@@ -279,7 +279,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_S3_TYPE_STR,
+                .type = STORAGE_S3_TYPE,
                 .name = strDup(name),
                 .atomic = true,
                 .createPath = true,

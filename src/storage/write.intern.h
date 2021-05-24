@@ -17,7 +17,7 @@ Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageWriteInterface
 {
-    const String *type;
+    StringId type;                                                  // Storage type
     const String *name;
 
     bool atomic;

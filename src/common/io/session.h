@@ -7,6 +7,8 @@ be closed when work with them is done but they also contain destructors to do cl
 #ifndef COMMON_IO_SESSION_H
 #define COMMON_IO_SESSION_H
 
+#include "common/type/stringId.h"
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -17,8 +19,8 @@ Session roles
 ***********************************************************************************************************************************/
 typedef enum
 {
-    ioSessionRoleClient,                                            // Client session
-    ioSessionRoleServer,                                            // Server session
+    ioSessionRoleClient = STRID5("client", 0x28e2a5830),            // Client session
+    ioSessionRoleServer = STRID5("server", 0x245b48b30),            // Server session
 } IoSessionRole;
 
 #include "common/io/read.h"
@@ -72,7 +74,7 @@ ioSessionClose(IoSession *const this)
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline IoSession *
-ioSessionMove(IoSession *this, MemContext *parentNew)
+ioSessionMove(IoSession *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -81,7 +83,7 @@ ioSessionMove(IoSession *this, MemContext *parentNew)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-ioSessionFree(IoSession *this)
+ioSessionFree(IoSession *const this)
 {
     objFree(this);
 }

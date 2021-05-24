@@ -251,14 +251,14 @@ Getters/Setters
 ***********************************************************************************************************************************/
 // Is the feature supported by this storage?
 __attribute__((always_inline)) static inline bool
-storageFeature(const Storage *this, StorageFeature feature)
+storageFeature(const Storage *const this, const StorageFeature feature)
 {
     return THIS_PUB(Storage)->interface.feature >> feature & 1;
 }
 
 // Storage type (posix, cifs, etc.)
-__attribute__((always_inline)) static inline const String *
-storageType(const Storage *this)
+__attribute__((always_inline)) static inline StringId
+storageType(const Storage *const this)
 {
     return THIS_PUB(Storage)->type;
 }

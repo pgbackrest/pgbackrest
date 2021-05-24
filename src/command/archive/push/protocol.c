@@ -12,11 +12,6 @@ Archive Push Protocol Handler
 #include "config/config.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE_STR,               PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
-
 /**********************************************************************************************************************************/
 void
 archivePushFileProtocol(const VariantList *paramList, ProtocolServer *server)
@@ -44,7 +39,7 @@ archivePushFileProtocol(const VariantList *paramList, ProtocolServer *server)
                 {
                     .repoIdx = varUIntForce(varLstGet(paramList, paramIdx)),
                     .archiveId = varStr(varLstGet(paramList, paramIdx + 1)),
-                    .cipherType = (CipherType)varUIntForce(varLstGet(paramList, paramIdx + 2)),
+                    .cipherType = varUInt64(varLstGet(paramList, paramIdx + 2)),
                     .cipherPass = varStr(varLstGet(paramList, paramIdx + 3)),
                 });
 

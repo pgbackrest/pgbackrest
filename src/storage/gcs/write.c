@@ -342,7 +342,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_GCS_TYPE_STR,
+                .type = STORAGE_GCS_TYPE,
                 .name = strDup(name),
                 .atomic = true,
                 .createPath = true,

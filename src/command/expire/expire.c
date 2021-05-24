@@ -332,7 +332,7 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigne
                     (strLstSize(backupExpired) > 1 ? "set " : ""), strZ(strLstJoin(backupExpired, ", ")));
             }
 
-            if (strEqZ(cfgOptionIdxStr(cfgOptRepoRetentionArchiveType, repoIdx), CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL) &&
+            if (cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx) == backupTypeFull &&
                 !cfgOptionIdxTest(cfgOptRepoRetentionArchive, repoIdx) && numFullExpired > 0)
             {
                 cfgOptionIdxSet(
@@ -380,7 +380,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
-        const String *archiveRetentionType = cfgOptionIdxStr(cfgOptRepoRetentionArchiveType, repoIdx);
+        const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx);
         unsigned int archiveRetention = cfgOptionIdxTest(
             cfgOptRepoRetentionArchive, repoIdx) ? cfgOptionIdxUInt(cfgOptRepoRetentionArchive, repoIdx) : 0;
 
@@ -388,7 +388,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
         {
-            String *msg = strNew("- archive logs will not be expired");
+            String *msg = strNewZ("- archive logs will not be expired");
 
             // Only notify user if not time-based retention
             if (!timeBasedFullRetention)
@@ -406,21 +406,24 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
             // remaining non-expired backups, from newest to oldest, based on the type.
             StringList *globalBackupRetentionList = NULL;
 
-            if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL)) == 0)
+            switch (archiveRetentionType)
             {
-                globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
-            }
-            else if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) == 0)
-            {
-                globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
-            }
-            else
-            {   // Incrementals can depend on Full or Diff so get a list of all incrementals
-                globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)),
-                    sortOrderDesc);
+                case backupTypeFull:
+                    globalBackupRetentionList = strLstSort(
+                        infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
+                    break;
+
+                case backupTypeDiff:
+                    globalBackupRetentionList = strLstSort(
+                        infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
+                    break;
+
+                case backupTypeIncr:
+                    // Incrementals can depend on Full or Diff so get a list of all incrementals
+                    globalBackupRetentionList = strLstSort(
+                        infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)),
+                        sortOrderDesc);
+                    break;
             }
 
             // Expire archives. If no backups were found or the number of backups found is not enough to satify archive retention
@@ -429,7 +432,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
             {
                 // Attempt to load the archive info file
                 InfoArchive *infoArchive = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
                 InfoPg *infoArchivePgData = infoArchivePg(infoArchive);
@@ -828,7 +831,7 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
             else
             {
                 Manifest *manifestResume = manifestLoadFile(
-                    storageRepoIdx(repoIdx), manifestFileName, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    storageRepoIdx(repoIdx), manifestFileName, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     infoPgCipherPass(infoBackupPg(infoBackup)));
 
                 // If the ancestor of the resumable backup still exists in backup.info then do not remove the resumable backup
@@ -908,14 +911,14 @@ cmdExpire(void)
             const Storage *storageRepo = storageRepoIdx(repoIdx);
             InfoBackup *infoBackup = NULL;
 
-            bool timeBasedFullRetention = strEqZ(
-                cfgOptionIdxStr(cfgOptRepoRetentionFullType, repoIdx), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_TIME);
+            bool timeBasedFullRetention =
+                cfgOptionIdxStrId(cfgOptRepoRetentionFullType, repoIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME;
 
             TRY_BEGIN()
             {
                 // Load the backup.info
                 infoBackup = infoBackupLoadFileReconstruct(
-                    storageRepo, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
                 // If a backupLabel was set, then attempt to expire the requested backup
@@ -960,8 +963,7 @@ cmdExpire(void)
                 {
                     infoBackupSaveFile(
                         infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR,
-                        cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
-                        cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                        cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
                 }
 
                 // Remove all files on disk that are now expired

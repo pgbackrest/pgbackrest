@@ -80,7 +80,7 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
         THROW(AssertError, harnessPqScriptError);
 
     // Convert params to json for comparison and reporting
-    String *paramStr = param ? jsonFromVar(varNewVarLst(param)) : strNew("");
+    String *paramStr = param ? jsonFromVar(varNewVarLst(param)) : strNew();
 
     // Ensure script has not ended
     if (harnessPqScriptDone)

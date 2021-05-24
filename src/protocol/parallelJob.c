@@ -117,7 +117,7 @@ protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState 
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
-        FUNCTION_LOG_PARAM(ENUM, state);
+        FUNCTION_LOG_PARAM(STRING_ID, state);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -129,35 +129,11 @@ protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState 
     else
     {
         THROW_FMT(
-            AssertError, "invalid state transition from '%s' to '%s'", protocolParallelJobToConstZ(protocolParallelJobState(this)),
-            protocolParallelJobToConstZ(state));
+            AssertError, "invalid state transition from '%s' to '%s'", strZ(strIdToStr(protocolParallelJobState(this))),
+            strZ(strIdToStr(state)));
     }
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-const char *
-protocolParallelJobToConstZ(ProtocolParallelJobState state)
-{
-    const char *result = NULL;
-
-    switch (state)
-    {
-        case protocolParallelJobStatePending:
-            result = "pending";
-            break;
-
-        case protocolParallelJobStateRunning:
-            result = "running";
-            break;
-
-        case protocolParallelJobStateDone:
-            result = "done";
-            break;
-    }
-
-    return result;
 }
 
 String *
@@ -165,7 +141,7 @@ protocolParallelJobToLog(const ProtocolParallelJob *this)
 {
     return strNewFmt(
         "{state: %s, key: %s, command: %s, code: %d, message: %s, result: %s}",
-        protocolParallelJobToConstZ(protocolParallelJobState(this)), strZ(varToLog(protocolParallelJobKey(this))),
+        strZ(strIdToStr(protocolParallelJobState(this))), strZ(varToLog(protocolParallelJobKey(this))),
         strZ(protocolCommandToLog(protocolParallelJobCommand(this))), protocolParallelJobErrorCode(this),
         strZ(strToLog(protocolParallelJobErrorMessage(this))), strZ(varToLog(protocolParallelJobResult(this))));
 }

@@ -298,7 +298,7 @@ void pckReadEnd(PackRead *this);
 Read Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-pckReadFree(PackRead *this)
+pckReadFree(PackRead *const this)
 {
     objFree(this);
 }
@@ -473,7 +473,7 @@ PackWrite *pckWriteEnd(PackWrite *this);
 Write Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-pckWriteFree(PackWrite *this)
+pckWriteFree(PackWrite *const this)
 {
     objFree(this);
 }

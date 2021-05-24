@@ -41,7 +41,7 @@ cmdStanzaUpgrade(void)
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
             LOG_INFO_FMT(
-                CFGCMD_STANZA_UPGRADE " for stanza '%s' on repo%u", strZ(cfgOptionStr(cfgOptStanza)),
+                CFGCMD_STANZA_UPGRADE " for stanza '%s' on repo%u", strZ(cfgOptionDisplay(cfgOptStanza)),
                 cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
 
             const Storage *storageRepoReadStanza = storageRepoIdx(repoIdx);
@@ -51,12 +51,12 @@ cmdStanzaUpgrade(void)
 
             // Load the info files (errors if missing)
             InfoArchive *infoArchive = infoArchiveLoadFile(
-                storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
             InfoBackup *infoBackup = infoBackupLoadFile(
-                storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
@@ -86,21 +86,21 @@ cmdStanzaUpgrade(void)
             {
                 infoArchiveSaveFile(
                     infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR,
-                    cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             }
 
             // Save backup info
             if (infoBackupUpgrade)
             {
                 infoBackupSaveFile(
-                    infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR,
-                    cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                    infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             }
 
             if (!(infoArchiveUpgrade || infoBackupUpgrade))
             {
                 LOG_INFO_FMT(
-                    "stanza '%s' on repo%u is already up to date", strZ(cfgOptionStr(cfgOptStanza)),
+                    "stanza '%s' on repo%u is already up to date", strZ(cfgOptionDisplay(cfgOptStanza)),
                     cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
             }
         }

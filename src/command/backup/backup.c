@@ -43,7 +43,7 @@ static String *
 backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
         FUNCTION_LOG_PARAM(TIME, timestamp);
     FUNCTION_LOG_END();
@@ -80,7 +80,7 @@ static String *
 backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
         FUNCTION_LOG_PARAM(TIME, timestamp);
     FUNCTION_LOG_END();
@@ -365,7 +365,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
     Manifest *result = NULL;
 
     // No incremental if backup type is full
-    BackupType type = backupType(cfgOptionStr(cfgOptType));
+    BackupType type = (BackupType)cfgOptionStrId(cfgOptType);
 
     if (type != backupTypeFull)
     {
@@ -380,7 +380,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                  InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
 
                 // The prior backup for a diff must be full
-                if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
+                if (type == backupTypeDiff && backupPrior.backupType != backupTypeFull)
                     continue;
 
                 // The backups must come from the same cluster ??? This should enable delta instead
@@ -397,7 +397,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             {
                 result = manifestLoadFile(
                     storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabelPrior)),
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+                    cfgOptionStrId(cfgOptRepoCipherType), infoPgCipherPass(infoBackupPg(infoBackup)));
                 const ManifestData *manifestPriorData = manifestData(result);
 
                 LOG_INFO_FMT(
@@ -409,8 +409,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter " CFGOPT_COMPRESS_TYPE " option to '%s', reset to value in %s",
-                        strZ(cfgOptionStr(cfgOptType)), strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
-                        strZ(backupLabelPrior));
+                        strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptCompressType)), strZ(backupLabelPrior));
 
                     // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
                     // could store compression type on a per file basis, but it seems simplest and safest for now.
@@ -434,8 +433,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter hardlink option to '%s', reset to value in %s",
-                        strZ(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
-                        strZ(backupLabelPrior));
+                        strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptRepoHardlink)), strZ(backupLabelPrior));
                     cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
                 }
 
@@ -456,7 +454,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     {
                         LOG_WARN_FMT(
                             "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
-                            strZ(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
+                            strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptChecksumPage)),
                             cvtBoolToConstZ(checksumPagePrior), strZ(manifestData(result)->backupLabel));
                     }
 
@@ -467,8 +465,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             }
             else
             {
-                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionStr(cfgOptType)));
-                cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(backupTypeFull)));
+                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)));
+                cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(strIdToStr(backupTypeFull)));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -501,7 +499,7 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *mani
             manifestMove(manifestPrior, MEM_CONTEXT_TEMP());
 
             // Build incremental manifest
-            manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), archiveStart);
+            manifestBuildIncr(manifest, manifestPrior, (BackupType)cfgOptionStrId(cfgOptType), archiveStart);
 
             // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
             manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
@@ -709,7 +707,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                         TRY_BEGIN()
                         {
                             manifestResume = manifestLoadFile(
-                                storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassBackup);
+                                storageRepo(), manifestFile, cfgOptionStrId(cfgOptRepoCipherType), cipherPassBackup);
                             const ManifestData *manifestResumeData = manifestData(manifestResume);
 
                             // Check pgBackRest version. This allows the resume implementation to be changed with each version of
@@ -722,11 +720,11 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                                     strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
                             }
                             // Check backup type because new backup label must be the same type as resume backup label
-                            else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
+                            else if (manifestResumeData->backupType != cfgOptionStrId(cfgOptType))
                             {
                                 reason = strNewFmt(
                                     "new backup type '%s' does not match resumable backup type '%s'",
-                                    strZ(cfgOptionStr(cfgOptType)), strZ(backupTypeStr(manifestResumeData->backupType)));
+                                    strZ(cfgOptionDisplay(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
                             }
                             // Check prior backup label ??? Do we really care about the prior backup label?
                             else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
@@ -743,7 +741,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             {
                                 reason = strNewFmt(
                                     "new compression '%s' does not match resumable compression '%s'",
-                                    strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
+                                    strZ(cfgOptionDisplay(cfgOptCompressType)),
                                     strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
                             }
                             else
@@ -963,7 +961,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(
-                filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, manifestCipherSubPass(manifest));
+                filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
 
             // Add size filter last to calculate repo size
             ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -1168,7 +1166,7 @@ backupJobResult(
                             checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
                             ASSERT(!varLstEmpty(checksumPageErrorList));
 
-                            String *error = strNew("");
+                            String *error = strNew();
                             unsigned int errorTotalMin = 0;
 
                             for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
@@ -1253,7 +1251,7 @@ backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
 
         // Add encryption filter if required
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, cipherPassBackup);
+            ioWriteFilterGroup(write), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, cipherPassBackup);
 
         // Save file
         manifestSave(manifest, write);
@@ -1478,7 +1476,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
                 // Create backup job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE_STR);
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
 
                 protocolCommandParamAdd(command, VARSTR(manifestPathPg(file->name)));
                 protocolCommandParamAdd(
@@ -1494,7 +1492,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
                 protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
                 protocolCommandParamAdd(command, VARBOOL(jobData->delta));
-                protocolCommandParamAdd(command, VARUINT(jobData->cipherType));
+                protocolCommandParamAdd(command, VARUINT64(jobData->cipherType));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
 
                 // Remove job from the queue
@@ -1585,7 +1583,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .backupStandby = backupStandby,
             .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
-            .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
@@ -1713,7 +1711,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             }
         }
 
-        LOG_INFO_FMT("%s backup size = %s", strZ(backupTypeStr(backupType)), strZ(strSizeFormat(sizeTotal)));
+        LOG_INFO_FMT("%s backup size = %s", strZ(strIdToStr(backupType)), strZ(strSizeFormat(sizeTotal)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1757,7 +1755,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
             // Loop through all the segments in the lsn range
             InfoArchive *infoArchive = infoArchiveLoadFile(
-                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
                 cfgOptionStrNull(cfgOptRepoCipherPass));
             const String *archiveId = infoArchiveId(infoArchive);
 
@@ -1790,7 +1788,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                         // Decrypt with archive key if encrypted
                         cipherBlockFilterGroupAdd(
-                            filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
+                            filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
                             infoArchiveCipherPass(infoArchive));
 
                         // Compress/decompress if archive and backup do not have the same compression settings
@@ -1808,8 +1806,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                         // Encrypt with backup key if encrypted
                         cipherBlockFilterGroupAdd(
-                            filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
-                            manifestCipherSubPass(manifest));
+                            filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
 
                         // Add size filter last to calculate repo size
                         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -1893,7 +1890,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                 storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
 
         cipherBlockFilterGroupAdd(
-            ioReadFilterGroup(storageReadIo(manifestRead)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
+            ioReadFilterGroup(storageReadIo(manifestRead)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
             infoPgCipherPass(infoBackupPg(infoBackup)));
 
         StorageWrite *manifestWrite = storageNewWriteP(
@@ -1905,7 +1902,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGz, 9));
 
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt,
             infoPgCipherPass(infoBackupPg(infoBackup)));
 
         storageCopyP(manifestRead, manifestWrite);
@@ -1924,7 +1921,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         infoBackupDataAdd(infoBackup, manifest);
 
         infoBackupSaveFile(
-            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
             cfgOptionStrNull(cfgOptRepoCipherPass));
     }
     MEM_CONTEXT_TEMP_END();
@@ -1956,8 +1953,7 @@ cmdBackup(void)
 
         // Load backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
+            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType), cfgOptionStrNull(cfgOptRepoCipherPass));
         InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
         const String *cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
 
@@ -1984,7 +1980,7 @@ cmdBackup(void)
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
-            manifestCipherSubPassSet(manifest, cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
+            manifestCipherSubPassSet(manifest, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
@@ -1995,7 +1991,8 @@ cmdBackup(void)
         {
             manifestBackupLabelSet(
                 manifest,
-                backupLabelCreate(backupType(cfgOptionStr(cfgOptType)), manifestData(manifest)->backupLabelPrior, timestampStart));
+                backupLabelCreate(
+                    (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
         }
 
         // Save the manifest before processing starts

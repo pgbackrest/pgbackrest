@@ -6,6 +6,8 @@ Archive Common
 
 #include <sys/types.h>
 
+#include "common/type/stringId.h"
+
 /***********************************************************************************************************************************
 Archive mode enum
 
@@ -13,8 +15,8 @@ Used for functions that are common to both archive-push and archive-get so they 
 ***********************************************************************************************************************************/
 typedef enum
 {
-    archiveModePush,
-    archiveModeGet,
+    archiveModeGet = STRID5("get", 0x50a70),
+    archiveModePush = STRID5("push", 0x44eb00),
 } ArchiveMode;
 
 #include "common/compress/helper.h"
@@ -67,8 +69,9 @@ Functions
 // old error may be reported rather than waiting for the async process to succeed or fail.
 void archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile);
 
-// Check for ok/error status files in the spool in/out directory
-bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError);
+// Check for ok/error status files in the spool in/out directory. throwOnError determines whether an error will be thrown when an
+// error file is found. warnOnOk determines whether a warning will be output when found in an ok file.
+bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError, bool warnOnOk);
 
 // Write an ok status file
 void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning);

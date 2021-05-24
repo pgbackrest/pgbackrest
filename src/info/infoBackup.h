@@ -4,10 +4,22 @@ Backup Info Handler
 #ifndef INFO_INFOBACKUP_H
 #define INFO_INFOBACKUP_H
 
+#include "common/type/stringId.h"
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct InfoBackup InfoBackup;
+
+/***********************************************************************************************************************************
+Backup type enum
+***********************************************************************************************************************************/
+typedef enum
+{
+    backupTypeFull = STRID5("full", 0x632a60),
+    backupTypeDiff = STRID5("diff", 0x319240),
+    backupTypeIncr = STRID5("incr", 0x90dc90),
+} BackupType;
 
 #include "common/type/object.h"
 #include "common/type/string.h"
@@ -45,7 +57,7 @@ typedef struct InfoBackupData
     StringList *backupReference;
     time_t backupTimestampStart;
     time_t backupTimestampStop;
-    const String *backupType;
+    BackupType backupType;
     bool optionArchiveCheck;
     bool optionArchiveCopy;
     bool optionBackupStandby;
@@ -124,7 +136,7 @@ StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expres
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline InfoBackup *
-infoBackupMove(InfoBackup *this, MemContext *parentNew)
+infoBackupMove(InfoBackup *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -133,7 +145,7 @@ infoBackupMove(InfoBackup *this, MemContext *parentNew)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-infoBackupFree(InfoBackup *this)
+infoBackupFree(InfoBackup *const this)
 {
     objFree(this);
 }

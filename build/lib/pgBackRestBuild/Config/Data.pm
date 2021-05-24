@@ -37,9 +37,9 @@ use constant CFGCMD_VERSION                                         => 'version'
 # Command role constants - roles allowed for each command. Commands may have multiple processes that work together to implement
 # their functionality.  These roles allow each process to know what it is supposed to do.
 ####################################################################################################################################
-# Called directly by the user. This is the main part of the command that may or may not spawn other command roles.
-use constant CFGCMD_ROLE_DEFAULT                                    => 'default';
-    push @EXPORT, qw(CFGCMD_ROLE_DEFAULT);
+# Called directly by the user. This is the main process of the command that may or may not spawn other command roles.
+use constant CFGCMD_ROLE_MAIN                                       => 'main';
+    push @EXPORT, qw(CFGCMD_ROLE_MAIN);
 
 # Async worker that is spawned so the main process can return a result while work continues. An async worker may spawn local or
 # remote workers.
@@ -222,6 +222,73 @@ my $rhOptionGroupDefine = $rhConfig->{'optionGroup'};
 my $rhConfigDefine = $rhConfig->{'option'};
 
 ####################################################################################################################################
+# Fix errors introduced by YAML::XS::LoadFile. This is typically fixed by setting local $YAML::XS::Boolean = "JSON::PP", but older
+# Debian/Ubuntu versions do not support this fix. Some booleans get set read only and others also end up as empty strings. There is
+# no apparent pattern to what gets broken so it is important to be on the lookout for strange output when adding new options.
+#
+# ??? For now this code is commented out since packages for older Debians can be built using backports. It is being preserved just
+# in case it is needed before the migration to C is complete.
+####################################################################################################################################
+# sub optionDefineFixup
+# {
+#     my $strKey = shift;
+#     my $rhDefine = shift;
+#
+#     # Fix read-only required values so they are writable
+#     if (defined($rhDefine->{&CFGDEF_REQUIRED}))
+#     {
+#         my $value = $rhDefine->{&CFGDEF_REQUIRED} ? true : false;
+#         delete($rhDefine->{&CFGDEF_REQUIRED});
+#         $rhDefine->{&CFGDEF_REQUIRED} = $value;
+#     }
+#
+#     # If the default is an empty string set to false. This must be a mangled boolean since empty strings are not valid defaults.
+#     if (defined($rhDefine->{&CFGDEF_DEFAULT}) && $rhDefine->{&CFGDEF_DEFAULT} eq '')
+#     {
+#         delete($rhDefine->{&CFGDEF_DEFAULT});
+#         $rhDefine->{&CFGDEF_DEFAULT} = false;
+#     }
+#
+#     # If a depend list value is an empty string set it to false. This must be a mangled boolean since empty strings are not valid
+#     # depend list values.
+#     if (ref($rhDefine->{&CFGDEF_DEPEND}) && defined($rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST}))
+#     {
+#         my @stryList;
+#
+#         for (my $iDependListIdx = 0; $iDependListIdx < @{$rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST}}; $iDependListIdx++)
+#         {
+#             if ($rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST}[$iDependListIdx] eq '')
+#             {
+#                 push(@stryList, false);
+#             }
+#             else
+#             {
+#                 push(@stryList, $rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST}[$iDependListIdx]);
+#             }
+#         }
+#
+#         delete($rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST});
+#         $rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST} = \@stryList;
+#     }
+# }
+#
+# # Fix all options
+# foreach my $strKey (sort(keys(%{$rhConfigDefine})))
+# {
+#     my $rhOption = $rhConfigDefine->{$strKey};
+#     optionDefineFixup($strKey, $rhOption);
+#
+#     # Fix all option commands
+#     if (ref($rhOption->{&CFGDEF_COMMAND}))
+#     {
+#         foreach my $strCommand (sort(keys(%{$rhOption->{&CFGDEF_COMMAND}})))
+#         {
+#             optionDefineFixup("$strKey-$strCommand", $rhOption->{&CFGDEF_COMMAND}{$strCommand});
+#         }
+#     }
+# }
+
+####################################################################################################################################
 # Process command define defaults
 ####################################################################################################################################
 foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
@@ -283,9 +350,9 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     }
 
     # All commands have the default role
-    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT}))
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_MAIN}))
     {
-        $rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT} = {};
+        $rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_MAIN} = {};
     }
 }
 

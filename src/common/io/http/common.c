@@ -81,7 +81,7 @@ httpUriDecode(const String *uri)
     // Decode if the string is not null
     if (uri != NULL)
     {
-        result = strNew("");
+        result = strNew();
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -127,7 +127,7 @@ httpUriEncode(const String *uri, bool path)
     // Encode if the string is not null
     if (uri != NULL)
     {
-        result = strNew("");
+        result = strNew();
 
         // Iterate all characters in the string
         for (unsigned uriIdx = 0; uriIdx < strSize(uri); uriIdx++)

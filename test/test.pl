@@ -81,7 +81,6 @@ test.pl [options]
    --build-only         build the binary (and honor --build-package) but don't run tests
    --build-package      build the package
    --build-max          max processes to use for builds (default 4)
-   --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
    --container-only     only run tests that must be run in a container
    --no-performance     do not run performance tests
@@ -106,6 +105,7 @@ test.pl [options]
 
  Report Options:
    --coverage-summary   generate a coverage summary report for the documentation
+   --coverage-only      only run coverage tests (as a subset of selected tests) for the documentation
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -334,7 +334,7 @@ eval
     }
 
     logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF, !$bNoLogTimestamp);
-    &log(INFO, "test begin - log level ${strLogLevel}");
+    &log(INFO, 'test begin on ' . hostArch() . " - log level ${strLogLevel}");
 
     if (@stryModuleTest != 0 && @stryModule != 1)
     {
@@ -359,12 +359,11 @@ eval
     {
         if (!defined($strVm))
         {
-            &log(INFO, "Set --vm=${strVmHost} for coverage testing");
-            $strVm = $strVmHost;
+            confess &log(ERROR, "select a VM for coverage testing");
         }
         elsif ($strVm eq VM_ALL)
         {
-            confess &log(ERROR, "select a single Debian-based VM for coverage testing");
+            confess &log(ERROR, "select a single VM for coverage testing");
         }
     }
 

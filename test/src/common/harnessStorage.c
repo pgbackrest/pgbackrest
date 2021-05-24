@@ -192,31 +192,94 @@ testStorageGet(
 }
 
 /**********************************************************************************************************************************/
-StringList *
-hrnStorageList(const Storage *storage, const char *path, HrnStorageListParam param)
+static void
+hrnStorageListCallback(void *list, const StorageInfo *info)
 {
-    StringList *list = strLstSort(storageListP(storage, STR(path)), sortOrderAsc);
+    if (!strEq(info->name, DOT_STR))
+    {
+        MEM_CONTEXT_BEGIN(lstMemContext(list))
+        {
+            StorageInfo infoCopy = *info;
+            infoCopy.name = strDup(infoCopy.name);
+            infoCopy.user = strDup(infoCopy.user);
+            infoCopy.group = strDup(infoCopy.group);
+            infoCopy.linkDestination = strDup(infoCopy.linkDestination);
+
+            lstAdd(list, &infoCopy);
+        }
+        MEM_CONTEXT_END();
+    }
+}
+
+void
+hrnStorageList(
+    const int line, const Storage *const storage, const char *const path, const char *const expected,
+    const HrnStorageListParam param)
+{
+    // Log list test
+    hrnTestLogPrefix(line, true);
+    hrnTestResultBegin(__func__, line, false);
+
+    const String *const pathFull = storagePathP(storage, STR(path));
+    printf("list%s contents of '%s'", param.remove ? "/remove": "", strZ(pathFull));
+    fflush(stdout);
+
+    // Generate a list of files/paths/etc
+    List *list = lstNewP(sizeof(StorageInfo));
+
+    storageInfoListP(storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = true);
 
     // Remove files if requested
     if (param.remove)
     {
-        for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
-            storageRemoveP(storage, strNewFmt("%s/%s", path, strZ(strLstGet(list, listIdx))), .errorOnMissing = true);
+        for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
+        {
+            const StorageInfo *const info = lstGet(list, listIdx);
+
+            // Only remove at the top level since path remove will recurse
+            if (strChr(info->name, '/') == -1)
+            {
+                // Remove a path recursively
+                if (info->type == storageTypePath)
+                {
+                    storagePathRemoveP(
+                        storage, strNewFmt("%s/%s", path, strZ(info->name)), .errorOnMissing = true, .recurse = true);
+                }
+                // Remove file, link, or special
+                else
+                    storageRemoveP(storage, strNewFmt("%s/%s", path, strZ(info->name)), .errorOnMissing = true);
+            }
+        }
     }
 
     // Return list for comparison
-    return list;
-}
+    StringList *listStr = strLstNew();
 
-const char *
-hrnStorageListLog(const Storage *storage, const char *path, HrnStorageListParam param)
-{
-    StringList *list = strLstSort(storageListP(storage, STR(path)), sortOrderAsc);
+    for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
+    {
+        const StorageInfo *const info = lstGet(list, listIdx);
 
-    return strZ(
-        strNewFmt(
-            "list%s %u file%s in '%s'", param.remove ? "/remove": "", strLstSize(list), strLstSize(list) == 1 ? "" : "s",
-            strZ(storagePathP(storage, STR(path)))));
+        switch (info->type)
+        {
+            case storageTypeFile:
+                strLstAdd(listStr, info->name);
+                break;
+
+            case storageTypeLink:
+                strLstAdd(listStr, strNewFmt("%s>", strZ(info->name)));
+                break;
+
+            case storageTypePath:
+                strLstAdd(listStr, strNewFmt("%s/", strZ(info->name)));
+                break;
+
+            case storageTypeSpecial:
+                strLstAdd(listStr, strNewFmt("%s*", strZ(info->name)));
+                break;
+        }
+    }
+
+    hrnTestResultStringList(listStr, expected, harnessTestResultOperationEq);
 }
 
 /**********************************************************************************************************************************/
@@ -254,7 +317,7 @@ void
 hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param)
 {
     // Add compression extension to file name
-    String *fileStr = strNew(file);
+    String *fileStr = strNewZ(file);
     compressExtCat(fileStr, param.compressType);
 
     // Create file
@@ -269,7 +332,7 @@ hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, Hr
     }
 
     // Add encrypted filter
-    if (param.cipherType != cipherTypeNone)
+    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
     {
         // Default to main cipher pass
         if (param.cipherPass == NULL)
@@ -286,14 +349,14 @@ const char *
 hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param)
 {
     // Empty if buffer is NULL
-    String *log = strNew(buffer == NULL || bufEmpty(buffer) ? "(empty) " : "");
+    String *log = strNewZ(buffer == NULL || bufEmpty(buffer) ? "(empty) " : "");
 
     // Add compression detail
     if (param.compressType != compressTypeNone)
         strCatFmt(log, "cmp[%s]", strZ(compressTypeStr(param.compressType)));
 
     // Add encryption detail
-    if (param.cipherType != cipherTypeNone)
+    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
     {
         if (param.cipherPass == NULL)
             param.cipherPass = TEST_CIPHER_PASS;
@@ -301,11 +364,11 @@ hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer,
         if (param.compressType != compressTypeNone)
             strCatZ(log, "/");
 
-        strCatFmt(log, "enc[%s,%s]", strZ(cipherTypeName(param.cipherType)), param.cipherPass);
+        strCatFmt(log, "enc[%s,%s]", strZ(strIdToStr(param.cipherType)), param.cipherPass);
     }
 
     // Add a space if compression/encryption defined
-    if (param.compressType != compressTypeNone || param.cipherType != cipherTypeNone)
+    if (param.compressType != compressTypeNone || (param.cipherType != 0 && param.cipherType != cipherTypeNone))
         strCatZ(log, " ");
 
     // Add file name

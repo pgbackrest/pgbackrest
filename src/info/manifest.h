@@ -10,11 +10,6 @@ nothing is missing or corrupt.  It is also useful for reporting, e.g. size of ba
 #ifndef INFO_MANIFEST_H
 #define INFO_MANIFEST_H
 
-#include "command/backup/common.h"
-#include "common/compress/helper.h"
-#include "common/crypto/common.h"
-#include "common/type/variantList.h"
-
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
@@ -31,9 +26,14 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct Manifest Manifest;
 
+#include "command/backup/common.h"
+#include "common/compress/helper.h"
+#include "common/crypto/common.h"
 #include "common/crypto/hash.h"
+#include "common/type/variantList.h"
 #include "common/type/object.h"
 #include "info/info.h"
+#include "info/infoBackup.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -220,7 +220,7 @@ void manifestLinkCheck(const Manifest *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline Manifest *
-manifestMove(Manifest *this, MemContext *parentNew)
+manifestMove(Manifest *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -381,7 +381,7 @@ void manifestTargetUpdate(const Manifest *this, const String *name, const String
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-manifestFree(Manifest *this)
+manifestFree(Manifest *const this)
 {
     objFree(this);
 }

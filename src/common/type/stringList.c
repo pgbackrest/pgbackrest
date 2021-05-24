@@ -16,7 +16,7 @@ String List Handler
 Internal add -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline String *
-strLstAddInternal(StringList *this, String *string)
+strLstAddInternal(StringList *const this, String *const string)
 {
     return *(String **)lstAdd((List *)this, &string);
 }
@@ -25,7 +25,7 @@ strLstAddInternal(StringList *this, String *string)
 Internal insert -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline  String *
-strLstInsertInternal(StringList *this, unsigned int listIdx, String *string)
+strLstInsertInternal(StringList *const this, const unsigned int listIdx, String *const string)
 {
     return *(String **)lstInsert((List *)this, listIdx, &string);
 }
@@ -66,7 +66,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
             }
             // Else make whatever is left the last string
             else
-                strLstAddInternal(this, strNew(stringBase));
+                strLstAddInternal(this, strNewZ(stringBase));
         }
         while (stringMatch != NULL);
     }
@@ -183,7 +183,7 @@ strLstAddZ(StringList *this, const char *string)
 
     MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {
-        result = strLstAddInternal(this, strNew(string));
+        result = strLstAddInternal(this, strNewZ(string));
     }
     MEM_CONTEXT_END();
 
@@ -227,7 +227,7 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
     ASSERT(separator != NULL);
     ASSERT(quote != NULL);
 
-    String *join = strNew("");
+    String *join = strNew();
 
     for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
     {

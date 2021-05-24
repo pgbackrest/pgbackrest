@@ -11,11 +11,6 @@ Configuration Protocol Handler
 #include "config/parse.h"
 #include "config/protocol.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_CONFIG_OPTION_STR,                   PROTOCOL_COMMAND_CONFIG_OPTION);
-
 /**********************************************************************************************************************************/
 void
 configOptionProtocol(const VariantList *paramList, ProtocolServer *server)
@@ -34,7 +29,7 @@ configOptionProtocol(const VariantList *paramList, ProtocolServer *server)
 
         for (unsigned int optionIdx = 0; optionIdx < varLstSize(paramList); optionIdx++)
         {
-            CfgParseOptionResult option = cfgParseOption(varStr(varLstGet(paramList, optionIdx)));
+            CfgParseOptionResult option = cfgParseOptionP(varStr(varLstGet(paramList, optionIdx)));
             CHECK(option.found);
 
             varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
@@ -60,7 +55,7 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION);
 
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
             protocolCommandParamAdd(command, varLstGet(paramList, paramIdx));

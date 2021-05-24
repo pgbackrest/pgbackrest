@@ -212,9 +212,6 @@ sub process
 
     foreach my $strOption (sort(keys(%{$oOptionDefine})))
     {
-        # Skip options that are internal only for all commands (test options)
-        next if $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
-
         # Iterate through all commands
         my @stryCommandList = sort(keys(%{defined($$oOptionDefine{$strOption}{&CFGDEF_COMMAND}) ?
                               $$oOptionDefine{$strOption}{&CFGDEF_COMMAND} : $$oConfigHash{&CONFIG_HELP_COMMAND}}));
@@ -228,13 +225,10 @@ sub process
 
             # Skip the option if it is not valid for this command and the default role. Only options valid for the default role are
             # show in help because that is the only role available to a user.
-            if (!defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT}))
+            if (!defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_MAIN}))
             {
                 next;
             }
-
-            # Skip options that are internal only for the current command
-            next if $oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL};
 
             my $oCommandDoc = $oDoc->nodeGet('operation')->nodeGet('command-list')->nodeGetById('command', $strCommand);
 
@@ -286,11 +280,14 @@ sub process
 
                     # If a section is specified then use it, otherwise the option should be general since it is not for a specific
                     # command
-                    $strSection = $oOptionDoc->paramGet('section', false);
-
-                    if (!defined($strSection))
+                    if (defined($oOptionDoc))
                     {
-                        $strSection = "general";
+                        $strSection = $oOptionDoc->paramGet('section', false);
+
+                        if (!defined($strSection))
+                        {
+                            $strSection = "general";
+                        }
                     }
                 }
             }
@@ -321,6 +318,8 @@ sub process
             $$oCommandOption{&CONFIG_HELP_SUMMARY} = $oOptionDoc->nodeGet('summary')->textGet();
             $$oCommandOption{&CONFIG_HELP_DESCRIPTION} = $oOptionDoc->textGet();
             $$oCommandOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
+            $oCommandOption->{&CONFIG_HELP_INTERNAL} =
+                cfgDefineCommand()->{$strCommand}{&CFGDEF_INTERNAL} ? true : $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
 
             $$oCommandOption{&CONFIG_HELP_NAME} = $oOptionDoc->paramGet('name');
 
@@ -364,6 +363,7 @@ sub process
                 $oOption->{&CONFIG_HELP_NAME_ALT} = $oCommandOption->{&CONFIG_HELP_NAME_ALT};
                 $$oOption{&CONFIG_HELP_DESCRIPTION} = $$oCommandOption{&CONFIG_HELP_DESCRIPTION};
                 $$oOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
+                $oOption->{&CONFIG_HELP_INTERNAL} = $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
             }
         }
     }
@@ -456,6 +456,9 @@ sub manGet
 
     foreach my $strOption (sort(keys(%{$$hConfig{&CONFIG_HELP_OPTION}})))
     {
+        # Skip internal options
+        next if $hConfig->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_INTERNAL};
+
         my $hOption = $$hConfig{&CONFIG_HELP_OPTION}{$strOption};
         $iOptionMaxLen = length($strOption) > $iOptionMaxLen ? length($strOption) : $iOptionMaxLen;
         my $strSection = defined($$hOption{&CONFIG_HELP_SECTION}) ? $$hOption{&CONFIG_HELP_SECTION} : CFGDEF_GENERAL;
@@ -642,6 +645,9 @@ sub helpConfigDocGet
 
         foreach my $strOption (sort(keys(%{$$oSectionHash{$strSection}})))
         {
+            # Skip internal options
+            next if $oConfigHash->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_INTERNAL};
+
             $self->helpOptionGet(undef, $strOption, $oSectionElement, $$oConfigHash{&CONFIG_HELP_OPTION}{$strOption});
         }
     }
@@ -708,6 +714,9 @@ sub helpCommandDocGet
 
             foreach my $strOption (sort(keys(%{$$oCommandHash{&CONFIG_HELP_OPTION}})))
             {
+                # Skip internal options
+                next if $rhConfigDefine->{$strOption}{&CFGDEF_INTERNAL};
+
                 # Skip secure options that can't be defined on the command line
                 next if ($rhConfigDefine->{$strOption}{&CFGDEF_SECURE});
 

@@ -40,10 +40,6 @@ Recovery constants
 #define RECOVERY_TARGET_XID                                         "recovery_target_xid"
 
 #define RECOVERY_TARGET_ACTION                                      "recovery_target_action"
-#define RECOVERY_TARGET_ACTION_PAUSE                                "pause"
-    STRING_STATIC(RECOVERY_TARGET_ACTION_PAUSE_STR,                 RECOVERY_TARGET_ACTION_PAUSE);
-#define RECOVERY_TARGET_ACTION_SHUTDOWN                             "shutdown"
-    STRING_STATIC(RECOVERY_TARGET_ACTION_SHUTDOWN_STR,              RECOVERY_TARGET_ACTION_SHUTDOWN);
 
 #define RECOVERY_TARGET_INCLUSIVE                                   "recovery_target_inclusive"
 #define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
@@ -51,23 +47,7 @@ Recovery constants
 #define STANDBY_MODE                                                "standby_mode"
     STRING_STATIC(STANDBY_MODE_STR,                                 STANDBY_MODE);
 
-#define RECOVERY_TYPE_DEFAULT                                       "default"
-    STRING_STATIC(RECOVERY_TYPE_DEFAULT_STR,                        RECOVERY_TYPE_DEFAULT);
-#define RECOVERY_TYPE_IMMEDIATE                                     "immediate"
-    STRING_STATIC(RECOVERY_TYPE_IMMEDIATE_STR,                      RECOVERY_TYPE_IMMEDIATE);
-#define RECOVERY_TYPE_NONE                                          "none"
-    STRING_STATIC(RECOVERY_TYPE_NONE_STR,                           RECOVERY_TYPE_NONE);
-#define RECOVERY_TYPE_PRESERVE                                      "preserve"
-    STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                       RECOVERY_TYPE_PRESERVE);
-#define RECOVERY_TYPE_STANDBY                                       "standby"
-    STRING_STATIC(RECOVERY_TYPE_STANDBY_STR,                        RECOVERY_TYPE_STANDBY);
-#define RECOVERY_TYPE_TIME                                          "time"
-    STRING_STATIC(RECOVERY_TYPE_TIME_STR,                           RECOVERY_TYPE_TIME);
-
 #define ARCHIVE_MODE                                                "archive_mode"
-#define ARCHIVE_MODE_OFF                                            "off"
-    STRING_STATIC(ARCHIVE_MODE_OFF_STR,                             ARCHIVE_MODE_OFF);
-STRING_STATIC(ARCHIVE_MODE_PRESERVE_STR,                            "preserve");
 
 /***********************************************************************************************************************************
 Validate restore path
@@ -82,7 +62,7 @@ restorePathValidate(void)
         // The PGDATA directory must exist
         // ??? We should remove this requirement in a separate commit.  What's the harm in creating the dir assuming we have perms?
         if (!storagePathExistsP(storagePg(), NULL))
-            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strZ(cfgOptionStr(cfgOptPgPath)));
+            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strZ(cfgOptionDisplay(cfgOptPgPath)));
 
         // PostgreSQL must not be running
         if (storageExistsP(storagePg(), PG_FILE_POSTMASTERPID_STR))
@@ -92,7 +72,7 @@ restorePathValidate(void)
                 "unable to restore while PostgreSQL is running\n"
                     "HINT: presence of '" PG_FILE_POSTMASTERPID "' in '%s' indicates PostgreSQL is running.\n"
                     "HINT: remove '" PG_FILE_POSTMASTERPID "' only if PostgreSQL is not running.",
-                strZ(cfgOptionStr(cfgOptPgPath)));
+                strZ(cfgOptionDisplay(cfgOptPgPath)));
         }
 
         // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
@@ -103,7 +83,7 @@ restorePathValidate(void)
                 "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" BACKUP_MANIFEST_FILE "' in '%s' to"
                     " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                     " exist in the destination directories the restore will be aborted.",
-               strZ(cfgOptionStr(cfgOptPgPath)));
+               strZ(cfgOptionDisplay(cfgOptPgPath)));
 
             // Disable delta and force so restore will fail if the directories are not empty
             cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
@@ -232,7 +212,7 @@ restoreBackupData(const String *backupLabel, unsigned int repoIdx, const String 
     {
         restoreBackup.backupSet = strDup(backupLabel);
         restoreBackup.repoIdx = repoIdx;
-        restoreBackup.repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+        restoreBackup.repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
         restoreBackup.backupCipherPass = strDup(backupCipherPass);
     }
     MEM_CONTEXT_PRIOR_END();
@@ -270,7 +250,7 @@ restoreBackupSet(void)
         // set that satisfies the time condition, else we will use the backup provided
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
-            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
+            if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_TIME)
                 timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
         }
         else
@@ -288,7 +268,7 @@ restoreBackupSet(void)
             TRY_BEGIN()
             {
                 infoBackup = infoBackupLoadFile(
-                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR,  cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR,  cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             }
             CATCH_ANY()
@@ -391,7 +371,7 @@ restoreBackupSet(void)
 
                 LOG_WARN_FMT(
                     "unable to find backup set with stop time less than '%s', repo%u: latest backup set will be used",
-                    strZ(cfgOptionStr(cfgOptTarget)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, result.repoIdx));
+                    strZ(cfgOptionDisplay(cfgOptTarget)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, result.repoIdx));
             }
             else
                 THROW(BackupSetInvalidError, "no backup set found to restore");
@@ -1023,7 +1003,7 @@ restoreCleanBuild(Manifest *manifest)
             strLstAdd(cleanData->fileIgnore, BACKUP_MANIFEST_FILE_STR);
 
             // Also ignore recovery files when recovery type = preserve
-            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+            if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
             {
                 // If recovery GUCs then three files must be preserved
                 if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC)
@@ -1119,8 +1099,7 @@ restoreCleanBuild(Manifest *manifest)
         }
 
         // Skip postgresql.auto.conf if preserve is set and the PostgreSQL version supports recovery GUCs
-        if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC &&
-            strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR) &&
+        if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC && cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE &&
             manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF), NULL) != NULL)
         {
             LOG_DETAIL_FMT("skip '" PG_FILE_POSTGRESQLAUTOCONF "' -- recovery type is preserve");
@@ -1279,8 +1258,8 @@ restoreSelectiveExpression(Manifest *manifest)
 
     String *result = NULL;
 
-    // Continue if db-include is specified
-    if (cfgOptionTest(cfgOptDbInclude))
+    // Continue if databases to include or exclude have been specified
+    if (cfgOptionTest(cfgOptDbExclude) || cfgOptionTest(cfgOptDbInclude))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1345,6 +1324,30 @@ restoreSelectiveExpression(Manifest *manifest)
             // Log databases found
             LOG_DETAIL_FMT("databases found for selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
+            // Generate list with ids of databases to exclude
+            StringList *excludeDbIdList = strLstNew();
+            const StringList *excludeList = strLstNewVarLst(cfgOptionLst(cfgOptDbExclude));
+
+            for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
+            {
+                const String *excludeDb = strLstGet(excludeList, excludeIdx);
+
+                // If the db to exclude is not in the list as an id then search by name
+                if (!strLstExists(dbList, excludeDb))
+                {
+                    const ManifestDb *db = manifestDbFindDefault(manifest, excludeDb, NULL);
+
+                    if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
+                        THROW_FMT(DbMissingError, "database to exclude '%s' does not exist", strZ(excludeDb));
+
+                    // Set the exclude db to the id if the name mapping was successful
+                    excludeDb = varStrForce(VARUINT(db->id));
+                }
+
+                // Add to exclude list
+                strLstAdd(excludeDbIdList, excludeDb);
+            }
+
             // Remove included databases from the list
             const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
 
@@ -1368,13 +1371,27 @@ restoreSelectiveExpression(Manifest *manifest)
                 if (strLstExists(systemDbIdList, includeDb))
                     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
 
+                // Error if the db id is in the exclude list
+                if (strLstExists(excludeDbIdList, includeDb))
+                    THROW_FMT(DbInvalidError, "database to include '%s' is in the exclude list", strZ(includeDb));
+
                 // Remove from list of DBs to zero
                 strLstRemove(dbList, includeDb);
             }
 
-            // Exclude the system databases from the list
-            strLstSort(systemDbIdList, sortOrderAsc);
-            dbList = strLstMergeAnti(dbList, systemDbIdList);
+            // Only exclude specified db in case no db to include has been provided
+            if (strLstEmpty(includeList))
+            {
+                dbList = strLstDup(excludeDbIdList);
+            }
+            // Else, remove the system databases from list of DBs to zero unless they are excluded explicitly
+            else
+            {
+                strLstSort(systemDbIdList, sortOrderAsc);
+                strLstSort(excludeDbIdList, sortOrderAsc);
+                systemDbIdList = strLstMergeAnti(systemDbIdList, excludeDbIdList);
+                dbList = strLstMergeAnti(dbList, systemDbIdList);
+            }
 
             // Build regular expression to identify files that will be zeroed
             String *expression = NULL;
@@ -1391,7 +1408,7 @@ restoreSelectiveExpression(Manifest *manifest)
 
                     // Create expression string or append |
                     if (expression == NULL)
-                        expression = strNew("");
+                        expression = strNew();
                     else
                         strCatZ(expression, "|");
 
@@ -1475,9 +1492,7 @@ restoreRecoveryOption(unsigned int pgVersion)
         }
 
         // If archive-mode is not preserve
-        const String *archiveMode = cfgOptionStr(cfgOptArchiveMode);
-
-        if (!strEq(archiveMode, ARCHIVE_MODE_PRESERVE_STR))
+        if (cfgOptionStrId(cfgOptArchiveMode) != CFGOPTVAL_ARCHIVE_MODE_PRESERVE)
         {
             if (pgVersion < PG_VERSION_12)
             {
@@ -1488,10 +1503,10 @@ restoreRecoveryOption(unsigned int pgVersion)
             }
 
             // The only other valid option is off
-            ASSERT(strEq(archiveMode, ARCHIVE_MODE_OFF_STR));
+            ASSERT(cfgOptionStrId(cfgOptArchiveMode) == CFGOPTVAL_ARCHIVE_MODE_OFF);
 
             // If archive-mode=off then set archive_mode=off
-            kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTR(ARCHIVE_MODE_OFF_STR));
+            kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTRDEF(CFGOPTVAL_ARCHIVE_MODE_OFF_Z));
         }
 
         // Write restore_command
@@ -1502,38 +1517,38 @@ restoreRecoveryOption(unsigned int pgVersion)
             // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 
-            kvPut(optionReplace, VARSTR(CFGOPT_EXEC_ID_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_INTERVAL_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_SUBPROCESS_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_TIMESTAMP_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_MAX_STR), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_EXEC_ID), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_JOB_RETRY), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_JOB_RETRY_INTERVAL), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_SUBPROCESS), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_TIMESTAMP), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_PROCESS_MAX), NULL);
 
             kvPut(
                 result, VARSTRZ(RESTORE_COMMAND),
                 VARSTR(
                     strNewFmt(
                         "%s %s %%f \"%%p\"", strZ(cfgExe()),
-                        strZ(strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleDefault, optionReplace, true, true), " ")))));
+                        strZ(strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleMain, optionReplace, true, true), " ")))));
         }
 
         // If recovery type is immediate
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_IMMEDIATE_STR))
+        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_IMMEDIATE)
         {
-            kvPut(result, VARSTRZ(RECOVERY_TARGET), VARSTRZ(RECOVERY_TYPE_IMMEDIATE));
+            kvPut(result, VARSTRZ(RECOVERY_TARGET), VARSTRZ(CFGOPTVAL_TYPE_IMMEDIATE_Z));
         }
         // Else recovery type is standby
-        else if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
+        else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_STANDBY)
         {
             // Write standby_mode for PostgreSQL versions that support it
             if (pgVersion < PG_VERSION_RECOVERY_GUC)
                 kvPut(result, VARSTR(STANDBY_MODE_STR), VARSTRDEF("on"));
         }
         // Else recovery type is not default so write target options
-        else if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_DEFAULT_STR))
+        else if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_DEFAULT)
         {
             // Write the recovery target
             kvPut(
@@ -1548,24 +1563,24 @@ restoreRecoveryOption(unsigned int pgVersion)
         // Write pause_at_recovery_target/recovery_target_action
         if (cfgOptionTest(cfgOptTargetAction))
         {
-            const String *targetAction = cfgOptionStr(cfgOptTargetAction);
+            StringId targetAction = cfgOptionStrId(cfgOptTargetAction);
 
-            if (!strEq(targetAction, RECOVERY_TARGET_ACTION_PAUSE_STR))
+            if (targetAction != CFGOPTVAL_TARGET_ACTION_PAUSE)
             {
                 // Write recovery_target on supported PostgreSQL versions
                 if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
                 {
-                    kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(targetAction));
+                    kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
                 }
                 // Write pause_at_recovery_target on supported PostgreSQL versions
                 else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
                 {
                     // Shutdown action is not supported with pause_at_recovery_target setting
-                    if (strEq(targetAction, RECOVERY_TARGET_ACTION_SHUTDOWN_STR))
+                    if (targetAction == CFGOPTVAL_TARGET_ACTION_SHUTDOWN)
                     {
                         THROW_FMT(
                             OptionInvalidError,
-                            CFGOPT_TARGET_ACTION "=" RECOVERY_TARGET_ACTION_SHUTDOWN " is only available in PostgreSQL >= %s",
+                            CFGOPT_TARGET_ACTION "=" CFGOPTVAL_TARGET_ACTION_SHUTDOWN_Z " is only available in PostgreSQL >= %s",
                             strZ(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
                     }
 
@@ -1641,7 +1656,7 @@ restoreRecoveryWriteConf(const Manifest *manifest, unsigned int pgVersion, const
     FUNCTION_LOG_END();
 
     // Only write recovery.conf if recovery type != none
-    if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+    if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
     {
         LOG_INFO_FMT("write %s", strZ(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
 
@@ -1671,7 +1686,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *content = strNew("");
+        String *content = strNew();
 
         // Load postgresql.auto.conf so we can preserve the existing contents
         Buffer *autoConf = storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR, .ignoreMissing = true));
@@ -1713,7 +1728,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             }
 
             // If settings will be appended then format the file so a blank line will be between old and new settings
-            if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+            if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
             {
                 strTrim(content);
                 strCatZ(content, "\n\n");
@@ -1721,7 +1736,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         }
 
         // If recovery was requested then write the recovery options
-        if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+        if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
         {
             // If the user specified standby_mode as a recovery option then error.  It's tempting to just set type=standby in this
             // case but since config parsing has already happened the target options could be in an invalid state.
@@ -1743,7 +1758,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                         THROW_FMT(
                             OptionInvalidError,
                             "'" STANDBY_MODE "' setting is not valid for " PG_NAME " >= %s\n"
-                            "HINT: use --" CFGOPT_TYPE "=" RECOVERY_TYPE_STANDBY " instead of --" CFGOPT_RECOVERY_OPTION "="
+                            "HINT: use --" CFGOPT_TYPE "=" CFGOPTVAL_TYPE_STANDBY_Z " instead of --" CFGOPT_RECOVERY_OPTION "="
                                 STANDBY_MODE "=on.",
                             strZ(pgVersionToStr(PG_VERSION_RECOVERY_GUC)));
                     }
@@ -1768,7 +1783,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             BUFSTR(content));
 
         // The standby.signal file is required for standby mode
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
+        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_STANDBY)
         {
             storagePutP(
                 storageNewWriteP(
@@ -1804,7 +1819,7 @@ restoreRecoveryWrite(const Manifest *manifest)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If recovery type is preserve then leave recovery file as it is
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
         {
             // Determine which file recovery setttings will be written to
             const String *recoveryFile = pgVersion >= PG_VERSION_RECOVERY_GUC ?
@@ -1813,7 +1828,7 @@ restoreRecoveryWrite(const Manifest *manifest)
             if (!storageExistsP(storagePg(), recoveryFile))
             {
                 LOG_WARN_FMT(
-                    "recovery type is " RECOVERY_TYPE_PRESERVE " but recovery file does not exist at '%s'",
+                    "recovery type is " CFGOPTVAL_TYPE_PRESERVE_Z " but recovery file does not exist at '%s'",
                     strZ(storagePathP(storagePg(), recoveryFile)));
             }
         }
@@ -2002,7 +2017,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             bool zeroed = restoreFileZeroed(file->name, zeroExp);
             bool copy = varBool(protocolParallelJobResult(job));
 
-            String *log = strNew("restore");
+            String *log = strNewZ("restore");
 
             // Note if file was zeroed (i.e. selective restore)
             if (zeroed)
@@ -2125,7 +2140,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
                 // Create restore job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARUINT(jobData->repoIdx));
                 protocolCommandParamAdd(
@@ -2181,6 +2196,11 @@ cmdRestore(void)
         // Validate restore path
         restorePathValidate();
 
+        // Remove stanza archive spool path so existing files do not interfere with the new cluster. For instance, old archive-push
+        // acknowledgements could cause a new cluster to skip archiving. This should not happen if a new timeline is selected but
+        // better to be safe. Missing stanza spool paths are ignored.
+        storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_STR, .recurse = true);
+
         // Get the backup set
         RestoreBackupData backupData = restoreBackupSet();
 
@@ -2191,6 +2211,9 @@ cmdRestore(void)
             storageRepoIdx(backupData.repoIdx),
             strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
             backupData.backupCipherPass);
+
+        // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
+        protocolFree();
 
         // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);

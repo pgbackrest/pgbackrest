@@ -341,7 +341,7 @@ tlsSessionRole(const THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoSessionInterface tlsSessionInterface =
 {
-    .type = &IO_CLIENT_TLS_TYPE_STR,
+    .type = IO_CLIENT_TLS_TYPE,
     .close = tlsSessionClose,
     .ioRead = tlsSessionIoRead,
     .ioWrite = tlsSessionIoWrite,

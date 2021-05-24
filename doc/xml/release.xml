@@ -13,8 +13,245 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.34dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1357"/>
+                        <github-pull-request id="1371"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="floris.van.nee"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="floris.van.nee"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issues with leftover spool files from a prior <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1368"/>
+                        <github-pull-request id="1374"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="francisco.miguel.biete"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Free no longer needed remotes so they do not timeout during <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1375"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <cmd>help</cmd> when a valid option is invalid for the specified command.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <commit subject="Use existing variable for GCS test server port."/>
+                        <commit subject="Refactor GCS token response parsing into a separate function."/>
+                        <commit subject="Add automatic GCS authentication for GCE instances.">
+                            <github-pull-request id="1395"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="jan.wieck"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="daniel.farina"/>
+                        </release-item-contributor-list>
+
+                        <p>Add automatic <proper>GCS</proper> authentication for <proper>GCE</proper> instances.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="986"/>
+                        <github-pull-request id="1337"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>db-exclude</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-issue id="1357"/>
+                        <github-pull-request id="1386"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove stanza archive spool path on <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1373"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Do not write files atomically or sync paths during <cmd>backup</cmd> copy.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Add config/parse test where the option/value are not in the same arg."/>
+                        <commit subject="Add config/parse tests for partial options."/>
+                        <commit subject="Add config/parse tests for options and option args with spaces."/>
+                        <commit subject="Add config/parse tests for config/env partial options."/>
+                        <commit subject="Replace getopt_long() with custom implementation.">
+                            <github-pull-request id="1396"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="jan.wieck"/>
+                        </release-item-contributor-list>
+
+                        <p>Replace <code>getopt_long()</code> with custom implementation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1377"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="cynthia.shang"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add help for all internal options valid for default roles.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Add StringId type.">
+                            <github-pull-request id="1358"/>
+                        </commit>
+                        <commit subject="Update storage module to use StringIds.">
+                            <github-pull-request id="1379"/>
+                        </commit>
+                        <commit subject="Update CipherType/CipherMode to StringId.">
+                            <github-pull-request id="1384"/>
+                        </commit>
+                        <commit subject="Convert ProtocolParallelJobState enum to StringId."/>
+                        <commit subject="Convert ProtocolStorageType enum to StringId."/>
+                        <commit subject="Convert ArchiveMode enum to StringId."/>
+                        <commit subject="Convert ArchivePushFileIoType enum to StringId."/>
+                        <commit subject="Update IoClient/IoSession to use StringIds."/>
+                        <commit subject="Convert InfoPgType enum to StringId."/>
+                        <commit subject="Convert BackupType enum to StringId.">
+                            <github-pull-request id="1385"/>
+                        </commit>
+                        <commit subject="Convert option values in commands to StringId.">
+                            <github-pull-request id="1388"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>StringId</code> type.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Factor local process exec out of protocolLocalGet()."/>
+                        <commit subject="Add shim feature for unit tests."/>
+                        <commit subject="Add local process shim."/>
+                        <commit subject="Add log shim."/>
+
+                        <p>Add local processs shim.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1381"/>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>cfgOptionDisplay()</code>/<code>cfgOptionIdxDisplay()</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Revert to checking catalog version for all <postgres/> versions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1410"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Rename default command role to main.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Simplify defaults for <br-option>--force</br-option> option.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1400"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Update contributing documentation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1405"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Consolidate <proper>RHEL</proper>/<proper>CentOS</proper> user guide into a single document.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1365"/>
 
@@ -139,6 +376,8 @@
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="daniel.farina"/>
                         </release-item-contributor-list>
 
                         <p>GCS support for repository storage.</p>
@@ -9438,6 +9677,11 @@
             <contributor-id type="github">farrellit</contributor-id>
         </contributor>
 
+        <contributor id="daniel.farina">
+            <contributor-name-display>Daniel Farina</contributor-name-display>
+            <contributor-id type="github">fdr</contributor-id>
+        </contributor>
+
         <contributor id="daniel.westermann">
             <contributor-name-display>Daniel Westermann</contributor-name-display>
             <contributor-id type="github">danielwestermann</contributor-id>
@@ -9510,6 +9754,11 @@
         <contributor id="floris.van.nee">
             <contributor-name-display>Floris van Nee</contributor-name-display>
             <contributor-id type="github">fvannee</contributor-id>
+        </contributor>
+
+        <contributor id="francisco.miguel.biete">
+            <contributor-name-display>Francisco Miguel Biete</contributor-name-display>
+            <contributor-id type="github">fmbiete</contributor-id>
         </contributor>
 
         <contributor id="vidhya.gurumoorthi">

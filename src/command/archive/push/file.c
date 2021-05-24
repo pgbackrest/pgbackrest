@@ -24,9 +24,9 @@ caller knows to stop writing on the affected repo.
 ***********************************************************************************************************************************/
 typedef enum
 {
-    archivePushFileIoTypeOpen,
-    archivePushFileIoTypeWrite,
-    archivePushFileIoTypeClose,
+    archivePushFileIoTypeOpen = STRID5("open", 0x7160f0),
+    archivePushFileIoTypeWrite = STRID5("write", 0x5a26570),
+    archivePushFileIoTypeClose = STRID5("close", 0x59bd830),
 } ArchivePushFileIoType;
 
 // Helper to add errors to the list
@@ -50,7 +50,7 @@ static bool
 archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buffer, unsigned int repoIdx, StringList *errorList)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(STRING_ID, type);
         FUNCTION_TEST_PARAM(IO_WRITE, write);
         FUNCTION_TEST_PARAM(BUFFER, buffer);
         FUNCTION_TEST_PARAM(UINT, repoIdx);

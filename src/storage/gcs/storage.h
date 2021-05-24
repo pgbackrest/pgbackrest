@@ -9,20 +9,17 @@ GCS Storage
 /***********************************************************************************************************************************
 Storage type
 ***********************************************************************************************************************************/
-#define STORAGE_GCS_TYPE                                            "gcs"
-    STRING_DECLARE(STORAGE_GCS_TYPE_STR);
+#define STORAGE_GCS_TYPE                                            STRID6("gcs", 0x130c71)
 
 /***********************************************************************************************************************************
 Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageGcsKeyTypeService,
-    storageGcsKeyTypeToken,
+    storageGcsKeyTypeAuto = STRID5("auto", 0x7d2a10),
+    storageGcsKeyTypeService = STRID5("service", 0x1469b48b30),
+    storageGcsKeyTypeToken = STRID5("token", 0xe2adf40),
 } StorageGcsKeyType;
-
-#define STORAGE_GCS_KEY_TYPE_SERVICE                                "service"
-#define STORAGE_GCS_KEY_TYPE_TOKEN                                  "token"
 
 /***********************************************************************************************************************************
 Defaults

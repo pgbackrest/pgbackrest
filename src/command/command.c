@@ -43,7 +43,7 @@ cmdOption(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            cmdOptionStr = strNew("");
+            cmdOptionStr = strNew();
 
             MEM_CONTEXT_TEMP_BEGIN()
             {
@@ -126,17 +126,11 @@ cmdOption(void)
                                 {
                                     valueList = strLstNewVarLst(cfgOptionIdxLst(optionId, optionIdx));
                                 }
-                                // Generate time value
-                                else if (cfgParseOptionType(optionId) == cfgOptTypeTime)
-                                {
-                                    valueList = strLstNew();
-                                    strLstAdd(valueList, strNewDbl((double)cfgOptionIdxInt64(optionId, optionIdx) / MSEC_PER_SEC));
-                                }
                                 // Else only one value
                                 else
                                 {
                                     valueList = strLstNew();
-                                    strLstAdd(valueList, varStrForce(cfgOptionIdx(optionId, optionIdx)));
+                                    strLstAdd(valueList, cfgOptionIdxDisplay(optionId, optionIdx));
                                 }
 
                                 // Output options and values

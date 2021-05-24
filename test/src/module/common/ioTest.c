@@ -56,7 +56,7 @@ static void
 testIoWrite(void *driver, const Buffer *buffer)
 {
     ASSERT(driver == (void *)999);
-    ASSERT(strEq(strNewBuf(buffer), strNew("ABC")));
+    ASSERT(strEq(strNewBuf(buffer), STRDEF("ABC")));
 }
 
 static bool testIoWriteCloseCalled = false;
@@ -118,7 +118,7 @@ ioTestFilterSizeNew(const char *type)
             .memContext = MEM_CONTEXT_NEW(),
         };
 
-        this = ioFilterNewP(strNew(type), driver, NULL, .in = ioTestFilterSizeProcess, .result = ioTestFilterSizeResult);
+        this = ioFilterNewP(strNewZ(type), driver, NULL, .in = ioTestFilterSizeProcess, .result = ioTestFilterSizeResult);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -233,7 +233,7 @@ ioTestFilterMultiplyNew(const char *type, unsigned int multiplier, unsigned int 
         varLstAdd(paramList, varNewUInt(flushTotal));
 
         this = ioFilterNewP(
-            strNew(type), driver, paramList, .done = ioTestFilterMultiplyDone, .inOut = ioTestFilterMultiplyProcess,
+            strNewZ(type), driver, paramList, .done = ioTestFilterMultiplyDone, .inOut = ioTestFilterMultiplyProcess,
             .inputSame = ioTestFilterMultiplyInputSame);
     }
     MEM_CONTEXT_NEW_END();
@@ -360,7 +360,7 @@ testRun(void)
             varUInt64(varLstGet(varVarLst(ioFilterGroupResult(ioReadFilterGroup(bufferRead), ioFilterType(sizeFilter))), 0)), 3,
             "    check filter result");
         TEST_RESULT_PTR(
-            ioFilterGroupResult(ioReadFilterGroup(bufferRead), strNew("double")), NULL, "    check filter result is NULL");
+            ioFilterGroupResult(ioReadFilterGroup(bufferRead), STRDEF("double")), NULL, "    check filter result is NULL");
         TEST_RESULT_UINT(
             varUInt64(varLstGet(varVarLst(ioFilterGroupResult(ioReadFilterGroup(bufferRead), ioFilterType(sizeFilter))), 1)), 9,
             "    check filter result");
@@ -376,9 +376,9 @@ testRun(void)
         IoFilterGroup *filterGroup = ioFilterGroupNew();
         filterGroup->pub.opened = true;
         TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, NULL), "null result");
-        TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, jsonToVar(strNew("{\"test\":777}"))), "add result");
+        TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, jsonToVar(STRDEF("{\"test\":777}"))), "add result");
         filterGroup->pub.closed = true;
-        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, strNew("test"))), 777, "    check filter result");
+        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, STRDEF("test"))), 777, "    check filter result");
 
         // Read a zero-size buffer to ensure filters are still processed even when there is no input.  Some filters (e.g. encryption
         // and compression) will produce output even if there is no input.
@@ -529,7 +529,7 @@ testRun(void)
         TEST_RESULT_PTR(ioWriteFilterGroup(bufferWrite), filterGroup, "    check filter group");
         TEST_RESULT_UINT(
             varUInt64(ioFilterGroupResult(filterGroup, ioFilterType(sizeFilter))), 9, "    check filter result");
-        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, strNew("size2"))), 22, "    check filter result");
+        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, STRDEF("size2"))), 22, "    check filter result");
     }
 
     // *****************************************************************************************************************************
@@ -543,13 +543,13 @@ testRun(void)
             {
                 IoWrite *write = NULL;
 
-                TEST_ASSIGN(write, ioFdWriteNew(strNew("write test"), HARNESS_FORK_CHILD_WRITE(), 1000), "move write");
+                TEST_ASSIGN(write, ioFdWriteNew(STRDEF("write test"), HARNESS_FORK_CHILD_WRITE(), 1000), "move write");
                 ioWriteOpen(write);
                 TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write is ready");
                 TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)write->driver)->fd, "check write fd");
 
                 // Write a line to be read
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("test string 1")), "write test string");
+                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("test string 1")), "write test string");
                 ioWriteFlush(write);
                 ioWriteFlush(write);
 
@@ -568,7 +568,7 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(strNew("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000);
+                IoRead *read = ioFdReadNew(STRDEF("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000);
 
                 ioReadOpen(read);
                 TEST_RESULT_INT(ioReadFd(read), ((IoFdRead *)ioReadDriver(read))->fd, "check fd");
@@ -608,13 +608,12 @@ testRun(void)
         HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(ioFdWriteOneStr(999999, strNew("test")), FileWriteError, "unable to write to fd: [9] Bad file descriptor");
+        TEST_ERROR(ioFdWriteOneStr(999999, STRDEF("test")), FileWriteError, "unable to write to fd: [9] Bad file descriptor");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        String *fileName = strNewFmt("%s/test.txt", testPath());
-        int fd = open(strZ(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
+        int fd = open(TEST_PATH "/test.txt", O_CREAT | O_TRUNC | O_WRONLY, 0700);
 
-        TEST_RESULT_VOID(ioFdWriteOneStr(fd, strNew("test1\ntest2")), "write string to file");
+        TEST_RESULT_VOID(ioFdWriteOneStr(fd, STRDEF("test1\ntest2")), "write string to file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fdReadyRetry() edge conditions");

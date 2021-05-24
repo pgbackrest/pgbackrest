@@ -28,7 +28,7 @@ String *hrnPackToStr(PackRead *read)
         FUNCTION_HARNESS_PARAM(PACK_READ, read);
     FUNCTION_HARNESS_END();
 
-    String *result = strNew("");
+    String *result = strNew();
     bool first = true;
 
     while (pckReadNext(read))

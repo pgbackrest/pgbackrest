@@ -38,7 +38,7 @@ ioFilterType(const IoFilter *const this)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-ioFilterFree(IoFilter *this)
+ioFilterFree(IoFilter *const this)
 {
     objFree(this);
 }

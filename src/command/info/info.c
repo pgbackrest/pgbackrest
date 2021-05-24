@@ -29,8 +29,6 @@ Info Command
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_STATIC(CFGOPTVAL_INFO_OUTPUT_TEXT_STR,                       "text");
-
 // Naming convention: <sectionname>_KEY_<keyname>_VAR. If the key exists in multiple sections, then <sectionname>_ is omitted.
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
@@ -106,7 +104,7 @@ Data types and structures
 typedef struct InfoRepoData
 {
     unsigned int key;                                               // User-defined repo key
-    CipherType cipher;                                              // Encryption type (0 = none)
+    CipherType cipher;                                              // Encryption type
     const String *cipherPass;                                       // Passphrase if the repo is encrypted (else NULL)
     int stanzaStatus;                                               // Status code of the the stanza on this repo
     unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
@@ -188,47 +186,47 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
 
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR);
 
-    kvAdd(statusKv, STATUS_KEY_CODE_VAR, VARINT(code));
+    kvPut(statusKv, STATUS_KEY_CODE_VAR, VARINT(code));
 
     switch (code)
     {
         case INFO_STANZA_STATUS_CODE_OK:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OK_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OK_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_NO_BACKUP:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_MIXED:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_MESSAGE_MIXED_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_MESSAGE_MIXED_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_PG_MISMATCH:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_BACKUP_MISSING:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_OTHER:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OTHER_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OTHER_STR));
             break;
     }
 
     // Construct a specific lock part
     KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
     KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
-    kvAdd(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(backupLockHeld));
+    kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(backupLockHeld));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -250,32 +248,32 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo, InfoRepoData *repoData
 
     KeyValue *statusKv = kvPutKv(varKv(repoStanzaInfo), STANZA_KEY_STATUS_VAR);
 
-    kvAdd(statusKv, STATUS_KEY_CODE_VAR, VARINT(code));
+    kvPut(statusKv, STATUS_KEY_CODE_VAR, VARINT(code));
 
     switch (code)
     {
         case INFO_STANZA_STATUS_CODE_OK:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OK_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OK_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_NO_BACKUP:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_BACKUP_MISSING:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_OTHER:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(repoData->error));
+            kvPut(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(repoData->error));
             break;
     }
 
@@ -363,8 +361,8 @@ archiveDbList(
         // Add empty database section to archiveInfo and then fill in database id from the backup.info
         KeyValue *databaseInfo = kvPutKv(varKv(archiveInfo), KEY_DATABASE_VAR);
 
-        kvAdd(databaseInfo, DB_KEY_ID_VAR, VARUINT(pgData->id));
-        kvAdd(databaseInfo, KEY_REPO_KEY_VAR, VARUINT(repoKey));
+        kvPut(databaseInfo, DB_KEY_ID_VAR, VARUINT(pgData->id));
+        kvPut(databaseInfo, KEY_REPO_KEY_VAR, VARUINT(repoKey));
 
         kvPut(varKv(archiveInfo), DB_KEY_ID_VAR, VARSTR(archiveId));
         kvPut(varKv(archiveInfo), ARCHIVE_KEY_MIN_VAR, (archiveStart != NULL ? VARSTR(archiveStart) : (Variant *)NULL));
@@ -398,7 +396,7 @@ backupListAdd(
 
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
-    kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(backupData->backupType));
+    kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(strIdToStr(backupData->backupType)));
     kvPut(
         varKv(backupInfo), BACKUP_KEY_PRIOR_VAR,
         (backupData->backupPrior != NULL ? VARSTR(backupData->backupPrior) : NULL));
@@ -409,43 +407,43 @@ backupListAdd(
     // archive section
     KeyValue *archiveInfo = kvPutKv(varKv(backupInfo), KEY_ARCHIVE_VAR);
 
-    kvAdd(
+    kvPut(
         archiveInfo, KEY_START_VAR,
         (backupData->backupArchiveStart != NULL ? VARSTR(backupData->backupArchiveStart) : NULL));
-    kvAdd(
+    kvPut(
         archiveInfo, KEY_STOP_VAR,
         (backupData->backupArchiveStop != NULL ? VARSTR(backupData->backupArchiveStop) : NULL));
 
     // backrest section
     KeyValue *backrestInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_BACKREST_VAR);
 
-    kvAdd(backrestInfo, BACKREST_KEY_FORMAT_VAR, VARUINT(backupData->backrestFormat));
-    kvAdd(backrestInfo, BACKREST_KEY_VERSION_VAR, VARSTR(backupData->backrestVersion));
+    kvPut(backrestInfo, BACKREST_KEY_FORMAT_VAR, VARUINT(backupData->backrestFormat));
+    kvPut(backrestInfo, BACKREST_KEY_VERSION_VAR, VARSTR(backupData->backrestVersion));
 
     // database section
     KeyValue *dbInfo = kvPutKv(varKv(backupInfo), KEY_DATABASE_VAR);
 
-    kvAdd(dbInfo, DB_KEY_ID_VAR, VARUINT(backupData->backupPgId));
-    kvAdd(dbInfo, KEY_REPO_KEY_VAR, VARUINT(repoData->key));
+    kvPut(dbInfo, DB_KEY_ID_VAR, VARUINT(backupData->backupPgId));
+    kvPut(dbInfo, KEY_REPO_KEY_VAR, VARUINT(repoData->key));
 
     // info section
     KeyValue *infoInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_INFO_VAR);
 
-    kvAdd(infoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoSize));
-    kvAdd(infoInfo, KEY_DELTA_VAR, VARUINT64(backupData->backupInfoSizeDelta));
+    kvPut(infoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoSize));
+    kvPut(infoInfo, KEY_DELTA_VAR, VARUINT64(backupData->backupInfoSizeDelta));
 
     // info:repository section
     KeyValue *repoInfo = kvPutKv(infoInfo, INFO_KEY_REPOSITORY_VAR);
 
-    kvAdd(repoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoRepoSize));
-    kvAdd(repoInfo, KEY_DELTA_VAR, VARUINT64(backupData->backupInfoRepoSizeDelta));
+    kvPut(repoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoRepoSize));
+    kvPut(repoInfo, KEY_DELTA_VAR, VARUINT64(backupData->backupInfoRepoSizeDelta));
 
     // timestamp section
     KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
 
     // time_t is generally a signed int so cast it to uint64 since it can never be negative (before 1970) in our system
-    kvAdd(timeInfo, KEY_START_VAR, VARUINT64((uint64_t)backupData->backupTimestampStart));
-    kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64((uint64_t)backupData->backupTimestampStop));
+    kvPut(timeInfo, KEY_START_VAR, VARUINT64((uint64_t)backupData->backupTimestampStart));
+    kvPut(timeInfo, KEY_STOP_VAR, VARUINT64((uint64_t)backupData->backupTimestampStop));
 
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
     if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
@@ -640,7 +638,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         VariantList *repoSection = varLstNew();
 
         int stanzaStatusCode = -1;
-        unsigned int stanzaCipherType = 0;
+        uint64_t stanzaCipherType = cipherTypeNone;
 
         // Set the stanza name and initialize the overall stanza variables
         kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
@@ -652,7 +650,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 
             Variant *repoInfo = varNewKv(kvNew());
             kvPut(varKv(repoInfo), REPO_KEY_KEY_VAR, VARUINT(repoData->key));
-            kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(repoData->cipher)));
+            kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(repoData->cipher)));
 
             // If the stanza on this repo has the default status of ok but the backupInfo was not read, then the stanza exists on
             // other repos but not this one
@@ -745,7 +743,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 
         // Set the overall cipher type
         if (stanzaCipherType != INFO_STANZA_STATUS_CODE_MIXED)
-            kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(stanzaCipherType)));
+            kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(stanzaCipherType)));
         else
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTRDEF(INFO_STANZA_MIXED));
 
@@ -1052,7 +1050,7 @@ formatTextDb(
         }
     }
 
-    String *resultCurrent = strNew("\n    db (current)");
+    String *resultCurrent = strNewZ("\n    db (current)");
     bool displayCurrent = false;
 
     for (unsigned int dbGrpIdx = backupDbGrpIdxMin; dbGrpIdx < backupDbGrpIdxMax; dbGrpIdx++)
@@ -1207,8 +1205,8 @@ infoRender(void)
 
         // Since the --set option depends on the --stanza option, the parser will error before this if the backup label is
         // specified but a stanza is not
-        if (backupLabel != NULL && !strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
-            THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
+        if (backupLabel != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_TEXT)
+            THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for " CFGOPTVAL_OUTPUT_TEXT_Z " output");
 
         // Initialize the repo index
         unsigned int repoIdxMin = 0;
@@ -1232,7 +1230,7 @@ infoRender(void)
             repoErrorList[repoIdx] = (InfoRepoData)
             {
                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
-                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx),
                 .error = NULL,
             };
@@ -1304,7 +1302,7 @@ infoRender(void)
                             stanzaRepo.repoList[repoListIdx] = (InfoRepoData)
                             {
                                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
-                                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
+                                .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoListIdx),
                                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
                                 .error = NULL,
                             };
@@ -1329,7 +1327,7 @@ infoRender(void)
         }
 
         VariantList *infoList = varLstNew();
-        String *resultStr = strNew("");
+        String *resultStr = strNew();
 
         // Record any repository-level errors with each stanza -- if there are no stanzas and one was not requested, then create an
         // "[invalid]" one for reporting
@@ -1387,7 +1385,7 @@ infoRender(void)
             infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxMin, repoIdxMax);
 
         // Format text output
-        if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
+        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
         {
             // Process any stanza directories
             if  (!varLstEmpty(infoList))
@@ -1515,11 +1513,14 @@ infoRender(void)
                 }
             }
             else
-                resultStr = strNew("No stanzas exist in the repository.\n");
+                resultStr = strNewZ("No stanzas exist in the repository.\n");
         }
         // Format json output
         else
+        {
+            ASSERT(cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON);
             resultStr = jsonFromVar(varNewVarLst(infoList));
+        }
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

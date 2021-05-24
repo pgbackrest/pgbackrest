@@ -36,8 +36,8 @@ jobs:
           # All unit tests (with coverage) on the newest gcc available
           - param: test --vm=f32 --param=c-only --param=tz=America/New_York
 
-          # RHEL/CentOS 7 documentation
-          - param: doc --vm=co7
+          # RHEL/CentOS 8 documentation
+          - param: doc --vm=co8
 
           # All integration tests
           - param: test --vm=co7 --param=module=mock --param=module=real

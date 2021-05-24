@@ -13,11 +13,6 @@ Archive Get Protocol Handler
 #include "storage/helper.h"
 #include "storage/write.intern.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_GET_FILE_STR,                PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
-
 /**********************************************************************************************************************************/
 void
 archiveGetFileProtocol(const VariantList *paramList, ProtocolServer *server)
@@ -53,7 +48,7 @@ archiveGetFileProtocol(const VariantList *paramList, ProtocolServer *server)
                     .file = varStr(varLstGet(paramList, paramFixed + (actualIdx * paramActual))),
                     .repoIdx = varUIntForce(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 1)),
                     .archiveId = varStr(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 2)),
-                    .cipherType = (CipherType)varUIntForce(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 3)),
+                    .cipherType = varUInt64(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 3)),
                     .cipherPassArchive = varStr(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 4)),
                 });
         }

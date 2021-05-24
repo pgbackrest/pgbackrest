@@ -7,6 +7,22 @@ Test Strings
 STRING_STATIC(TEST_STRING, "a very interesting string!");
 
 /***********************************************************************************************************************************
+Test enum and function to ensure 64-bit enums work properly
+***********************************************************************************************************************************/
+typedef enum
+{
+    testStringIdEnumAes256Cbc = STRID5("aes-256-cbc", 0xc43dfbbcdcca10),
+    testStringIdEnumRemote = STRID6("remote", 0x1543cd1521),
+    testStringIdEnumTest = STRID5("test", 0xa4cb40),
+} TestStringIdEnum;
+
+TestStringIdEnum
+testStringIdEnumFunc(TestStringIdEnum testEnum)
+{
+    return testEnum;
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -19,13 +35,13 @@ testRun(void)
     {
         // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
         // knowing about it
-        TEST_RESULT_UINT(sizeof(StringConst), TEST_64BIT() ? 16 : 12, "check StringConst struct size");
+        TEST_RESULT_UINT(sizeof(StringPub), TEST_64BIT() ? 16 : 12, "check StringConst struct size");
 
         // Test the size macro
         TEST_RESULT_VOID(CHECK_SIZE(555), "valid size");
         TEST_ERROR(CHECK_SIZE(STRING_SIZE_MAX + 1), AssertError, "string size must be <= 1073741824 bytes");
 
-        String *string = strNew("static string");
+        String *string = strNewZ("static string");
         TEST_RESULT_STR_Z(string, "static string", "new with static string");
         TEST_RESULT_UINT(strSize(string), 13, "check size");
         TEST_RESULT_BOOL(strEmpty(string), false, "is not empty");
@@ -60,9 +76,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("empty string is allocated extra space");
 
-        TEST_ASSIGN(string, strNew(""), "new empty string");
-        TEST_RESULT_UINT(string->size, 0, "    check size");
-        TEST_RESULT_UINT(string->extra, 64, "    check extra");
+        TEST_ASSIGN(string, strNew(), "new empty string");
+        TEST_RESULT_UINT(string->pub.size, 0, "    check size");
+        TEST_RESULT_UINT(string->pub.extra, 64, "    check extra");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strNewEncode()");
@@ -106,23 +122,23 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strCat*()"))
     {
-        String *string = strNew("XXXX");
-        String *string2 = strNew("ZZZZ");
+        String *string = strNewZ("XXXX");
+        String *string2 = strNewZ("ZZZZ");
 
         TEST_RESULT_STR_Z(strCat(string, STRDEF("YYYY")), "XXXXYYYY", "cat string");
-        TEST_RESULT_UINT(string->extra, 60, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatFmt(string, "%05d", 777), "XXXXYYYY00777", "cat formatted string");
-        TEST_RESULT_UINT(string->extra, 55, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 55, "check extra");
         TEST_RESULT_STR_Z(strCatChr(string, '!'), "XXXXYYYY00777!", "cat chr");
-        TEST_RESULT_UINT(string->extra, 54, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 54, "check extra");
         TEST_RESULT_STR_Z(
             strCatZN(string, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*", 55),
             "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
-        TEST_RESULT_UINT(string->extra, 34, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 34, "check extra");
         TEST_RESULT_STR_Z(
             strCatEncode(string, encodeBase64, BUFSTRDEF("zzzzz")),
             "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=", "cat encode");
-        TEST_RESULT_UINT(string->extra, 26, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 26, "check extra");
 
         TEST_RESULT_STR_Z(string2, "ZZZZ", "check unaltered string");
     }
@@ -185,23 +201,23 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strFirstUpper(), strFirstLower(), strUpper(), strLower()"))
     {
-        TEST_RESULT_STR_Z(strFirstUpper(strNew("")), "", "empty first upper");
-        TEST_RESULT_STR_Z(strFirstUpper(strNew("aaa")), "Aaa", "first upper");
-        TEST_RESULT_STR_Z(strFirstUpper(strNew("Aaa")), "Aaa", "first already upper");
+        TEST_RESULT_STR_Z(strFirstUpper(strNewZ("")), "", "empty first upper");
+        TEST_RESULT_STR_Z(strFirstUpper(strNewZ("aaa")), "Aaa", "first upper");
+        TEST_RESULT_STR_Z(strFirstUpper(strNewZ("Aaa")), "Aaa", "first already upper");
 
-        TEST_RESULT_STR_Z(strFirstLower(strNew("")), "", "empty first lower");
-        TEST_RESULT_STR_Z(strFirstLower(strNew("AAA")), "aAA", "first lower");
-        TEST_RESULT_STR_Z(strFirstLower(strNew("aAA")), "aAA", "first already lower");
+        TEST_RESULT_STR_Z(strFirstLower(strNew()), "", "empty first lower");
+        TEST_RESULT_STR_Z(strFirstLower(strNewZ("AAA")), "aAA", "first lower");
+        TEST_RESULT_STR_Z(strFirstLower(strNewZ("aAA")), "aAA", "first already lower");
 
-        TEST_RESULT_STR_Z(strLower(strNew("K123aBc")), "k123abc", "all lower");
-        TEST_RESULT_STR_Z(strLower(strNew("k123abc")), "k123abc", "already lower");
-        TEST_RESULT_STR_Z(strLower(strNew("C")), "c", "char lower");
-        TEST_RESULT_STR_Z(strLower(strNew("")), "", "empty lower");
+        TEST_RESULT_STR_Z(strLower(strNewZ("K123aBc")), "k123abc", "all lower");
+        TEST_RESULT_STR_Z(strLower(strNewZ("k123abc")), "k123abc", "already lower");
+        TEST_RESULT_STR_Z(strLower(strNewZ("C")), "c", "char lower");
+        TEST_RESULT_STR_Z(strLower(strNew()), "", "empty lower");
 
-        TEST_RESULT_STR_Z(strUpper(strNew("K123aBc")), "K123ABC", "all upper");
-        TEST_RESULT_STR_Z(strUpper(strNew("K123ABC")), "K123ABC", "already upper");
-        TEST_RESULT_STR_Z(strUpper(strNew("c")), "C", "char upper");
-        TEST_RESULT_STR_Z(strUpper(strNew("")), "", "empty upper");
+        TEST_RESULT_STR_Z(strUpper(strNewZ("K123aBc")), "K123ABC", "all upper");
+        TEST_RESULT_STR_Z(strUpper(strNewZ("K123ABC")), "K123ABC", "already upper");
+        TEST_RESULT_STR_Z(strUpper(strNewZ("c")), "C", "char upper");
+        TEST_RESULT_STR_Z(strUpper(strNew()), "", "empty upper");
     }
 
     // *****************************************************************************************************************************
@@ -213,7 +229,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strReplaceChr()"))
     {
-        TEST_RESULT_STR_Z(strReplaceChr(strNew("ABCD"), 'B', 'R'), "ARCD", "replace chr");
+        TEST_RESULT_STR_Z(strReplaceChr(strNewZ("ABCD"), 'B', 'R'), "ARCD", "replace chr");
     }
 
     // *****************************************************************************************************************************
@@ -228,14 +244,14 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strTrim()"))
     {
-        TEST_RESULT_STR_Z(strTrim(strNew("")), "", "trim empty");
-        TEST_RESULT_STR_Z(strTrim(strNew("X")), "X", "no trim (one char)");
-        TEST_RESULT_STR_Z(strTrim(strNew("no-trim")), "no-trim", "no trim (string)");
-        TEST_RESULT_STR_Z(strTrim(strNew(" \t\r\n")), "", "all whitespace");
-        TEST_RESULT_STR_Z(strTrim(strNew(" \tbegin-only")), "begin-only", "trim begin");
-        TEST_RESULT_STR_Z(strTrim(strNew("end-only\t ")), "end-only", "trim end");
-        TEST_RESULT_STR_Z(strTrim(strNew("\n\rboth\r\n")), "both", "trim both");
-        TEST_RESULT_STR_Z(strTrim(strNew("begin \r\n\tend")), "begin \r\n\tend", "ignore whitespace in middle");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("")), "", "trim empty");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("X")), "X", "no trim (one char)");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("no-trim")), "no-trim", "no trim (string)");
+        TEST_RESULT_STR_Z(strTrim(strNewZ(" \t\r\n")), "", "all whitespace");
+        TEST_RESULT_STR_Z(strTrim(strNewZ(" \tbegin-only")), "begin-only", "trim begin");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("end-only\t ")), "end-only", "trim end");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("\n\rboth\r\n")), "both", "trim both");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("begin \r\n\tend")), "begin \r\n\tend", "ignore whitespace in middle");
     }
 
     // *****************************************************************************************************************************
@@ -246,11 +262,11 @@ testRun(void)
         TEST_RESULT_INT(strChr(STRDEF("abcd"), 'i'), -1, "i not found");
         TEST_RESULT_INT(strChr(STRDEF(""), 'x'), -1, "empty string - x not found");
 
-        String *val = strNew("abcdef");
+        String *val = strNewZ("abcdef");
         TEST_ERROR(
             strTrunc(val, (int)(strSize(val) + 1)), AssertError,
-            "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
-        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
+            "assertion 'idx >= 0 && (size_t)idx <= strSize(this)' failed");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= strSize(this)' failed");
 
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'd')), "abc", "simple string truncated");
         strCatZ(val, "\r\n to end");
@@ -309,7 +325,8 @@ testRun(void)
                 else
                 {
                     TEST_RESULT_STR(
-                        strLstAdd(list, strNewFmt("STR%02d", listIdx)), strNewFmt("STR%02d", listIdx), "add item %d", listIdx);
+                        strLstAdd(list, strNewFmt("STR%02d", listIdx)), strNewFmt("STR%02d", listIdx),
+                        strZ(strNewFmt("add item %d", listIdx)));
                 }
             }
 
@@ -328,9 +345,7 @@ testRun(void)
                 TEST_RESULT_STR(strLstGet(list, listIdx), NULL, "check null item");
             }
             else
-            {
-                TEST_RESULT_STR(strLstGet(list, listIdx), strNewFmt("STR%02u", listIdx), "check item %u", listIdx);
-            }
+                TEST_RESULT_STR(strLstGet(list, listIdx), strNewFmt("STR%02u", listIdx), strZ(strNewFmt("check item %u", listIdx)));
         }
 
         TEST_RESULT_VOID(strLstFree(list), "free string list");
@@ -402,7 +417,7 @@ testRun(void)
             }
             else
             {
-                TEST_RESULT_Z_STR(szList[listIdx], strNewFmt("STR%02u", listIdx), "check item %u", listIdx);
+                TEST_RESULT_Z_STR(szList[listIdx], strNewFmt("STR%02u", listIdx), strZ(strNewFmt("check item %u", listIdx)));
             }
         }
 
@@ -502,6 +517,164 @@ testRun(void)
 
         strLstComparatorSet(list, lstComparatorStr);
         TEST_RESULT_STR_Z(strLstJoin(strLstSort(list, sortOrderAsc), ", "), "a, b, c", "sort ascending");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("STRID*(), strIdTo*(), and strIdFrom*()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdFromZN()");
+
+        #define TEST_STR5ID1                                        (stringIdBit5 | (uint16_t)('a' - 96) << 4)
+        #define TEST_STR5ID2                                        (TEST_STR5ID1 | (uint16_t)('b' - 96) << 9)
+        #define TEST_STR5ID3                                        ((uint32_t)TEST_STR5ID2 | (uint32_t)('c' - 96) << 14)
+        #define TEST_STR5ID4                                        (TEST_STR5ID3 | (uint32_t)('-' - 18) << 19)
+        #define TEST_STR5ID5                                        (TEST_STR5ID4 | (uint32_t)('z' - 96) << 24)
+        #define TEST_STR5ID6                                        ((uint64_t)TEST_STR5ID5 | (uint64_t)('k' - 96) << 29)
+        #define TEST_STR5ID7                                        (TEST_STR5ID6 | (uint64_t)('z' - 96) << 34)
+        #define TEST_STR5ID8                                        (TEST_STR5ID7 | (uint64_t)('2' - 22) << 39)
+        #define TEST_STR5ID9                                        (TEST_STR5ID8 | (uint64_t)('-' - 18) << 44)
+        #define TEST_STR5ID10                                       (TEST_STR5ID9 | (uint64_t)('y' - 96) << 49)
+        #define TEST_STR5ID11                                       (TEST_STR5ID10 | (uint64_t)('5' - 24) << 54)
+        #define TEST_STR5ID12                                       (TEST_STR5ID11 | (uint64_t)('6' - 24) << 59)
+        #define TEST_STR5ID13                                       (TEST_STR5ID12 | STRING_ID_PREFIX)
+
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "a", 1), TEST_STR5ID1, "5 bits 1 char");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zk", 6), TEST_STR5ID6, "5 bits 6 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz2-y56", 12), TEST_STR5ID12, "5 bits 12 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz2-y56?", 13), TEST_STR5ID13, "5 bits 13 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz2-y56??", 14), TEST_STR5ID13, "5 bits 14 chars");
+
+        #define TEST_STR6ID1                                        (stringIdBit6 | (uint16_t)('a' - 96) << 4)
+        #define TEST_STR6ID2                                        (TEST_STR6ID1 | (uint16_t)('b' - 96) << 10)
+        #define TEST_STR6ID3                                        ((uint32_t)TEST_STR6ID2 | (uint32_t)('C' - 27) << 16)
+        #define TEST_STR6ID4                                        (TEST_STR6ID3 | (uint32_t)('-' - 18) << 22)
+        #define TEST_STR6ID5                                        ((uint64_t)TEST_STR6ID4 | (uint64_t)('4' - 20) << 28)
+        #define TEST_STR6ID6                                        (TEST_STR6ID5 | (uint64_t)('0' - 20) << 34)
+        #define TEST_STR6ID7                                        (TEST_STR6ID6 | (uint64_t)('M' - 27) << 40)
+        #define TEST_STR6ID8                                        (TEST_STR6ID7 | (uint64_t)('z' - 96) << 46)
+        #define TEST_STR6ID9                                        (TEST_STR6ID8 | (uint64_t)('Z' - 27) << 52)
+        #define TEST_STR6ID10                                       (TEST_STR6ID9 | (uint64_t)('9' - 20) << 58)
+        #define TEST_STR6ID11                                       (TEST_STR6ID10 | STRING_ID_PREFIX)
+
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "a", 1), TEST_STR6ID1, "6 bits 1 char");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-4", 5), TEST_STR6ID5, "6 bits 5 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9", 10), TEST_STR6ID10, "6 bits 10 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9?", 11), TEST_STR6ID11, "6 bits 11 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9??", 12), TEST_STR6ID11, "6 bits 12 chars");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("STRID*()");
+
+        TEST_RESULT_UINT(STRID5("a", TEST_STR5ID1), TEST_STR5ID1, "STRID5()");
+        TEST_RESULT_UINT(STRID6("abC-4", TEST_STR6ID5), TEST_STR6ID5, "STRID6()");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdFromStr()");
+
+        TEST_RESULT_UINT(strIdFromStr(stringIdBit5, STRDEF("abc-")), TEST_STR5ID4, "5 bits 4 chars");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdFromZ()");
+
+        TEST_RESULT_UINT(strIdFromZ(stringIdBit6, "abC-"), TEST_STR6ID4, "6 bits 4 chars");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdToZN()");
+
+        char buffer5[] = "XXXXXXXXXXXXX";
+
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID1, buffer5), 1, "5 bits 1 char");
+        TEST_RESULT_Z(buffer5, "aXXXXXXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID2, buffer5), 2, "5 bits 2 chars");
+        TEST_RESULT_Z(buffer5, "abXXXXXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID3, buffer5), 3, "5 bits 3 chars");
+        TEST_RESULT_Z(buffer5, "abcXXXXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID4, buffer5), 4, "5 bits 4 chars");
+        TEST_RESULT_Z(buffer5, "abc-XXXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID5, buffer5), 5, "5 bits 5 chars");
+        TEST_RESULT_Z(buffer5, "abc-zXXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID6, buffer5), 6, "5 bits 6 chars");
+        TEST_RESULT_Z(buffer5, "abc-zkXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID7, buffer5), 7, "5 bits 7 chars");
+        TEST_RESULT_Z(buffer5, "abc-zkzXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID8, buffer5), 8, "5 bits 8 chars");
+        TEST_RESULT_Z(buffer5, "abc-zkz2XXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID9, buffer5), 9, "5 bits 9 chars");
+        TEST_RESULT_Z(buffer5, "abc-zkz2-XXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID10, buffer5), 10, "5 bits 10 chars");
+        TEST_RESULT_Z(buffer5, "abc-zkz2-yXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID11, buffer5), 11, "5 bits 11 chars");
+        TEST_RESULT_Z(buffer5, "abc-zkz2-y5XX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID12, buffer5), 12, "5 bits 12 chars");
+        TEST_RESULT_Z(buffer5, "abc-zkz2-y56X", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID13, buffer5), 13, "5 bits 13 chars");
+        TEST_RESULT_Z(buffer5, "abc-zkz2-y56+", "    check");
+
+        char buffer6[] = "XXXXXXXXXXX";
+
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID1, buffer6), 1, "6 bits 1 char");
+        TEST_RESULT_Z(buffer6, "aXXXXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID2, buffer6), 2, "6 bits 2 chars");
+        TEST_RESULT_Z(buffer6, "abXXXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID3, buffer6), 3, "6 bits 3 chars");
+        TEST_RESULT_Z(buffer6, "abCXXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID4, buffer6), 4, "6 bits 4 chars");
+        TEST_RESULT_Z(buffer6, "abC-XXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID5, buffer6), 5, "6 bits 5 chars");
+        TEST_RESULT_Z(buffer6, "abC-4XXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID6, buffer6), 6, "6 bits 6 chars");
+        TEST_RESULT_Z(buffer6, "abC-40XXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID7, buffer6), 7, "6 bits 7 chars");
+        TEST_RESULT_Z(buffer6, "abC-40MXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID8, buffer6), 8, "6 bits 8 chars");
+        TEST_RESULT_Z(buffer6, "abC-40MzXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID9, buffer6), 9, "6 bits 9 chars");
+        TEST_RESULT_Z(buffer6, "abC-40MzZXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID10, buffer6), 10, "6 bits 10 chars");
+        TEST_RESULT_Z(buffer6, "abC-40MzZ9X", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID11, buffer6), 11, "6 bits 11 chars");
+        TEST_RESULT_Z(buffer6, "abC-40MzZ9+", "    check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdToStr()");
+
+        TEST_RESULT_STR_Z(strIdToStr(TEST_STR5ID1), "a", "5 bits 1 char");
+        TEST_RESULT_STR_Z(strIdToStr(TEST_STR5ID8), "abc-zkz2", "5 bits 8 chars");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdToStr()");
+
+        char buffer[STRID_MAX + 1];
+
+        TEST_RESULT_UINT(strIdToZ(TEST_STR5ID1, buffer), 1, "5 bits 1 char");
+        TEST_RESULT_Z(buffer, "a", "    check");
+        TEST_RESULT_UINT(strIdToZ(TEST_STR5ID4, buffer), 4, "4 chars");
+        TEST_RESULT_Z(buffer, "abc-", "    check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("64-bit enum");
+
+        TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumFunc(testStringIdEnumAes256Cbc)), "aes-256-cbc", "pass to enum param");
+
+        TestStringIdEnum testEnum = testStringIdEnumRemote;
+        TEST_RESULT_STR_Z(strIdToStr(testEnum), "remote", "assign to enum");
+
+        TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumTest), "test", "pass to StringId param");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdGenerate()");
+
+        TEST_ERROR(strIdGenerate("watcha"), FormatError, "STRID5(\"watcha\", 0x281d0370)");
+        TEST_ERROR(strIdGenerate("Watcha"), FormatError, "STRID6(\"Watcha\", 0x480d407c1)");
+        TEST_ERROR(strIdGenerate("%tcha"), FormatError, "'%' is invalid for 6-bit encoding in '%tcha'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdToLog()");
+
+        TEST_RESULT_UINT(strIdToLog(TEST_STR5ID2, buffer, sizeof(buffer)), 2, "string id with limited buffer");
+        TEST_RESULT_UINT(strlen(buffer), 2, "    check length");
+        TEST_RESULT_Z(buffer, "ab", "    check buffer");
     }
 
     // *****************************************************************************************************************************

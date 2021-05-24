@@ -184,12 +184,13 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // Get test host and ports
     const String *const testHost = hrnServerHost();
     const unsigned int testPort = hrnServerPort(0);
     const unsigned int testPortAuth = hrnServerPort(1);
+    const unsigned int testPortMeta = hrnServerPort(2);
 
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))
@@ -199,10 +200,10 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-        hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, STORAGE_GCS_KEY_TYPE_TOKEN);
+        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
         hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -282,7 +283,7 @@ testRun(void)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(strNew("gcs server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        ioFdReadNew(STRDEF("gcs server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
                         .port = testPort),
                     "gcs server run");
             }
@@ -292,37 +293,47 @@ testRun(void)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(strNew("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        ioFdReadNew(STRDEF("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
                         .port = testPortAuth),
                     "auth server run");
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                TEST_RESULT_VOID(
+                    hrnServerRunP(
+                        ioFdReadNew(STRDEF("meta server read"), HARNESS_FORK_CHILD_READ(), 10000), hrnServerProtocolSocket,
+                        .port = testPortMeta),
+                    "meta server run");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
                 IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNew(strNew("gcs client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdWriteNew(STRDEF("gcs client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
                 IoWrite *auth = hrnServerScriptBegin(
-                    ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
+                    ioFdWriteNew(STRDEF("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
+                IoWrite *meta = hrnServerScriptBegin(
+                    ioFdWriteNew(STRDEF("meta client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(2), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test service auth");
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-                hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), hrnServerPort(0));
-                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, testContainer());
+                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
+                hrnCfgEnvRemoveRaw(cfgOptRepoGcsKey);
 
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
-
-                // Tests need the chunk size to be 16
-                ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
 
                 // Generate the auth request. The JWT part will need to be ? since it can vary in content and size.
                 const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
@@ -405,16 +416,54 @@ testRun(void)
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, strNew("file.txt")))), "this is a sample file", "get file");
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to auto auth");
+
+                hrnServerScriptClose(service);
+
+                StringList *argListAuto = strLstDup(argList);
+                hrnCfgArgRawStrId(argListAuto, cfgOptRepoGcsKeyType, storageGcsKeyTypeAuto);
+                harnessCfgLoad(cfgCmdArchivePush, argListAuto);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                // Replace the default authClient with one that points locally. The default host and url will still be used so they
+                // can be verified when testing auth.
+                ((StorageGcs *)storageDriver(storage))->authClient = httpClientNew(
+                    sckClientNew(hrnServerHost(), testPortMeta, 2000), 2000);
+
+                // Tests need the chunk size to be 16
+                ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
+
+                hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
+
+                // Get token automatically from metadata
+                hrnServerScriptAccept(meta);
+                hrnServerScriptExpectZ(
+                    meta,
+                    "GET /computeMetadata/v1/instance/service-accounts/default/token HTTP/1.1\r\n"
+                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+                    "content-length:0\r\n"
+                    "host:metadata.google.internal\r\n"
+                    "metadata-flavor:Google\r\n"
+                    "\r\n");
+
+                testResponseP(meta, .content = "{\"access_token\":\"X\",\"token_type\":\"X\",\"expires_in\":3600}");
+                hrnServerScriptClose(meta);
+
+                // Meta service no longer needed
+                hrnServerScriptEnd(meta);
 
                 testRequestP(service, HTTP_VERB_GET, .object = "file0.txt", .query = "alt=media");
                 testResponseP(service);
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, strNew("file0.txt")))), "", "get zero-length file");
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file0.txt")))), "", "get zero-length file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
@@ -423,7 +472,7 @@ testRun(void)
                 testResponseP(service, .code = 303, .content = "CONTENT");
 
                 StorageRead *read = NULL;
-                TEST_ASSIGN(read, storageNewReadP(storage, strNew("file.txt"), .ignoreMissing = true), "new read file");
+                TEST_ASSIGN(read, storageNewReadP(storage, STRDEF("file.txt"), .ignoreMissing = true), "new read file");
                 TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
                 TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
 
@@ -451,7 +500,7 @@ testRun(void)
                 testResponseP(service, .code = 403);
 
                 TEST_ERROR_FMT(
-                    storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
+                    storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
                     "HTTP request failed with 403 (Forbidden):\n"
                     "*** Path/Query ***:\n"
                     "/upload/storage/v1/b/bucket/o?fields=md5Hash%%2Csize&name=file.txt&uploadType=media\n"
@@ -474,7 +523,7 @@ testRun(void)
                 testResponseP(service, .content = "{\"md5Hash\":\"ywjKSnu1+Wg8GRM6hIcspw==\"}");
 
                 StorageWrite *write = NULL;
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
 
                 TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
@@ -495,7 +544,7 @@ testRun(void)
                     .content = "");
                 testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"0\"}");
 
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, NULL), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -506,7 +555,7 @@ testRun(void)
                     .content = "");
                 testResponseP(service, .content = "{\"md5Hash\":\"ywjK\",\"size\":\"0\"}");
 
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_ERROR(
                     storagePutP(write, NULL), FormatError,
                     "expected md5 'd41d8cd98f00b204e9800998ecf8427e' for '/file.txt' but actual is 'cb08ca'");
@@ -519,7 +568,7 @@ testRun(void)
                     .content = "");
                 testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"55\"}");
 
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_ERROR(storagePutP(write, NULL), FormatError, "expected size 55 for '/file.txt' but actual is 0");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -540,7 +589,7 @@ testRun(void)
                     .content = "7890123456789012");
                 testResponseP(service, .content = "{\"md5Hash\":\"dnF5x6K/8ZZRzpfSlMMM+w==\",\"size\":\"32\"}");
 
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -566,7 +615,7 @@ testRun(void)
                     .content = "7890");
                 testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
 
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -581,10 +630,10 @@ testRun(void)
                     .content = "1234567890123456");
                 testResponseP(service, .code = 403);
 
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
 
                 TEST_ERROR_FMT(
-                    storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("12345678901234567")), ProtocolError,
+                    storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("12345678901234567")), ProtocolError,
                     "HTTP request failed with 403 (Forbidden):\n"
                     "*** Path/Query ***:\n"
                     "/upload/storage/v1/b/bucket/o?name=file.txt&uploadType=resumable&upload_id=<redacted>\n"
@@ -606,7 +655,7 @@ testRun(void)
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(
-                    storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for file");
@@ -615,7 +664,7 @@ testRun(void)
                 testResponseP(service, .content = "{\"size\":\"9999\",\"updated\":\"2015-10-21T07:28:00.000Z\"}");
 
                 StorageInfo info;
-                TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
+                TEST_ASSIGN(info, storageInfoP(storage, STRDEF("subdir/file1.txt")), "file exists");
                 TEST_RESULT_BOOL(info.exists, true, "    check exists");
                 TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
                 TEST_RESULT_UINT(info.size, 9999, "    check exists");
@@ -628,7 +677,7 @@ testRun(void)
                 testResponseP(service, .content = "{}");
 
                 TEST_ASSIGN(
-                    info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
+                    info, storageInfoP(storage, STRDEF("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
                 TEST_RESULT_BOOL(info.exists, true, "    check exists");
                 TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
                 TEST_RESULT_UINT(info.size, 0, "    check exists");
@@ -659,15 +708,15 @@ testRun(void)
 
                 HarnessStorageInfoListCallbackData callbackData =
                 {
-                    .content = strNew(""),
+                    .content = strNew(),
                 };
 
                 TEST_ERROR(
-                    storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
+                    storageInfoListP(storage, STRDEF("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
                     AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
+                    storageInfoListP(storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
                     "test_path {path}\n"
@@ -692,11 +741,11 @@ testRun(void)
                         "  ]"
                         "}");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                        storage, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
@@ -720,11 +769,11 @@ testRun(void)
                         "  ]"
                         "}");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
+                        storage, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test.*$"),
                         .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
@@ -773,11 +822,11 @@ testRun(void)
                         "  ]"
                         "}");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                        storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
@@ -815,11 +864,11 @@ testRun(void)
                         "  ]"
                         "}");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
+                        storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test(1|3)"),
                         .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
@@ -829,7 +878,7 @@ testRun(void)
                     "test3.txt {}\n",
                     "check");
 
-                // // -----------------------------------------------------------------------------------------------------------------
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to token auth");
 
                 hrnServerScriptClose(service);
@@ -848,7 +897,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test.txt");
                 testResponseP(service);
 
-                TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
+                TEST_RESULT_VOID(storageRemoveP(storage, STRDEF("/path/to/test.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove missing file");
@@ -856,7 +905,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/missing.txt");
                 testResponseP(service, .code = 404);
 
-                TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/missing.txt")), "remove");
+                TEST_RESULT_VOID(storageRemoveP(storage, STRDEF("/path/to/missing.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from root");
@@ -885,7 +934,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_DELETE, .object = "path1/xxx.zzz");
                 testResponseP(service);
 
-                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
+                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from path");
@@ -914,7 +963,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_DELETE, .object = "path/path1/xxx.zzz");
                 testResponseP(service);
 
-                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
+                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files in empty subpath (nothing to do)");
@@ -922,7 +971,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_GET, .query = "fields=nextPageToken%2Cprefixes%2Citems%28name%29&prefix=path%2F");
                 testResponseP(service, .content = "{}");
 
-                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
+                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);

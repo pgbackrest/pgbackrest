@@ -88,7 +88,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
-                storageRepo, pgControl.version, pgControl.systemId, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                storageRepo, pgControl.version, pgControl.systemId, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
         }
 
@@ -100,7 +100,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
     // If backup from standby is true then warn when a standby not found
     else if (cfgOptionBool(cfgOptBackupStandby))
     {
-        LOG_WARN_FMT("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
+        LOG_WARN("option '" CFGOPT_BACKUP_STANDBY "' is enabled but standby is not properly configured");
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -134,12 +134,12 @@ checkPrimary(const DbGetResult dbGroup)
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
-                storageRepo, pgControl.version, pgControl.systemId, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                storageRepo, pgControl.version, pgControl.systemId, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
             // Attempt to load the archive info file and retrieve the archiveId
             InfoArchive *archiveInfo = infoArchiveLoadFile(
-                storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
             repoArchiveId[repoIdx] = infoArchiveId(archiveInfo);

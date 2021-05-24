@@ -22,7 +22,7 @@ testRun(void)
     setenv("TZ", "UTC", true);
 
     // Create the repo directories
-    String *repoPath = strNewFmt("%s/repo", testPath());
+    const String *repoPath = STRDEF(TEST_PATH "/repo");
     String *archivePath = strNewFmt("%s/%s", strZ(repoPath), "archive");
     String *backupPath = strNewFmt("%s/%s", strZ(repoPath), "backup");
     String *archiveStanza1Path = strNewFmt("%s/stanza1", strZ(archivePath));
@@ -132,7 +132,7 @@ testRun(void)
 
         // backup.info file exists, but archive.info does not
         //--------------------------------------------------------------------------------------------------------------------------
-        String *content = strNew
+        const String *content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -209,7 +209,7 @@ testRun(void)
         // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         // Only the current db information from the db:history will be processed.
         //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=3\n"
@@ -239,7 +239,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
                 sleepMSec(1000);
@@ -330,7 +330,7 @@ testRun(void)
 
         StringList *argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -349,7 +349,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -363,18 +363,18 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archiveDb1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveDb1_1))));
 
         String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveDb1_2))));
 
         String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
@@ -384,12 +384,12 @@ testRun(void)
             storagePutP(storageNewWriteP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "create db3 archive WAL3 file");
 
         // Create a WAL file in 9.3-2 so that a prior will show
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archiveDb2_1)))))), 0, "touch WAL1 file in prior");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archiveDb2_1))));
 
         harnessCfgLoad(cfgCmdInfo, argList);
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -435,7 +435,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
                 sleepMSec(1000);
@@ -623,7 +623,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mixed multi-repo");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=2\n"
@@ -641,7 +641,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put archive info to file - stanza1, repo1");
 
-        content = strNew
+        content = STRDEF
         (
             "[backup:current]\n"
             "20181119-152138F={"
@@ -835,7 +835,7 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup path stanza2 directory, repo1");
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive path stanza2 directory, repo1");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -852,7 +852,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put archive info to file - stanza2, repo1");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -873,13 +873,13 @@ testRun(void)
             "put backup info to file - stanza2, repo1");
 
         // Create encrypted repo2
-        String *repo2archivePath =  strNewFmt("%s/repo2/archive", testPath());
-        String *repo2backupPath =  strNewFmt("%s/repo2/backup", testPath());
+        const String *repo2archivePath = STRDEF(TEST_PATH "/repo2/archive");
+        const String *repo2backupPath = STRDEF(TEST_PATH "/repo2/backup");
         storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2archivePath)));
         storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2backupPath)));
 
         // Write encrypted info files
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -899,7 +899,7 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
         TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201510051\n"
@@ -934,27 +934,27 @@ testRun(void)
         // Add WAL on repo1 and encrypted repo2 for stanza1
         String *archive1Db1_1 = strNewFmt("%s/9.5-2/0000000100000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive1Db1_1), "create db1 archive WAL directory, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-ee61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000005-abc123f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive1Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archive1Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000004-ee61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive1Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000005-abc123f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive1Db1_1))));
 
         String *archive2Db1_1 = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(repo2archivePath));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive2Db1_1), "create db1 archive WAL directory, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-ff61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archive2Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000004-ff61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive2Db1_1))));
 
         // Add a manifest on the encrypted repo2
         #define TEST_MANIFEST_HEADER2                                                                                              \
@@ -1013,7 +1013,7 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(write, contentLoad), "write encrypted manifest, repo2");
 
         // Create a stanza on repo2 that is not on repo1
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -1033,7 +1033,7 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
         TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2, stanza3");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -1067,18 +1067,18 @@ testRun(void)
 
         archive2Db1_1 = strNewFmt("%s/stanza3/9.4-1/0000000100000000", strZ(repo2archivePath));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive2Db1_1), "create db1 archive WAL directory, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-2261b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archive2Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-2261b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive2Db1_1))));
 
         // Set up the configuration
         StringList *argListMultiRepo = strLstNew();
         hrnCfgArgRawZ(argListMultiRepo, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgKeyRawFmt(argListMultiRepo, cfgOptRepoPath, 2, "%s/repo2", testPath());
-        hrnCfgArgKeyRawZ(argListMultiRepo, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawZ(argListMultiRepo, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawStrId(argListMultiRepo, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
 
         StringList *argListMultiRepoJson = strLstDup(argListMultiRepo);
@@ -1089,7 +1089,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
                 sleepMSec(1000);
@@ -1507,7 +1507,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
                 sleepMSec(1000);
@@ -1740,7 +1740,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
-                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
                 "write manifest");
 
@@ -1810,7 +1810,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
-                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
             "write manifest");
 
@@ -1909,7 +1909,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, backups only on one");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201510051\n"
@@ -2060,7 +2060,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, current database different across repos");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=2\n"
@@ -2077,7 +2077,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), harnessInfoChecksum(content)),
             "put archive info to file - stanza3, repo1 stanza upgraded");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -2350,19 +2350,19 @@ testRun(void)
         TEST_TITLE("encryption error");
 
         // Change repo1 to have the same cipher type as repo2 even though on disk it does not
-        content = strNew
+        content = STRDEF
         (
             "[global]\n"
             "repo-cipher-pass=123abc\n"
         );
 
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/pgbackrest.conf", testPath())),
-                BUFSTR(content)), "put pgbackrest.conf file");
+            storagePutP(storageNewWriteP(storageLocalWrite(), STRDEF(TEST_PATH "/pgbackrest.conf")), BUFSTR(content)),
+            "put pgbackrest.conf file");
 
         argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--repo-cipher-type=aes-256-cbc");
-        strLstAdd(argList2, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
+        strLstAddZ(argList2, "--config=" TEST_PATH "/pgbackrest.conf");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR(
@@ -2489,12 +2489,12 @@ testRun(void)
 
         storagePathCreateP(storageLocalWrite(), archivePath);
         storagePathCreateP(storageLocalWrite(), backupPath);
-        String *archivePath2 = strNewFmt("%s/repo2/%s", testPath(), "archive");
-        String *backupPath2 = strNewFmt("%s/repo2/%s", testPath(), "backup");
+        String *archivePath2 = strNewFmt(TEST_PATH "/repo2/%s", "archive");
+        String *backupPath2 = strNewFmt(TEST_PATH "/repo2/%s", "backup");
         storagePathCreateP(storageLocalWrite(), archivePath2);
         storagePathCreateP(storageLocalWrite(), backupPath2);
 
-        String *content = strNew
+        const String *content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -2524,7 +2524,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put backup info to file, repo1");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -2543,14 +2543,14 @@ testRun(void)
 
         String *walPath = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo1, archive directory");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo1");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -2580,7 +2580,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put backup info to file, repo2, same system-id, different version");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -2599,17 +2599,17 @@ testRun(void)
 
         walPath = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(archivePath2));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo2, archive directory");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo2");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
 
         StringList *argList2 = strLstNew();
         hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
-        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         // Note that although the time on the backup in repo2 > repo1, repo1 current db is not the same because of the version so
@@ -2644,7 +2644,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, database mismatch, pg version only");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -2674,7 +2674,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put backup info to file, repo2, different system-id, same version");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -2731,7 +2731,7 @@ testRun(void)
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
-        String *stdoutFile = strNewFmt("%s/stdout.info", testPath());
+        const String *stdoutFile = STRDEF(TEST_PATH "/stdout.info");
 
         THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
@@ -2741,7 +2741,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNewP(strNew(testPath()));
+        Storage *storage = storagePosixNewP(TEST_PATH_STR);
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), "No stanzas exist in the repository.\n",
             "    check text");
@@ -2749,33 +2749,32 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--set=bogus");
 
-        TEST_ERROR_FMT(
-            harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
+        TEST_ERROR(harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo-level error");
 
         TEST_RESULT_VOID(
-            storagePathCreateP(
-                storageLocalWrite(), strNewFmt("%s/repo2", testPath()), .mode = 0200), "repo directory with bad permissions");
+            storagePathCreateP(storageLocalWrite(), STRDEF(TEST_PATH "/repo2"), .mode = 0200),
+            "repo directory with bad permissions");
 
         argList = strLstNew();
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 1, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: [invalid]\n"
             "    status: error (other)\n"
-            "            [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
-            "    cipher: none\n", testPath()),
+            "            [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup': [13] Permission denied\n"
+            "    cipher: none\n",
             "text - invalid stanza");
 
         hrnCfgArgRawZ(argList, cfgOptOutput, "json");
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "["
                 "{"
                     "\"archive\":[],"
@@ -2789,8 +2788,8 @@ testRun(void)
                             "\"key\":1,"
                             "\"status\":{"
                                 "\"code\":99,"
-                                "\"message\":\"[PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission"
-                                " denied\""
+                                "\"message\":\"[PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup':"
+                                    " [13] Permission denied\""
                             "}"
                         "}"
                     "],"
@@ -2800,33 +2799,34 @@ testRun(void)
                         "\"message\":\"other\""
                         "}"
                 "}"
-            "]", testPath()),
+            "]",
             "json - invalid stanza");
 
         argList = strLstNew();
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 1, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptStanza, "stanza1");
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: error (other)\n"
-            "            [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
-            "    cipher: none\n", testPath()),
+            "            [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup': [13] Permission denied\n"
+            "    cipher: none\n",
             "text - stanza requested");
 
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
+            "               [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup':"
+                " [13] Permission denied\n"
             "        repo2: error (missing stanza path)\n"
-            "    cipher: none\n", testPath()),
+            "    cipher: none\n",
             "text - stanza repo structure exists");
     }
 

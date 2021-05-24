@@ -78,11 +78,11 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
 
     // Set log path if valid
     if (cfgParseOptionValid(commandId, commandRoleId, cfgOptLogPath))
-        strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testDataPath()));
+        strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOG_PATH "=%s", hrnPath()));
 
     // Set lock path if valid
     if (cfgParseOptionValid(commandId, commandRoleId, cfgOptLockPath))
-        strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
+        strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", hrnPath()));
 
     // Insert the command so it does not interfere with parameters
     strLstInsert(argList, 0, cfgCommandRoleNameParam(commandId, commandRoleId, COLON_STR));
@@ -104,7 +104,7 @@ harnessCfgLoad(ConfigCommand commandId, const StringList *argListParam)
         FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
     FUNCTION_HARNESS_END();
 
-    harnessCfgLoadRole(commandId, cfgCmdRoleDefault, argListParam);
+    harnessCfgLoadRole(commandId, cfgCmdRoleMain, argListParam);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -161,6 +161,21 @@ hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey,
 }
 
 void
+hrnCfgArgRawStrId(StringList *argList, ConfigOption optionId, StringId value)
+{
+    hrnCfgArgKeyRawStrId(argList, optionId, 1, value);
+}
+
+void
+hrnCfgArgKeyRawStrId(StringList *argList, ConfigOption optionId, unsigned optionKey, StringId value)
+{
+    char buffer[STRID_MAX + 1];
+    strIdToZ(value, buffer);
+
+    hrnCfgArgKeyRawZ(argList, optionId, optionKey, buffer);
+}
+
+void
 hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value)
 {
     hrnCfgArgKeyRawBool(argList, optionId, 1, value);
@@ -198,7 +213,7 @@ hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned option
 
 /**********************************************************************************************************************************/
 __attribute__((always_inline)) static inline const char *
-hrnCfgEnvName(ConfigOption optionId, unsigned optionKey)
+hrnCfgEnvName(const ConfigOption optionId, const unsigned optionKey)
 {
     return strZ(
         strReplaceChr(strUpper(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))), '-', '_'));

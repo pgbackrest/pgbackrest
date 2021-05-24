@@ -77,7 +77,7 @@ Improvements:
 
 Documentation Features:
 
-* Add user guide for CentOS/RHEL 7.
+* Add user guide for RHEL/CentOS 7.
 ```
 
 Commit to integration with the above message and push to CI.
@@ -103,7 +103,7 @@ v2.14: Bug Fix and Improvements
 
 **Documentation Features**:
 
-- Add user guide for CentOS/RHEL 7.
+- Add user guide for RHEL/CentOS 7.
 ```
 
 The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from master. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in master!**
@@ -121,9 +121,9 @@ Deploy the documentation on `pgbackrest.org`.
 
 ## Announce release on Twitter
 
-## Do a press release once per quarter
+## Publish a postgresql.org news item when there are major new features
 
-Start from the press release at https://www.postgresql.org/about/news/2057 (logon required) and update for improvements made in the last quarter. Then convert to text and send to `pgsql-announce` using https://www.postgresql.org/message-id/6b1bbd0f-08a7-bc51-7252-12bd3a645aea%40pgmasters.net as an example of how it looks in text format.
+Start from NEWS.md and update with the new date, version, and interesting features added since the last release. News items are automatically sent to the `pgsql-announce` mailing list once they have been approved.
 
 ## Prepare for the next release
 

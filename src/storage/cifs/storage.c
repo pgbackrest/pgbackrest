@@ -10,11 +10,6 @@ CIFS Storage
 #include "storage/cifs/storage.h"
 #include "storage/posix/storage.intern.h"
 
-/***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_CIFS_TYPE_STR,                                STORAGE_CIFS_TYPE);
-
 /**********************************************************************************************************************************/
 Storage *
 storageCifsNew(
@@ -29,5 +24,5 @@ storageCifsNew(
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE, storagePosixNewInternal(STORAGE_CIFS_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, false));
+        STORAGE, storagePosixNewInternal(STORAGE_CIFS_TYPE, path, modeFile, modePath, write, pathExpressionFunction, false));
 }

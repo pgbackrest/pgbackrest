@@ -9,6 +9,8 @@ Storage Helper
 /***********************************************************************************************************************************
 Storage path constants
 ***********************************************************************************************************************************/
+#define STORAGE_SPOOL_ARCHIVE                                       "<SPOOL:ARCHIVE>"
+    STRING_DECLARE(STORAGE_SPOOL_ARCHIVE_STR);
 #define STORAGE_SPOOL_ARCHIVE_IN                                    "<SPOOL:ARCHIVE:IN>"
     STRING_DECLARE(STORAGE_SPOOL_ARCHIVE_IN_STR);
 #define STORAGE_SPOOL_ARCHIVE_OUT                                   "<SPOOL:ARCHIVE:OUT>"

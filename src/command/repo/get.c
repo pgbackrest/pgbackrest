@@ -48,7 +48,7 @@ storageGetProcess(IoWrite *destination)
             {
                 THROW_FMT(
                     OptionInvalidValueError, "absolute path '%s' is not in base path '%s'", strZ(file),
-                    strZ(cfgOptionStr(cfgOptRepoPath)));
+                    strZ(cfgOptionDisplay(cfgOptRepoPath)));
             }
 
             // Get the relative part of the file
@@ -61,7 +61,7 @@ storageGetProcess(IoWrite *destination)
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))
         {
-            CipherType repoCipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
+            CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
             if (repoCipherType != cipherTypeNone)
             {
@@ -95,7 +95,7 @@ storageGetProcess(IoWrite *destination)
                         {
                             THROW_FMT(
                                 OptionInvalidValueError, "stanza name '%s' given in option doesn't match the given path",
-                                strZ(cfgOptionStr(cfgOptStanza)));
+                                strZ(cfgOptionDisplay(cfgOptStanza)));
                         }
 
                         // Archive path

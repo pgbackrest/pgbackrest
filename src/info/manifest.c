@@ -1069,9 +1069,10 @@ manifestNewBuild(
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(NULL);
-        this->pub.data.backrestVersion = strNew(PROJECT_VERSION);
+        this->pub.data.backrestVersion = strNewZ(PROJECT_VERSION);
         this->pub.data.pgVersion = pgVersion;
         this->pub.data.pgCatalogVersion = pgCatalogVersion;
+        this->pub.data.backupType = backupTypeFull;
         this->pub.data.backupOptionOnline = online;
         this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
 
@@ -1318,7 +1319,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, archiveStart);
     FUNCTION_LOG_END();
 
@@ -1863,7 +1864,12 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             else if (strEq(key, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR))
                 manifest->pub.data.backupTimestampStop = (time_t)varUInt64(value);
             else if (strEq(key, MANIFEST_KEY_BACKUP_TYPE_STR))
-                manifest->pub.data.backupType = backupType(varStr(value));
+            {
+                manifest->pub.data.backupType = (BackupType)strIdFromStr(stringIdBit5, varStr(value));
+                ASSERT(
+                    manifest->pub.data.backupType == backupTypeFull || manifest->pub.data.backupType == backupTypeDiff ||
+                    manifest->pub.data.backupType == backupTypeIncr);
+            }
         }
         MEM_CONTEXT_END();
     }
@@ -2125,7 +2131,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             jsonFromInt64(manifest->pub.data.backupTimestampStop));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TYPE_STR,
-            jsonFromStr(backupTypeStr(manifest->pub.data.backupType)));
+            jsonFromStr(strIdToStr(manifest->pub.data.backupType)));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -2538,7 +2544,7 @@ manifestValidate(Manifest *this, bool strict)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *error = strNew("");
+        String *error = strNew();
 
         // Validate files
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
@@ -2784,7 +2790,7 @@ manifestPathPg(const String *manifestPath)
     // If something in pg_data/
     if (strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGDATA "/")))
     {
-        FUNCTION_TEST_RETURN(strNew(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
+        FUNCTION_TEST_RETURN(strNewZ(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
     }
     // Else not pg_data (this is faster since the length of everything else will be different than pg_data)
     else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
@@ -2979,7 +2985,7 @@ manifestLoadFile(const Storage *storage, const String *fileName, CipherType ciph
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 

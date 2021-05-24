@@ -67,24 +67,30 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("helpRenderText()"))
     {
-        TEST_RESULT_STR_Z(helpRenderText(strNew("this is a short sentence"), 0, false, 80), "this is a short sentence", "one line");
+        TEST_RESULT_STR_Z(
+            helpRenderText(STRDEF("this is a short sentence"), false, 0, false, 80), "this is a short sentence", "one line");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("this is a short sentence"), 4, false, 14),
+            helpRenderText(STRDEF("this is a short sentence"), false, 4, false, 14),
             "this is a\n"
             "    short\n"
             "    sentence",
             "three lines, no indent first");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), 2, true, 16),
+            helpRenderText(STRDEF("This is a short paragraph.\n\nHere is another one."), true, 2, true, 16),
             "  This is a\n"
             "  short\n"
             "  paragraph.\n"
             "\n"
             "  Here is\n"
-            "  another one.",
-            "two paragraphs, indent first");
+            "  another one.\n"
+            "\n"
+            "  FOR INTERNAL\n"
+            "  USE ONLY. DO\n"
+            "  NOT USE IN\n"
+            "  PRODUCTION.",
+            "two paragraphs, indent first, internal");
     }
 
     // *****************************************************************************************************************************
@@ -158,6 +164,7 @@ testRun(void)
             "\n"
             "  --archive-mode                   preserve or disable archiving on restored\n"
             "                                   cluster [default=preserve]\n"
+            "  --db-exclude                     restore excluding the specified databases\n"
             "  --db-include                     restore only specified databases\n"
             "                                   [current=db1, db2]\n"
             "  --force                          force a restore [default=n]\n"
@@ -305,6 +312,14 @@ testRun(void)
         strLstAddZ(argList, BOGUS_STR);
         TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse bogus option");
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, CFGCMD_HELP);
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH);
+        strLstAddZ(argList, CFGOPT_PROCESS);
+        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse option invalid for command");
+        TEST_ERROR(helpRender(), OptionInvalidError, "option 'process' is not valid for command 'archive-push'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const char *optionHelp = strZ(strNewFmt(
@@ -481,7 +496,7 @@ testRun(void)
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
-        String *stdoutFile = strNewFmt("%s/stdout.help", testPath());
+        const String *stdoutFile = STRDEF(TEST_PATH "/stdout.help");
 
         THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
@@ -491,7 +506,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNewP(strNew(testPath()));
+        Storage *storage = storagePosixNewP(TEST_PATH_STR);
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), generalHelp, "    check text");
     }
 

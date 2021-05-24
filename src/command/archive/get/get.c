@@ -260,7 +260,7 @@ archiveGetFind(
             {
                 getCheckResult->errorType = &RepoInvalidError;
                 getCheckResult->errorFile = strDup(archiveFileRequest);
-                getCheckResult->errorMessage = strNew(UNABLE_TO_FIND_VALID_REPO_MSG);
+                getCheckResult->errorMessage = strNewZ(UNABLE_TO_FIND_VALID_REPO_MSG);
                 getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
             }
             MEM_CONTEXT_END();
@@ -285,7 +285,7 @@ archiveGetFind(
                 {
                     // Build list of duplicates
                     unsigned int repoKeyLast = 0;
-                    String *message = strNew("");
+                    String *message = strNew();
                     bool first = true;
 
                     for (unsigned int matchIdx = 0; matchIdx < lstSize(matchList); matchIdx++)
@@ -390,7 +390,7 @@ archiveGetCheck(const StringList *archiveRequestList)
                 ArchiveGetFindCacheRepo cacheRepo =
                 {
                     .repoIdx = repoIdx,
-                    .cipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    .cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     .archiveList = lstNewP(sizeof(ArchiveGetFindCacheArchive)),
                     .warnList = strLstNew(),
                 };
@@ -481,7 +481,7 @@ archiveGetCheck(const StringList *archiveRequestList)
             MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
             {
                 result.errorType = &RepoInvalidError;
-                result.errorMessage = strNew(UNABLE_TO_FIND_VALID_REPO_MSG);
+                result.errorMessage = strNewZ(UNABLE_TO_FIND_VALID_REPO_MSG);
                 result.warnList = strLstMove(warnList, memContextCurrent());
             }
             MEM_CONTEXT_END();
@@ -631,10 +631,11 @@ cmdArchiveGet(void)
         // Async get can only be performed on WAL segments, history or other files must use synchronous mode
         if (cfgOptionBool(cfgOptArchiveAsync) && walIsSegment(walSegment))
         {
+            bool first = true;                                          // Is this the first time the loop has run?
             bool found = false;                                         // Has the WAL segment been found yet?
+            bool foundOk = false;                                       // Was an OK file found which confirms the file was missing?
             bool queueFull = false;                                     // Is the queue half or more full?
             bool forked = false;                                        // Has the async process been forked yet?
-            bool throwOnError = false;                                  // Should we throw errors?
 
             // Loop and wait for the WAL segment to be pushed
             Wait *wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
@@ -645,15 +646,25 @@ cmdArchiveGet(void)
                 found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
 
                 // Check for errors or missing files. For archive-get ok indicates that the process succeeded but there is no WAL
-                // file to download, or that there was a warning.
-                if (archiveAsyncStatus(archiveModeGet, walSegment, throwOnError))
+                // file to download, or that there was a warning. Do not error on the first run so the async process can be spawned
+                // to correct any errors from a previous run. Do not warn on the first run if the segment was not found so the async
+                // process can be spawned to check for the file again.
+                if (archiveAsyncStatus(archiveModeGet, walSegment, !first, found || !first))
                 {
                     storageRemoveP(
                         storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s" STATUS_EXT_OK, strZ(walSegment)),
                         .errorOnMissing = true);
 
-                    if (!found)
+                    // Break if an ok file was found but no segment exists, which means the segment was missing. However, don't
+                    // break if this is the first time through the loop since this means the ok file was written by an async process
+                    // spawned by a prior archive-get execution, which means we should spawn the async process again to see if the
+                    // file exists now. This also prevents spool files from a previous recovery interfering with the current
+                    // recovery.
+                    if (!found && !first)
+                    {
+                        foundOk = true;
                         break;
+                    }
                 }
 
                 // If found then move the WAL segment to the destination directory
@@ -712,8 +723,8 @@ cmdArchiveGet(void)
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
 
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("off"));
 
                     // Generate command options
                     StringList *commandExec = cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, optionReplace, true, false);
@@ -746,14 +757,26 @@ cmdArchiveGet(void)
                 if (found)
                     break;
 
-                // Now that the async process has been launched, throw any errors that are found
-                throwOnError = true;
+                // No longer the first run, so errors will be thrown and missing files will be reported
+                first = false;
             }
             while (waitMore(wait));
 
-            // Log that the file was not found
-            if (result == 1)
-                LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
+            // If the WAL segment was not found
+            if (!found)
+            {
+                // If no ok file was found then something may be wrong with the async process. It's better to throw an error here
+                // than report not found for debugging purposes. Either way PostgreSQL will halt if it has not reached consistency.
+                if (!foundOk)
+                {
+                    THROW_FMT(
+                        ArchiveTimeoutError, "unable to get WAL file '%s' from the archive asynchronously after %s second(s)",
+                        strZ(walSegment), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)));
+                }
+                // Else report that the WAL segment could not be found
+                else
+                    LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
+            }
         }
         // Else perform synchronous get
         else
@@ -828,7 +851,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
         const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
         jobData->archiveFileIdx++;
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
         protocolCommandParamAdd(command, VARSTR(archiveFileMap->request));
 
         // Add actual files to get
@@ -839,7 +862,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
             protocolCommandParamAdd(command, VARSTR(actual->file));
             protocolCommandParamAdd(command, VARUINT(actual->repoIdx));
             protocolCommandParamAdd(command, VARSTR(actual->archiveId));
-            protocolCommandParamAdd(command, VARUINT(actual->cipherType));
+            protocolCommandParamAdd(command, VARUINT64(actual->cipherType));
             protocolCommandParamAdd(command, VARSTR(actual->cipherPassArchive));
         }
 
@@ -909,7 +932,7 @@ cmdArchiveGetAsync(void)
                         ASSERT(fileMap != NULL);
 
                         // Build warnings for status file
-                        String *warning = strNew("");
+                        String *warning = strNew();
 
                         if (!strLstEmpty(fileMap->warnList))
                             strCatFmt(warning, "%s", strZ(strLstJoin(fileMap->warnList, "\n")));
@@ -982,7 +1005,9 @@ cmdArchiveGetAsync(void)
                 archiveAsyncStatusErrorWrite(
                     archiveModeGet, checkResult.errorFile, errorTypeCode(checkResult.errorType), message);
             }
-            // Else log a warning if any files were missing
+            // If any files were missing write an ok file for the first missing file and add any warnings. It is important that this
+            // happen right before the async process exits so the main process can immediately respawn the async process to retry
+            // missing files.
             else if (archiveFileMissing != NULL)
             {
                 LOG_DETAIL_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(archiveFileMissing));
