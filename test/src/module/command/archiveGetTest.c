@@ -2,8 +2,6 @@
 Test Archive Get Command
 ***********************************************************************************************************************************/
 #include "common/compress/helper.h"
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/fdRead.h"
@@ -12,6 +10,8 @@ Test Archive Get Command
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessConfig.h"
+#include "common/harnessFork.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessStorage.h"
@@ -698,6 +698,7 @@ testRun(void)
             "P00   INFO: found 000000010000000100000001 in the archive asynchronously");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n", .remove = true);
 
         // Make sure the process times out when it can't get a lock
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1063,7 +1064,7 @@ testRun(void)
 
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
@@ -1103,8 +1104,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,[]]}\n", "check result");
         TEST_STORAGE_LIST(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n",
-            .remove = true);
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n", .remove = true);
 
         bufUsedSet(serverWrite, 0);
 
