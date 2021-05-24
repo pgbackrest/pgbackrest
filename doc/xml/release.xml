@@ -73,6 +73,17 @@
 
                 <release-feature-list>
                     <release-item>
+                        <github-pull-request id="1413"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <proper>PostgreSQL 14</proper> support.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Use existing variable for GCS test server port."/>
                         <commit subject="Refactor GCS token response parsing into a separate function."/>
                         <commit subject="Add automatic GCS authentication for GCE instances.">

@@ -25,8 +25,9 @@ PostgreSQL version constants
 #define PG_VERSION_11                                               110000
 #define PG_VERSION_12                                               120000
 #define PG_VERSION_13                                               130000
+#define PG_VERSION_14                                               140000
 
-#define PG_VERSION_MAX                                              PG_VERSION_13
+#define PG_VERSION_MAX                                              PG_VERSION_14
 
 /***********************************************************************************************************************************
 Version where various PostgreSQL capabilities were introduced
@@ -77,5 +78,6 @@ PostgreSQL version string constants for use in error messages
 #define PG_VERSION_11_STR                                            "11"
 #define PG_VERSION_12_STR                                            "12"
 #define PG_VERSION_13_STR                                            "13"
+#define PG_VERSION_14_STR                                            "14"
 
 #endif
