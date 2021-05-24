@@ -401,31 +401,33 @@ sub run
 
                                     foreach my $strLine (split("\n", $strShimModuleSrc))
                                     {
-                                        # Renamed shimmed functions
-                                        foreach my $strFunction (@{$rhShim->{$strShimModule}{&TESTDEF_HARNESS_SHIM_FUNCTION}})
+                                        # If shimmed function declaration construction is in progress
+                                        if (defined($strFunctionShim))
                                         {
-                                            # If shimmed function declaration construction is in progress
-                                            if (defined($strFunctionShim))
+                                            # When the beginning of the function block is found, output both the constructed
+                                            # declaration and the renamed implementation.
+                                            if ($strLine =~ /^{/)
                                             {
-                                                # When the beginning of the function block is found, output both the constructed
-                                                # declaration and the renamed implementation.
-                                                if ($strLine =~ /^{/)
-                                                {
-                                                    push(@stryShimModuleSrcRenamed, trim($strFunctionDeclaration) . ";");
-                                                    push(@stryShimModuleSrcRenamed, $strFunctionShim);
-                                                    push(@stryShimModuleSrcRenamed, $strLine);
+                                                push(@stryShimModuleSrcRenamed, trim($strFunctionDeclaration) . ";");
+                                                push(@stryShimModuleSrcRenamed, $strFunctionShim);
+                                                push(@stryShimModuleSrcRenamed, $strLine);
 
-                                                    $strFunctionShim = undef;
-                                                }
-                                                # Else keep constructing the declaration and implementation
-                                                else
-                                                {
-                                                    $strFunctionDeclaration .= "${strLine}\n";
-                                                    $strFunctionShim .= "${strLine}\n";
-                                                }
+                                                $strFunctionShim = undef;
                                             }
-                                            # Else search for shimmed functions
+                                            # Else keep constructing the declaration and implementation
                                             else
+                                            {
+                                                $strFunctionDeclaration .= "${strLine}\n";
+                                                $strFunctionShim .= "${strLine}\n";
+                                            }
+                                        }
+                                        # Else search for shimmed functions
+                                        else
+                                        {
+                                            # Rename shimmed functions
+                                            my $bFound = false;
+
+                                            foreach my $strFunction (@{$rhShim->{$strShimModule}{&TESTDEF_HARNESS_SHIM_FUNCTION}})
                                             {
                                                 # If the function to shim is static then we need to create a declaration with the
                                                 # original name so references to the original name in the C module will compile.
@@ -439,12 +441,16 @@ sub run
 
                                                     $strLine =~ s/^${strFunction}\(/${strFunction}_SHIMMED\(/;
                                                     $strFunctionShim = "${strLineLast}\n${strLine}\n";
+
+                                                    $bFound = true;
+                                                    last;
                                                 }
-                                                # Else just append the line
-                                                else
-                                                {
-                                                    push(@stryShimModuleSrcRenamed, $strLine);
-                                                }
+                                            }
+
+                                            # If the function was not found then just append the line
+                                            if (!$bFound)
+                                            {
+                                                push(@stryShimModuleSrcRenamed, $strLine);
                                             }
                                         }
                                     }

@@ -208,6 +208,7 @@
                         <commit subject="Add shim feature for unit tests."/>
                         <commit subject="Add local process shim."/>
                         <commit subject="Add log shim."/>
+                        <commit subject="Fix shims with more than one function."/>
 
                         <p>Add local processs shim.</p>
                     </release-item>
