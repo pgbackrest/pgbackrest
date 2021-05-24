@@ -148,7 +148,7 @@ exitSafe(int result, bool error, SignalType signalType)
             // On process terminate
             if (result == errorTypeCode(&TermError))
             {
-                errorMessage = strNew("terminated on signal ");
+                errorMessage = strNewZ("terminated on signal ");
 
                 // Terminate from a child
                 if (signalType == signalTypeNone)

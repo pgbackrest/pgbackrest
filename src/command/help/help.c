@@ -85,7 +85,7 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
                     stringBase = stringMatchLast;
                 }
 
-                strLstAdd(this, strNew(stringBase));
+                strLstAddZ(this, stringBase);
             }
         }
         while (stringMatch != NULL);
@@ -112,7 +112,7 @@ helpRenderText(const String *text, const bool internal, size_t indent, bool inde
     ASSERT(text != NULL);
     ASSERT(length > 0);
 
-    String *result = strNew("");
+    String *result = strNew();
 
     // Split the text into paragraphs
     StringList *lineList = strLstNewSplitZ(
@@ -172,7 +172,7 @@ helpRenderValue(const Variant *value, ConfigOptionType type)
         }
         else if (varType(value) == varTypeKeyValue)
         {
-            String *resultTemp = strNew("");
+            String *resultTemp = strNew();
 
             const KeyValue *optionKv = varKv(value);
             const VariantList *keyList = kvKeyList(optionKv);
@@ -191,7 +191,7 @@ helpRenderValue(const Variant *value, ConfigOptionType type)
         }
         else if (varType(value) == varTypeVariantList)
         {
-            String *resultTemp = strNew("");
+            String *resultTemp = strNew();
 
             const VariantList *list = varVarLst(value);
 
@@ -238,7 +238,7 @@ helpRender(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    String *result = strNew(PROJECT_NAME " " PROJECT_VERSION);
+    String *result = strNewZ(PROJECT_NAME " " PROJECT_VERSION);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -300,7 +300,7 @@ helpRender(void)
             }
 
             // Construct message for more help
-            more = strNew("[command]");
+            more = strNewZ("[command]");
         }
         else
         {
@@ -397,7 +397,7 @@ helpRender(void)
 
                 for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    if (cfgParseOptionValid(commandId, cfgCmdRoleDefault, optionId) && !optionData[optionId].internal)
+                    if (cfgParseOptionValid(commandId, cfgCmdRoleMain, optionId) && !optionData[optionId].internal)
                     {
                         const String *section = optionData[optionId].section;
 
@@ -405,7 +405,7 @@ helpRender(void)
                             (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
                              !strEqZ(section, "stanza")))
                         {
-                            section = strNew("command");
+                            section = strNewZ("command");
                         }
 
                         kvAdd(optionKv, VARSTR(section), VARUINT(optionId));
@@ -484,7 +484,7 @@ helpRender(void)
 
                 // Ensure the option is valid
                 const String *optionName = strLstGet(cfgCommandParam(), 0);
-                CfgParseOptionResult option = cfgParseOption(optionName);
+                CfgParseOptionResult option = cfgParseOptionP(optionName);
 
                 // If the option was not found it might be an indexed option without the index, e.g. repo-host instead of
                 // repo1-host. This is valid for help even though the parser will reject it.
@@ -500,7 +500,7 @@ helpRender(void)
                 }
 
                 // Error when option is not found or is invalid for the current command
-                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleDefault, option.id))
+                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleMain, option.id))
                     THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
 
                 // Output option summary and description. Add a warning for internal options.

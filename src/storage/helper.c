@@ -22,6 +22,7 @@ Storage Helper
 /***********************************************************************************************************************************
 Storage path constants
 ***********************************************************************************************************************************/
+STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_STR,                            STORAGE_SPOOL_ARCHIVE);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
 
@@ -297,7 +298,7 @@ storageRepoPathExpression(const String *expression, const String *path)
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
         else
-            result = strNew(STORAGE_PATH_ARCHIVE);
+            result = strNewZ(STORAGE_PATH_ARCHIVE);
 
         // If a subpath should be appended, determine if it is WAL path, else just append the subpath
         if (path != NULL)
@@ -317,7 +318,7 @@ storageRepoPathExpression(const String *expression, const String *path)
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strZ(storageHelper.stanza));
         else
-            result = strNew(STORAGE_PATH_BACKUP);
+            result = strNewZ(STORAGE_PATH_BACKUP);
 
         // Append subpath if provided
         if (path != NULL)
@@ -529,7 +530,14 @@ storageSpoolPathExpression(const String *expression, const String *path)
 
     String *result = NULL;
 
-    if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
+    if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE))
+    {
+        if (path == NULL)
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
+        else
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(storageHelper.stanza), strZ(path));
+    }
+    else if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
     {
         if (path == NULL)
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in", strZ(storageHelper.stanza));

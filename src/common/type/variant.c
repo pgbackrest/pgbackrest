@@ -831,7 +831,7 @@ varNewStrZ(const char *data)
         FUNCTION_TEST_PARAM(STRINGZ, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(varNewStr(data == NULL ? NULL : strNew(data)));
+    FUNCTION_TEST_RETURN(varNewStr(data == NULL ? NULL : strNewZ(data)));
 }
 
 /**********************************************************************************************************************************/
@@ -867,7 +867,7 @@ varStrForce(const Variant *this)
     switch (varType(this))
     {
         case varTypeBool:
-            result = strNew(cvtBoolToConstZ(varBool(this)));
+            result = strNewZ(cvtBoolToConstZ(varBool(this)));
             break;
 
         case varTypeInt:
@@ -875,7 +875,7 @@ varStrForce(const Variant *this)
             char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtIntToZ(varInt(this), working, sizeof(working));
-            result = strNew(working);
+            result = strNewZ(working);
             break;
         }
 
@@ -884,7 +884,7 @@ varStrForce(const Variant *this)
             char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtInt64ToZ(varInt64(this), working, sizeof(working));
-            result = strNew(working);
+            result = strNewZ(working);
             break;
         }
 
@@ -897,7 +897,7 @@ varStrForce(const Variant *this)
             char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtUIntToZ(varUInt(this), working, sizeof(working));
-            result = strNew(working);
+            result = strNewZ(working);
             break;
         }
 
@@ -906,7 +906,7 @@ varStrForce(const Variant *this)
             char working[CVT_BASE10_BUFFER_SIZE];
 
             cvtUInt64ToZ(varUInt64(this), working, sizeof(working));
-            result = strNew(working);
+            result = strNewZ(working);
             break;
         }
 
@@ -976,11 +976,11 @@ varToLog(const Variant *this)
                 break;
 
             case varTypeKeyValue:
-                result = strNew("{KeyValue}");
+                result = strNewZ("{KeyValue}");
                 break;
 
             case varTypeVariantList:
-                result = strNew("{VariantList}");
+                result = strNewZ("{VariantList}");
                 break;
 
             case varTypeBool:

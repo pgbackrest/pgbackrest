@@ -181,7 +181,7 @@ httpHeaderRedact(const HttpHeader *this, const String *key)
 String *
 httpHeaderToLog(const HttpHeader *this)
 {
-    String *result = strNew("{");
+    String *result = strNewZ("{");
     const StringList *keyList = httpHeaderList(this);
 
     for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)

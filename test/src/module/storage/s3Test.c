@@ -194,7 +194,7 @@ testS3DateTime(time_t time)
         strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", gmtime(&time)) != sizeof(buffer) - 1, AssertError,
         "unable to format date");
 
-    FUNCTION_HARNESS_RETURN(STRING, strNew(buffer));
+    FUNCTION_HARNESS_RETURN(STRING, strNewZ(buffer));
 }
 
 /***********************************************************************************************************************************
@@ -206,16 +206,16 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Test strings
-    const String *path = strNew("/");
-    const String *bucket = strNew("bucket");
-    const String *region = strNew("us-east-1");
-    const String *endPoint = strNew("s3.amazonaws.com");
+    const String *path = STRDEF("/");
+    const String *bucket = STRDEF("bucket");
+    const String *region = STRDEF("us-east-1");
+    const String *endPoint = STRDEF("s3.amazonaws.com");
     const String *host = hrnServerHost();
     const unsigned int port = hrnServerPort(0);
     const unsigned int authPort = hrnServerPort(1);
-    const String *accessKey = strNew("AKIAIOSFODNN7EXAMPLE");
-    const String *secretAccessKey = strNew("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
-    const String *securityToken = strNew(
+    const String *accessKey = STRDEF("AKIAIOSFODNN7EXAMPLE");
+    const String *secretAccessKey = STRDEF("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
+    const String *securityToken = STRDEF(
         "AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22wDOk4x4HIZ8j4FZTwdQWLWsKWHGBuFqwAeMicRXmxfpSPfIeoIYRqTflfKD8YUuwthAx7mSEI/q"
         "kPpKPi/kMcGdQrmGdeehM4IC1NtBmUpp2wUE8phUZampKsburEDy0KPkyQDYwT7WZ0wq5VSXDvp75YU9HFvlRd8Tx6q6fE8YQcHNVXAkiY9q6d+xo0rKwT38xV"
         "qr7ZD0u0iPPkUL64lIZbqBAz+scqKmlzm8FDrypNC9Yjc8fPOLn9FX9KSYvKTr4rvx3iSIlTJabIQwj2ICCR/oLxBA==");
@@ -230,7 +230,7 @@ testRun(void)
     hrnCfgArgRaw(commonArgWithoutEndpointList, cfgOptRepoS3Region, region);
 
     // TLS can only be verified in a container
-    if (!testContainer())
+    if (!TEST_IN_CONTAINER)
         hrnCfgArgRawBool(commonArgWithoutEndpointList, cfgOptRepoStorageVerifyTls, false);
 
     // Config settings that are required for every test (with endpoint)
@@ -265,7 +265,7 @@ testRun(void)
             strNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
                     ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
-                cvtBoolToConstZ(testContainer())),
+                cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -273,13 +273,13 @@ testRun(void)
 
         HttpHeader *header = httpHeaderNew(NULL);
         HttpQuery *query = httpQueryNewP();
-        httpQueryAdd(query, strNew("list-type"), strNew("2"));
+        httpQueryAdd(query, STRDEF("list-type"), STRDEF("2"));
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR_Z(
-            httpHeaderGet(header, strNew("authorization")),
+            httpHeaderGet(header, STRDEF("authorization")),
             "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
                 "SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
                 "Signature=cb03bf1d575c1f8904dabf0e573990375340ab293ef7ad18d049fc1338fd89b3",
@@ -289,10 +289,10 @@ testRun(void)
         const Buffer *lastSigningKey = driver->signingKey;
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR_Z(
-            httpHeaderGet(header, strNew("authorization")),
+            httpHeaderGet(header, STRDEF("authorization")),
             "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
                 "SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
                 "Signature=cb03bf1d575c1f8904dabf0e573990375340ab293ef7ad18d049fc1338fd89b3",
@@ -303,10 +303,10 @@ testRun(void)
         TEST_TITLE("change date to generate new signing key");
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20180814T080808Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20180814T080808Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR_Z(
-            httpHeaderGet(header, strNew("authorization")),
+            httpHeaderGet(header, STRDEF("authorization")),
             "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20180814/us-east-1/s3/aws4_request,"
                 "SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
                 "Signature=d0fa9c36426eb94cdbaf287a7872c7a3b6c913f523163d0d7debba0758e36f49",
@@ -319,7 +319,7 @@ testRun(void)
         argList = strLstDup(commonArgWithoutEndpointList);
         hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "custom.endpoint:333");
         hrnCfgArgRawZ(argList, cfgOptRepoStorageCaPath, "/path/to/cert");
-        hrnCfgArgRawFmt(argList, cfgOptRepoStorageCaFile, "%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageCaFile, HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".crt");
         hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -331,17 +331,17 @@ testRun(void)
             strNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
                     ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
-                cvtBoolToConstZ(testContainer())),
+                cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("auth with token");
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, strNew("GET"), strNew("/"), query, strNew("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
             "generate authorization");
         TEST_RESULT_STR_Z(
-            httpHeaderGet(header, strNew("authorization")),
+            httpHeaderGet(header, STRDEF("authorization")),
             "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
                 "SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,"
                 "Signature=85278841678ccbc0f137759265030d7b5e237868dd36eea658426b18344d1685",
@@ -357,7 +357,7 @@ testRun(void)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(strNew("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls, .port = port),
+                        ioFdReadNew(STRDEF("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls, .port = port),
                     "s3 server run");
             }
             HARNESS_FORK_CHILD_END();
@@ -366,7 +366,7 @@ testRun(void)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(strNew("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
+                        ioFdReadNew(STRDEF("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
                         .port = authPort),
                     "auth server run");
             }
@@ -375,9 +375,9 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNew(strNew("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdWriteNew(STRDEF("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
                 IoWrite *auth = hrnServerScriptBegin(
-                    ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
+                    ioFdWriteNew(STRDEF("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("config with keys, token, and host with custom port");
@@ -396,7 +396,7 @@ testRun(void)
 
                 // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_RESULT_VOID(storagePathSyncP(s3, strNew("path")), "path sync is a noop");
+                TEST_RESULT_VOID(storagePathSyncP(s3, STRDEF("path")), "path sync is a noop");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");
@@ -405,7 +405,7 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_GET, "/fi%26le.txt");
                 testResponseP(service, .code = 404);
 
-                TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
+                TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing file");
@@ -414,7 +414,7 @@ testRun(void)
                 testResponseP(service, .code = 404);
 
                 TEST_ERROR(
-                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), FileMissingError,
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), FileMissingError,
                     "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -424,7 +424,7 @@ testRun(void)
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, strNew("file.txt")))), "this is a sample file", "get file");
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt")))), "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
@@ -432,7 +432,7 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_GET, "/file0.txt");
                 testResponseP(service);
 
-                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, strNew("file0.txt")))), "", "get zero-length file");
+                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file0.txt")))), "", "get zero-length file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to temp credentials");
@@ -476,7 +476,7 @@ testRun(void)
                 hrnServerScriptClose(auth);
 
                 TEST_ERROR_FMT(
-                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "HTTP request failed with 301:\n"
                         "*** Path/Query ***:\n"
                         "/latest/meta-data/iam/security-credentials\n"
@@ -496,7 +496,7 @@ testRun(void)
                 hrnServerScriptClose(auth);
 
                 TEST_ERROR(
-                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "role to retrieve temporary credentials not found\n"
                         "HINT: is a valid IAM role associated with this instance?");
 
@@ -517,7 +517,7 @@ testRun(void)
                 hrnServerScriptClose(auth);
 
                 TEST_ERROR_FMT(
-                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "HTTP request failed with 300:\n"
                         "*** Path/Query ***:\n"
                         "/latest/meta-data/iam/security-credentials/credrole\n"
@@ -537,7 +537,7 @@ testRun(void)
                 hrnServerScriptClose(auth);
 
                 TEST_ERROR_FMT(
-                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "role '%s' not found\n"
                         "HINT: is '%s' a valid IAM role associated with this instance?",
                     strZ(credRole), strZ(credRole));
@@ -553,7 +553,7 @@ testRun(void)
                 hrnServerScriptClose(auth);
 
                 TEST_ERROR(
-                    storageGetP(storageNewReadP(s3, strNew("file.txt"))), FormatError,
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), FormatError,
                     "unable to retrieve temporary credentials: IAM role is not configured");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -576,7 +576,7 @@ testRun(void)
                 testResponseP(service, .code = 303, .content = "CONTENT");
 
                 StorageRead *read = NULL;
-                TEST_ASSIGN(read, storageNewReadP(s3, strNew("file.txt"), .ignoreMissing = true), "new read file");
+                TEST_ASSIGN(read, storageNewReadP(s3, STRDEF("file.txt"), .ignoreMissing = true), "new read file");
                 TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
                 TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
 
@@ -625,7 +625,7 @@ testRun(void)
                 const Buffer *oldSigningKey = bufDup(driver->signingKey);
 
                 StorageWrite *write = NULL;
-                TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
 
                 TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
@@ -655,7 +655,7 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "");
                 testResponseP(service);
 
-                TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, NULL), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -688,7 +688,7 @@ testRun(void)
                         "</CompleteMultipartUpload>\n");
                 testResponseP(service);
 
-                TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -721,7 +721,7 @@ testRun(void)
                         "</CompleteMultipartUpload>\n");
                 testResponseP(service);
 
-                TEST_ASSIGN(write, storageNewWriteP(s3, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -730,7 +730,7 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_HEAD, "/BOGUS");
                 testResponseP(service, .code = 404);
 
-                TEST_RESULT_BOOL(storageExistsP(s3, strNew("BOGUS")), false, "check");
+                TEST_RESULT_BOOL(storageExistsP(s3, STRDEF("BOGUS")), false, "check");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for / does not exist");
@@ -744,7 +744,7 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_HEAD, "/BOGUS");
                 testResponseP(service, .code = 404);
 
-                TEST_RESULT_BOOL(storageInfoP(s3, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+                TEST_RESULT_BOOL(storageInfoP(s3, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for file");
@@ -753,7 +753,7 @@ testRun(void)
                 testResponseP(service, .header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
 
                 StorageInfo info;
-                TEST_ASSIGN(info, storageInfoP(s3, strNew("subdir/file1.txt")), "file exists");
+                TEST_ASSIGN(info, storageInfoP(s3, STRDEF("subdir/file1.txt")), "file exists");
                 TEST_RESULT_BOOL(info.exists, true, "    check exists");
                 TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
                 TEST_RESULT_UINT(info.size, 9999, "    check exists");
@@ -765,7 +765,7 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_HEAD, "/subdir/file2.txt");
                 testResponseP(service, .header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
 
-                TEST_ASSIGN(info, storageInfoP(s3, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
+                TEST_ASSIGN(info, storageInfoP(s3, STRDEF("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
                 TEST_RESULT_BOOL(info.exists, true, "    check exists");
                 TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
                 TEST_RESULT_UINT(info.size, 0, "    check exists");
@@ -775,7 +775,7 @@ testRun(void)
                 TEST_TITLE("errorOnMissing invalid because there are no paths");
 
                 TEST_ERROR(
-                    storageListP(s3, strNew("/"), .errorOnMissing = true), AssertError,
+                    storageListP(s3, STRDEF("/"), .errorOnMissing = true), AssertError,
                     "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -784,7 +784,7 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 testResponseP(service, .code = 344);
 
-                TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
+                TEST_ERROR(storageListP(s3, STRDEF("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
                     "*** Path/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
@@ -808,7 +808,7 @@ testRun(void)
                         "<Code>SomeOtherCode</Code>"
                         "</Error>");
 
-                TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
+                TEST_ERROR(storageListP(s3, STRDEF("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
                     "*** Path/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
@@ -845,15 +845,15 @@ testRun(void)
 
                 HarnessStorageInfoListCallbackData callbackData =
                 {
-                    .content = strNew(""),
+                    .content = strNew(),
                 };
 
                 TEST_ERROR(
-                    storageInfoListP(s3, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
+                    storageInfoListP(s3, STRDEF("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
                     AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(s3, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
+                    storageInfoListP(s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
                     "test_path {path}\n"
@@ -877,10 +877,10 @@ testRun(void)
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(s3, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                    storageInfoListP(s3, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
@@ -902,11 +902,11 @@ testRun(void)
                         "    </Contents>"
                         "</ListBucketResult>");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        s3, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
+                        s3, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test.*$"),
                         .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
@@ -952,11 +952,11 @@ testRun(void)
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        s3, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                        s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
@@ -993,11 +993,11 @@ testRun(void)
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        s3, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
+                        s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test(1|3)"),
                         .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
@@ -1031,7 +1031,7 @@ testRun(void)
                 TEST_TITLE("error when no recurse because there are no paths");
 
                 TEST_ERROR(
-                    storagePathRemoveP(s3, strNew("/")), AssertError,
+                    storagePathRemoveP(s3, STRDEF("/")), AssertError,
                     "assertion 'param.recurse || storageFeature(this, storageFeaturePath)' failed");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -1062,7 +1062,7 @@ testRun(void)
                 testResponseP(
                     service, .content = "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"></DeleteResult>");
 
-                TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/"), .recurse = true), "remove");
+                TEST_RESULT_VOID(storagePathRemoveP(s3, STRDEF("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files in empty subpath (nothing to do)");
@@ -1075,7 +1075,7 @@ testRun(void)
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                         "</ListBucketResult>");
 
-                TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path"), .recurse = true), "remove");
+                TEST_RESULT_VOID(storagePathRemoveP(s3, STRDEF("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files with continuation");
@@ -1128,7 +1128,7 @@ testRun(void)
                         "</Delete>\n");
                 testResponseP(service);
 
-                TEST_RESULT_VOID(storagePathRemoveP(s3, strNew("/path/to"), .recurse = true), "remove");
+                TEST_RESULT_VOID(storagePathRemoveP(s3, STRDEF("/path/to"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove error");
@@ -1164,7 +1164,7 @@ testRun(void)
                             "</DeleteResult>");
 
                 TEST_ERROR(
-                    storagePathRemoveP(s3, strNew("/path"), .recurse = true), FileRemoveError,
+                    storagePathRemoveP(s3, STRDEF("/path"), .recurse = true), FileRemoveError,
                     "unable to remove file 'sample2.txt': [AccessDenied] Access Denied");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -1173,7 +1173,7 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_DELETE, "/bucket/path/to/test.txt");
                 testResponseP(service, .code = 204);
 
-                TEST_RESULT_VOID(storageRemoveP(s3, strNew("/path/to/test.txt")), "remove");
+                TEST_RESULT_VOID(storageRemoveP(s3, STRDEF("/path/to/test.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);

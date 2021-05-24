@@ -15,6 +15,12 @@ Functions
 void configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel);
 
 // Parse option name and return option info
+typedef struct CfgParseOptionParam
+{
+    VAR_PARAM_HEADER;
+    bool prefixMatch;                                               // Allow prefix matches, e.g. 'stanz' for 'stanza'
+} CfgParseOptionParam;
+
 typedef struct CfgParseOptionResult
 {
     bool found;                                                     // Was the option found?
@@ -25,7 +31,10 @@ typedef struct CfgParseOptionResult
     bool deprecated;                                                // Is the option deprecated?
 } CfgParseOptionResult;
 
-CfgParseOptionResult cfgParseOption(const String *optionName);
+#define cfgParseOptionP(optionName, ...)                                                                                            \
+    cfgParseOption(optionName, (CfgParseOptionParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+CfgParseOptionResult cfgParseOption(const String *const optionName, const CfgParseOptionParam param);
 
 // Default value for the option
 const char *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);

@@ -17,7 +17,7 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("InfoBackup"))
@@ -76,7 +76,7 @@ testRun(void)
             infoBackup,
             infoBackupNew(
                 PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10),
-                strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+                STRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -225,13 +225,13 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), "20161219-212741F_20161219-212918I\n",
             "incremental=true");
 
-        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212918I")), "delete a backup");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F_20161219-212918I")), "delete a backup");
         TEST_RESULT_STRLST_Z(
             strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
             "20161219-212741F\n20161219-212741F_20161219-212803D\n", "  backup deleted");
 
-        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212803D")), "delete all backups");
-        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F")), "  deleted");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F_20161219-212803D")), "delete all backups");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F")), "  deleted");
         TEST_RESULT_UINT(strLstSize(infoBackupDataLabelList(infoBackup, NULL)), 0, "  no backups remain");
 
         // infoBackupDataToLog
@@ -450,7 +450,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
+        strLstAddZ(argList, "--repo-path=" TEST_PATH);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         // Create manifest for upgrade db (id=2), save to disk
@@ -509,7 +509,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
            storagePutP(storageNewWriteP(storageRepoWrite(),
-           strNew(STORAGE_REPO_BACKUP "/20190923-164324F/" BACKUP_MANIFEST_FILE)), manifestContent),
+           STRDEF(STORAGE_REPO_BACKUP "/20190923-164324F/" BACKUP_MANIFEST_FILE)), manifestContent),
            "write main manifest for pgId=2 - valid backup to add");
 
         manifestContent = harnessInfoChecksumZ
@@ -548,7 +548,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
             manifestContent), "write manifest copy for pgId=1");
 
         manifestContent = harnessInfoChecksumZ
@@ -591,7 +591,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084555F/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084555F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup pgId mismatch");
 
         manifestContent = harnessInfoChecksumZ
@@ -634,7 +634,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084666F/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084666F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup system-id mismatch");
 
         manifestContent = harnessInfoChecksumZ
@@ -677,16 +677,16 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084777F/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084777F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup version mismatch");
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE)),
             manifestContentIncr), "write manifest for dependent backup that will be removed from backup.info");
 
         TEST_RESULT_VOID(
-            storagePathCreateP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F")),
+            storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F")),
             "create backup on disk that is in current but no manifest");
 
         TEST_RESULT_STRLST_Z(
@@ -720,7 +720,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             backupData.backupLabel, "20190923-164324F", "backups not on disk removed, dependent backup removed and not added back, "
             "valid backup on disk added, manifest copy-only ignored");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
             "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
             "P00   WARN: invalid backup '20190818-084502F_20190820-084502I' cannot be added to current backups\n"
@@ -731,12 +731,12 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePathRemoveP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I"),
+            storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I"),
             .recurse = true), "remove dependent backup from disk");
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "reconstruct does not attempt to add back dependent backup");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
             "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
@@ -747,8 +747,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             storageCopyP(
-                storageNewReadP(storageRepo(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
-                storageNewWriteP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
+                storageNewReadP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
+                storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
                 "write manifest from copy-only for pgId=1");
 
         manifestContentIncr = harnessInfoChecksumZ
@@ -794,7 +794,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084444F_20190924-084502D/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F_20190924-084502D/" BACKUP_MANIFEST_FILE)),
             manifestContentIncr), "write manifest for dependent backup to be added to full already in backup.info");
 
         TEST_RESULT_VOID(
@@ -809,7 +809,7 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, NULL),
             "20190818-084444F\n20190818-084444F_20190924-084502D\n20190923-164324F\n",
             "previously ignored pgId=1 manifest copy-only now added before existing, and add dependent found");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084444F' found in repository added to backup.info\n"
             "P00   WARN: backup '20190818-084444F_20190924-084502D' found in repository added to backup.info\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
@@ -820,14 +820,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoBackupLoadFile() and infoBackupSaveFile()"))
     {
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), FileMissingError,
-            "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
-            "FileMissingError: unable to open missing file '%s/backup.info' for read\n"
-            "FileMissingError: unable to open missing file '%s/backup.info.copy' for read\n"
+            "unable to load info file '" TEST_PATH "/backup.info' or '" TEST_PATH "/backup.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info.copy' for read\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "HINT: has a stanza-create been performed?",
-            testPath(), testPath(), testPath(), testPath());
+            "HINT: has a stanza-create been performed?");
 
         InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), NULL);
         TEST_RESULT_VOID(

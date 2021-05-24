@@ -268,7 +268,7 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
             {
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = strNew("");
+                    result = strNew();
                 }
                 MEM_CONTEXT_PRIOR_END();
 
@@ -296,7 +296,7 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
 String *
 httpQueryToLog(const HttpQuery *this)
 {
-    String *result = strNew("{");
+    String *result = strNewZ("{");
     const StringList *keyList = httpQueryList(this);
 
     for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)

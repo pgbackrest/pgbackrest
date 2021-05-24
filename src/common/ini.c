@@ -281,7 +281,7 @@ iniParse(Ini *this, const String *content)
                                 THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
 
                             // Store the section/key/value
-                            iniSet(this, section, key, strTrim(strNew(lineEqual + 1)));
+                            iniSet(this, section, key, strTrim(strNewZ(lineEqual + 1)));
                         }
                     }
                 }
@@ -398,7 +398,7 @@ iniLoad(
 
                             // Get key/value
                             key = strNewN(linePtr, (size_t)(lineEqual - linePtr));
-                            value = strNew(lineEqual + 1);
+                            value = strNewZ(lineEqual + 1);
 
                             // Check that the value is valid JSON
                             TRY_BEGIN()

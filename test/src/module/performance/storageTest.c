@@ -125,7 +125,7 @@ testIoRateNew(uint64_t bytesPerSec)
             .bytesPerSec = bytesPerSec,
         };
 
-        this = ioFilterNewP(strNew("TestIoRate"), driver, NULL, .in = testIoRateProcess);
+        this = ioFilterNewP(STRDEF("TestIoRate"), driver, NULL, .in = testIoRateProcess);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -144,8 +144,8 @@ testRun(void)
     if (testBegin("storageInfoList()"))
     {
         // One million files represents a fairly large cluster
-        CHECK(testScale() <= 2000);
-        uint64_t fileTotal = (uint64_t)1000000 * testScale();
+        CHECK(TEST_SCALE <= 2000);
+        uint64_t fileTotal = (uint64_t)1000000 * TEST_SCALE;
 
         HARNESS_FORK_BEGIN()
         {
@@ -172,12 +172,12 @@ testRun(void)
                     strIdFromZ(stringIdBit6, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
 
                 // Setup handler for remote storage protocol
-                IoRead *read = ioFdReadNew(strNew("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
+                IoRead *read = ioFdReadNew(STRDEF("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("storage server write"), HARNESS_FORK_CHILD_WRITE(), 1000);
+                IoWrite *write = ioFdWriteNew(STRDEF("storage server write"), HARNESS_FORK_CHILD_WRITE(), 1000);
                 ioWriteOpen(write);
 
-                ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
+                ProtocolServer *server = protocolServerNew(STRDEF("storage test server"), STRDEF("test"), read, write);
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
                 protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
@@ -188,12 +188,12 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 // Create client
-                IoRead *read = ioFdReadNew(strNew("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000);
+                IoRead *read = ioFdReadNew(STRDEF("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000);
+                IoWrite *write = ioFdWriteNew(STRDEF("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000);
                 ioWriteOpen(write);
 
-                ProtocolClient *client = protocolClientNew(strNew("storage test client"), strNew("test"), read, write);
+                ProtocolClient *client = protocolClientNew(STRDEF("storage test client"), STRDEF("test"), read, write);
 
                 // Create remote storage
                 Storage *storageRemote = storageRemoteNew(
@@ -203,8 +203,7 @@ testRun(void)
 
                 // Storage info list
                 TEST_RESULT_VOID(
-                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL),
-                    "list %" PRIu64 " remote files", fileTotal);
+                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL), "list remote files");
 
                 TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 
@@ -223,8 +222,8 @@ testRun(void)
         ioBufferSizeSet(4 * 1024 * 1024);
 
         // 1MB is a fairly normal table size
-        CHECK(testScale() <= 1024 * 1024 * 1024);
-        uint64_t blockTotal = (uint64_t)1 * testScale();
+        CHECK(TEST_SCALE <= 1024 * 1024 * 1024);
+        uint64_t blockTotal = (uint64_t)1 * TEST_SCALE;
 
         // Set iteration
         unsigned int iteration = 1;
@@ -234,7 +233,7 @@ testRun(void)
         uint64_t rateOut = 0; // MB/s (0 disables)
 
         // Get the sample pages from disk
-        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(STR(testRepoPath())), STRDEF("test/data/filecopy.table.bin")));
+        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(HRN_PATH_REPO_STR), STRDEF("test/data/filecopy.table.bin")));
         ASSERT(bufUsed(block) == 1024 * 1024);
 
         // Build the input buffer

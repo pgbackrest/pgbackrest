@@ -14,7 +14,7 @@ Helper functions
 ***********************************************************************************************************************************/
 void
 archiveGenerate(
-    Storage *storageTest, String *archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
+    Storage *storageTest, const String *archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
     const char *majorWal)
 {
     // For simplicity, only allow 2 digits
@@ -39,7 +39,7 @@ archiveGenerate(
 String *
 archiveExpectList(const unsigned int start, unsigned int end, const char *majorWal)
 {
-    String *result = strNew("");
+    String *result = strNew();
 
     // For simplicity, only allow 2 digits
     if (end > 99)
@@ -68,16 +68,16 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    String *backupStanzaPath = strNew("repo/backup/db");
+    const String *backupStanzaPath = STRDEF("repo/backup/db");
     String *backupInfoFileName = strNewFmt("%s/backup.info", strZ(backupStanzaPath));
-    String *archiveStanzaPath = strNew("repo/archive/db");
+    const String *archiveStanzaPath = STRDEF("repo/archive/db");
     String *archiveInfoFileName = strNewFmt("%s/archive.info", strZ(archiveStanzaPath));
 
     StringList *argListBase = strLstNew();
     strLstAddZ(argListBase, "--stanza=db");
-    strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
+    strLstAddZ(argListBase, "--repo1-path=" TEST_PATH "/repo");
 
     StringList *argListAvoidWarn = strLstDup(argListBase);
     strLstAddZ(argListAvoidWarn, "--repo1-retention-full=1");  // avoid warning
@@ -167,8 +167,8 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
 
         // Create backup directories and manifest files
-        String *full1 = strNew("20181119-152138F");
-        String *full2 = strNew("20181119-152800F");
+        const String *full1 = STRDEF("20181119-152138F");
+        const String *full2 = STRDEF("20181119-152800F");
         String *full1Path = strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(full1));
         String *full2Path = strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(full2));
 
@@ -219,11 +219,11 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup, 0), 0, "retention-full not set");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-            " of space\n"
+                " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-            " maximum.");
+                " maximum.");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - full backup no dependencies expired");
@@ -238,7 +238,7 @@ testRun(void)
             "20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n20181119-152900F\n"
                 "20181119-152900F_20181119-152600D\n",
             "remaining backups correct");
-        harnessLogResult("P00   INFO: repo1: expire full backup 20181119-152138F");
+        TEST_RESULT_LOG("P00   INFO: repo1: expire full backup 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - full backup with dependencies expired");
@@ -252,9 +252,9 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152900F\n20181119-152900F_20181119-152600D\n",
             "remaining backups correct");
-        harnessLogResult(
-            "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D, "
-            "20181119-152800F_20181119-152155I");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D,"
+                " 20181119-152800F_20181119-152155I");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - no backups expired");
@@ -305,7 +305,7 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, NULL),
             "20181119-152138F\n20181119-152800F\n20181119-152900F\n20181119-152900F_20181119-152600D\n",
             "remaining backups correct");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire diff backup set 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I");
 
         TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff=2 but no more to expire");
@@ -322,7 +322,7 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, NULL),
             "20181119-152138F\n20181119-152800F\n20181119-152900F\n20181119-152900F_20181119-152600D\n",
             "  remaining backups correct");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire diff backup set 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -381,8 +381,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152800F\n20181119-152800F_20181119-152155D\n",
             "remaining backups correct");
-        harnessLogResult(
-            "P00   INFO: repo1: expire diff backup 20181119-152800F_20181119-152152D");
+        TEST_RESULT_LOG("P00   INFO: repo1: expire diff backup 20181119-152800F_20181119-152152D");
     }
 
     // *****************************************************************************************************************************
@@ -445,7 +444,7 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL, 0), "remove backups not in backup.info current");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: remove expired backup 20181119-152100F_20181119-152152D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152100F");
 
@@ -476,7 +475,7 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL, 0), "remove backups - backup.info current empty");
 
-        harnessLogResult("P00   INFO: repo1: remove expired backup 20181119-152138F");
+        TEST_RESULT_LOG("P00   INFO: repo1: remove expired backup 20181119-152138F");
         TEST_RESULT_STRLST_Z(
             strLstSort(storageListP(storageTest, backupStanzaPath), sortOrderAsc),
             "20181118-152100F_20181119-152152D.save\nbackup.info\nbogus\n", "remaining file/directories correct");
@@ -494,8 +493,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-host=/repo/not/local");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_ERROR_FMT(
-            cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
+        TEST_ERROR(cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check stop file");
@@ -508,7 +506,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
-        TEST_ERROR_FMT(cmdExpire(), StopError, "stop file exists for stanza db");
+        TEST_ERROR(cmdExpire(), StopError, "stop file exists for stanza db");
         TEST_RESULT_VOID(
             storageRemoveP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "remove the stop file");
 
@@ -538,15 +536,15 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "archive retention not set");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-            " of space\n"
+                " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-            " maximum.\n"
+                " maximum.\n"
             "P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired");
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, true, 0), "archive retention not set - retention-full-type=time");
-        harnessLogResult("P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
+        TEST_RESULT_LOG("P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - no current backups");
@@ -557,11 +555,11 @@ testRun(void)
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "archive retention set, retention type default, no current backups");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-            " of space\n"
+                " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-            " maximum.");
+                " maximum.");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - no archive on disk");
@@ -750,7 +748,7 @@ testRun(void)
             removeExpiredArchive(infoBackup, false, 0),
             "full counts as differential and incremental associated with differential expires");
 
-        String *result = strNew("");
+        String *result = strNew();
         strCatFmt(
             result,
             "%s%s%s%s",
@@ -784,7 +782,7 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "differential and full count as an incremental");
 
-        result = strNew("");
+        result = strNew();
         strCatFmt(
             result,
             "%s%s%s",
@@ -846,7 +844,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))), true,
             "backup not removed");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F");
 
@@ -854,8 +852,8 @@ testRun(void)
         TEST_TITLE("expire via backup command");
 
         // Copy the repo to another repo
-        TEST_SYSTEM_FMT("mkdir %s/repo2", testPath());
-        TEST_SYSTEM_FMT("cp -r %s/repo/* %s/repo2/", testPath(), testPath());
+        HRN_SYSTEM("mkdir " TEST_PATH "/repo2");
+        HRN_SYSTEM("cp -r " TEST_PATH "/repo/* " TEST_PATH "/repo2/");
 
         // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);
@@ -863,7 +861,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-diff=3");
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "2");
@@ -871,7 +869,7 @@ testRun(void)
 
         StringList *argList2 = strLstDup(argList);
         hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
-        strLstAdd(argList2, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList2, "--pg1-path=" TEST_PATH "/pg");
         harnessCfgLoad(cfgCmdBackup, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
@@ -882,7 +880,7 @@ testRun(void)
             storagePathExistsP(storageTest, strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanzaPath))), true,
             "archive sub path repo1 not removed");
 
-        String *backupLabel = strNew("20181119-152138F");
+        const String *backupLabel = STRDEF("20181119-152138F");
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageTest, STRDEF("repo2/backup/db/backup.info"), cipherTypeNone, NULL),
             "get backup.info repo2");
@@ -890,7 +888,7 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info repo1");
         TEST_RESULT_BOOL(strLstExists(infoBackupDataLabelList(infoBackup, NULL), backupLabel), true, "backup exists repo1");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo2: expire full backup 20181119-152138F\n"
             "P00   INFO: repo2: remove expired backup 20181119-152138F");
 
@@ -905,7 +903,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1/0000000100000000")), false,
             "archive sub path removed");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152138F");
 
@@ -914,7 +912,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "1");
@@ -939,7 +937,7 @@ testRun(void)
             "repo1: backup.info.copy moved to backup.info.copy.save");
 
         // Rename archive.info file on repo2 to cause error
-        String *archiveInfoFileNameRepo2 = strNew("repo2/archive/db/archive.info");
+        const String *archiveInfoFileNameRepo2 = STRDEF("repo2/archive/db/archive.info");
         TEST_RESULT_VOID(
             storageMoveP(storageTest,
                 storageNewReadP(storageTest, archiveInfoFileNameRepo2),
@@ -948,30 +946,28 @@ testRun(void)
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 2 error(s), check the log file for details");
-        harnessLogResult(
-            strZ(strNewFmt(
-                "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '%s/%s' or '%s/%s':\n"
-                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
-                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
-                "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
-                "            HINT: has a stanza-create been performed?\n"
-                "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
+        TEST_RESULT_LOG_FMT(
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/%s' or '" TEST_PATH "/%s':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
+            "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
                 " 20181119-152800F_20181119-152155I\n"
-                "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
-                "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
-                "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '%s/%s' or '%s/%s':\n"
-                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
-                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
-                "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-                "            HINT: is archive_command configured correctly in postgresql.conf?\n"
-                "            HINT: has a stanza-create been performed?\n"
-                "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
+            "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH "/%s' or '" TEST_PATH "/%s':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
+            "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
                 " archiving scheme.",
-                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
-                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
-                testPath(), strZ(archiveInfoFileNameRepo2), testPath(),
-                strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))), testPath(), strZ(archiveInfoFileNameRepo2),
-                testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))))));
+            strZ(backupInfoFileName), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))), strZ(backupInfoFileName),
+            strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))), strZ(archiveInfoFileNameRepo2),
+            strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))), strZ(archiveInfoFileNameRepo2),
+            strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))));
 
         // Restore saved archive.info file
         TEST_RESULT_VOID(
@@ -985,27 +981,26 @@ testRun(void)
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
-        harnessLogResult(
-            strZ(strNewFmt(
-                "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '%s/%s' or '%s/%s':\n"
-                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
-                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
-                "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
-                "            HINT: has a stanza-create been performed?\n"
-                "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
+        TEST_RESULT_LOG_FMT(
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/%s' or '" TEST_PATH "/%s':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
+            "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
                 " 20181119-152800F_20181119-152155I\n"
-                "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
-                "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
-                "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002,"
+            "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
+            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002,"
                 " stop = 000000020000000000000002\n"
-                "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D,"
+            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D,"
                 " start = 000000020000000000000009\n"
-                "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004,"
+            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004,"
                 " stop = 000000020000000000000007\n"
-                "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
-                "P00 DETAIL: [DRY-RUN] repo2: 10-2 no archive to remove",
-                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
-                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))));
+            "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
+            "P00 DETAIL: [DRY-RUN] repo2: 10-2 no archive to remove",
+            strZ(backupInfoFileName), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))), strZ(backupInfoFileName),
+            strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))));
 
         // Restore saved backup.info files
         TEST_RESULT_VOID(
@@ -1036,28 +1031,29 @@ testRun(void)
                 storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)))),
             true, "backup not removed");
 
-        harnessLogResult(strZ(strNewFmt(
+        TEST_RESULT_LOG_FMT(
             "P00   INFO: [DRY-RUN] repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D, "
-            "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
+                "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F\n"
-            "P00   INFO: [DRY-RUN] repo1: remove archive path %s/%s/9.4-1\n"
+            "P00   INFO: [DRY-RUN] repo1: remove archive path " TEST_PATH "/%s/9.4-1\n"
             "P00 DETAIL: [DRY-RUN] repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00 DETAIL: [DRY-RUN] repo1: 10-2 no archive to remove\n"
             "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
-            " 20181119-152800F_20181119-152155I\n"
+                " 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002,"
-            " stop = 000000020000000000000002\n"
+                " stop = 000000020000000000000002\n"
             "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D,"
-            " start = 000000020000000000000009\n"
+                " start = 000000020000000000000009\n"
             "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004,"
-            " stop = 000000020000000000000007\n"
+                " stop = 000000020000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
-            "P00 DETAIL: [DRY-RUN] repo2: 10-2 no archive to remove", testPath(), strZ(archiveStanzaPath))));
+            "P00 DETAIL: [DRY-RUN] repo2: 10-2 no archive to remove",
+            strZ(archiveStanzaPath));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, archive and backups removed");
@@ -1070,27 +1066,28 @@ testRun(void)
             storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1")),
             false, "archive path removed");
 
-        harnessLogResult(strZ(strNewFmt(
+        TEST_RESULT_LOG_FMT(
             "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D, "
-            "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
+                "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"
-            "P00   INFO: repo1: remove archive path %s/%s/9.4-1\n"
+            "P00   INFO: repo1: remove archive path " TEST_PATH "/%s/9.4-1\n"
             "P00 DETAIL: repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00 DETAIL: repo1: 10-2 no archive to remove\n"
             "P00   INFO: repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
-            " 20181119-152800F_20181119-152155I\n"
+                " 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00 DETAIL: repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002,"
-            " stop = 000000020000000000000002\n"
+                " stop = 000000020000000000000002\n"
             "P00 DETAIL: repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D,"
-            " start = 000000020000000000000009\n"
+                " start = 000000020000000000000009\n"
             "P00 DETAIL: repo2: 9.4-1 remove archive, start = 000000020000000000000004, stop = 000000020000000000000007\n"
             "P00 DETAIL: repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
-            "P00 DETAIL: repo2: 10-2 no archive to remove", testPath(), strZ(archiveStanzaPath))));
+            "P00 DETAIL: repo2: 10-2 no archive to remove",
+            strZ(archiveStanzaPath));
 
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup.info updated on disk");
@@ -1109,7 +1106,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on any repo");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
             "            HINT: run the info command and confirm the backup is listed");
 
@@ -1118,7 +1115,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on requested repo");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
             "            HINT: run the info command and confirm the backup is listed");
 
@@ -1129,11 +1126,11 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "label format OK and expired on specified repo");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: [DRY-RUN] repo1: expiring latest backup 20181119-152900F_20181119-152500I - the ability to perform"
-            " point-in-time-recovery (PITR) may be affected\n"
+                " point-in-time-recovery (PITR) may be affected\n"
             "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
-            " expires) can cause gaps in the WAL.\n"
+                " expires) can cause gaps in the WAL.\n"
             "P00   INFO: [DRY-RUN] repo1: expire adhoc backup 20181119-152900F_20181119-152500I\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152900F_20181119-152500I");
 
@@ -1150,12 +1147,11 @@ testRun(void)
         archiveGenerate(storageTest, archiveStanzaPath, 1, 1, "9.4-1", "0000000100000000");
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
-        harnessLogResult(
-            strZ(strNewFmt("P00   INFO: repo1: remove archive path %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
+        TEST_RESULT_LOG_FMT("P00   INFO: repo1: remove archive path " TEST_PATH "/%s/9.4-1", strZ(archiveStanzaPath));
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
@@ -1228,9 +1224,9 @@ testRun(void)
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "backup earlier than selected for retention does not have archive-start");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002,"
-            " stop = 000000010000000000000002\n"
+                " stop = 000000010000000000000002\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000004\n"
             "P00 DETAIL: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00 DETAIL: repo1: 9.4-1 remove archive, start = 000000010000000000000003, stop = 000000010000000000000003");
@@ -1318,7 +1314,7 @@ testRun(void)
             storageExistsP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), true,
             "history file not removed");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 no archive to remove\n"
             "P00 DETAIL: [DRY-RUN] repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000030000000000000006\n"
@@ -1341,7 +1337,7 @@ testRun(void)
             storageExistsP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), true,
             "00000003.history file not removed");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
             "P00 DETAIL: repo1: 9.4-1 no archive to remove\n"
             "P00 DETAIL: repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000030000000000000006\n"
@@ -1354,7 +1350,7 @@ testRun(void)
         // Load Parameters
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         harnessCfgLoad(cfgCmdBackup, argList);
 
         storagePutP(
@@ -1368,7 +1364,7 @@ testRun(void)
             storageExistsP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), true,
             "00000003.history file not removed");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
             "P00 DETAIL: repo1: 9.4-1 no archive to remove\n"
             "P00 DETAIL: repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000030000000000000006\n"
@@ -1460,11 +1456,10 @@ testRun(void)
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
-            "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not"
-            " match");
+            "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
         TEST_RESULT_STRLST_STR(
             strLstSort(storageListP(
                 storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc),
@@ -1491,7 +1486,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1511,7 +1506,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1590,7 +1585,7 @@ testRun(void)
         // here we are testing that things on disk that we are not aware of are not touched.
         TEST_RESULT_VOID(cmdExpire(), "Expire archive that archive.info is aware of");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: repo1: expire full backup 20181119-152800F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"
@@ -1737,7 +1732,7 @@ testRun(void)
                 "option-online=false\n"
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[db]\n"
                 "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
@@ -1817,16 +1812,16 @@ testRun(void)
             true, "only adhoc and dependents removed - resumable and all other backups remain");
         TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
             STRDEF("20181119-152900F"), "latest link not updated");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire adhoc backup set 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000020000000000000001,"
-            " stop = 000000020000000000000001\n"
+                " stop = 000000020000000000000001\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002\n"
             "P00 DETAIL: repo1: 9.4-1 no archive to remove\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002,"
-            " stop = 000000010000000000000004\n"
+                " stop = 000000010000000000000004\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152900F, start = 000000010000000000000006\n"
             "P00 DETAIL: repo1: 12-2 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00 DETAIL: repo1: 12-2 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005");
@@ -1853,13 +1848,13 @@ testRun(void)
                 strZ(backupStanzaPath))) &&
             !storageExistsP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)))),
             true, "only adhoc full removed");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire adhoc backup 20181119-152138F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002\n"
             "P00 DETAIL: repo1: 9.4-1 remove archive, start = 000000020000000000000001, stop = 000000020000000000000001\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002,"
-            " stop = 000000010000000000000004\n"
+                " stop = 000000010000000000000004\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152900F, start = 000000010000000000000006\n"
             "P00 DETAIL: repo1: 12-2 no archive to remove");
 
@@ -1871,7 +1866,7 @@ testRun(void)
         strLstAddZ(argList, "--set=20181119-152900F");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        String *archiveRemaining = strNew("");
+        String *archiveRemaining = strNew();
         strCatFmt(
             archiveRemaining, "%s%s", strZ(archiveExpectList(2, 4, "0000000100000000")),
             strZ(archiveExpectList(6, 10, "0000000100000000")));
@@ -1887,11 +1882,11 @@ testRun(void)
                 storageTest, strNewFmt("%s/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
                 strZ(backupStanzaPath)))),
             true, "latest and resumable removed");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: repo1: expiring latest backup 20181119-152900F - the ability to perform point-in-time-recovery (PITR) may"
-            " be affected\n"
-            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
-            " (even in prior expires) can cause gaps in the WAL.\n"
+                " be affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
+                " expires) can cause gaps in the WAL.\n"
             "P00   INFO: repo1: expire adhoc backup 20181119-152900F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152900F_20181119-153000I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152900F\n"
@@ -1916,9 +1911,9 @@ testRun(void)
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
-            " this repo");
+                " this repo");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("allow adhoc expire on last full backup in prior db-id");
@@ -1935,14 +1930,13 @@ testRun(void)
             !storageExistsP(
                 storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)))),
             true, "only last prior backup removed");
-        harnessLogResult(
-            strZ(strNewFmt(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire adhoc backup set 20181119-152800F, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"
-            "P00   INFO: repo1: remove archive path %s/repo/archive/db/9.4-1\n"
+            "P00   INFO: repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
-            "P00 DETAIL: repo1: 12-2 no archive to remove", testPath())));
+            "P00 DETAIL: repo1: 12-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on expire last full backup on disk");
@@ -1953,9 +1947,9 @@ testRun(void)
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
-            " this repo");
+                " this repo");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("adhoc dry-run");
@@ -2009,15 +2003,15 @@ testRun(void)
         storageRemoveP(
             storageTest, strNewFmt("%s/20181119-152850F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)));
 
-        String *adhocBackupLabel = strNew("20181119-152850F_20181119-152252D");
+        const String *adhocBackupLabel = STRDEF("20181119-152850F_20181119-152252D");
         TEST_RESULT_UINT(expireAdhocBackup(infoBackup, adhocBackupLabel, 0), 1, "adhoc expire last dependent backup");
         TEST_RESULT_VOID(
             removeExpiredBackup(infoBackup, adhocBackupLabel, 0), "code coverage: removeExpireBackup with no manifests");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: [DRY-RUN] repo1: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform"
-            " point-in-time-recovery (PITR) may be affected\n"
-            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
-            " (even in prior expires) can cause gaps in the WAL.\n"
+                " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
+                " expires) can cause gaps in the WAL.\n"
             "P00   INFO: [DRY-RUN] repo1: expire adhoc backup 20181119-152850F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152850F_20181119-152252D");
 
@@ -2026,7 +2020,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152850F_20181119-152252D");
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
@@ -2067,7 +2061,7 @@ testRun(void)
             "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"                \
                 "\"db-version\":\"12\"}\n"
 
-        String *backupInfoContent = strNew(
+        const String *backupInfoContent = STRDEF(
             TEST_BACKUP_CURRENT
             TEST_BACKUP_DB);
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoContent));
@@ -2076,7 +2070,7 @@ testRun(void)
             harnessInfoChecksum(backupInfoContent));
 
         // Adhoc backup and resumable backup manifests
-        String *manifestContent = strNew(
+        const String *manifestContent = STRDEF(
                 "[backup]\n"
                 "backup-archive-start=\"000000010000000000000009\"\n"
                 "backup-label=null\n"
@@ -2103,7 +2097,7 @@ testRun(void)
                 "option-online=false\n"
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[db]\n"
                 "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
@@ -2136,8 +2130,8 @@ testRun(void)
 
         // Create encrypted repo2 with same data from repo1 and ensure results are reported the same. This will test that the
         // manifest can be read on encrypted repos.
-        String *repo2ArchiveStanzaPath =  strNewFmt("%s/repo2/archive/db", testPath());
-        String *repo2BackupStanzaPath =  strNewFmt("%s/repo2/backup/db", testPath());
+        const String *repo2ArchiveStanzaPath = STRDEF(TEST_PATH "/repo2/archive/db");
+        const String *repo2BackupStanzaPath = STRDEF(TEST_PATH "/repo2/backup/db");
         storagePathCreateP(storageLocalWrite(), repo2ArchiveStanzaPath);
         storagePathCreateP(storageLocalWrite(), repo2BackupStanzaPath);
 
@@ -2156,7 +2150,7 @@ testRun(void)
             "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}",
             .cipherType = cipherTypeAes256Cbc);
 
-        backupInfoContent = strNew(
+        backupInfoContent = STRDEF(
             TEST_BACKUP_CURRENT
             "\n"
             "[cipher]\n"
@@ -2189,19 +2183,19 @@ testRun(void)
             FileOpenError, "unable to create symlink '%s' to '%s'", strZ(latestLink), "20181119-152850F_20181200-152252D");
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest with resumable possibly based on it");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: repo1: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform"
-            " point-in-time-recovery (PITR) may be affected\n"
-            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
-            " (even in prior expires) can cause gaps in the WAL.\n"
+                " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
+                " expires) can cause gaps in the WAL.\n"
             "P00   INFO: repo1: expire adhoc backup 20181119-152850F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152850F_20181119-152252D\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
             "P00 DETAIL: repo1: 12-2 no archive to remove\n"
             "P00   WARN: repo2: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform"
-            " point-in-time-recovery (PITR) may be affected\n"
-            "            HINT: non-default settings for 'repo2-retention-archive'/'repo2-retention-archive-type'"
-            " (even in prior expires) can cause gaps in the WAL.\n"
+                " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo2-retention-archive'/'repo2-retention-archive-type' (even in prior"
+                " expires) can cause gaps in the WAL.\n"
             "P00   INFO: repo2: expire adhoc backup 20181119-152850F_20181119-152252D\n"
             "P00   INFO: repo2: remove expired backup 20181119-152850F_20181119-152252D\n"
             "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
@@ -2288,11 +2282,11 @@ testRun(void)
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
         TEST_RESULT_VOID(cmdExpire(), "repo-retention-full not set for time-based");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=time', the repository may run out"
-            " of space\n"
+                " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-            " maximum.\n"
+                " maximum.\n"
             "P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
 
         // Stop time equals retention time
@@ -2318,7 +2312,7 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, NULL),
             "20181119-152138F\n20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n"
             "20181119-152900F\n20181119-152900F_20181119-152600D\n", "no backups expired");
-        harnessLogResult("P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
+        TEST_RESULT_LOG("P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("oldest backup expired");
@@ -2328,7 +2322,7 @@ testRun(void)
         strLstAddZ(argList, "--dry-run");
         harnessCfgLoad(cfgCmdExpire, argList);
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004\n"
@@ -2337,7 +2331,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=9999999");
         harnessCfgLoad(cfgCmdExpire, argList);
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run, retention-archive set to max, no archives expired");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F");
 
@@ -2347,15 +2341,15 @@ testRun(void)
         strLstAddZ(argList, "--dry-run");
         harnessCfgLoad(cfgCmdExpire, argList);
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired but retention archive set lower - dry-run");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004,"
-            " stop = 000000010000000000000004\n"
+                " stop = 000000010000000000000004\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152152D,"
-            " start = 000000010000000000000006, stop = 000000010000000000000006\n"
+                " start = 000000010000000000000006, stop = 000000010000000000000006\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152155I,"
-            " start = 000000010000000000000007, stop = 000000010000000000000007\n"
+                " start = 000000010000000000000007, stop = 000000010000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005\n"
@@ -2372,22 +2366,22 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired, retention archive is DIFF - dry-run");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: [DRY-RUN] option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
-            " to the maximum.\n"
+                " to the maximum.\n"
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004,"
-            " stop = 000000010000000000000004\n"
+                " stop = 000000010000000000000004\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152152D,"
-            " start = 000000010000000000000006, stop = 000000010000000000000006\n"
+                " start = 000000010000000000000006, stop = 000000010000000000000006\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152155I,"
-            " start = 000000010000000000000007, stop = 000000010000000000000007\n"
+                " start = 000000010000000000000007, stop = 000000010000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009,"
-            " stop = 000000010000000000000009\n"
+                " stop = 000000010000000000000009\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F_20181119-152600D,"
-            " start = 000000010000000000000011\n"
+                " start = 000000010000000000000011\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000008, stop = 000000010000000000000008\n"
@@ -2405,9 +2399,9 @@ testRun(void)
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageTest, backupInfoFileName, cipherTypeNone, NULL),
             "save backup.info without oldest");
-        harnessLogResult("P00   INFO: repo1: expire time-based backup 20181119-152138F");
+        TEST_RESULT_LOG("P00   INFO: repo1: expire time-based backup 20181119-152138F");
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004\n"
             "P00 DETAIL: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003");
@@ -2420,9 +2414,9 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire all but newest");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire time-based backup set 20181119-152800F, 20181119-152800F_20181119-152152D,"
-            " 20181119-152800F_20181119-152155I\n"
+                " 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"

@@ -22,11 +22,26 @@ typedef enum
 } HarnessTestResultOperation;
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Location of the data path were the harness can write data that won't be visible to the test
+const char *hrnPath(void);
+
+// Path to the source repository
+const char *hrnPathRepo(void);
+
+// Path where test data is written
+const char *testPath(void);
+
+// Location of the project exe
+const char *testProjectExe(void);
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 void hrnInit(
-    const char *testExe, const char *testProjectExe, bool testContainer, unsigned int testIdx, bool timing, uint64_t testScale,
-    const char *testPath, const char *testDataPath, const char *testRepoPath);
+    const char *testExe, const char *testProjectExe, bool testContainer, unsigned int testIdx, bool timing, const char *testPath,
+    const char *testDataPath, const char *testRepoPath);
 void hrnAdd(int run, bool selected);
 void hrnComplete(void);
 
@@ -48,7 +63,7 @@ void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOpera
 void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation);
 
 #ifdef HRN_FEATURE_STRING
-void hrnTestResultStringList(const StringList *actual, const void *expected, HarnessTestResultOperation operation);
+void hrnTestResultStringList(const StringList *actual, const char *expected, HarnessTestResultOperation operation);
 #endif
 
 void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation);

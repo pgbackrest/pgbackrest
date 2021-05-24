@@ -16,7 +16,7 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("InfoArchive"))
@@ -72,7 +72,7 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoArchiveNew(
-                PG_VERSION_10, 6569239123849665999, strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+                PG_VERSION_10, 6569239123849665999, STRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoArchiveNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -127,16 +127,15 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoArchiveLoadFile() and infoArchiveSaveFile()"))
     {
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), FileMissingError,
-            "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
-            "FileMissingError: unable to open missing file '%s/archive.info' for read\n"
-            "FileMissingError: unable to open missing file '%s/archive.info.copy' for read\n"
+            "unable to load info file '" TEST_PATH "/archive.info' or '" TEST_PATH "/archive.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/archive.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/archive.info.copy' for read\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
-            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            testPath(), testPath(), testPath(), testPath());
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
 
         InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_10, 6569239123849665999, NULL);
         TEST_RESULT_VOID(
