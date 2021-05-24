@@ -505,7 +505,7 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
                 if (target1->file == NULL)
                 {
                     // Check the link destination path to be sure it is not a subpath of a prior link destination path
-                    for (unsigned int priorLinkIdx = linkIdx - 1; priorLinkIdx < linkIdx; priorLinkIdx--)
+                    for (unsigned int priorLinkIdx = linkIdx - 1; (int)priorLinkIdx >= 0; priorLinkIdx--)
                     {
                         const ManifestLinkCheckItem *const priorLink = lstGet(linkCheck->linkList, priorLinkIdx);
 
