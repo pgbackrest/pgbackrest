@@ -1891,14 +1891,52 @@ testRun(void)
 
         // Link check
         TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on link to subpath of another link destination (prior ordering)");
+
         manifestTargetAdd(
             manifest, &(ManifestTarget){
-               .name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/base-2")});
+               .name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/base-2/")});
         TEST_ERROR(
             manifestLinkCheck(manifest), LinkDestinationError,
-            "link 'base/2' (/pg/base-1/base-2) destination is a subdirectory of or the same directory as"
-                " link 'base/1' (/pg/base-1)");
+            "link 'base/2' (/pg/base-1/base-2) destination is a subdirectory of link 'base/1' (/pg/base-1)");
         manifestTargetRemove(manifest, STRDEF("pg_data/base/2"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on link to subpath of another link destination (subsequent ordering)");
+
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+               .name = STRDEF("pg_data/base/pg"), .type = manifestTargetTypeLink, .path = STRDEF("../..")});
+        TEST_ERROR(
+            manifestLinkCheck(manifest), LinkDestinationError,
+            "link 'base/1' (/pg/base-1) destination is a subdirectory of link 'base/pg' (/pg)");
+        manifestTargetRemove(manifest, STRDEF("pg_data/base/pg"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on link to same destination path");
+
+        manifestTargetAdd(
+            manifest,
+            &(ManifestTarget){.name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/")});
+        TEST_ERROR(
+            manifestLinkCheck(manifest), LinkDestinationError,
+            "link 'base/2' (/pg/base-1) destination is the same directory as link 'base/1' (/pg/base-1)");
+        manifestTargetRemove(manifest, STRDEF("pg_data/base/2"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on file link in linked path");
+
+        manifestTargetAdd(
+            manifest,
+            &(ManifestTarget){
+                .name = STRDEF("pg_data/base/1/file"), .type = manifestTargetTypeLink, .path = STRDEF("../../../base-1"),
+                .file = STRDEF("file")});
+        TEST_ERROR(
+            manifestLinkCheck(manifest), LinkDestinationError,
+            "link 'base/1/file' (/pg/base-1) destination is the same directory as link 'base/1' (/pg/base-1)");
+        manifestTargetRemove(manifest, STRDEF("pg_data/base/1/file"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check that a file link in the parent path of a path link does not conflict");
@@ -1907,8 +1945,23 @@ testRun(void)
             manifest, &(ManifestTarget){
                .name = STRDEF("pg_data/test.sh"), .type = manifestTargetTypeLink, .path = STRDEF(".."), .file = STRDEF("test.sh")});
         TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
-        manifestTargetRemove(manifest, STRDEF("pg_data/test.sh"));
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on two file links with the same name");
+
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+               .name = STRDEF("pg_data/test2.sh"), .type = manifestTargetTypeLink, .path = STRDEF(".."),
+               .file = STRDEF("test.sh")});
+
+        TEST_ERROR(
+            manifestLinkCheck(manifest), LinkDestinationError,
+            "link 'test2.sh' (/pg/test.sh) destination is the same file as link 'test.sh' (/pg/test.sh)");
+
+        manifestTargetRemove(manifest, STRDEF("pg_data/test.sh"));
+        manifestTargetRemove(manifest, STRDEF("pg_data/test2.sh"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
         // ManifestFile getters
         const ManifestFile *file = NULL;
         TEST_ERROR(
