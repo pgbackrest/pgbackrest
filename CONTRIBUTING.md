@@ -39,7 +39,7 @@ pgbackrest-dev => Clone pgBackRest repository
 git clone https://github.com/pgbackrest/pgbackrest.git
 ```
 
-If using a RHEL-based system, the CPAN XML parser is required to run `test.pl` and `doc.pl`. Instructions for installing Docker and the XML parser can be found in the `README.md` file of the pgBackRest [doc](https://github.com/pgbackrest/pgbackrest/blob/master/doc) directory in the section "The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation". NOTE that the "Install latex (for building PDF)" section is not required since testing of the docs need only be run for HTML output.
+If using a RHEL-based system, the CPAN XML parser is required to run `test.pl` and `doc.pl`. Instructions for installing Docker and the XML parser can be found in the `README.md` file of the pgBackRest [doc](https://github.com/pgbackrest/pgbackrest/blob/master/doc) directory in the section "The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation". NOTE that the "Install latex (for building PDF)" section is not required since testing of the docs need only be run for HTML output.
 
 ## Coding
 
