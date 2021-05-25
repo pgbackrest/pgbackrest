@@ -21,11 +21,12 @@ Include shimmed C modules
 {[SHIM_MODULE]}
 
 /***********************************************************************************************************************************
-Shim initialization state
+Shim install state
 ***********************************************************************************************************************************/
 static struct
 {
-    bool localHandler;
+    // Local process shim
+    bool localShim;
     const ProtocolServerHandler *localHandlerList;
     unsigned int localHandlerListSize;
 } hrnProtocolStatic;
@@ -37,15 +38,15 @@ static void
 protocolLocalExec(
     ProtocolHelperClient *helper, ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
 {
-    // Call the shim when initialized
-    if (hrnProtocolStatic.localHandler)
+    // Call the shim when installed
+    if (hrnProtocolStatic.localShim)
     {
-        FUNCTION_HARNESS_BEGIN();
-            FUNCTION_HARNESS_PARAM_P(VOID, helper);
-            FUNCTION_HARNESS_PARAM(ENUM, protocolStorageType);
-            FUNCTION_HARNESS_PARAM(UINT, hostIdx);
-            FUNCTION_HARNESS_PARAM(UINT, processId);
-        FUNCTION_HARNESS_END();
+        FUNCTION_LOG_BEGIN(logLevelDebug);
+            FUNCTION_LOG_PARAM_P(VOID, helper);
+            FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
+            FUNCTION_LOG_PARAM(UINT, hostIdx);
+            FUNCTION_LOG_PARAM(UINT, processId);
+        FUNCTION_LOG_END();
 
         // Create pipes to communicate with the subprocess. The names of the pipes are from the perspective of the parent process
         // since the child process will use them only briefly before exec'ing.
@@ -59,7 +60,8 @@ protocolLocalExec(
         if (forkSafe() == 0)
         {
             // Load configuration
-            const StringList *const paramList = protocolLocalParam(protocolStorageType, hostIdx, processId);
+            StringList *const paramList = protocolLocalParam(protocolStorageType, hostIdx, processId);
+            strLstInsert(paramList, 0, cfgExe());
             harnessCfgLoadRaw(strLstSize(paramList), strLstPtr(paramList));
 
             // Change log process id to aid in debugging
@@ -92,7 +94,7 @@ protocolLocalExec(
         helper->client = protocolClientNew(
             strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u shim protocol", processId), PROTOCOL_SERVICE_LOCAL_STR, read, write);
 
-        FUNCTION_HARNESS_RETURN_VOID();
+        FUNCTION_LOG_RETURN_VOID();
     }
     // Else call the base function
     else
@@ -108,9 +110,20 @@ hrnProtocolLocalShimInstall(const ProtocolServerHandler *const handlerList, cons
         FUNCTION_HARNESS_PARAM(UINT, handlerListSize);
     FUNCTION_HARNESS_END();
 
-    hrnProtocolStatic.localHandler = true;
+    hrnProtocolStatic.localShim = true;
     hrnProtocolStatic.localHandlerList = handlerList;
     hrnProtocolStatic.localHandlerListSize = handlerListSize;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+hrnProtocolLocalShimUninstall(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    hrnProtocolStatic.localShim = false;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
