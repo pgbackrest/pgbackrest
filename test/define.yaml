@@ -457,6 +457,7 @@ unit:
             protocol/helper:
               function:
                 - protocolLocalExec
+                - protocolRemoteExec
         containerReq: true
         binReq: true
 
