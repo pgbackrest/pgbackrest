@@ -12,6 +12,7 @@ Harness for Loading Test Configurations
 #include "common/harnessLog.h"
 #include "common/harnessTest.h"
 
+#include "common/io/io.h"
 #include "config/config.intern.h"
 #include "config/load.h"
 #include "config/parse.h"
@@ -51,6 +52,11 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
 
     // Apply special option rules
     cfgLoadUpdateOption();
+
+    // Set buffer size when it is specified explicity -- otherwise the module default will be used. Note that this is *not* the
+    // configuration default, which is much larger.
+    if (cfgOptionTest(cfgOptBufferSize))
+        ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
 
     // Use a static exec-id for testing if it is not set explicitly
     if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
