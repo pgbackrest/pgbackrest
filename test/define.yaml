@@ -445,6 +445,33 @@ unit:
           - postgres/interface/page
 
   # ********************************************************************************************************************************
+  - name: protocol
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: protocol
+        total: 9
+        harness:
+          name: protocol
+          shim:
+            protocol/helper:
+              function:
+                - protocolLocalExec
+        containerReq: true
+        binReq: true
+
+        coverage:
+          - protocol/client
+          - protocol/command
+          - protocol/helper
+          - protocol/parallel
+          - protocol/parallelJob
+          - protocol/server
+
+        include:
+          - common/exec
+
+  # ********************************************************************************************************************************
   - name: config
 
     test:
@@ -571,33 +598,6 @@ unit:
 
         include:
           - storage/write
-
-  # ********************************************************************************************************************************
-  - name: protocol
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: protocol
-        total: 9
-        harness:
-          name: protocol
-          shim:
-            protocol/helper:
-              function:
-                - protocolLocalExec
-        containerReq: true
-        binReq: true
-
-        coverage:
-          - protocol/client
-          - protocol/command
-          - protocol/helper
-          - protocol/parallel
-          - protocol/parallelJob
-          - protocol/server
-
-        include:
-          - common/exec
 
   # ********************************************************************************************************************************
   - name: info
