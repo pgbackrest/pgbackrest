@@ -316,31 +316,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     // Is this a repo remote?
     bool isRepo = protocolStorageType == protocolStorageTypeRepo;
 
-    // Fixed parameters for ssh command
-    StringList *result = strLstNew();
-    strLstAddZ(result, "-o");
-    strLstAddZ(result, "LogLevel=error");
-    strLstAddZ(result, "-o");
-    strLstAddZ(result, "Compression=no");
-    strLstAddZ(result, "-o");
-    strLstAddZ(result, "PasswordAuthentication=no");
-
-    // Append port if specified
-    ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
-
-    if (cfgOptionIdxTest(optHostPort, hostIdx))
-    {
-        strLstAddZ(result, "-p");
-        strLstAdd(result, strNewFmt("%u", cfgOptionIdxUInt(optHostPort, hostIdx)));
-    }
-
-    // Append user/host
-    strLstAdd(
-        result,
-        strNewFmt(
-            "%s@%s", strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser, hostIdx)),
-            strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx))));
-
     // Option replacements
     KeyValue *optionReplace = kvNew();
 
@@ -444,14 +419,99 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     // Add the remote type
     kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
 
-    StringList *commandExec = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true);
-    strLstInsert(commandExec, 0, cfgOptionIdxStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd, hostIdx));
-    strLstAdd(result, strLstJoin(commandExec, " "));
+    FUNCTION_LOG_RETURN(STRING_LIST, cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true));
+}
+
+// Helper to add SSH parameters when executing the remote via SSH
+static StringList *
+protocolRemoteParamSsh(const ProtocolStorageType protocolStorageType, const unsigned int hostIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
+        FUNCTION_LOG_PARAM(UINT, hostIdx);
+    FUNCTION_LOG_END();
+
+    StringList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Is this a repo remote?
+        bool isRepo = protocolStorageType == protocolStorageTypeRepo;
+
+        // Fixed parameters for ssh command
+        result = strLstNew();
+        strLstAddZ(result, "-o");
+        strLstAddZ(result, "LogLevel=error");
+        strLstAddZ(result, "-o");
+        strLstAddZ(result, "Compression=no");
+        strLstAddZ(result, "-o");
+        strLstAddZ(result, "PasswordAuthentication=no");
+
+        // Append port if specified
+        ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
+
+        if (cfgOptionIdxTest(optHostPort, hostIdx))
+        {
+            strLstAddZ(result, "-p");
+            strLstAdd(result, strNewFmt("%u", cfgOptionIdxUInt(optHostPort, hostIdx)));
+        }
+
+        // Append user/host
+        strLstAdd(
+            result,
+            strNewFmt(
+                "%s@%s", strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser, hostIdx)),
+                strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx))));
+
+        // Add remote command and parameters
+        StringList *paramList = protocolRemoteParam(protocolStorageType, hostIdx);
+
+        strLstInsert(paramList, 0, cfgOptionIdxStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd, hostIdx));
+        strLstAdd(result, strLstJoin(paramList, " "));
+
+        // Move to prior context
+        strLstMove(result, memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
+// Helper to execute the local process. This is a separate function solely so that it can be shimmed during testing.
+static void
+protocolRemoteExec(
+    ProtocolHelperClient *const helper, const ProtocolStorageType protocolStorageType, const unsigned int hostIdx,
+    const unsigned int processId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, helper);
+        FUNCTION_TEST_PARAM(ENUM, protocolStorageType);
+        FUNCTION_TEST_PARAM(UINT, hostIdx);
+        FUNCTION_TEST_PARAM(UINT, processId);
+    FUNCTION_TEST_END();
+
+    ASSERT(helper != NULL);
+
+    // Execute the protocol command
+    const char *const host =
+        strZ(cfgOptionIdxStr(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx));
+
+    helper->exec = execNew(
+        cfgOptionStr(cfgOptCmdSsh), protocolRemoteParamSsh(protocolStorageType, hostIdx),
+        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, host), cfgOptionUInt64(cfgOptProtocolTimeout));
+    execOpen(helper->exec);
+
+    // Create protocol object
+    helper->client = protocolClientNew(
+        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, host), PROTOCOL_SERVICE_REMOTE_STR,
+        execIoRead(helper->exec), execIoWrite(helper->exec));
+
+    protocolClientMove(helper->client, execMemContext(helper->exec));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 ProtocolClient *
 protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 {
@@ -496,19 +556,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            unsigned int optHost = isRepo ? cfgOptRepoHost : cfgOptPgHost;
-
-            // Execute the protocol command
-            protocolHelperClient->exec = execNew(
-                cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, hostIdx),
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(cfgOptionIdxStr(optHost, hostIdx))),
-                cfgOptionUInt64(cfgOptProtocolTimeout));
-            execOpen(protocolHelperClient->exec);
-
-            // Create protocol object
-            protocolHelperClient->client = protocolClientNew(
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, strZ(cfgOptionIdxStr(optHost, hostIdx))),
-                PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
+            protocolRemoteExec(protocolHelperClient, protocolStorageType, hostIdx, processId);
 
             // Get cipher options from the remote if none are locally configured
             if (isRepo && cfgOptionIdxStrId(cfgOptRepoCipherType, hostIdx) == cipherTypeNone)
@@ -526,8 +574,6 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
                     cfgOptionIdxSet(cfgOptRepoCipherPass, hostIdx, cfgSourceConfig, varLstGet(optionList, 1));
                 }
             }
-
-            protocolClientMove(protocolHelperClient->client, execMemContext(protocolHelperClient->exec));
         }
         MEM_CONTEXT_END();
     }

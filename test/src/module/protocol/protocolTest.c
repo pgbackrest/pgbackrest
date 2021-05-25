@@ -285,7 +285,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("protocolRemoteParam()"))
+    if (testBegin("protocolRemoteParam() and protocolRemoteParamSsh()"))
     {
         storagePutP(storageNewWriteP(storageTest, STRDEF("pgbackrest.conf")), bufNew(0));
 
@@ -303,7 +303,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STRLST_Z(
-            protocolRemoteParam(protocolStorageTypeRepo, 0),
+            protocolRemoteParamSsh(protocolStorageTypeRepo, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\nrepo-host-user@repo-host\n"
                 "pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/pg --process=0 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
@@ -326,7 +326,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STRLST_Z(
-            protocolRemoteParam(protocolStorageTypeRepo, 0),
+            protocolRemoteParamSsh(protocolStorageTypeRepo, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\n-p\n444\nrepo-host-user@repo-host\n"
                 "pgbackrest --config=/path/pgbackrest.conf --config-include-path=/path/include --config-path=/path/config"
                 " --exec-id=1-test --log-level-console=off --log-level-file=info --log-level-stderr=error --log-subprocess"
@@ -346,7 +346,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STRLST_Z(
-            protocolRemoteParam(protocolStorageTypeRepo, 0),
+            protocolRemoteParamSsh(protocolStorageTypeRepo, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npgbackrest@repo-host\n"
                 "pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/pg --process=3 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
@@ -363,7 +363,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STRLST_Z(
-            protocolRemoteParam(protocolStorageTypePg, 0),
+            protocolRemoteParamSsh(protocolStorageTypePg, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg1-host\n"
                 "pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote\n",
@@ -385,7 +385,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STRLST_Z(
-            protocolRemoteParam(protocolStorageTypePg, 1),
+            protocolRemoteParamSsh(protocolStorageTypePg, 1),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg2-host\n"
                 "pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote\n",
@@ -407,7 +407,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STRLST_Z(
-            protocolRemoteParam(protocolStorageTypePg, 1),
+            protocolRemoteParamSsh(protocolStorageTypePg, 1),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg3-host\n"
                 "pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1"
