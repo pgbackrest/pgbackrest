@@ -892,20 +892,12 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
             const StringList *historyYearList = strLstSort(
                 storageListP(
                     storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
-                sortOrderDesc);
+                sortOrderAsc);
 
             for (unsigned int historyYearIdx = 0; historyYearIdx < strLstSize(historyYearList); historyYearIdx++)
             {
                 // Get all the backup history manifests
                 const String *historyYear = strLstGet(historyYearList, historyYearIdx);
-                const StringList *historyList = strLstSort(
-                    storageListP(
-                        storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(historyYear)),
-                        .expression = strNewFmt(
-                            "%s\\.manifest\\.%s$",
-                            strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
-                            strZ(compressTypeStr(compressTypeGz)))),
-                    sortOrderDesc);
 
                 // If the entire year is less than the year of the minimum backup to retain, then remove completely the directory
                 if (strCmp(historyYear, strSubN(minBackupLabel, 0, 4)) < 0)
@@ -923,8 +915,16 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                     }
                 }
                 // Else find and remove individual files
-                else
+                else if (strEq(historyYear, strSubN(minBackupLabel, 0, 4)))
                 {
+                    const StringList *historyList = strLstSort(
+                        storageListP(
+                            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(historyYear)),
+                            .expression = strNewFmt(
+                                "%s\\.manifest\\.%s$",
+                                strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
+                                strZ(compressTypeStr(compressTypeGz)))),
+                        sortOrderDesc);
                     for (unsigned int historyIdx = 0; historyIdx < strLstSize(historyList); historyIdx++)
                     {
                         const String *historyBackupFile = strLstGet(historyList, historyIdx);
@@ -949,6 +949,8 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                         }
                     }
                 }
+                else
+                    break;
             }
         }
     }

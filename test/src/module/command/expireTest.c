@@ -1431,9 +1431,9 @@ testRun(void)
             "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
 
         TEST_RESULT_LOG(
+            "P00   INFO: [DRY-RUN] repo1: remove expired backup history path 2017\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup history manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
-            "P00   INFO: [DRY-RUN] repo1: remove expired backup history manifest 20181029-152138F.manifest.gz\n"
-            "P00   INFO: [DRY-RUN] repo1: remove expired backup history path 2017");
+            "P00   INFO: [DRY-RUN] repo1: remove expired backup history manifest 20181029-152138F.manifest.gz");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup history manifests older than 20 days");
@@ -1443,6 +1443,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
         hrnCfgArgRawFmt(argList, cfgOptRepoRetentionHistory, "%u", historyRetentionDays);
         harnessCfgLoad(cfgCmdExpire, argList);
+
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2019/20191119-152138F.manifest.gz", "tmp");
 
         TEST_RESULT_VOID(cmdExpire(), "expire");
 
@@ -1454,12 +1456,14 @@ testRun(void)
             // Manifests for current backups
             "2018/20181119-152138F.manifest.gz\n"
             "2018/20181119-152900F.manifest.gz\n"
-            "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
+            "2018/20181119-152900F_20181119-152500I.manifest.gz\n"
+            "2019/\n"
+            "2019/20191119-152138F.manifest.gz\n");
 
         TEST_RESULT_LOG(
+            "P00   INFO: repo1: remove expired backup history path 2017\n"
             "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
-            "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz\n"
-            "P00   INFO: repo1: remove expired backup history path 2017");
+            "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup history manifests older than 20 days using backup config");
@@ -1483,11 +1487,13 @@ testRun(void)
             // Manifests for current backups are kept
             "2018/20181119-152138F.manifest.gz\n"
             "2018/20181119-152900F.manifest.gz\n"
-            "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
+            "2018/20181119-152900F_20181119-152500I.manifest.gz\n"
+            "2019/\n"
+            "2019/20191119-152138F.manifest.gz\n");
 
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz\n"
-            "P00   INFO: repo1: remove expired backup history path 2017");
+            "P00   INFO: repo1: remove expired backup history path 2017\n"
+            "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz");
     }
 
     // *****************************************************************************************************************************
