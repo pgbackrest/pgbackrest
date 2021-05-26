@@ -29,16 +29,16 @@ testRun(void)
     if (testBegin("httpUriEncode() and httpUriDecode()"))
     {
         TEST_RESULT_STR(httpUriEncode(NULL, false), NULL, "null encodes to null");
-        TEST_RESULT_STR_Z(httpUriEncode(strNew("0-9_~/A Z.az"), false), "0-9_~%2FA%20Z.az", "non-path encoding");
-        TEST_RESULT_STR_Z(httpUriEncode(strNew("0-9_~/A Z.az"), true), "0-9_~/A%20Z.az", "path encoding");
+        TEST_RESULT_STR_Z(httpUriEncode(STRDEF("0-9_~/A Z.az"), false), "0-9_~%2FA%20Z.az", "non-path encoding");
+        TEST_RESULT_STR_Z(httpUriEncode(STRDEF("0-9_~/A Z.az"), true), "0-9_~/A%20Z.az", "path encoding");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("decode");
 
         TEST_RESULT_STR(httpUriDecode(NULL), NULL, "null decodes to null");
-        TEST_RESULT_STR_Z(httpUriDecode(strNew("0-9_~%2FA%20Z.az")), "0-9_~/A Z.az", "valid decode");
-        TEST_ERROR(httpUriDecode(strNew("%A")), FormatError, "invalid escape sequence length in '%A'");
-        TEST_ERROR(httpUriDecode(strNew("%XX")), FormatError, "unable to convert base 16 string 'XX' to unsigned int");
+        TEST_RESULT_STR_Z(httpUriDecode(STRDEF("0-9_~%2FA%20Z.az")), "0-9_~/A Z.az", "valid decode");
+        TEST_ERROR(httpUriDecode(STRDEF("%A")), FormatError, "invalid escape sequence length in '%A'");
+        TEST_ERROR(httpUriDecode(STRDEF("%XX")), FormatError, "unable to convert base 16 string 'XX' to unsigned int");
     }
 
     // *****************************************************************************************************************************
@@ -66,16 +66,16 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key2"), strNew("value2")), header, "add header");
-        TEST_RESULT_PTR(httpHeaderPut(header, strNew("key2"), strNew("value2a")), header, "put header");
-        TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key2"), strNew("value2b")), header, "add header");
+        TEST_RESULT_PTR(httpHeaderAdd(header, STRDEF("key2"), STRDEF("value2")), header, "add header");
+        TEST_RESULT_PTR(httpHeaderPut(header, STRDEF("key2"), STRDEF("value2a")), header, "put header");
+        TEST_RESULT_PTR(httpHeaderAdd(header, STRDEF("key2"), STRDEF("value2b")), header, "add header");
 
-        TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key1"), strNew("value1")), header, "add header");
+        TEST_RESULT_PTR(httpHeaderAdd(header, STRDEF("key1"), STRDEF("value1")), header, "add header");
         TEST_RESULT_STRLST_Z(httpHeaderList(header), "key1\nkey2\n", "header list");
 
-        TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key1")), "value1", "get value");
-        TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key2")), "value2a, value2b", "get value");
-        TEST_RESULT_STR(httpHeaderGet(header, strNew(BOGUS_STR)), NULL, "get missing value");
+        TEST_RESULT_STR_Z(httpHeaderGet(header, STRDEF("key1")), "value1", "get value");
+        TEST_RESULT_STR_Z(httpHeaderGet(header, STRDEF("key2")), "value2a, value2b", "get value");
+        TEST_RESULT_STR(httpHeaderGet(header, STRDEF(BOGUS_STR)), NULL, "get missing value");
 
         TEST_RESULT_STR_Z(httpHeaderToLog(header), "{key1: 'value1', key2: 'value2a, value2b'}", "log output");
 
@@ -87,8 +87,8 @@ testRun(void)
         strLstAddZ(redact, "secret");
 
         TEST_ASSIGN(header, httpHeaderNew(redact), "new header with redaction");
-        httpHeaderAdd(header, strNew("secret"), strNew("secret-value"));
-        httpHeaderAdd(header, strNew("public"), strNew("public-value"));
+        httpHeaderAdd(header, STRDEF("secret"), STRDEF("secret-value"));
+        httpHeaderAdd(header, STRDEF("public"), STRDEF("public-value"));
 
         TEST_RESULT_STR_Z(httpHeaderToLog(header), "{public: 'public-value', secret: <redacted>}", "log output");
 
@@ -126,20 +126,20 @@ testRun(void)
         TEST_RESULT_STR(httpQueryRenderP(NULL), NULL, "null query renders null");
         TEST_RESULT_STR(httpQueryRenderP(query), NULL, "empty query renders null");
 
-        TEST_RESULT_PTR(httpQueryAdd(query, strNew("key2"), strNew("value2")), query, "add query");
-        TEST_ERROR(httpQueryAdd(query, strNew("key2"), strNew("value2")), AssertError, "key 'key2' already exists");
-        TEST_RESULT_PTR(httpQueryPut(query, strNew("key2"), strNew("value2a")), query, "put query");
+        TEST_RESULT_PTR(httpQueryAdd(query, STRDEF("key2"), STRDEF("value2")), query, "add query");
+        TEST_ERROR(httpQueryAdd(query, STRDEF("key2"), STRDEF("value2")), AssertError, "key 'key2' already exists");
+        TEST_RESULT_PTR(httpQueryPut(query, STRDEF("key2"), STRDEF("value2a")), query, "put query");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "key2=value2a", "render one query item");
 
-        TEST_RESULT_PTR(httpQueryAdd(query, strNew("key1"), strNew("value 1?")), query, "add query");
+        TEST_RESULT_PTR(httpQueryAdd(query, STRDEF("key1"), STRDEF("value 1?")), query, "add query");
         TEST_RESULT_STRLST_Z(httpQueryList(query), "key1\nkey2\n", "query list");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "key1=value%201%3F&key2=value2a", "render two query items");
         TEST_RESULT_STR_Z(
             httpQueryRenderP(query, .redact = true), "key1=value%201%3F&key2=<redacted>", "render two query items with redaction");
 
-        TEST_RESULT_STR_Z(httpQueryGet(query, strNew("key1")), "value 1?", "get value");
-        TEST_RESULT_STR_Z(httpQueryGet(query, strNew("key2")), "value2a", "get value");
-        TEST_RESULT_STR(httpQueryGet(query, strNew(BOGUS_STR)), NULL, "get missing value");
+        TEST_RESULT_STR_Z(httpQueryGet(query, STRDEF("key1")), "value 1?", "get value");
+        TEST_RESULT_STR_Z(httpQueryGet(query, STRDEF("key2")), "value2a", "get value");
+        TEST_RESULT_STR(httpQueryGet(query, STRDEF(BOGUS_STR)), NULL, "get missing value");
 
         TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: 'value 1?', key2: <redacted>}", "log output");
 
@@ -273,10 +273,10 @@ testRun(void)
     {
         HttpClient *client = NULL;
 
-        TEST_ASSIGN(client, httpClientNew(sckClientNew(strNew("localhost"), hrnServerPort(0), 500), 500), "new client");
+        TEST_ASSIGN(client, httpClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 500), 500), "new client");
 
         TEST_ERROR_FMT(
-            httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), HostConnectError,
+            httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
             "unable to connect to 'localhost:%u': [111] Connection refused", hrnServerPort(0));
 
         HARNESS_FORK_BEGIN()
@@ -286,7 +286,7 @@ testRun(void)
                 // Start HTTP test server
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(strNew("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket),
+                        ioFdReadNew(STRDEF("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket),
                     "http server run");
             }
             HARNESS_FORK_CHILD_END();
@@ -294,7 +294,7 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 IoWrite *http = hrnServerScriptBegin(
-                    ioFdWriteNew(strNew("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdWriteNew(STRDEF("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("create client");
@@ -316,7 +316,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FileReadError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FileReadError,
                     "unexpected eof while reading line");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -330,7 +330,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FormatError,
                     "HTTP response status 'HTTP/1.0 200 OK' should be CR-terminated");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -344,7 +344,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FormatError,
                     "HTTP response 'HTTP/1.0 200' has invalid length");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -358,7 +358,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FormatError,
                     "HTTP version of response 'HTTP/1 200 OK' must be HTTP/1.1 or HTTP/1.0");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -372,7 +372,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FormatError,
                     "response status '200OK' must have a space after the status code");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -386,7 +386,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FileReadError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FileReadError,
                     "unexpected eof while reading line");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -400,7 +400,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FormatError,
                     "header 'header-value' missing colon");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -414,7 +414,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FormatError,
                     "only 'chunked' is supported for 'transfer-encoding' header");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -428,7 +428,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FormatError,
                     "'transfer-encoding' and 'content-length' headers are both set");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -442,7 +442,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
-                    httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), ServiceError,
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), ServiceError,
                     "[503] Slow Down");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -463,11 +463,11 @@ testRun(void)
                     http, "HTTP/1.1 200 OK\r\nkey1:0\r\n key2 : value2\r\nConnection:ack\r\ncontent-length:0\r\n\r\n");
 
                 HttpHeader *headerRequest = httpHeaderNew(NULL);
-                httpHeaderAdd(headerRequest, strNew("host"), strNew("myhost.com"));
+                httpHeaderAdd(headerRequest, STRDEF("host"), STRDEF("myhost.com"));
 
                 HttpQuery *query = httpQueryNewP();
-                httpQueryAdd(query, strNew("name"), strNew("/path/A Z.txt"));
-                httpQueryAdd(query, strNew("type"), strNew("test"));
+                httpQueryAdd(query, STRDEF("name"), STRDEF("/path/A Z.txt"));
+                httpQueryAdd(query, STRDEF("type"), STRDEF("test"));
 
                 client->pub.timeout = 5000;
 
@@ -477,7 +477,7 @@ testRun(void)
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
                     TEST_ASSIGN(
-                        request, httpRequestNewP(client, strNew("GET"), strNew("/"), .query = query, .header = headerRequest),
+                        request, httpRequestNewP(client, STRDEF("GET"), STRDEF("/"), .query = query, .header = headerRequest),
                         "request");
                     TEST_ASSIGN(response, httpRequestResponse(request, false), "request");
 
@@ -512,7 +512,7 @@ testRun(void)
 
                 hrnServerScriptClose(http);
 
-                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, strNew("HEAD"), strNew("/")), true), "request");
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("HEAD"), STRDEF("/")), true), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
@@ -528,7 +528,7 @@ testRun(void)
                 hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
 
-                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, strNew("HEAD"), strNew("/")), true), "request");
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("HEAD"), STRDEF("/")), true), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
@@ -544,7 +544,7 @@ testRun(void)
 
                 hrnServerScriptClose(http);
 
-                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, strNew("HEAD"), strNew("/")), true), "request");
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("HEAD"), STRDEF("/")), true), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "OK", "check response message");
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
@@ -573,7 +573,7 @@ testRun(void)
                 hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 404 Not Found\r\n\r\n");
 
-                TEST_ASSIGN(request, httpRequestNewP(client, strNew("GET"), strNew("/")), "request");
+                TEST_ASSIGN(request, httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), "request");
                 TEST_ASSIGN(response, httpRequestResponse(request, false), "response");
                 TEST_RESULT_UINT(httpResponseCode(response), 404, "check response code");
                 TEST_RESULT_BOOL(httpResponseCodeOk(response), false, "check response code error");
@@ -596,13 +596,13 @@ testRun(void)
                 StringList *headerRedact = strLstNew();
                 strLstAdd(headerRedact, STRDEF("hdr2"));
                 headerRequest = httpHeaderNew(headerRedact);
-                httpHeaderAdd(headerRequest, strNew("hdr1"), strNew("1"));
-                httpHeaderAdd(headerRequest, strNew("hdr2"), strNew("2"));
+                httpHeaderAdd(headerRequest, STRDEF("hdr1"), STRDEF("1"));
+                httpHeaderAdd(headerRequest, STRDEF("hdr2"), STRDEF("2"));
 
                 TEST_ASSIGN(
                     request,
                     httpRequestNewP(
-                        client, strNew("GET"), strNew("/"), .query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b")),
+                        client, STRDEF("GET"), STRDEF("/"), .query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b")),
                         .header = headerRequest),
                     "request");
                 TEST_ASSIGN(response, httpRequestResponse(request, false), "response");
@@ -641,8 +641,8 @@ testRun(void)
                     response,
                     httpRequestResponse(
                         httpRequestNewP(
-                            client, strNew("GET"), httpUriEncode(strNew("/path/file 1.txt"), true),
-                            .header = httpHeaderAdd(httpHeaderNew(NULL), strNew("content-length"), strNew("30")),
+                            client, STRDEF("GET"), httpUriEncode(STRDEF("/path/file 1.txt"), true),
+                            .header = httpHeaderAdd(httpHeaderNew(NULL), STRDEF("content-length"), STRDEF("30")),
                             .content = BUFSTRDEF("012345678901234567890123456789")), true),
                     "request");
                 TEST_RESULT_STR_Z(
@@ -667,7 +667,7 @@ testRun(void)
                 TEST_ASSIGN(
                     response,
                     httpRequestResponse(
-                        httpRequestNewP(client, strNew("GET"), httpUriEncode(strNew("/path/file 1.txt"), true)), true),
+                        httpRequestNewP(client, STRDEF("GET"), httpUriEncode(STRDEF("/path/file 1.txt"), true)), true),
                     "request");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)),  "01234567890123456789012345678901", "check response");
                 TEST_RESULT_UINT(httpResponseRead(response, bufNew(1), true), 0, "call internal read to check eof");
@@ -683,7 +683,7 @@ testRun(void)
                 TEST_ASSIGN(
                     response,
                     httpRequestResponse(
-                        httpRequestNewP(client, strNew("GET"), httpUriEncode(strNew("/path/file 1.txt"), true)), false),
+                        httpRequestNewP(client, STRDEF("GET"), httpUriEncode(STRDEF("/path/file 1.txt"), true)), false),
                     "request");
                 TEST_RESULT_PTR_NE(response->session, NULL, "session is busy");
                 TEST_ERROR(ioRead(httpResponseIoRead(response), bufNew(32)), FileReadError, "unexpected EOF reading HTTP content");
@@ -702,7 +702,7 @@ testRun(void)
                     "10\r\n0123456789012345\r\n"
                     "0\r\n\r\n");
 
-                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), "request");
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), "request");
                 TEST_RESULT_STR_Z(
                     httpHeaderToLog(httpResponseHeader(response)),  "{transfer-encoding: 'chunked'}", "check response headers");
 

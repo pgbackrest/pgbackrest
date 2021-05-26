@@ -31,8 +31,61 @@ The test code is included directly so it can freely interact with the included C
     #include "common/debug.h"
 #endif
 
+#ifdef HRN_FEATURE_STRING
+    #include "common/type/string.h"
+#endif
+
+// Name of the project exe
+#define TEST_PROJECT_EXE                                            "{[C_TEST_PROJECT_EXE]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(TEST_PROJECT_EXE_STR, TEST_PROJECT_EXE);
+#endif
+
 // Path where the test is running
 #define TEST_PATH                                                   "{[C_TEST_PATH]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(TEST_PATH_STR, TEST_PATH);
+#endif
+
+// Path to the source repository
+#define HRN_PATH_REPO                                               "{[C_HRN_PATH_REPO]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(HRN_PATH_REPO_STR, HRN_PATH_REPO);
+#endif
+
+// Path where the harness can store data without interfering with the test
+#define HRN_PATH                                                    "{[C_HRN_PATH]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(HRN_PATH_STR, HRN_PATH);
+#endif
+
+// User running the test
+#define TEST_USER                                                   "{[C_TEST_USER]}"
+#define TEST_USER_ID                                                {[C_TEST_USER_ID]}
+#define TEST_USER_ID_Z                                              "{[C_TEST_USER_ID]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(TEST_USER_STR, TEST_USER);
+#endif
+
+// Group running the test
+#define TEST_GROUP                                                  "{[C_TEST_GROUP]}"
+#define TEST_GROUP_ID                                               {[C_TEST_GROUP_ID]}
+#define TEST_GROUP_ID_Z                                             "{[C_TEST_GROUP_ID]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
+#endif
+
+// Scaling factor for performance tests
+#define TEST_SCALE                                                  {[C_TEST_SCALE]}
+
+// Is this test running in a container?
+#define TEST_IN_CONTAINER                                           {[C_TEST_CONTAINER]}
 
 // Path to source -- used to construct __FILENAME__ tests
 #define TEST_PGB_PATH                                               "{[C_TEST_PGB_PATH]}"
@@ -130,10 +183,9 @@ main(int argListSize, const char *argList[])
         {[C_TEST_CONTAINER]},       // Is this test running in a container?
         {[C_TEST_IDX]},             // The 0-based index of this test
         {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
-        {[C_TEST_SCALE]},           // Scaling factor for performance tests
         "{[C_TEST_PATH]}",          // Path where tests write data
-        "{[C_TEST_DATA_PATH]}",     // Path where the harness stores temp files (expect, diff, etc.)
-        "{[C_TEST_REPO_PATH]}");    // Path with a copy of the repository
+        "{[C_HRN_PATH]}",           // Path where the harness stores temp files (expect, diff, etc.)
+        "{[C_HRN_PATH_REPO]}");     // Path with a copy of the repository
 
     // Set default test log level
 #ifdef HRN_FEATURE_LOG

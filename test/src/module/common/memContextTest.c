@@ -325,7 +325,7 @@ testRun(void)
         {
             memContext = MEM_CONTEXT_NEW();
             TEST_RESULT_PTR(memContext, memContextCurrent(), "new mem context is current");
-            TEST_RESULT_Z(memContextName(memContext), memContextTestName, "context is now '%s'", memContextTestName);
+            TEST_RESULT_Z(memContextName(memContext), memContextTestName, "check context name");
         }
         MEM_CONTEXT_NEW_END();
 
@@ -344,7 +344,7 @@ testRun(void)
             MEM_CONTEXT_NEW_BEGIN(memContextTestName)
             {
                 memContext = MEM_CONTEXT_NEW();
-                TEST_RESULT_Z(memContextName(memContext), memContextTestName, "context is now '%s'", memContextTestName);
+                TEST_RESULT_Z(memContextName(memContext), memContextTestName, "check mem context name");
                 THROW(AssertError, "create failed");
             }
             MEM_CONTEXT_NEW_END();

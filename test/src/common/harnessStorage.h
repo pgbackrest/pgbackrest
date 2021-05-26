@@ -14,7 +14,8 @@ Helper functions for testing storage and related functions.
 Check file exists
 ***********************************************************************************************************************************/
 #define TEST_STORAGE_EXISTS(storage, file)                                                                                         \
-    TEST_RESULT_BOOL(storageExistsP(storage, STR(file)), true, "file exists '%s'", strZ(storagePathP(storage, STR(file))))
+    TEST_RESULT_BOOL(                                                                                                              \
+        storageExistsP(storage, STR(file)), true, strZ(strNewFmt("file exists '%s'", strZ(storagePathP(storage, STR(file))))))
 
 /***********************************************************************************************************************************
 Get a file and test it against the specified content
@@ -79,8 +80,8 @@ typedef struct HrnStoragePutParam
 
 #define HRN_STORAGE_PUT(storage, file, buffer, ...)                                                                                \
     TEST_RESULT_VOID(                                                                                                              \
-        hrnStoragePut(storage, file, buffer, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}), "put file %s",                    \
-        hrnStoragePutLog(storage, file, buffer, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}))
+        hrnStoragePut(storage, file, buffer, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}),                                   \
+        strZ(strNewFmt("put file %s", hrnStoragePutLog(storage, file, buffer, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}))))
 
 #define HRN_STORAGE_PUT_EMPTY(storage, file, ...)                                                                                  \
     HRN_STORAGE_PUT(storage, file, NULL, __VA_ARGS__)
@@ -95,8 +96,9 @@ const char *hrnStoragePutLog(const Storage *storage, const char *file, const Buf
 Remove a file and error if it does not exist
 ***********************************************************************************************************************************/
 #define TEST_STORAGE_REMOVE(storage, path)                                                                                         \
-    TEST_RESULT_VOID(storageRemoveP(storage, STR(path), .errorOnMissing = true), "remove file '%s'",                               \
-    strZ(storagePathP(storage, STR(path))))
+    TEST_RESULT_VOID(                                                                                                              \
+        storageRemoveP(storage, STR(path), .errorOnMissing = true),                                                                \
+        strZ(strNewFmt("remove file '%s'", strZ(storagePathP(storage, STR(path))))))
 
 /***********************************************************************************************************************************
 Change the time of a path/file

@@ -1408,7 +1408,7 @@ restoreSelectiveExpression(Manifest *manifest)
 
                     // Create expression string or append |
                     if (expression == NULL)
-                        expression = strNew("");
+                        expression = strNew();
                     else
                         strCatZ(expression, "|");
 
@@ -1532,7 +1532,7 @@ restoreRecoveryOption(unsigned int pgVersion)
                 VARSTR(
                     strNewFmt(
                         "%s %s %%f \"%%p\"", strZ(cfgExe()),
-                        strZ(strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleDefault, optionReplace, true, true), " ")))));
+                        strZ(strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleMain, optionReplace, true, true), " ")))));
         }
 
         // If recovery type is immediate
@@ -1686,7 +1686,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *content = strNew("");
+        String *content = strNew();
 
         // Load postgresql.auto.conf so we can preserve the existing contents
         Buffer *autoConf = storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR, .ignoreMissing = true));
@@ -2017,7 +2017,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             bool zeroed = restoreFileZeroed(file->name, zeroExp);
             bool copy = varBool(protocolParallelJobResult(job));
 
-            String *log = strNew("restore");
+            String *log = strNewZ("restore");
 
             // Note if file was zeroed (i.e. selective restore)
             if (zeroed)

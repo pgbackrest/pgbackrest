@@ -104,7 +104,7 @@ pgClientEscape(const String *string)
 
     ASSERT(string != NULL);
 
-    String *result = strNew("'");
+    String *result = strNewZ("'");
 
     // Iterate all characters in the string
     for (unsigned stringIdx = 0; stringIdx < strSize(string); stringIdx++)
@@ -158,7 +158,7 @@ pgClientOpen(PgClient *this)
         {
             THROW_FMT(
                 DbConnectError, "unable to connect to '%s': %s", strZ(connInfo),
-                strZ(strTrim(strNew(PQerrorMessage(this->connection)))));
+                strZ(strTrim(strNewZ(PQerrorMessage(this->connection)))));
         }
 
         // Set notice and warning processor
@@ -191,7 +191,7 @@ pgClientQuery(PgClient *this, const String *query)
         {
             THROW_FMT(
                 DbQueryError, "unable to send query '%s': %s", strZ(query),
-                strZ(strTrim(strNew(PQerrorMessage(this->connection)))));
+                strZ(strTrim(strNewZ(PQerrorMessage(this->connection)))));
         }
 
         // Wait for a result
@@ -219,7 +219,7 @@ pgClientQuery(PgClient *this, const String *query)
                 char error[256];
 
                 if (!PQcancel(cancel, error, sizeof(error)))
-                    THROW_FMT(DbQueryError, "unable to cancel query '%s': %s", strZ(query), strZ(strTrim(strNew(error))));
+                    THROW_FMT(DbQueryError, "unable to cancel query '%s': %s", strZ(query), strZ(strTrim(strNewZ(error))));
             }
             FINALLY()
             {
@@ -247,7 +247,7 @@ pgClientQuery(PgClient *this, const String *query)
                 {
                     THROW_FMT(
                         DbQueryError, "unable to execute query '%s': %s", strZ(query),
-                        strZ(strTrim(strNew(PQresultErrorMessage(pgResult)))));
+                        strZ(strTrim(strNewZ(PQresultErrorMessage(pgResult)))));
                 }
 
                 // Fetch row and column values

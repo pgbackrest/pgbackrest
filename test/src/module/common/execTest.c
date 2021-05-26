@@ -16,7 +16,7 @@ testRun(void)
     {
         Exec *exec = NULL;
 
-        TEST_ASSIGN(exec, execNew(strNew("catt"), NULL, strNew("cat"), 1000), "invalid exec");
+        TEST_ASSIGN(exec, execNew(STRDEF("catt"), NULL, STRDEF("cat"), 1000), "invalid exec");
         TEST_RESULT_VOID(execOpen(exec), "open invalid exec");
         TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), EMPTY_STR), "write invalid exec");
         sleep(1);
@@ -26,19 +26,19 @@ testRun(void)
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(exec, execNew(strNew("cat"), NULL, strNew("cat"), 1000), "new cat exec");
+        TEST_ASSIGN(exec, execNew(STRDEF("cat"), NULL, STRDEF("cat"), 1000), "new cat exec");
         TEST_RESULT_PTR(execMemContext(exec), exec->pub.memContext, "get mem context");
         TEST_RESULT_INT(execFdRead(exec), exec->fdRead, "check read file descriptor");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
-        String *message = strNew("ACKBYACK");
+        const String *message = STRDEF("ACKBYACK");
         TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
         ioWriteFlush(execIoWrite(exec));
         TEST_RESULT_STR(ioReadLine(execIoRead(exec)), message, "read cat exec");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(exec, execNew(strNew("cat"), NULL, strNew("cat"), 1000), "new cat exec");
+        TEST_ASSIGN(exec, execNew(STRDEF("cat"), NULL, STRDEF("cat"), 1000), "new cat exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
         close(exec->fdWrite);
 
@@ -46,7 +46,7 @@ testRun(void)
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(exec, execNew(strNew("cat"), NULL, strNew("cat"), 1000), "new cat exec");
+        TEST_ASSIGN(exec, execNew(STRDEF("cat"), NULL, STRDEF("cat"), 1000), "new cat exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
         kill(exec->processId, SIGKILL);
 
@@ -57,7 +57,7 @@ testRun(void)
         StringList *option = strLstNew();
         strLstAddZ(option, "-b");
 
-        TEST_ASSIGN(exec, execNew(strNew("cat"), option, strNew("cat"), 1000), "new cat exec");
+        TEST_ASSIGN(exec, execNew(STRDEF("cat"), option, STRDEF("cat"), 1000), "new cat exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
@@ -79,7 +79,7 @@ testRun(void)
                 StringList *option = strLstNew();
                 strLstAddZ(option, "-b");
 
-                TEST_ASSIGN(exec, execNew(strNew("cat"), option , strNew("cat"), 1000), "new cat exec");
+                TEST_ASSIGN(exec, execNew(STRDEF("cat"), option , STRDEF("cat"), 1000), "new cat exec");
                 TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
                 TEST_RESULT_VOID(ioWriteStrLine(execIoWrite(exec), message), "write cat exec");
@@ -95,13 +95,13 @@ testRun(void)
         option = strLstNew();
         strLstAddZ(option, "2");
 
-        TEST_ASSIGN(exec, execNew(strNew("sleep"), option, strNew("sleep"), 1000), "new sleep exec");
+        TEST_ASSIGN(exec, execNew(STRDEF("sleep"), option, STRDEF("sleep"), 1000), "new sleep exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         TEST_ERROR(execFreeResource(exec), ExecuteError, "sleep did not exit when expected");
 
         TEST_ERROR(ioReadLine(execIoRead(exec)), FileReadError, "unable to read from sleep read: [9] Bad file descriptor");
-        ioWriteStrLine(execIoWrite(exec), strNew(""));
+        ioWriteStrLine(execIoWrite(exec), strNew());
         TEST_ERROR(ioWriteFlush(execIoWrite(exec)), FileWriteError, "unable to write to sleep write: [9] Bad file descriptor");
 
         sleepMSec(500);

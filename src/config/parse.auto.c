@@ -18,8 +18,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleAsync)
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -33,8 +33,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleAsync)
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -46,8 +46,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -59,7 +59,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -71,7 +71,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
         ),
     ),
 
@@ -83,7 +83,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
         ),
     ),
 
@@ -94,7 +94,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -106,7 +106,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -119,7 +119,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -132,7 +132,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -145,7 +145,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -158,7 +158,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -170,8 +170,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -183,7 +183,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -195,7 +195,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -207,7 +207,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -219,7 +219,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
         ),
     ),
 
@@ -230,7 +230,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
         ),
     ),
 
@@ -241,8 +241,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
             PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
         ),
     ),
@@ -254,7 +254,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
-            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
         ),
     ),
 };
@@ -290,7 +290,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -328,7 +328,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -359,7 +359,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
@@ -389,7 +389,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
         ),
@@ -414,7 +414,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
@@ -438,7 +438,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -463,7 +463,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -489,7 +489,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
@@ -513,7 +513,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -536,7 +536,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -558,7 +558,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -641,7 +641,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
@@ -655,7 +655,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
@@ -670,7 +670,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -718,7 +718,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
@@ -738,7 +738,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
@@ -763,7 +763,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -810,7 +810,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
@@ -844,7 +844,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -914,7 +914,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -984,7 +984,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1055,7 +1055,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -1070,7 +1070,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -1084,7 +1084,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1144,7 +1144,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
@@ -1164,7 +1164,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
         ),
@@ -1184,7 +1184,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
@@ -1198,7 +1198,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1263,7 +1263,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
@@ -1282,7 +1282,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
         ),
@@ -1296,7 +1296,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
@@ -1330,7 +1330,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
         ),
@@ -1349,7 +1349,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1418,7 +1418,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1471,7 +1471,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1524,7 +1524,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -1544,7 +1544,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -1558,7 +1558,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1613,7 +1613,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1694,7 +1694,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1775,7 +1775,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1856,7 +1856,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1926,7 +1926,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -1993,7 +1993,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -2063,7 +2063,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
@@ -2083,7 +2083,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -2151,7 +2151,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
@@ -2172,7 +2172,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
@@ -2237,7 +2237,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2277,7 +2277,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -2323,7 +2323,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2353,7 +2353,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2384,7 +2384,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2415,7 +2415,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2446,7 +2446,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2477,7 +2477,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2508,7 +2508,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -2550,7 +2550,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -2609,7 +2609,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2650,7 +2650,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2690,7 +2690,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
@@ -2769,7 +2769,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -2799,7 +2799,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -2867,7 +2867,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
@@ -2888,7 +2888,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -2916,7 +2916,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
@@ -2982,7 +2982,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
@@ -3046,7 +3046,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3119,7 +3119,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3193,7 +3193,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3269,7 +3269,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3342,7 +3342,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3424,7 +3424,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3497,7 +3497,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3572,7 +3572,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3641,7 +3641,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3712,7 +3712,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3786,7 +3786,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3868,7 +3868,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
@@ -3889,7 +3889,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3944,7 +3944,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -3992,7 +3992,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4041,7 +4041,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4090,7 +4090,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4139,7 +4139,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4188,7 +4188,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4237,7 +4237,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4288,7 +4288,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4357,7 +4357,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
@@ -4379,7 +4379,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
@@ -4408,7 +4408,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
@@ -4430,7 +4430,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
@@ -4452,7 +4452,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
@@ -4502,7 +4502,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4575,7 +4575,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4649,7 +4649,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4723,7 +4723,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4796,7 +4796,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4877,7 +4877,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -4950,7 +4950,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5024,7 +5024,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5097,7 +5097,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5178,7 +5178,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5253,7 +5253,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5328,7 +5328,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5402,7 +5402,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5479,7 +5479,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5556,7 +5556,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5632,7 +5632,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
@@ -5651,7 +5651,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5719,7 +5719,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5787,7 +5787,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
@@ -5836,7 +5836,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
         ),
@@ -5862,7 +5862,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -5918,7 +5918,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -6042,7 +6042,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
@@ -6061,7 +6061,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
@@ -6081,7 +6081,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -6095,7 +6095,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -6109,7 +6109,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -6139,7 +6139,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -6179,7 +6179,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -6210,7 +6210,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
@@ -6244,7 +6244,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -6317,7 +6317,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -6390,7 +6390,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
@@ -6463,7 +6463,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)

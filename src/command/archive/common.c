@@ -137,7 +137,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
 
                 // Get contents
                 code = varIntForce(VARSTR(strNewN(strZ(content), (size_t)(linefeedPtr - strZ(content)))));
-                message = strTrim(strNew(linefeedPtr + 1));
+                message = strTrim(strNewZ(linefeedPtr + 1));
             }
 
             // Process OK files

@@ -260,7 +260,7 @@ archiveGetFind(
             {
                 getCheckResult->errorType = &RepoInvalidError;
                 getCheckResult->errorFile = strDup(archiveFileRequest);
-                getCheckResult->errorMessage = strNew(UNABLE_TO_FIND_VALID_REPO_MSG);
+                getCheckResult->errorMessage = strNewZ(UNABLE_TO_FIND_VALID_REPO_MSG);
                 getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
             }
             MEM_CONTEXT_END();
@@ -285,7 +285,7 @@ archiveGetFind(
                 {
                     // Build list of duplicates
                     unsigned int repoKeyLast = 0;
-                    String *message = strNew("");
+                    String *message = strNew();
                     bool first = true;
 
                     for (unsigned int matchIdx = 0; matchIdx < lstSize(matchList); matchIdx++)
@@ -481,7 +481,7 @@ archiveGetCheck(const StringList *archiveRequestList)
             MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
             {
                 result.errorType = &RepoInvalidError;
-                result.errorMessage = strNew(UNABLE_TO_FIND_VALID_REPO_MSG);
+                result.errorMessage = strNewZ(UNABLE_TO_FIND_VALID_REPO_MSG);
                 result.warnList = strLstMove(warnList, memContextCurrent());
             }
             MEM_CONTEXT_END();
@@ -932,7 +932,7 @@ cmdArchiveGetAsync(void)
                         ASSERT(fileMap != NULL);
 
                         // Build warnings for status file
-                        String *warning = strNew("");
+                        String *warning = strNew();
 
                         if (!strLstEmpty(fileMap->warnList))
                             strCatFmt(warning, "%s", strZ(strLstJoin(fileMap->warnList, "\n")));

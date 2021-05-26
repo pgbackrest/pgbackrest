@@ -851,7 +851,7 @@ pckReadStr(PackRead *this, PckReadStrParam param)
         size_t sizeExpected = (size_t)pckReadUInt64Internal(this);
 
         // Read the string out in chunks
-        result = strNew("");
+        result = strNew();
 
         while (strSize(result) != sizeExpected)
         {
@@ -862,7 +862,7 @@ pckReadStr(PackRead *this, PckReadStrParam param)
     }
     // Else return an empty string
     else
-        result = strNew("");
+        result = strNew();
 
     FUNCTION_TEST_RETURN(result);
 }

@@ -61,10 +61,10 @@ static void
 testInfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
 {
     if (infoSaveSection(infoSaveData, STRDEF("c"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("c"), strNew("key"), (String *)data);
+        infoSaveValue(infoSaveData, STRDEF("c"), STRDEF("key"), (String *)data);
 
     if (infoSaveSection(infoSaveData, STRDEF("d"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("d"), strNew("key"), (String *)data);
+        infoSaveValue(infoSaveData, STRDEF("d"), STRDEF("key"), (String *)data);
 }
 
 /***********************************************************************************************************************************
@@ -78,7 +78,7 @@ testRun(void)
     {
         Info *info = NULL;
 
-        TEST_ASSIGN(info, infoNew(strNew("123xyz")), "infoNew(cipher)");
+        TEST_ASSIGN(info, infoNew(STRDEF("123xyz")), "infoNew(cipher)");
         TEST_RESULT_STR_Z(infoCipherPass(info), "123xyz", "    cipherPass is set");
 
         TEST_ASSIGN(info, infoNew(NULL), "infoNew(NULL)");
@@ -94,7 +94,7 @@ testRun(void)
             "[backrest]\n"
             "backrest-format=4\n");
 
-        String *callbackContent = strNew("");
+        String *callbackContent = strNew();
 
         TEST_ERROR(
             infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), FormatError,
@@ -150,7 +150,7 @@ testRun(void)
             "cipher-other=1\n");
 
         Info *info = NULL;
-        callbackContent = strNew("");
+        callbackContent = strNew();
 
         TEST_ASSIGN(
             info, infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with other cipher");
@@ -166,7 +166,7 @@ testRun(void)
             "[d]\n"
             "key=1\n");
 
-        callbackContent = strNew("");
+        callbackContent = strNew();
 
         TEST_ASSIGN(
             info, infoNewLoad(ioBufferReadNew(contentLoad), harnessInfoLoadNewCallback, callbackContent), "info with content");
@@ -175,7 +175,7 @@ testRun(void)
 
         Buffer *contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNew("1")), "info save");
+        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "info save");
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
 
         // File with content and cipher
@@ -190,7 +190,7 @@ testRun(void)
             "[d]\n"
             "key=1\n");
 
-        callbackContent = strNew("");
+        callbackContent = strNew();
 
         TEST_ASSIGN(
             info,
@@ -201,7 +201,7 @@ testRun(void)
 
         contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNew("1")), "info save");
+        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "info save");
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
     }
 

@@ -29,14 +29,9 @@ testRun(void)
         // Create and start the test database
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef HARNESS_PQ_REAL
-        if (system("sudo pg_createcluster 11 test") != 0)
-            THROW(AssertError, "unable to create cluster");
-
-        if (system("sudo pg_ctlcluster 11 test start") != 0)
-            THROW(AssertError, "unable to start cluster");
-
-        if (system(strZ(strNewFmt("sudo -u postgres psql -c 'create user %s superuser'", testUser()))) != 0)
-            THROW(AssertError, "unable to create superuser");
+        HRN_SYSTEM("sudo pg_createcluster 11 test");
+        HRN_SYSTEM("sudo pg_ctlcluster 11 test start");
+        HRN_SYSTEM("sudo -u postgres psql -c 'create user " TEST_USER " superuser'");
 #endif
 
         // Test connection error
@@ -59,7 +54,7 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(client, pgClientNew(NULL, 5433, strNew("postg '\\res"), NULL, 3000), "new client");
+            TEST_ASSIGN(client, pgClientNew(NULL, 5433, STRDEF("postg '\\res"), NULL, 3000), "new client");
             TEST_RESULT_VOID(pgClientMove(client, memContextPrior()), "move client");
             TEST_RESULT_VOID(pgClientMove(NULL, memContextPrior()), "move null client");
         }
@@ -86,13 +81,13 @@ testRun(void)
         });
 #endif
 
-        TEST_ASSIGN(client, pgClientOpen(pgClientNew(NULL, 5432, strNew("postgres"), NULL, 3000)), "new client");
+        TEST_ASSIGN(client, pgClientOpen(pgClientNew(NULL, 5432, STRDEF("postgres"), NULL, 3000)), "new client");
 
 #ifdef HARNESS_PQ_REAL
         PQsendQuery(client->connection, "select bogus from pg_class");
 #endif
 
-        String *query = strNew("select bogus from pg_class");
+        const String *query = STRDEF("select bogus from pg_class");
 
         TEST_ERROR(
             pgClientQuery(client, query), DbQueryError,
@@ -105,15 +100,15 @@ testRun(void)
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_CONNECTDB, .param = strZ(
-                strNewFmt("[\"dbname='postgres' port=5432 user='%s' host='/var/run/postgresql'\"]", testUser()))},
+            {.function = HRNPQ_CONNECTDB,
+                .param = "[\"dbname='postgres' port=5432 user='" TEST_USER "' host='/var/run/postgresql'\"]"},
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
             {.function = NULL}
         });
 #endif
 
         TEST_ASSIGN(
-            client, pgClientOpen(pgClientNew(strNew("/var/run/postgresql"), 5432, strNew("postgres"), strNew(testUser()), 500)),
+            client, pgClientOpen(pgClientNew(STRDEF("/var/run/postgresql"), 5432, STRDEF("postgres"), TEST_USER_STR, 500)),
             "new client");
 
         // Invalid query
@@ -136,7 +131,7 @@ testRun(void)
         });
 #endif
 
-        query = strNew("select bogus from pg_class");
+        query = STRDEF("select bogus from pg_class");
 
         TEST_ERROR(
             pgClientQuery(client, query), DbQueryError,
@@ -164,7 +159,7 @@ testRun(void)
         });
 #endif
 
-        query = strNew("select pg_sleep(3000)");
+        query = STRDEF("select pg_sleep(3000)");
 
         TEST_ERROR(pgClientQuery(client, query), DbQueryError, "query 'select pg_sleep(3000)' timed out after 500ms");
 
@@ -184,7 +179,7 @@ testRun(void)
             {.function = NULL}
         });
 
-        query = strNew("select pg_sleep(3000)");
+        query = STRDEF("select pg_sleep(3000)");
 
         TEST_ERROR(pgClientQuery(client, query), DbQueryError, "unable to cancel query 'select pg_sleep(3000)': test error");
 #endif
@@ -224,7 +219,7 @@ testRun(void)
         });
 #endif
 
-        query = strNew("do $$ begin raise notice 'mememe'; end $$");
+        query = STRDEF("do $$ begin raise notice 'mememe'; end $$");
 
         TEST_RESULT_PTR(pgClientQuery(client, query), NULL, "execute do block");
 
@@ -248,7 +243,7 @@ testRun(void)
         });
 #endif
 
-        query = strNew("select clock_timestamp()");
+        query = STRDEF("select clock_timestamp()");
 
         TEST_ERROR(
             pgClientQuery(client, query), FormatError,
@@ -294,7 +289,7 @@ testRun(void)
         });
 #endif
 
-        query = strNew(
+        query = STRDEF(
             "select oid, case when relname = 'pg_class' then null::text else '' end, relname, relname = 'pg_class'"
             "  from pg_class where relname in ('pg_class', 'pg_proc')"
             " order by relname");

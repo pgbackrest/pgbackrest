@@ -112,7 +112,7 @@ storageAzureAuth(
             httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
 
             // Generate canonical headers
-            String *headerCanonical = strNew("");
+            String *headerCanonical = strNew();
             StringList *headerKeyList = httpHeaderList(httpHeader);
 
             for (unsigned int headerKeyIdx = 0; headerKeyIdx < strLstSize(headerKeyList); headerKeyIdx++)
@@ -126,7 +126,7 @@ storageAzureAuth(
             }
 
             // Generate canonical query
-            String *queryCanonical = strNew("");
+            String *queryCanonical = strNew();
 
             if (query != NULL)
             {

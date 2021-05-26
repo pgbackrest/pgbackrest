@@ -83,7 +83,7 @@ testSuite(CompressType type, const char *decompressCmd)
     varLstAdd(compressParamList, varNewUInt(1));
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     TEST_TITLE("simple data");
 
@@ -98,7 +98,7 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_TITLE("compressed output can be decompressed with command-line tool");
 
     storagePutP(storageNewWriteP(storageTest, STRDEF("test.cmp")), compressed);
-    TEST_SYSTEM_FMT("%s {[path]}/test.cmp > {[path]}/test.out", decompressCmd);
+    HRN_SYSTEM_FMT("%s " TEST_PATH "/test.cmp > " TEST_PATH "/test.out", decompressCmd);
     TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
 
     TEST_RESULT_BOOL(
@@ -337,7 +337,7 @@ testRun(void)
 
         TEST_RESULT_UINT(compressTypeEnum(STRDEF("none")), compressTypeNone, "none enum");
         TEST_RESULT_UINT(compressTypeEnum(STRDEF("gz")), compressTypeGz, "gz enum");
-        TEST_ERROR(compressTypeEnum(strNew(BOGUS_STR)), AssertError, "invalid compression type 'BOGUS'");
+        TEST_ERROR(compressTypeEnum(STRDEF(BOGUS_STR)), AssertError, "invalid compression type 'BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypePresent()");
@@ -365,7 +365,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressExtCat()");
 
-        String *file = strNew("file");
+        String *file = strNewZ("file");
         TEST_RESULT_VOID(compressExtCat(file, compressTypeGz), "cat gz ext");
         TEST_RESULT_STR_Z(file, "file.gz", "    check gz ext");
 

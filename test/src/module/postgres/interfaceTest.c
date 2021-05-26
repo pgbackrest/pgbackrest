@@ -13,17 +13,17 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("pgVersionFromStr() and pgVersionToStr()"))
     {
-        TEST_ERROR(pgVersionFromStr(strNew("9.3.4")), AssertError, "version 9.3.4 format is invalid");
-        TEST_ERROR(pgVersionFromStr(strNew("abc")), AssertError, "version abc format is invalid");
+        TEST_ERROR(pgVersionFromStr(STRDEF("9.3.4")), AssertError, "version 9.3.4 format is invalid");
+        TEST_ERROR(pgVersionFromStr(STRDEF("abc")), AssertError, "version abc format is invalid");
         TEST_ERROR(pgVersionFromStr(NULL), AssertError, "assertion 'version != NULL' failed");
 
-        TEST_RESULT_INT(pgVersionFromStr(strNew("10")), PG_VERSION_10, "valid pg version 10");
-        TEST_RESULT_INT(pgVersionFromStr(strNew("9.6")), 90600, "valid pg version 9.6");
+        TEST_RESULT_INT(pgVersionFromStr(STRDEF("10")), PG_VERSION_10, "valid pg version 10");
+        TEST_RESULT_INT(pgVersionFromStr(STRDEF("9.6")), 90600, "valid pg version 9.6");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_11), "11", "infoPgVersionToString 11");
@@ -47,7 +47,7 @@ testRun(void)
         TEST_RESULT_UINT(pgInterface[0].version, PG_VERSION_MAX, "check max version");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        String *controlFile = strNew(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
+        const String *controlFile = STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
 
         // Create a bogus control file
         Buffer *result = bufNew(HRN_PG_CONTROL_SIZE);
@@ -185,7 +185,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgWalFromBuffer() and pgWalFromFile()"))
     {
-        String *walFile = strNewFmt("%s/0000000F0000000F0000000F", testPath());
+        const String *walFile = STRDEF(TEST_PATH "/0000000F0000000F0000000F");
 
         // Create a bogus control file, initially not in long format)
         // --------------------------------------------------------------------------------------------------------------------------

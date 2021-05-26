@@ -361,7 +361,7 @@ sub buildConfigParse
         #---------------------------------------------------------------------------------------------------------------------------
         my $strBuildSourceSub = "";
 
-        foreach my $strCommandRole (CFGCMD_ROLE_DEFAULT, CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
+        foreach my $strCommandRole (CFGCMD_ROLE_MAIN, CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
         {
             $strBuildSourceSub = "";
 

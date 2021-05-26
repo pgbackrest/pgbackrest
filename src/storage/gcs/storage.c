@@ -170,7 +170,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     FUNCTION_TEST_END();
 
     // Static header with dot delimiter
-    String *result = strNew("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
+    String *result = strNewZ("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

@@ -31,9 +31,11 @@ use pgBackRestTest::Common::VmTest;
 use constant TEST_USER                                              => getpwuid($UID) . '';
     push @EXPORT, qw(TEST_USER);
 use constant TEST_USER_ID                                           => $UID;
+    push @EXPORT, qw(TEST_USER_ID);
 use constant TEST_GROUP                                             => getgrgid((getpwnam(TEST_USER))[3]) . '';
     push @EXPORT, qw(TEST_GROUP);
 use constant TEST_GROUP_ID                                          => getgrnam(TEST_GROUP) . '';
+    push @EXPORT, qw(TEST_GROUP_ID);
 
 ####################################################################################################################################
 # Cert file constants
@@ -482,7 +484,7 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' .
+                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . ($strOS eq VM_U18 ? ' 14' : '') .
                         "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .

@@ -181,16 +181,14 @@ testRun(void)
         String *logTime = strNewN(logBuffer, 23);
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                strNew("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
-            true, "check timestamp format: %s", strZ(logTime));
+                STRDEF("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
+            true, "check timestamp format");
 
         // Redirect output to files
-        char stdoutFile[1024];
-        snprintf(stdoutFile, sizeof(stdoutFile), "%s/stdout.log", testPath());
+        const char *const stdoutFile = TEST_PATH "/stdout.log";
         logFdStdOut = testLogOpen(stdoutFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
-        char stderrFile[1024];
-        snprintf(stderrFile, sizeof(stderrFile), "%s/stderr.log", testPath());
+        const char *const stderrFile = TEST_PATH "/stderr.log";
         logFdStdErr = testLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
         TEST_RESULT_VOID(
@@ -220,8 +218,7 @@ testRun(void)
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 999, false), "init logging to debug");
 
         // Log to file
-        char fileFile[1024];
-        snprintf(fileFile, sizeof(stdoutFile), "%s/file.log", testPath());
+        const char *const fileFile = TEST_PATH "/file.log";
         logFileSet(fileFile);
 
         logBuffer[0] = 0;

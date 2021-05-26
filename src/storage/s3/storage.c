@@ -147,7 +147,7 @@ storageS3DateTime(time_t authTime)
         strftime(buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime(&authTime)) != ISO_8601_DATE_TIME_SIZE, AssertError,
         "unable to format date");
 
-    FUNCTION_TEST_RETURN(strNew(buffer));
+    FUNCTION_TEST_RETURN(strNewZ(buffer));
 }
 
 /***********************************************************************************************************************************

@@ -4,8 +4,6 @@ C Test Harness
 #include "build.auto.h"
 
 #include <fcntl.h>
-#include <grp.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,15 +35,9 @@ static const char *testProjectExeData = NULL;
 static bool testContainerData = false;
 static unsigned int testIdxData = 0;
 static bool testTiming = true;
-static uint64_t testScaleData = 1;
 static const char *testPathData = NULL;
 static const char *testDataPathData = NULL;
 static const char *testRepoPathData = NULL;
-
-static char testUserIdData[32];
-static char testUserData[64];
-static char testGroupIdData[32];
-static char testGroupData[64];
 
 static struct HarnessTestLocal
 {
@@ -73,8 +65,8 @@ Initialize harness
 ***********************************************************************************************************************************/
 void
 hrnInit(
-    const char *testExe, const char *testProjectExe, bool testContainer, unsigned int testIdx, bool timing, uint64_t testScale,
-    const char *testPath, const char *testDataPath, const char *testRepoPath)
+    const char *testExe, const char *testProjectExe, bool testContainer, unsigned int testIdx, bool timing, const char *testPath,
+    const char *testDataPath, const char *testRepoPath)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -84,40 +76,9 @@ hrnInit(
     testContainerData = testContainer;
     testIdxData = testIdx;
     testTiming = timing;
-    testScaleData = testScale;
     testPathData = testPath;
     testDataPathData = testDataPath;
     testRepoPathData = testRepoPath;
-
-    // Set test user id
-    snprintf(testUserIdData, sizeof(testUserIdData), "%u", getuid());
-
-    // Set test user
-    const char *testUserTemp = getpwuid(getuid())->pw_name;
-
-    if (strlen(testUserTemp) > sizeof(testUserData) - 1)
-    {
-        fprintf(stderr, "ERROR: test user name must be less than %zu characters", sizeof(testUserData) - 1);
-        fflush(stderr);
-        exit(255);
-    }
-
-    strcpy(testUserData, testUserTemp);
-
-    // Set test group id
-    snprintf(testGroupIdData, sizeof(testGroupIdData), "%u", getgid());
-
-    // Set test group
-    const char *testGroupTemp = getgrgid(getgid())->gr_name;
-
-    if (strlen(testGroupTemp) > sizeof(testGroupData) - 1)
-    {
-        fprintf(stderr, "ERROR: test group name must be less than %zu characters", sizeof(testGroupData) - 1);
-        fflush(stderr);
-        exit(255);
-    }
-
-    strcpy(testGroupData, testGroupTemp);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -185,11 +146,11 @@ testBegin(const char *name)
             // Clear out the data directory so the next test starts clean
             snprintf(
                 buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%srm -rf %s/" "*", testContainer() ? "sudo " : "",
-                testDataPath(), testContainer() ? "sudo " : "", testDataPath());
+                hrnPath(), testContainer() ? "sudo " : "", hrnPath());
 
             if (system(buffer) != 0)
             {
-                fprintf(stderr, "ERROR: unable to clear data path '%s'\n", testDataPath());
+                fprintf(stderr, "ERROR: unable to clear data path '%s'\n", hrnPath());
                 fflush(stderr);
                 exit(255);
             }
@@ -245,72 +206,6 @@ hrnComplete(void)
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Replace a substring with another string
-***********************************************************************************************************************************/
-static void
-hrnReplaceStr(char *string, size_t bufferSize, const char *substring, const char *replace)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, string);
-        FUNCTION_HARNESS_PARAM(SIZE, bufferSize);
-        FUNCTION_HARNESS_PARAM(STRINGZ, substring);
-        FUNCTION_HARNESS_PARAM(STRINGZ, replace);
-    FUNCTION_HARNESS_END();
-
-    ASSERT(string != NULL);
-    ASSERT(substring != NULL);
-
-    // Find substring
-    char *begin = strstr(string, substring);
-
-    while (begin != NULL)
-    {
-        // Find end of substring and calculate replace size difference
-        char *end = begin + strlen(substring);
-        int diff = (int)strlen(replace) - (int)strlen(substring);
-
-        // Make sure we won't overflow the buffer
-        CHECK((size_t)((int)strlen(string) + diff) < bufferSize - 1);
-
-        // Move data from end of string enough to make room for the replacement and copy replacement
-        memmove(end + diff, end, strlen(end) + 1);
-        memcpy(begin, replace, strlen(replace));
-
-        // Find next substring
-        begin = strstr(begin + strlen(replace), substring);
-    }
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-char harnessReplaceKeyBuffer[256 * 1024];
-
-const char *
-hrnReplaceKey(const char *string)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, string);
-    FUNCTION_HARNESS_END();
-
-    ASSERT(string != NULL);
-
-    // Make sure we won't overflow the buffer
-    ASSERT(strlen(string) < sizeof(harnessReplaceKeyBuffer) - 1);
-
-    strcpy(harnessReplaceKeyBuffer, string);
-    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[path]}", testPath());
-    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[path-data]}", testDataPath());
-    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[user-id]}", testUserIdData);
-    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[user]}", testUser());
-    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[group-id]}", testGroupIdData);
-    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[group]}", testGroup());
-    hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[project-exe]}", testProjectExe());
-
-    FUNCTION_HARNESS_RETURN(STRINGZ, harnessReplaceKeyBuffer);
 }
 
 /**********************************************************************************************************************************/
@@ -378,17 +273,17 @@ hrnDiff(const char *expected, const char *actual)
 
     // Write expected file
     char expectedFile[1024];
-    snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", testDataPath());
+    snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", hrnPath());
     hrnFileWrite(expectedFile, (unsigned char *)expected, strlen(expected));
 
     // Write actual file
     char actualFile[1024];
-    snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", testDataPath());
+    snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", hrnPath());
     hrnFileWrite(actualFile, (unsigned char *)actual, strlen(actual));
 
     // Perform diff
     char command[2560];
-    snprintf(command, sizeof(command), "diff -u %s %s > %s/diff.result", expectedFile, actualFile, testDataPath());
+    snprintf(command, sizeof(command), "diff -u %s %s > %s/diff.result", expectedFile, actualFile, hrnPath());
 
     if (system(command) == 2)
     {
@@ -399,7 +294,7 @@ hrnDiff(const char *expected, const char *actual)
 
     // Read result
     char resultFile[1024];
-    snprintf(resultFile, sizeof(resultFile), "%s/diff.result", testDataPath());
+    snprintf(resultFile, sizeof(resultFile), "%s/diff.result", hrnPath());
     hrnFileRead(resultFile, (unsigned char *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
 
     // Remove last linefeed from diff output
@@ -781,14 +676,6 @@ testIdx(void)
 }
 
 /**********************************************************************************************************************************/
-uint64_t
-testScale(void)
-{
-    FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RETURN(UINT64, testScaleData);
-}
-
-/**********************************************************************************************************************************/
 const char *
 testPath(void)
 {
@@ -798,7 +685,7 @@ testPath(void)
 
 /**********************************************************************************************************************************/
 const char *
-testDataPath(void)
+hrnPath(void)
 {
     FUNCTION_HARNESS_VOID();
     FUNCTION_HARNESS_RETURN(STRINGZ, testDataPathData);
@@ -806,24 +693,10 @@ testDataPath(void)
 
 /**********************************************************************************************************************************/
 const char *
-testRepoPath(void)
+hrnPathRepo(void)
 {
     FUNCTION_HARNESS_VOID();
     FUNCTION_HARNESS_RETURN(STRINGZ, testRepoPathData);
-}
-
-/**********************************************************************************************************************************/
-const char *
-testUser(void)
-{
-    return testUserData;
-}
-
-/**********************************************************************************************************************************/
-const char *
-testGroup(void)
-{
-    return testGroupData;
 }
 
 /**********************************************************************************************************************************/

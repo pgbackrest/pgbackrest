@@ -70,7 +70,7 @@ backupRegExp(BackupRegExpParam param)
     String *result = NULL;
 
     // Start the expression with the anchor, date/time regexp and full backup indicator
-    result = strNew("^" DATE_TIME_REGEX "F");
+    result = strNewZ("^" DATE_TIME_REGEX "F");
 
     // Add the diff and/or incr expressions if requested
     if (param.differential || param.incremental)

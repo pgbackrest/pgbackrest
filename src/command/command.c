@@ -43,7 +43,7 @@ cmdOption(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            cmdOptionStr = strNew("");
+            cmdOptionStr = strNew();
 
             MEM_CONTEXT_TEMP_BEGIN()
             {

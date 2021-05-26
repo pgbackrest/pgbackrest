@@ -10,7 +10,6 @@
 # Most options can be set for modules and tests (test option will override module option if both are set):
 #     * db - determines if the test will be run against multiple db versions
 #     * define - defines for C code (will also be applied to the test harness)
-#     * debugUnitSuppress - don't define DEBUG_UNIT for unit tests -- this is used to test unit test debugging macros
 #     * binReq - is the pgbackrest binary required for this test?
 #     * containerReq - is this test required to run in a container?
 #
@@ -23,6 +22,11 @@
 #         because it is used to implement the error handling, so it must do error testing in a more primitive way.
 #     * harness - Adds a harness module that contains functions to aid in testing. For example, the "log" harness includes the
 #         common/harnessLog module to aid in expect log testing.
+#       * shim - list of modules that are shimmed in the harness. This allows the harness to access static elements of the module to
+#         provide additional services for unit testing. A shim can have a 'function' list. In this case the listed functions in the
+#         C module will be appended with _SHIMMED and an implementation with the same function signature must be provided in the
+#         harness. Generally speaking this function will default to calling the original function, but after some initialization the
+#         shim may implement other logic that is useful for unit testing.
 #     * depend - Source modules that this test depends on that have not already been included in prior tests via coverage. Ideally
 #         this option would never be used because it is essentially documenting cross-dependencies in the code.
 #     * total - total runs in the test
@@ -74,16 +78,14 @@ unit:
       - name: assert-off
         total: 1
         define: -DNDEBUG
-        debugUnitSuppress: true
 
         coverage:
           - common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-off
-        total: 2
+        total: 1
         define: -DNDEBUG
-        debugUnitSuppress: true
 
         coverage:
           - common/debug
@@ -177,14 +179,17 @@ unit:
       - name: log
         total: 5
         feature: log
-        harness: log
+        harness:
+          name: log
+          shim:
+            common/log: ~
 
         coverage:
           - common/log
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-on
-        total: 4
+        total: 3
         feature: debug
 
         coverage:
@@ -390,6 +395,7 @@ unit:
           - postgres/interface/v110
           - postgres/interface/v120
           - postgres/interface/v130
+          - postgres/interface/v140
           - protocol/client
           - protocol/command
           - protocol/helper
@@ -439,6 +445,33 @@ unit:
           - postgres/interface/page
 
   # ********************************************************************************************************************************
+  - name: protocol
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: protocol
+        total: 9
+        harness:
+          name: protocol
+          shim:
+            protocol/helper:
+              function:
+                - protocolLocalExec
+        containerReq: true
+        binReq: true
+
+        coverage:
+          - protocol/client
+          - protocol/command
+          - protocol/helper
+          - protocol/parallel
+          - protocol/parallelJob
+          - protocol/server
+
+        include:
+          - common/exec
+
+  # ********************************************************************************************************************************
   - name: config
 
     test:
@@ -451,9 +484,6 @@ unit:
           - config/parse
           - config/parse.auto: noCode
 
-        include:
-          - common/log
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: load
         total: 4
@@ -462,7 +492,6 @@ unit:
           - config/load
 
         include:
-          - common/log
           - common/io/socket/common
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -569,27 +598,6 @@ unit:
 
         include:
           - storage/write
-
-  # ********************************************************************************************************************************
-  - name: protocol
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: protocol
-        total: 9
-        containerReq: true
-        binReq: true
-
-        coverage:
-          - protocol/client
-          - protocol/command
-          - protocol/helper
-          - protocol/parallel
-          - protocol/parallelJob
-          - protocol/server
-
-        include:
-          - common/exec
 
   # ********************************************************************************************************************************
   - name: info
@@ -755,7 +763,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
         total: 12
-        binReq: true
 
         coverage:
           - command/restore/file
@@ -778,7 +785,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
         total: 10
-        binReq: true
 
         coverage:
           - command/backup/backup
@@ -809,7 +815,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify
         total: 8
-        binReq: true
 
         coverage:
           - command/verify/file

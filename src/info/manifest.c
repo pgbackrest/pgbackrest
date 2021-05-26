@@ -381,6 +381,209 @@ manifestNewInternal(void)
     FUNCTION_TEST_RETURN(this);
 }
 
+/***********************************************************************************************************************************
+Ensure that symlinks do not point to the same file, directory, or subdirectory of another link
+
+There are two implementations: manifestLinkCheck(), which is externed, and manifestLinkCheckOne(), which is intended to be
+used internally during processing. manifestLinkCheck() works simply by calling manifestLinkCheckOne() for every link in the target
+list. manifestLinkCheckOne() is optimized to work quickly on a single link.
+***********************************************************************************************************************************/
+// Data needed in link list
+typedef struct ManifestLinkCheckItem
+{
+    const String *path;                                             // Link destination path terminated with /
+    const String *file;                                             // Link file if a file link
+    unsigned int targetIdx;                                         // Index of target used for error messages
+} ManifestLinkCheckItem;
+
+// Persistent data needed during processing of manifestLinkCheck/One()
+typedef struct ManifestLinkCheck
+{
+    const String *basePath;                                         // Base data path (initialized on first call)
+    List *linkList;                                                 // Current list of link destination paths
+} ManifestLinkCheck;
+
+// Helper to initialize the link data
+static ManifestLinkCheck
+manifestLinkCheckInit(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN((ManifestLinkCheck){.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)});
+}
+
+// Helper to check a single link specified by targetIdx
+static void
+manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigned int targetIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM_P(VOID, linkCheck);
+        FUNCTION_LOG_PARAM(UINT, targetIdx);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(linkCheck != NULL);
+    ASSERT(linkCheck->linkList != NULL);
+    ASSERT(targetIdx < manifestTargetTotal(this));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const ManifestTarget *target1 = manifestTarget(this, targetIdx);
+
+        // Only check link targets
+        if (target1->type == manifestTargetTypeLink)
+        {
+            // Create link destination path for comparison with other paths. It must end in / so subpaths can be detected without
+            // matching valid partial path names at the end of the path.
+            const String *path = NULL;
+
+            MEM_CONTEXT_BEGIN(lstMemContext(linkCheck->linkList))
+            {
+                path = strNewFmt("%s/", strZ(manifestTargetPath(this, target1)));
+
+                // Get base bath
+                if (linkCheck->basePath == NULL)
+                {
+                    linkCheck->basePath = strNewFmt(
+                        "%s/", strZ(manifestTargetPath(this, manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR))));
+                }
+            }
+            MEM_CONTEXT_END();
+
+            // Check that link destination is not in base data path
+            if (strBeginsWith(path, linkCheck->basePath))
+            {
+                THROW_FMT(
+                    LinkDestinationError,
+                    "link '%s' destination '%s' is in PGDATA",
+                    strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)));
+            }
+
+            // Check if the link destination path already exists
+            const ManifestLinkCheckItem *const link = lstFind(linkCheck->linkList, &path);
+
+            if (link != NULL)
+            {
+                // If both links are files make sure they don't link to the same file
+                if (target1->file != NULL && link->file != NULL)
+                {
+                    if (strEq(target1->file, link->file))
+                    {
+                        const ManifestTarget *const target2 = manifestTarget(this, link->targetIdx);
+
+                        THROW_FMT(
+                            LinkDestinationError,
+                            "link '%s' (%s/%s) destination is the same file as link '%s' (%s/%s)",
+                            strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)), strZ(target1->file),
+                            strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)), strZ(target2->file));
+                    }
+                }
+                // Else error because one of the links is a path and cannot link to the same path as another file/path link
+                else
+                {
+                    const ManifestTarget *const target2 = manifestTarget(this, link->targetIdx);
+
+                    THROW_FMT(
+                        LinkDestinationError,
+                        "link '%s' (%s) destination is the same directory as link '%s' (%s)",
+                        strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)),
+                        strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
+                }
+            }
+            // Else add to the link list and check against other links
+            else
+            {
+                // Add the link destination path and sort
+                lstAdd(linkCheck->linkList, &(ManifestLinkCheckItem){.path = path, .file = target1->file, .targetIdx = targetIdx});
+                lstSort(linkCheck->linkList, sortOrderAsc);
+
+                // Find the path in the sorted list
+                unsigned int linkIdx = lstFindIdx(linkCheck->linkList, &path);
+                ASSERT(linkIdx != LIST_NOT_FOUND);
+
+                // Check path links against other links (file links have already been checked)
+                if (target1->file == NULL)
+                {
+                    // Check the link destination path to be sure it is not a subpath of a prior link destination path
+                    for (unsigned int priorLinkIdx = linkIdx - 1; (int)priorLinkIdx >= 0; priorLinkIdx--)
+                    {
+                        const ManifestLinkCheckItem *const priorLink = lstGet(linkCheck->linkList, priorLinkIdx);
+
+                        // Skip file links since they are allowed to be in the same path with each other and in the parent path of a
+                        // linked destination path.
+                        if (priorLink->file != NULL)
+                            continue;
+
+                        if (strBeginsWith(path, priorLink->path))
+                        {
+                            const ManifestTarget *const target2 = manifestTarget(this, priorLink->targetIdx);
+
+                            THROW_FMT(
+                                LinkDestinationError,
+                                "link '%s' (%s) destination is a subdirectory of link '%s' (%s)",
+                                strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)),
+                                strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
+                        }
+
+                        // Stop once the first prior path link has been checked since it must be a parent (if there is one)
+                        break;
+                    }
+
+                    // Check the link destination path to be sure it is not a parent path of a subsequent link destination path
+                    for (unsigned int nextLinkIdx = linkIdx + 1; nextLinkIdx < lstSize(linkCheck->linkList); nextLinkIdx++)
+                    {
+                        const ManifestLinkCheckItem *const nextLink = lstGet(linkCheck->linkList, nextLinkIdx);
+
+                        // Skip file links since they are allowed to be in the same path with each other and in the parent path of a
+                        // linked destination path.
+                        if (nextLink->file != NULL)
+                            continue;
+
+                        if (strBeginsWith(nextLink->path, path))
+                        {
+                            const ManifestTarget *const target2 = manifestTarget(this, nextLink->targetIdx);
+
+                            THROW_FMT(
+                                LinkDestinationError,
+                                "link '%s' (%s) destination is a subdirectory of link '%s' (%s)",
+                                strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)),
+                                strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)));
+                        }
+
+                        // Stop once the first next path link has been checked since it must be a subpath (if there is one)
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+manifestLinkCheck(const Manifest *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Check all links
+        ManifestLinkCheck linkCheck = manifestLinkCheckInit();
+
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(this); targetIdx++)
+            manifestLinkCheckOne(this, &linkCheck, targetIdx);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 typedef struct ManifestBuildData
 {
@@ -394,6 +597,7 @@ typedef struct ManifestBuildData
     RegExp *tempRelationExp;                                        // Identify temp relations
     RegExp *standbyExp;                                             // Identify files that must be copied from the primary
     const VariantList *tablespaceList;                              // List of tablespaces in the database
+    ManifestLinkCheck linkCheck;                                    // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
 
@@ -816,7 +1020,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             manifestLinkAdd(buildData.manifest, &link);
 
             // Make sure the link is valid
-            manifestLinkCheck(buildData.manifest);
+            manifestLinkCheckOne(buildData.manifest, &buildData.linkCheck, manifestTargetTotal(buildData.manifest) - 1);
 
             // If the link check was successful but the destination does not exist then check it again to generate an error
             if (!linkedInfo.exists)
@@ -865,7 +1069,7 @@ manifestNewBuild(
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(NULL);
-        this->pub.data.backrestVersion = strNew(PROJECT_VERSION);
+        this->pub.data.backrestVersion = strNewZ(PROJECT_VERSION);
         this->pub.data.pgVersion = pgVersion;
         this->pub.data.pgCatalogVersion = pgCatalogVersion;
         this->pub.data.backupType = backupTypeFull;
@@ -883,6 +1087,7 @@ manifestNewBuild(
                 .online = online,
                 .checksumPage = checksumPage,
                 .tablespaceList = tablespaceList,
+                .linkCheck = manifestLinkCheckInit(),
                 .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
                 .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
                 .pgPath = storagePathP(storagePg, NULL),
@@ -2339,7 +2544,7 @@ manifestValidate(Manifest *this, bool strict)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *error = strNew("");
+        String *error = strNew();
 
         // Validate files
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
@@ -2368,69 +2573,6 @@ manifestValidate(Manifest *this, bool strict)
             THROW_FMT(FormatError, "manifest validation failed:%s", strZ(error));
     }
     MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-manifestLinkCheck(const Manifest *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Base path used for link checks
-    const ManifestTarget *base = manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR);
-
-    for (unsigned int linkIdx1 = 0; linkIdx1 < manifestTargetTotal(this); linkIdx1++)
-    {
-        const ManifestTarget *link1 = manifestTarget(this, linkIdx1);
-
-        // Only compare links
-        if (link1->type == manifestTargetTypeLink)
-        {
-            // Check that the link is not inside the base data path
-            if (strBeginsWith(
-                    strNewFmt("%s/", strZ(manifestTargetPath(this, link1))),
-                    strNewFmt("%s/", strZ(manifestTargetPath(this, base)))))
-            {
-                THROW_FMT(
-                    LinkDestinationError,
-                    "link '%s' destination '%s' is in PGDATA",
-                    strZ(manifestPathPg(link1->name)), strZ(manifestTargetPath(this, link1)));
-            }
-
-            // Check that no link is a subpath of another link
-            for (unsigned int linkIdx2 = 0; linkIdx2 < manifestTargetTotal(this); linkIdx2++)
-            {
-                const ManifestTarget *link2 = manifestTarget(this, linkIdx2);
-
-                if (link2->type == manifestTargetTypeLink && link1 != link2)
-                {
-                    // Don't check link1 against a file link. If link1 is a file there's no need to compare because they cannot have
-                    // conflicting paths. If link1 is a path we want to make sure that the file link is not located within it but to
-                    // do that we need to wait until the file link is link1 and the path link is link2, which happens on another
-                    // interation of the outer loop.
-                    if (link2->file != NULL)
-                        continue;
-
-                    if (strBeginsWith(
-                            strNewFmt("%s/", strZ(manifestTargetPath(this, link1))),
-                            strNewFmt("%s/", strZ(manifestTargetPath(this, link2)))))
-                    {
-                        THROW_FMT(
-                            LinkDestinationError,
-                            "link '%s' (%s) destination is a subdirectory of or the same directory as link '%s' (%s)",
-                            strZ(manifestPathPg(link1->name)), strZ(manifestTargetPath(this, link1)),
-                            strZ(manifestPathPg(link2->name)), strZ(manifestTargetPath(this, link2)));
-                    }
-                }
-            }
-        }
-    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -2648,7 +2790,7 @@ manifestPathPg(const String *manifestPath)
     // If something in pg_data/
     if (strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGDATA "/")))
     {
-        FUNCTION_TEST_RETURN(strNew(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
+        FUNCTION_TEST_RETURN(strNewZ(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
     }
     // Else not pg_data (this is faster since the length of everything else will be different than pg_data)
     else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
