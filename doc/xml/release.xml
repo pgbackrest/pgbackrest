@@ -101,6 +101,18 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1389"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>repo-retention-history</br-option> option to expire backup history.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="986"/>
                         <github-pull-request id="1337"/>
 
