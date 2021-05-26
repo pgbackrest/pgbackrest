@@ -457,6 +457,7 @@ unit:
             protocol/helper:
               function:
                 - protocolLocalExec
+                - protocolRemoteExec
         containerReq: true
         binReq: true
 
@@ -570,8 +571,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
         total: 9
-        containerReq: true
-        binReq: true
 
         coverage:
           - storage/remote/read
