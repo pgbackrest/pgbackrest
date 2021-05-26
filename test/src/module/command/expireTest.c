@@ -683,6 +683,9 @@ testRun(void)
                 storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"),
             "000000010000000000000001 and 000000010000000000000002 removed from 10-2/0000000100000000");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
+            "P00   INFO: repo1: 10-2 remove archive, start = 000000010000000000000001, stop = 000000010000000000000002");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - latest archive not expired");
@@ -709,6 +712,10 @@ testRun(void)
                 storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"),
             "none removed from 10-2/0000000100000000");
+        // Only last 2 full backups and dependents are PITRable, first full backup is not
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000003, stop = 000000020000000000000001\n"
+            "P00   INFO: repo1: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set to lowest - keep PITR for each archiveId");
@@ -734,6 +741,9 @@ testRun(void)
             strLstSort(storageListP(
                 storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"), "none removed from 10-2/0000000100000000");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 no archive to remove\n"
+            "P00   INFO: repo1: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive, retention-archive-type=diff, retention-diff set");
@@ -768,6 +778,11 @@ testRun(void)
             strLstSort(storageListP(
                 storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"), "none removed from 10-2/0000000100000000");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000003, stop = 000000020000000000000003\n"
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000006, stop = 000000020000000000000006\n"
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
+            "P00   INFO: repo1: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive, retention-archive-type=incr");
@@ -802,6 +817,11 @@ testRun(void)
             strLstSort(storageListP(
                 storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"), "none removed from 10-2/0000000100000000");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000001, stop = 000000020000000000000001\n"
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000003, stop = 000000020000000000000003\n"
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000006, stop = 000000020000000000000006\n"
+            "P00   INFO: repo1: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - dry run");
@@ -811,7 +831,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-diff=3");
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
-        strLstAddZ(argList, "--dry-run");
+        // strLstAddZ(argList, "--dry-run");
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk
@@ -837,6 +857,7 @@ testRun(void)
             storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F_20181119-152500I/" BACKUP_MANIFEST_FILE,
             strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
 
+// CSHANG This test is bad because we are testing files still existing after a dry-run - which they WILL always exist!
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) do not remove last backup in archive sub path or sub path");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1/0000000100000000")), true,
@@ -846,8 +867,11 @@ testRun(void)
             "backup not removed");
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire full backup 20181119-152138F\n"
-            "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F");
-
+            "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
+            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 0000000100000000, stop = 0000000100000000\n"
+            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
+            "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove");
+exit(0);
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire via backup command");
 
