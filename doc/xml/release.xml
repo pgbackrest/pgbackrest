@@ -213,6 +213,7 @@
                         <commit subject="Add local process shim to archive-get/archive-push unit tests."/>
                         <commit subject="Set buffer-size in the configuration test harness."/>
                         <commit subject="Factor remote process exec out of protocolRemoteGet()."/>
+                        <commit subject="Refactor storage/remote unit test using the protocol remote shim."/>
 
                         <p>Add local processs shim.</p>
                     </release-item>
