@@ -4480,7 +4480,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)

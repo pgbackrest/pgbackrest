@@ -1797,7 +1797,7 @@ option:
       backup: {}
       expire: {}
     command-role:
-      default: {}
+      main: {}
 
   repo-s3-bucket:
     section: global
