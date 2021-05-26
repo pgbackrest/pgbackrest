@@ -5,8 +5,10 @@ Common Functions and Definitions for Backup and Expire Commands
 #define COMMAND_BACKUP_COMMON_H
 
 #include <stdbool.h>
+#include <time.h>
 
 #include "common/type/string.h"
+#include "info/infoBackup.h"
 
 /***********************************************************************************************************************************
 Backup constants
@@ -16,6 +18,9 @@ Backup constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Format a backup label from a type and timestamp with an optional prior label
+String *backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp);
+
 // Returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
 typedef struct BackupRegExpParam
 {

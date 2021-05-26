@@ -4473,6 +4473,28 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("repo-retention-history"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_REQUIRED(false),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(0, 9999999),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("repo-s3-bucket"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_REQUIRED(true),
@@ -9624,6 +9646,45 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFullType,
     },
 
+    // repo-retention-history option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-retention-history",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
+    },
+    {
+        .name = "reset-repo1-retention-history",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
+    },
+    {
+        .name = "repo2-retention-history",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
+    },
+    {
+        .name = "reset-repo2-retention-history",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
+    },
+    {
+        .name = "repo3-retention-history",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
+    },
+    {
+        .name = "reset-repo3-retention-history",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
+    },
+    {
+        .name = "repo4-retention-history",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
+    },
+    {
+        .name = "reset-repo4-retention-history",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
+    },
+
     // repo-s3-bucket option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -10665,6 +10726,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoRetentionDiff,
     cfgOptRepoRetentionFull,
     cfgOptRepoRetentionFullType,
+    cfgOptRepoRetentionHistory,
     cfgOptRepoType,
     cfgOptResume,
     cfgOptSckBlock,

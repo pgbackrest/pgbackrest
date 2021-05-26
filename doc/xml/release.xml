@@ -101,6 +101,18 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1389"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>repo-retention-history</br-option> option to expire backup history.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="986"/>
                         <github-pull-request id="1337"/>
 
@@ -209,6 +221,11 @@
                         <commit subject="Add local process shim."/>
                         <commit subject="Add log shim."/>
                         <commit subject="Fix shims with more than one function."/>
+                        <commit subject="Protocol shim improvements."/>
+                        <commit subject="Add local process shim to archive-get/archive-push unit tests."/>
+                        <commit subject="Set buffer-size in the configuration test harness."/>
+                        <commit subject="Factor remote process exec out of protocolRemoteGet()."/>
+                        <commit subject="Refactor storage/remote unit test using the protocol remote shim."/>
 
                         <p>Add local processs shim.</p>
                     </release-item>

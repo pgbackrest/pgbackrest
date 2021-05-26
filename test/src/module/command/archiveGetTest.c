@@ -2,8 +2,6 @@
 Test Archive Get Command
 ***********************************************************************************************************************************/
 #include "common/compress/helper.h"
-#include "common/io/bufferRead.h"
-#include "common/io/bufferWrite.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "postgres/interface.h"
@@ -14,6 +12,7 @@ Test Archive Get Command
 #include "common/harnessFork.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPostgres.h"
+#include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
@@ -106,6 +105,10 @@ testRun(void)
     if (testBegin("cmdArchiveGetAsync()"))
     {
         harnessLogLevelSet(logLevelDetail);
+
+        // Install local command handler shim
+        static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST};
+        hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
 
         // Arguments that must be included
         StringList *argBaseList = strLstNew();
@@ -203,14 +206,14 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01   WARN: [FileReadError] raised from local-1 protocol: unable to get 000000010000000100000001:\n"
+            "P01   WARN: [FileReadError] raised from local-1 shim protocol: unable to get 000000010000000100000001:\n"
             "            repo1: 10-1/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
                 " [FormatError] unexpected eof in compressed data");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error",
             "42\n"
-            "raised from local-1 protocol: unable to get 000000010000000100000001:\n"
+            "raised from local-1 shim protocol: unable to get 000000010000000100000001:\n"
             "repo1: 10-1/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
                 " unexpected eof in compressed data",
             .remove = true);
@@ -515,14 +518,14 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
             "P00   WARN: " TEST_WARN1 "\n"
-            "P01   WARN: [FileReadError] raised from local-1 protocol: unable to get 000000010000000200000000:\n"
+            "P01   WARN: [FileReadError] raised from local-1 shim protocol: unable to get 000000010000000200000000:\n"
             "            " TEST_WARN2 "\n"
             "            " TEST_WARN3);
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
             "42\n"
-            "raised from local-1 protocol: unable to get 000000010000000200000000:\n"
+            "raised from local-1 shim protocol: unable to get 000000010000000200000000:\n"
             TEST_WARN2 "\n"
             TEST_WARN3 "\n"
             TEST_WARN1,
@@ -532,6 +535,9 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("global error on invalid executable");
+
+        // Uninstall local command handler shim
+        hrnProtocolLocalShimUninstall();
 
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest-bogus");
@@ -1071,42 +1077,6 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("call protocol function directly");
-
-        // Start a protocol server
-        Buffer *serverWrite = bufNew(8192);
-        IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
-        ioWriteOpen(serverWriteIo);
-
-        ProtocolServer *server = protocolServerNew(STRDEF("test"), STRDEF("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-        bufUsedSet(serverWrite, 0);
-
-        // Add archive-async and spool path
-        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
-        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
-        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
-        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
-
-        // Setup protocol command
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStrZ("01ABCDEF01ABCDEF01ABCDEF"));
-        varLstAdd(
-            paramList, varNewStrZ("10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
-        varLstAdd(paramList, varNewUInt(1));
-        varLstAdd(paramList, varNewStrZ("10-1"));
-        varLstAdd(paramList, varNewUInt64(cipherTypeAes256Cbc));
-        varLstAdd(paramList, varNewStrZ(TEST_CIPHER_PASS_ARCHIVE));
-
-        TEST_RESULT_VOID(archiveGetFileProtocol(paramList, server), "protocol archive get");
-
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,[]]}\n", "check result");
-        TEST_STORAGE_LIST(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n", .remove = true);
-
-        bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no segments to find with existing ok file");

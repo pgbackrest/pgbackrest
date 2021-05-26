@@ -1,8 +1,6 @@
 /***********************************************************************************************************************************
 Test Archive Push Command
 ***********************************************************************************************************************************/
-#include "common/io/bufferRead.h"
-#include "common/io/bufferWrite.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/time.h"
@@ -13,6 +11,7 @@ Test Archive Push Command
 #include "common/harnessFork.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPostgres.h"
+#include "common/harnessProtocol.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -24,16 +23,6 @@ testRun(void)
 
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-
-    // Start a protocol server to test the protocol directly
-    Buffer *serverWrite = bufNew(8192);
-    IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
-    ioWriteOpen(serverWriteIo);
-
-    ProtocolServer *server = protocolServerNew(
-        STRDEF("test"), STRDEF("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-
-    bufUsedSet(serverWrite, 0);
 
     // *****************************************************************************************************************************
     if (testBegin("archivePushReadyList(), archivePushProcessList(), and archivePushDrop()"))
@@ -258,7 +247,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("Synchronous cmdArchivePush(), archivePushFile() and archivePushFileProtocol()"))
+    if (testBegin("Synchronous cmdArchivePush() and archivePushFile()"))
     {
         TEST_TITLE("command must be run on the pg host");
 
@@ -473,32 +462,6 @@ testRun(void)
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStrZ(TEST_PATH "/pg/pg_wal/000000010000000100000002"));
-        varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, varNewUInt64(PG_VERSION_11));
-        varLstAdd(paramList, varNewUInt64(0xFACEFACEFACEFACE));
-        varLstAdd(paramList, varNewStrZ("000000010000000100000002"));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewInt(6));
-        varLstAdd(paramList, varNewVarLst(varLstNewStrLst(strLstNew())));
-        varLstAdd(paramList, varNewUInt(1));
-        varLstAdd(paramList, varNewUInt(0));
-        varLstAdd(paramList, varNewStrZ("11-1"));
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone));
-        varLstAdd(paramList, NULL);
-
-        TEST_RESULT_VOID(archivePushFileProtocol(paramList, server), "protocol archive put");
-        TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite),
-            "{\"out\":[[\"WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum"
-                "\\nHINT: this is valid in some recovery scenarios but may also indicate a problem.\"]]}\n",
-            "check result");
-
-        bufUsedSet(serverWrite, 0);
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple repos, one encrypted");
 
@@ -666,6 +629,10 @@ testRun(void)
     if (testBegin("Asynchronous cmdArchivePush() and cmdArchivePushAsync()"))
     {
         harnessLogLevelSet(logLevelDetail);
+
+        // Install local command handler shim
+        static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST};
+        hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
 
         TEST_TITLE("command must be run on the pg host");
 
@@ -899,7 +866,7 @@ testRun(void)
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
             "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
-                "[55] raised from local-1 protocol: " STORAGE_ERROR_READ_MISSING,
+                "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING,
             TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_RESULT_BOOL(
@@ -1026,7 +993,10 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             strLstSort(storageListP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
             "000000010000000100000001.ok\n000000010000000100000002.ok\n", "check status files");
-        }
+
+        // Uninstall local command handler shim
+        hrnProtocolLocalShimUninstall();
+    }
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
