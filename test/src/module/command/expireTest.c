@@ -1464,6 +1464,8 @@ testRun(void)
             "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
 
         TEST_RESULT_LOG(
+            "P00   INFO: [DRY-RUN] repo1: 9.4-1 no archive to remove\n"
+            "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup history path 2017\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup history manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup history manifest 20181029-152138F.manifest.gz");
@@ -1494,6 +1496,8 @@ testRun(void)
             "2019/20191119-152138F.manifest.gz\n");
 
         TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 no archive to remove\n"
+            "P00   INFO: repo1: 10-2 no archive to remove\n"
             "P00   INFO: repo1: remove expired backup history path 2017\n"
             "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
             "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz");
@@ -1525,6 +1529,8 @@ testRun(void)
             "2019/20191119-152138F.manifest.gz\n");
 
         TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 no archive to remove\n"
+            "P00   INFO: repo1: 10-2 no archive to remove\n"
             "P00   INFO: repo1: remove expired backup history path 2017\n"
             "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz");
     }
