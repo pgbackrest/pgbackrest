@@ -583,6 +583,19 @@
                         <example>2</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-retention-history" name="Backup History Retention">
+                        <summary>Days of backup history manifests to retain.</summary>
+
+                        <text>A copy of the backup manifest is stored in the <path>backup.history</path> path when a backup completes. By default these files are never expired since they are useful for data mining, e.g. measuring backup and WAL growth over time.
+
+                        Set <setting>repo-retention-history</setting> to define the number of days of backup history manifests to retain. Unexpired backups are always kept in the backup history. Specify <br-option>repo-retention-history=0</br-option> to retain the backup history only for unexpired backups.
+
+                        When a full backup history manifest is expired, all differential and incremental backup history manifests associated with the full backup also expire.</text>
+
+                        <example>365</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-KEY KEY -->
                     <config-key id="repo-s3-key" name="S3 Repository Access Key">
                         <summary>S3 repository access key.</summary>
