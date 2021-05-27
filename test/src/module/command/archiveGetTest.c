@@ -1,12 +1,8 @@
 /***********************************************************************************************************************************
 Test Archive Get Command
 ***********************************************************************************************************************************/
-#include "common/compress/helper.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
-#include "postgres/interface.h"
-#include "postgres/version.h"
-#include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -22,8 +18,6 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
-
-    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("queueNeed()"))
@@ -610,7 +604,7 @@ testRun(void)
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
-        storagePathCreateP(storageTest, STRDEF(TEST_PATH "/pg/pg_wal"));
+        storagePathCreateP(storagePgWrite(), STRDEF("pg_wal"));
 
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -686,7 +680,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: found 000000010000000100000001 in the archive asynchronously");
 
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // Write more WAL segments (in this case queue should be full)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -703,7 +697,7 @@ testRun(void)
             "P00   WARN: warning about x\n"
             "P00   INFO: found 000000010000000100000001 in the archive asynchronously");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n", .remove = true);
 
         // Make sure the process times out when it can't get a lock
@@ -815,7 +809,7 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: unable to find 01ABCDEF01ABCDEF01ABCDEF in the archive");
 
-        TEST_STORAGE_LIST_EMPTY(storageTest, TEST_PATH_PG "/pg_wal");
+        TEST_STORAGE_LIST_EMPTY(storagePg(), "pg_wal");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get WAL segment");
@@ -832,9 +826,8 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
-        TEST_RESULT_UINT(
-            storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on duplicate WAL segment");
@@ -849,7 +842,7 @@ testRun(void)
                 ", 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "HINT: are multiple primaries archiving to this stanza?");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", NULL);
+        TEST_STORAGE_LIST(storagePg(), "pg_wal", NULL);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
@@ -871,7 +864,7 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get from current db-id");
@@ -883,7 +876,7 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-4 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         TEST_STORAGE_REMOVE(
@@ -910,7 +903,7 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 000000010000000100000001.partial in the repo1: 10-4 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(),
             STORAGE_REPO_ARCHIVE "/10-4/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -927,7 +920,7 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: unable to find 00000001.history in the archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", NULL);
+        TEST_STORAGE_LIST(storagePg(), "pg_wal", NULL);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get history");
@@ -938,8 +931,8 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 00000001.history in the repo1: 10-1 archive");
 
-        TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYHISTORY")).size, 7, "check size");
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYHISTORY\n", .remove = true);
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYHISTORY")).size, 7, "check size");
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYHISTORY\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get compressed and encrypted WAL segment with invalid repo");
@@ -989,9 +982,8 @@ testRun(void)
                 " archiving scheme.\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
-        TEST_RESULT_UINT(
-            storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo1 has info but bad permissions");
@@ -1013,7 +1005,7 @@ testRun(void)
                 "/01ABCDEF01ABCDEF': [13] Permission denied\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("all repos have info but bad permissions");
