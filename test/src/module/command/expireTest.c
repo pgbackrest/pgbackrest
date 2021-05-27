@@ -69,9 +69,9 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
-
+// cshang - try to avoid using storageTest - if use storageRepo, there are built in stuff for me
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-
+// cshang - paths as constant - get rid of strins and use constants
     const String *backupStanzaPath = STRDEF("repo/backup/db");
     String *backupInfoFileName = strNewFmt("%s/backup.info", strZ(backupStanzaPath));
     const String *archiveStanzaPath = STRDEF("repo/archive/db");
@@ -79,7 +79,8 @@ testRun(void)
 
     StringList *argListBase = strLstNew();
     strLstAddZ(argListBase, "--stanza=db");
-    strLstAddZ(argListBase, "--repo1-path=" TEST_PATH "/repo");
+    strLstAddZ(argListBase, "--repo1-path=" TEST_PATH "/repo"); // cshang - should be test_path_repo - and if have repo1 then test_path_repo "1"
+    // EXAMPLE - storagePathCreateP(storageTest, STRDEF(TEST_PATH "/pg/pg_wal")); // cshang could maybe use storagePgWrite, STRDEF("pg_wal")
 
     StringList *argListAvoidWarn = strLstDup(argListBase);
     strLstAddZ(argListAvoidWarn, "--repo1-retention-full=1");  // avoid warning
@@ -168,37 +169,25 @@ testRun(void)
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
 
-        // Create backup directories and manifest files
-        const String *full1 = STRDEF("20181119-152138F");
-        const String *full2 = STRDEF("20181119-152800F");
-        String *full1Path = strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(full1));
-        String *full2Path = strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(full2));
-
         // Load Parameters
         StringList *argList = strLstDup(argListAvoidWarn);
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, strNewFmt("%s/%s", strZ(full1Path), BACKUP_MANIFEST_FILE)), BUFSTRDEF(BOGUS_STR)),
-                "full1 put manifest");
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageTest, strNewFmt("%s/%s", strZ(full1Path), BACKUP_MANIFEST_FILE ".copy")), BUFSTRDEF(BOGUS_STR)),
-            "full1 put manifest copy");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/%s", strZ(full1Path), "bogus")),
-                BUFSTRDEF(BOGUS_STR)), "full1 put extra file");
-        TEST_RESULT_VOID(storagePathCreateP(storageTest, full2Path), "full2 empty");
+        // Write out manifest files for full backups (contents can be anything as their presence only is required)
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE, BOGUS_STR);
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, BOGUS_STR);
 
-        TEST_RESULT_VOID(expireBackup(infoBackup, full1, 0), "expire backup with both manifest files");
-        TEST_RESULT_BOOL(
-            (strLstSize(storageListP(storageTest, full1Path)) &&
-                strLstExists(storageListP(storageTest, full1Path), STRDEF("bogus"))),
-            true, "full1 - only manifest files removed");
+        // Put extra file in 20181119-152138F backup directory
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BOGUS_STR, BOGUS_STR);
+        TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152800F")), "full2 empty");
 
-        TEST_RESULT_VOID(expireBackup(infoBackup, full2, 0), "expire backup with no manifest - does not error");
+        // Expire 20181119-152138F - only manifest files removed
+        TEST_RESULT_VOID(expireBackup(infoBackup, STRDEF("20181119-152138F"), 0), "expire backup with both manifest files");
+        TEST_STORAGE_LIST(storageRepo(), STORAGE_REPO_BACKUP "/20181119-152138F", BOGUS_STR "\n");
+
+        TEST_RESULT_VOID(
+            expireBackup(infoBackup, STRDEF("20181119-152800F"), 0), "expire backup with no manifest - does not error");
 
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
