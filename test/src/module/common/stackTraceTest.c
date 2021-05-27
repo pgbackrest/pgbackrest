@@ -44,7 +44,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("stackTraceTestStart(), stackTraceTestStop(), and stackTraceTest()"))
     {
-#ifndef NDEBUG
+#ifdef DEBUG
         assert(stackTraceTest());
 
         stackTraceTestStop();
@@ -98,9 +98,9 @@ testRun(void)
 
             TEST_RESULT_Z(
                 buffer,
-                "file1:function2:99:(test build required for parameters)\n"
+                "file1.c:function2:99:(test build required for parameters)\n"
                 "    ... function(s) omitted ...\n"
-                "file1:function1:(void)",
+                "file1.c:function1:(void)",
                 "    check stack trace");
 
             assert(stackTracePush("file1.c", "function2", logLevelTrace) == logLevelTrace);
@@ -154,11 +154,11 @@ testRun(void)
 
                 TEST_RESULT_Z(
                     buffer,
-                    "file4:function4:99:(buffer full - parameters not available)\n"
-                    "file3:function3:7777:(param1: value1, param2: value2)\n"
-                    "file2:function2:7777:(param1: value1)\n"
-                    "file1:function2:7777:(debug log level required for parameters)\n"
-                    "file1:function1:7777:(void)",
+                    "file4.c:function4:99:(buffer full - parameters not available)\n"
+                    "file3.c:function3:7777:(param1: value1, param2: value2)\n"
+                    "file2.c:function2:7777:(param1: value1)\n"
+                    "file1.c:function2:7777:(debug log level required for parameters)\n"
+                    "file1.c:function1:7777:(void)",
                     "stack trace");
 
                 stackTracePop("file4.c", "function4", false);
@@ -193,5 +193,5 @@ testRun(void)
         assert(stackTraceLocal.stackSize == 0);
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -133,7 +133,7 @@ eval
 
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
-    processExec('sudo apt-get install -y libxml-checker-perl libyaml-libyaml-perl', {bSuppressStdErr => true});
+    processExec('sudo apt-get install -y libxml-checker-perl libyaml-perl', {bSuppressStdErr => true});
     processEnd();
 
     processBegin('mount tmpfs');
@@ -149,7 +149,7 @@ eval
 
     if ($ARGV[0] eq 'doc')
     {
-        if ($strVm eq VM_CO7)
+        if ($strVm eq VM_CO7 || $strVm eq VM_CO8)
         {
             processBegin('LaTeX install');
             processExec(
@@ -221,7 +221,7 @@ eval
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --no-gen --log-level-test-file=off --no-coverage-report --vm-host=none --vm-max=2 --vm=${strVm}" .
+            "${strTestExe} --gen-check --log-level-test-file=off --no-coverage-report --vm-host=none --vm-max=2 --vm=${strVm}" .
             (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();

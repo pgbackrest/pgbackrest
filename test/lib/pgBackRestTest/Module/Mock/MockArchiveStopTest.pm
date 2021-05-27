@@ -44,11 +44,11 @@ sub run
     foreach my $rhRun
     (
         {vm => VM2, remote => false, storage =>    S3, encrypt => false, compress =>  NONE, error => 0},
-        {vm => VM2, remote =>  true, storage => POSIX, encrypt =>  true, compress =>   BZ2, error => 0},
-        {vm => VM3, remote => false, storage => POSIX, encrypt =>  true, compress =>  NONE, error => 0},
+        {vm => VM2, remote =>  true, storage => POSIX, encrypt =>  true, compress =>  NONE, error => 0},
+        {vm => VM3, remote => false, storage =>   GCS, encrypt =>  true, compress =>   BZ2, error => 0},
         {vm => VM3, remote =>  true, storage => AZURE, encrypt => false, compress =>   LZ4, error => 1},
-        {vm => VM4, remote => false, storage =>    S3, encrypt =>  true, compress =>   ZST, error => 0},
-        {vm => VM4, remote =>  true, storage => POSIX, encrypt => false, compress =>  NONE, error => 0},
+        {vm => VM4, remote => false, storage =>    S3, encrypt =>  true, compress =>  NONE, error => 0},
+        {vm => VM4, remote =>  true, storage =>   GCS, encrypt => false, compress =>   ZST, error => 0},
     )
     {
         # Only run tests for this vm
@@ -102,12 +102,12 @@ sub run
         &log(INFO, '    push second WAL');
 
         $oHostDbPrimary->archivePush(
-            $strWalPath, $strWalTestFile, 2, $iError ? ERROR_UNKNOWN : ERROR_ARCHIVE_MISMATCH);
+            $strWalPath, $strWalTestFile, 2, ERROR_REPO_INVALID, undef, $iError ? '--repo1-host=bogus' : undef);
 
         &log(INFO, '    push third WAL');
 
         $oHostDbPrimary->archivePush(
-            $strWalPath, $strWalTestFile, 3, $iError ? ERROR_UNKNOWN : ERROR_ARCHIVE_MISMATCH);
+            $strWalPath, $strWalTestFile, 3, ERROR_REPO_INVALID, undef, $iError ? '--repo1-host=bogus' : undef);
 
         # Now this segment will get dropped
         &log(INFO, '    push fourth WAL');

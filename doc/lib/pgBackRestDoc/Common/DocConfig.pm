@@ -212,9 +212,6 @@ sub process
 
     foreach my $strOption (sort(keys(%{$oOptionDefine})))
     {
-        # Skip options that are internal only for all commands (test options)
-        next if $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
-
         # Iterate through all commands
         my @stryCommandList = sort(keys(%{defined($$oOptionDefine{$strOption}{&CFGDEF_COMMAND}) ?
                               $$oOptionDefine{$strOption}{&CFGDEF_COMMAND} : $$oConfigHash{&CONFIG_HELP_COMMAND}}));
@@ -226,14 +223,12 @@ sub process
                 next;
             }
 
-            if (ref(\$$oOptionDefine{$strOption}{&CFGDEF_COMMAND}{$strCommand}) eq 'SCALAR' &&
-                $$oOptionDefine{$strOption}{&CFGDEF_COMMAND}{$strCommand} == false)
+            # Skip the option if it is not valid for this command and the default role. Only options valid for the default role are
+            # show in help because that is the only role available to a user.
+            if (!defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_MAIN}))
             {
                 next;
             }
-
-            # Skip options that are internal only for the current command
-            next if $oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL};
 
             my $oCommandDoc = $oDoc->nodeGet('operation')->nodeGet('command-list')->nodeGetById('command', $strCommand);
 
@@ -281,8 +276,19 @@ sub process
                 {
                     $oOptionDoc = $oDoc->nodeGet('operation')->nodeGet('operation-general')->nodeGet('option-list')
                                        ->nodeGetById('option', $strOption, false);
-
                     $strOptionSource = CONFIG_HELP_SOURCE_DEFAULT if (defined($oOptionDoc));
+
+                    # If a section is specified then use it, otherwise the option should be general since it is not for a specific
+                    # command
+                    if (defined($oOptionDoc))
+                    {
+                        $strSection = $oOptionDoc->paramGet('section', false);
+
+                        if (!defined($strSection))
+                        {
+                            $strSection = "general";
+                        }
+                    }
                 }
             }
 
@@ -312,15 +318,17 @@ sub process
             $$oCommandOption{&CONFIG_HELP_SUMMARY} = $oOptionDoc->nodeGet('summary')->textGet();
             $$oCommandOption{&CONFIG_HELP_DESCRIPTION} = $oOptionDoc->textGet();
             $$oCommandOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
+            $oCommandOption->{&CONFIG_HELP_INTERNAL} =
+                cfgDefineCommand()->{$strCommand}{&CFGDEF_INTERNAL} ? true : $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
 
             $$oCommandOption{&CONFIG_HELP_NAME} = $oOptionDoc->paramGet('name');
 
             # Generate a list of alternate names
-            if (defined($rhConfigDefine->{$strOption}{&CFGDEF_NAME_ALT}))
+            if (defined($rhConfigDefine->{$strOption}{&CFGDEF_DEPRECATE}))
             {
                 my $rhNameAlt = {};
 
-                foreach my $strNameAlt (sort(keys(%{$rhConfigDefine->{$strOption}{&CFGDEF_NAME_ALT}})))
+                foreach my $strNameAlt (sort(keys(%{$rhConfigDefine->{$strOption}{&CFGDEF_DEPRECATE}})))
                 {
                     $strNameAlt =~ s/\?//g;
 
@@ -334,12 +342,6 @@ sub process
 
                 if (@stryNameAlt > 0)
                 {
-                    if (@stryNameAlt != 1)
-                    {
-                        confess &log(
-                            ERROR, "multiple alt names are not supported for option '${strOption}':  " . join(', ', @stryNameAlt));
-                    }
-
                     $oCommandOption->{&CONFIG_HELP_NAME_ALT} = \@stryNameAlt;
                 }
             }
@@ -361,6 +363,7 @@ sub process
                 $oOption->{&CONFIG_HELP_NAME_ALT} = $oCommandOption->{&CONFIG_HELP_NAME_ALT};
                 $$oOption{&CONFIG_HELP_DESCRIPTION} = $$oCommandOption{&CONFIG_HELP_DESCRIPTION};
                 $$oOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
+                $oOption->{&CONFIG_HELP_INTERNAL} = $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
             }
         }
     }
@@ -453,6 +456,9 @@ sub manGet
 
     foreach my $strOption (sort(keys(%{$$hConfig{&CONFIG_HELP_OPTION}})))
     {
+        # Skip internal options
+        next if $hConfig->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_INTERNAL};
+
         my $hOption = $$hConfig{&CONFIG_HELP_OPTION}{$strOption};
         $iOptionMaxLen = length($strOption) > $iOptionMaxLen ? length($strOption) : $iOptionMaxLen;
         my $strSection = defined($$hOption{&CONFIG_HELP_SECTION}) ? $$hOption{&CONFIG_HELP_SECTION} : CFGDEF_GENERAL;
@@ -639,6 +645,9 @@ sub helpConfigDocGet
 
         foreach my $strOption (sort(keys(%{$$oSectionHash{$strSection}})))
         {
+            # Skip internal options
+            next if $oConfigHash->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_INTERNAL};
+
             $self->helpOptionGet(undef, $strOption, $oSectionElement, $$oConfigHash{&CONFIG_HELP_OPTION}{$strOption});
         }
     }
@@ -705,6 +714,9 @@ sub helpCommandDocGet
 
             foreach my $strOption (sort(keys(%{$$oCommandHash{&CONFIG_HELP_OPTION}})))
             {
+                # Skip internal options
+                next if $rhConfigDefine->{$strOption}{&CFGDEF_INTERNAL};
+
                 # Skip secure options that can't be defined on the command line
                 next if ($rhConfigDefine->{$strOption}{&CFGDEF_SECURE});
 
@@ -749,28 +761,23 @@ sub helpCommandDocGetOptionFind
     my $strCommand = shift;
     my $strOption = shift;
 
-    my $strSection = CONFIG_HELP_COMMAND;
+    # Get section from the option
+    my $strSection = $oConfigHelpData->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_SECTION};
+
+    # Get option from the command to start
     my $oOption = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption};
 
-    if ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_DEFAULT)
-    {
-        $strSection = CFGDEF_GENERAL;
-    }
-    elsif ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_SECTION)
+    # If the option has a section (i.e. not command-line only) then it comes from the standard option reference
+    if ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_SECTION)
     {
         $oOption = $$oConfigHelpData{&CONFIG_HELP_OPTION}{$strOption};
+    }
 
-        if (defined($$oOption{&CONFIG_HELP_SECTION}) && $strSection ne $strCommand)
-        {
-            $strSection = $$oOption{&CONFIG_HELP_SECTION};
-        }
-
-        if (($strSection ne CFGDEF_GENERAL && $strSection ne CFGDEF_LOG &&
-             $strSection ne CFGDEF_REPOSITORY && $strSection ne CFGDEF_SECTION_STANZA) ||
-            $strSection eq $strCommand)
-        {
-            $strSection = CONFIG_HELP_COMMAND;
-        }
+    # Reduce the sections that are shown in the command help. This is the same logic as help.c.
+    if (!defined($strSection) ||
+        ($strSection ne 'general' && $strSection ne 'log' && $strSection ne 'repository' && $strSection ne 'stanza'))
+    {
+        $strSection = 'command';
     }
 
     return $oOption, $strSection;

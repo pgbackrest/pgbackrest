@@ -29,7 +29,7 @@ testRun(void)
         // Empty file
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *iniBuf = bufNew(0);
-        String *result = strNew("");
+        String *result = strNew();
 
         TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
         TEST_RESULT_STR_Z(result, "", "    check ini");
@@ -80,7 +80,7 @@ testRun(void)
             "key2=\"value2\"\n"
             "key=3==\"value3\"\n"
             "==\"=\"");
-        result = strNew("");
+        result = strNew();
 
         TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
         TEST_RESULT_STR_Z(
@@ -101,7 +101,7 @@ testRun(void)
             "[section2]\n"
             "\n"
             "#key2=\"value2\"");
-        result = strNew("");
+        result = strNew();
 
         TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
         TEST_RESULT_STR_Z(
@@ -132,35 +132,35 @@ testRun(void)
         {
             TEST_ASSIGN(ini, iniNew(), "new ini");
 
-            TEST_RESULT_VOID(iniSet(ini, strNew("section1"), strNew("key1"), strNew("11")), "set section, key");
-            TEST_RESULT_VOID(iniSet(ini, strNew("section1"), strNew("key2"), strNew("1.234")), "set section, key");
+            TEST_RESULT_VOID(iniSet(ini, STRDEF("section1"), STRDEF("key1"), STRDEF("11")), "set section, key");
+            TEST_RESULT_VOID(iniSet(ini, STRDEF("section1"), STRDEF("key2"), STRDEF("1.234")), "set section, key");
 
             TEST_RESULT_VOID(iniMove(ini, memContextPrior()), "move ini");
             TEST_RESULT_VOID(iniMove(NULL, memContextPrior()), "move null ini");
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(iniGet(ini, strNew("section1"), strNew("key1")), "11", "get section, key");
-        TEST_RESULT_STR_Z(iniGet(ini, strNew("section1"), strNew("key2")), "1.234", "get section, key");
+        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("section1"), STRDEF("key1")), "11", "get section, key");
+        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("section1"), STRDEF("key2")), "1.234", "get section, key");
 
-        TEST_ERROR(iniGet(ini, strNew("section2"), strNew("key2")), FormatError, "section 'section2', key 'key2' does not exist");
+        TEST_ERROR(iniGet(ini, STRDEF("section2"), STRDEF("key2")), FormatError, "section 'section2', key 'key2' does not exist");
 
-        TEST_RESULT_STR_Z(iniGetDefault(ini, strNew("section1"), strNew("key1"), NULL), "11", "get section, key, int");
-        TEST_RESULT_STR(iniGetDefault(ini, strNew("section2"), strNew("key2"), NULL), NULL, "get section, key, NULL");
-        TEST_RESULT_STR_Z(iniGetDefault(ini, strNew("section3"), strNew("key3"), strNew("true")), "true", "get section, key, bool");
+        TEST_RESULT_STR_Z(iniGetDefault(ini, STRDEF("section1"), STRDEF("key1"), NULL), "11", "get section, key, int");
+        TEST_RESULT_STR(iniGetDefault(ini, STRDEF("section2"), STRDEF("key2"), NULL), NULL, "get section, key, NULL");
+        TEST_RESULT_STR_Z(iniGetDefault(ini, STRDEF("section3"), STRDEF("key3"), STRDEF("true")), "true", "get section, key, bool");
 
-        TEST_RESULT_INT(strLstSize(iniSectionKeyList(ini, strNew("bogus"))), 0, "get keys for missing section");
-        TEST_RESULT_STR_Z(strLstJoin(iniSectionKeyList(ini, strNew("section1")), "|"), "key1|key2", "get keys for section");
+        TEST_RESULT_INT(strLstSize(iniSectionKeyList(ini, STRDEF("bogus"))), 0, "get keys for missing section");
+        TEST_RESULT_STRLST_Z(iniSectionKeyList(ini, STRDEF("section1")), "key1\nkey2\n", "get keys for section");
 
-        TEST_RESULT_VOID(iniSet(ini, strNew("section2"), strNew("key2"), strNew("2")), "set section2, key");
+        TEST_RESULT_VOID(iniSet(ini, STRDEF("section2"), STRDEF("key2"), STRDEF("2")), "set section2, key");
         TEST_RESULT_INT(strLstSize(iniSectionList(ini)), 2, "number of sections");
-        TEST_RESULT_STR_Z(strLstJoin(iniSectionList(ini), "|"), "section1|section2", "get sections");
+        TEST_RESULT_STRLST_Z(iniSectionList(ini), "section1\nsection2\n", "get sections");
 
-        TEST_RESULT_BOOL(iniSectionKeyIsList(ini, strNew("section1"), strNew("key1")), false, "single value is not list");
-        TEST_RESULT_VOID(iniSet(ini, strNew("section2"), strNew("key2"), strNew("7")), "set section2, key");
-        TEST_RESULT_BOOL(iniSectionKeyIsList(ini, strNew("section2"), strNew("key2")), true, "section2, key2 is a list");
-        TEST_RESULT_STR_Z(strLstJoin(iniGetList(ini, strNew("section2"), strNew("key2")), "|"), "2|7", "get list");
-        TEST_RESULT_PTR(iniGetList(ini, strNew("section2"), strNew("key-missing")), NULL, "get missing list");
+        TEST_RESULT_BOOL(iniSectionKeyIsList(ini, STRDEF("section1"), STRDEF("key1")), false, "single value is not list");
+        TEST_RESULT_VOID(iniSet(ini, STRDEF("section2"), STRDEF("key2"), STRDEF("7")), "set section2, key");
+        TEST_RESULT_BOOL(iniSectionKeyIsList(ini, STRDEF("section2"), STRDEF("key2")), true, "section2, key2 is a list");
+        TEST_RESULT_STRLST_Z(iniGetList(ini, STRDEF("section2"), STRDEF("key2")), "2\n7\n", "get list");
+        TEST_RESULT_PTR(iniGetList(ini, STRDEF("section2"), STRDEF("key-missing")), NULL, "get missing list");
 
         TEST_RESULT_VOID(iniFree(ini), "free ini");
     }
@@ -169,20 +169,20 @@ testRun(void)
     if (testBegin("iniParse()"))
     {
         Ini *ini = NULL;
-        String *content = NULL;
+        const String *content = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(iniParse(iniNew(), NULL), "no content");
         TEST_ERROR(
-            iniParse(iniNew(), strNew("compress=y\n")), FormatError, "key/value found outside of section at line 1: compress=y");
-        TEST_ERROR(iniParse(iniNew(), strNew("[section\n")), FormatError, "ini section should end with ] at line 1: [section");
-        TEST_ERROR(iniParse(iniNew(), strNew("[section]\nkey")), FormatError, "missing '=' in key/value at line 2: key");
-        TEST_ERROR(iniParse(iniNew(), strNew("[section]\n =value")), FormatError, "key is zero-length at line 1: =value");
+            iniParse(iniNew(), STRDEF("compress=y\n")), FormatError, "key/value found outside of section at line 1: compress=y");
+        TEST_ERROR(iniParse(iniNew(), STRDEF("[section\n")), FormatError, "ini section should end with ] at line 1: [section");
+        TEST_ERROR(iniParse(iniNew(), STRDEF("[section]\nkey")), FormatError, "missing '=' in key/value at line 2: key");
+        TEST_ERROR(iniParse(iniNew(), STRDEF("[section]\n =value")), FormatError, "key is zero-length at line 1: =value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(ini, iniNew(), "new ini");
 
-        content = strNew
+        content = STRDEF
         (
             "# Comment\n"
             "[global] \n"
@@ -194,9 +194,9 @@ testRun(void)
 
         TEST_RESULT_VOID(iniParse(ini, content), "load ini");
 
-        TEST_RESULT_STR_Z(iniGet(ini, strNew("global"), strNew("compress")), "y", "get compress");
-        TEST_RESULT_STR_Z(iniGet(ini, strNew("db"), strNew("pg1-path")), "/path/to/pg", "get pg1-path");
+        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("global"), STRDEF("compress")), "y", "get compress");
+        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("db"), STRDEF("pg1-path")), "/path/to/pg", "get pg1-path");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

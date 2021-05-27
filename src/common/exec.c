@@ -17,9 +17,8 @@ Execute Process
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
-#include "common/io/read.intern.h"
-#include "common/io/write.intern.h"
-#include "common/type/object.h"
+#include "common/io/read.h"
+#include "common/io/write.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -27,7 +26,7 @@ Object type
 ***********************************************************************************************************************************/
 struct Exec
 {
-    MemContext *memContext;                                         // Mem context
+    ExecPub pub;                                                    // Publicly accessible variables
     String *command;                                                // Command to execute
     StringList *param;                                              // List of parameters to pass to command
     const String *name;                                             // Name to display in log/error messages
@@ -41,12 +40,7 @@ struct Exec
 
     IoRead *ioReadFd;                                               // File descriptor read interface
     IoWrite *ioWriteFd;                                             // File descriptor write interface
-
-    IoRead *ioReadExec;                                             // Wrapper for file descriptor read interface
-    IoWrite *ioWriteExec;                                           // Wrapper for file descriptor write interface
 };
-
-OBJECT_DEFINE_FREE(EXEC);
 
 /***********************************************************************************************************************************
 Macro to close file descriptors after dup2() in the child process
@@ -74,8 +68,17 @@ other code.
 /***********************************************************************************************************************************
 Free exec file descriptors and ensure process is shut down
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(EXEC, LOG, logLevelTrace)
+static void
+execFreeResource(THIS_VOID)
 {
+    THIS(Exec);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(EXEC, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     // Close file descriptors
     close(this->fdRead);
     close(this->fdWrite);
@@ -103,8 +106,9 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(EXEC, LOG, logLevelTrace)
         }
         MEM_CONTEXT_TEMP_END();
     }
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 Exec *
@@ -129,7 +133,10 @@ execNew(const String *command, const StringList *param, const String *name, Time
 
         *this = (Exec)
         {
-            .memContext = MEM_CONTEXT_NEW(),
+            .pub =
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+            },
             .command = strDup(command),
             .name = strDup(name),
             .timeout = timeout,
@@ -358,52 +365,13 @@ execOpen(Exec *this)
     ioWriteOpen(this->ioWriteFd);
 
     // Create wrapper interfaces that check process state
-    this->ioReadExec = ioReadNewP(this, .block = true, .read = execRead, .eof = execEof, .fd = execFdRead);
-    ioReadOpen(this->ioReadExec);
-    this->ioWriteExec = ioWriteNewP(this, .write = execWrite);
-    ioWriteOpen(this->ioWriteExec);
+    this->pub.ioReadExec = ioReadNewP(this, .block = true, .read = execRead, .eof = execEof, .fd = execFdRead);
+    ioReadOpen(execIoRead(this));
+    this->pub.ioWriteExec = ioWriteNewP(this, .write = execWrite);
+    ioWriteOpen(execIoWrite(this));
 
     // Set a callback so the file descriptors will get freed
-    memContextCallbackSet(this->memContext, execFreeResource, this);
+    memContextCallbackSet(execMemContext(this), execFreeResource, this);
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-IoRead *
-execIoRead(const Exec *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(EXEC, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->ioReadExec);
-}
-
-/**********************************************************************************************************************************/
-IoWrite *
-execIoWrite(const Exec *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(EXEC, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->ioWriteExec);
-}
-
-/**********************************************************************************************************************************/
-MemContext *
-execMemContext(const Exec *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(EXEC, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->memContext);
 }

@@ -20,9 +20,15 @@ Archive Push Command
 #include "config/exec.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
+
+/***********************************************************************************************************************************
+Constants for log messages that are used multiple times to keep them consistent
+***********************************************************************************************************************************/
+#define UNABLE_TO_FIND_VALID_REPO_MSG                               "unable to find a valid repository"
 
 /***********************************************************************************************************************************
 Ready file extension constants
@@ -186,68 +192,110 @@ Check that pg_control and archive.info match and get the archive id and archive 
 As much information as possible is collected here so that async archiving has as little work as possible to do for each file.  Sync
 archiving does not benefit but it makes sense to use the same function.
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_ARCHIVE_PUSH_CHECK_RESULT_TYPE                                                                                \
-    ArchivePushCheckResult
-#define FUNCTION_LOG_ARCHIVE_PUSH_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                   \
-    objToLog(&value, "ArchivePushCheckResult", buffer, bufferSize)
-
 typedef struct ArchivePushCheckResult
 {
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system id
-    String *archiveId;                                              // Archive id for current pg version
-    String *archiveCipherPass;                                      // Archive cipher passphrase
+    List *repoList;                                                 // Data for each repo
+    StringList *errorList;                                          // Errors while checking repos
 } ArchivePushCheckResult;
 
 static ArchivePushCheckResult
-archivePushCheck(bool pgPathSet, CipherType cipherType, const String *cipherPass)
+archivePushCheck(bool pgPathSet)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, pgPathSet);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
-    ArchivePushCheckResult result = {0};
+    ArchivePushCheckResult result = {.repoList = lstNewP(sizeof(ArchivePushFileRepoData)), .errorList = strLstNew()};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Attempt to load the archive info file
-        InfoArchive *info = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
-
-        // Get archive id for the most recent version -- archive-push will only operate against the most recent version
-        String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
-        InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
-
-        // Ensure that stanza version and system identifier match pg_control when available
+        // If we have access to pg_control then load it to get the pg version and system id. If we can't load pg_control then we'll
+        // still compare the pg info stored in the repo to the WAL segment and also all the repos against each other.
         if (pgPathSet)
         {
             // Get info from pg_control
-            PgControl controlInfo = pgControlFromFile(storagePg());
-
-            if (controlInfo.version != archiveInfo.version || controlInfo.systemId != archiveInfo.systemId)
-            {
-                THROW_FMT(
-                    ArchiveMismatchError,
-                    "PostgreSQL version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64
-                    "\nHINT: are you archiving to the correct stanza?",
-                    strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId, strZ(pgVersionToStr(archiveInfo.version)),
-                    archiveInfo.systemId);
-            }
+            PgControl pgControl = pgControlFromFile(storagePg());
+            result.pgVersion = pgControl.version;
+            result.pgSystemId = pgControl.systemId;
         }
 
-        MEM_CONTEXT_PRIOR_BEGIN()
+        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            result.pgVersion = archiveInfo.version;
-            result.pgSystemId = archiveInfo.systemId;
-            result.archiveId = strDup(archiveId);
-            result.archiveCipherPass = strDup(infoArchiveCipherPass(info));
+            TRY_BEGIN()
+            {
+                // Get the repo storage in case it is remote and encryption settings need to be pulled down
+                storageRepoIdx(repoIdx);
+
+                // Get cipher type
+                CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
+
+                // Attempt to load the archive info file
+                InfoArchive *info = infoArchiveLoadFile(
+                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, repoCipherType,
+                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+
+                // Get archive id for the most recent version -- archive-push will only operate against the most recent version
+                String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+                InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+
+                // Ensure that stanza version and system identifier match pg_control when available or the other repos when
+                // pg_control is not available
+                if (pgPathSet || repoIdx > 0)
+                {
+                    if (result.pgVersion != archiveInfo.version || result.pgSystemId != archiveInfo.systemId)
+                    {
+                        THROW_FMT(
+                            ArchiveMismatchError,
+                            "%s version %s, system-id %" PRIu64 " do not match %s stanza version %s, system-id %" PRIu64
+                            "\nHINT: are you archiving to the correct stanza?",
+                            pgPathSet ? PG_NAME : strZ(strNewFmt("repo%u stanza", cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0))),
+                            strZ(pgVersionToStr(result.pgVersion)), result.pgSystemId,
+                            strZ(strNewFmt("repo%u", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx))),
+                            strZ(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId);
+                    }
+                }
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result.pgVersion = archiveInfo.version;
+                    result.pgSystemId = archiveInfo.systemId;
+
+                    lstAdd(
+                        result.repoList,
+                        &(ArchivePushFileRepoData)
+                        {
+                            .repoIdx = repoIdx,
+                            .archiveId = strDup(archiveId),
+                            .cipherType = repoCipherType,
+                            .cipherPass = strDup(infoArchiveCipherPass(info)),
+                        });
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            CATCH_ANY()
+            {
+                strLstAdd(
+                    result.errorList,
+                    strNewFmt(
+                        "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()),
+                        errorMessage()));
+            }
+            TRY_END();
         }
-        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(ARCHIVE_PUSH_CHECK_RESULT, result);
+    // If no valid repos were found then error
+    if (lstEmpty(result.repoList))
+    {
+        ASSERT(strLstSize(result.errorList) > 0);
+
+        THROW_FMT(RepoInvalidError, UNABLE_TO_FIND_VALID_REPO_MSG ":\n%s", strZ(strLstJoin(result.errorList, "\n")));
+    }
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /**********************************************************************************************************************************/
@@ -297,7 +345,7 @@ cmdArchivePush(void)
             {
                 // Check if the WAL segment has been pushed.  Errors will not be thrown on the first try to allow the async process
                 // a chance to fix them.
-                pushed = archiveAsyncStatus(archiveModePush, archiveFile, throwOnError);
+                pushed = archiveAsyncStatus(archiveModePush, archiveFile, throwOnError, true);
 
                 // If the WAL segment has not already been pushed then start the async process to push it.  There's no point in
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
@@ -310,8 +358,8 @@ cmdArchivePush(void)
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
 
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("off"));
 
                     // Generate command options
                     StringList *commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
@@ -342,7 +390,7 @@ cmdArchivePush(void)
             {
                 THROW_FMT(
                     ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %s second(s)",
-                    strZ(archiveFile), strZ(cvtDoubleToStr((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)));
+                    strZ(archiveFile), strZ(cfgOptionDisplay(cfgOptArchiveTimeout)));
             }
 
             // Log success
@@ -359,23 +407,18 @@ cmdArchivePush(void)
             // Else push the file
             else
             {
-                // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                storageRepo();
-
-                // Get archive info
-                ArchivePushCheckResult archiveInfo = archivePushCheck(
-                    cfgOptionTest(cfgOptPgPath), cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                    cfgOptionStrNull(cfgOptRepoCipherPass));
+                // Check archive info for each repo
+                ArchivePushCheckResult archiveInfo = archivePushCheck(cfgOptionTest(cfgOptPgPath));
 
                 // Push the file to the archive
-                String *warning = archivePushFile(
-                    walFile, archiveInfo.archiveId, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), archiveInfo.archiveCipherPass,
-                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel));
+                ArchivePushFileResult fileResult = archivePushFile(
+                    walFile, cfgOptionBool(cfgOptArchiveHeaderCheck), archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
+                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList,
+                    archiveInfo.errorList);
 
                 // If a warning was returned then log it
-                if (warning != NULL)
-                    LOG_WARN(strZ(warning));
+                for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
+                    LOG_WARN(strZ(strLstGet(fileResult.warnList, warnIdx)));
 
                 // Log success
                 LOG_INFO_FMT("pushed WAL file '%s' to the archive", strZ(archiveFile));
@@ -393,13 +436,13 @@ typedef struct ArchivePushAsyncData
     const String *walPath;                                          // Path to pg_wal/pg_xlog
     const StringList *walFileList;                                  // List of wal files to process
     unsigned int walFileIdx;                                        // Current index in the list to be processed
-    CipherType cipherType;                                          // Cipher type
     CompressType compressType;                                      // Type of compression for WAL segments
     int compressLevel;                                              // Compression level for wal files
     ArchivePushCheckResult archiveInfo;                             // Archive info
 } ArchivePushAsyncData;
 
-static ProtocolParallelJob *archivePushAsyncCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+archivePushAsyncCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -417,18 +460,19 @@ static ProtocolParallelJob *archivePushAsyncCallback(void *data, unsigned int cl
         const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
         jobData->walFileIdx++;
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
-        PackWrite *param = protocolCommandParam(command);
-
-        pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
-        pckWriteStrP(param, jobData->archiveInfo.archiveId);
-        pckWriteU32P(param, jobData->archiveInfo.pgVersion);
-        pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
-        pckWriteStrP(param, walFile);
-        pckWriteU32P(param, jobData->cipherType);
-        pckWriteStrP(param, jobData->archiveInfo.archiveCipherPass);
-        pckWriteU32P(param, jobData->compressType);
-        pckWriteI32P(param, jobData->compressLevel);
+        // !!! BROKEN
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
+        // PackWrite *param = protocolCommandParam(command);
+        //
+        // pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
+        // pckWriteStrP(param, jobData->archiveInfo.archiveId);
+        // pckWriteU32P(param, jobData->archiveInfo.pgVersion);
+        // pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
+        // pckWriteStrP(param, walFile);
+        // pckWriteU32P(param, jobData->cipherType);
+        // pckWriteStrP(param, jobData->archiveInfo.archiveCipherPass);
+        // pckWriteU32P(param, jobData->compressType);
+        // pckWriteI32P(param, jobData->compressLevel);
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));
     }
@@ -470,7 +514,7 @@ cmdArchivePushAsync(void)
             jobData.walFileList = archivePushProcessList(jobData.walPath);
 
             // The archive-push:async command should not have been called unless there are WAL files to process
-            if (strLstSize(jobData.walFileList) == 0)
+            if (strLstEmpty(jobData.walFileList))
                 THROW(AssertError, "no WAL files to process");
 
             LOG_INFO_FMT(
@@ -493,15 +537,8 @@ cmdArchivePushAsync(void)
             // Else continue processing
             else
             {
-                // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                storageRepo();
-
-                // Get cipher type
-                jobData.cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
-
-                // Get archive info
-                jobData.archiveInfo = archivePushCheck(
-                    true, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
+                // Check archive info for each repo
+                jobData.archiveInfo = archivePushCheck(true);
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
@@ -527,17 +564,21 @@ cmdArchivePushAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            // If there was a warning then output it to the log
-                            const String *warning = varStr(protocolParallelJobResult(job));
+                            // Get job result
+                            const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
 
-                            if (warning != NULL)
-                                LOG_WARN_PID(processId, strZ(warning));
+                            // Output file warnings
+                            StringList *fileWarnList = strLstNewVarLst(varVarLst(varLstGet(fileResult, 0)));
+
+                            for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
+                                LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
 
                             // Log success
                             LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
 
                             // Write the status file
-                            archiveAsyncStatusOkWrite(archiveModePush, walFile, warning);
+                            archiveAsyncStatusOkWrite(
+                                archiveModePush, walFile, strLstEmpty(fileWarnList) ? NULL : strLstJoin(fileWarnList, "\n"));
                         }
                         // Else the job errored
                         else

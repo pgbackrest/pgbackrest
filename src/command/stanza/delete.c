@@ -56,7 +56,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, storageRepoWriteStanza);
         FUNCTION_TEST_PARAM(STRING_LIST, archiveList);
-        FUNCTION_TEST_PARAM(STRING_LIST, archiveList);
+        FUNCTION_TEST_PARAM(STRING_LIST, backupList);
     FUNCTION_TEST_END();
 
     ASSERT(storageRepoWriteStanza != NULL);
@@ -67,8 +67,8 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
     // empty StringList will be returned; in such a case, the directory will attempt to be deleted (this is OK).
     if (archiveList != NULL || backupList != NULL)
     {
-        bool archiveNotEmpty = (archiveList != NULL && strLstSize(archiveList) > 0) ? true : false;
-        bool backupNotEmpty = (backupList != NULL && strLstSize(backupList) > 0) ? true : false;
+        bool archiveNotEmpty = (archiveList != NULL && !strLstEmpty(archiveList)) ? true : false;
+        bool backupNotEmpty = (backupList != NULL && !strLstEmpty(backupList)) ? true : false;
 
         // If something exists in either directory, then remove
         if (archiveNotEmpty || backupNotEmpty)
@@ -79,7 +79,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                 THROW_FMT(
                     FileMissingError, "stop file does not exist for stanza '%s'\n"
                     "HINT: has the pgbackrest stop command been run on this server for this stanza?",
-                    strZ(cfgOptionStr(cfgOptStanza)));
+                    strZ(cfgOptionDisplay(cfgOptStanza)));
             }
 
             // If a force has not been issued and Postgres is running, then error
@@ -87,8 +87,10 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
             {
                 THROW_FMT(
                     PgRunningError, PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running. "
-                    "To delete stanza '%s', shut down " PG_NAME " for stanza '%s' and try again, or use --force.",
-                    strZ(cfgOptionStr(cfgOptStanza)), strZ(cfgOptionStr(cfgOptStanza)));
+                    "To delete stanza '%s' on repo%u, shut down " PG_NAME " for stanza '%s' and try again, or use --force.",
+                    strZ(cfgOptionDisplay(cfgOptStanza)),
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
+                    strZ(cfgOptionDisplay(cfgOptStanza)));
             }
 
             // Delete the archive info files
@@ -133,9 +135,6 @@ void
 cmdStanzaDelete(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
-
-    // Verify the repo is local before proceeding
-    repoIsLocalVerify();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

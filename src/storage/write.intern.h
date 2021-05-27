@@ -4,8 +4,7 @@ Storage Write Interface Internal
 #ifndef STORAGE_WRITE_INTERN_H
 #define STORAGE_WRITE_INTERN_H
 
-#include "common/io/write.intern.h"
-#include "storage/write.h"
+#include "common/io/write.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -18,7 +17,7 @@ Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageWriteInterface
 {
-    const String *type;
+    StringId type;                                                  // Storage type
     const String *name;
 
     bool atomic;

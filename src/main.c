@@ -42,6 +42,10 @@ Main
 int
 main(int argListSize, const char *argList[])
 {
+    // Set stack trace and mem context error cleanup handlers
+    static const ErrorHandlerFunction errorHandlerList[] = {stackTraceClean, memContextClean};
+    errorHandlerSet(errorHandlerList, sizeof(errorHandlerList) / sizeof(ErrorHandlerFunction));
+
 #ifdef WITH_BACKTRACE
     stackTraceInit(argList[0]);
 #endif
@@ -127,7 +131,7 @@ main(int argListSize, const char *argList[])
                     {
                         // Switch to expire command
                         cmdEnd(0, NULL);
-                        cfgCommandSet(cfgCmdExpire, cfgCmdRoleDefault);
+                        cfgCommandSet(cfgCmdExpire, cfgCmdRoleMain);
                         cfgLoadLogFile();
                         cmdBegin();
 
@@ -141,139 +145,105 @@ main(int argListSize, const char *argList[])
                 // Check command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdCheck:
-                {
                     cmdCheck();
                     break;
-                }
 
                 // Expire command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdExpire:
-                {
                     cmdExpire();
                     break;
-                }
 
                 // Help command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdHelp:
                 case cfgCmdNone:
-                {
                     THROW(AssertError, "'help' and 'none' commands should have been handled already");
-                }
 
                 // Info command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdInfo:
-                {
                     cmdInfo();
                     break;
-                }
 
                 // Repository create command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoCreate:
-                {
                     cmdRepoCreate();
                     break;
-                }
 
                 // Repository get file command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoGet:
-                {
                     result = cmdStorageGet();
                     break;
-                }
 
                 // Repository list paths/files command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoLs:
-                {
                     cmdStorageList();
                     break;
-                }
 
                 // Repository put file command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoPut:
-                {
                     cmdStoragePut();
                     break;
-                }
 
                 // Repository remove paths/files command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoRm:
-                {
                     cmdStorageRemove();
                     break;
-                }
 
                 // Restore command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRestore:
-                {
                     cmdRestore();
                     break;
-                }
 
                 // Stanza create command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaCreate:
-                {
                     cmdStanzaCreate();
                     break;
-                }
 
                 // Stanza delete command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaDelete:
-                {
                     cmdStanzaDelete();
                     break;
-                }
 
                 // Stanza upgrade command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaUpgrade:
-                {
                     cmdStanzaUpgrade();
                     break;
-                }
 
                 // Start command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStart:
-                {
                     cmdStart();
                     break;
-                }
 
                 // Stop command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStop:
-                {
                     cmdStop();
                     break;
-                }
 
                 // Verify command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdVerify:
-                {
                     cmdVerify();
                     break;
-                }
 
                 // Display version
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdVersion:
-                {
                     printf(PROJECT_NAME " " PROJECT_VERSION "\n");
                     fflush(stdout);
                     break;
-                }
             }
         }
     }

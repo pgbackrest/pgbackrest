@@ -1,12 +1,14 @@
 /***********************************************************************************************************************************
 Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <string.h>
 
 #include "common/assert.h"
 #include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/type/json.h"
 #include "info/info.h"
 #include "version.h"
@@ -65,6 +67,8 @@ harnessInfoChecksum(const String *info)
         FUNCTION_HARNESS_PARAM(STRING, info);
     FUNCTION_HARNESS_END();
 
+    ASSERT(info != NULL);
+
     Buffer *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -100,7 +104,7 @@ harnessInfoChecksum(const String *info)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RESULT(BUFFER, result);
+    FUNCTION_HARNESS_RETURN(BUFFER, result);
 }
 
 Buffer *
@@ -110,7 +114,9 @@ harnessInfoChecksumZ(const char *info)
         FUNCTION_HARNESS_PARAM(STRINGZ, info);
     FUNCTION_HARNESS_END();
 
-    FUNCTION_HARNESS_RESULT(BUFFER, harnessInfoChecksum(STR(info)));
+    ASSERT(info != NULL);
+
+    FUNCTION_HARNESS_RETURN(BUFFER, harnessInfoChecksum(STR(info)));
 }
 
 /***********************************************************************************************************************************

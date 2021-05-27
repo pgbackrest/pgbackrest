@@ -4,25 +4,21 @@ Azure Storage
 #ifndef STORAGE_AZURE_STORAGE_H
 #define STORAGE_AZURE_STORAGE_H
 
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type
 ***********************************************************************************************************************************/
-#define STORAGE_AZURE_TYPE                                          "azure"
-    STRING_DECLARE(STORAGE_AZURE_TYPE_STR);
+#define STORAGE_AZURE_TYPE                                          STRID6("azure", 0x54956811)
 
 /***********************************************************************************************************************************
 Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageAzureKeyTypeShared,
-    storageAzureKeyTypeSas,
+    storageAzureKeyTypeShared = STRID5("shared", 0x85905130),
+    storageAzureKeyTypeSas = STRID5("sas", 0x4c330),
 } StorageAzureKeyType;
-
-#define STORAGE_AZURE_KEY_TYPE_SHARED                               "shared"
-#define STORAGE_AZURE_KEY_TYPE_SAS                                  "sas"
 
 /***********************************************************************************************************************************
 Defaults

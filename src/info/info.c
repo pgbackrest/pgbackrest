@@ -10,8 +10,7 @@ Info Handler
 #include "common/type/convert.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
-#include "common/encode.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/ini.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -39,9 +38,8 @@ Object types
 ***********************************************************************************************************************************/
 struct Info
 {
+    InfoPub pub;                                                    // Publicly accessible variables
     MemContext *memContext;                                         // Mem context
-    const String *backrestVersion;                                  // pgBackRest version
-    const String *cipherPass;                                       // Cipher passphrase if set
 };
 
 struct InfoSave
@@ -143,7 +141,7 @@ infoNew(const String *cipherPass)
 
         // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
         infoCipherPassSet(this, cipherPass);
-        this->backrestVersion = STRDEF(PROJECT_VERSION);
+        this->pub.backrestVersion = STRDEF(PROJECT_VERSION);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -220,7 +218,7 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
         {
             MEM_CONTEXT_BEGIN(loadData->info->memContext)
             {
-                loadData->info->backrestVersion = strDup(varStr(valueVar));
+                loadData->info->pub.backrestVersion = strDup(varStr(valueVar));
             }
             MEM_CONTEXT_END();
         }
@@ -244,7 +242,7 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
         {
             MEM_CONTEXT_BEGIN(loadData->info->memContext)
             {
-                loadData->info->cipherPass = strDup(varStr(valueVar));
+                loadData->info->pub.cipherPass = strDup(varStr(valueVar));
             }
             MEM_CONTEXT_END();
         }
@@ -425,10 +423,10 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
         infoSaveValue(&data, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
 
         // Add cipher passphrase if defined
-        if (this->cipherPass != NULL)
+        if (infoCipherPass(this) != NULL)
         {
             callbackFunction(callbackData, INFO_SECTION_CIPHER_STR, &data);
-            infoSaveValue(&data, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(this->cipherPass));
+            infoSaveValue(&data, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(infoCipherPass(this)));
         }
 
         // Flush out any additional sections
@@ -451,18 +449,6 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-const String *
-infoCipherPass(const Info *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->cipherPass);
-}
-
 void
 infoCipherPassSet(Info *this, const String *cipherPass)
 {
@@ -475,23 +461,11 @@ infoCipherPassSet(Info *this, const String *cipherPass)
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
-        this->cipherPass = strDup(cipherPass);
+        this->pub.cipherPass = strDup(cipherPass);
     }
     MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-const String *
-infoBackrestVersion(const Info *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->backrestVersion);
 }
 
 /**********************************************************************************************************************************/

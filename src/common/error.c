@@ -3,13 +3,13 @@ Error Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "common/error.h"
-#include "common/memContext.h"
 #include "common/stackTrace.h"
 
 /***********************************************************************************************************************************
@@ -27,7 +27,7 @@ struct ErrorType
     const ErrorType name = {code, #name, &parentType}
 
 // Define test error
-#ifndef NDEBUG
+#ifdef DEBUG
     ERROR_DEFINE(1, TestError, RuntimeError);
 #endif
 
@@ -51,6 +51,10 @@ static struct
 {
     // Array of jump buffers
     jmp_buf jumpList[ERROR_TRY_MAX];
+
+    // Handler list
+    const ErrorHandlerFunction *handlerList;
+    unsigned int handlerTotal;
 
     // State of each try
     int tryTotal;
@@ -87,6 +91,15 @@ The temp buffer is required because the error message being passed might be the 
 static char messageBuffer[ERROR_MESSAGE_BUFFER_SIZE];
 static char messageBufferTemp[ERROR_MESSAGE_BUFFER_SIZE];
 static char stackTraceBuffer[ERROR_MESSAGE_BUFFER_SIZE];
+
+/**********************************************************************************************************************************/
+void errorHandlerSet(ErrorHandlerFunction *list, unsigned int total)
+{
+    assert(total == 0 || list != NULL);
+
+    errorContext.handlerList = list;
+    errorContext.handlerTotal = total;
+}
 
 /**********************************************************************************************************************************/
 int
@@ -312,8 +325,8 @@ errorInternalProcess(bool catch)
     // Else if just entering error state clean up the stack
     else if (errorContext.tryList[errorContext.tryTotal].state == errorStateTry)
     {
-        stackTraceClean(errorTryDepth());
-        memContextClean(errorTryDepth());
+        for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
+            errorContext.handlerList[handlerIdx](errorTryDepth());
     }
 
     // Increment the state

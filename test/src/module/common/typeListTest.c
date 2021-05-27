@@ -35,9 +35,9 @@ testRun(void)
         List *list = lstNewP(sizeof(void *));
 
         TEST_RESULT_UINT(list->itemSize, sizeof(void *), "item size");
-        TEST_RESULT_UINT(list->listSize, 0, "list size");
+        TEST_RESULT_UINT(list->pub.listSize, 0, "list size");
         TEST_RESULT_UINT(list->listSizeMax, 0, "list size max");
-        TEST_RESULT_PTR(lstMemContext(list), list->memContext, "list mem context");
+        TEST_RESULT_PTR(lstMemContext(list), list->pub.memContext, "list mem context");
         TEST_RESULT_VOID(lstClear(list), "clear list");
 
         void *ptr = NULL;
@@ -53,12 +53,12 @@ testRun(void)
 
         TEST_ASSIGN(list, lstNewP(sizeof(String *), .comparator = lstComparatorStr), "new list with params");
 
-        String *string1 = strNew("string1");
+        const String *string1 = STRDEF("string1");
         TEST_RESULT_STR_Z(*(String **)lstAdd(list, &string1), "string1", "    add string1");
-        String *string2 = strNew("string2");
+        const String *string2 = STRDEF("string2");
         TEST_RESULT_VOID(lstAdd(list, &string2), "    add string2");
 
-        String *string3 = strNew("string3");
+        const String *string3 = STRDEF("string3");
         TEST_RESULT_PTR(lstFindDefault(list, &string3, (void *)1), (void *)1, "    find string3 returns default");
         TEST_RESULT_BOOL(lstExists(list, &string3), false, "    string3 does not exist");
         TEST_RESULT_STR_Z(*(String **)lstFind(list, &string2), "string2", "    find string2");
@@ -79,12 +79,16 @@ testRun(void)
         {
             list = lstNewP(sizeof(int));
 
+            TEST_RESULT_BOOL(lstEmpty(list), true, "list empty");
+
             TEST_ERROR(lstGetLast(list), AssertError, "cannot get last from list with no values");
             TEST_ERROR(lstRemoveLast(list), AssertError, "cannot remove last from list with no values");
 
             // Add ints to the list
             for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
-                TEST_RESULT_VOID(lstAdd(list, &listIdx), "add item %d", listIdx);
+            {
+                TEST_RESULT_VOID(lstAdd(list, &listIdx), strZ(strNewFmt("add item %d", listIdx)));
+            }
 
             lstMove(list, memContextPrior());
         }
@@ -92,16 +96,17 @@ testRun(void)
 
         // Insert an int at the beginning
         int insertIdx = 0;
-        TEST_RESULT_INT(*(int *)lstInsert(list, 0, &insertIdx), 0, "insert item %d", insertIdx);
+        TEST_RESULT_INT(*(int *)lstInsert(list, 0, &insertIdx), 0, strZ(strNewFmt("insert item %d", insertIdx)));
 
         // Check the size
         TEST_RESULT_INT(lstSize(list), 9, "list size");
+        TEST_RESULT_BOOL(lstEmpty(list), false, "list not empty");
 
         // Read them back and check values
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
         {
             int *item = lstGet(list, listIdx);
-            TEST_RESULT_INT(*item, listIdx, "check item %u", listIdx);
+            TEST_RESULT_INT(*item, listIdx, strZ(strNewFmt("check item %u", listIdx)));
         }
 
         // Remove first item
@@ -112,7 +117,7 @@ testRun(void)
         {
             int *item = listIdx == lstSize(list) - 1 ? lstGetLast(list) : lstGet(list, listIdx);
 
-            TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
+            TEST_RESULT_INT(*item, listIdx + 1, strZ(strNewFmt("check item %u", listIdx)));
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -124,10 +129,10 @@ testRun(void)
         for (int listIdx = 0; listIdx < 8; listIdx++)
         {
             int item = listIdx + 9;
-            TEST_RESULT_VOID(lstAdd(list, &item), "add item %d", item);
+            TEST_RESULT_VOID(lstAdd(list, &item), strZ(strNewFmt("add item %d", item)));
         }
 
-        TEST_RESULT_INT(list->listSize, list->listSizeMax, "size equals max size");
+        TEST_RESULT_UINT(lstSize(list), list->listSizeMax, "size equals max size");
 
         // Remove last item
         TEST_RESULT_VOID(lstRemoveLast(list), "remove last item");
@@ -136,7 +141,7 @@ testRun(void)
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
         {
             int *item = lstGet(list, listIdx);
-            TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
+            TEST_RESULT_INT(*item, listIdx + 1, strZ(strNewFmt("check item %u", listIdx)));
         }
 
         TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 15 from list with 15 value(s)");
@@ -207,5 +212,5 @@ testRun(void)
             CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

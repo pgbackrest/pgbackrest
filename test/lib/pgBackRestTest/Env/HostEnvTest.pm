@@ -32,6 +32,7 @@ use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
 use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::Host::HostDbSyntheticTest;
+use pgBackRestTest::Env::Host::HostGcsTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 
 ####################################################################################################################################
@@ -65,6 +66,10 @@ sub setup
     elsif ($oConfigParam->{strStorage} eq AZURE)
     {
         $oHostObject = new pgBackRestTest::Env::Host::HostAzureTest();
+    }
+    elsif ($oConfigParam->{strStorage} eq GCS)
+    {
+        $oHostObject = new pgBackRestTest::Env::Host::HostGcsTest();
     }
 
     # Get host group
@@ -122,13 +127,13 @@ sub setup
         $oHostGroup->hostAdd($oHostDbStandby);
     }
 
-    # Finalize S3 server
+    # Finalize object server
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($oConfigParam->{strStorage} eq S3)
     {
         $oHostGroup->hostAdd($oHostObject, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
     }
-    elsif ($oConfigParam->{strStorage} eq AZURE)
+    elsif ($oConfigParam->{strStorage} eq AZURE || $oConfigParam->{strStorage} eq GCS)
     {
         $oHostGroup->hostAdd($oHostObject);
     }
@@ -139,7 +144,8 @@ sub setup
         strCompressType => $$oConfigParam{strCompressType},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
         bArchiveAsync => $$oConfigParam{bArchiveAsync},
-        strStorage => $oConfigParam->{strStorage}});
+        strStorage => $oConfigParam->{strStorage},
+        iRepoTotal => $oConfigParam->{iRepoTotal}});
 
     # Create backup config if backup host exists
     if (defined($oHostBackup))
@@ -147,7 +153,8 @@ sub setup
         $oHostBackup->configCreate({
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $$oConfigParam{bHardLink},
-            strStorage => $oConfigParam->{strStorage}});
+            strStorage => $oConfigParam->{strStorage},
+            iRepoTotal => $oConfigParam->{iRepoTotal}});
     }
     # If backup host is not defined set it to db-primary
     else
@@ -159,8 +166,10 @@ sub setup
         $self->backrestExeHelper() .
             ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
             ' --log-level-stderr=error' .
-            ($oConfigParam->{strStorage} ne POSIX ? " --no-repo1-$oConfigParam->{strStorage}-verify-tls" .
-                " --repo1-$oConfigParam->{strStorage}-host=" . $oHostObject->ipGet() : ''),
+            ($oConfigParam->{strStorage} ne POSIX ?
+                " --no-repo1-storage-verify-tls --repo1-$oConfigParam->{strStorage}-" .
+                ($oConfigParam->{strStorage} eq GCS ? 'endpoint' : 'host') . "=" . $oHostObject->ipGet() : '') .
+                ($oConfigParam->{strStorage} eq GCS ? ':' . HOST_GCS_PORT : ''),
         $oConfigParam->{strStorage} eq POSIX ? STORAGE_POSIX : STORAGE_OBJECT);
 
     # Create db-standby config
@@ -171,7 +180,8 @@ sub setup
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
             bArchiveAsync => $$oConfigParam{bArchiveAsync},
-            strStorage => $oConfigParam->{strStorage}});
+            strStorage => $oConfigParam->{strStorage},
+            iRepoTotal => $oConfigParam->{iRepoTotal}});
     }
 
     # Create object storage
@@ -239,6 +249,7 @@ sub dbCatalogVersion
         &PG_VERSION_11 => 201806231,
         &PG_VERSION_12 => 201909212,
         &PG_VERSION_13 => 202007201,
+        &PG_VERSION_14 => 202105121,
     };
 
     if (!defined($hCatalogVersion->{$strPgVersion}))
@@ -283,6 +294,7 @@ sub dbControlVersion
         &PG_VERSION_11 => 1100,
         &PG_VERSION_12 => 1201,
         &PG_VERSION_13 => 1300,
+        &PG_VERSION_14 => 1300,
     };
 
     if (!defined($hControlVersion->{$strPgVersion}))

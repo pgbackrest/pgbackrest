@@ -11,7 +11,7 @@ Block Cipher
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
@@ -35,9 +35,6 @@ Header constants and sizes
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define CIPHER_BLOCK_TYPE                                           CipherBlock
-#define CIPHER_BLOCK_PREFIX                                         cipherBlock
-
 typedef struct CipherBlock
 {
     MemContext *memContext;                                         // Context to store data
@@ -75,11 +72,21 @@ cipherBlockToLog(const CipherBlock *this)
 /***********************************************************************************************************************************
 Free cipher context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(CIPHER_BLOCK, LOG, logLevelTrace)
+static void
+cipherBlockFreeResource(THIS_VOID)
 {
+    THIS(CipherBlock);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(CIPHER_BLOCK, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     EVP_CIPHER_CTX_free(this->cipherContext);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Determine how large the destination buffer should be
@@ -267,7 +274,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
     ASSERT(bufRemains(destination) > 0);
 
     // Copy already buffered bytes
-    if (this->buffer != NULL && bufUsed(this->buffer) > 0)
+    if (this->buffer != NULL && !bufEmpty(this->buffer))
     {
         if (bufRemains(destination) >= bufUsed(this->buffer))
         {
@@ -289,7 +296,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
     }
     else
     {
-        ASSERT(this->buffer == NULL || bufUsed(this->buffer) == 0);
+        ASSERT(this->buffer == NULL || bufEmpty(this->buffer));
 
         // Determine how much space is required in the output buffer
         Buffer *outputActual = destination;
@@ -339,7 +346,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
         bufUsedInc(outputActual, destinationSizeActual);
 
         // Copy from buffer to destination if needed
-        if (this->buffer != NULL && bufUsed(this->buffer) > 0)
+        if (this->buffer != NULL && !bufEmpty(this->buffer))
             cipherBlockProcess(this, source, destination);
     }
 
@@ -385,24 +392,24 @@ IoFilter *
 cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, mode);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_LOG_PARAM(STRING_ID, mode);
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(BUFFER, pass);                          // Use FUNCTION_TEST so passphrase is not logged
         FUNCTION_LOG_PARAM(STRING, digestName);
     FUNCTION_LOG_END();
 
     ASSERT(pass != NULL);
-    ASSERT(bufUsed(pass) > 0);
+    ASSERT(!bufEmpty(pass));
 
     // Init crypto subsystem
     cryptoInit();
 
     // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
     // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.
-    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(cipherTypeName(cipherType)));
+    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(strIdToStr(cipherType)));
 
     if (!cipher)
-        THROW_FMT(AssertError, "unable to load cipher '%s'", strZ(cipherTypeName(cipherType)));
+        THROW_FMT(AssertError, "unable to load cipher '%s'", strZ(strIdToStr(cipherType)));
 
     // Lookup digest.  If not defined it will be set to sha1.
     const EVP_MD *digest = NULL;
@@ -437,8 +444,8 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 
         // Create param list
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewUInt(mode));
-        varLstAdd(paramList, varNewUInt(cipherType));
+        varLstAdd(paramList, varNewUInt64(mode));
+        varLstAdd(paramList, varNewUInt64(cipherType));
         // ??? Using a string here is not correct since the passphrase is being passed as a buffer so may contain null characters.
         // However, since strings are used to hold the passphrase in the rest of the code this is currently valid.
         varLstAdd(paramList, varNewStr(strNewBuf(pass)));
@@ -458,7 +465,7 @@ IoFilter *
 cipherBlockNewVar(const VariantList *paramList)
 {
     return cipherBlockNew(
-        (CipherMode)varUIntForce(varLstGet(paramList, 0)), (CipherType)varUIntForce(varLstGet(paramList, 1)),
+        (CipherMode)varUInt64(varLstGet(paramList, 0)), (CipherType)varUInt64(varLstGet(paramList, 1)),
         BUFSTR(varStr(varLstGet(paramList, 2))), varLstGet(paramList, 3) == NULL ? NULL : varStr(varLstGet(paramList, 3)));
 }
 
@@ -468,8 +475,8 @@ cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMod
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
-        FUNCTION_LOG_PARAM(ENUM, type);
-        FUNCTION_LOG_PARAM(ENUM, mode);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(STRING_ID, mode);
         FUNCTION_TEST_PARAM(STRING, pass);                          // Use FUNCTION_TEST so passphrase is not logged
     FUNCTION_LOG_END();
 

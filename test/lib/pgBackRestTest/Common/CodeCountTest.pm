@@ -56,6 +56,7 @@ sub codeCountScan
                  $strFile =~ '\.cache$' ||
                  $strFile =~ '^doc/site/' ||
                  $strFile =~ '^src/build/autom4te.cache/' ||
+                 $strFile eq 'test/Dockerfile' ||
                  $strFile eq 'test/Vagrantfile' ||
                  $strFile =~ '^test/\.vagrant/' ||
                  $strFile =~ '^test/certificate/' ||
@@ -64,7 +65,7 @@ sub codeCountScan
                  $strFile =~ '^test/expect/' ||
                  $strFile =~ '^test/patch/' ||
                  $strFile =~ '^test/result/' ||
-                 $strFile eq 'test/scratch.txt' ||
+                 $strFile =~ '^test/scratch' ||
                  $strFile =~ '^test/src/valgrind\.suppress\.' ||
                  $strFile eq 'test/src/lcov.conf');
 

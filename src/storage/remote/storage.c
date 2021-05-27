@@ -15,11 +15,6 @@ Remote Storage
 #include "storage/remote/write.h"
 
 /***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_REMOTE_TYPE_STR,                              STORAGE_REMOTE_TYPE);
-
-/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct StorageRemote
@@ -125,7 +120,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO);
         PackWrite *commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, file);
@@ -186,7 +181,7 @@ storageRemoteInfoList(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST);
         PackWrite *commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, path);
@@ -310,7 +305,7 @@ storageRemotePathCreate(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
         PackWrite *commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, path);
@@ -345,7 +340,7 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInte
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE);
         PackWrite *commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, path);
@@ -375,7 +370,7 @@ storageRemotePathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPar
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
         pckWriteStrP(protocolCommandParam(command), path);
 
         protocolClientExecute(this->client, command, false);
@@ -402,7 +397,7 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE);
         PackWrite *commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, file);
@@ -466,7 +461,7 @@ storageRemoteNew(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Send command
-            protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR));
+            protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE));
 
             // Get result and acknowledge command compeleted
             PackRead *result = protocolClientResult(driver->client, true);
@@ -483,8 +478,7 @@ storageRemoteNew(
         }
         MEM_CONTEXT_TEMP_END();
 
-        this = storageNew(
-            STORAGE_REMOTE_TYPE_STR, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
+        this = storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 

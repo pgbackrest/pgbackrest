@@ -5,15 +5,15 @@ Io Session Interface Internal
 #define COMMON_IO_SESSION_INTERN_H
 
 #include "common/io/session.h"
+#include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Interface
 ***********************************************************************************************************************************/
 typedef struct IoSessionInterface
 {
-    // Type used to identify the session. This is stored as a pointer to a String pointer so it can be used with an existing String
-    // constant (e.g. created with STRING_EXTERN()) without needing to be copied.
-    const String *const *type;
+    // Type used to identify the session
+    StringId type;
 
     // Close the session
     void (*close)(void *driver);

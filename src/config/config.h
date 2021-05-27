@@ -9,6 +9,7 @@ config/parse.c sets the command and options and determines which options are val
 
 #include "common/lock.h"
 #include "common/log.h"
+#include "common/type/stringId.h"
 #include "common/type/stringList.h"
 #include "config/config.auto.h"
 
@@ -20,8 +21,8 @@ what it is supposed to do.
 ***********************************************************************************************************************************/
 typedef enum
 {
-    // Called directly by the user.  This is the main part of the command that may or may not spawn other command roles.
-    cfgCmdRoleDefault = 0,
+    // Called directly by the user. This is the main process of the command that may or may not spawn other command roles.
+    cfgCmdRoleMain = 0,
 
     // Async worker that is spawned so the main process can return a result while work continues.  An async worker may spawn local
     // or remote workers.
@@ -42,16 +43,37 @@ typedef enum
 #define CFG_COMMAND_ROLE_TOTAL                           4
 
 /***********************************************************************************************************************************
-Constants
+Constants for configuration option values
 
-Constants for configuration options.
+??? These should be generated automatically but for now just put them here so they are easy to find when it is time to replace them
+with the auto-generated values. Note that the _Z variants of these constants are auto-generated.
 ***********************************************************************************************************************************/
-#define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF              "diff"
-#define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL              "full"
-#define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR              "incr"
+#define CFGOPTVAL_ARCHIVE_MODE_OFF                                  STRID5("off", 0x18cf0)
+#define CFGOPTVAL_ARCHIVE_MODE_PRESERVE                             STRID5("preserve", 0x2da45996500)
 
-#define CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT                "count"
-#define CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_TIME                 "time"
+#define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
+#define CFGOPTVAL_OUTPUT_JSON                                       STRID5("json", 0x73e6a0)
+
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                  STRID5("diff", 0x319240)
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL                  STRID5("full", 0x632a60)
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR                  STRID5("incr", 0x90dc90)
+
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT                    STRID5("count", 0x14755e30)
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME                     STRID5("time", 0x2b5340)
+
+#define CFGOPTVAL_TARGET_ACTION_PAUSE                               STRID5("pause", 0x59d4300)
+#define CFGOPTVAL_TARGET_ACTION_SHUTDOWN                            STRID5("shutdown", 0x75de4a55130)
+
+#define CFGOPTVAL_SORT_ASC                                          STRID5("asc", 0xe610)
+#define CFGOPTVAL_SORT_DESC                                         STRID5("desc", 0x1cca40)
+#define CFGOPTVAL_SORT_NONE                                         STRID5("none", 0x2b9ee0)
+
+#define CFGOPTVAL_TYPE_DEFAULT                                      STRID5("default", 0x5195098a40)
+#define CFGOPTVAL_TYPE_IMMEDIATE                                    STRID5("immediate", 0x5a05242b5a90)
+#define CFGOPTVAL_TYPE_NONE                                         STRID5("none", 0x2b9ee0)
+#define CFGOPTVAL_TYPE_PRESERVE                                     STRID5("preserve", 0x2da45996500)
+#define CFGOPTVAL_TYPE_STANDBY                                      STRID5("standby", 0x6444706930)
+#define CFGOPTVAL_TYPE_TIME                                         STRID5("time", 0x2b5340)
 
 /***********************************************************************************************************************************
 Command Functions
@@ -127,12 +149,21 @@ const VariantList *cfgOptionLst(ConfigOption optionId);
 const VariantList *cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStr(ConfigOption optionId);
 const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx);
+StringId cfgOptionStrId(ConfigOption optionId);
+StringId cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStrNull(ConfigOption optionId);
 const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx);
 unsigned int cfgOptionUInt(ConfigOption optionId);
 unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
 uint64_t cfgOptionUInt64(ConfigOption optionId);
 uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int optionIdx);
+
+// Format the configuration value for display to the user or passing on a command line. If the value was set by the user via the
+// command line, config, etc., then that exact value will be displayed. This makes it easier for the user to recognize the value and
+// saves having to format it into something reasonable, especially for time and size option types. Note that cfgOptTypeHash and
+// cfgOptTypeList option types are not supported by these functions, but they are generally not displayed to the user as a whole.
+const String *cfgOptionDisplay(const ConfigOption optionId);
+const String *cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx);
 
 // Option name by id
 const char *cfgOptionName(ConfigOption optionId);

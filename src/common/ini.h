@@ -7,13 +7,11 @@ Ini Handler
 /***********************************************************************************************************************************
 Ini object
 ***********************************************************************************************************************************/
-#define INI_TYPE                                                    Ini
-#define INI_PREFIX                                                  ini
-
 typedef struct Ini Ini;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/object.h"
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
@@ -25,7 +23,11 @@ Ini *iniNew(void);
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-Ini *iniMove(Ini *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline Ini *
+iniMove(Ini *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Parse ini from a string. Comments are ignored and additional whitespace around sections, keys, and values is trimmed. Should be
 // used *only* to read user-generated config files, for code-generated info files see iniLoad().
@@ -58,7 +60,11 @@ StringList *iniSectionList(const Ini *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void iniFree(Ini *this);
+__attribute__((always_inline)) static inline void
+iniFree(Ini *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Helper Functions

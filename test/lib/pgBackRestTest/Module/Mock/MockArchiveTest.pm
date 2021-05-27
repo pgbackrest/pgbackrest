@@ -135,11 +135,11 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile1}",
-            {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('stanza create', {strOptionalParam => '--no-online'});
@@ -278,7 +278,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         # Restore the file to its original condition
         $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));
@@ -293,11 +293,11 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile}",
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         # Restore the file to its original condition
         $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));
@@ -341,7 +341,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --archive-async" .
-            ($strStorage eq POSIX ? " --repo-type=cifs" : '') . " --archive-timeout=5 ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
+            ($strStorage eq POSIX ? " --repo-type=cifs" : '') . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
             {oLogTest => $self->expect()});
 
         # Check that the destination file exists

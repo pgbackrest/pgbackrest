@@ -109,7 +109,7 @@ groupNameFromId(gid_t groupId)
     struct group *groupData = getgrgid(groupId);
 
     if (groupData != NULL)
-        FUNCTION_TEST_RETURN(strNew(groupData->gr_name));
+        FUNCTION_TEST_RETURN(strNewZ(groupData->gr_name));
 
     FUNCTION_TEST_RETURN(NULL);
 }
@@ -160,7 +160,7 @@ userNameFromId(uid_t userId)
     struct passwd *userData = getpwuid(userId);
 
     if (userData != NULL)
-        FUNCTION_TEST_RETURN(strNew(userData->pw_name));
+        FUNCTION_TEST_RETURN(strNewZ(userData->pw_name));
 
     FUNCTION_TEST_RETURN(NULL);
 }

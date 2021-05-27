@@ -8,6 +8,7 @@ Test Backup Info Handler
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessPostgres.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -16,7 +17,7 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("InfoBackup"))
@@ -59,13 +60,13 @@ testRun(void)
         Buffer *contentCompare = bufNew(0);
 
         TEST_ASSIGN(
-            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_94), NULL),
+            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_94), NULL),
             "infoBackupNew() - no cipher sub");
         TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "    save backup info from new");
         TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "   check save");
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentCompare)), "load backup info");
-        TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
+        TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->pub.infoPg, "    infoPg set");
         TEST_RESULT_STR(infoBackupCipherPass(infoBackup), NULL, "    cipher sub not set");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "    infoBackupDataTotal returns 0");
 
@@ -74,8 +75,8 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupNew(
-                PG_VERSION_10, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_10),
-                strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+                PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10),
+                STRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -84,19 +85,19 @@ testRun(void)
 
         infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave)), "    load backup info with cipher sub");
-        TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->infoPg, "    infoPg set");
+        TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackupPg(infoBackup), "    infoPg set");
         TEST_RESULT_STR_Z(infoBackupCipherPass(infoBackup),
             "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "    cipher sub set");
-        TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 1, "    history set");
+        TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 1, "    history set");
 
         // Add pg info
         // -------------------------------------------------------------------------------------------------------------------------
         InfoPgData infoPgData = {0};
         TEST_RESULT_VOID(
-            infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_94)),
+            infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_94)),
             "add another infoPg");
-        TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 2, "    history incremented");
-        TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackup->infoPg), "    get current infoPgData");
+        TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "    history incremented");
+        TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackupPg(infoBackup)), "    get current infoPgData");
         TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
         TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "    systemId set");
         TEST_RESULT_UINT(infoPgData.catalogVersion, 201409291, "    catalogVersion set");
@@ -150,7 +151,7 @@ testRun(void)
         InfoBackupData backupData = infoBackupData(infoBackup, 0);
 
         TEST_RESULT_STR_Z(backupData.backupLabel, "20161219-212741F", "full backup label");
-        TEST_RESULT_STR_Z(backupData.backupType, "full", "    backup type full");
+        TEST_RESULT_UINT(backupData.backupType, backupTypeFull, "    backup type full");
         TEST_RESULT_INT(backupData.backrestFormat, 5, "    backrest format");
         TEST_RESULT_STR_Z(backupData.backrestVersion, "2.04", "    backrest version");
         TEST_RESULT_STR_Z(backupData.backupArchiveStart, "00000007000000000000001C", "    archive start");
@@ -167,26 +168,28 @@ testRun(void)
 
         InfoBackupData *backupDataPtr = infoBackupDataByLabel(infoBackup, STRDEF("20161219-212741F_20161219-212803D"));
         TEST_RESULT_STR_Z(backupDataPtr->backupLabel, "20161219-212741F_20161219-212803D", "diff backup label");
-        TEST_RESULT_STR_Z(backupDataPtr->backupType, "diff", "    backup type diff");
+        TEST_RESULT_UINT(backupDataPtr->backupType, backupTypeDiff, "    backup type diff");
         TEST_RESULT_UINT(backupDataPtr->backupInfoRepoSize, 3159811, "    repo size");
         TEST_RESULT_UINT(backupDataPtr->backupInfoRepoSizeDelta, 15765, "    repo delta");
         TEST_RESULT_UINT(backupDataPtr->backupInfoSize, 26897030, "    backup size");
         TEST_RESULT_UINT(backupDataPtr->backupInfoSizeDelta, 163866, "    backup delta");
         TEST_RESULT_STR_Z(backupDataPtr->backupPrior, "20161219-212741F", "    backup prior exists");
         TEST_RESULT_BOOL(
-            (strLstSize(backupDataPtr->backupReference) == 1 && strLstExistsZ(backupDataPtr->backupReference, "20161219-212741F")), true,
-            "    backup reference exists");
+            (strLstSize(backupDataPtr->backupReference) == 1 &&
+                strLstExists(backupDataPtr->backupReference, STRDEF("20161219-212741F"))),
+            true, "    backup reference exists");
         TEST_RESULT_PTR(infoBackupDataByLabel(infoBackup, STRDEF("20161219-12345")), NULL, "    backup label does not exist");
 
         backupData = infoBackupData(infoBackup, 2);
         TEST_RESULT_STR_Z(backupData.backupLabel, "20161219-212741F_20161219-212918I", "incr backup label");
         TEST_RESULT_STR(backupData.backupArchiveStart, NULL, "    archive start NULL");
         TEST_RESULT_STR(backupData.backupArchiveStop, NULL, "    archive stop NULL");
-        TEST_RESULT_STR_Z(backupData.backupType, "incr", "    backup type incr");
+        TEST_RESULT_UINT(backupData.backupType, backupTypeIncr, "    backup type incr");
         TEST_RESULT_STR_Z(backupData.backupPrior, "20161219-212741F", "    backup prior exists");
         TEST_RESULT_BOOL(
-            (strLstSize(backupData.backupReference) == 2 && strLstExistsZ(backupData.backupReference, "20161219-212741F") &&
-            strLstExistsZ(backupData.backupReference, "20161219-212741F_20161219-212803D")), true, "    backup reference exists");
+            (strLstSize(backupData.backupReference) == 2 && strLstExists(backupData.backupReference, STRDEF("20161219-212741F")) &&
+                strLstExists(backupData.backupReference, STRDEF("20161219-212741F_20161219-212803D"))),
+            true, "    backup reference exists");
         TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "    option archive check");
         TEST_RESULT_BOOL(backupData.optionArchiveCopy, false, "    option archive copy");
         TEST_RESULT_BOOL(backupData.optionBackupStandby, false, "    option backup standby");
@@ -203,33 +206,32 @@ testRun(void)
 
         // infoBackupDataLabelList and infoBackupDataDelete
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", "),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I",
+        TEST_RESULT_STRLST_Z(
+            strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
+            "20161219-212741F\n20161219-212741F_20161219-212803D\n20161219-212741F_20161219-212918I\n",
             "infoBackupDataLabelList without expression");
-        TEST_RESULT_STR_Z(
-            strLstJoin(
-                strLstSort(
-                    infoBackupDataLabelList(
-                        infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderAsc), ", "),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I",
+        TEST_RESULT_STRLST_Z(
+            strLstSort(
+                infoBackupDataLabelList(
+                    infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderAsc),
+            "20161219-212741F\n20161219-212741F_20161219-212803D\n20161219-212741F_20161219-212918I\n",
             "infoBackupDataLabelList with expression");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), ", "), "20161219-212741F", "  full=true");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.differential=true)), ", "),
-            "20161219-212741F_20161219-212803D", "differential=true");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), ", "),
-            "20161219-212741F_20161219-212918I", "incremental=true");
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), "20161219-212741F\n", "  full=true");
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.differential=true)), "20161219-212741F_20161219-212803D\n",
+            "differential=true");
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), "20161219-212741F_20161219-212918I\n",
+            "incremental=true");
 
-        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212918I")), "delete a backup");
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", "),
-            "20161219-212741F, 20161219-212741F_20161219-212803D", "  backup deleted");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F_20161219-212918I")), "delete a backup");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
+            "20161219-212741F\n20161219-212741F_20161219-212803D\n", "  backup deleted");
 
-        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212803D")), "delete all backups");
-        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F")), "  deleted");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F_20161219-212803D")), "delete all backups");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F")), "  deleted");
         TEST_RESULT_UINT(strLstSize(infoBackupDataLabelList(infoBackup, NULL)), 0, "  no backups remain");
 
         // infoBackupDataToLog
@@ -316,7 +318,7 @@ testRun(void)
         TEST_RESULT_INT(backupData.backupPgId, 1, "pg id");
         TEST_RESULT_STR(backupData.backupArchiveStart, NULL, "archive start NULL");
         TEST_RESULT_STR(backupData.backupArchiveStop, NULL, "archive stop NULL");
-        TEST_RESULT_STR_Z(backupData.backupType, "full", "backup type set");
+        TEST_RESULT_UINT(backupData.backupType, backupTypeFull, "backup type set");
         TEST_RESULT_STR(backupData.backupPrior, NULL, "no backup prior");
         TEST_RESULT_PTR(backupData.backupReference, NULL, "no backup reference");
         TEST_RESULT_INT(backupData.backupTimestampStart, 1565282140, "timestamp start");
@@ -423,11 +425,11 @@ testRun(void)
         TEST_RESULT_STR_Z(backupData.backrestVersion, PROJECT_VERSION, "backuprest version");
         TEST_RESULT_STR_Z(backupData.backupArchiveStart, "000000030000028500000089", "archive start set");
         TEST_RESULT_STR_Z(backupData.backupArchiveStop, "000000030000028500000090", "archive stop set");
-        TEST_RESULT_STR_Z(backupData.backupType, "diff", "backup type set");
+        TEST_RESULT_UINT(backupData.backupType, backupTypeDiff, "backup type set");
         TEST_RESULT_STR_Z(backupData.backupPrior, "20190818-084502F", "backup prior set");
-        TEST_RESULT_STR_Z(
-            strLstJoin(backupData.backupReference, ", "),
-            "20190818-084502F, 20190818-084502F_20190819-084506D, 20190818-084502F_20190819-084506I",
+        TEST_RESULT_STRLST_Z(
+            backupData.backupReference,
+            "20190818-084502F\n20190818-084502F_20190819-084506D\n20190818-084502F_20190819-084506I\n",
             "backup reference set and ordered");
         TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "option archive check");
         TEST_RESULT_BOOL(backupData.optionArchiveCopy, true, "option archive copy");
@@ -448,7 +450,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
+        strLstAddZ(argList, "--repo-path=" TEST_PATH);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         // Create manifest for upgrade db (id=2), save to disk
@@ -507,7 +509,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
            storagePutP(storageNewWriteP(storageRepoWrite(),
-           strNew(STORAGE_REPO_BACKUP "/20190923-164324F/" BACKUP_MANIFEST_FILE)), manifestContent),
+           STRDEF(STORAGE_REPO_BACKUP "/20190923-164324F/" BACKUP_MANIFEST_FILE)), manifestContent),
            "write main manifest for pgId=2 - valid backup to add");
 
         manifestContent = harnessInfoChecksumZ
@@ -546,7 +548,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
             manifestContent), "write manifest copy for pgId=1");
 
         manifestContent = harnessInfoChecksumZ
@@ -589,7 +591,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084555F/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084555F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup pgId mismatch");
 
         manifestContent = harnessInfoChecksumZ
@@ -632,7 +634,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084666F/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084666F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup system-id mismatch");
 
         manifestContent = harnessInfoChecksumZ
@@ -675,32 +677,30 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084777F/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084777F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup version mismatch");
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE)),
             manifestContentIncr), "write manifest for dependent backup that will be removed from backup.info");
 
         TEST_RESULT_VOID(
-            storagePathCreateP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F")),
+            storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F")),
             "create backup on disk that is in current but no manifest");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(
-                strLstSort(
-                    storageListP(
-                        storageRepo(), STORAGE_REPO_BACKUP_STR,
-                        .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
-                    sortOrderAsc),
-                ", "),
-            "20190818-084444F, 20190818-084502F, 20190818-084502F_20190820-084502I, 20190818-084555F, 20190818-084666F, "
-            "20190818-084777F, 20190923-164324F", "confirm backups on disk");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(
+                storageListP(
+                    storageRepo(), STORAGE_REPO_BACKUP_STR,
+                    .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+                sortOrderAsc),
+            "20190818-084444F\n20190818-084502F\n20190818-084502F_20190820-084502I\n20190818-084555F\n20190818-084666F\n"
+            "20190818-084777F\n20190923-164324F\n", "confirm backups on disk");
 
         // With the infoBackup from above, upgrade the DB so there a 2 histories then save to disk
         TEST_ASSIGN(
-            infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196, pgCatalogTestVersion(PG_VERSION_11)),
+            infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196, hrnPgCatalogVersion(PG_VERSION_11)),
             "upgrade db");
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
@@ -710,7 +710,7 @@ testRun(void)
             infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "get saved backup info");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 2, "backup list contains backups to be removed");
-        TEST_RESULT_INT(infoPgDataTotal(infoBackup->infoPg), 2, "multiple DB history");
+        TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "multiple DB history");
 
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
@@ -720,7 +720,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             backupData.backupLabel, "20190923-164324F", "backups not on disk removed, dependent backup removed and not added back, "
             "valid backup on disk added, manifest copy-only ignored");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
             "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
             "P00   WARN: invalid backup '20190818-084502F_20190820-084502I' cannot be added to current backups\n"
@@ -731,12 +731,12 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePathRemoveP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I"),
+            storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I"),
             .recurse = true), "remove dependent backup from disk");
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "reconstruct does not attempt to add back dependent backup");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
             "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
@@ -747,8 +747,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             storageCopyP(
-                storageNewReadP(storageRepo(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
-                storageNewWriteP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
+                storageNewReadP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
+                storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
                 "write manifest from copy-only for pgId=1");
 
         manifestContentIncr = harnessInfoChecksumZ
@@ -794,7 +794,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084444F_20190924-084502D/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F_20190924-084502D/" BACKUP_MANIFEST_FILE)),
             manifestContentIncr), "write manifest for dependent backup to be added to full already in backup.info");
 
         TEST_RESULT_VOID(
@@ -805,11 +805,11 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "reconstruct");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20190818-084444F, 20190818-084444F_20190924-084502D, 20190923-164324F",
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL),
+            "20190818-084444F\n20190818-084444F_20190924-084502D\n20190923-164324F\n",
             "previously ignored pgId=1 manifest copy-only now added before existing, and add dependent found");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084444F' found in repository added to backup.info\n"
             "P00   WARN: backup '20190818-084444F_20190924-084502D' found in repository added to backup.info\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
@@ -820,25 +820,24 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoBackupLoadFile() and infoBackupSaveFile()"))
     {
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), FileMissingError,
-            "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
-            "FileMissingError: unable to open missing file '%s/backup.info' for read\n"
-            "FileMissingError: unable to open missing file '%s/backup.info.copy' for read\n"
+            "unable to load info file '" TEST_PATH "/backup.info' or '" TEST_PATH "/backup.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info.copy' for read\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "HINT: has a stanza-create been performed?",
-            testPath(), testPath(), testPath(), testPath());
+            "HINT: has a stanza-create been performed?");
 
-        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_10), NULL);
+        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), NULL);
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "save backup info");
 
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "load main");
-        TEST_RESULT_UINT(infoPgDataCurrent(infoBackup->infoPg).systemId, 6569239123849665999, "    check file loaded");
+        TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "    check file loaded");
 
         storageRemoveP(storageTest, STRDEF(INFO_BACKUP_FILE), .errorOnMissing = true);
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "load copy");
-        TEST_RESULT_UINT(infoPgDataCurrent(infoBackup->infoPg).systemId, 6569239123849665999, "    check file loaded");
+        TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "    check file loaded");
     }
 
     // *****************************************************************************************************************************
@@ -925,27 +924,26 @@ testRun(void)
 
         TEST_ASSIGN(
             dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F")), "full");
-        TEST_RESULT_STR_Z(
-            strLstJoin(dependencyList, ", "),
-            "20200317-181625F, 20200317-181625F_20200317-182239D, 20200317-181625F_20200317-182300D, "
-            "20200317-181625F_20200317-182324I, 20200317-181625F_20200317-182340I, 20200317-181625F_20200317-182340D",
+        TEST_RESULT_STRLST_Z(
+            dependencyList,
+            "20200317-181625F\n20200317-181625F_20200317-182239D\n20200317-181625F_20200317-182300D\n"
+                "20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n20200317-181625F_20200317-182340D\n",
             "all dependents");
 
         TEST_ASSIGN(
             dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181416F")), "full");
-        TEST_RESULT_STR_Z(strLstJoin(dependencyList, ", "), "20200317-181416F", "no dependents");
+        TEST_RESULT_STRLST_Z(dependencyList, "20200317-181416F\n", "no dependents");
 
         TEST_ASSIGN(
             dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F_20200317-182300D")), "diff");
-        TEST_RESULT_STR_Z(
-            strLstJoin(dependencyList, ", "),
-            "20200317-181625F_20200317-182300D, 20200317-181625F_20200317-182324I, 20200317-181625F_20200317-182340I",
+        TEST_RESULT_STRLST_Z(
+            dependencyList,
+            "20200317-181625F_20200317-182300D\n20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n",
             "all dependents");
 
         TEST_ASSIGN(
             dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F_20200317-182324I")), "incr");
-        TEST_RESULT_STR_Z(
-            strLstJoin(dependencyList, ", "), "20200317-181625F_20200317-182324I, 20200317-181625F_20200317-182340I",
-            "all dependents");
+        TEST_RESULT_STRLST_Z(
+            dependencyList, "20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n", "all dependents");
     }
 }

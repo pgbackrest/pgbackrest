@@ -16,9 +16,43 @@ Constants
 #define DATE_TIME_REGEX                                             "[0-9]{8}\\-[0-9]{6}"
 #define BACKUP_LINK_LATEST                                          "latest"
 
-STRING_EXTERN(BACKUP_TYPE_FULL_STR,                                 BACKUP_TYPE_FULL);
-STRING_EXTERN(BACKUP_TYPE_DIFF_STR,                                 BACKUP_TYPE_DIFF);
-STRING_EXTERN(BACKUP_TYPE_INCR_STR,                                 BACKUP_TYPE_INCR);
+/**********************************************************************************************************************************/
+String *
+backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
+        FUNCTION_LOG_PARAM(TIME, timestamp);
+    FUNCTION_LOG_END();
+
+    ASSERT((type == backupTypeFull && backupLabelPrior == NULL) || (type != backupTypeFull && backupLabelPrior != NULL));
+    ASSERT(timestamp > 0);
+
+    // Format the timestamp
+    char buffer[16];
+    THROW_ON_SYS_ERROR(
+        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&timestamp)) == 0, AssertError, "unable to format time");
+
+    // If full label
+    String *result = NULL;
+
+    if (type == backupTypeFull)
+    {
+        result = strNewFmt("%sF", buffer);
+    }
+    // Else diff or incr label
+    else
+    {
+        // Get the full backup portion of the prior backup label
+        result = strSubN(backupLabelPrior, 0, 16);
+
+        // Append the diff/incr timestamp
+        strCatFmt(result, "_%s%s", buffer, type == backupTypeDiff ? "D" : "I");
+    }
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
 
 /**********************************************************************************************************************************/
 String *
@@ -36,7 +70,7 @@ backupRegExp(BackupRegExpParam param)
     String *result = NULL;
 
     // Start the expression with the anchor, date/time regexp and full backup indicator
-    result = strNew("^" DATE_TIME_REGEX "F");
+    result = strNewZ("^" DATE_TIME_REGEX "F");
 
     // Add the diff and/or incr expressions if requested
     if (param.differential || param.incremental)
@@ -86,69 +120,12 @@ backupRegExp(BackupRegExpParam param)
 }
 
 /**********************************************************************************************************************************/
-BackupType
-backupType(const String *type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, type);
-    FUNCTION_TEST_END();
-
-    ASSERT(type != NULL);
-
-    BackupType result;
-
-    if (strEq(type, BACKUP_TYPE_FULL_STR))
-        result = backupTypeFull;
-    else if (strEq(type, BACKUP_TYPE_DIFF_STR))
-        result = backupTypeDiff;
-    else if (strEq(type, BACKUP_TYPE_INCR_STR))
-        result = backupTypeIncr;
-    else
-        THROW_FMT(AssertError, "invalid backup type '%s'", strZ(type));
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-const String *backupTypeStr(BackupType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
-
-    ASSERT(type <= backupTypeIncr);
-
-    const String *result = NULL;
-
-    switch (type)
-    {
-        case backupTypeFull:
-        {
-            result = BACKUP_TYPE_FULL_STR;
-            break;
-        }
-
-        case backupTypeDiff:
-        {
-            result = BACKUP_TYPE_DIFF_STR;
-            break;
-        }
-
-        case backupTypeIncr:
-        {
-            result = BACKUP_TYPE_INCR_STR;
-            break;
-        }
-    }
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
 void
-backupLinkLatest(const String *backupLabel)
+backupLinkLatest(const String *backupLabel, unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, backupLabel);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -156,12 +133,12 @@ backupLinkLatest(const String *backupLabel)
         // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
         // used by us since symlinks are not supported on all storage types.
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *const latestLink = storagePathP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST));
+        const String *const latestLink = storagePathP(storageRepoIdx(repoIdx), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST));
 
         // Remove an existing latest link/file in case symlink capabilities have changed
-        storageRemoveP(storageRepoWrite(), latestLink);
+        storageRemoveP(storageRepoIdxWrite(repoIdx), latestLink);
 
-        if (storageFeature(storageRepoWrite(), storageFeatureSymLink))
+        if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeatureSymLink))
         {
             THROW_ON_SYS_ERROR_FMT(
                 symlink(strZ(backupLabel), strZ(latestLink)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'",
@@ -169,8 +146,8 @@ backupLinkLatest(const String *backupLabel)
         }
 
         // Sync backup path if required
-        if (storageFeature(storageRepoWrite(), storageFeaturePathSync))
-            storagePathSyncP(storageRepoWrite(), STORAGE_REPO_BACKUP_STR);
+        if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeaturePathSync))
+            storagePathSyncP(storageRepoIdxWrite(repoIdx), STORAGE_REPO_BACKUP_STR);
     }
     MEM_CONTEXT_TEMP_END();
 

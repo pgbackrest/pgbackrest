@@ -33,11 +33,11 @@ typedef struct TestRequestParam
     const char *blobType;
 } TestRequestParam;
 
-#define testRequestP(write, verb, uri, ...)                                                                                        \
-    testRequest(write, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define testRequestP(write, verb, path, ...)                                                                                       \
+    testRequest(write, verb, path, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
-testRequest(IoWrite *write, const char *verb, const char *uri, TestRequestParam param)
+testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam param)
 {
     String *request = strNewFmt("%s /" TEST_ACCOUNT "/" TEST_CONTAINER, verb);
 
@@ -45,20 +45,20 @@ testRequest(IoWrite *write, const char *verb, const char *uri, TestRequestParam 
     if (driver->sasKey != NULL)
     {
         HttpQuery *query = httpQueryNewP();
-        StringList *uriQuery = strLstNewSplitZ(STR(uri), "?");
+        StringList *pathQuery = strLstNewSplitZ(STR(path), "?");
 
-        if (strLstSize(uriQuery) == 2)
-            query = httpQueryNewStr(strLstGet(uriQuery, 1));
+        if (strLstSize(pathQuery) == 2)
+            query = httpQueryNewStr(strLstGet(pathQuery, 1));
 
         httpQueryMerge(query, driver->sasKey);
 
-        strCat(request, strLstGet(uriQuery, 0));
+        strCat(request, strLstGet(pathQuery, 0));
         strCatZ(request, "?");
         strCat(request, httpQueryRenderP(query));
     }
-    // Else just output URI as is
+    // Else just output path as is
     else
-        strCatZ(request, uri);
+        strCatZ(request, path);
 
     // Add HTTP version and user agent
     strCatZ(request, " HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
@@ -73,9 +73,9 @@ testRequest(IoWrite *write, const char *verb, const char *uri, TestRequestParam 
     // Add md5
     if (param.content != NULL)
     {
-        char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-        encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content))), HASH_TYPE_M5_SIZE, md5Hash);
-        strCatFmt(request, "content-md5:%s\r\n", md5Hash);
+        strCatFmt(
+            request, "content-md5:%s\r\n",
+            strZ(strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content)))));
     }
 
     // Add date
@@ -130,16 +130,12 @@ testResponse(IoWrite *write, TestResponseParam param)
     switch (param.code)
     {
         case 200:
-        {
             strCatZ(response, "OK");
             break;
-        }
 
         case 403:
-        {
             strCatZ(response, "Forbidden");
             break;
-        }
     }
 
     // End header
@@ -182,7 +178,7 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
         hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
@@ -192,12 +188,13 @@ testRun(void)
         Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->account, TEST_ACCOUNT_STR, "    check account");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->container, TEST_CONTAINER_STR, "    check container");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->sharedKey, TEST_KEY_SHARED_STR, "    check key");
-        TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
-        TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->uriPrefix, "/" TEST_CONTAINER, "    check uri prefix");
-        TEST_RESULT_UINT(((StorageAzure *)storage->driver)->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
+        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->account, TEST_ACCOUNT_STR, "    check account");
+        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->container, TEST_CONTAINER_STR, "    check container");
+        TEST_RESULT_STR(
+            strNewEncode(encodeBase64, ((StorageAzure *)storageDriver(storage))->sharedKey), TEST_KEY_SHARED_STR, "    check key");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "    check path prefix");
+        TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
     }
@@ -273,7 +270,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
-                    hrnServerRunP(ioFdReadNew(strNew("azure server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls),
+                    hrnServerRunP(ioFdReadNew(STRDEF("azure server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls),
                     "azure server run");
             }
             HARNESS_FORK_CHILD_END();
@@ -281,19 +278,19 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNew(strNew("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdWriteNew(STRDEF("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test against local host");
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-                hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-                hrnCfgArgRaw(argList, cfgOptRepoAzureHost, hrnServerHost());
-                hrnCfgArgRawFmt(argList, cfgOptRepoAzurePort, "%u", hrnServerPort(0));
-                hrnCfgArgRawBool(argList, cfgOptRepoAzureVerifyTls, testContainer());
+                hrnCfgArgRaw(argList, cfgOptRepoStorageHost, hrnServerHost());
+                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", hrnServerPort(0));
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
@@ -301,9 +298,9 @@ testRun(void)
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
-                driver = (StorageAzure *)storage->driver;
+                driver = (StorageAzure *)storageDriver(storage);
                 TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
-                TEST_RESULT_STR_Z(driver->uriPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check uri prefix");
+                TEST_RESULT_STR_Z(driver->pathPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check path prefix");
                 TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
 
                 // Tests need the block size to be 16
@@ -317,7 +314,7 @@ testRun(void)
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_PTR(
-                    storageGetP(storageNewReadP(storage, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
+                    storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing file");
@@ -326,8 +323,8 @@ testRun(void)
                 testResponseP(service, .code = 404);
 
                 TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, strNew("file.txt"))), FileMissingError,
-                    "unable to open '/file.txt': No such file or directory");
+                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file");
@@ -336,7 +333,7 @@ testRun(void)
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, strNew("file.txt")))), "this is a sample file", "get file");
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
@@ -345,7 +342,7 @@ testRun(void)
                 testResponseP(service);
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, strNew("file0.txt")))), "", "get zero-length file");
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file0.txt")))), "", "get zero-length file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
@@ -354,14 +351,14 @@ testRun(void)
                 testResponseP(service, .code = 303, .content = "CONTENT");
 
                 StorageRead *read = NULL;
-                TEST_ASSIGN(read, storageNewReadP(storage, strNew("file.txt"), .ignoreMissing = true), "new read file");
+                TEST_ASSIGN(read, storageNewReadP(storage, STRDEF("file.txt"), .ignoreMissing = true), "new read file");
                 TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
                 TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
 
                 TEST_ERROR_FMT(
                     ioReadOpen(storageReadIo(read)), ProtocolError,
                     "HTTP request failed with 303:\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/account/container/file.txt\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
@@ -382,9 +379,9 @@ testRun(void)
                 testResponseP(service, .code = 403);
 
                 TEST_ERROR_FMT(
-                    storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
+                    storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
                     "HTTP request failed with 403 (Forbidden):\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/account/container/file.txt\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
@@ -405,7 +402,7 @@ testRun(void)
                 testResponseP(service);
 
                 StorageWrite *write = NULL;
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
 
                 TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
@@ -424,7 +421,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "");
                 testResponseP(service);
 
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, NULL), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -451,7 +448,7 @@ testRun(void)
                 // Test needs a predictable file id
                 driver->fileId = 0x0AAAAAAACCCCCCCC;
 
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -475,8 +472,13 @@ testRun(void)
                         "</BlockList>\n");
                 testResponseP(service);
 
-                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for / does not exist");
+
+                TEST_RESULT_BOOL(storageInfoP(storage, NULL, .ignoreMissing = true).exists, false, "info for /");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
@@ -485,7 +487,7 @@ testRun(void)
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(
-                    storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for file");
@@ -494,7 +496,7 @@ testRun(void)
                 testResponseP(service, .header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
 
                 StorageInfo info;
-                TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
+                TEST_ASSIGN(info, storageInfoP(storage, STRDEF("subdir/file1.txt")), "file exists");
                 TEST_RESULT_BOOL(info.exists, true, "    check exists");
                 TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
                 TEST_RESULT_UINT(info.size, 9999, "    check exists");
@@ -507,7 +509,7 @@ testRun(void)
                 testResponseP(service, .header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
 
                 TEST_ASSIGN(
-                    info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
+                    info, storageInfoP(storage, STRDEF("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
                 TEST_RESULT_BOOL(info.exists, true, "    check exists");
                 TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
                 TEST_RESULT_UINT(info.size, 0, "    check exists");
@@ -539,15 +541,15 @@ testRun(void)
 
                 HarnessStorageInfoListCallbackData callbackData =
                 {
-                    .content = strNew(""),
+                    .content = strNew(),
                 };
 
                 TEST_ERROR(
-                    storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
+                    storageInfoListP(storage, STRDEF("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
                     AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
+                    storageInfoListP(storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
                     "test_path {path}\n"
@@ -575,11 +577,11 @@ testRun(void)
                         "    <NextMarker/>"
                         "</EnumerationResults>");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                        storage, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
@@ -605,11 +607,11 @@ testRun(void)
                         "    <NextMarker/>"
                         "</EnumerationResults>");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
+                        storage, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test.*$"),
                         .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
@@ -661,11 +663,11 @@ testRun(void)
                         "    <NextMarker/>"
                         "</EnumerationResults>");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                        storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
@@ -708,11 +710,11 @@ testRun(void)
                         "    <NextMarker/>"
                         "</EnumerationResults>");
 
-                callbackData.content = strNew("");
+                callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
                     storageInfoListP(
-                        storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
+                        storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test(1|3)"),
                         .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
@@ -727,13 +729,13 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                hrnCfgArgRawZ(argList, cfgOptRepoAzureKeyType, STORAGE_AZURE_KEY_TYPE_SAS);
+                hrnCfgArgRawStrId(argList, cfgOptRepoAzureKeyType, storageAzureKeyTypeSas);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SAS);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
-                driver = (StorageAzure *)storage->driver;
+                driver = (StorageAzure *)storageDriver(storage);
                 TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");
 
                 hrnServerScriptAccept(service);
@@ -744,7 +746,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_DELETE, "/path/to/test.txt");
                 testResponseP(service);
 
-                TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
+                TEST_RESULT_VOID(storageRemoveP(storage, STRDEF("/path/to/test.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove missing file");
@@ -752,7 +754,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_DELETE, "/path/to/missing.txt");
                 testResponseP(service, .code = 404);
 
-                TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/missing.txt")), "remove");
+                TEST_RESULT_VOID(storageRemoveP(storage, STRDEF("/path/to/missing.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files error to check redacted sig");
@@ -761,9 +763,9 @@ testRun(void)
                 testResponseP(service, .code = 403);
 
                 TEST_ERROR_FMT(
-                    storagePathRemoveP(storage, strNew("/"), .recurse = true), ProtocolError,
+                    storagePathRemoveP(storage, STRDEF("/"), .recurse = true), ProtocolError,
                     "HTTP request failed with 403 (Forbidden):\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/account/container?comp=list&restype=container&sig=<redacted>\n"
                     "*** Request Headers ***:\n"
                     "content-length: 0\n"
@@ -801,7 +803,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_DELETE, "/path1/xxx.zzz");
                 testResponseP(service);
 
-                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
+                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from path");
@@ -834,7 +836,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
                 testResponseP(service);
 
-                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
+                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files in empty subpath (nothing to do)");
@@ -850,7 +852,7 @@ testRun(void)
                         "    <NextMarker/>"
                         "</EnumerationResults>");
 
-                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
+                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);
@@ -860,5 +862,5 @@ testRun(void)
         HARNESS_FORK_END();
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

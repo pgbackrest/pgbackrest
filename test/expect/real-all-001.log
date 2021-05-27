@@ -1,8 +1,8 @@
 run 001 - bkp 1, sby 1, dst backup, cmp none, storage posix, enc 0
 ==================================================================
 
-stanza-create db - main create stanza info files (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
+stanza-create db - main create stanza info files (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - verify check command runs successfully (db-primary host)
@@ -17,7 +17,7 @@ full backup - fail on backup lock exists (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
-full backup - update during backup (backup host)
+full backup - repo1 (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --buffer-size=[BUFFER-SIZE] --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -34,6 +34,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -46,6 +47,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
@@ -61,6 +66,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -73,6 +79,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-standby/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -102,6 +112,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -111,6 +122,118 @@ log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/backup/repo
+repo2-path=[TEST_PATH]/backup/repo2
+
+[global:backup]
+archive-copy=y
+start-fast=y
+
+full backup - repo2 (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo=2 --type=full --stanza=db backup
+------------------------------------------------------------------------------------------------------------------------------------
+
++ supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg1-socket-path=[TEST_PATH]/db-primary/db
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+job-retry=0
+lock-path=[TEST_PATH]/db-primary/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-primary/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-primary/spool
+
++ supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
+-----------------------------------------------------------
+[db]
+pg1-path=[TEST_PATH]/db-standby/db/base
+pg1-port=6544
+pg1-socket-path=[TEST_PATH]/db-standby/db
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+job-retry=0
+lock-path=[TEST_PATH]/db-standby/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/db-standby/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-host=backup
+repo1-host-cmd=[BACKREST-BIN]
+repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
+spool-path=[TEST_PATH]/db-standby/spool
+
++ supplemental file: [TEST_PATH]/backup/pgbackrest.conf
+-------------------------------------------------------
+[db]
+pg1-host=db-primary
+pg1-host-cmd=[BACKREST-BIN]
+pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-user=[USER-1]
+pg1-path=[TEST_PATH]/db-primary/db/base
+pg1-port=6543
+pg2-host=bogus
+pg2-host-cmd=[BACKREST-BIN]
+pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg2-host-user=[USER-1]
+pg2-path=[TEST_PATH]/db-standby/db/base
+pg8-host=db-standby
+pg8-host-cmd=[BACKREST-BIN]
+pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg8-host-user=[USER-1]
+pg8-path=[TEST_PATH]/db-standby/db/base
+pg8-port=6544
+
+[global]
+buffer-size=[BUFFER-SIZE]
+compress-level=3
+compress-level-network=1
+compress-type=none
+db-timeout=45
+job-retry=0
+lock-path=[TEST_PATH]/backup/lock
+log-level-console=detail
+log-level-file=[LOG-LEVEL-FILE]
+log-level-stderr=off
+log-path=[TEST_PATH]/backup/log
+log-subprocess=[LOG-SUBPROCESS]
+log-timestamp=n
+protocol-timeout=60
+repo1-path=[TEST_PATH]/backup/repo
+repo2-path=[TEST_PATH]/backup/repo2
 
 [global:backup]
 archive-copy=y
@@ -133,6 +256,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -145,6 +269,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
@@ -160,6 +288,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -172,6 +301,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-standby/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -201,6 +334,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -210,13 +344,14 @@ log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/backup/repo
+repo2-path=[TEST_PATH]/backup/repo2
 
 [global:backup]
 archive-copy=y
 start-fast=y
 
 expire full=1 (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=1  --stanza=db expire
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=1 --repo=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
 
 restore, type 'standby', remap - restore backup on replica (db-standby host)
@@ -251,6 +386,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -263,6 +399,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
@@ -280,6 +420,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -292,6 +433,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-standby/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -322,6 +467,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -331,6 +477,7 @@ log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/backup/repo
+repo2-path=[TEST_PATH]/backup/repo2
 
 [global:backup]
 archive-copy=y
@@ -357,6 +504,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -369,6 +517,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
@@ -386,6 +538,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -398,6 +551,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-standby/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -428,6 +585,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -437,6 +595,7 @@ log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/backup/repo
+repo2-path=[TEST_PATH]/backup/repo2
 
 [global:backup]
 archive-copy=y
@@ -459,11 +618,11 @@ incr backup - fail on archive_mode=always (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 expire --set=[BACKUP-DIFF-1] (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --set=[BACKUP-DIFF-1]  --stanza=db expire
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --set=[BACKUP-DIFF-1] --repo=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
 
-incr backup - update during backup (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stop-auto --buffer-size=[BUFFER-SIZE] --delta --stanza=db backup
+incr backup - delta (backup host)
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stop-auto --buffer-size=[BUFFER-SIZE] --delta --repo=2 --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -479,6 +638,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-primary/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -491,6 +651,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
 + supplemental file: [TEST_PATH]/db-standby/pgbackrest.conf
@@ -508,6 +672,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/db-standby/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -520,6 +685,10 @@ repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
 repo1-host-user=[USER-1]
+repo2-host=backup
+repo2-host-cmd=[BACKREST-BIN]
+repo2-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo2-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-standby/spool
 
 + supplemental file: [TEST_PATH]/backup/pgbackrest.conf
@@ -550,6 +719,7 @@ compress-level=3
 compress-level-network=1
 compress-type=none
 db-timeout=45
+job-retry=0
 lock-path=[TEST_PATH]/backup/lock
 log-level-console=detail
 log-level-file=[LOG-LEVEL-FILE]
@@ -559,6 +729,7 @@ log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
 repo1-path=[TEST_PATH]/backup/repo
+repo2-path=[TEST_PATH]/backup/repo2
 
 [global:backup]
 archive-copy=y
@@ -577,13 +748,13 @@ restore, type 'default', expect exit 40 - path not empty (db-primary host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 restore, type 'default' (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf  --db-include=test2 --db-include=test3 --buffer-size=[BUFFER-SIZE]  --link-all --stanza=db restore
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf  --db-include=test2 --db-include=test3 --buffer-size=[BUFFER-SIZE]  --link-all --repo=2 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
 -----------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo=2 --stanza=db archive-get %f "%p"'
 
 restore, force, backup '[BACKUP-FULL-1]', type 'immediate', target-action=promote (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --force --set=[BACKUP-FULL-1] --type=immediate --link-all --target-action=promote --stanza=db restore
@@ -597,13 +768,13 @@ recovery_target = 'immediate'
 recovery_target_action = 'promote'
 
 restore, force, backup '[BACKUP-INCR-1]', type 'xid', target '[XID-TARGET-1]', target-action=promote (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --force --set=[BACKUP-INCR-1] --tablespace-map-all=../../tablespace  --type=xid --target="[XID-TARGET-1]" --link-all --target-action=promote --stanza=db restore
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --force --set=[BACKUP-INCR-1] --tablespace-map-all=../../tablespace  --type=xid --target="[XID-TARGET-1]" --link-all --target-action=promote --repo=2 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
 -----------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo=2 --stanza=db archive-get %f "%p"'
 recovery_target_xid = '[XID-TARGET-1]'
 recovery_target_action = 'promote'
 
@@ -614,7 +785,7 @@ restore, type 'preserve' (db-primary host)
 + supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
 -----------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo=2 --stanza=db archive-get %f "%p"'
 recovery_target_xid = '[XID-TARGET-1]'
 recovery_target_action = 'promote'
 
@@ -630,13 +801,13 @@ recovery_target_time = '[TIMESTAMP-TARGET-1]'
 recovery_target_action = 'promote'
 
 restore delta, backup '[BACKUP-INCR-1]', type 'xid', target '[XID-TARGET-1]', exclusive, target-action=promote (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-INCR-1] --type=xid --target="[XID-TARGET-1]" --target-exclusive --link-all --target-action=promote --stanza=db restore
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-INCR-1] --type=xid --target="[XID-TARGET-1]" --target-exclusive --link-all --target-action=promote --repo=2 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
 -----------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo=2 --stanza=db archive-get %f "%p"'
 recovery_target_xid = '[XID-TARGET-1]'
 recovery_target_inclusive = 'false'
 recovery_target_action = 'promote'
@@ -653,13 +824,13 @@ recovery_target_name = 'backrest'
 recovery_target_action = 'promote'
 
 restore delta, backup '[BACKUP-INCR-1]', type 'standby', timeline '4' (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-INCR-1] --type=standby --target-timeline="4" --link-all --stanza=db restore
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-INCR-1] --type=standby --target-timeline="4" --link-all --repo=2 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
 -----------------------------------------------------------------
 # Recovery settings generated by pgBackRest restore on [TIMESTAMP]
-restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get %f "%p"'
+restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo=2 --stanza=db archive-get %f "%p"'
 standby_mode = 'on'
 recovery_target_timeline = '4'
 
@@ -672,7 +843,7 @@ stop db stanza (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 stanza-delete db - delete stanza with --force when pgbackrest on pg host not accessible (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db  --force stanza-delete
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo=1 --stanza=db  --force stanza-delete
 ------------------------------------------------------------------------------------------------------------------------------------
 
 start all stanzas (db-primary host)

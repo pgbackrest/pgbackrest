@@ -20,10 +20,10 @@ Exit Routines
 Return signal names
 ***********************************************************************************************************************************/
 static const char *
-exitSignalName(int signalType)
+exitSignalName(SignalType signalType)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INT, signalType);
+        FUNCTION_TEST_PARAM(ENUM, signalType);
     FUNCTION_TEST_END();
 
     const char *name = NULL;
@@ -31,22 +31,16 @@ exitSignalName(int signalType)
     switch (signalType)
     {
         case signalTypeHup:
-        {
             name = "HUP";
             break;
-        }
 
         case signalTypeInt:
-        {
             name = "INT";
             break;
-        }
 
         case signalTypeTerm:
-        {
             name = "TERM";
             break;
-        }
 
         case signalTypeNone:
             THROW(AssertError, "no name for signal none");
@@ -154,7 +148,7 @@ exitSafe(int result, bool error, SignalType signalType)
             // On process terminate
             if (result == errorTypeCode(&TermError))
             {
-                errorMessage = strNew("terminated on signal ");
+                errorMessage = strNewZ("terminated on signal ");
 
                 // Terminate from a child
                 if (signalType == signalTypeNone)

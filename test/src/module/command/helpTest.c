@@ -34,6 +34,8 @@ testRun(void)
         "    expire          Expire backups that exceed retention.\n"
         "    help            Get help.\n"
         "    info            Retrieve information about backups.\n"
+        "    repo-get        Get a file from a repository.\n"
+        "    repo-ls         List files in a repository.\n"
         "    restore         Restore a database cluster.\n"
         "    stanza-create   Create the required stanza data.\n"
         "    stanza-delete   Delete a stanza.\n"
@@ -46,26 +48,49 @@ testRun(void)
         helpVersion));
 
     // *****************************************************************************************************************************
-    if (testBegin("helpRenderText()"))
+    if (testBegin("helpRenderSplitSize()"))
     {
-        TEST_RESULT_STR_Z(helpRenderText(strNew("this is a short sentence"), 0, false, 80), "this is a short sentence", "one line");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def"), " ", 3), "-"), "abc-def", "two items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def"), " ", 4), "-"), "abc-def", "one items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 4), "-"), "abc-def-ghi", "three items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 8), "-"), "abc def-ghi", "three items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def "), " ", 4), "-"), "abc-def ", "two items");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("this is a short sentence"), 4, false, 14),
+            strLstJoin(helpRenderSplitSize(STRDEF("this is a short sentence"), " ", 10), "\n"),
+            "this is a\n"
+            "short\n"
+            "sentence",
+            "empty list");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("helpRenderText()"))
+    {
+        TEST_RESULT_STR_Z(
+            helpRenderText(STRDEF("this is a short sentence"), false, 0, false, 80), "this is a short sentence", "one line");
+
+        TEST_RESULT_STR_Z(
+            helpRenderText(STRDEF("this is a short sentence"), false, 4, false, 14),
             "this is a\n"
             "    short\n"
             "    sentence",
             "three lines, no indent first");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), 2, true, 16),
+            helpRenderText(STRDEF("This is a short paragraph.\n\nHere is another one."), true, 2, true, 16),
             "  This is a\n"
             "  short\n"
             "  paragraph.\n"
             "\n"
             "  Here is\n"
-            "  another one.",
-            "two paragraphs, indent first");
+            "  another one.\n"
+            "\n"
+            "  FOR INTERNAL\n"
+            "  USE ONLY. DO\n"
+            "  NOT USE IN\n"
+            "  PRODUCTION.",
+            "two paragraphs, indent first, internal");
     }
 
     // *****************************************************************************************************************************
@@ -121,13 +146,25 @@ testRun(void)
             "\n"
             "Restore a database cluster.\n"
             "\n"
-            "This command is generally run manually, but there are instances where it might\n"
-            "be automated.\n"
+            "The restore command automatically defaults to selecting the latest backup from\n"
+            "the first repository where backups exist (see Quick Start - Restore a Backup).\n"
+            "The order in which the repositories are checked is dictated by the\n"
+            "pgbackrest.conf (e.g. repo1 will be checked before repo2). To select from a\n"
+            "specific repository, the --repo option can be passed (e.g. --repo=1). The --set\n"
+            "option can be passed if a backup other than the latest is desired.\n"
+            "\n"
+            "For PITR, --type=time must be provided and the target time specified with the\n"
+            "--target option. If a backup is not specified via the --set option, then the\n"
+            "configured repositories will be checked, in order, for a backup that contains\n"
+            "the requested time. If no backup can be found, the latest backup from the first\n"
+            "repository containing backups will be used. See Point-in-Time Recovery for more\n"
+            "details and examples.\n"
             "\n"
             "Command Options:\n"
             "\n"
             "  --archive-mode                   preserve or disable archiving on restored\n"
             "                                   cluster [default=preserve]\n"
+            "  --db-exclude                     restore excluding the specified databases\n"
             "  --db-include                     restore only specified databases\n"
             "                                   [current=db1, db2]\n"
             "  --force                          force a restore [default=n]\n"
@@ -186,22 +223,22 @@ testRun(void)
             "\n",
             "Repository Options:\n"
             "\n"
+            "  --repo                           set repository\n"
             "  --repo-azure-account             azure repository account\n"
-            "  --repo-azure-ca-file             azure repository TLS CA file\n"
-            "  --repo-azure-ca-path             azure repository TLS CA path\n"
             "  --repo-azure-container           azure repository container\n"
             "  --repo-azure-endpoint            azure repository endpoint\n"
             "                                   [default=blob.core.windows.net]\n"
-            "  --repo-azure-host                azure repository host\n"
             "  --repo-azure-key                 azure repository key\n"
             "  --repo-azure-key-type            azure repository key type [default=shared]\n"
-            "  --repo-azure-port                azure repository server port [default=443]\n"
-            "  --repo-azure-verify-tls          azure repository server certificate verify\n"
-            "                                   [default=y]\n"
             "  --repo-cipher-pass               repository cipher passphrase\n"
             "                                   [current=<redacted>]\n"
             "  --repo-cipher-type               cipher used to encrypt the repository\n"
             "                                   [current=aes-256-cbc, default=none]\n"
+            "  --repo-gcs-bucket                GCS repository bucket\n"
+            "  --repo-gcs-endpoint              GCS repository endpoint\n"
+            "                                   [default=storage.googleapis.com]\n"
+            "  --repo-gcs-key                   GCS repository key\n"
+            "  --repo-gcs-key-type              GCS repository key type [default=service]\n"
             "  --repo-host                      repository host when operating remotely via\n"
             "                                   SSH [current=backup.example.net]\n"
             "  --repo-host-cmd                  pgBackRest exe path on the repository host\n"
@@ -218,20 +255,21 @@ testRun(void)
             "                                   [default=pgbackrest]\n"
             "  --repo-path                      path where backups and archive are stored\n"
             "                                   [default=/var/lib/pgbackrest]\n"
-            "  --repo-s3-bucket                 s3 repository bucket\n"
-            "  --repo-s3-ca-file                s3 SSL CA File\n"
-            "  --repo-s3-ca-path                s3 SSL CA Path\n"
-            "  --repo-s3-endpoint               s3 repository endpoint\n"
-            "  --repo-s3-host                   s3 repository host\n"
-            "  --repo-s3-key                    s3 repository access key\n"
-            "  --repo-s3-key-secret             s3 repository secret access key\n"
-            "  --repo-s3-key-type               s3 repository key type [default=shared]\n"
-            "  --repo-s3-port                   s3 repository port [default=443]\n"
-            "  --repo-s3-region                 s3 repository region\n"
-            "  --repo-s3-role                   s3 repository role\n"
-            "  --repo-s3-token                  s3 repository security token\n"
-            "  --repo-s3-uri-style              s3 URI Style [default=host]\n"
-            "  --repo-s3-verify-tls             verify S3 server certificate [default=y]\n"
+            "  --repo-s3-bucket                 S3 repository bucket\n"
+            "  --repo-s3-endpoint               S3 repository endpoint\n"
+            "  --repo-s3-key                    S3 repository access key\n"
+            "  --repo-s3-key-secret             S3 repository secret access key\n"
+            "  --repo-s3-key-type               S3 repository key type [default=shared]\n"
+            "  --repo-s3-region                 S3 repository region\n"
+            "  --repo-s3-role                   S3 repository role\n"
+            "  --repo-s3-token                  S3 repository security token\n"
+            "  --repo-s3-uri-style              S3 URI Style [default=host]\n"
+            "  --repo-storage-ca-file           repository storage CA file\n"
+            "  --repo-storage-ca-path           repository storage CA path\n"
+            "  --repo-storage-host              repository storage host\n"
+            "  --repo-storage-port              repository storage port [default=443]\n"
+            "  --repo-storage-verify-tls        repository storage certificate verify\n"
+            "                                   [default=y]\n"
             "  --repo-type                      type of storage used for the repository\n"
             "                                   [default=posix]\n"
             "\n"
@@ -275,6 +313,14 @@ testRun(void)
         TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse bogus option");
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
 
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, CFGCMD_HELP);
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH);
+        strLstAddZ(argList, CFGOPT_PROCESS);
+        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse option invalid for command");
+        TEST_ERROR(helpRender(), OptionInvalidError, "option 'process' is not valid for command 'archive-push'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         const char *optionHelp = strZ(strNewFmt(
             "%s - 'archive-push' command - 'buffer-size' option help\n"
@@ -308,12 +354,21 @@ testRun(void)
         TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 1048576\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        #define HELP_OPTION                                                                                                        \
+            "%s - 'archive-push' command - 'repo-storage-host' option help\n"                                                      \
+            "\n"                                                                                                                   \
+            "Repository storage host.\n"                                                                                           \
+            "\n"                                                                                                                   \
+            "Connect to a host other than the storage (e.g. S3, Azure) endpoint. This is\n"                                        \
+            "typically used for testing.\n"                                                                                        \
+            "\n"
+
+        #define HELP_OPTION_DEPRECATED_NAMES                                                                                       \
+            "deprecated names: repo-azure-host, repo-s3-host\n"
+
         optionHelp = strZ(strNewFmt(
-            "%s - 'archive-push' command - 'repo-s3-host' option help\n"
-            "\n"
-            "S3 repository host.\n"
-            "\n"
-            "Connect to a host other than the end point. This is typically used for testing.\n",
+            HELP_OPTION
+            HELP_OPTION_DEPRECATED_NAMES,
             helpVersion));
 
         argList = strLstNew();
@@ -325,11 +380,18 @@ testRun(void)
             harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
+        optionHelp = strZ(strNewFmt(
+            HELP_OPTION
+            "current: s3-host\n"
+            "\n"
+            HELP_OPTION_DEPRECATED_NAMES,
+            helpVersion));
+
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAddZ(argList, "--repo1-s3-host=s3-host");
         TEST_RESULT_VOID(
             harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: s3-host\n", optionHelp), "    check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strZ(strNewFmt(
@@ -434,7 +496,7 @@ testRun(void)
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
-        String *stdoutFile = strNewFmt("%s/stdout.help", testPath());
+        const String *stdoutFile = STRDEF(TEST_PATH "/stdout.help");
 
         THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
@@ -444,9 +506,9 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNewP(strNew(testPath()));
+        Storage *storage = storagePosixNewP(TEST_PATH_STR);
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), generalHelp, "    check text");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -9,6 +9,16 @@ Prefix for environment variables
 #define HRN_PGBACKREST_ENV                                          "PGBACKREST_"
 
 /***********************************************************************************************************************************
+Config option constants
+***********************************************************************************************************************************/
+#define TEST_PATH_REPO                                              TEST_PATH "/repo"
+#define TEST_PATH_PG                                                TEST_PATH "/pg"
+#define TEST_PATH_SPOOL                                             TEST_PATH "/spool"
+
+#define TEST_CIPHER_PASS                                            "xmainx"
+#define TEST_CIPHER_PASS_ARCHIVE                                    "xarchivex"
+
+/***********************************************************************************************************************************
 Load a test configuration without any side effects
 
 There's no need to open log files, acquire locks, reset log levels, etc.
@@ -38,6 +48,9 @@ void hrnCfgArgKeyRawFmt(StringList *argList, ConfigOption optionId, unsigned opt
 
 void hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value);
 void hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *value);
+
+void hrnCfgArgRawStrId(StringList *argList, ConfigOption optionId, StringId value);
+void hrnCfgArgKeyRawStrId(StringList *argList, ConfigOption optionId, unsigned optionKey, StringId);
 
 void hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value);
 void hrnCfgArgKeyRawBool(StringList *argList, ConfigOption optionId, unsigned optionKey, bool value);

@@ -6,7 +6,6 @@ S3 Storage
 #include <string.h>
 
 #include "common/crypto/hash.h"
-#include "common/encode.h"
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
@@ -21,11 +20,6 @@ S3 Storage
 #include "storage/s3/read.h"
 #include "storage/s3/storage.intern.h"
 #include "storage/s3/write.h"
-
-/***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_S3_TYPE_STR,                                  STORAGE_S3_TYPE);
 
 /***********************************************************************************************************************************
 Defaults
@@ -74,7 +68,7 @@ Documentation for the response format is found at: https://docs.aws.amazon.com/A
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_CREDENTIAL_HOST_STR,                               "169.254.169.254");
 #define S3_CREDENTIAL_PORT                                          80
-#define S3_CREDENTIAL_URI                                           "/latest/meta-data/iam/security-credentials"
+#define S3_CREDENTIAL_PATH                                          "/latest/meta-data/iam/security-credentials"
 #define S3_CREDENTIAL_RENEW_SEC                                     (5 * 60)
 
 VARIANT_STRDEF_STATIC(S3_JSON_TAG_ACCESS_KEY_ID_VAR,                "AccessKeyId");
@@ -112,7 +106,7 @@ struct StorageS3
 
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
-    StorageS3KeyType keyType;                                       // Key type (shared or temp)
+    StorageS3KeyType keyType;                                       // Key type (e.g. storageS3KeyTypeShared)
     String *accessKey;                                              // Access key
     String *secretAccessKey;                                        // Secret access key
     String *securityToken;                                          // Security token, if any
@@ -153,7 +147,7 @@ storageS3DateTime(time_t authTime)
         strftime(buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime(&authTime)) != ISO_8601_DATE_TIME_SIZE, AssertError,
         "unable to format date");
 
-    FUNCTION_TEST_RETURN(strNew(buffer));
+    FUNCTION_TEST_RETURN(strNewZ(buffer));
 }
 
 /***********************************************************************************************************************************
@@ -163,13 +157,13 @@ Based on the excellent documentation at http://docs.aws.amazon.com/AmazonS3/late
 ***********************************************************************************************************************************/
 static void
 storageS3Auth(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const String *dateTime,
+    StorageS3 *this, const String *verb, const String *path, const HttpQuery *query, const String *dateTime,
     HttpHeader *httpHeader, const String *payloadHash)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_S3, this);
         FUNCTION_TEST_PARAM(STRING, verb);
-        FUNCTION_TEST_PARAM(STRING, uri);
+        FUNCTION_TEST_PARAM(STRING, path);
         FUNCTION_TEST_PARAM(HTTP_QUERY, query);
         FUNCTION_TEST_PARAM(STRING, dateTime);
         FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
@@ -177,7 +171,7 @@ storageS3Auth(
     FUNCTION_TEST_END();
 
     ASSERT(verb != NULL);
-    ASSERT(uri != NULL);
+    ASSERT(path != NULL);
     ASSERT(dateTime != NULL);
     ASSERT(httpHeader != NULL);
     ASSERT(payloadHash != NULL);
@@ -200,15 +194,15 @@ storageS3Auth(
         String *signedHeaders = NULL;
 
         String *canonicalRequest = strNewFmt(
-            "%s\n%s\n%s\n", strZ(verb), strZ(uri), query == NULL ? "" : strZ(httpQueryRenderP(query)));
+            "%s\n%s\n%s\n", strZ(verb), strZ(path), query == NULL ? "" : strZ(httpQueryRenderP(query)));
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
         {
             const String *headerKey = strLstGet(headerList, headerIdx);
             const String *headerKeyLower = strLower(strDup(headerKey));
 
-            // Skip the authorization header -- if it exists this is a retry
-            if (strEq(headerKeyLower, HTTP_HEADER_AUTHORIZATION_STR))
+            // Skip the authorization (exists on retry) and content-length headers since they do not need to be signed
+            if (strEq(headerKeyLower, HTTP_HEADER_AUTHORIZATION_STR) || strEq(headerKeyLower, HTTP_HEADER_CONTENT_LENGTH_STR))
                 continue;
 
             strCatFmt(canonicalRequest, "%s:%s\n", strZ(headerKeyLower), strZ(httpHeaderGet(httpHeader, headerKey)));
@@ -278,19 +272,19 @@ storageS3CvtTime(const String *time)
 }
 
 HttpRequest *
-storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param)
+storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, uri);
+        FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
-    ASSERT(uri != NULL);
+    ASSERT(path != NULL);
 
     HttpRequest *result = NULL;
 
@@ -301,19 +295,19 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
         // Set content length
         httpHeaderAdd(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-            param.content == NULL || bufUsed(param.content) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+            param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
         // Calculate content-md5 header if there is content
         if (param.content != NULL)
         {
-            char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-            encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
-            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
+            httpHeaderAdd(
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
+                strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
         }
 
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
-            uri = strNewFmt("/%s%s", strZ(this->bucket), strZ(uri));
+            path = strNewFmt("/%s%s", strZ(this->bucket), strZ(path));
 
         // If temp crendentials will be expiring soon then renew them
         if (this->keyType == storageS3KeyTypeAuto && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
@@ -328,7 +322,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
             {
                 // Request the role
                 HttpRequest *request = httpRequestNewP(
-                    this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_URI), .header = credHeader);
+                    this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_PATH), .header = credHeader);
                 HttpResponse *response = httpRequestResponse(request, true);
 
                 // Not found likely means no role is associated with this instance
@@ -353,7 +347,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
 
             // Retrieve the temp credentials
             HttpRequest *request = httpRequestNewP(
-                this->credHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(this->credRole)),
+                this->credHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(this->credRole)),
                 .header = credHeader);
             HttpResponse *response = httpRequestResponse(request, true);
 
@@ -407,17 +401,20 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
             this->signingKeyDate = YYYYMMDD_STR;
         }
 
+        // Encode path
+        path = httpUriEncode(path, true);
+
         // Generate authorization header
         storageS3Auth(
-            this, verb, httpUriEncode(uri, true), param.query, storageS3DateTime(time(NULL)), requestHeader,
-            param.content == NULL || bufUsed(param.content) == 0 ?
+            this, verb, path, param.query, storageS3DateTime(time(NULL)), requestHeader,
+            param.content == NULL || bufEmpty(param.content) ?
                 HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, param.content)));
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, uri, .query = param.query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = param.query, .header = requestHeader, .content = param.content);
         }
         MEM_CONTEXT_END();
     }
@@ -457,12 +454,12 @@ storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
 }
 
 HttpResponse *
-storageS3Request(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestParam param)
+storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, uri);
+        FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
@@ -472,7 +469,7 @@ storageS3Request(StorageS3 *this, const String *verb, const String *uri, Storage
     FUNCTION_LOG_RETURN(
         HTTP_RESPONSE,
         storageS3ResponseP(
-            storageS3RequestAsyncP(this, verb, uri, .query = param.query, .content = param.content),
+            storageS3RequestAsyncP(this, verb, path, .query = param.query, .content = param.content),
             .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 
@@ -481,13 +478,13 @@ General function for listing files to be used by other list routines
 ***********************************************************************************************************************************/
 static void
 storageS3ListInternal(
-    StorageS3 *this, const String *path, const String *expression, bool recurse,
-    void (*callback)(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml),
-    void *callbackData)
+    StorageS3 *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
+    StorageInfoListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
@@ -578,21 +575,30 @@ storageS3ListInternal(
                     MEM_CONTEXT_PRIOR_END();
                 }
 
-                // Get subpath list
+                // Get prefix list
                 XmlNodeList *subPathList = xmlNodeChildList(xmlRoot, S3_XML_TAG_COMMON_PREFIXES_STR);
 
                 for (unsigned int subPathIdx = 0; subPathIdx < xmlNodeLstSize(subPathList); subPathIdx++)
                 {
                     const XmlNode *subPathNode = xmlNodeLstGet(subPathList, subPathIdx);
 
-                    // Get subpath name
-                    const String *subPath = xmlNodeContent(xmlNodeChild(subPathNode, S3_XML_TAG_PREFIX_STR, true));
+                    // Get path name
+                    StorageInfo info =
+                    {
+                        .level = level,
+                        .name = xmlNodeContent(xmlNodeChild(subPathNode, S3_XML_TAG_PREFIX_STR, true)),
+                        .exists = true,
+                    };
 
                     // Strip off base prefix and final /
-                    subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
+                    info.name = strSubN(info.name, strSize(basePrefix), strSize(info.name) - strSize(basePrefix) - 1);
 
-                    // Add to list
-                    callback(this, callbackData, subPath, storageTypePath, NULL);
+                    // Add type info if requested
+                    if (level >= storageInfoLevelType)
+                        info.type = storageTypePath;
+
+                    // Callback with info
+                    callback(callbackData, &info);
                 }
 
                 // Get file list
@@ -603,13 +609,27 @@ storageS3ListInternal(
                     const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
 
                     // Get file name
-                    const String *file = xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_KEY_STR, true));
+                    StorageInfo info =
+                    {
+                        .level = level,
+                        .name = xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_KEY_STR, true)),
+                        .exists = true,
+                    };
 
                     // Strip off the base prefix when present
-                    file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
+                    if (!strEmpty(basePrefix))
+                        info.name = strSub(info.name, strSize(basePrefix));
 
-                    // Add to list
-                    callback(this, callbackData, file, storageTypeFile, fileNode);
+                    // Add basic info if requested (no need to add type info since file is default type)
+                    if (level >= storageInfoLevelBasic)
+                    {
+                        info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
+                        info.timeModified = storageS3CvtTime(
+                            xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
+                    }
+
+                    // Callback with info
+                    callback(callbackData, &info);
                 }
             }
             MEM_CONTEXT_TEMP_END();
@@ -643,70 +663,24 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
 
-    // Add basic level info if requested and the file exists
+    // Add basic level info if requested and the file exists (no need to add type info since file is default type)
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
         const HttpHeader *httpHeader = httpResponseHeader(httpResponse);
 
-        result.type = storageTypeFile;
-        result.size = cvtZToUInt64(strZ(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-        result.timeModified = httpDateToTime(httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+        const String *const contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
+        CHECK(contentLength != NULL);
+        result.size = cvtZToUInt64(strZ(contentLength));
+
+        const String *const lastModified = httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR);
+        CHECK(lastModified != NULL);
+        result.timeModified = httpDateToTime(lastModified);
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageS3InfoListData
-{
-    StorageInfoLevel level;                                         // Level of info to set
-    StorageInfoListCallback callback;                               // User-supplied callback function
-    void *callbackData;                                             // User-supplied callback data
-} StorageS3InfoListData;
-
-static void
-storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_S3, this);
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(XML_NODE, xml);
-    FUNCTION_TEST_END();
-
-    (void)this;                                                     // Unused but still logged above for debugging
-    ASSERT(callbackData != NULL);
-    ASSERT(name != NULL);
-
-    StorageS3InfoListData *data = (StorageS3InfoListData *)callbackData;
-
-    StorageInfo info =
-    {
-        .name = name,
-        .level = data->level,
-        .exists = true,
-    };
-
-    if (data->level >= storageInfoLevelBasic)
-    {
-        info.type = type;
-
-        // Add additional info for files
-        if (type == storageTypeFile)
-        {
-            ASSERT(xml != NULL);
-
-            info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true))));
-            info.timeModified = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true)));
-        }
-    }
-
-    data->callback(data->callbackData, &info);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 static bool
 storageS3InfoList(
     THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
@@ -727,12 +701,7 @@ storageS3InfoList(
     ASSERT(path != NULL);
     ASSERT(callback != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        StorageS3InfoListData data = {.level = level, .callback = callback, .callbackData = callbackData};
-        storageS3ListInternal(this, path, param.expression, false, storageS3InfoListCallback, &data);
-    }
-    MEM_CONTEXT_TEMP_END();
+    storageS3ListInternal(this, path, level, param.expression, false, callback, callbackData);
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -781,10 +750,12 @@ storageS3NewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam p
 /**********************************************************************************************************************************/
 typedef struct StorageS3PathRemoveData
 {
+    StorageS3 *this;                                                // Storage object
     MemContext *memContext;                                         // Mem context to create xml document in
     unsigned int size;                                              // Size of delete request
     HttpRequest *request;                                           // Async delete request
     XmlDocument *xml;                                               // Delete xml
+    const String *path;                                             // Root path of remove
 } StorageS3PathRemoveData;
 
 static HttpRequest *
@@ -804,7 +775,7 @@ storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *
         const Buffer *response = httpResponseContent(storageS3ResponseP(request));
 
         // Nothing is returned when there are no errors
-        if (bufUsed(response) > 0)
+        if (!bufEmpty(response))
         {
             XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
 
@@ -837,24 +808,19 @@ storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *
 }
 
 static void
-storageS3PathRemoveCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
+storageS3PathRemoveCallback(void *callbackData, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_S3, this);
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        (void)name;                                                 // Unused since full path from XML needed
-        FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(XML_NODE, xml);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
     ASSERT(callbackData != NULL);
+    ASSERT(info != NULL);
 
     // Only delete files since paths don't really exist
-    if (type == storageTypeFile)
+    if (info->type == storageTypeFile)
     {
-        ASSERT(xml != NULL);
-
         StorageS3PathRemoveData *data = (StorageS3PathRemoveData *)callbackData;
 
         // If there is something to delete then create the request
@@ -871,15 +837,15 @@ storageS3PathRemoveCallback(StorageS3 *this, void *callbackData, const String *n
         // Add to delete list
         xmlNodeContentSet(
             xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
-            xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_KEY_STR, true)));
+            strNewFmt("%s%s", strZ(data->path), strZ(info->name)));
         data->size++;
 
         // Delete list when it is full
-        if (data->size == this->deleteMax)
+        if (data->size == data->this->deleteMax)
         {
             MEM_CONTEXT_BEGIN(data->memContext)
             {
-                data->request = storageS3PathRemoveInternal(this, data->request, data->xml);
+                data->request = storageS3PathRemoveInternal(data->this, data->request, data->xml);
             }
             MEM_CONTEXT_END();
 
@@ -909,8 +875,14 @@ storageS3PathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfac
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageS3PathRemoveData data = {.memContext = memContextCurrent()};
-        storageS3ListInternal(this, path, NULL, true, storageS3PathRemoveCallback, &data);
+        StorageS3PathRemoveData data =
+        {
+            .this = this,
+            .memContext = memContextCurrent(),
+            .path = strEq(path, FSLASH_STR) ? EMPTY_STR : strNewFmt("%s/", strZ(strSub(path, 1))),
+        };
+
+        storageS3ListInternal(this, path, storageInfoLevelType, NULL, true, storageS3PathRemoveCallback, &data);
 
         // Call if there is more to be removed
         if (data.xml != NULL)
@@ -969,9 +941,9 @@ storageS3New(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING, endPoint);
-        FUNCTION_LOG_PARAM(ENUM, uriStyle);
+        FUNCTION_LOG_PARAM(STRING_ID, uriStyle);
         FUNCTION_LOG_PARAM(STRING, region);
-        FUNCTION_LOG_PARAM(ENUM, keyType);
+        FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
@@ -1039,8 +1011,7 @@ storageS3New(
         strLstAdd(driver->headerRedactList, S3_HEADER_DATE_STR);
         strLstAdd(driver->headerRedactList, S3_HEADER_TOKEN_STR);
 
-        this = storageNew(
-            STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        this = storageNew(STORAGE_S3_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 

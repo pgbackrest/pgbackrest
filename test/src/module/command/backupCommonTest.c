@@ -19,9 +19,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupRegExp()"))
     {
-        String *full = strNew("20181119-152138F");
-        String *incr = strNew("20181119-152138F_20181119-152152I");
-        String *diff = strNew("20181119-152138F_20181119-152152D");
+        const String *full = STRDEF("20181119-152138F");
+        const String *incr = STRDEF("20181119-152138F_20181119-152152I");
+        const String *diff = STRDEF("20181119-152138F_20181119-152152D");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
@@ -45,10 +45,10 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                filter, strNew("12341234-123123F_12341234-123123IG")), false, "    does not match with trailing character");
+                filter, STRDEF("12341234-123123F_12341234-123123IG")), false, "    does not match with trailing character");
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                filter, strNew("A12341234-123123F_12341234-123123I")), false, "    does not match with leading character");
+                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "    does not match with leading character");
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.full = true, .differential = true);
@@ -78,7 +78,7 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                filter, strNew("A12341234-123123F_12341234-123123I")), false, "   does not match with leading character");
+                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "   does not match with leading character");
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.incremental = true);
@@ -146,7 +146,8 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewVar(varVarLst(jsonToVar(strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000)))));
+            pageChecksumNewVar(varVarLst(jsonToVar(
+                strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, (uint64_t)0xFACEFACE00000000)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -176,7 +177,8 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewVar(varVarLst(jsonToVar(strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000)))));
+            pageChecksumNewVar(varVarLst(jsonToVar(
+                strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, (uint64_t)0xFACEFACE00000000)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -309,18 +311,5 @@ testRun(void)
         TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");
     }
 
-    // *****************************************************************************************************************************
-    if (testBegin("backupType() and backupTypeStr()"))
-    {
-        TEST_RESULT_UINT(backupType(strNew("full")), backupTypeFull, "backup type full");
-        TEST_RESULT_UINT(backupType(strNew("diff")), backupTypeDiff, "backup type diff");
-        TEST_RESULT_UINT(backupType(strNew("incr")), backupTypeIncr, "backup type incr");
-        TEST_ERROR(backupType(strNew("bogus")), AssertError, "invalid backup type 'bogus'");
-
-        TEST_RESULT_STR_Z(backupTypeStr(backupTypeFull), "full", "backup type str full");
-        TEST_RESULT_STR_Z(backupTypeStr(backupTypeDiff), "diff", "backup type str diff");
-        TEST_RESULT_STR_Z(backupTypeStr(backupTypeIncr), "incr", "backup type str incr");
-    }
-
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -24,7 +24,7 @@ testLogOpen(const char *logFile, int flags, int mode)
 
     THROW_ON_SYS_ERROR_FMT(result == -1, FileOpenError, "unable to open log file '%s'", logFile);
 
-    FUNCTION_HARNESS_RESULT(INT, result);
+    FUNCTION_HARNESS_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -64,7 +64,7 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
     // Remove final linefeed
     buffer[totalBytes - 1] = 0;
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -88,7 +88,7 @@ testLogResult(const char *logFile, const char *expected)
         THROW_FMT(                                                                              // {+uncovered}
             AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, actual);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -181,16 +181,14 @@ testRun(void)
         String *logTime = strNewN(logBuffer, 23);
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                strNew("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
-            true, "check timestamp format: %s", strZ(logTime));
+                STRDEF("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
+            true, "check timestamp format");
 
         // Redirect output to files
-        char stdoutFile[1024];
-        snprintf(stdoutFile, sizeof(stdoutFile), "%s/stdout.log", testPath());
+        const char *const stdoutFile = TEST_PATH "/stdout.log";
         logFdStdOut = testLogOpen(stdoutFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
-        char stderrFile[1024];
-        snprintf(stderrFile, sizeof(stderrFile), "%s/stderr.log", testPath());
+        const char *const stderrFile = TEST_PATH "/stderr.log";
         logFdStdErr = testLogOpen(stderrFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
         TEST_RESULT_VOID(
@@ -220,8 +218,7 @@ testRun(void)
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 999, false), "init logging to debug");
 
         // Log to file
-        char fileFile[1024];
-        snprintf(fileFile, sizeof(stdoutFile), "%s/file.log", testPath());
+        const char *const fileFile = TEST_PATH "/file.log";
         logFileSet(fileFile);
 
         logBuffer[0] = 0;
@@ -257,6 +254,11 @@ testRun(void)
         TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");
         TEST_RESULT_INT(logFdFile, -1, "log file is closed");
 
+        // Get the error message from above to use for the expect log test
+        int testFdFile = open("/" BOGUS_STR, O_CREAT | O_APPEND, 0640);
+        const char *testErrorFile = strerror(errno);
+        TEST_RESULT_INT(testFdFile, -1, "got error message");
+
         // Close logging again
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 99, false), "reduce log size");
         TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
@@ -277,14 +279,19 @@ testRun(void)
             "            message2");
 
         // Check stderr
-        testLogResult(
-            stderrFile,
+        char buffer[4096];
+
+        sprintf(
+            buffer,
             "DEBUG:     test::test_func: message\n"
             "           message2\n"
             "INFO: [DRY-RUN] info message\n"
             "INFO: [DRY-RUN] info message 2\n"
-            "WARN: [DRY-RUN] unable to open log file '/BOGUS': Permission denied\n"
-            "      NOTE: process will continue without log file.");
+            "WARN: [DRY-RUN] unable to open log file '/BOGUS': %s\n"
+            "      NOTE: process will continue without log file.",
+            testErrorFile);
+
+        testLogResult(stderrFile, buffer);
 
         // Check file
         testLogResult(
@@ -298,5 +305,5 @@ testRun(void)
             "P99   INFO: [DRY-RUN] info message 2");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

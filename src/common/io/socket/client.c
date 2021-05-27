@@ -10,7 +10,7 @@ Socket Client
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/io/client.intern.h"
+#include "common/io/client.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
@@ -18,11 +18,6 @@ Socket Client
 #include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
-
-/***********************************************************************************************************************************
-Io client type
-***********************************************************************************************************************************/
-STRING_EXTERN(IO_CLIENT_SOCKET_TYPE_STR,                            IO_CLIENT_SOCKET_TYPE);
 
 /***********************************************************************************************************************************
 Statistics constants
@@ -34,9 +29,6 @@ STRING_EXTERN(SOCKET_STAT_SESSION_STR,                              SOCKET_STAT_
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define SOCKET_CLIENT_TYPE                                          SocketClient
-#define SOCKET_CLIENT_PREFIX                                        sckClient
-
 typedef struct SocketClient
 {
     MemContext *memContext;                                         // Mem context
@@ -179,7 +171,7 @@ sckClientName(THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoClientInterface sckClientInterface =
 {
-    .type = &IO_CLIENT_SOCKET_TYPE_STR,
+    .type = IO_CLIENT_SOCKET_TYPE,
     .name = sckClientName,
     .open = sckClientOpen,
     .toLog = sckClientToLog,

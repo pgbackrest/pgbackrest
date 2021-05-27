@@ -15,12 +15,6 @@ Crypto Common
 #include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
-Cipher types
-***********************************************************************************************************************************/
-STRING_EXTERN(CIPHER_TYPE_NONE_STR,                                 CIPHER_TYPE_NONE);
-STRING_EXTERN(CIPHER_TYPE_AES_256_CBC_STR,                          CIPHER_TYPE_AES_256_CBC);
-
-/***********************************************************************************************************************************
 Flag to indicate if OpenSSL has already been initialized
 ***********************************************************************************************************************************/
 static bool cryptoInitDone = false;
@@ -52,43 +46,6 @@ cryptoErrorCode(unsigned long code, const char *description)
     THROW_FMT(CryptoError, "%s: [%lu] %s", description, code, errorMessage == NULL ? "no details available" : errorMessage);
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-CipherType
-cipherType(const String *name)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, name);
-    FUNCTION_TEST_END();
-
-    ASSERT(name != NULL);
-
-    CipherType result = cipherTypeNone;
-
-    if (strEq(name, CIPHER_TYPE_AES_256_CBC_STR))
-        result = cipherTypeAes256Cbc;
-    else if (!strEq(name, CIPHER_TYPE_NONE_STR))
-        THROW_FMT(AssertError, "invalid cipher name '%s'", strZ(name));
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-const String *
-cipherTypeName(CipherType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
-
-    const String *result = CIPHER_TYPE_NONE_STR;
-
-    if (type == cipherTypeAes256Cbc)
-        result = CIPHER_TYPE_AES_256_CBC_STR;
-    else if (type != cipherTypeNone)
-        THROW_FMT(AssertError, "invalid cipher type %u", type);
-
-    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/

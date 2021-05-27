@@ -3,6 +3,7 @@ C Test Wrapper
 
 This wrapper runs the the C unit tests.
 ***********************************************************************************************************************************/
+#include "build.auto.h"
 
 /***********************************************************************************************************************************
 C files to be tested
@@ -22,20 +23,82 @@ The test code is included directly so it can freely interact with the included C
 #include <string.h>
 #include <sys/stat.h>
 
-#ifndef NO_ERROR
-    #include "common/debug.h"
+#ifdef HRN_FEATURE_ERROR
     #include "common/error.h"
 #endif
+
+#ifdef HRN_FEATURE_DEBUG
+    #include "common/debug.h"
+#endif
+
+#ifdef HRN_FEATURE_STRING
+    #include "common/type/string.h"
+#endif
+
+// Name of the project exe
+#define TEST_PROJECT_EXE                                            "{[C_TEST_PROJECT_EXE]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(TEST_PROJECT_EXE_STR, TEST_PROJECT_EXE);
+#endif
+
+// Path where the test is running
+#define TEST_PATH                                                   "{[C_TEST_PATH]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(TEST_PATH_STR, TEST_PATH);
+#endif
+
+// Path to the source repository
+#define HRN_PATH_REPO                                               "{[C_HRN_PATH_REPO]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(HRN_PATH_REPO_STR, HRN_PATH_REPO);
+#endif
+
+// Path where the harness can store data without interfering with the test
+#define HRN_PATH                                                    "{[C_HRN_PATH]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(HRN_PATH_STR, HRN_PATH);
+#endif
+
+// User running the test
+#define TEST_USER                                                   "{[C_TEST_USER]}"
+#define TEST_USER_ID                                                {[C_TEST_USER_ID]}
+#define TEST_USER_ID_Z                                              "{[C_TEST_USER_ID]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(TEST_USER_STR, TEST_USER);
+#endif
+
+// Group running the test
+#define TEST_GROUP                                                  "{[C_TEST_GROUP]}"
+#define TEST_GROUP_ID                                               {[C_TEST_GROUP_ID]}
+#define TEST_GROUP_ID_Z                                             "{[C_TEST_GROUP_ID]}"
+
+#ifdef HRN_FEATURE_STRING
+    STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
+#endif
+
+// Scaling factor for performance tests
+#define TEST_SCALE                                                  {[C_TEST_SCALE]}
+
+// Is this test running in a container?
+#define TEST_IN_CONTAINER                                           {[C_TEST_CONTAINER]}
+
+// Path to source -- used to construct __FILENAME__ tests
+#define TEST_PGB_PATH                                               "{[C_TEST_PGB_PATH]}"
 
 #include "common/harnessDebug.h"
 #include "common/harnessTest.intern.h"
 
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     #include "common/harnessLog.h"
     void harnessLogLevelDefaultSet(LogLevel logLevel);
 #endif
 
-#ifndef NO_MEM_CONTEXT
+#ifdef HRN_FEATURE_MEMCONTEXT
     #include "common/memContext.h"
 #endif
 
@@ -48,8 +111,12 @@ Includes that are not generally used by tests
 
 #include "common/io/socket/common.h"
 
-#ifndef NO_STAT
+#ifdef HRN_FEATURE_STAT
     #include "common/stat.h"
+#endif
+
+#ifdef HRN_IN_STACKTRACE
+    #include "common/stackTrace.h"
 #endif
 
 /***********************************************************************************************************************************
@@ -76,13 +143,29 @@ main(int argListSize, const char *argList[])
 
     int result = 0;
 
+#ifdef HRN_FEATURE_ERROR
+    static const ErrorHandlerFunction handlerList[] =
+    {
+#if defined(HRN_INTEST_STACKTRACE) || defined(HRN_FEATURE_STACKTRACE)
+        stackTraceClean,
+#endif
+#if defined(HRN_INTEST_MEMCONTEXT) || defined(HRN_FEATURE_MEMCONTEXT)
+        memContextClean,
+#endif
+    };
+
+    errorHandlerSet(handlerList, sizeof(handlerList) / sizeof(ErrorHandlerFunction));
+#endif
+
     // Initialize statistics
-#ifndef NO_STAT
+#if defined(HRN_INTEST_STAT) || defined(HRN_FEATURE_STAT)
     statInit();
 #endif
 
     // Use aggressive keep-alive settings for testing
+#if defined(HRN_INTEST_SOCKET) || defined(HRN_FEATURE_SOCKET)
     sckInit(false, true, 2, 5, 5);
+#endif
 
     // Set neutral umask for testing
     umask(0000);
@@ -100,13 +183,12 @@ main(int argListSize, const char *argList[])
         {[C_TEST_CONTAINER]},       // Is this test running in a container?
         {[C_TEST_IDX]},             // The 0-based index of this test
         {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
-        {[C_TEST_SCALE]},           // Scaling factor for performance tests
         "{[C_TEST_PATH]}",          // Path where tests write data
-        "{[C_TEST_DATA_PATH]}",     // Path where the harness stores temp files (expect, diff, etc.)
-        "{[C_TEST_REPO_PATH]}");    // Path with a copy of the repository
+        "{[C_HRN_PATH]}",           // Path where the harness stores temp files (expect, diff, etc.)
+        "{[C_HRN_PATH_REPO]}");     // Path with a copy of the repository
 
     // Set default test log level
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     harnessLogLevelDefaultSet({[C_LOG_LEVEL_TEST]});
 #endif
 
@@ -114,7 +196,7 @@ main(int argListSize, const char *argList[])
     //      run, selected
     {[C_TEST_LIST]}
 
-#ifndef NO_ERROR
+#ifdef HRN_FEATURE_ERROR
     TRY_BEGIN()
     {
         TRY_BEGIN()
@@ -122,12 +204,12 @@ main(int argListSize, const char *argList[])
 #endif
             // Run the tests
             testRun();
-#ifndef NO_ERROR
+#ifdef HRN_FEATURE_ERROR
         }
         CATCH_ANY()
         {
             // If a test was running then throw a detailed result exception
-#ifndef NDEBUG
+#ifdef DEBUG
         if (!errorInstanceOf(&TestError))
 #endif
             hrnTestResultException();
@@ -143,7 +225,7 @@ main(int argListSize, const char *argList[])
 
         printf("\nTESTS COMPLETED SUCCESSFULLY\n");
         fflush(stdout);
-#ifndef NO_ERROR
+#ifdef HRN_FEATURE_ERROR
     }
     CATCH_ANY()
     {
@@ -157,7 +239,7 @@ main(int argListSize, const char *argList[])
             errorName(), errorMessage());
 
         // If not a TestError (which is detailed) then also print the stack trace
-#ifndef NDEBUG
+#ifdef DEBUG
         if (!errorInstanceOf(&TestError))
 #endif
             fprintf(stderr, "\nTHROWN AT:\n%s\n", errorStackTrace());
@@ -165,7 +247,7 @@ main(int argListSize, const char *argList[])
         fflush(stderr);
         result = errorCode();
     }
-#ifndef NO_MEM_CONTEXT
+#ifdef HRN_FEATURE_MEMCONTEXT
     FINALLY()
     {
         memContextFree(memContextTop());
@@ -174,5 +256,5 @@ main(int argListSize, const char *argList[])
     TRY_END();
 #endif
 
-    FUNCTION_HARNESS_RESULT(INT, result);
+    FUNCTION_HARNESS_RETURN(INT, result);
 }

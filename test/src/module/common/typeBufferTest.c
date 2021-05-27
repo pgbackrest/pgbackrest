@@ -11,7 +11,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("bufNew(), bufNewC, bufNewUseC, bufMove(), bufSize(), bufSizeAlloc(), bufPtr(), and bufFree()"))
+    if (testBegin("bufNew*(), bufMove(), bufSize(), bufSizeAlloc(), bufPtr(), and bufFree()"))
     {
         Buffer *buffer = NULL;
 
@@ -22,7 +22,7 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_PTR(bufPtr(buffer), buffer->buffer, "buffer pointer");
+        TEST_RESULT_PTR(bufPtr(buffer), buffer->pub.buffer, "buffer pointer");
         TEST_RESULT_UINT(bufSize(buffer), 256, "buffer size");
         TEST_RESULT_UINT(bufSizeAlloc(buffer), 256, "buffer allocation size");
 
@@ -39,6 +39,11 @@ testRun(void)
 
         TEST_ASSIGN(buffer, bufNewC(cBuffer, sizeof(cBuffer)), "create from c buffer");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), cBuffer, sizeof(cBuffer)) == 0, true, "check buffer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bufNewDecode()");
+
+        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodeBase64, STRDEF("eno="))), "zz", "decode base64");
     }
 
     // *****************************************************************************************************************************
@@ -94,7 +99,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when used > new limit");
 
-        TEST_ERROR(bufLimitSet(buffer, 64), AssertError, "assertion 'limit >= this->used' failed");
+        TEST_ERROR(bufLimitSet(buffer, 64), AssertError, "assertion 'limit >= bufUsed(this)' failed");
         TEST_RESULT_VOID(bufUsedSet(buffer, 64), "set used");
 
         // Use limits to change size reporting
@@ -157,5 +162,5 @@ testRun(void)
         TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 50, sizeAlloc: 100}", "buf to log");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

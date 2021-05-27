@@ -155,7 +155,15 @@
                     <config-key id="compress-level" name="Compress Level">
                         <summary>File compression level.</summary>
 
-                        <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).</text>
+                        <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).
+
+                        The following are the defaults levels based on <setting>compress-type</setting> when <setting>compress-level</setting> is not specified:
+                        <ul>
+                            <li><id>bz2</id> - 9</li>
+                            <li><id>gz</id> - 6</li>
+                            <li><id>lz4</id> - 1</li>
+                            <li><id>zst</id> - 3</li>
+                        </ul></text>
 
                         <allow>0-9</allow>
                         <example>9</example>
@@ -200,6 +208,24 @@
                         Note that the entire read/write operation does not need to complete within this timeout but <i>some</i> progress must be made, even if it is only a single byte.</text>
 
                         <example>120</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="job-retry" name="Job Retry Count">
+                        <summary>Retry count for local jobs.</summary>
+
+                        <text>The number of retries for jobs run in the local process, e.g. file backup.</text>
+
+                        <example>5</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="job-retry-interval" name="Job Retry Interval">
+                        <summary>Retry interval after first retry.</summary>
+
+                        <text>The first retry is always performed immediately. This option specifies the interval to wait (in seconds) before performing each additional retry.</text>
+
+                        <example>30</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - LOCK-PATH KEY -->
@@ -257,6 +283,15 @@
                         <example>630</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="sck-block" name="Socket Blocking">
+                        <summary>Socket blocking enable.</summary>
+
+                        <text>Enable blocking on socket connections.</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - SCK-KEEP-ALIVE KEY -->
                     <config-key id="sck-keep-alive" name="Keep Alive">
                         <summary>Keep-alive enable.</summary>
@@ -305,9 +340,9 @@
             <config-section id="repository" name="Repository">
                 <text>The <setting>repository</setting> section defines options used to configure the repository.
 
-                <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories, though only a single repository is currently supported. For example, the repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options.
+                <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories. For example, a single repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options. If there is more than one repository configured and the <br-option>{[dash]}-repo</br-option> option is not specified for a command, the repositories will be acted upon in highest priority order (e.g. repo1 then repo2).
 
-                The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the count of complete backups exceeds the allowed retention.  In other words, if <setting>repo-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired.  If <setting>repo-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo-retention-full</setting> represents days so there must be at least that many days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
+                The <setting>repo-retention-*</setting> options define how long backups will be retained. Expiration only occurs when the count of complete backups exceeds the allowed retention. In other words, if <setting>repo1-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo1-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired. If <setting>repo1-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo1-retention-full</setting> represents days so there must be at least that many days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
 
                 <config-key-list>
                     <!-- ======================================================================================================= -->
@@ -317,24 +352,6 @@
                         <text>Azure account used to store the repository.</text>
 
                         <example>pg-backup</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="repo-azure-ca-file" name="Azure Repository TLS CA File">
-                        <summary>Azure repository TLS CA file.</summary>
-
-                        <text>Use a CA file other than the system default.</text>
-
-                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="repo-azure-ca-path" name="Azure Respository TLS CA Path">
-                        <summary>Azure repository TLS CA path.</summary>
-
-                        <text>Use a CA path other than the system default.</text>
-
-                        <example>/etc/pki/tls/certs</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -352,18 +369,11 @@
                     <config-key id="repo-azure-endpoint" name="Azure Repository Endpoint">
                         <summary>Azure repository endpoint.</summary>
 
-                        <text>Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government.</text>
+                        <text>Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government.
+
+                        For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</text>
 
                         <example>blob.core.usgovcloudapi.net</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="repo-azure-host" name="Azure Repository Host">
-                        <summary>Azure repository host.</summary>
-
-                        <text>Connect to a host other than the default. This is typically used for testing.</text>
-
-                        <example>127.0.0.1</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -389,21 +399,46 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="repo-azure-port" name="Azure Repository Server Port">
-                        <summary>Azure repository server port.</summary>
+                    <config-key id="repo-gcs-bucket" name="GCS Repository Bucket">
+                        <summary>GCS repository bucket.</summary>
 
-                        <text>Port to use when connecting to the default server (or host if specified). This is typically used for testing.</text>
+                        <text>GCS bucket used to store the repository.
 
-                        <example>10000</example>
+                        <backrest/> repositories can be stored in the bucket root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other GCS-generated content can also be stored in the bucket.</text>
+
+                        <example>/pg-backup</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                        <config-key id="repo-azure-verify-tls" name="Azure Repository Server Certificate Verify">
-                        <summary>Azure repository server certificate verify.</summary>
+                    <config-key id="repo-gcs-endpoint" name="GCS Repository Endpoint">
+                        <summary>GCS repository endpoint.</summary>
 
-                        <text>Disables verification of the Azure server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
+                        <text>Endpoint used to connect to the storage service. May be updated to use a local GCS server or alternate endpoint.</text>
 
-                        <example>n</example>
+                        <example>localhost</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-key" name="GCS Repository Key">
+                        <summary>GCS repository key.</summary>
+
+                        <text>A token or service key file depending on the <br-option>repo-gcs-key-type</br-option> option.</text>
+
+                        <example>/etc/pgbackrest/gcs-key.json</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-key-type" name="GCS Repository Key Type">
+                        <summary>GCS repository key type.</summary>
+
+                        <text>The following types are supported for authorization:
+                        <ul>
+                            <li><id>auto</id> - Authorize using the instance service account.</li>
+                            <li><id>service</id> - Service account from locally stored key.</li>
+                            <li><id>token</id> - For local testing, e.g. <file>fakegcs</file>.</li>
+                        </ul></text>
+
+                        <example>none</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
@@ -481,6 +516,15 @@
                         <example>y</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-local" name="Repository Locality">
+                        <summary>Repository is local.</summary>
+
+                        <text>Indicates that the repository for the specified index is local and any repository host settings for that index (e.g. <setting>repo1-host</setting>) should be ignored.</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Path where backups and archive are stored.</summary>
@@ -539,6 +583,19 @@
                         <example>2</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-retention-history" name="Backup History Retention">
+                        <summary>Days of backup history manifests to retain.</summary>
+
+                        <text>A copy of the backup manifest is stored in the <path>backup.history</path> path when a backup completes. By default these files are never expired since they are useful for data mining, e.g. measuring backup and WAL growth over time.
+
+                        Set <setting>repo-retention-history</setting> to define the number of days of backup history manifests to retain. Unexpired backups are always kept in the backup history. Specify <br-option>repo-retention-history=0</br-option> to retain the backup history only for unexpired backups.
+
+                        When a full backup history manifest is expired, all differential and incremental backup history manifests associated with the full backup also expire.</text>
+
+                        <example>365</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-S3-KEY KEY -->
                     <config-key id="repo-s3-key" name="S3 Repository Access Key">
                         <summary>S3 repository access key.</summary>
@@ -590,56 +647,22 @@
                         <example>pg-backup</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-CA-FILE KEY -->
-                    <config-key id="repo-s3-ca-file" name="S3 SSL CA File">
-                        <summary>S3 SSL CA File.</summary>
-
-                        <text>Use a CA file other than the system default.</text>
-
-                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
-                    </config-key>
-
-                    <!-- CONFIG - REPO SECTION - REPO-S3-CA-PATH KEY -->
-                    <config-key id="repo-s3-ca-path" name="S3 SSL CA Path">
-                        <summary>S3 SSL CA Path.</summary>
-
-                        <text>Use a CA path other than the system default.</text>
-
-                        <example>/etc/pki/tls/certs</example>
-                    </config-key>
-
                     <!-- CONFIG - REPO SECTION - REPO-S3-ENDPOINT KEY -->
                     <config-key id="repo-s3-endpoint" name="S3 Repository Endpoint">
                         <summary>S3 repository endpoint.</summary>
 
-                        <text>The AWS end point should be valid for the selected region.</text>
+                        <text>The AWS endpoint should be valid for the selected region.
+
+                        For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</text>
 
                         <example>s3.amazonaws.com</example>
-                    </config-key>
-
-                    <!-- CONFIG - REPO SECTION - REPO-S3-HOST KEY -->
-                    <config-key id="repo-s3-host" name="S3 Repository Host">
-                        <summary>S3 repository host.</summary>
-
-                        <text>Connect to a host other than the end point.  This is typically used for testing.</text>
-
-                        <example>127.0.0.1</example>
-                    </config-key>
-
-                    <!-- CONFIG - REPO SECTION - REPO-S3-PORT KEY -->
-                    <config-key id="repo-s3-port" name="S3 Repository Port">
-                        <summary>S3 repository port.</summary>
-
-                        <text>Port to use when connecting to the endpoint (or host if specified).</text>
-
-                        <example>9000</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
                     <config-key id="repo-s3-role" name="S3 Repository Role">
                         <summary>S3 repository role.</summary>
 
-                        <text>AWS role used to retrieve temporary credentials when <br-option>repo-s3-key-type=auto</br-option>.</text>
+                        <text>The AWS role name (not the full ARN) used to retrieve temporary credentials when <br-option>repo-s3-key-type=auto</br-option>.</text>
 
                         <example>authrole</example>
                     </config-key>
@@ -666,11 +689,47 @@
                         <example>path</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-TLS KEY -->
-                    <config-key id="repo-s3-verify-tls" name="S3 Repository Verify TLS">
-                        <summary>Verify S3 server certificate.</summary>
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-ca-file" name="Repository Storage CA File">
+                        <summary>Repository storage CA file.</summary>
 
-                        <text>Disables verification of the S3 server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
+                        <text>Use a CA file other than the system default for storage (e.g. S3, Azure) certificates.</text>
+
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-ca-path" name="Repository Storage TLS CA Path">
+                        <summary>Repository storage CA path.</summary>
+
+                        <text>Use a CA path other than the system default for storage (e.g. S3, Azure) certificates.</text>
+
+                        <example>/etc/pki/tls/certs</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-host" name="Repository Storage Host">
+                        <summary>Repository storage host.</summary>
+
+                        <text>Connect to a host other than the storage (e.g. S3, Azure) endpoint. This is typically used for testing.</text>
+
+                        <example>127.0.0.1</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-port" name="Repository Storage Port">
+                        <summary>Repository storage port.</summary>
+
+                        <text>Port to use when connecting to the storage (e.g. S3, Azure) endpoint (or host if specified).</text>
+
+                        <example>9000</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-verify-tls" name="Repository Storage Certificate Verify">
+                        <summary>Repository storage certificate verify.</summary>
+
+                        <text>This option provides the ability to enable/disable verification of the storage (e.g. S3, Azure) server TLS certificate. Disabling should only be used for testing or other scenarios where a certificate has been self-signed.</text>
 
                         <example>n</example>
                     </config-key>
@@ -683,9 +742,10 @@
                         <ul>
                             <li><id>azure</id> - Azure Blob Storage Service</li>
                             <li><id>cifs</id> - Like <id>posix</id>, but disables links and directory fsyncs</li>
+                            <li><id>gcs</id> - Google Cloud Storage</li>
                             <li><id>posix</id> - Posix-compliant file systems</li>
                             <li><id>s3</id> - AWS Simple Storage Service</li>
-                        </ul></text>
+                        </ul>When an <proper>NFS</proper> mount is used as a <id>posix</id> repository, the same rules apply to <backrest/> as described in the <postgres/> documentation: <link url="https://www.postgresql.org/docs/current/creating-cluster.html#CREATING-CLUSTER-FILESYSTEM">Creating a Database Cluster - File Systems</link>.</text>
 
                         <example>cifs</example>
                     </config-key>
@@ -737,11 +797,37 @@
 
                         <text>This slightly paranoid option protects against corruption in the WAL segment archive by storing the WAL segments required for consistency directly in the backup.  WAL segments are still stored in the archive so this option will use additional space.
 
+                        It is best if the <cmd>archive-push</cmd> and <cmd>backup</cmd> commands have the same <setting>compress-type</setting> (e.g. <id>lz4</id>) when using this option. Otherwise, the WAL segments will need to be recompressed with the <setting>compress-type</setting> used by the backup, which can be fairly expensive depending on how much WAL was generated during the backup.
+
                         On restore, the WAL segments will be present in <path>pg_xlog/pg_wal</path> and <postgres/> will use them in preference to calling the <code>restore_command</code>.
 
                         The <br-option>archive-check</br-option> option must be enabled if <br-option>archive-copy</br-option> is enabled.</text>
 
                         <example>y</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-header-check" name="Check WAL Headers">
+                        <summary>Check PostgreSQL version/id in WAL headers.</summary>
+
+                        <text>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.
+
+                        Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-mode-check" name="Check Archive Mode">
+                        <summary>Check the <postgres/> <setting>archive_mode</setting> setting.</summary>
+
+                        <text>Enabled by default, this option disallows <postgres/> <setting>archive_mode=always</setting>.
+
+                        WAL segments pushed from a standby server might be logically the same as WAL segments pushed from the primary but have different checksums. Disabling archiving from multiple sources is recommended to avoid conflicts.
+
+                        <admonition type="caution">If this option is disabled then it is critical to ensure that only one archiver is writing to the repository via the <cmd>archive-push</cmd> command.</admonition></text>
+
+                        <example>n</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - BACKUP-STANDBY KEY -->
@@ -914,11 +1000,24 @@
                         <example>off</example>
                     </config-key>
 
+                    <!-- CONFIG - RESTORE SECTION - DB-EXCLUDE KEY -->
+                    <config-key id="db-exclude" name="Exclude Database">
+                        <summary>Restore excluding the specified databases.</summary>
+
+                        <text>Databases excluded will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery. After recovery, those databases will not be accessible but can be removed with the <id>drop database</id> command. The <setting>{[dash]}-db-exclude</setting> option can be passed multiple times to specify more than one database to exclude.
+
+                        When used in combination with the <setting>{[dash]}-db-include</setting> option, <setting>{[dash]}-db-exclude</setting> will only apply to standard system databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>).</text>
+
+                        <example>db_main</example>
+                    </config-key>
+
                     <!-- CONFIG - RESTORE SECTION - DB-INCLUDE KEY -->
                     <config-key id="db-include" name="Include Database">
                         <summary>Restore only specified databases.</summary>
 
-                        <text>This feature allows only selected databases to be restored.  Databases not specifically included will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery.  After recovery the databases that were not included will not be accessible but can be removed with the <id>drop database</id> command. <admonition type="note">built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</admonition>The <setting>{[dash]}-db-include</setting> option can be passed multiple times to specify more than one database to include.</text>
+                        <text>This feature allows only selected databases to be restored. Databases not specifically included will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery. After recovery, the databases that were not included will not be accessible but can be removed with the <id>drop database</id> command. <admonition type="note">built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored unless specifically excluded.</admonition>The <setting>{[dash]}-db-include</setting> option can be passed multiple times to specify more than one database to include.
+
+                        See <link page="user-guide" section="/restore/option-db-include">Restore Selected Databases</link> for additional information and caveats.</text>
 
                         <example>db_main</example>
                     </config-key>
@@ -1047,6 +1146,15 @@
                         <example>backupdb</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-local" name="PostgreSQL Locality">
+                        <summary><postgres/> is local.</summary>
+
+                        <text>Indicates that <postgres/> for the specified index is local and any <postgres/> host settings for that index (e.g. <setting>pg1-host</setting>) should be ignored.</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - STANZA SECTION - PG-PATH KEY -->
                     <config-key id="pg-path" name="PostgreSQL Path">
                         <summary><postgres/> data directory.</summary>
@@ -1104,7 +1212,7 @@
 
         <text>Commands are used to execute the various <backrest/> functions.  Here the command options are listed exhaustively, that is, each option applicable to a command is listed with that command even if it applies to one or more other commands.  This includes all the options that may also configured in <file>pgbackrest.conf</file>.
 
-        Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>reset-</id> prefix.  This feature may be used to restore a backup directly on a repository host.  Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely.  By adding <br-option>--reset-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally.  It may be necessary to pass a new <br-option>--pg-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.
+        Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>reset-</id> prefix. This feature may be used to restore a backup directly on a repository host. Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely. By adding <br-option>--reset-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally. It may be necessary to pass a new <br-option>--pg1-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.
 
         The <id>no-</id> prefix may be used to set a boolean option to false on the command-line.
 
@@ -1118,9 +1226,7 @@
                 <option id="cipher-pass" name="Ad Hoc Cipher Passphrase">
                     <summary>Cipher passphrase for current command.</summary>
 
-                    <text>Specify an ad hoc cipher passphrase for the current command.
-
-                    <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+                    <text>Specify an ad hoc cipher passphrase for the current command.</text>
 
                     <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
                 </option>
@@ -1163,6 +1269,17 @@
                     <example>y</example>
                 </option>
 
+                <!-- =========================================================================================================== -->
+                <option id="exec-id" name="Execution Identifier">
+                    <summary>Unique identifier for the process.</summary>
+
+                    <text>A locally unique identifier used to identify a process when resolving locks on a remote host.
+
+                    The <setting>exec-id</setting> option is generated automatically when needed but it is possible to set it explicitly, which saves a bit of time at startup but introduces the problem of selecting a unique value.</text>
+
+                    <example>y</example>
+                </option>
+
                 <!-- OPERATION - GENERAL - RAW -->
                 <option id="raw" name="Raw Data">
                     <summary>Do not transform data.</summary>
@@ -1170,6 +1287,17 @@
                     <text>Do not transform (i.e, encrypt, decompress, etc.) data for the current command.</text>
 
                     <example>y</example>
+                </option>
+
+                <!-- =========================================================================================================== -->
+                <option id="repo" section="repository" name="Set Repository">
+                    <summary>Set repository.</summary>
+
+                    <text>Set the repository for a command to operate on.
+
+                    For example, this option may be used to perform a restore from a specific repository, rather than letting <backrest/> choose.</text>
+
+                    <example>1</example>
                 </option>
 
                 <!-- OPERATION - GENERAL - STANZA OPTION -->
@@ -1190,7 +1318,11 @@
             <command id="backup" name="Backup">
                 <summary>Backup a database cluster.</summary>
 
-                <text><backrest/> does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.</text>
+                <text>When multiple repositories are configured, <backrest/> will backup to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.
+
+                <backrest/> does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.
+
+                See <link page="user-guide" section="/quickstart/perform-backup">Perform a Backup</link> for more details and examples.</text>
 
                 <option-list>
                     <!-- OPERATION - BACKUP COMMAND - TYPE OPTION -->
@@ -1229,117 +1361,74 @@
                         <example>n</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="Full Backup">
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db --type=full backup
-                        </code-block>
-                        Run a <id>full</id> backup on the <id>db</id> stanza.  <br-option>--type</br-option> can also be set to <id>incr</id> or <id>diff</id> for incremental or differential backups.  However, if no <id>full</id> backup exists then a <id>full</id> backup will be forced even if <id>incr</id> or <id>diff</id> is requested.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - ARCHIVE-PUSH COMMAND -->
             <command id="archive-push" name="Archive Push">
                 <summary>Push a WAL segment to the archive.</summary>
 
-                <text>The WAL segment may be pushed immediately to the archive or stored locally depending on the value of <setting>archive-async</setting></text>
+                <text>Accepts a WAL segment from <postgres/> and archives it in each repository defined by the indexed <setting>repo-path</setting> option (see the <link page="configuration" section="/section-repository">Repository</link> section for information on configuring repositories). The WAL segment may be pushed immediately to the archive or stored locally depending on the value of <setting>archive-async</setting>. With multiple repositories configured, <cmd>archive-push</cmd> will attempt to push to as many repositories as possible.
 
-                <command-example-list>
-                    <command-example>
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db archive-push %p
-                        </code-block>
-                        Accepts a WAL segment from <postgres/> and archives it in the repository defined by <setting>repo-path</setting>.  <id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived.</text>
-                    </command-example>
-                </command-example-list>
+                The <cmd>archive-push</cmd> is intended to be configured and called by <postgres/>. See <link page="user-guide" section="/quickstart/configure-archiving">Configure Archiving</link> for an example.</text>
             </command>
 
             <!-- OPERATION - ARCHIVE-GET COMMAND -->
             <command id="archive-get" name="Archive Get">
                 <summary>Get a WAL segment from the archive.</summary>
 
-                <text>WAL segments are required for restoring a <postgres/> cluster or maintaining a replica.</text>
+                <text>This command is used by <postgres/> to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date. WAL segments are required for <postgres/> recovery or to maintain a replica.
 
-                <command-example-list>
-                    <command-example>
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db archive-get %f %p
-                        </code-block>
-                        Retrieves a WAL segment from the repository.  This command is used in <file>recovery.conf</file> to restore a backup, perform PITR, or as an alternative to streaming for keeping a replica up to date.  <id>%f</id> is how <postgres/> specifies the WAL segment it needs and <id>%p</id> is the location where it should be copied.</text>
-                    </command-example>
-                </command-example-list>
+                When multiple repositories are configured, WAL will be fetched from the repositories in priority order (e.g. <id>repo1</id>, <id>repo2</id>, etc.). In general it is better if faster/cheaper storage has higher priority. If a repository is specified with the <br-option>{[dash]}-repo</br-option> option then only that repository will be searched.
+
+                The <cmd>archive-get</cmd> command is configured and generated by <backrest/> during a restore for use by <postgres/>. See <link page="user-guide" section="/pitr">Point-in-Time Recovery</link> for an example.</text>
             </command>
 
             <!-- OPERATION - CHECK COMMAND -->
             <command id="check" name="Check">
                 <summary>Check the configuration.</summary>
 
-                <text>The <cmd>check</cmd> command validates that <backrest/> and the <pg-setting>archive_command</pg-setting> setting are configured correctly for archiving and backups. It detects misconfigurations, particularly in archiving, that result in incomplete backups because required WAL segments did not reach the archive. The command can be run on the database or the repository host.  The command may also be run on the standby host, however, since <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> cannot be performed on the standby, the command will only test the repository configuration.
+                <text>The <cmd>check</cmd> command validates that <backrest/> and the <pg-setting>archive_command</pg-setting> setting are configured correctly for archiving and backups for the specified stanza. It will attempt to check all repositories and databases that are configured for the host on which the command is run. It detects misconfigurations, particularly in archiving, that result in incomplete backups because required WAL segments did not reach the archive. The command can be run on the <postgres/> or repository host. The command may also be run on the standby host, however, since <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> cannot be performed on the standby, the command will only test the repository configuration.
 
                 Note that <code>pg_create_restore_point('pgBackRest Archive Check')</code> and <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> are called to force <postgres/> to archive a WAL segment.  Restore points are only supported in <postgres/> &gt;= 9.1 so for older versions the <cmd>check</cmd> command may fail if there has been no write activity since the last log rotation, therefore it is recommended that activity be generated by the user if there have been no writes since the last WAL switch before running the <cmd>check</cmd> command.</text>
-
-                <command-example-list>
-                    <command-example>
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db check
-                        </code-block>
-                        </text>
-                    </command-example>
-                </command-example-list>
+                <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
             </command>
 
             <!-- OPERATION - EXPIRE COMMAND -->
             <command id="expire" name="Expire">
                 <summary>Expire backups that exceed retention.</summary>
 
-                <text><backrest/> does backup rotation but is not concerned with when the backups were created.  If two full backups are configured for retention, <backrest/> will keep two full backups no matter whether they occur two hours or two weeks apart.</text>
+                <text><backrest/> does full backup rotation based on the retention type which can be a count or a time period. When a count is specified, then expiration is not concerned with when the backups were created but with how many must be retained. Differential and Incremental backups are count-based but will always be expired when the backup they depend on is expired. See sections <link page="user-guide" section="/retention/full">Full Backup Retention</link> and <link page="user-guide" section="/retention/diff">Differential Backup Retention</link> for details and examples. Archived WAL is retained by default for backups that have not expired, however, although not recommended, this schedule can be modified per repository with the retention-archive options. See section <link page="user-guide" section="/retention/archive">Archive Retention</link> for details and examples.
+
+                The <cmd>expire</cmd> command is run automatically after each successful backup and can also be run by the user. When run by the user, expiration will occur as defined by the retention settings for each configured repository. If the <br-option>{[dash]}-repo</br-option> option is provided, expiration will occur only on the specified repository. Expiration can also be limited by the user to a specific backup set with the <br-option>--set</br-option> option and, unless the <br-option>{[dash]}-repo</br-option> option is specified, all repositories will be searched and any matching the set criteria will be expired. It should be noted that the archive retention schedule will be checked and performed any time the <cmd>expire</cmd> command is run.</text>
 
                 <option-list>
                     <!-- OPERATION - EXPIRE COMMAND - SET OPTION -->
                     <option id="set" name="Set">
                         <summary>Backup set to expire.</summary>
 
-                        <text>The specified backup set (i.e. the backup label provided and all of its dependent backups, if any) will be expired regardless of backup retention rules except that at least one full backup must remain in the repository. <admonition type="warning">Use this option with extreme caution &amp;mdash; it will permanently remove all backups and archives not required to make a backup consistent from the <backrest/> repository for the specified backup set. This process may negate the ability to perform PITR. If <br-option>--repo-retention-full</br-option> and/or <br-option>--repo-retention-archive</br-option> options are configured, then it is recommended that you override these options by setting their values to the maximum while performing adhoc expiration.</admonition></text>
+                        <text>The specified backup set (i.e. the backup label provided and all of its dependent backups, if any) will be expired regardless of backup retention rules except that at least one full backup must remain in the repository. <admonition type="warning">Use this option with extreme caution &amp;mdash; it will permanently remove all backups and archives not required to make a backup consistent from the <backrest/> repository for the specified backup set. This process may negate the ability to perform PITR. If <br-option>--repo-retention-full</br-option> and/or <br-option>--repo-retention-archive</br-option> options are configured, then it is recommended that you override these options by setting their values to the maximum while performing adhoc expiration in order to prevent an unintended expiration of archives.</admonition></text>
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example>
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db expire
-                        </code-block>
-                        Expire (rotate) any backups that exceed the defined retention.  Expiration is run automatically after every successful backup, so there is no need to run this command separately unless you have reduced retention, usually to free up some space.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - REPO-CREATE COMMAND -->
             <command id="repo-create" name="Create Repository">
                 <summary>Create the repository.</summary>
 
-                <text>Creates the bucket if <setting>repo-type=s3</setting>.
+                <text>Create the repository (path, bucket, etc.) on the default repository. If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified. If <setting>repo-type=s3</setting> the bucket will be created.</text>
 
-                <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
-
-                <command-example-list>
-                    <command-example title="Create repository">
-                        <text><code-block title="">
-                            {[backrest-exe]} repo-create
-                        </code-block>
-
-                        Create the repository.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - REPO-GET COMMAND -->
-            <command id="repo-get" name="Repository Get File">
-                <summary>Get a file from the repository.</summary>
+            <command id="repo-get" name="Repository Get">
+                <summary>Get a file from a repository.</summary>
 
-                <text>Similar to the unix <cmd>cat</cmd> command but options are different.</text>
+                <text>Similar to the unix <cmd>cat</cmd> command but works on any supported repository type. This command requires a fully qualified file name and is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
+
+                If the repository is encrypted then <cmd>repo-get</cmd> will automatically decrypt the file. Files are not automatically decompressed but the output can be piped through the appropriate decompression command, e.g. <id>gzip -d</id>.
+
+                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</text>
 
                 <option-list>
                     <!-- OPERATION - REPO-GET COMMAND - IGNORE-MISSING OPTION -->
@@ -1351,23 +1440,17 @@
                         <example>y</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="Get a file from the repository">
-                        <text><code-block title="">
-                            {[backrest-exe]} repo-get backup/demo/file.txt
-                        </code-block>
-
-                        Get a file from the demo stanza.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - REPO-LS COMMAND -->
-            <command id="repo-ls" name="Repository List Paths/Files">
-                <summary>List paths/files in the repository.</summary>
+            <command id="repo-ls" name="Repository List">
+                <summary>List files in a repository.</summary>
 
-                <text>Similar to the unix <cmd>ls</cmd> command but options and output are different.  Only information provided by repository storage drivers is available: <id>name</id>, <id>type</id>, <id>size</id>, (modify) <id>time</id>, and <id>destination</id> (for drivers that support links).</text>
+                <text>Similar to the unix <cmd>ls</cmd> command but works on any supported repository type. This command accepts a path, absolute or relative to the repository path defined by the <br-option>{[dash]}-repo-path</br-option> option, and is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
+
+                The default text output prints one file name per line. JSON output is available by specifying <br-option>--output=json</br-option>.
+
+                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</text>
 
                 <option-list>
                     <!-- OPERATION - LS COMMAND - FILTER OPTION -->
@@ -1376,7 +1459,7 @@
 
                         <text>The filter is applied against the file/path names before they are output.</text>
 
-                        <example>(F|D|I)$</example>
+                        <example>"(F|D|I)$"</example>
                     </option>
 
                     <!-- OPERATION - LS COMMAND - OUTPUT OPTION -->
@@ -1387,6 +1470,13 @@
                         <ul>
                             <li><id>text</id> - Simple list with one file/link/path name on each line.</li>
                             <li><id>json</id> - Detailed file/link/path information in JSON format.</li>
+                        </ul>In JSON format the available fields are:
+                        <ul>
+                            <li><id>name</id> - file/link/path name (and partial path when recursing).</li>
+                            <li><id>type</id> - <id>file</id>, <id>path</id>, or <id>link</id>.</li>
+                            <li><id>size</id> - size in bytes (files only).</li>
+                            <li><id>time</id> - time last modified (files only).</li>
+                            <li><id>destination</id> - link destination (links only).</li>
                         </ul></text>
 
                         <example>json</example>
@@ -1415,47 +1505,27 @@
                         <example>desc</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="List all backups in a stanza">
-                        <text><code-block title="">
-                            {[backrest-exe]} repo-ls backup/demo
-                        </code-block>
-
-                        List all backups in the demo stanza.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - REPO-PUT COMMAND -->
             <command id="repo-put" name="Repository Put File">
                 <summary>Put a file in the repository.</summary>
 
-                <text>Similar to the unix <cmd>tee</cmd> command but options and behavior are different.
+                <text>Similar to the unix <cmd>tee</cmd> command by copying from stdin to a file but options and behavior are different. This command requires a fully qualified file name and is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
 
-                <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
-
-                <command-example-list>
-                    <command-example title="Put a file in the repository">
-                        <text><code-block title="">
-                            cat file.txt {[backrest-exe]} repo-put backup/demo/file.txt
-                        </code-block>
-
-                        Put a file in the demo stanza.</text>
-                    </command-example>
-                </command-example-list>
+                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</text>
             </command>
 
-            <!-- OPERATION - RM COMMAND -->
+            <!-- OPERATION - REPO-RM COMMAND -->
             <command id="repo-rm" name="Repository Remove Paths/Files">
                 <summary>Remove paths/files in the repository.</summary>
 
-                <text>Similar to the unix <cmd>rm</cmd> command but options are different.
+                <text>Similar to the unix <cmd>rm</cmd> command but options are different. This command accepts a path, absolute or relative to the repository path defined by the <br-option>{[dash]}-repo-path</br-option> option, and is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
 
-                <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</text>
 
                 <option-list>
-                    <!-- OPERATION - RM COMMAND - RECURSE OPTION -->
+                    <!-- OPERATION - REPO-RM COMMAND - RECURSE OPTION -->
                     <option id="recurse" name="Recurse Subpaths">
                         <summary>Remove all sub file/paths.</summary>
 
@@ -1464,23 +1534,15 @@
                         <example>y</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="Remove backup">
-                        <text><code-block title="">
-                            {[backrest-exe]} rm --recurse backup/demo/20190718-155825F
-                        </code-block>
-
-                        Remove 20190718-155825F backup in the demo stanza.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - RESTORE COMMAND -->
             <command id="restore" name="Restore">
                 <summary>Restore a database cluster.</summary>
 
-                <text>This command is generally run manually, but there are instances where it might be automated.</text>
+                <text>The restore command automatically defaults to selecting the latest backup from the first repository where backups exist (see <link page="user-guide" section="/quickstart/perform-restore">Quick Start - Restore a Backup</link>). The order in which the repositories are checked is dictated by the <file>pgbackrest.conf</file> (e.g. repo1 will be checked before repo2). To select from a specific repository, the <br-option>{[dash]}-repo</br-option> option can be passed (e.g. <br-option>{[dash]}-repo=1</br-option>). The <br-option>{[dash]}-set</br-option> option can be passed if a backup other than the latest is desired.
+
+                For PITR, <br-option>{[dash]}-type=time</br-option> must be provided and the target time specified with the <br-option>{[dash]}-target</br-option> option. If a backup is not specified via the <br-option>{[dash]}-set</br-option> option, then the configured repositories will be checked, in order, for a backup that contains the requested time. If no backup can be found, the latest backup from the first repository containing backups will be used. See <link page="user-guide" section="/pitr">Point-in-Time Recovery</link> for more details and examples.</text>
 
                 <option-list>
                     <!-- OPERATION - RESTORE COMMAND - SET OPTION -->
@@ -1560,15 +1622,6 @@
                         <example>3</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="Restore Latest">
-                        <text><code-block title="">
-                                {[backrest-exe]} --stanza=db --type=name --target=release restore
-                            </code-block>
-                            Restores the latest database cluster backup and then recovers to the <id>release</id> restore point.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - INFO COMMAND -->
@@ -1579,7 +1632,7 @@
 
                 For machine-readable output use <br-option>--output=json</br-option>.  The JSON output contains far more information than the text output and is kept stable unless a bug is found.
 
-                Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option.  The stanza '<id>status</id>' gives a brief indication of the stanza's health.  If this is '<id>ok</id>' then <backrest/> is functioning normally.  The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive.  Note that there may be gaps due to archive retention policies or other reasons.
+                Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories; in this case the state of the stanza will be detailed per repository. For cases in which an error on a repository occurred that is not one of the known error codes, then an error code of '<id>other</id>' will be used and the full error details will be provided. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>{[dash]}-repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.
 
                 The '<id>backup/expire running</id>' message will appear beside the '<id>status</id>' information if one of those commands is currently running on the host.
 
@@ -1589,9 +1642,12 @@
 
                 The '<id>wal start/stop</id>' defines the WAL range that is required to make the database consistent when restoring.  The <cmd>backup</cmd> command will ensure that this WAL range is in the archive before completing.
 
-                The '<id>database size</id>' is the full uncompressed size of the database while '<id>backup size</id>' is the amount of data actually backed up (these will be the same for full backups).  The '<id>repository size</id>' includes all the files from this backup and any referenced backups that are required to restore the database while '<id>repository backup size</id>' includes only the files in this backup (these will also be the same for full backups).  Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.
+                The '<id>database size</id>' is the full uncompressed size of the database while '<id>database backup size</id>' is the amount of data in the database to actually back up (these will be the same for full backups).
+
+                The '<id>repo</id>' indicates in which repository this backup resides. The '<id>backup set size</id>' includes all the files from this backup and any referenced backups in the repository that are required to restore the database from this backup while '<id>backup size</id>' includes only the files in this backup (these will also be the same for full backups). Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.
 
                 The '<id>backup reference list</id>' contains the additional backups that are required to restore this backup.</text>
+                <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
 
                 <option-list>
                     <!-- OPERATION - INFO COMMAND - OUTPUT OPTION -->
@@ -1614,66 +1670,20 @@
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="Information for a single stanza">
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db --output=json info
-                        </code-block>
-
-                        Get information about backups in the <id>db</id> stanza.</text>
-                    </command-example>
-
-                    <command-example title="Information for all stanzas">
-                        <text><code-block title="">
-                            {[backrest-exe]} --output=json info
-                        </code-block>
-
-                        Get information about backups for all stanzas in the repository.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - HELP COMMAND -->
             <command id="help" name="Help">
                 <summary>Get help.</summary>
 
-                <text>Three levels of help are provided.  If no command is specified then general help will be displayed.  If a command is specified then a full description of the command will be displayed along with a list of valid options.  If an option is specified in addition to a command then the a full description of the option as it applies to the command will be displayed.</text>
-
-                <command-example-list>
-                    <command-example title="Help for the backup command">
-                        <text><code-block title="">
-                            {[backrest-exe]} help backup
-                        </code-block>
-
-                        Get help for the backup command.</text>
-                    </command-example>
-
-                    <command-example title="Help for backup command, --force option">
-                        <text><code-block title="">
-                            {[backrest-exe]} help backup force
-                        </code-block>
-
-                        Get help for the force option of the backup command.</text>
-                    </command-example>
-                </command-example-list>
+                <text>Three levels of help are provided.  If no command is specified then general help will be displayed.  If a command is specified (e.g. <cmd>pgbackrest help backup</cmd>) then a full description of the command will be displayed along with a list of valid options.  If an option is specified in addition to a command (e.g. <cmd>pgbackrest help backup type</cmd>) then a full description of the option as it applies to the command will be displayed.</text>
             </command>
 
             <!-- OPERATION - START COMMAND -->
             <command id="start" name="Start">
                 <summary>Allow <backrest/> processes to run.</summary>
 
-                <text>If the <backrest/> processes were previously stopped using the <cmd>stop</cmd> command then they can be started again using the <cmd>start</cmd> command.  Note that this will not immediately start up any <backrest/> processes but they are allowed to run.</text>
-
-                <command-example-list>
-                    <command-example title="Start processes for stanza main">
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=main start
-                        </code-block>
-
-                        Allows <backrest/> processes to run for the <id>main</id> stanza.</text>
-                    </command-example>
-                </command-example-list>
+                <text>If the <backrest/> processes were previously stopped using the <cmd>stop</cmd> command then they can be started again using the <cmd>start</cmd> command.  Note that this will not immediately start up any <backrest/> processes but they are allowed to run. See <link page="user-guide" section="/start-stop">Starting and Stopping</link> for more information and examples.</text>
             </command>
 
             <!-- OPERATION - STOP COMMAND -->
@@ -1682,7 +1692,7 @@
 
                 <text>Does not allow any new <backrest/> processes to run.  By default running processes will be allowed to complete successfully.  Use the <setting>--force</setting> option to terminate running processes.
 
-                <backrest/> processes will return an error if they are run after the stop command completes.</text>
+                <backrest/> processes will return an error if they are run after the stop command completes. See <link page="user-guide" section="/start-stop">Starting and Stopping</link> for more information and examples.</text>
 
                 <option-list>
                     <!-- OPERATION - STOP COMMAND - FORCE OPTION -->
@@ -1694,16 +1704,6 @@
                         <example>y</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="Stop processes for all stanzas">
-                        <text><code-block title="">
-                            {[backrest-exe]} stop
-                        </code-block>
-
-                        Stop new <backrest/> processes for all stanzas but allow any current process to complete.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - VERIFY COMMAND -->
@@ -1721,15 +1721,6 @@
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example>
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db verify
-                        </code-block>
-                        Verify all database and archive files associated with the stanza.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - VERSION COMMAND -->
@@ -1737,23 +1728,13 @@
                 <summary>Get version.</summary>
 
                 <text>Displays installed <backrest/> version.</text>
-
-                <command-example-list>
-                    <command-example title="Get version">
-                        <text><code-block title="">
-                            {[backrest-exe]} version
-                        </code-block>
-
-                        Get <backrest/> version.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - STANZA-CREATE COMMAND -->
             <command id="stanza-create" name="Stanza Create">
                 <summary>Create the required stanza data.</summary>
 
-                <text>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located after the stanza has been configured in <file>pgbackrest.conf</file>.</text>
+                <text>The <cmd>stanza-create</cmd> command must be run after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured, the stanza will be created on each. See <link page="user-guide" section="/quickstart/create-stanza">Create the Stanza</link> for more information and an example.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
@@ -1774,23 +1755,14 @@
                         <example>n</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="Create required stanza data">
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db stanza-create
-                        </code-block>
-
-                        Create the required data for the <id>db</id> stanza.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - STANZA-UPGRADE COMMAND -->
             <command id="stanza-upgrade" name="Stanza Upgrade">
                 <summary>Upgrade a stanza.</summary>
 
-                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the repository host. If the database is offline use the <br-option>--no-online</br-option> option.</text>
+                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be created on each. If the database is offline use the <br-option>--no-online</br-option> option.</text>
+                <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
 
                 <option-list>
                     <!-- ======================================================================================================= -->
@@ -1802,16 +1774,6 @@
                         <example>n</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="Upgrade a stanza">
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db stanza-upgrade
-                        </code-block>
-
-                        Upgrade the <id>db</id> stanza to a new version of <postgres/>.</text>
-                    </command-example>
-                </command-example-list>
             </command>
 
             <!-- OPERATION - STANZA-DELETE COMMAND -->
@@ -1822,9 +1784,12 @@
                 To delete a stanza:
                 <ul>
                     <li>Shut down the <postgres/> cluster associated with the stanza (or use --force to override).</li>
-                    <li>Run the <cmd>stop</cmd> command on the repository host.</li>
-                    <li>Run the <cmd>stanza-delete</cmd> command on the repository host.</li>
-                </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files.</text>
+                    <li>Run the <cmd>stop</cmd> command on the host where the <cmd>stanza-delete</cmd> command will be run.</li>
+                    <li>Run the <cmd>stanza-delete</cmd> command.</li>
+                </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files and/or environment variables.
+
+                A stanza may only be deleted from one repository at a time. To delete the stanza from multiple repositories, repeat the <cmd>stanza-delete</cmd> command for each repository while specifying the <br-option>{[dash]}-repo</br-option> option.</text>
+                <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
@@ -1836,16 +1801,6 @@
                         <example>n</example>
                     </option>
                 </option-list>
-
-                <command-example-list>
-                    <command-example title="Delete a stanza">
-                        <text><code-block title="">
-                            {[backrest-exe]} --stanza=db stanza-delete
-                        </code-block>
-
-                        Delete the <id>db</id> stanza repository.</text>
-                    </command-example>
-                </command-example-list>
             </command>
         </command-list>
     </operation>

@@ -153,8 +153,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstFind()"))
     {
-        CHECK(testScale() <= 10000);
-        int testMax = 100000 * (int)testScale();
+        CHECK(TEST_SCALE <= 10000);
+        int testMax = 100000 * (int)TEST_SCALE;
 
         // Generate a large list of values (use int instead of string so there fewer allocations)
         List *list = lstNewP(sizeof(int), .comparator = testComparator);
@@ -190,8 +190,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstRemoveIdx()"))
     {
-        CHECK(testScale() <= 10000);
-        int testMax = 1000000 * (int)testScale();
+        CHECK(TEST_SCALE <= 10000);
+        int testMax = 1000000 * (int)TEST_SCALE;
 
         // Generate a large list of values (use int instead of string so there fewer allocations)
         List *list = lstNewP(sizeof(int));
@@ -211,16 +211,16 @@ testRun(void)
 
         TEST_LOG_FMT("remove completed in %ums", (unsigned int)(timeMSec() - timeBegin));
 
-        CHECK(lstSize(list) == 0);
+        CHECK(lstEmpty(list));
     }
 
     // *****************************************************************************************************************************
     if (testBegin("iniLoad()"))
     {
-        CHECK(testScale() <= 10000);
+        CHECK(TEST_SCALE <= 10000);
 
-        String *iniStr = strNew("[section1]\n");
-        unsigned int iniMax = 100000 * (unsigned int)testScale();
+        String *iniStr = strNewZ("[section1]\n");
+        unsigned int iniMax = 100000 * (unsigned int)TEST_SCALE;
 
         for (unsigned int keyIdx = 0; keyIdx < iniMax; keyIdx++)
             strCatFmt(iniStr, "key%u=\"value%u\"\n", keyIdx, keyIdx);
@@ -240,19 +240,20 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("manifestNewBuild()/manifestNewLoad()/manifestSave()"))
     {
-        CHECK(testScale() <= 1000000);
+        CHECK(TEST_SCALE <= 1000000);
 
         // Create a storage driver to test manifest build with an arbitrary number of files
         StorageTestManifestNewBuild driver =
         {
             .interface = storageInterfaceTestDummy,
-            .fileTotal = 100000 * (unsigned int)testScale(),
+            .fileTotal = 100000 * (unsigned int)TEST_SCALE,
         };
 
         driver.interface.info = storageTestManifestNewBuildInfo;
         driver.interface.infoList = storageTestManifestNewBuildInfoList;
 
-        Storage *storagePg = storageNew(STRDEF("TEST"), STRDEF("/pg"), 0, 0, false, NULL, &driver, driver.interface);
+        const Storage *const storagePg = storageNew(
+            strIdFromZ(stringIdBit6, "test"), STRDEF("/pg"), 0, 0, false, NULL, &driver, driver.interface);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build manifest");
@@ -264,9 +265,7 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(testContext)
         {
-            TEST_ASSIGN(
-                manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, NULL, NULL),
-                "build with %" PRIu64 " files", driver.fileTotal);
+            TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, NULL, NULL), "build files");
         }
         MEM_CONTEXT_END();
 
@@ -323,7 +322,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("statistics collector"))
     {
-        CHECK(testScale() <= 1000000);
+        CHECK(TEST_SCALE <= 1000000);
 
         // Setup a list of stats to use for testing
         #define TEST_STAT_TOTAL 100
@@ -332,7 +331,7 @@ testRun(void)
         for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
             statList[statIdx] = strNewFmt("STAT%u", statIdx);
 
-        uint64_t runTotal = (uint64_t)testScale() * (uint64_t)100000;
+        uint64_t runTotal = (uint64_t)TEST_SCALE * (uint64_t)100000;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE_FMT("update %d stats %" PRIu64 " times", TEST_STAT_TOTAL, runTotal);
@@ -355,10 +354,10 @@ testRun(void)
         for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
         {
             TEST_RESULT_UINT(
-                varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal, "check stat %u",
-                statIdx);
+                varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal,
+                strZ(strNewFmt("check stat %u", statIdx)));
         }
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

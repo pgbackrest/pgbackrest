@@ -5,19 +5,21 @@ Restore Protocol Handler
 #define COMMAND_RESTORE_PROTOCOL_H
 
 #include "common/type/pack.h"
-#include "common/type/string.h"
+#include "common/type/stringId.h"
 #include "protocol/server.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_RESTORE_FILE                               "restoreFile"
-    STRING_DECLARE(PROTOCOL_COMMAND_RESTORE_FILE_STR);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool restoreProtocol(const String *command, PackRead *param, ProtocolServer *server);
+void restoreFileProtocol(PackRead *const param, ProtocolServer *const server);
+
+/***********************************************************************************************************************************
+Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
+***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_RESTORE_FILE                               STRID5("rs-f", 0x36e720)
+
+#define PROTOCOL_SERVER_HANDLER_RESTORE_LIST                                                                                       \
+    {.command = PROTOCOL_COMMAND_RESTORE_FILE, .handler = restoreFileProtocol},
 
 #endif

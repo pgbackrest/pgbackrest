@@ -1,7 +1,10 @@
 /***********************************************************************************************************************************
 Server Test Harness
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -63,7 +66,7 @@ hrnServerScriptCommand(IoWrite *write, HrnServerCmd cmd, const Variant *data)
     ioWriteStrLine(write, jsonFromVar(data));
     ioWriteFlush(write);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -75,10 +78,9 @@ IoWrite *hrnServerScriptBegin(IoWrite *write)
 
     ASSERT(write != NULL);
 
-    write = write;
     ioWriteOpen(write);
 
-    FUNCTION_HARNESS_RESULT(IO_WRITE, write);
+    FUNCTION_HARNESS_RETURN(IO_WRITE, write);
 }
 
 void hrnServerScriptEnd(IoWrite *write)
@@ -91,7 +93,7 @@ void hrnServerScriptEnd(IoWrite *write)
 
     hrnServerScriptCommand(write, hrnServerCmdDone, NULL);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -104,7 +106,7 @@ hrnServerScriptAbort(IoWrite *write)
 
     hrnServerScriptCommand(write, hrnServerCmdAbort, NULL);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -116,7 +118,7 @@ hrnServerScriptAccept(IoWrite *write)
 
     hrnServerScriptCommand(write, hrnServerCmdAccept, NULL);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -128,7 +130,7 @@ hrnServerScriptClose(IoWrite *write)
 
     hrnServerScriptCommand(write, hrnServerCmdClose, NULL);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -143,7 +145,7 @@ hrnServerScriptExpect(IoWrite *write, const String *data)
 
     hrnServerScriptCommand(write, hrnServerCmdExpect, VARSTR(data));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -158,7 +160,7 @@ hrnServerScriptExpectZ(IoWrite *write, const char *data)
 
     hrnServerScriptCommand(write, hrnServerCmdExpect, VARSTRZ(data));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -173,7 +175,7 @@ hrnServerScriptReply(IoWrite *write, const String *data)
 
     hrnServerScriptCommand(write, hrnServerCmdReply, VARSTR(data));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -188,7 +190,7 @@ hrnServerScriptReplyZ(IoWrite *write, const char *data)
 
     hrnServerScriptCommand(write, hrnServerCmdReply, VARSTRZ(data));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -203,7 +205,7 @@ hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs)
 
     hrnServerScriptCommand(write, hrnServerCmdSleep, VARUINT64(sleepMs));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -246,14 +248,14 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             // If running in a container use the installed certificate
             if (testContainer())
             {
-                param.certificate = strNew(HRN_SERVER_FAKE_CERT_FILE);
-                param.key = strNew(HRN_SERVER_FAKE_KEY_FILE);
+                param.certificate = strNewZ(HRN_SERVER_FAKE_CERT_FILE);
+                param.key = strNewZ(HRN_SERVER_FAKE_KEY_FILE);
             }
             // Else use a certificate from the test path -- tests will need to disable verify
             else
             {
-                param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
-                param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".key", testRepoPath());
+                param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".crt", hrnPathRepo());
+                param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".key", hrnPathRepo());
             }
         }
 
@@ -368,10 +370,8 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             }
 
             case hrnServerCmdDone:
-            {
                 done = true;
                 break;
-            }
 
             case hrnServerCmdExpect:
             {
@@ -387,7 +387,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
                 CATCH(FileReadError)
                 {
                     // If nothing was read then throw the original error
-                    if (bufUsed(buffer) == 0)
+                    if (bufEmpty(buffer))
                         THROW_FMT(AssertError, "server expected '%s' but got EOF", strZ(expected));
                 }
                 TRY_END();
@@ -409,19 +409,13 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             }
 
             case hrnServerCmdReply:
-            {
                 ioWrite(ioSessionIoWrite(serverSession), BUFSTR(varStr(data)));
                 ioWriteFlush(ioSessionIoWrite(serverSession));
-
                 break;
-            }
 
             case hrnServerCmdSleep:
-            {
                 sleepMSec(varUInt64Force(data));
-
                 break;
-            }
         }
     }
     while (!done);
@@ -430,13 +424,13 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
     if (protocol == hrnServerProtocolTls)
         SSL_CTX_free(serverContext);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 const String *hrnServerHost(void)
 {
-    return strNew(testContainer() ? HRN_SERVER_HOST : "127.0.0.1");
+    return strNewZ(testContainer() ? HRN_SERVER_HOST : "127.0.0.1");
 }
 
 /**********************************************************************************************************************************/

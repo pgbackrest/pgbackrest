@@ -12,11 +12,9 @@ since it is not stored.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define MOST_COMMON_VALUE_TYPE                                      MostCommonValue
-#define MOST_COMMON_VALUE_PREFIX                                    mcv
-
 typedef struct MostCommonValue MostCommonValue;
 
+#include "common/type/object.h"
 #include "common/type/stringList.h"
 #include "common/type/variant.h"
 
@@ -37,7 +35,11 @@ const Variant *mcvResult(const MostCommonValue *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void mcvFree(MostCommonValue *this);
+__attribute__((always_inline)) static inline void
+mcvFree(MostCommonValue *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

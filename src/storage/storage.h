@@ -9,9 +9,6 @@ Storage Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_TYPE                                                Storage
-#define STORAGE_PREFIX                                              storage
-
 typedef struct Storage Storage;
 
 #include "common/type/buffer.h"
@@ -21,6 +18,7 @@ typedef struct Storage Storage;
 #include "common/type/param.h"
 #include "storage/info.h"
 #include "storage/read.h"
+#include "storage/storage.intern.h"
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
@@ -252,10 +250,18 @@ void storageRemove(const Storage *this, const String *fileExp, StorageRemovePara
 Getters/Setters
 ***********************************************************************************************************************************/
 // Is the feature supported by this storage?
-bool storageFeature(const Storage *this, StorageFeature feature);
+__attribute__((always_inline)) static inline bool
+storageFeature(const Storage *const this, const StorageFeature feature)
+{
+    return THIS_PUB(Storage)->interface.feature >> feature & 1;
+}
 
 // Storage type (posix, cifs, etc.)
-const String *storageType(const Storage *this);
+__attribute__((always_inline)) static inline StringId
+storageType(const Storage *const this)
+{
+    return THIS_PUB(Storage)->type;
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

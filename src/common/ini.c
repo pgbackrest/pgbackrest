@@ -13,7 +13,6 @@ Ini Handler
 #include "common/ini.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -23,9 +22,6 @@ struct Ini
     MemContext *memContext;                                         // Context that contains the ini
     KeyValue *store;                                                // Key value store that contains the ini data
 };
-
-OBJECT_DEFINE_MOVE(INI);
-OBJECT_DEFINE_FREE(INI);
 
 /**********************************************************************************************************************************/
 Ini *
@@ -285,7 +281,7 @@ iniParse(Ini *this, const String *content)
                                 THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
 
                             // Store the section/key/value
-                            iniSet(this, section, key, strTrim(strNew(lineEqual + 1)));
+                            iniSet(this, section, key, strTrim(strNewZ(lineEqual + 1)));
                         }
                     }
                 }
@@ -402,7 +398,7 @@ iniLoad(
 
                             // Get key/value
                             key = strNewN(linePtr, (size_t)(lineEqual - linePtr));
-                            value = strNew(lineEqual + 1);
+                            value = strNewZ(lineEqual + 1);
 
                             // Check that the value is valid JSON
                             TRY_BEGIN()

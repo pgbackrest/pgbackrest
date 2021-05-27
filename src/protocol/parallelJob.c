@@ -6,7 +6,6 @@ Protocol Parallel Job
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "protocol/command.h"
 #include "protocol/parallelJob.h"
 
@@ -15,20 +14,8 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolParallelJob
 {
-    MemContext *memContext;                                         // Job mem context
-    ProtocolParallelJobState state;                                 // Current state of the job
-
-    const Variant *key;                                             // Unique key used to identify the job
-    const ProtocolCommand *command;                                 // Command to be executed
-
-    unsigned int processId;                                         // Process that executed this job
-    int code;                                                       // Non-zero result indicates an error
-    String *message;                                                // Message if there was a error
-    const Variant *result;                                          // Result if job was successful
+    ProtocolParallelJobPub pub;                                     // Publicly accessible variables
 };
-
-OBJECT_DEFINE_MOVE(PROTOCOL_PARALLEL_JOB);
-OBJECT_DEFINE_FREE(PROTOCOL_PARALLEL_JOB);
 
 /**********************************************************************************************************************************/
 ProtocolParallelJob *
@@ -47,12 +34,15 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 
         *this = (ProtocolParallelJob)
         {
-            .memContext = memContextCurrent(),
-            .state = protocolParallelJobStatePending,
-            .key = varDup(key),
+            .pub =
+            {
+                .memContext = memContextCurrent(),
+                .state = protocolParallelJobStatePending,
+                .key = varDup(key),
+            },
         };
 
-        this->command = protocolCommandMove(command, this->memContext);
+        this->pub.command = protocolCommandMove(command, this->pub.memContext);
 
         // End the pack
         pckWriteEndP(protocolCommandParam(command));
@@ -63,43 +53,6 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 }
 
 /**********************************************************************************************************************************/
-const ProtocolCommand *
-protocolParallelJobCommand(const ProtocolParallelJob *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_PARALLEL_JOB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->command);
-}
-
-/**********************************************************************************************************************************/
-int
-protocolParallelJobErrorCode(const ProtocolParallelJob *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_PARALLEL_JOB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->code);
-}
-
-const String *
-protocolParallelJobErrorMessage(const ProtocolParallelJob *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_PARALLEL_JOB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->message);
-}
-
 void
 protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message)
 {
@@ -113,10 +66,10 @@ protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *m
     ASSERT(code != 0);
     ASSERT(message != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
-        this->code = code;
-        this->message = strDup(message);
+        this->pub.code = code;
+        this->pub.message = strDup(message);
     }
     MEM_CONTEXT_END();
 
@@ -124,31 +77,6 @@ protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *m
 }
 
 /**********************************************************************************************************************************/
-const Variant *
-protocolParallelJobKey(const ProtocolParallelJob *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_PARALLEL_JOB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->key);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-protocolParallelJobProcessId(const ProtocolParallelJob *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_PARALLEL_JOB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->processId);
-}
-
 void
 protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId)
 {
@@ -160,24 +88,12 @@ protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processI
     ASSERT(this != NULL);
     ASSERT(processId > 0);
 
-    this ->processId = processId;
+    this->pub.processId = processId;
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-const Variant *
-protocolParallelJobResult(const ProtocolParallelJob *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_PARALLEL_JOB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->result);
-}
-
 void
 protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result)
 {
@@ -187,11 +103,11 @@ protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->code == 0);
+    ASSERT(protocolParallelJobErrorCode(this) == 0);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
-        this->result = varDup(result);
+        this->pub.result = varDup(result);
     }
     MEM_CONTEXT_END();
 
@@ -199,77 +115,36 @@ protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result)
 }
 
 /**********************************************************************************************************************************/
-ProtocolParallelJobState
-protocolParallelJobState(const ProtocolParallelJob *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_PARALLEL_JOB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->state);
-}
-
 void
 protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
-        FUNCTION_LOG_PARAM(ENUM, state);
+        FUNCTION_LOG_PARAM(STRING_ID, state);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    if (this->state == protocolParallelJobStatePending && state == protocolParallelJobStateRunning)
-        this->state = protocolParallelJobStateRunning;
-    else if (this->state == protocolParallelJobStateRunning && state == protocolParallelJobStateDone)
-        this->state = protocolParallelJobStateDone;
+    if (this->pub.state == protocolParallelJobStatePending && state == protocolParallelJobStateRunning)
+        this->pub.state = protocolParallelJobStateRunning;
+    else if (this->pub.state == protocolParallelJobStateRunning && state == protocolParallelJobStateDone)
+        this->pub.state = protocolParallelJobStateDone;
     else
     {
         THROW_FMT(
-            AssertError, "invalid state transition from '%s' to '%s'", protocolParallelJobToConstZ(this->state),
-            protocolParallelJobToConstZ(state));
+            AssertError, "invalid state transition from '%s' to '%s'", strZ(strIdToStr(protocolParallelJobState(this))),
+            strZ(strIdToStr(state)));
     }
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-const char *
-protocolParallelJobToConstZ(ProtocolParallelJobState state)
-{
-    const char *result = NULL;
-
-    switch (state)
-    {
-        case protocolParallelJobStatePending:
-        {
-            result = "pending";
-            break;
-        }
-
-        case protocolParallelJobStateRunning:
-        {
-            result = "running";
-            break;
-        }
-
-        case protocolParallelJobStateDone:
-        {
-            result = "done";
-            break;
-        }
-    }
-
-    return result;
 }
 
 String *
 protocolParallelJobToLog(const ProtocolParallelJob *this)
 {
     return strNewFmt(
-        "{state: %s, key: %s, command: %s, code: %d, message: %s, result: %s}", protocolParallelJobToConstZ(this->state),
-        strZ(varToLog(this->key)), strZ(protocolCommandToLog(this->command)), this->code, strZ(strToLog(this->message)),
-        strZ(varToLog(this->result)));
+        "{state: %s, key: %s, command: %s, code: %d, message: %s, result: %s}",
+        strZ(strIdToStr(protocolParallelJobState(this))), strZ(varToLog(protocolParallelJobKey(this))),
+        strZ(protocolCommandToLog(protocolParallelJobCommand(this))), protocolParallelJobErrorCode(this),
+        strZ(strToLog(protocolParallelJobErrorMessage(this))), strZ(varToLog(protocolParallelJobResult(this))));
 }

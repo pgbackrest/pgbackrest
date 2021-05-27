@@ -14,7 +14,7 @@ stress testing as needed.
 #include "common/crypto/hash.h"
 #include "common/compress/gz/compress.h"
 #include "common/compress/lz4/compress.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/io/filter/sink.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -125,7 +125,7 @@ testIoRateNew(uint64_t bytesPerSec)
             .bytesPerSec = bytesPerSec,
         };
 
-        this = ioFilterNewP(strNew("TestIoRate"), driver, NULL, .in = testIoRateProcess);
+        this = ioFilterNewP(STRDEF("TestIoRate"), driver, NULL, .in = testIoRateProcess);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -144,8 +144,8 @@ testRun(void)
     if (testBegin("storageInfoList()"))
     {
         // One million files represents a fairly large cluster
-        CHECK(testScale() <= 2000);
-        uint64_t fileTotal = (uint64_t)1000000 * testScale();
+        CHECK(TEST_SCALE <= 2000);
+        uint64_t fileTotal = (uint64_t)1000000 * TEST_SCALE;
 
         HARNESS_FORK_BEGIN()
         {
@@ -155,7 +155,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
                 strLstAddZ(argList, "--" CFGOPT_PROCESS "=0");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
 
                 // Create a driver to test remote performance of storageInfoList() and inject it into storageRepo()
@@ -169,17 +169,18 @@ testRun(void)
 
                 storageHelper.storageRepo = memNew(sizeof(Storage *));
                 storageHelper.storageRepo[0] = storageNew(
-                    STRDEF("TEST"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
+                    strIdFromZ(stringIdBit6, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
 
                 // Setup handler for remote storage protocol
-                IoRead *read = ioFdReadNew(strNew("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
+                IoRead *read = ioFdReadNew(STRDEF("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("storage server write"), HARNESS_FORK_CHILD_WRITE(), 1000);
+                IoWrite *write = ioFdWriteNew(STRDEF("storage server write"), HARNESS_FORK_CHILD_WRITE(), 1000);
                 ioWriteOpen(write);
 
-                ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
-                protocolServerHandlerAdd(server, storageRemoteProtocol);
-                protocolServerProcess(server, NULL);
+                ProtocolServer *server = protocolServerNew(STRDEF("storage test server"), STRDEF("test"), read, write);
+
+                static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
+                protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
 
             }
             HARNESS_FORK_CHILD_END();
@@ -187,12 +188,12 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 // Create client
-                IoRead *read = ioFdReadNew(strNew("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000);
+                IoRead *read = ioFdReadNew(STRDEF("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000);
+                IoWrite *write = ioFdWriteNew(STRDEF("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000);
                 ioWriteOpen(write);
 
-                ProtocolClient *client = protocolClientNew(strNew("storage test client"), strNew("test"), read, write);
+                ProtocolClient *client = protocolClientNew(STRDEF("storage test client"), STRDEF("test"), read, write);
 
                 // Create remote storage
                 Storage *storageRemote = storageRemoteNew(
@@ -202,8 +203,7 @@ testRun(void)
 
                 // Storage info list
                 TEST_RESULT_VOID(
-                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL),
-                    "list %" PRIu64 " remote files", fileTotal);
+                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL), "list remote files");
 
                 TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 
@@ -222,8 +222,8 @@ testRun(void)
         ioBufferSizeSet(4 * 1024 * 1024);
 
         // 1MB is a fairly normal table size
-        CHECK(testScale() <= 1024 * 1024 * 1024);
-        uint64_t blockTotal = (uint64_t)1 * testScale();
+        CHECK(TEST_SCALE <= 1024 * 1024 * 1024);
+        uint64_t blockTotal = (uint64_t)1 * TEST_SCALE;
 
         // Set iteration
         unsigned int iteration = 1;
@@ -233,11 +233,11 @@ testRun(void)
         uint64_t rateOut = 0; // MB/s (0 disables)
 
         // Get the sample pages from disk
-        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(STR(testRepoPath())), STRDEF("test/data/filecopy.table.bin")));
+        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(HRN_PATH_REPO_STR), STRDEF("test/data/filecopy.table.bin")));
         ASSERT(bufUsed(block) == 1024 * 1024);
 
         // Build the input buffer
-        Buffer *input = bufNew(blockTotal * bufSize(block));
+        Buffer *input = bufNew((size_t)blockTotal * bufSize(block));
 
         for (unsigned int blockIdx = 0; blockIdx < blockTotal; blockIdx++)
             memcpy(bufPtr(input) + (blockIdx * bufSize(block)), bufPtr(block), bufSize(block));
@@ -246,7 +246,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE_FMT(
-            "%u iteration(s) of %" PRIu64 "MiB with %" PRIu64 "MB/s input, %" PRIu64 "MB/s output", iteration,
+            "%u iteration(s) of %zuMiB with %" PRIu64 "MB/s input, %" PRIu64 "MB/s output", iteration,
             bufUsed(input) / bufUsed(block), rateIn, rateOut);
 
         #define BENCHMARK_BEGIN()                                                                                                  \
@@ -289,7 +289,10 @@ testRun(void)
         uint64_t sha1Total = 1;
         uint64_t sha256Total = 1;
         uint64_t gzip6Total = 1;
+
+#ifdef HAVE_LIBLZ4
         uint64_t lz41Total = 1;
+#endif // HAVE_LIBLZ4
 
         for (unsigned int idx = 0; idx < iteration; idx++)
         {
@@ -348,6 +351,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_END();
 
             // -------------------------------------------------------------------------------------------------------------------------
+#ifdef HAVE_LIBLZ4
             TEST_LOG_FMT("lz4 -1 iteration %u", idx + 1);
 
             MEM_CONTEXT_TEMP_BEGIN()
@@ -357,6 +361,7 @@ testRun(void)
                 BENCHMARK_END(lz41Total);
             }
             MEM_CONTEXT_TEMP_END();
+#endif // HAVE_LIBLZ4
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -372,8 +377,11 @@ testRun(void)
         TEST_RESULT("sha1", sha1Total);
         TEST_RESULT("sha256", sha256Total);
         TEST_RESULT("gzip -6", gzip6Total);
+
+#ifdef HAVE_LIBLZ4
         TEST_RESULT("lz4 -1", lz41Total);
+#endif // HAVE_LIBLZ4
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

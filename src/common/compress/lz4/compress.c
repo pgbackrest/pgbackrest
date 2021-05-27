@@ -14,7 +14,7 @@ Developed against version r131 using the documentation in https://github.com/lz4
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
@@ -34,9 +34,6 @@ STRING_EXTERN(LZ4_COMPRESS_FILTER_TYPE_STR,                         LZ4_COMPRESS
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define LZ4_COMPRESS_TYPE                                           Lz4Compress
-#define LZ4_COMPRESS_PREFIX                                         lz4Compress
-
 typedef struct Lz4Compress
 {
     MemContext *memContext;                                         // Context to store data
@@ -69,11 +66,21 @@ lz4CompressToLog(const Lz4Compress *this)
 /***********************************************************************************************************************************
 Free compression context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(LZ4_COMPRESS, LOG, logLevelTrace)
+static void
+lz4CompressFreeResource(THIS_VOID)
 {
+    THIS(Lz4Compress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(LZ4_COMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     LZ4F_freeCompressionContext(this->context);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Compress data
@@ -93,7 +100,7 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
     Buffer *result = output;
 
     // Is an internal buffer required to hold the compressed data?
-    if (bufUsed(this->buffer) > 0 || required >= bufRemains(output))
+    if (!bufEmpty(this->buffer) || required >= bufRemains(output))
     {
         // Reallocate buffer if it is not large enough
         if (required >= bufRemains(this->buffer))

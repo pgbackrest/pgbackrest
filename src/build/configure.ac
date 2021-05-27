@@ -1,7 +1,7 @@
 # Initialize configuration
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.32dev])
+AC_INIT([pgBackRest], [2.34dev])
 AC_CONFIG_SRCDIR([version.h])
 AC_CONFIG_AUX_DIR(build)
 
@@ -42,7 +42,7 @@ AC_LINK_IFELSE(
 
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers")
+AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough")
 
 # -Wno-clobbered is not supported on all compilers
 AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [AC_SUBST(CFLAGS, "${CFLAGS} -Wno-clobbered")], [], [-Werror])
@@ -63,6 +63,12 @@ then
         AC_SUBST(CFLAGS_PAGE_CHECKSUM, "-funroll-loops -ftree-vectorize")
     fi
 else
+    # Check for optional warnings (note that these must be checked before the additional warnings below are added)
+    AX_CHECK_COMPILE_FLAG([-Wformat-signedness], [AC_SUBST(CFLAGS, "${CFLAGS} -Wformat-signedness")], [], [-Werror])
+    AX_CHECK_COMPILE_FLAG([-Wduplicated-branches], [AC_SUBST(CFLAGS, "${CFLAGS} -Wduplicated-branches")], [], [-Werror])
+    AX_CHECK_COMPILE_FLAG([-Wduplicated-cond], [AC_SUBST(CFLAGS, "${CFLAGS} -Wduplicated-cond")], [], [-Werror])
+
+    # Add additional warnings
     AC_SUBST(CFLAGS, "${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith")
     AC_SUBST(CFLAGS, "${CFLAGS} -Wvla")
 fi
@@ -143,6 +149,13 @@ AC_CHECK_LIB(
                     #endif])],
             [AC_DEFINE(HAVE_LIBZST) AC_SUBST(LIBS, "${LIBS} -lzstd")])],
         [AC_MSG_ERROR([header file <zstd.h> is required])])])
+
+# Set configuration path
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_ARG_WITH(
+    [configdir], [AS_HELP_STRING([--with-configdir=DIR], [default configuration path])],
+    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["${withval}"])],
+    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["/etc/" PROJECT_BIN])])
 
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------

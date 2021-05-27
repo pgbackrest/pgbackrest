@@ -162,6 +162,26 @@ if (condition)
         valueThatUsesEntireLine2;
 }
 ```
+Braces should be added to `switch` statement cases that have a significant amount of code. As a general rule of thumb, if the code block in the `case` is large enough to have blank lines and/or multiple comments then it should be enclosed in braces.
+```c
+switch (int)
+{
+    case 1:
+        a = 2;
+        break;
+
+    case 2:
+    {
+        # Comment this more complex code
+        a = 1;
+        b = 2;
+
+        c = func(a, b);
+
+        break;
+    }
+}
+```
 
 #### Hints, Warnings, and Errors
 
@@ -184,6 +204,37 @@ Don't use a macro when a function could be used instead. Macros make it hard to 
 ### Objects
 
 Object-oriented programming is used extensively. The object pointer is always referred to as `this`.
+
+An object can expose internal struct members by defining a public struct that contains the members to be exposed and using inline functions to get/set the members.
+
+The header file:
+```c
+/***********************************************************************************************************************************
+Getters/setters
+***********************************************************************************************************************************/
+typedef struct ListPub
+{
+    unsigned int listSize;                                          // List size
+} ListPub;
+
+// List size
+__attribute__((always_inline)) static inline unsigned int
+lstSize(const List *const this)
+{
+    return THIS_PUB(List)->listSize;
+}
+```
+`THIS_PUB()` ensures that `this != NULL` so there is no need to check that in the calling function.
+
+And the C file:
+```c
+struct List
+{
+    ListPub pub;                                                    // Publicly accessible variables
+    ...
+};
+```
+The public struct must be the first member of the private struct. The naming convention for the public struct is to add `Pub` to the end of the private struct name.
 
 ### Variadic Functions
 

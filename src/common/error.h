@@ -54,7 +54,7 @@ typedef struct ErrorType ErrorType;
 #include "common/error.auto.h"
 
 // Declare test error
-#ifndef NDEBUG
+#ifdef DEBUG
     ERROR_DECLARE(TestError);
 #else
     // Must always be defined since it might be needed to compile (though not used) during profiling
@@ -110,10 +110,15 @@ const char *errorName(void);
 const char *errorStackTrace(void);
 
 /***********************************************************************************************************************************
-Functions to get information about the try stack
+Try stack getters/setters
 ***********************************************************************************************************************************/
 // Get the depth of the current try statement (0 if none)
 unsigned int errorTryDepth(void);
+
+// Add a handler to be called when an error occurs
+typedef void (*const ErrorHandlerFunction)(unsigned int);
+
+void errorHandlerSet(const ErrorHandlerFunction *list, unsigned int total);
 
 /***********************************************************************************************************************************
 Begin a block where errors can be thrown

@@ -22,22 +22,8 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-typedef struct VerifyFileResult
-{
-    VerifyResult fileResult;
-    String *filePathName;
-} VerifyFileResult;
-
 // Verify a file in the pgBackRest repository
 VerifyResult verifyFile(
     const String *filePathName, const String *fileChecksum, uint64_t fileSize, const String *cipherPass);
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_VERIFY_FILE_RESULT_TYPE                                                                                       \
-    VerifyFileResult
-#define FUNCTION_LOG_VERIFY_FILE_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(&value, "VerifyFileResult", buffer, bufferSize)
 
 #endif

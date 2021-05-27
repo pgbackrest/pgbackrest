@@ -94,18 +94,12 @@ Minimum number of extra bytes to allocate for packs that are growing or are like
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
-#define PACK_READ_TYPE                                              PackRead
-#define PACK_READ_PREFIX                                            pckRead
-
 typedef struct PackRead PackRead;
-
-#define PACK_WRITE_TYPE                                             PackWrite
-#define PACK_WRITE_PREFIX                                           pckWrite
-
 typedef struct PackWrite PackWrite;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -327,7 +321,11 @@ void pckReadEnd(PackRead *this);
 /***********************************************************************************************************************************
 Read Destructor
 ***********************************************************************************************************************************/
-void pckReadFree(PackRead *this);
+__attribute__((always_inline)) static inline void
+pckReadFree(PackRead *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Write Constructors
@@ -521,7 +519,11 @@ const Buffer *pckWriteBuf(const PackWrite *this);
 /***********************************************************************************************************************************
 Write Destructor
 ***********************************************************************************************************************************/
-void pckWriteFree(PackWrite *this);
+__attribute__((always_inline)) static inline void
+pckWriteFree(PackWrite *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Helper Functions

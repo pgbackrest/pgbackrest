@@ -11,8 +11,8 @@
         <variable key="github-url-issues">{[github-url-base]}/issues</variable>
         <variable key="github-url-release">{[github-url-base]}/archive/release</variable>
         <variable key="github-url-license">{[github-url-master]}/LICENSE</variable>
-        <variable key="github-url-wiki">{[github-url-base]}/wiki</variable>
-        <variable key="github-url-wiki-backlog">{[github-url-wiki]}#backlog</variable>
+        <variable key="github-url-projects">{[github-url-base]}/projects</variable>
+        <variable key="github-url-contributing">{[github-url-master]}/CONTRIBUTING.md</variable>
 
         <variable key="backrest-url-base">http://www.pgbackrest.org</variable>
         <variable key="backrest-page-user-guide-index">user-guide-index</variable>
@@ -51,6 +51,12 @@
             <title>Local or Remote Operation</title>
 
             <p>A custom protocol allows <backrest/> to backup, restore, and archive locally or remotely via SSH with minimal configuration.  An interface to query <postgres/> is also provided via the protocol layer so that remote access to <postgres/> is never required, which enhances security.</p>
+        </section>
+
+        <section id="multi-repo">
+            <title>Multiple Repositories</title>
+
+            <p>Multiple repositories allow, for example, a local repository with minimal retention for fast restores and a remote repository with a longer retention for redundancy and access across the enterprise.</p>
         </section>
 
         <section id="backup-types">
@@ -126,9 +132,9 @@
         </section>
 
         <section id="object-store-support">
-            <title>S3 and Azure Compatible Object Store Support</title>
+            <title>S3, Azure, and GCS Compatible Object Store Support</title>
 
-            <p><backrest/> repositories can be located in <proper>S3</proper> and <proper>Azure</proper> compatible object stores to allow for virtually unlimited capacity and retention.</p>
+            <p><backrest/> repositories can be located in <proper>S3</proper>, <proper>Azure</proper>, and GCS compatible object stores to allow for virtually unlimited capacity and retention.</p>
         </section>
 
         <section id="encryption">
@@ -159,13 +165,7 @@
     <section id="contributions">
         <title>Contributions</title>
 
-        <p>Contributions to <backrest/> are always welcome!
-
-        Code fixes or new features can be submitted via pull requests.  Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>.  You may want to check the <link url="{[github-url-wiki-backlog]}">Feature Backlog</link> to see if your suggestion has already been submitted.
-
-        Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>.  Please provide as much information as possible to aid in determining the cause of the problem.
-
-        You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.</p>
+        <p>Contributions to <backrest/> are always welcome! Please see our <link url="{[github-url-contributing]}">Contributing Guidelines</link> for details on how to contribute features, improvements or issues.</p>
     </section>
 
     <section id="support">

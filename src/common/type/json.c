@@ -229,7 +229,7 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
         FUNCTION_TEST_PARAM_P(UINT, jsonPos);
     FUNCTION_TEST_END();
 
-    String *result = strNew("");
+    String *result = strNew();
 
     if (json[*jsonPos] != '"')
         THROW_FMT(JsonFormatError, "expected '\"' at '%s'", json + *jsonPos);
@@ -254,41 +254,57 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
                     noEscapeSize = 0;
                 }
 
-                (*jsonPos)++;;
+                (*jsonPos)++;
 
                 switch (json[*jsonPos])
                 {
                     case '"':
-                            strCatChr(result, '"');
+                        strCatChr(result, '"');
                         break;
 
                     case '\\':
-                            strCatChr(result, '\\');
+                        strCatChr(result, '\\');
                         break;
 
                     case '/':
-                            strCatChr(result, '/');
+                        strCatChr(result, '/');
                         break;
 
                     case 'n':
-                            strCatChr(result, '\n');
+                        strCatChr(result, '\n');
                         break;
 
                     case 'r':
-                            strCatChr(result, '\r');
+                        strCatChr(result, '\r');
                         break;
 
                     case 't':
-                            strCatChr(result, '\t');
+                        strCatChr(result, '\t');
                         break;
 
                     case 'b':
-                            strCatChr(result, '\b');
+                        strCatChr(result, '\b');
                         break;
 
                     case 'f':
-                            strCatChr(result, '\f');
+                        strCatChr(result, '\f');
                         break;
+
+                    case 'u':
+                    {
+                        (*jsonPos)++;
+
+                        // We don't know how to decode anything except ASCII so fail if it looks like Unicode
+                        if (strncmp(json + *jsonPos, "00", 2) != 0)
+                            THROW_FMT(JsonFormatError, "unable to decode '%.4s'", json + *jsonPos);
+
+                        // Decode char
+                        (*jsonPos) += 2;
+                        strCatChr(result, (char)cvtZToUIntBase(strZ(strNewN(json + *jsonPos, 2)), 16));
+                        (*jsonPos) += 1;
+
+                        break;
+                    }
 
                     default:
                         THROW_FMT(JsonFormatError, "invalid escape character '%c'", json[*jsonPos]);
@@ -515,26 +531,20 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
     {
         // String
         case '"':
-        {
             result = varNewStr(jsonToStrInternal(json, jsonPos));
             break;
-        }
 
         // Integer
         case '-':
         case '0' ... '9':
-        {
             result = jsonToNumberInternal(json, jsonPos);
             break;
-        }
 
         // Boolean
         case 't':
         case 'f':
-        {
             result = varNewBool(jsonToBoolInternal(json, jsonPos));
             break;
-        }
 
         // Null
         case 'n':
@@ -549,24 +559,18 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
 
         // Array
         case '[':
-        {
             result = varNewVarLst(jsonToVarLstInternal(json, jsonPos));
             break;
-        }
 
         // Object
         case '{':
-        {
             result = varNewKv(jsonToKvInternal(json, jsonPos));
             break;
-        }
 
         // Object
         default:
-        {
             THROW_FMT(JsonFormatError, "invalid type at '%s'", json + *jsonPos);
             break;
-        }
     }
 
     jsonConsumeWhiteSpace(json, jsonPos);
@@ -614,7 +618,7 @@ jsonFromInt(int number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtIntToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNew(working));
+    FUNCTION_TEST_RETURN(strNewZ(working));
 }
 
 String *
@@ -627,7 +631,7 @@ jsonFromInt64(int64_t number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtInt64ToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNew(working));
+    FUNCTION_TEST_RETURN(strNewZ(working));
 }
 
 String *
@@ -640,7 +644,7 @@ jsonFromUInt(unsigned int number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtUIntToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNew(working));
+    FUNCTION_TEST_RETURN(strNewZ(working));
 }
 
 String *
@@ -653,7 +657,7 @@ jsonFromUInt64(uint64_t number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtUInt64ToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNew(working));
+    FUNCTION_TEST_RETURN(strNewZ(working));
 }
 
 /**********************************************************************************************************************************/
@@ -705,46 +709,32 @@ jsonFromStrInternal(String *json, const String *string)
                     switch (stringChr)
                     {
                         case '"':
-                        {
                             strCatZ(json, "\\\"");
                             break;
-                        }
 
                         case '\\':
-                        {
                             strCatZ(json, "\\\\");
                             break;
-                        }
 
                         case '\n':
-                        {
                             strCatZ(json, "\\n");
                             break;
-                        }
 
                         case '\r':
-                        {
                             strCatZ(json, "\\r");
                             break;
-                        }
 
                         case '\t':
-                        {
                             strCatZ(json, "\\t");
                             break;
-                        }
 
                         case '\b':
-                        {
                             strCatZ(json, "\\b");
                             break;
-                        }
 
                         case '\f':
-                        {
                             strCatZ(json, "\\f");
                             break;
-                        }
                     }
 
                     break;
@@ -779,7 +769,7 @@ jsonFromStr(const String *string)
         FUNCTION_TEST_PARAM(STRING, string);
     FUNCTION_TEST_END();
 
-    String *json = strNew("");
+    String *json = strNew();
     jsonFromStrInternal(json, string);
 
     FUNCTION_TEST_RETURN(json);
@@ -797,7 +787,7 @@ jsonFromKvInternal(const KeyValue *kv)
 
     ASSERT(kv != NULL);
 
-    String *result = strNew("{");
+    String *result = strNewZ("{");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -823,17 +813,15 @@ jsonFromKvInternal(const KeyValue *kv)
                 switch (varType(value))
                 {
                     case varTypeKeyValue:
-                    {
                         strCat(result, jsonFromKvInternal(kvDup(varKv(value))));
                         break;
-                    }
 
                     case varTypeVariantList:
                     {
                         // If the array is empty, then do not add formatting, else process the array.
                         if (varVarLst(value) == NULL)
                             strCat(result, NULL_STR);
-                        else if (varLstSize(varVarLst(value)) == 0)
+                        else if (varLstEmpty(varVarLst(value)))
                             strCatZ(result, "[]");
                         else
                         {
@@ -878,16 +866,12 @@ jsonFromKvInternal(const KeyValue *kv)
 
                     // String
                     case varTypeString:
-                    {
                         jsonFromStrInternal(result, varStr(value));
                         break;
-                    }
 
                     default:
-                    {
                         strCat(result, varStrForce(value));
                         break;
-                    }
                 }
             }
         }
@@ -946,7 +930,7 @@ jsonFromVar(const Variant *var)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *jsonStr = strNew("");
+        String *jsonStr = strNew();
 
         // If VariantList then process each item in the array. Currently the list must be KeyValue types.
         if (var == NULL)
@@ -974,7 +958,7 @@ jsonFromVar(const Variant *var)
             const VariantList *vl = varVarLst(var);
 
             // If not an empty array
-            if (varLstSize(vl) > 0)
+            if (!varLstEmpty(vl))
             {
                 strCatZ(jsonStr, "[");
 

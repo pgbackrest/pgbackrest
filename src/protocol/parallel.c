@@ -8,11 +8,11 @@ Protocol Parallel Executor
 
 #include "common/debug.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
-#include "common/type/object.h"
 #include "protocol/command.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
@@ -34,8 +34,6 @@ struct ProtocolParallel
 
     ProtocolParallelJobState state;                                 // Overall state of job processing
 };
-
-OBJECT_DEFINE_FREE(PROTOCOL_PARALLEL);
 
 /**********************************************************************************************************************************/
 ProtocolParallel *
@@ -146,7 +144,7 @@ protocolParallelProcess(ProtocolParallel *this)
         // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
         struct timeval timeoutSelect;
         timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-        timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
+        timeoutSelect.tv_usec = (suseconds_t)(this->timeout % MSEC_PER_SEC * 1000);
 
         // Determine if there is data to be read
         int completed = select(fdMax + 1, &selectSet, NULL, NULL, &timeoutSelect);
@@ -269,7 +267,7 @@ protocolParallelDone(ProtocolParallel *this)
     ASSERT(this->state != protocolParallelJobStatePending);
 
     // If there are no jobs left then we are done
-    if (this->state != protocolParallelJobStateDone && lstSize(this->jobList) == 0)
+    if (this->state != protocolParallelJobStateDone && lstEmpty(this->jobList))
         this->state = protocolParallelJobStateDone;
 
     FUNCTION_LOG_RETURN(BOOL, this->state == protocolParallelJobStateDone);
@@ -280,6 +278,6 @@ String *
 protocolParallelToLog(const ProtocolParallel *this)
 {
     return strNewFmt(
-        "{state: %s, clientTotal: %u, jobTotal: %u}", protocolParallelJobToConstZ(this->state), lstSize(this->clientList),
+        "{state: %s, clientTotal: %u, jobTotal: %u}", strZ(strIdToStr(this->state)), lstSize(this->clientList),
         lstSize(this->jobList));
 }

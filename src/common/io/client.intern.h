@@ -5,15 +5,16 @@ Io Client Interface Internal
 #define COMMON_IO_CLIENT_INTERN_H
 
 #include "common/io/client.h"
+#include "common/io/session.h"
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Interface
 ***********************************************************************************************************************************/
 typedef struct IoClientInterface
 {
-    // Type used to identify the client. This is stored as a pointer to a String pointer so it can be used with an existing String
-    // constant (e.g. created with STRING_EXTERN()) without needing to be copied.
-    const String *const *type;
+    // Type used to identify the client
+    StringId type;
 
     // Client name, usually host:port or some other unique indentifier
     const String *(*name)(void *driver);

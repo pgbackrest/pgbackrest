@@ -14,8 +14,6 @@ Backup Manifest Handler
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "common/type/mcv.h"
-#include "common/type/object.h"
-#include "info/info.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -151,22 +149,10 @@ Object type
 ***********************************************************************************************************************************/
 struct Manifest
 {
-    MemContext *memContext;                                         // Context that contains the Manifest
-
-    Info *info;                                                     // Base info object
+    ManifestPub pub;                                                // Publicly accessible variables
     StringList *ownerList;                                          // List of users/groups
     StringList *referenceList;                                      // List of file references
-
-    ManifestData data;                                              // Manifest data and options
-    List *targetList;                                               // List of targets
-    List *pathList;                                                 // List of paths
-    List *fileList;                                                 // List of files
-    List *linkList;                                                 // List of links
-    List *dbList;                                                   // List of databases
 };
-
-OBJECT_DEFINE_MOVE(MANIFEST);
-OBJECT_DEFINE_FREE(MANIFEST);
 
 /***********************************************************************************************************************************
 Internal functions to add types to their lists
@@ -200,7 +186,7 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     ASSERT(db != NULL);
     ASSERT(db->name != NULL);
 
-    MEM_CONTEXT_BEGIN(lstMemContext(this->dbList))
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.dbList))
     {
         ManifestDb dbAdd =
         {
@@ -209,7 +195,7 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
             .name = strDup(db->name),
         };
 
-        lstAdd(this->dbList, &dbAdd);
+        lstAdd(this->pub.dbList, &dbAdd);
     }
     MEM_CONTEXT_END();
 
@@ -228,7 +214,7 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
     ASSERT(file != NULL);
     ASSERT(file->name != NULL);
 
-    MEM_CONTEXT_BEGIN(lstMemContext(this->fileList))
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
         ManifestFile fileAdd =
         {
@@ -269,7 +255,7 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
             }
         }
 
-        lstAdd(this->fileList, &fileAdd);
+        lstAdd(this->pub.fileList, &fileAdd);
     }
     MEM_CONTEXT_END();
 
@@ -289,7 +275,7 @@ manifestLinkAdd(Manifest *this, const ManifestLink *link)
     ASSERT(link->name != NULL);
     ASSERT(link->destination != NULL);
 
-    MEM_CONTEXT_BEGIN(lstMemContext(this->linkList))
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.linkList))
     {
         ManifestLink linkAdd =
         {
@@ -299,7 +285,7 @@ manifestLinkAdd(Manifest *this, const ManifestLink *link)
             .user = manifestOwnerCache(this, link->user),
         };
 
-        lstAdd(this->linkList, &linkAdd);
+        lstAdd(this->pub.linkList, &linkAdd);
     }
     MEM_CONTEXT_END();
 
@@ -318,7 +304,7 @@ manifestPathAdd(Manifest *this, const ManifestPath *path)
     ASSERT(path != NULL);
     ASSERT(path->name != NULL);
 
-    MEM_CONTEXT_BEGIN(lstMemContext(this->pathList))
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.pathList))
     {
         ManifestPath pathAdd =
         {
@@ -328,7 +314,7 @@ manifestPathAdd(Manifest *this, const ManifestPath *path)
             .user = manifestOwnerCache(this, path->user),
         };
 
-        lstAdd(this->pathList, &pathAdd);
+        lstAdd(this->pub.pathList, &pathAdd);
     }
     MEM_CONTEXT_END();
 
@@ -348,7 +334,7 @@ manifestTargetAdd(Manifest *this, const ManifestTarget *target)
     ASSERT(target->path != NULL);
     ASSERT(target->name != NULL);
 
-    MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.targetList))
     {
         ManifestTarget targetAdd =
         {
@@ -360,7 +346,7 @@ manifestTargetAdd(Manifest *this, const ManifestTarget *target)
             .type = target->type,
         };
 
-        lstAdd(this->targetList, &targetAdd);
+        lstAdd(this->pub.targetList, &targetAdd);
     }
     MEM_CONTEXT_END();
 
@@ -379,17 +365,223 @@ manifestNewInternal(void)
 
     *this = (Manifest)
     {
-        .memContext = memContextCurrent(),
-        .dbList = lstNewP(sizeof(ManifestDb), .comparator = lstComparatorStr),
-        .fileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr),
-        .linkList = lstNewP(sizeof(ManifestLink), .comparator =  lstComparatorStr),
-        .pathList = lstNewP(sizeof(ManifestPath), .comparator =  lstComparatorStr),
+        .pub =
+        {
+            .memContext = memContextCurrent(),
+            .dbList = lstNewP(sizeof(ManifestDb), .comparator = lstComparatorStr),
+            .fileList = lstNewP(sizeof(ManifestFile), .comparator =  lstComparatorStr),
+            .linkList = lstNewP(sizeof(ManifestLink), .comparator =  lstComparatorStr),
+            .pathList = lstNewP(sizeof(ManifestPath), .comparator =  lstComparatorStr),
+            .targetList = lstNewP(sizeof(ManifestTarget), .comparator =  lstComparatorStr),
+        },
         .ownerList = strLstNew(),
         .referenceList = strLstNew(),
-        .targetList = lstNewP(sizeof(ManifestTarget), .comparator =  lstComparatorStr),
     };
 
     FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Ensure that symlinks do not point to the same file, directory, or subdirectory of another link
+
+There are two implementations: manifestLinkCheck(), which is externed, and manifestLinkCheckOne(), which is intended to be
+used internally during processing. manifestLinkCheck() works simply by calling manifestLinkCheckOne() for every link in the target
+list. manifestLinkCheckOne() is optimized to work quickly on a single link.
+***********************************************************************************************************************************/
+// Data needed in link list
+typedef struct ManifestLinkCheckItem
+{
+    const String *path;                                             // Link destination path terminated with /
+    const String *file;                                             // Link file if a file link
+    unsigned int targetIdx;                                         // Index of target used for error messages
+} ManifestLinkCheckItem;
+
+// Persistent data needed during processing of manifestLinkCheck/One()
+typedef struct ManifestLinkCheck
+{
+    const String *basePath;                                         // Base data path (initialized on first call)
+    List *linkList;                                                 // Current list of link destination paths
+} ManifestLinkCheck;
+
+// Helper to initialize the link data
+static ManifestLinkCheck
+manifestLinkCheckInit(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN((ManifestLinkCheck){.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)});
+}
+
+// Helper to check a single link specified by targetIdx
+static void
+manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigned int targetIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM_P(VOID, linkCheck);
+        FUNCTION_LOG_PARAM(UINT, targetIdx);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(linkCheck != NULL);
+    ASSERT(linkCheck->linkList != NULL);
+    ASSERT(targetIdx < manifestTargetTotal(this));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const ManifestTarget *target1 = manifestTarget(this, targetIdx);
+
+        // Only check link targets
+        if (target1->type == manifestTargetTypeLink)
+        {
+            // Create link destination path for comparison with other paths. It must end in / so subpaths can be detected without
+            // matching valid partial path names at the end of the path.
+            const String *path = NULL;
+
+            MEM_CONTEXT_BEGIN(lstMemContext(linkCheck->linkList))
+            {
+                path = strNewFmt("%s/", strZ(manifestTargetPath(this, target1)));
+
+                // Get base bath
+                if (linkCheck->basePath == NULL)
+                {
+                    linkCheck->basePath = strNewFmt(
+                        "%s/", strZ(manifestTargetPath(this, manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR))));
+                }
+            }
+            MEM_CONTEXT_END();
+
+            // Check that link destination is not in base data path
+            if (strBeginsWith(path, linkCheck->basePath))
+            {
+                THROW_FMT(
+                    LinkDestinationError,
+                    "link '%s' destination '%s' is in PGDATA",
+                    strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)));
+            }
+
+            // Check if the link destination path already exists
+            const ManifestLinkCheckItem *const link = lstFind(linkCheck->linkList, &path);
+
+            if (link != NULL)
+            {
+                // If both links are files make sure they don't link to the same file
+                if (target1->file != NULL && link->file != NULL)
+                {
+                    if (strEq(target1->file, link->file))
+                    {
+                        const ManifestTarget *const target2 = manifestTarget(this, link->targetIdx);
+
+                        THROW_FMT(
+                            LinkDestinationError,
+                            "link '%s' (%s/%s) destination is the same file as link '%s' (%s/%s)",
+                            strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)), strZ(target1->file),
+                            strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)), strZ(target2->file));
+                    }
+                }
+                // Else error because one of the links is a path and cannot link to the same path as another file/path link
+                else
+                {
+                    const ManifestTarget *const target2 = manifestTarget(this, link->targetIdx);
+
+                    THROW_FMT(
+                        LinkDestinationError,
+                        "link '%s' (%s) destination is the same directory as link '%s' (%s)",
+                        strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)),
+                        strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
+                }
+            }
+            // Else add to the link list and check against other links
+            else
+            {
+                // Add the link destination path and sort
+                lstAdd(linkCheck->linkList, &(ManifestLinkCheckItem){.path = path, .file = target1->file, .targetIdx = targetIdx});
+                lstSort(linkCheck->linkList, sortOrderAsc);
+
+                // Find the path in the sorted list
+                unsigned int linkIdx = lstFindIdx(linkCheck->linkList, &path);
+                ASSERT(linkIdx != LIST_NOT_FOUND);
+
+                // Check path links against other links (file links have already been checked)
+                if (target1->file == NULL)
+                {
+                    // Check the link destination path to be sure it is not a subpath of a prior link destination path
+                    for (unsigned int priorLinkIdx = linkIdx - 1; (int)priorLinkIdx >= 0; priorLinkIdx--)
+                    {
+                        const ManifestLinkCheckItem *const priorLink = lstGet(linkCheck->linkList, priorLinkIdx);
+
+                        // Skip file links since they are allowed to be in the same path with each other and in the parent path of a
+                        // linked destination path.
+                        if (priorLink->file != NULL)
+                            continue;
+
+                        if (strBeginsWith(path, priorLink->path))
+                        {
+                            const ManifestTarget *const target2 = manifestTarget(this, priorLink->targetIdx);
+
+                            THROW_FMT(
+                                LinkDestinationError,
+                                "link '%s' (%s) destination is a subdirectory of link '%s' (%s)",
+                                strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)),
+                                strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
+                        }
+
+                        // Stop once the first prior path link has been checked since it must be a parent (if there is one)
+                        break;
+                    }
+
+                    // Check the link destination path to be sure it is not a parent path of a subsequent link destination path
+                    for (unsigned int nextLinkIdx = linkIdx + 1; nextLinkIdx < lstSize(linkCheck->linkList); nextLinkIdx++)
+                    {
+                        const ManifestLinkCheckItem *const nextLink = lstGet(linkCheck->linkList, nextLinkIdx);
+
+                        // Skip file links since they are allowed to be in the same path with each other and in the parent path of a
+                        // linked destination path.
+                        if (nextLink->file != NULL)
+                            continue;
+
+                        if (strBeginsWith(nextLink->path, path))
+                        {
+                            const ManifestTarget *const target2 = manifestTarget(this, nextLink->targetIdx);
+
+                            THROW_FMT(
+                                LinkDestinationError,
+                                "link '%s' (%s) destination is a subdirectory of link '%s' (%s)",
+                                strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)),
+                                strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)));
+                        }
+
+                        // Stop once the first next path link has been checked since it must be a subpath (if there is one)
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+manifestLinkCheck(const Manifest *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Check all links
+        ManifestLinkCheck linkCheck = manifestLinkCheckInit();
+
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(this); targetIdx++)
+            manifestLinkCheckOne(this, &linkCheck, targetIdx);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -405,6 +597,7 @@ typedef struct ManifestBuildData
     RegExp *tempRelationExp;                                        // Identify temp relations
     RegExp *standbyExp;                                             // Identify files that must be copied from the primary
     const VariantList *tablespaceList;                              // List of tablespaces in the database
+    ManifestLinkCheck linkCheck;                                    // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
 
@@ -443,7 +636,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
     // Get build data
     ManifestBuildData buildData = *(ManifestBuildData *)data;
-    unsigned int pgVersion = buildData.manifest->data.pgVersion;
+    unsigned int pgVersion = buildData.manifest->pub.data.pgVersion;
 
     // Contruct the name used to identify this file/link/path in the manifest
     const String *manifestName = strNewFmt("%s/%s", strZ(buildData.manifestParentName), strZ(info->name));
@@ -744,7 +937,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
                 // Add a dummy pg_tblspc path entry if it does not already exist.  This entry will be ignored by restore but it is
                 // part of the original manifest format so we need to have it.
-                lstSort(buildData.manifest->pathList, sortOrderAsc);
+                lstSort(buildData.manifest->pub.pathList, sortOrderAsc);
                 const ManifestPath *pathBase = manifestPathFind(buildData.manifest, MANIFEST_TARGET_PGDATA_STR);
 
                 if (manifestPathFindDefault(buildData.manifest, MANIFEST_TARGET_PGTBLSPC_STR, NULL) == NULL)
@@ -827,7 +1020,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             manifestLinkAdd(buildData.manifest, &link);
 
             // Make sure the link is valid
-            manifestLinkCheck(buildData.manifest);
+            manifestLinkCheckOne(buildData.manifest, &buildData.linkCheck, manifestTargetTotal(buildData.manifest) - 1);
 
             // If the link check was successful but the destination does not exist then check it again to generate an error
             if (!linkedInfo.exists)
@@ -839,10 +1032,8 @@ manifestBuildCallback(void *data, const StorageInfo *info)
         // Skip special files
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
-        {
             LOG_WARN_FMT("exclude special file '%s/%s' from backup", strZ(buildData.pgPath), strZ(info->name));
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -877,12 +1068,13 @@ manifestNewBuild(
     MEM_CONTEXT_NEW_BEGIN("Manifest")
     {
         this = manifestNewInternal();
-        this->info = infoNew(NULL);
-        this->data.backrestVersion = strNew(PROJECT_VERSION);
-        this->data.pgVersion = pgVersion;
-        this->data.pgCatalogVersion = pgCatalogVersion;
-        this->data.backupOptionOnline = online;
-        this->data.backupOptionChecksumPage = varNewBool(checksumPage);
+        this->pub.info = infoNew(NULL);
+        this->pub.data.backrestVersion = strNewZ(PROJECT_VERSION);
+        this->pub.data.pgVersion = pgVersion;
+        this->pub.data.pgCatalogVersion = pgCatalogVersion;
+        this->pub.data.backupType = backupTypeFull;
+        this->pub.data.backupOptionOnline = online;
+        this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -895,6 +1087,7 @@ manifestNewBuild(
                 .online = online,
                 .checksumPage = checksumPage,
                 .tablespaceList = tablespaceList,
+                .linkCheck = manifestLinkCheckInit(),
                 .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
                 .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
                 .pgPath = storagePathP(storagePg, NULL),
@@ -977,10 +1170,10 @@ manifestNewBuild(
                 storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
 
             // These may not be in order even if the incoming data was sorted
-            lstSort(this->fileList, sortOrderAsc);
-            lstSort(this->linkList, sortOrderAsc);
-            lstSort(this->pathList, sortOrderAsc);
-            lstSort(this->targetList, sortOrderAsc);
+            lstSort(this->pub.fileList, sortOrderAsc);
+            lstSort(this->pub.linkList, sortOrderAsc);
+            lstSort(this->pub.pathList, sortOrderAsc);
+            lstSort(this->pub.targetList, sortOrderAsc);
 
             // Remove unlogged relations from the manifest.  This can't be done during the initial build because of the requirement
             // to check for _init files which will sort after the vast majority of the relation files.  We could check storage for
@@ -1077,24 +1270,24 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType
     ASSERT(this != NULL);
     ASSERT(copyStart > 0);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         // Store the delta option.  If true we can skip checks that automatically enable delta.
-        this->data.backupOptionDelta = varNewBool(delta);
+        this->pub.data.backupOptionDelta = varNewBool(delta);
 
         // If online then add one second to the copy start time to allow for database updates during the last second that the
         // manifest was being built.  It's up to the caller to actually wait the remainder of the second, but for comparison
         // purposes we want the time when the waiting started.
-        this->data.backupTimestampCopyStart = copyStart + (this->data.backupOptionOnline ? 1 : 0);
+        this->pub.data.backupTimestampCopyStart = copyStart + (this->pub.data.backupOptionOnline ? 1 : 0);
 
         // This value is not needed in this function, but it is needed for resumed manifests and this is last place to set it before
         // processing begins
-        this->data.backupOptionCompressType = compressType;
+        this->pub.data.backupOptionCompressType = compressType;
     }
     MEM_CONTEXT_END();
 
     // Check the manifest for timestamp anomalies that require a delta backup (if delta is not already specified)
-    if (!varBool(this->data.backupOptionDelta))
+    if (!varBool(this->pub.data.backupOptionDelta))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1108,7 +1301,7 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType
                     LOG_WARN_FMT(
                         "file '%s' has timestamp in the future, enabling delta checksum", strZ(manifestPathPg(file->name)));
 
-                    this->data.backupOptionDelta = BOOL_TRUE_VAR;
+                    this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
                     break;
                 }
             }
@@ -1126,23 +1319,23 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, archiveStart);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(manifestPrior != NULL);
     ASSERT(type == backupTypeDiff || type == backupTypeIncr);
-    ASSERT(type != backupTypeDiff || manifestPrior->data.backupType == backupTypeFull);
+    ASSERT(type != backupTypeDiff || manifestPrior->pub.data.backupType == backupTypeFull);
     ASSERT(archiveStart == NULL || strSize(archiveStart) == 24);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         // Set prior backup label
-        this->data.backupLabelPrior = strDup(manifestPrior->data.backupLabel);
+        this->pub.data.backupLabelPrior = strDup(manifestPrior->pub.data.backupLabel);
 
         // Set diff/incr backup type
-        this->data.backupType = type;
+        this->pub.data.backupType = type;
     }
     MEM_CONTEXT_END();
 
@@ -1157,21 +1350,21 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 "HINT: this is normal after restoring from backup or promoting a standby.",
                 strZ(manifestData(manifestPrior)->backupLabel));
 
-            this->data.backupOptionDelta = BOOL_TRUE_VAR;
+            this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
         }
         // Else enable delta if online differs
-        else if (manifestData(manifestPrior)->backupOptionOnline != this->data.backupOptionOnline)
+        else if (manifestData(manifestPrior)->backupOptionOnline != this->pub.data.backupOptionOnline)
         {
             LOG_WARN_FMT(
                 "the online option has changed since the %s backup, enabling delta checksum",
                 strZ(manifestData(manifestPrior)->backupLabel));
 
-            this->data.backupOptionDelta = BOOL_TRUE_VAR;
+            this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
         }
 
         // Check for anomalies between manifests if delta is not already enabled.  This can't be combined with the main comparison
         // loop below because delta changes the behavior of that loop.
-        if (!varBool(this->data.backupOptionDelta))
+        if (!varBool(this->pub.data.backupOptionDelta))
         {
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
             {
@@ -1188,7 +1381,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                             "file '%s' has timestamp earlier than prior backup, enabling delta checksum",
                             strZ(manifestPathPg(file->name)));
 
-                        this->data.backupOptionDelta = BOOL_TRUE_VAR;
+                        this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
                         break;
                     }
 
@@ -1199,7 +1392,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                             "file '%s' has same timestamp as prior but different size, enabling delta checksum",
                             strZ(manifestPathPg(file->name)));
 
-                        this->data.backupOptionDelta = BOOL_TRUE_VAR;
+                        this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
                         break;
                     }
                 }
@@ -1209,9 +1402,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         // Find files to reference in the prior manifest:
         // 1) that don't need to be copied because delta is disabled and the size and timestamp match or size matches and is zero
         // 2) where delta is enabled and size matches so checksum will be verified during backup and the file copied on mismatch
-        bool delta = varBool(this->data.backupOptionDelta);
+        bool delta = varBool(this->pub.data.backupOptionDelta);
 
-        for (unsigned int fileIdx = 0; fileIdx < lstSize(this->fileList); fileIdx++)
+        for (unsigned int fileIdx = 0; fileIdx < lstSize(this->pub.fileList); fileIdx++)
         {
             const ManifestFile *file = manifestFile(this, fileIdx);
             const ManifestFile *filePrior = manifestFileFindDefault(manifestPrior, file->name, NULL);
@@ -1222,7 +1415,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             {
                 manifestFileUpdate(
                     this, file->name, file->size, filePrior->sizeRepo, filePrior->checksumSha1,
-                    VARSTR(filePrior->reference != NULL ? filePrior->reference : manifestPrior->data.backupLabel),
+                    VARSTR(filePrior->reference != NULL ? filePrior->reference : manifestPrior->pub.data.backupLabel),
                     filePrior->checksumPage, filePrior->checksumPageError, filePrior->checksumPageErrorList);
             }
         }
@@ -1262,17 +1455,17 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionStandby);
     FUNCTION_LOG_END();
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         // Save info
-        this->data.backupTimestampStart = timestampStart;
-        this->data.lsnStart = strDup(lsnStart);
-        this->data.archiveStart = strDup(archiveStart);
-        this->data.backupTimestampStop = timestampStop;
-        this->data.lsnStop = strDup(lsnStop);
-        this->data.archiveStop = strDup(archiveStop);
-        this->data.pgId = pgId;
-        this->data.pgSystemId = pgSystemId;
+        this->pub.data.backupTimestampStart = timestampStart;
+        this->pub.data.lsnStart = strDup(lsnStart);
+        this->pub.data.archiveStart = strDup(archiveStart);
+        this->pub.data.backupTimestampStop = timestampStop;
+        this->pub.data.lsnStop = strDup(lsnStop);
+        this->pub.data.archiveStop = strDup(archiveStop);
+        this->pub.data.pgId = pgId;
+        this->pub.data.pgSystemId = pgSystemId;
 
         // Save db list
         if (dbList != NULL)
@@ -1291,18 +1484,18 @@ manifestBuildComplete(
                 manifestDbAdd(this, &db);
             }
 
-            lstSort(this->dbList, sortOrderAsc);
+            lstSort(this->pub.dbList, sortOrderAsc);
         }
 
         // Save options
-        this->data.backupOptionArchiveCheck = optionArchiveCheck;
-        this->data.backupOptionArchiveCopy = optionArchiveCopy;
-        this->data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
-        this->data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
-        this->data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
-        this->data.backupOptionHardLink = optionHardLink;
-        this->data.backupOptionProcessMax = varNewUInt(optionProcessMax);
-        this->data.backupOptionStandby = varNewBool(optionStandby);
+        this->pub.data.backupOptionArchiveCheck = optionArchiveCheck;
+        this->pub.data.backupOptionArchiveCopy = optionArchiveCopy;
+        this->pub.data.backupOptionBufferSize = varNewUInt64(optionBufferSize);
+        this->pub.data.backupOptionCompressLevel = varNewUInt(optionCompressLevel);
+        this->pub.data.backupOptionCompressLevelNetwork = varNewUInt(optionCompressLevelNetwork);
+        this->pub.data.backupOptionHardLink = optionHardLink;
+        this->pub.data.backupOptionProcessMax = varNewUInt(optionProcessMax);
+        this->pub.data.backupOptionStandby = varNewBool(optionStandby);
     }
     MEM_CONTEXT_END();
 
@@ -1406,7 +1599,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     {
         KeyValue *fileKv = varKv(value);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->fileList))
+        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.fileList))
         {
             ManifestLoadFound valueFound = {0};
 
@@ -1496,7 +1689,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     {
         KeyValue *pathKv = varKv(value);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pathList))
+        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.pathList))
         {
             ManifestLoadFound valueFound = {0};
 
@@ -1534,7 +1727,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     {
         KeyValue *linkKv = varKv(value);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->linkList))
+        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.linkList))
         {
             ManifestLoadFound valueFound = {0};
 
@@ -1633,7 +1826,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     {
         KeyValue *dbKv = varKv(value);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->dbList))
+        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.dbList))
         {
             ManifestDb db =
             {
@@ -1650,28 +1843,33 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_BACKUP_STR))
     {
-        MEM_CONTEXT_BEGIN(manifest->memContext)
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             if (strEq(key, MANIFEST_KEY_BACKUP_ARCHIVE_START_STR))
-                manifest->data.archiveStart = strDup(varStr(value));
+                manifest->pub.data.archiveStart = strDup(varStr(value));
             else if (strEq(key, MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR))
-                manifest->data.archiveStop = strDup(varStr(value));
+                manifest->pub.data.archiveStop = strDup(varStr(value));
             else if (strEq(key, MANIFEST_KEY_BACKUP_LABEL_STR))
-                manifest->data.backupLabel = strDup(varStr(value));
+                manifest->pub.data.backupLabel = strDup(varStr(value));
             else if (strEq(key, MANIFEST_KEY_BACKUP_LSN_START_STR))
-                manifest->data.lsnStart = strDup(varStr(value));
+                manifest->pub.data.lsnStart = strDup(varStr(value));
             else if (strEq(key, MANIFEST_KEY_BACKUP_LSN_STOP_STR))
-                manifest->data.lsnStop = strDup(varStr(value));
+                manifest->pub.data.lsnStop = strDup(varStr(value));
             else if (strEq(key, MANIFEST_KEY_BACKUP_PRIOR_STR))
-                manifest->data.backupLabelPrior = strDup(varStr(value));
+                manifest->pub.data.backupLabelPrior = strDup(varStr(value));
             else if (strEq(key, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR))
-                manifest->data.backupTimestampCopyStart = (time_t)varUInt64(value);
+                manifest->pub.data.backupTimestampCopyStart = (time_t)varUInt64(value);
             else if (strEq(key, MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR))
-                manifest->data.backupTimestampStart = (time_t)varUInt64(value);
+                manifest->pub.data.backupTimestampStart = (time_t)varUInt64(value);
             else if (strEq(key, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR))
-                manifest->data.backupTimestampStop = (time_t)varUInt64(value);
+                manifest->pub.data.backupTimestampStop = (time_t)varUInt64(value);
             else if (strEq(key, MANIFEST_KEY_BACKUP_TYPE_STR))
-                manifest->data.backupType = backupType(varStr(value));
+            {
+                manifest->pub.data.backupType = (BackupType)strIdFromStr(stringIdBit5, varStr(value));
+                ASSERT(
+                    manifest->pub.data.backupType == backupTypeFull || manifest->pub.data.backupType == backupTypeDiff ||
+                    manifest->pub.data.backupType == backupTypeIncr);
+            }
         }
         MEM_CONTEXT_END();
     }
@@ -1680,52 +1878,52 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     else if (strEq(section, MANIFEST_SECTION_BACKUP_DB_STR))
     {
         if (strEq(key, MANIFEST_KEY_DB_ID_STR))
-            manifest->data.pgId = varUIntForce(value);
+            manifest->pub.data.pgId = varUIntForce(value);
         else if (strEq(key, MANIFEST_KEY_DB_SYSTEM_ID_STR))
-            manifest->data.pgSystemId = varUInt64(value);
+            manifest->pub.data.pgSystemId = varUInt64(value);
         else if (strEq(key, MANIFEST_KEY_DB_CATALOG_VERSION_STR))
-            manifest->data.pgCatalogVersion = varUIntForce(value);
+            manifest->pub.data.pgCatalogVersion = varUIntForce(value);
         else if (strEq(key, MANIFEST_KEY_DB_VERSION_STR))
-            manifest->data.pgVersion = pgVersionFromStr(varStr(value));
+            manifest->pub.data.pgVersion = pgVersionFromStr(varStr(value));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_BACKUP_OPTION_STR))
     {
-        MEM_CONTEXT_BEGIN(manifest->memContext)
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             // Required options
             if (strEq(key, MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR))
-                manifest->data.backupOptionArchiveCheck = varBool(value);
+                manifest->pub.data.backupOptionArchiveCheck = varBool(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR))
-                manifest->data.backupOptionArchiveCopy = varBool(value);
+                manifest->pub.data.backupOptionArchiveCopy = varBool(value);
             // Historically this option meant to add gz compression
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_STR))
-                manifest->data.backupOptionCompressType = varBool(value) ? compressTypeGz : compressTypeNone;
+                manifest->pub.data.backupOptionCompressType = varBool(value) ? compressTypeGz : compressTypeNone;
             // This new option allows any type of compression to be specified.  It must be parsed after the option above so the
             // value does not get overwritten.  Since options are stored in alpha order this should always be true.
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR))
-                manifest->data.backupOptionCompressType = compressTypeEnum(varStr(value));
+                manifest->pub.data.backupOptionCompressType = compressTypeEnum(varStr(value));
             else if (strEq(key, MANIFEST_KEY_OPTION_HARDLINK_STR))
-                manifest->data.backupOptionHardLink = varBool(value);
+                manifest->pub.data.backupOptionHardLink = varBool(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_ONLINE_STR))
-                manifest->data.backupOptionOnline = varBool(value);
+                manifest->pub.data.backupOptionOnline = varBool(value);
 
             // Options that were added after v1.00 and may not be present in every manifest
             else if (strEq(key, MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR))
-                manifest->data.backupOptionStandby = varNewBool(varBool(value));
+                manifest->pub.data.backupOptionStandby = varNewBool(varBool(value));
             else if (strEq(key, MANIFEST_KEY_OPTION_BUFFER_SIZE_STR))
-                manifest->data.backupOptionBufferSize = varNewUInt(varUIntForce(value));
+                manifest->pub.data.backupOptionBufferSize = varNewUInt(varUIntForce(value));
             else if (strEq(key, MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR))
-                manifest->data.backupOptionChecksumPage = varDup(value);
+                manifest->pub.data.backupOptionChecksumPage = varDup(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR))
-                manifest->data.backupOptionCompressLevel = varNewUInt(varUIntForce(value));
+                manifest->pub.data.backupOptionCompressLevel = varNewUInt(varUIntForce(value));
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR))
-                manifest->data.backupOptionCompressLevelNetwork = varNewUInt(varUIntForce(value));
+                manifest->pub.data.backupOptionCompressLevelNetwork = varNewUInt(varUIntForce(value));
             else if (strEq(key, MANIFEST_KEY_OPTION_DELTA_STR))
-                manifest->data.backupOptionDelta = varDup(value);
+                manifest->pub.data.backupOptionDelta = varDup(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_PROCESS_MAX_STR))
-                manifest->data.backupOptionProcessMax = varNewUInt(varUIntForce(value));
+                manifest->pub.data.backupOptionProcessMax = varNewUInt(varUIntForce(value));
         }
         MEM_CONTEXT_END();
     }
@@ -1763,13 +1961,13 @@ manifestNewLoad(IoRead *read)
         }
         MEM_CONTEXT_END();
 
-        this->info = infoNewLoad(read, manifestLoadCallback, &loadData);
-        this->data.backrestVersion = infoBackrestVersion(this->info);
+        this->pub.info = infoNewLoad(read, manifestLoadCallback, &loadData);
+        this->pub.data.backrestVersion = infoBackrestVersion(this->pub.info);
 
         // Process file defaults
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
         {
-            ManifestFile *file = lstGet(this->fileList, fileIdx);
+            ManifestFile *file = lstGet(this->pub.fileList, fileIdx);
             ManifestLoadFound *found = lstGet(loadData.fileFoundList, fileIdx);
 
             if (!found->group)
@@ -1788,7 +1986,7 @@ manifestNewLoad(IoRead *read)
         // Process link defaults
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(this); linkIdx++)
         {
-            ManifestLink *link = lstGet(this->linkList, linkIdx);
+            ManifestLink *link = lstGet(this->pub.linkList, linkIdx);
             ManifestLoadFound *found = lstGet(loadData.linkFoundList, linkIdx);
 
             if (!found->group)
@@ -1801,7 +1999,7 @@ manifestNewLoad(IoRead *read)
         // Process path defaults
         for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(this); pathIdx++)
         {
-            ManifestPath *path = lstGet(this->pathList, pathIdx);
+            ManifestPath *path = lstGet(this->pub.pathList, pathIdx);
             ManifestLoadFound *found = lstGet(loadData.pathFoundList, pathIdx);
 
             if (!found->group)
@@ -1819,11 +2017,11 @@ manifestNewLoad(IoRead *read)
         //
         // This must happen *after* the default processing because found lists are in natural file order and it is not worth writing
         // comparator routines for them.
-        lstSort(this->dbList, sortOrderAsc);
-        lstSort(this->fileList, sortOrderAsc);
-        lstSort(this->linkList, sortOrderAsc);
-        lstSort(this->pathList, sortOrderAsc);
-        lstSort(this->targetList, sortOrderAsc);
+        lstSort(this->pub.dbList, sortOrderAsc);
+        lstSort(this->pub.fileList, sortOrderAsc);
+        lstSort(this->pub.linkList, sortOrderAsc);
+        lstSort(this->pub.pathList, sortOrderAsc);
+        lstSort(this->pub.targetList, sortOrderAsc);
 
         // Make sure the base path exists
         manifestTargetBase(this);
@@ -1883,57 +2081,57 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     // -----------------------------------------------------------------------------------------------------------------------------
     if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_STR, sectionNext))
     {
-        if (manifest->data.archiveStart != NULL)
+        if (manifest->pub.data.archiveStart != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_ARCHIVE_START_STR,
-                jsonFromStr(manifest->data.archiveStart));
+                jsonFromStr(manifest->pub.data.archiveStart));
         }
 
-        if (manifest->data.archiveStop != NULL)
+        if (manifest->pub.data.archiveStop != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR,
-                jsonFromStr(manifest->data.archiveStop));
+                jsonFromStr(manifest->pub.data.archiveStop));
         }
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LABEL_STR,
-            jsonFromStr(manifest->data.backupLabel));
+            jsonFromStr(manifest->pub.data.backupLabel));
 
-        if (manifest->data.lsnStart != NULL)
+        if (manifest->pub.data.lsnStart != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LSN_START_STR,
-                jsonFromStr(manifest->data.lsnStart));
+                jsonFromStr(manifest->pub.data.lsnStart));
         }
 
-        if (manifest->data.lsnStop != NULL)
+        if (manifest->pub.data.lsnStop != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LSN_STOP_STR,
-                jsonFromStr(manifest->data.lsnStop));
+                jsonFromStr(manifest->pub.data.lsnStop));
         }
 
-        if (manifest->data.backupLabelPrior != NULL)
+        if (manifest->pub.data.backupLabelPrior != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_PRIOR_STR,
-                jsonFromStr(manifest->data.backupLabelPrior));
+                jsonFromStr(manifest->pub.data.backupLabelPrior));
         }
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,
-            jsonFromInt64(manifest->data.backupTimestampCopyStart));
+            jsonFromInt64(manifest->pub.data.backupTimestampCopyStart));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,
-            jsonFromInt64(manifest->data.backupTimestampStart));
+            jsonFromInt64(manifest->pub.data.backupTimestampStart));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,
-            jsonFromInt64(manifest->data.backupTimestampStop));
+            jsonFromInt64(manifest->pub.data.backupTimestampStop));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TYPE_STR,
-            jsonFromStr(backupTypeStr(manifest->data.backupType)));
+            jsonFromStr(strIdToStr(manifest->pub.data.backupType)));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1941,18 +2139,18 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_CATALOG_VERSION_STR,
-            jsonFromUInt(manifest->data.pgCatalogVersion));
+            jsonFromUInt(manifest->pub.data.pgCatalogVersion));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-control-version"),
-            jsonFromUInt(pgControlVersion(manifest->data.pgVersion)));
+            jsonFromUInt(pgControlVersion(manifest->pub.data.pgVersion)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_ID_STR, jsonFromUInt(manifest->data.pgId));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_ID_STR, jsonFromUInt(manifest->pub.data.pgId));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_SYSTEM_ID_STR,
-            jsonFromUInt64(manifest->data.pgSystemId));
+            jsonFromUInt64(manifest->pub.data.pgSystemId));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_VERSION_STR,
-            jsonFromStr(pgVersionToStr(manifest->data.pgVersion)));
+            jsonFromStr(pgVersionToStr(manifest->pub.data.pgVersion)));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1960,76 +2158,76 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR,
-            jsonFromBool(manifest->data.backupOptionArchiveCheck));
+            jsonFromBool(manifest->pub.data.backupOptionArchiveCheck));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR,
-            jsonFromBool(manifest->data.backupOptionArchiveCopy));
+            jsonFromBool(manifest->pub.data.backupOptionArchiveCopy));
 
-        if (manifest->data.backupOptionStandby != NULL)
+        if (manifest->pub.data.backupOptionStandby != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR,
-                jsonFromVar(manifest->data.backupOptionStandby));
+                jsonFromVar(manifest->pub.data.backupOptionStandby));
         }
 
-        if (manifest->data.backupOptionBufferSize != NULL)
+        if (manifest->pub.data.backupOptionBufferSize != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_BUFFER_SIZE_STR,
-                jsonFromVar(manifest->data.backupOptionBufferSize));
+                jsonFromVar(manifest->pub.data.backupOptionBufferSize));
         }
 
-        if (manifest->data.backupOptionChecksumPage != NULL)
+        if (manifest->pub.data.backupOptionChecksumPage != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR,
-                jsonFromVar(manifest->data.backupOptionChecksumPage));
+                jsonFromVar(manifest->pub.data.backupOptionChecksumPage));
         }
 
         // Set the option when compression is turned on.  In older versions this also implied gz compression but in newer versions
         // the type option must also be set if compression is not gz.
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_STR,
-            jsonFromBool(manifest->data.backupOptionCompressType != compressTypeNone));
+            jsonFromBool(manifest->pub.data.backupOptionCompressType != compressTypeNone));
 
-        if (manifest->data.backupOptionCompressLevel != NULL)
+        if (manifest->pub.data.backupOptionCompressLevel != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR,
-                jsonFromVar(manifest->data.backupOptionCompressLevel));
+                jsonFromVar(manifest->pub.data.backupOptionCompressLevel));
         }
 
-        if (manifest->data.backupOptionCompressLevelNetwork != NULL)
+        if (manifest->pub.data.backupOptionCompressLevelNetwork != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
-                jsonFromVar(manifest->data.backupOptionCompressLevelNetwork));
+                jsonFromVar(manifest->pub.data.backupOptionCompressLevelNetwork));
         }
 
         // Set the compression type.  Older versions will ignore this and assume gz compression if the compress option is set.
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR,
-            jsonFromStr(compressTypeStr(manifest->data.backupOptionCompressType)));
+            jsonFromStr(compressTypeStr(manifest->pub.data.backupOptionCompressType)));
 
-        if (manifest->data.backupOptionDelta != NULL)
+        if (manifest->pub.data.backupOptionDelta != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_DELTA_STR,
-                jsonFromVar(manifest->data.backupOptionDelta));
+                jsonFromVar(manifest->pub.data.backupOptionDelta));
         }
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_HARDLINK_STR,
-            jsonFromBool(manifest->data.backupOptionHardLink));
+            jsonFromBool(manifest->pub.data.backupOptionHardLink));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_ONLINE_STR,
-            jsonFromBool(manifest->data.backupOptionOnline));
+            jsonFromBool(manifest->pub.data.backupOptionOnline));
 
-        if (manifest->data.backupOptionProcessMax != NULL)
+        if (manifest->pub.data.backupOptionProcessMax != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_PROCESS_MAX_STR,
-                jsonFromVar(manifest->data.backupOptionProcessMax));
+                jsonFromVar(manifest->pub.data.backupOptionProcessMax));
         }
     }
 
@@ -2257,7 +2455,7 @@ manifestSave(Manifest *this, IoWrite *write)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Files can be added from outside the manifest so make sure they are sorted
-        lstSort(this->fileList, sortOrderAsc);
+        lstSort(this->pub.fileList, sortOrderAsc);
 
         ManifestSaveData saveData =
         {
@@ -2283,7 +2481,7 @@ manifestSave(Manifest *this, IoWrite *write)
         }
 
         saveData.fileGroupDefault = manifestOwnerVar(varStr(mcvResult(fileGroupMcv)));
-        saveData.fileModeDefault = varUInt(mcvResult(fileModeMcv));
+        saveData.fileModeDefault = (mode_t)varUInt(mcvResult(fileModeMcv));
         saveData.filePrimaryDefault = varBool(mcvResult(filePrimaryMcv));
         saveData.fileUserDefault = manifestOwnerVar(varStr(mcvResult(fileUserMcv)));
 
@@ -2322,11 +2520,11 @@ manifestSave(Manifest *this, IoWrite *write)
         }
 
         saveData.pathGroupDefault = manifestOwnerVar(varStr(mcvResult(pathGroupMcv)));
-        saveData.pathModeDefault = varUInt(mcvResult(pathModeMcv));
+        saveData.pathModeDefault = (mode_t)varUInt(mcvResult(pathModeMcv));
         saveData.pathUserDefault = manifestOwnerVar(varStr(mcvResult(pathUserMcv)));
 
         // Save manifest
-        infoSave(this->info, write, manifestSaveCallback, &saveData);
+        infoSave(this->pub.info, write, manifestSaveCallback, &saveData);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -2346,7 +2544,7 @@ manifestValidate(Manifest *this, bool strict)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *error = strNew("");
+        String *error = strNew();
 
         // Validate files
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
@@ -2379,85 +2577,9 @@ manifestValidate(Manifest *this, bool strict)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
-void
-manifestLinkCheck(const Manifest *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Base path used for link checks
-    const ManifestTarget *base = manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR);
-
-    for (unsigned int linkIdx1 = 0; linkIdx1 < manifestTargetTotal(this); linkIdx1++)
-    {
-        const ManifestTarget *link1 = manifestTarget(this, linkIdx1);
-
-        // Only compare links
-        if (link1->type == manifestTargetTypeLink)
-        {
-            // Check that the link is not inside the base data path
-            if (strBeginsWith(
-                    strNewFmt("%s/", strZ(manifestTargetPath(this, link1))),
-                    strNewFmt("%s/", strZ(manifestTargetPath(this, base)))))
-            {
-                THROW_FMT(
-                    LinkDestinationError,
-                    "link '%s' destination '%s' is in PGDATA",
-                    strZ(manifestPathPg(link1->name)), strZ(manifestTargetPath(this, link1)));
-            }
-
-            // Check that no link is a subpath of another link
-            for (unsigned int linkIdx2 = 0; linkIdx2 < manifestTargetTotal(this); linkIdx2++)
-            {
-                const ManifestTarget *link2 = manifestTarget(this, linkIdx2);
-
-                if (link2->type == manifestTargetTypeLink && link1 != link2)
-                {
-                    // Don't check link1 against a file link. If link1 is a file there's no need to compare because they cannot have
-                    // conflicting paths. If link1 is a path we want to make sure that the file link is not located within it but to
-                    // do that we need to wait until the file link is link1 and the path link is link2, which happens on another
-                    // interation of the outer loop.
-                    if (link2->file != NULL)
-                        continue;
-
-                    if (strBeginsWith(
-                            strNewFmt("%s/", strZ(manifestTargetPath(this, link1))),
-                            strNewFmt("%s/", strZ(manifestTargetPath(this, link2)))))
-                    {
-                        THROW_FMT(
-                            LinkDestinationError,
-                            "link '%s' (%s) destination is a subdirectory of or the same directory as link '%s' (%s)",
-                            strZ(manifestPathPg(link1->name)), strZ(manifestTargetPath(this, link1)),
-                            strZ(manifestPathPg(link2->name)), strZ(manifestTargetPath(this, link2)));
-                    }
-                }
-            }
-        }
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
 /***********************************************************************************************************************************
 Db functions and getters/setters
 ***********************************************************************************************************************************/
-const ManifestDb *
-manifestDb(const Manifest *this, unsigned int dbIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(UINT, dbIdx);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstGet(this->dbList, dbIdx));
-}
-
 const ManifestDb *
 manifestDbFind(const Manifest *this, const String *name)
 {
@@ -2469,7 +2591,7 @@ manifestDbFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestDb *result = lstFind(this->dbList, &name);
+    const ManifestDb *result = lstFind(this->pub.dbList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest db list", strZ(name));
@@ -2477,50 +2599,9 @@ manifestDbFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN(result);
 }
 
-// If the database requested is not found in the list, return the default passed rather than throw an error
-const ManifestDb *
-manifestDbFindDefault(const Manifest *this, const String *name, const ManifestDb *dbDefault)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(MANIFEST_DB, dbDefault);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    FUNCTION_TEST_RETURN(lstFindDefault(this->dbList, &name, (void *)dbDefault));
-}
-
-unsigned int
-manifestDbTotal(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize(this->dbList));
-}
-
 /***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
-const ManifestFile *
-manifestFile(const Manifest *this, unsigned int fileIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(UINT, fileIdx);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstGet(this->fileList, fileIdx));
-}
-
 const ManifestFile *
 manifestFileFind(const Manifest *this, const String *name)
 {
@@ -2532,28 +2613,12 @@ manifestFileFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestFile *result = lstFind(this->fileList, &name);
+    const ManifestFile *result = lstFind(this->pub.fileList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strZ(name));
 
     FUNCTION_TEST_RETURN(result);
-}
-
-// If the file requested is not found in the list, return the default passed rather than throw an error
-const ManifestFile *
-manifestFileFindDefault(const Manifest *this, const String *name, const ManifestFile *fileDefault)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(MANIFEST_TARGET, fileDefault);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    FUNCTION_TEST_RETURN(lstFindDefault(this->fileList, &name, (void *)fileDefault));
 }
 
 void
@@ -2567,22 +2632,10 @@ manifestFileRemove(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    if (!lstRemove(this->fileList, &name))
+    if (!lstRemove(this->pub.fileList, &name))
         THROW_FMT(AssertError, "unable to remove '%s' from manifest file list", strZ(name));
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-unsigned int
-manifestFileTotal(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize(this->fileList));
 }
 
 void
@@ -2610,7 +2663,7 @@ manifestFileUpdate(
 
     ManifestFile *file = (ManifestFile *)manifestFileFind(this, name);
 
-    MEM_CONTEXT_BEGIN(lstMemContext(this->fileList))
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
         // Update reference if set
         if (reference != NULL)
@@ -2643,19 +2696,6 @@ manifestFileUpdate(
 Link functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestLink *
-manifestLink(const Manifest *this, unsigned int linkIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(UINT, linkIdx);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstGet(this->linkList, linkIdx));
-}
-
-const ManifestLink *
 manifestLinkFind(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -2666,28 +2706,12 @@ manifestLinkFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestLink *result = lstFind(this->linkList, &name);
+    const ManifestLink *result = lstFind(this->pub.linkList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest link list", strZ(name));
 
     FUNCTION_TEST_RETURN(result);
-}
-
-// If the link requested is not found in the list, return the default passed rather than throw an error
-const ManifestLink *
-manifestLinkFindDefault(const Manifest *this, const String *name, const ManifestLink *linkDefault)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(MANIFEST_TARGET, linkDefault);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    FUNCTION_TEST_RETURN(lstFindDefault(this->linkList, &name, (void *)linkDefault));
 }
 
 void
@@ -2701,22 +2725,10 @@ manifestLinkRemove(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    if (!lstRemove(this->linkList, &name))
+    if (!lstRemove(this->pub.linkList, &name))
         THROW_FMT(AssertError, "unable to remove '%s' from manifest link list", strZ(name));
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-unsigned int
-manifestLinkTotal(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize(this->linkList));
 }
 
 void
@@ -2734,7 +2746,7 @@ manifestLinkUpdate(const Manifest *this, const String *name, const String *desti
 
     ManifestLink *link = (ManifestLink *)manifestLinkFind(this, name);
 
-    MEM_CONTEXT_BEGIN(lstMemContext(this->linkList))
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.linkList))
     {
         if (!strEq(link->destination, destination))
             link->destination = strDup(destination);
@@ -2748,19 +2760,6 @@ manifestLinkUpdate(const Manifest *this, const String *name, const String *desti
 Path functions and getters/setters
 ***********************************************************************************************************************************/
 const ManifestPath *
-manifestPath(const Manifest *this, unsigned int pathIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(UINT, pathIdx);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstGet(this->pathList, pathIdx));
-}
-
-const ManifestPath *
 manifestPathFind(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -2771,28 +2770,12 @@ manifestPathFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestPath *result = lstFind(this->pathList, &name);
+    const ManifestPath *result = lstFind(this->pub.pathList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest path list", strZ(name));
 
     FUNCTION_TEST_RETURN(result);
-}
-
-// If the path requested is not found in the list, return the default passed rather than throw an error
-const ManifestPath *
-manifestPathFindDefault(const Manifest *this, const String *name, const ManifestPath *pathDefault)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(MANIFEST_TARGET, pathDefault);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    FUNCTION_TEST_RETURN(lstFindDefault(this->pathList, &name, (void *)pathDefault));
 }
 
 String *
@@ -2807,7 +2790,7 @@ manifestPathPg(const String *manifestPath)
     // If something in pg_data/
     if (strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGDATA "/")))
     {
-        FUNCTION_TEST_RETURN(strNew(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
+        FUNCTION_TEST_RETURN(strNewZ(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
     }
     // Else not pg_data (this is faster since the length of everything else will be different than pg_data)
     else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
@@ -2822,46 +2805,9 @@ manifestPathPg(const String *manifestPath)
     FUNCTION_TEST_RETURN(NULL);
 }
 
-unsigned int
-manifestPathTotal(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize(this->pathList));
-}
-
 /***********************************************************************************************************************************
 Target functions and getters/setters
 ***********************************************************************************************************************************/
-const ManifestTarget *
-manifestTarget(const Manifest *this, unsigned int targetIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(UINT, targetIdx);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstGet(this->targetList, targetIdx));
-}
-
-const ManifestTarget *
-manifestTargetBase(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR));
-}
-
 const ManifestTarget *
 manifestTargetFind(const Manifest *this, const String *name)
 {
@@ -2873,7 +2819,7 @@ manifestTargetFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestTarget *result = lstFind(this->targetList, &name);
+    const ManifestTarget *result = lstFind(this->pub.targetList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strZ(name));
@@ -2930,22 +2876,10 @@ manifestTargetRemove(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    if (!lstRemove(this->targetList, &name))
+    if (!lstRemove(this->pub.targetList, &name))
         THROW_FMT(AssertError, "unable to remove '%s' from manifest target list", strZ(name));
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-unsigned int
-manifestTargetTotal(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize(this->targetList));
 }
 
 void
@@ -2966,7 +2900,7 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 
     ASSERT((target->file == NULL && file == NULL) || (target->file != NULL && file != NULL));
 
-    MEM_CONTEXT_BEGIN(lstMemContext(this->targetList))
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.targetList))
     {
         if (!strEq(target->path, path))
             target->path = strDup(path);
@@ -2982,45 +2916,6 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-const String *
-manifestCipherSubPass(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(infoCipherPass(this->info));
-}
-
-void
-manifestCipherSubPassSet(Manifest *this, const String *cipherSubPass)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, cipherSubPass);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    infoCipherPassSet(this->info, cipherSubPass);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-const ManifestData *
-manifestData(const Manifest *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(&this->data);
-}
-
 void
 manifestBackupLabelSet(Manifest *this, const String *backupLabel)
 {
@@ -3031,9 +2926,9 @@ manifestBackupLabelSet(Manifest *this, const String *backupLabel)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
-        this->data.backupLabel = strDup(backupLabel);
+        this->pub.data.backupLabel = strDup(backupLabel);
     }
     MEM_CONTEXT_END();
 
@@ -3090,7 +2985,7 @@ manifestLoadFile(const Storage *storage, const String *fileName, CipherType ciph
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 

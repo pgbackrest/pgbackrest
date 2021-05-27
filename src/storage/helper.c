@@ -13,6 +13,7 @@ Storage Helper
 #include "protocol/helper.h"
 #include "storage/azure/storage.h"
 #include "storage/cifs/storage.h"
+#include "storage/gcs/storage.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
 #include "storage/s3/storage.h"
@@ -21,6 +22,7 @@ Storage Helper
 /***********************************************************************************************************************************
 Storage path constants
 ***********************************************************************************************************************************/
+STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_STR,                            STORAGE_SPOOL_ARCHIVE);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
 
@@ -296,7 +298,7 @@ storageRepoPathExpression(const String *expression, const String *path)
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
         else
-            result = strNew(STORAGE_PATH_ARCHIVE);
+            result = strNewZ(STORAGE_PATH_ARCHIVE);
 
         // If a subpath should be appended, determine if it is WAL path, else just append the subpath
         if (path != NULL)
@@ -316,7 +318,7 @@ storageRepoPathExpression(const String *expression, const String *path)
         if (storageHelper.stanza != NULL)
             result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strZ(storageHelper.stanza));
         else
-            result = strNew(STORAGE_PATH_BACKUP);
+            result = strNewZ(STORAGE_PATH_BACKUP);
 
         // Append subpath if provided
         if (path != NULL)
@@ -346,68 +348,83 @@ storageRepoGet(unsigned int repoIdx, bool write)
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionIdxUInt(cfgOptCompressLevelNetwork, repoIdx));
+            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
-    // Use Azure storage
+    // Use local storage
     else
     {
-        const String *type = cfgOptionIdxStr(cfgOptRepoType, repoIdx);
+        const StringId type = cfgOptionIdxStrId(cfgOptRepoType, repoIdx);
 
-        if (strEqZ(type, STORAGE_AZURE_TYPE))
+        switch (type)
         {
-            result = storageAzureNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
-                cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx),
-                strEqZ(cfgOptionIdxStr(cfgOptRepoAzureKeyType, repoIdx), STORAGE_AZURE_KEY_TYPE_SHARED) ?
-                    storageAzureKeyTypeShared : storageAzureKeyTypeSas,
-                cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
-                cfgOptionIdxStrNull(cfgOptRepoAzureHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoAzurePort, repoIdx), ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoAzureVerifyTls, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoAzureCaFile, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoAzureCaPath, repoIdx));
-        }
-        // Use CIFS storage
-        else if (strEqZ(type, STORAGE_CIFS_TYPE))
-        {
-            result = storageCifsNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
-                storageRepoPathExpression);
-        }
-        // Use Posix storage
-        else if (strEqZ(type, STORAGE_POSIX_TYPE))
-        {
-            result = storagePosixNewP(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression);
-        }
-        // Use S3 storage
-        else
-        {
-            // Storage must be S3
-            CHECK(strEqZ(type, STORAGE_S3_TYPE));
+            // Use Azure storage
+            case STORAGE_AZURE_TYPE:
+                result = storageAzureNew(
+                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
+                    cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx),
+                    (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx),
+                    cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
+                    cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
+                    cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx), ioTimeoutMs(),
+                    cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+                break;
 
-            // Set the default port
-            unsigned int port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
+            // Use CIFS storage
+            case STORAGE_CIFS_TYPE:
+                result = storageCifsNew(
+                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
+                    storageRepoPathExpression);
+                break;
 
-            // Extract port from the endpoint and host if it is present
-            const String *endPoint = cfgOptionIdxHostPort(cfgOptRepoS3Endpoint, repoIdx, &port);
-            const String *host = cfgOptionIdxHostPort(cfgOptRepoS3Host, repoIdx, &port);
+            // Use GCS storage
+            case STORAGE_GCS_TYPE:
+                result = storageGcsNew(
+                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
+                    cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx),
+                    (StorageGcsKeyType)cfgOptionIdxStrId(cfgOptRepoGcsKeyType, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoGcsKey, repoIdx), STORAGE_GCS_CHUNKSIZE_DEFAULT,
+                    cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), ioTimeoutMs(),
+                    cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+                break;
 
-            // If the port option was set explicitly then use it in preference to appended ports
-            if (cfgOptionIdxSource(cfgOptRepoS3Port, repoIdx) != cfgSourceDefault)
-                port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
+            // Use S3 storage
+            case STORAGE_S3_TYPE:
+            {
+                // Set the default port
+                unsigned int port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
-            result = storageS3New(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
-                cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
-                strEqZ(cfgOptionIdxStr(cfgOptRepoS3UriStyle, repoIdx), STORAGE_S3_URI_STYLE_HOST) ?
-                    storageS3UriStyleHost : storageS3UriStylePath,
-                cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
-                strEqZ(cfgOptionIdxStr(cfgOptRepoS3KeyType, repoIdx), STORAGE_S3_KEY_TYPE_SHARED) ?
-                    storageS3KeyTypeShared : storageS3KeyTypeAuto,
-                cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
-                STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3CaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3CaPath, repoIdx));
+                // Extract port from the endpoint and host if it is present
+                const String *const endPoint = cfgOptionIdxHostPort(cfgOptRepoS3Endpoint, repoIdx, &port);
+                const String *const host = cfgOptionIdxHostPort(cfgOptRepoStorageHost, repoIdx, &port);
+
+                // If the port option was set explicitly then use it in preference to appended ports
+                if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
+                    port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
+
+                result = storageS3New(
+                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
+                    cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
+                    (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
+                    cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
+                    STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+
+                break;
+            }
+
+            // Use Posix storage. Keep this as the default to prevent code churn.
+            default:
+            {
+                CHECK(type == STORAGE_POSIX_TYPE);
+
+                result = storagePosixNewP(
+                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression);
+                break;
+            }
         }
     }
 
@@ -513,7 +530,14 @@ storageSpoolPathExpression(const String *expression, const String *path)
 
     String *result = NULL;
 
-    if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
+    if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE))
+    {
+        if (path == NULL)
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
+        else
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(storageHelper.stanza), strZ(path));
+    }
+    else if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
     {
         if (path == NULL)
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in", strZ(storageHelper.stanza));

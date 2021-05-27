@@ -81,12 +81,12 @@ test.pl [options]
    --build-only         build the binary (and honor --build-package) but don't run tests
    --build-package      build the package
    --build-max          max processes to use for builds (default 4)
-   --coverage-only      only run coverage tests (as a subset of selected tests)
    --c-only             only run C tests
    --container-only     only run tests that must be run in a container
    --no-performance     do not run performance tests
    --gen-only           only run auto-generation
    --no-gen             do not run code generation
+   --gen-check          check that auto-generated files are correct (used in CI to detect changes)
    --code-count         generate code counts
    --smart              perform bin/package builds only when source timestamps have changed
    --dev                --smart --no-optimize
@@ -105,6 +105,7 @@ test.pl [options]
 
  Report Options:
    --coverage-summary   generate a coverage summary report for the documentation
+   --coverage-only      only run coverage tests (as a subset of selected tests) for the documentation
 
  Configuration Options:
    --psql-bin           path to the psql executables (e.g. /usr/lib/postgresql/9.3/bin/)
@@ -113,6 +114,7 @@ test.pl [options]
    --log-level-test     log level to use for C tests (defaults to OFF)
    --log-level-test-file log level to use for file logging in integration tests (defaults to TRACE)
    --no-log-timestamp   suppress timestamps, timings, etc. Used to generate documentation.
+   --make-cmd           gnu-compatible make command (defaults to make)
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
@@ -134,7 +136,7 @@ my $bClean;
 my $bCleanOnly;
 my $strLogLevel = lc(INFO);
 my $strLogLevelTest = lc(OFF);
-my $strLogLevelTestFile = lc(TRACE);
+my $strLogLevelTestFile = lc(DEBUG);
 my $bNoLogTimestamp = false;
 my $bVmOut = false;
 my @stryModule;
@@ -146,6 +148,7 @@ my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
 my $strTestPath;
+my $strMakeCmd = 'make';
 my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
@@ -166,6 +169,7 @@ my $bCOnly = false;
 my $bContainerOnly = false;
 my $bNoPerformance = false;
 my $bGenOnly = false;
+my $bGenCheck = false;
 my $bNoGen = false;
 my $bCodeCount = false;
 my $bSmart = false;
@@ -191,6 +195,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'clean-only' => \$bCleanOnly,
             'pgsql-bin=s' => \$strPgSqlBin,
             'test-path=s' => \$strTestPath,
+            'make-cmd=s' => \$strMakeCmd,
             'log-level=s' => \$strLogLevel,
             'log-level-test=s' => \$strLogLevelTest,
             'log-level-test-file=s' => \$strLogLevelTestFile,
@@ -220,6 +225,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'container-only' => \$bContainerOnly,
             'no-performance' => \$bNoPerformance,
             'gen-only' => \$bGenOnly,
+            'gen-check' => \$bGenCheck,
             'no-gen' => \$bNoGen,
             'code-count' => \$bCodeCount,
             'smart' => \$bSmart,
@@ -328,7 +334,7 @@ eval
     }
 
     logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF, !$bNoLogTimestamp);
-    &log(INFO, "test begin - log level ${strLogLevel}");
+    &log(INFO, 'test begin on ' . hostArch() . " - log level ${strLogLevel}");
 
     if (@stryModuleTest != 0 && @stryModule != 1)
     {
@@ -353,12 +359,11 @@ eval
     {
         if (!defined($strVm))
         {
-            &log(INFO, "Set --vm=${strVmHost} for coverage testing");
-            $strVm = $strVmHost;
+            confess &log(ERROR, "select a VM for coverage testing");
         }
         elsif ($strVm eq VM_ALL)
         {
-            confess &log(ERROR, "select a single Debian-based VM for coverage testing");
+            confess &log(ERROR, "select a single VM for coverage testing");
         }
     }
 
@@ -450,7 +455,9 @@ eval
                 trim(
                     executeTest(
                         "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
-                            " rsync -rtW --out-format=\"\%n\" --delete --ignore-missing-args" .
+                            " rsync -rtW --out-format=\"\%n\" --delete" .
+                            # This option is not supported on MacOS. The eventual plan is to remove the need for it.
+                            (trim(`uname`) ne 'Darwin' ? ' --ignore-missing-args' : '') .
                             " --exclude=test/result --exclude=repo.manifest" .
                             " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}" .
                             " | grep -E -v '/\$' | cat"))));
@@ -510,6 +517,15 @@ eval
                     push(@stryModifiedList, @stryBuilt);
                 }
 
+                # Error when checking that files have already been generated but they change
+                if ($bGenCheck && @stryBuilt)
+                {
+                    confess &log(
+                        ERROR,
+                        "unexpected autogeneration of version in configure.ac script: " . join(', ', @stryBuilt) . ":\n" .
+                            trim(executeTest("git -C ${strBackRestBase} diff")));
+                }
+
                 &log(INFO,
                     "    autogenerated version in configure.ac script: " . (@stryBuilt ? join(', ', @stryBuilt) : 'no changes'));
             }
@@ -542,9 +558,15 @@ eval
                     $strConfigure =
                         trim($strConfigure) . "\n\n# Generated from src/build/configure.ac sha1 ${strConfigureAcHash}\n";
 
+                    # Remove cache created by autconf
+                    executeTest("rm -rf ${strBackRestBase}/src/build/autom4te.cache");
+
                     # Remove unused options from help
-                    $strConfigure =~ s/^  --((?!bin).)*dir=DIR.*\n//mg;
-                    $strConfigure =~ s/^  --sbindir=DIR.*\n//mg;
+                    my $strDirList =
+                        "sbin|libexec|sysconf|sharedstate|localstate|runstate|lib|include|oldinclude|dataroot|data|info" .
+                        "|locale|man|doc|html|dvi|pdf|ps";
+
+                    $strConfigure =~ s/^  --(${strDirList})*dir=DIR.*\n//mg;
 
                     # Save into the src dir
                     $oStorageBackRest->put(
@@ -556,12 +578,22 @@ eval
                     push(@stryModifiedList, @stryBuilt);
                 }
 
+                # Error when checking that files have already been generated but they change
+                if ($bGenCheck && @stryBuilt)
+                {
+                    confess &log(
+                        ERROR,
+                        "unexpected autogeneration of configure script: " . join(', ', @stryBuilt) . ":\n" .
+                            trim(executeTest("git -C ${strBackRestBase} diff")));
+                }
+
                 &log(INFO, "    autogenerated configure script: " . (@stryBuilt ? join(', ', @stryBuilt) : 'no changes'));
             }
 
             # Auto-generate C files
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bSmart || grep(/^build\//, @stryModifiedList) || grep(/^doc\/xml\/reference\.xml/, @stryModifiedList))
+            if (!$bSmart || grep(/^build\//, @stryModifiedList) || grep(/^doc\/xml\/reference\.xml/, @stryModifiedList) ||
+                grep(/^src\/build\/config\/config\.yaml/, @stryModifiedList))
             {
                 errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
 
@@ -593,6 +625,16 @@ eval
                 };
 
                 my @stryBuilt = buildAll("${strBackRestBase}/src", $rhBuild);
+
+                # Error when checking that files have already been generated but they change
+                if ($bGenCheck && @stryBuilt)
+                {
+                    confess &log(
+                        ERROR,
+                        'unexpected autogeneration of C code: ' . join(', ', @stryBuilt) . ":\n" .
+                            trim(executeTest("git -C ${strBackRestBase} diff")));
+                }
+
                 &log(INFO, "    autogenerated C code: " . (@stryBuilt ? join(', ', @stryBuilt) : 'no changes'));
 
                 if (@stryBuilt)
@@ -612,46 +654,6 @@ eval
             if ($bGenOnly)
             {
                 exit 0;
-            }
-        }
-
-        # Check Perl version against release notes and update version in C code if needed
-        #---------------------------------------------------------------------------------------------------------------------------
-        my $bVersionDev = true;
-        my $strVersionBase;
-
-        if (!$bDev || $bBuildPackage)
-        {
-            # Make sure version number matches the latest release
-            #-----------------------------------------------------------------------------------------------------------------------
-            &log(INFO, "check version info");
-
-            # Load the doc modules dynamically since they are not supported on all systems
-            require pgBackRestDoc::Common::Doc;
-            pgBackRestDoc::Common::Doc->import();
-            require pgBackRestDoc::Custom::DocCustomRelease;
-            pgBackRestDoc::Custom::DocCustomRelease->import();
-
-            my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
-            my $oRelease =
-                (new pgBackRestDoc::Custom::DocCustomRelease(new pgBackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
-            my $strVersion = $oRelease->paramGet('version');
-            $bVersionDev = false;
-            $strVersionBase = $strVersion;
-
-            if ($strVersion =~ /dev$/)
-            {
-                $bVersionDev = true;
-                $strVersionBase = substr($strVersion, 0, length($strVersion) - 3);
-
-                if (PROJECT_VERSION !~ /dev$/ && $oRelease->nodeTest('release-core-list'))
-                {
-                    confess "dev release ${strVersion} must match the program version when core changes have been made";
-                }
-            }
-            elsif ($strVersion ne PROJECT_VERSION)
-            {
-                confess 'unable to find version ' . PROJECT_VERSION . " as the most recent release in ${strReleaseFile}";
             }
         }
 
@@ -677,7 +679,8 @@ eval
             }
 
             executeTest(
-                "rm -rf ${strTestPath}/temp ${strTestPath}/test-* ${strTestPath}/data-*" . ($bDev ? '' : " ${strTestPath}/gcov-*"));
+                "chmod 700 -R ${strTestPath}/test-* 2>&1 || true && rm -rf ${strTestPath}/temp ${strTestPath}/test-*" .
+                    " ${strTestPath}/data-*" . ($bDev ? '' : " ${strTestPath}/gcov-*"));
             $oStorageTest->pathCreate("${strTestPath}/temp", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
             # Remove old lcov dirs -- do it this way so the dirs stay open in finder/explorer, etc.
@@ -788,7 +791,7 @@ eval
                         ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
                     my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace  ? '-lbacktrace' : '';
                     my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
-                    my $strBuildFlags = "CFLAGS=${strCFlags}\nLDFLAGS=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
+                    my $strBuildFlags = "CFLAGS_EXTRA=${strCFlags}\nLDFLAGS_EXTRA=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
                     my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
 
                     my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
@@ -830,14 +833,15 @@ eval
 
                             executeTest(
                                 ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
-                                "bash -c 'cd ${strBuildPath} && ${strBackRestBase}/src/configure${strConfigOptions}'",
+                                "bash -c 'cd ${strBuildPath} && ${strBackRestBase}/src/configure -q${strConfigOptions}'",
                                 {bShowOutputAsync => $bLogDetail});
                         }
 
                         executeTest(
                             ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
-                            "make -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
-                                " --directory ${strBuildPath} CFLAGS='${strCFlags}' LDFLAGS='${strLdFlags}'",
+                            "${strMakeCmd} -s -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
+                                " --directory ${strBuildPath} CFLAGS_EXTRA='${strCFlags}'" .
+                                ($strLdFlags ne '' ? " LDFLAGS_EXTRA='${strLdFlags}'" : ''),
                             {bShowOutputAsync => $bLogDetail});
 
                         if ($strBuildVM ne VM_NONE)
@@ -905,6 +909,8 @@ eval
                         }
 
                         # If dev build then disable static release date used for reproducibility
+                        my $bVersionDev = PROJECT_VERSION =~ /dev$/;
+
                         if ($bVersionDev)
                         {
                             my $strRules = ${$oStorageBackRest->get("${strBuildPath}/debian/rules")};
@@ -920,7 +926,7 @@ eval
 
                         # Update changelog to add experimental version
                         $oStorageBackRest->put("${strBuildPath}/debian/changelog",
-                            "pgbackrest (${strVersionBase}-0." . ($bVersionDev ? 'D' : 'P') . strftime("%Y%m%d%H%M%S", gmtime) .
+                            "pgbackrest (${\PROJECT_VERSION}-0." . ($bVersionDev ? 'D' : 'P') . strftime("%Y%m%d%H%M%S", gmtime) .
                                 ") experimental; urgency=medium\n" .
                             "\n" .
                             '  * Automated experimental ' . ($bVersionDev ? 'development' : 'production') . " build.\n" .
@@ -986,8 +992,8 @@ eval
 
                         # Copy source files
                         executeTest(
-                            "tar --transform='s_^_pgbackrest-release-${strVersionBase}/_'" .
-                                " -czf ${strBuildPath}/SOURCES/${strVersionBase}.tar.gz -C ${strBackRestBase}" .
+                            "tar --transform='s_^_pgbackrest-release-${\PROJECT_VERSION}/_'" .
+                                " -czf ${strBuildPath}/SOURCES/${\PROJECT_VERSION}.tar.gz -C ${strBackRestBase}" .
                                 " src LICENSE");
 
                         # Copy package files
@@ -1016,7 +1022,7 @@ eval
 
                         # Update version number to match current version
                         my $strSpec = ${$oStorageBackRest->get("${strBuildPath}/SPECS/pgbackrest.spec")};
-                        $strSpec =~ s/^Version\:.*$/Version\:\t${strVersionBase}/gm;
+                        $strSpec =~ s/^Version\:.*$/Version\:\t${\PROJECT_VERSION}/gm;
                         $oStorageBackRest->put("${strBuildPath}/SPECS/pgbackrest.spec", $strSpec);
 
                         # Build package
@@ -1136,7 +1142,7 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $strVmHost, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile,
+                        $iVmIdx, $iVmMax, $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile,
                         !$bNoLogTimestamp, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage,
                         $bCoverageSummary, !$bNoOptimize, $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug,
                         $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));

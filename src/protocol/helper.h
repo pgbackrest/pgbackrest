@@ -4,13 +4,15 @@ Protocol Helper
 #ifndef PROTOCOL_HELPER_H
 #define PROTOCOL_HELPER_H
 
+#include "common/type/stringId.h"
+
 /***********************************************************************************************************************************
 Protocol storage type enum
 ***********************************************************************************************************************************/
 typedef enum
 {
-    protocolStorageTypeRepo,
-    protocolStorageTypePg,
+    protocolStorageTypePg = STRID5("pg", 0xf00),
+    protocolStorageTypeRepo = STRID5("repo", 0x7c0b20),
 } ProtocolStorageType;
 
 #include "protocol/client.h"
@@ -23,8 +25,21 @@ Constants
 #define PROTOCOL_SERVICE_REMOTE                                     "remote"
     STRING_DECLARE(PROTOCOL_SERVICE_REMOTE_STR);
 
-#define PROTOCOL_REMOTE_TYPE_PG                                     "pg"
-#define PROTOCOL_REMOTE_TYPE_REPO                                   "repo"
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Is pg local?
+bool pgIsLocal(unsigned int pgIdx);
+
+// Error if PostgreSQL is not local, i.e. pg-host is set
+void pgIsLocalVerify(void);
+
+// Is the repository local?
+bool repoIsLocal(unsigned int repoIdx);
+
+// Error if the repository is not local
+void repoIsLocalVerify(void);
+void repoIsLocalVerifyIdx(unsigned int repoIdx);
 
 /***********************************************************************************************************************************
 Functions
@@ -43,25 +58,6 @@ ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsig
 
 // Free (shutdown) a remote
 void protocolRemoteFree(unsigned int hostId);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Is pg local?
-bool pgIsLocal(unsigned int pgIdx);
-
-// Error if PostgreSQL is not local, i.e. pg-host is set
-void pgIsLocalVerify(void);
-
-// Is the repository local?
-bool repoIsLocal(unsigned int repoIdx);
-
-// Error if the repository is not local
-void repoIsLocalVerify(void);
-
-// Get enum/string for protocol storage type
-ProtocolStorageType protocolStorageTypeEnum(const String *type);
-const String *protocolStorageTypeStr(ProtocolStorageType type);
 
 /***********************************************************************************************************************************
 Destructor

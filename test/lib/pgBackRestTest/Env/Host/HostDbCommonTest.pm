@@ -150,7 +150,6 @@ sub archivePush
         ' --config=' . $self->backrestConfig() .
         ' --log-level-console=warn --archive-push-queue-max=' . int(2 * PG_WAL_SIZE_TEST) .
         ' --stanza=' . $self->stanza() .
-        (defined($iExpectedError) && $iExpectedError == ERROR_UNKNOWN ? ' --repo1-host=bogus' : '') .
         ($bAsync ? '' : ' --no-archive-async') .
         " archive-push" . (defined($strSourceFile) ? " ${strSourceFile}" : '') .
         (defined($strOptionalParam) ? " ${strOptionalParam}" : ''),

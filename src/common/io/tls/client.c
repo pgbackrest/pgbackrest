@@ -11,7 +11,7 @@ TLS Client
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/io/client.intern.h"
+#include "common/io/client.h"
 #include "common/io/io.h"
 #include "common/io/tls/client.h"
 #include "common/io/tls/session.h"
@@ -19,11 +19,6 @@ TLS Client
 #include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
-
-/***********************************************************************************************************************************
-Io client type
-***********************************************************************************************************************************/
-STRING_EXTERN(IO_CLIENT_TLS_TYPE_STR,                               IO_CLIENT_TLS_TYPE);
 
 /***********************************************************************************************************************************
 Statistics constants
@@ -35,9 +30,6 @@ STRING_EXTERN(TLS_STAT_SESSION_STR,                                 TLS_STAT_SES
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define TLS_CLIENT_TYPE                                             TlsClient
-#define TLS_CLIENT_PREFIX                                           tlsClient
-
 typedef struct TlsClient
 {
     MemContext *memContext;                                         // Mem context
@@ -71,11 +63,21 @@ tlsClientToLog(const THIS_VOID)
 /***********************************************************************************************************************************
 Free connection
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_CLIENT, LOG, logLevelTrace)
+static void
+tlsClientFreeResource(THIS_VOID)
 {
+    THIS(TlsClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     SSL_CTX_free(this->context);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Convert an ASN1 string used in certificates to a String
@@ -329,7 +331,7 @@ tlsClientName(THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoClientInterface tlsClientInterface =
 {
-    .type = &IO_CLIENT_TLS_TYPE_STR,
+    .type = IO_CLIENT_TLS_TYPE,
     .name = tlsClientName,
     .open = tlsClientOpen,
     .toLog = tlsClientToLog,

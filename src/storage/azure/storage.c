@@ -7,7 +7,6 @@ Azure Storage
 
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/encode.h"
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
@@ -21,11 +20,6 @@ Azure Storage
 #include "storage/azure/read.h"
 #include "storage/azure/storage.intern.h"
 #include "storage/azure/write.h"
-
-/***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_AZURE_TYPE_STR,                               STORAGE_AZURE_TYPE);
 
 /***********************************************************************************************************************************
 Azure http headers
@@ -71,11 +65,11 @@ struct StorageAzure
 
     const String *container;                                        // Container to store data in
     const String *account;                                          // Account
-    const String *sharedKey;                                        // Shared key
+    const Buffer *sharedKey;                                        // Shared key
     const HttpQuery *sasKey;                                        // SAS key
     const String *host;                                             // Host name
     size_t blockSize;                                               // Block size for multi-block upload
-    const String *uriPrefix;                                        // Account/container prefix
+    const String *pathPrefix;                                       // Account/container prefix
 
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
 };
@@ -87,12 +81,12 @@ Based on the documentation at https://docs.microsoft.com/en-us/rest/api/storages
 ***********************************************************************************************************************************/
 static void
 storageAzureAuth(
-    StorageAzure *this, const String *verb, const String *uri, HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
+    StorageAzure *this, const String *verb, const String *path, HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
         FUNCTION_TEST_PARAM(STRING, verb);
-        FUNCTION_TEST_PARAM(STRING, uri);
+        FUNCTION_TEST_PARAM(STRING, path);
         FUNCTION_TEST_PARAM(HTTP_QUERY, query);
         FUNCTION_TEST_PARAM(STRING, dateTime);
         FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
@@ -100,7 +94,7 @@ storageAzureAuth(
 
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
-    ASSERT(uri != NULL);
+    ASSERT(path != NULL);
     ASSERT(dateTime != NULL);
     ASSERT(httpHeader != NULL);
     ASSERT(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR) != NULL);
@@ -118,7 +112,7 @@ storageAzureAuth(
             httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
 
             // Generate canonical headers
-            String *headerCanonical = strNew("");
+            String *headerCanonical = strNew();
             StringList *headerKeyList = httpHeaderList(httpHeader);
 
             for (unsigned int headerKeyIdx = 0; headerKeyIdx < strLstSize(headerKeyList); headerKeyIdx++)
@@ -132,12 +126,12 @@ storageAzureAuth(
             }
 
             // Generate canonical query
-            String *queryCanonical = strNew("");
+            String *queryCanonical = strNew();
 
             if (query != NULL)
             {
                 StringList *queryKeyList = httpQueryList(query);
-                ASSERT(strLstSize(queryKeyList) > 0);
+                ASSERT(!strLstEmpty(queryKeyList));
 
                 for (unsigned int queryKeyIdx = 0; queryKeyIdx < strLstSize(queryKeyList); queryKeyIdx++)
                 {
@@ -165,23 +159,15 @@ storageAzureAuth(
                 "\n"                                                    // If-Unmodified-Since
                 "\n"                                                    // range
                 "%s"                                                    // Canonicalized headers
-                "/%s%s"                                                 // Canonicalized account/uri
+                "/%s%s"                                                 // Canonicalized account/path
                 "%s",                                                   // Canonicalized query
                 strZ(verb), strEq(contentLength, ZERO_STR) ? "" : strZ(contentLength), contentMd5 == NULL ? "" : strZ(contentMd5),
-                strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(uri), strZ(queryCanonical));
+                strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(path), strZ(queryCanonical));
 
             // Generate authorization header
-            Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strZ(this->sharedKey)));
-            decodeToBin(encodeBase64, strZ(this->sharedKey), bufPtr(keyBin));
-            bufUsedSet(keyBin, bufSize(keyBin));
-
-            char authHmacBase64[45];
-            encodeToStr(
-                encodeBase64, bufPtr(cryptoHmacOne(HASH_TYPE_SHA256_STR, keyBin, BUFSTR(stringToSign))),
-                HASH_TYPE_SHA256_SIZE, authHmacBase64);
-
             httpHeaderPut(
-                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account), authHmacBase64));
+                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account),
+                strZ(strNewEncode(encodeBase64, cryptoHmacOne(HASH_TYPE_SHA256_STR, this->sharedKey, BUFSTR(stringToSign))))));
         }
         // SAS authentication
         else
@@ -201,7 +187,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, param.uri);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
@@ -214,8 +200,8 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Prepend uri prefix
-        param.uri = param.uri == NULL ? this->uriPrefix : strNewFmt("%s%s", strZ(this->uriPrefix), strZ(param.uri));
+        // Prepend path prefix
+        param.path = param.path == NULL ? this->pathPrefix : strNewFmt("%s%s", strZ(this->pathPrefix), strZ(param.path));
 
         // Create header list and add content length
         HttpHeader *requestHeader = param.header == NULL ?
@@ -224,15 +210,18 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         // Set content length
         httpHeaderAdd(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-            param.content == NULL || bufUsed(param.content) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+            param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
         // Calculate content-md5 header if there is content
         if (param.content != NULL)
         {
-            char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-            encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
-            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
+            httpHeaderAdd(
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
+                strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
         }
+
+        // Encode path
+        const String *const path = httpUriEncode(param.path, true);
 
         // Make a copy of the query so it can be modified
         HttpQuery *query =
@@ -241,13 +230,13 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
                 httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Generate authorization header
-        storageAzureAuth(this, verb, httpUriEncode(param.uri, true), query, httpDateFromTime(time(NULL)), requestHeader);
+        storageAzureAuth(this, verb, path, query, httpDateFromTime(time(NULL)), requestHeader);
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, param.uri, .query = query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = param.content);
         }
         MEM_CONTEXT_END();
     }
@@ -292,7 +281,7 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, param.uri);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
@@ -304,7 +293,7 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
         HTTP_RESPONSE,
         storageAzureResponseP(
             storageAzureRequestAsyncP(
-                this, verb, .uri = param.uri, .header = param.header, .query = param.query, .content = param.content),
+                this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content),
             .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 
@@ -313,13 +302,13 @@ General function for listing files to be used by other list routines
 ***********************************************************************************************************************************/
 static void
 storageAzureListInternal(
-    StorageAzure *this, const String *path, const String *expression, bool recurse,
-    void (*callback)(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml),
-    void *callbackData)
+    StorageAzure *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
+    StorageInfoListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
@@ -412,7 +401,7 @@ storageAzureListInternal(
                     MEM_CONTEXT_PRIOR_END();
                 }
 
-                // Get subpath list
+                // Get prefix list
                 XmlNode *blobs = xmlNodeChild(xmlRoot, AZURE_XML_TAG_BLOBS_STR, true);
                 XmlNodeList *blobPrefixList = xmlNodeChildList(blobs, AZURE_XML_TAG_BLOB_PREFIX_STR);
 
@@ -420,14 +409,23 @@ storageAzureListInternal(
                 {
                     const XmlNode *subPathNode = xmlNodeLstGet(blobPrefixList, blobPrefixIdx);
 
-                    // Get subpath name
-                    const String *subPath = xmlNodeContent(xmlNodeChild(subPathNode, AZURE_XML_TAG_NAME_STR, true));
+                    // Get path name
+                    StorageInfo info =
+                    {
+                        .level = level,
+                        .name = xmlNodeContent(xmlNodeChild(subPathNode, AZURE_XML_TAG_NAME_STR, true)),
+                        .exists = true,
+                    };
 
                     // Strip off base prefix and final /
-                    subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
+                    info.name = strSubN(info.name, strSize(basePrefix), strSize(info.name) - strSize(basePrefix) - 1);
 
-                    // Add to list
-                    callback(this, callbackData, subPath, storageTypePath, NULL);
+                    // Add type info if requested
+                    if (level >= storageInfoLevelType)
+                        info.type = storageTypePath;
+
+                    // Callback with info
+                    callback(callbackData, &info);
                 }
 
                 // Get file list
@@ -438,14 +436,30 @@ storageAzureListInternal(
                     const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
 
                     // Get file name
-                    const String *file = xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_NAME_STR, true));
+                    StorageInfo info =
+                    {
+                        .level = level,
+                        .name = xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_NAME_STR, true)),
+                        .exists = true,
+                    };
 
                     // Strip off the base prefix when present
-                    file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
+                    if (!strEmpty(basePrefix))
+                        info.name = strSub(info.name, strSize(basePrefix));
 
-                    // Add to list
-                    callback(
-                        this, callbackData, file, storageTypeFile, xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true));
+                    // Add basic info if requested (no need to add type info since file is default type)
+                    if (level >= storageInfoLevelBasic)
+                    {
+                        XmlNode *property = xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true);
+
+                        info.size = cvtZToUInt64(
+                            strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
+                        info.timeModified = httpDateToTime(
+                            xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
+                    }
+
+                    // Callback with info
+                    callback(callbackData, &info);
                 }
             }
             MEM_CONTEXT_TEMP_END();
@@ -474,15 +488,14 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     ASSERT(file != NULL);
 
     // Attempt to get file info
-    HttpResponse *httpResponse = storageAzureRequestP(this, HTTP_VERB_HEAD_STR, .uri = file, .allowMissing = true);
+    HttpResponse *httpResponse = storageAzureRequestP(this, HTTP_VERB_HEAD_STR, .path = file, .allowMissing = true);
 
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
 
-    // Add basic level info if requested and the file exists
+    // Add basic level info if requested and the file exists (no need to add type info since file is default type)
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
-        result.type = storageTypeFile;
         result.size = cvtZToUInt64(strZ(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_CONTENT_LENGTH_STR)));
         result.timeModified = httpDateToTime(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_LAST_MODIFIED_STR));
     }
@@ -491,56 +504,6 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageAzureInfoListData
-{
-    StorageInfoLevel level;                                         // Level of info to set
-    StorageInfoListCallback callback;                               // User-supplied callback function
-    void *callbackData;                                             // User-supplied callback data
-} StorageAzureInfoListData;
-
-static void
-storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(XML_NODE, xml);
-    FUNCTION_TEST_END();
-
-    (void)this;                                                     // Unused but still logged above for debugging
-    ASSERT(callbackData != NULL);
-    ASSERT(name != NULL);
-
-    StorageAzureInfoListData *data = (StorageAzureInfoListData *)callbackData;
-
-    StorageInfo info =
-    {
-        .name = name,
-        .level = data->level,
-        .exists = true,
-    };
-
-    if (data->level >= storageInfoLevelBasic)
-    {
-        info.type = type;
-
-        // Add additional info for files
-        if (type == storageTypeFile)
-        {
-            ASSERT(xml != NULL);
-
-            info.size =  cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
-            info.timeModified = httpDateToTime(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
-        }
-    }
-
-    data->callback(data->callbackData, &info);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 static bool
 storageAzureInfoList(
     THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
@@ -561,12 +524,7 @@ storageAzureInfoList(
     ASSERT(path != NULL);
     ASSERT(callback != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        StorageAzureInfoListData data = {.level = level, .callback = callback, .callbackData = callbackData};
-        storageAzureListInternal(this, path, param.expression, false, storageAzureInfoListCallback, &data);
-    }
-    MEM_CONTEXT_TEMP_END();
+    storageAzureListInternal(this, path, level, param.expression, false, callback, callbackData);
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -615,27 +573,24 @@ storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
 /**********************************************************************************************************************************/
 typedef struct StorageAzurePathRemoveData
 {
+    StorageAzure *this;                                             // Storage object
     MemContext *memContext;                                         // Mem context to create requests in
     HttpRequest *request;                                           // Async remove request
     const String *path;                                             // Root path of remove
 } StorageAzurePathRemoveData;
 
 static void
-storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
+storageAzurePathRemoveCallback(void *callbackData, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(ENUM, type);
-        (void)xml;                                                  // Unused since no additional data needed for files
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
     ASSERT(callbackData != NULL);
-    ASSERT(name != NULL);
+    ASSERT(info != NULL);
 
-    StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
+    StorageAzurePathRemoveData *data = callbackData;
 
     // Get response from prior async request
     if (data->request != NULL)
@@ -647,12 +602,12 @@ storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const Str
     }
 
     // Only delete files since paths don't really exist
-    if (type == storageTypeFile)
+    if (info->type == storageTypeFile)
     {
         MEM_CONTEXT_BEGIN(data->memContext)
         {
             data->request = storageAzureRequestAsyncP(
-                this, HTTP_VERB_DELETE_STR, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(name)));
+                data->this, HTTP_VERB_DELETE_STR, strNewFmt("%s/%s", strZ(data->path), strZ(info->name)));
         }
         MEM_CONTEXT_END();
     }
@@ -677,8 +632,14 @@ storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageAzurePathRemoveData data = {.memContext = memContextCurrent(), .path = path};
-        storageAzureListInternal(this, path, NULL, true, storageAzurePathRemoveCallback, &data);
+        StorageAzurePathRemoveData data =
+        {
+            .this = this,
+            .memContext = memContextCurrent(),
+            .path = strEq(path, FSLASH_STR) ? EMPTY_STR : path,
+        };
+
+        storageAzureListInternal(this, path, storageInfoLevelType, NULL, true, storageAzurePathRemoveCallback, &data);
 
         // Check response on last async request
         if (data.request != NULL)
@@ -733,7 +694,7 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, container);
         FUNCTION_TEST_PARAM(STRING, account);
-        FUNCTION_LOG_PARAM(ENUM, keyType);
+        FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -765,12 +726,12 @@ storageAzureNew(
             .account = strDup(account),
             .blockSize = blockSize,
             .host = host == NULL ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : host,
-            .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
+            .pathPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 
         // Store shared key or parse sas query
         if (keyType == storageAzureKeyTypeShared)
-            driver->sharedKey = key;
+            driver->sharedKey = bufNewDecode(encodeBase64, key);
         else
             driver->sasKey = httpQueryNewStr(key);
 
@@ -790,7 +751,7 @@ storageAzureNew(
         // Generate starting file id
         cryptoRandomBytes((unsigned char *)&driver->fileId, sizeof(driver->fileId));
 
-        this = storageNew(STORAGE_AZURE_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        this = storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 

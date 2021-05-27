@@ -7,29 +7,25 @@
     <variable-list>
         <!-- Defined OS types -->
         <variable key="os-debian">debian</variable>
-        <variable key="os-centos">centos</variable>
+        <variable key="os-rhel">rhel</variable>
 
         <!-- OS titles -->
         <variable key="os-debian-title">Debian &amp; Ubuntu</variable>
-        <variable key="os-centos-title">RHEL &amp; CentOS 7-8</variable>
+        <variable key="os-rhel-title">RHEL &amp; CentOS 7-8</variable>
 
         <!-- Base PostgreSQL versions -->
         <variable key="os-debian-pg-version">12</variable>
         <variable key="os-debian-pg-version-min">12</variable>
         <variable key="os-debian-pg-version-max">13</variable>
 
-        <variable key="os-centos7-pg-version">9.5</variable>
-        <variable key="os-centos7-pg-version-min">9.2</variable>
-        <variable key="os-centos7-pg-version-max">9.5</variable>
-
-        <variable key="os-centos8-pg-version">10</variable>
-        <variable key="os-centos8-pg-version-min">9.6</variable>
-        <variable key="os-centos8-pg-version-max">11</variable>
+        <variable key="os-rhel-pg-version">10</variable>
+        <variable key="os-rhel-pg-version-min">9.6</variable>
+        <variable key="os-rhel-pg-version-max">11</variable>
 
         <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
         <variable key="package">none</variable>
 
-        <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos7, centos8 -->
+        <!-- Defines the general OS type that will be used to generate commands. Also supported: rhel -->
         <variable key="os-type">debian</variable>
 
         <!-- Will encryption be used in the documentation? It can be useful for testing to omit encryption. -->
@@ -37,26 +33,23 @@
 
         <!-- Common if expressions for testing os-type -->
         <variable key="os-type-is-debian">'{[os-type]}' eq '{[os-debian]}'</variable>
-        <variable key="os-type-is-centos7">'{[os-type]}' eq '{[os-centos]}7'</variable>
-        <variable key="os-type-is-centos8">'{[os-type]}' eq '{[os-centos]}8'</variable>
-        <variable key="os-type-is-centos">({[os-type-is-centos7]} || {[os-type-is-centos8]})</variable>
+        <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:16.04</variable>
-        <variable key="os-image" if="{[os-type-is-centos7]}">centos:7</variable>
-        <variable key="os-image" if="{[os-type-is-centos8]}">centos:8</variable>
+        <variable key="os-image" if="{[os-type-is-rhel]}">centos:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
-        <variable key="user-guide-subtitle" if="{[os-type-is-centos]}">{[os-centos-title]}</variable>
+        <variable key="user-guide-subtitle" if="{[os-type-is-rhel]}">{[os-rhel-title]}</variable>
 
         <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
-        <variable key="user-guide-os" if="{[os-type-is-centos]}">RHEL/CentOS 7-8</variable>
+        <variable key="user-guide-os" if="{[os-type-is-rhel]}">RHEL/CentOS 7-8</variable>
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
         <!-- Path where CA certificates are installed -->
         <variable key="ca-cert-path" if="{[os-type-is-debian]}">/usr/local/share/ca-certificates</variable>
-        <variable key="ca-cert-path" if="{[os-type-is-centos]}">/etc/pki/ca-trust/source/anchors</variable>
+        <variable key="ca-cert-path" if="{[os-type-is-rhel]}">/etc/pki/ca-trust/source/anchors</variable>
 
         <!-- Path where fake certificates are located -->
         <variable key="fake-cert-path-relative">resource/fake-cert</variable>
@@ -67,13 +60,9 @@
         <variable key="pg-version-min" if="{[os-type-is-debian]}">{[os-debian-pg-version-min]}</variable>
         <variable key="pg-version-max" if="{[os-type-is-debian]}">{[os-debian-pg-version-max]}</variable>
 
-        <variable key="pg-version" if="{[os-type-is-centos7]}">{[os-centos7-pg-version]}</variable>
-        <variable key="pg-version-min" if="{[os-type-is-centos7]}">{[os-centos7-pg-version-min]}</variable>
-        <variable key="pg-version-max" if="{[os-type-is-centos7]}">{[os-centos7-pg-version-max]}</variable>
-
-        <variable key="pg-version" if="{[os-type-is-centos8]}">{[os-centos8-pg-version]}</variable>
-        <variable key="pg-version-min" if="{[os-type-is-centos8]}">{[os-centos8-pg-version-min]}</variable>
-        <variable key="pg-version-max" if="{[os-type-is-centos8]}">{[os-centos8-pg-version-max]}</variable>
+        <variable key="pg-version" if="{[os-type-is-rhel]}">{[os-rhel-pg-version]}</variable>
+        <variable key="pg-version-min" if="{[os-type-is-rhel]}">{[os-rhel-pg-version-min]}</variable>
+        <variable key="pg-version-max" if="{[os-type-is-rhel]}">{[os-rhel-pg-version-max]}</variable>
 
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
@@ -82,18 +71,17 @@
         <variable key="wal-level" if="{[pg-version]} &gt;= 9.6">replica</variable>
 
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">13</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-centos7]}">9.6</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-centos8]}">11</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">11</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>
-        <variable key="pg-bin-path" if="{[os-type-is-centos]}">/usr/pgsql-{[pg-version]}/bin</variable>
+        <variable key="pg-bin-path" if="{[os-type-is-rhel]}">/usr/pgsql-{[pg-version]}/bin</variable>
 
         <variable key="pg-bin-upgrade-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version-upgrade]}/bin</variable>
-        <variable key="pg-bin-upgrade-path" if="{[os-type-is-centos]}">/usr/pgsql-{[pg-version-upgrade]}/bin</variable>
+        <variable key="pg-bin-upgrade-path" if="{[os-type-is-rhel]}">/usr/pgsql-{[pg-version-upgrade]}/bin</variable>
 
         <variable key="pg-home-path" if="{[os-type-is-debian]}">/var/lib/postgresql</variable>
-        <variable key="pg-home-path" if="{[os-type-is-centos]}">/var/lib/pgsql</variable>
+        <variable key="pg-home-path" if="{[os-type-is-rhel]}">/var/lib/pgsql</variable>
 
         <variable key="pg-group">postgres</variable>
 
@@ -112,35 +100,35 @@
         <variable if="'{[package]}' ne 'none'" key="backrest-config-demo">/etc/{[project-exe]}.conf</variable>
 
         <variable key="pg-path-default" if="{[os-type-is-debian]}">/var/lib/postgresql/[version]/[cluster]</variable>
-        <variable key="pg-path-default" if="{[os-type-is-centos]}">/var/lib/pgsql/[version]/data</variable>
+        <variable key="pg-path-default" if="{[os-type-is-rhel]}">/var/lib/pgsql/[version]/data</variable>
 
         <variable key="pg-path" if="{[os-type-is-debian]}">/var/lib/postgresql/{[pg-version]}/{[postgres-cluster-demo]}</variable>
-        <variable key="pg-path" if="{[os-type-is-centos]}">/var/lib/pgsql/{[pg-version]}/data</variable>
+        <variable key="pg-path" if="{[os-type-is-rhel]}">/var/lib/pgsql/{[pg-version]}/data</variable>
 
         <variable key="pg-path-upgrade" if="{[os-type-is-debian]}">/var/lib/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}</variable>
-        <variable key="pg-path-upgrade" if="{[os-type-is-centos]}">/var/lib/pgsql/{[pg-version-upgrade]}/data</variable>
+        <variable key="pg-path-upgrade" if="{[os-type-is-rhel]}">/var/lib/pgsql/{[pg-version-upgrade]}/data</variable>
 
         <variable key="spool-path">/var/spool/pgbackrest</variable>
 
         <variable key="postgres-config-demo" if="{[os-type-is-debian]}">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
-        <variable key="postgres-config-demo" if="{[os-type-is-centos]}">{[pg-path]}/postgresql.conf</variable>
+        <variable key="postgres-config-demo" if="{[os-type-is-rhel]}">{[pg-path]}/postgresql.conf</variable>
 
         <variable key="postgres-config-demo-upgrade" if="{[os-type-is-debian]}">/etc/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}/postgresql.conf</variable>
-        <variable key="postgres-config-demo-upgrade" if="{[os-type-is-centos]}">{[pg-path-upgrade]}/postgresql.conf</variable>
+        <variable key="postgres-config-demo-upgrade" if="{[os-type-is-rhel]}">{[pg-path-upgrade]}/postgresql.conf</variable>
 
         <variable key="postgres-hba-demo" if="{[os-type-is-debian]}">/etc/postgresql/{[pg-version]}/{[postgres-cluster-demo]}/pg_hba.conf</variable>
-        <variable key="postgres-hba-demo" if="{[os-type-is-centos]}">{[pg-path]}/pg_hba.conf</variable>
+        <variable key="postgres-hba-demo" if="{[os-type-is-rhel]}">{[pg-path]}/pg_hba.conf</variable>
 
         <variable key="postgres-hba-demo-upgrade" if="{[os-type-is-debian]}">/etc/postgresql/{[pg-version-upgrade]}/{[postgres-cluster-demo]}/pg_hba.conf</variable>
-        <variable key="postgres-hba-demo-upgrade" if="{[os-type-is-centos]}">{[pg-path-upgrade]}/pg_hba.conf</variable>
+        <variable key="postgres-hba-demo-upgrade" if="{[os-type-is-rhel]}">{[pg-path-upgrade]}/pg_hba.conf</variable>
 
         <variable key="postgres-pgpass">{[pg-home-path]}/.pgpass</variable>
 
         <variable key="postgres-log-demo" if="{[os-type-is-debian]}">/var/log/postgresql/postgresql-{[pg-version]}-{[postgres-cluster-demo]}.log</variable>
-        <variable key="postgres-log-demo" if="{[os-type-is-centos]} &amp;&amp; {[pg-version]} &lt; 10">{[pg-path]}/pg_log/postgresql.log</variable>
-        <variable key="postgres-log-demo" if="{[os-type-is-centos]} &amp;&amp; {[pg-version]} &gt;= 10">{[pg-path]}/log/postgresql.log</variable>
+        <variable key="postgres-log-demo" if="{[os-type-is-rhel]} &amp;&amp; {[pg-version]} &lt; 10">{[pg-path]}/pg_log/postgresql.log</variable>
+        <variable key="postgres-log-demo" if="{[os-type-is-rhel]} &amp;&amp; {[pg-version]} &gt;= 10">{[pg-path]}/log/postgresql.log</variable>
 
-        <variable key="postgres-log-pgstartup-demo" if="{[os-type-is-centos]}">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
+        <variable key="postgres-log-pgstartup-demo" if="{[os-type-is-rhel]}">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
 
         <variable key="pg-recovery-file-demo" if="{[pg-version]} &lt; 12">recovery.conf</variable>
         <variable key="pg-recovery-file-demo" if="{[pg-version]} &gt;= 12">postgresql.auto.conf</variable>
@@ -159,6 +147,13 @@
         <variable key="azure-key-type">shared</variable>
         <variable key="azure-key">YXpLZXk=</variable>
 
+        <!-- GCS Settings -->
+        <variable key="gcs-all">n</variable>                        <!-- Build all the documentation with GCS? -->
+        <variable key="gcs-bucket">demo-bucket</variable>
+        <variable key="gcs-repo">demo-repo</variable>
+        <variable key="gcs-key-type">service</variable>
+        <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
+
         <!-- S3 Settings -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
@@ -168,6 +163,9 @@
         <variable key="s3-endpoint">s3.{[s3-region]}.amazonaws.com</variable>
         <variable key="s3-key">accessKey1</variable>
         <variable key="s3-key-secret">verySecretKey1</variable>
+
+        <!-- Is any object store being used to build all the documentation? -->
+        <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y')</variable>
 
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
@@ -222,25 +220,25 @@
         <variable key="pg-cluster-create-upgrade" if="{[os-type-is-debian]}">pg_createcluster {[pg-version-upgrade]} {[postgres-cluster-demo]}</variable>
 
         <variable key="pg-cluster-start" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} start</variable>
-        <variable key="pg-cluster-start" if="{[os-type-is-centos]}">systemctl start postgresql-{[pg-version]}.service</variable>
+        <variable key="pg-cluster-start" if="{[os-type-is-rhel]}">systemctl start postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-start-upgrade" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version-upgrade]} {[postgres-cluster-demo]} start</variable>
-        <variable key="pg-cluster-start-upgrade" if="{[os-type-is-centos]}">systemctl start postgresql-{[pg-version-upgrade]}.service</variable>
+        <variable key="pg-cluster-start-upgrade" if="{[os-type-is-rhel]}">systemctl start postgresql-{[pg-version-upgrade]}.service</variable>
 
         <variable key="pg-cluster-stop" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} stop</variable>
-        <variable key="pg-cluster-stop" if="{[os-type-is-centos]}">systemctl stop postgresql-{[pg-version]}.service</variable>
+        <variable key="pg-cluster-stop" if="{[os-type-is-rhel]}">systemctl stop postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-restart" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} restart</variable>
-        <variable key="pg-cluster-restart" if="{[os-type-is-centos]}">systemctl restart postgresql-{[pg-version]}.service</variable>
+        <variable key="pg-cluster-restart" if="{[os-type-is-rhel]}">systemctl restart postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-reload" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} reload</variable>
-        <variable key="pg-cluster-reload" if="{[os-type-is-centos]}">systemctl reload postgresql-{[pg-version]}.service</variable>
+        <variable key="pg-cluster-reload" if="{[os-type-is-rhel]}">systemctl reload postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-check" if="{[os-type-is-debian]}">pg_lsclusters</variable>
-        <variable key="pg-cluster-check" if="{[os-type-is-centos]}">systemctl status postgresql-{[pg-version]}.service</variable>
+        <variable key="pg-cluster-check" if="{[os-type-is-rhel]}">systemctl status postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-debian]}">pg_lsclusters</variable>
-        <variable key="pg-cluster-check-upgrade" if="{[os-type-is-centos]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
+        <variable key="pg-cluster-check-upgrade" if="{[os-type-is-rhel]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
 
         <!-- Add more tables to make the backup more interesting. This is a rough and ready solution that can be pasted into the
              document where needed to grow the number of files as needed for performance testing. -->
@@ -338,7 +336,7 @@
         ENTRYPOINT service ssh restart &amp;&amp; bash
     </host-define>
 
-    <host-define if="{[os-type-is-centos]}" image="{[host-image]}" from="{[os-image]}">
+    <host-define if="{[os-type-is-rhel]}" image="{[host-image]}" from="{[os-image]}">
         ENV container docker
 
         {[copy-ca-cert]}
@@ -481,7 +479,7 @@
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos]}" user="root" pre="y">
+            <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
                     yum install postgresql-libs
                 </exe-cmd>
@@ -558,16 +556,16 @@
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos]} &amp;&amp; '{[package]}' ne 'yum'" user="root" show="n">
+            <execute if="{[os-type-is-rhel]} &amp;&amp; '{[package]}' ne 'yum'" user="root" show="n">
                 <exe-cmd>yum -y install {[pgbackrest-repo-path]}/{[package]}</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos]} &amp;&amp; '{[package]}' ne 'yum'" user="root" skip="y">
+            <execute if="{[os-type-is-rhel]} &amp;&amp; '{[package]}' ne 'yum'" user="root" skip="y">
                 <exe-cmd>yum install pgbackrest</exe-cmd>
             </execute>
 
-            <execute if="{[os-type-is-centos]} &amp;&amp; '{[package]}' eq 'yum'" user="root">
+            <execute if="{[os-type-is-rhel]} &amp;&amp; '{[package]}' eq 'yum'" user="root">
                 <exe-cmd>yum install pgbackrest</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -616,13 +614,14 @@
         <backrest-config host="{[azure-setup-host]}" file="{[backrest-config-demo]}" owner="{[azure-setup-config-owner]}">
             <title>Configure <proper>Azure</proper></title>
 
-            <backrest-config-option section="global" key="repo1-type">azure</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/{[azure-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-account">{[azure-account]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo1-azure-key-type">{[azure-key-type]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-key">{[azure-key]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-container">{[azure-container]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo1-azure-host">blob.core.windows.net</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-type">azure</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-path">/{[azure-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-account">{[azure-account]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo{[azure-setup-repo-id]}-azure-key-type">{[azure-key-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-key">{[azure-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-container">{[azure-container]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo{[azure-setup-repo-id]}-storage-host">blob.core.windows.net</backrest-config-option>
+            <backrest-config-option if="'{[azure-all]}' ne 'y'" section="global" key="repo{[azure-setup-repo-id]}-retention-full">4</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -636,11 +635,30 @@
             </execute>
 
             <execute user="{[azure-setup-user]}" if="'{[azure-setup-create-container]}' eq 'y'" show='n'>
-                <exe-cmd>{[project-exe]} repo-create</exe-cmd>
+                <exe-cmd>{[project-exe]} --repo={[azure-setup-repo-id]} repo-create</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>Shared access signatures may be used by setting the <br-option>repo1-azure-key-type</br-option> option to <id>sas</id> and the <br-option>repo1-azure-key</br-option> option to the shared access signature token.</p>
+        <p>Shared access signatures may be used by setting the <br-option>repo{[azure-setup-repo-id]}-azure-key-type</br-option> option to <id>sas</id> and the <br-option>repo{[azure-setup-repo-id]}-azure-key</br-option> option to the shared access signature token.</p>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
+    <block-define id="gcs-setup">
+        <p><backrest/> supports locating repositories in <proper>GCS-compatible</proper> object stores. The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically. The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
+
+        <backrest-config host="{[gcs-setup-host]}" file="{[backrest-config-demo]}" owner="{[gcs-setup-config-owner]}">
+            <title>Configure <proper>GCS</proper></title>
+
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-type">gcs</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-path">/{[gcs-repo]}</backrest-config-option>
+            <backrest-config-option if="'{[gcs-key-type]}' ne 'service'" section="global" key="repo{[gcs-setup-repo-id]}-gcs-key-type">{[gcs-key-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-gcs-key">{[gcs-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-gcs-bucket">{[gcs-bucket]}</backrest-config-option>
+
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
+
+        <p>When running in <proper>GCE</proper> set <br-option>repo{[gcs-setup-repo-id]}-gcs-key-type=auto</br-option> to automatically authenticate using the instance service account.</p>
     </block-define>
 
     <!-- ======================================================================================================================= -->
@@ -650,13 +668,15 @@
         <backrest-config host="{[s3-setup-host]}" file="{[backrest-config-demo]}" owner="{[s3-setup-config-owner]}">
             <title>Configure <proper>S3</proper></title>
 
-            <backrest-config-option section="global" key="repo1-type">s3</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/{[s3-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key">{[s3-key]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key-secret">{[s3-key-secret]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-type">s3</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-path">/{[s3-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-key">{[s3-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-key-secret">{[s3-key-secret]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-bucket">{[s3-bucket]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-region">{[s3-region]}</backrest-config-option>
+            <backrest-config-option if="'{[s3-all]}' ne 'y'" section="global" key="repo{[s3-setup-repo-id]}-retention-full">4</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-storage-host" remove="y"/>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -670,7 +690,7 @@
             </execute>
 
             <execute user="{[s3-setup-user]}" if="'{[s3-setup-create-bucket]}' eq 'y'" show='n'>
-                <exe-cmd>{[project-exe]} repo-create</exe-cmd>
+                <exe-cmd>{[project-exe]} --repo={[s3-setup-repo-id]} repo-create</exe-cmd>
             </execute>
         </execute-list>
 
@@ -685,7 +705,7 @@
         <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="mcr.microsoft.com/azure-storage/azurite" os="{[os-type]}" option="-v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio:RELEASE.2020-05-06T23-23-25Z" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example, the <link section="/backup">Backup</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section.  Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -777,7 +797,7 @@
 
         <p if="{[os-type-is-debian]}">{[user-guide-os]} packages for <backrest/> are available at <link url="https://www.postgresql.org/download/linux/ubuntu/">apt.postgresql.org</link>.  If they are not provided for your distribution/version it is easy to download the source and install manually.</p>
 
-        <p if="{[os-type-is-centos]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
+        <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
 
         <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="{[host-option]}"/>
 
@@ -820,7 +840,7 @@
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
-            <execute if="{[os-type-is-centos]}" user="root" pre="y">
+            <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
                     yum install make gcc postgresql{[pg-version-nodot]}-devel
                     openssl-devel libxml2-devel lz4-devel libzstd-devel bzip2-devel
@@ -852,7 +872,7 @@
             <execute if="{[os-type-is-debian]}" user="root">
                 <exe-cmd>adduser {[dash]}-ingroup {[pg-group]} {[dash]}-disabled-password {[dash]}-gecos "" {[br-user]}</exe-cmd>
             </execute>
-            <execute if="{[os-type-is-centos]}" user="root">
+            <execute if="{[os-type-is-rhel]}" user="root">
                 <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
             </execute>
         </execute-list> -->
@@ -916,9 +936,9 @@
                 <postgres-config-option key="log_line_prefix">''</postgres-config-option>
             </postgres-config>
 
-            <p if="{[os-type-is-centos]}">By default {[user-guide-os]} includes the day of the week in the log filename.  This makes automating the user guide a bit more complicated so the <pg-option>log_filename</pg-option> is set to a constant.</p>
+            <p if="{[os-type-is-rhel]}">By default {[user-guide-os]} includes the day of the week in the log filename.  This makes automating the user guide a bit more complicated so the <pg-option>log_filename</pg-option> is set to a constant.</p>
 
-            <postgres-config host="{[host-pg1]}" if="{[os-type-is-centos]}" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg1]}" if="{[os-type-is-rhel]}" file="{[postgres-config-demo]}">
                 <title>Set <pg-option>log_filename</pg-option></title>
 
                 <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
@@ -1005,6 +1025,8 @@
 
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
+
+            <p if="!{[object-any-all]}">Multiple repositories may also be configured. See <link section="/multi-repo">Multiple Repositories</link> for details.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -1012,6 +1034,7 @@
             <title>Azure-Compatible Object Store Support</title>
 
             <block id="azure-setup">
+                <block-variable-replace key="azure-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="azure-setup-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="azure-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -1020,10 +1043,23 @@
         </section>
 
         <!-- =================================================================================================================== -->
+        <section id="gcs-support" if="'{[gcs-all]}' eq 'y'">
+            <title>GCS-Compatible Object Store Support</title>
+
+            <block id="gcs-setup">
+                <block-variable-replace key="gcs-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
+                <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
         <section id="s3-support" if="'{[s3-all]}' eq 'y'">
             <title>S3-Compatible Object Store Support</title>
 
             <block id="s3-setup">
+                <block-variable-replace key="s3-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -1046,7 +1082,7 @@
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             </postgres-config>
 
-            <p>Setting <pg-option>wal_level</pg-option> to at least <pg-setting>{[wal-level]}</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
+            <p><id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived. Setting <pg-option>wal_level</pg-option> to at least <pg-setting>{[wal-level]}</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
 
             <p>The <postgres/> cluster must be restarted after making these changes and before performing a backup.</p>
 
@@ -1113,7 +1149,7 @@
         <section id="create-stanza">
             <title>Create the Stanza</title>
 
-            <p>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
+            <p>The <cmd>stanza-create</cmd> command must be run to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create the stanza and check the configuration</title>
@@ -1252,11 +1288,11 @@
                     <exe-highlight>could not find the database system</exe-highlight>
                 </execute>
 
-                <execute if="{[os-type-is-centos]}" user="root" err-expect="1">
+                <execute if="{[os-type-is-rhel]}" user="root" err-expect="1">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
-                <execute if="{[os-type-is-centos]}" user="root" output="y" err-expect="3">
+                <execute if="{[os-type-is-rhel]}" user="root" output="y" err-expect="3">
                     <exe-cmd>{[pg-cluster-check]}</exe-cmd>
                     <exe-highlight>Failed to start PostgreSQL</exe-highlight>
                 </execute>
@@ -1298,7 +1334,7 @@
     <section id="backup" depend="/quickstart/create-stanza">
         <title>Backup</title>
 
-        <p>The Backup section introduces additional <cmd>backup</cmd> command features.</p>
+        <p>The Backup section introduces additional <cmd>backup</cmd> command features not covered in the <link section="/quickstart/perform-backup">Quick Start - Perform a Backup</link> section.</p>
 
         <!-- SECTION => BACKUP - START-FAST -->
         <section id="option-start-fast">
@@ -1510,6 +1546,8 @@
 
         <p>Generally it is best to retain as many backups as possible to provide a greater window for <link section="/pitr">Point-in-Time Recovery</link>, but practical concerns such as disk space must also be considered.  Retention options remove older backups once they are no longer needed.</p>
 
+        <cmd-description key="expire"/>
+
         <!-- SECTION => RETENTION - FULL -->
         <section id="full">
             <title>Full Backup Retention</title>
@@ -1546,7 +1584,7 @@
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=full
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>expire full backup set\: {[backup-full-first]}|archive retention on backup {[backup-full-second]}|remove archive</exe-highlight>
+                    <exe-highlight>expire full backup set {[backup-full-first]}|archive retention on backup {[backup-full-second]}|remove archive</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -1591,7 +1629,7 @@
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=diff
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>expire diff backup set: {[backup-diff-second]}</exe-highlight>
+                    <exe-highlight>expire diff backup set {[backup-diff-second]}</exe-highlight>
                 </execute>
             </execute-list>
         </section>
@@ -1655,7 +1693,9 @@
     <section id="restore" depend="quickstart/perform-backup">
         <title>Restore</title>
 
-        <p>The Restore section introduces additional <cmd>restore</cmd> command features.</p>
+        <cmd-description key="restore"/>
+
+        <p>The following sections introduce additional <cmd>restore</cmd> command features.</p>
 
         <!-- ******************************************************************************************************************* -->
         <section id="ownership">
@@ -1705,10 +1745,10 @@
 
             <p>There may be cases where it is desirable to selectively restore specific databases from a cluster backup.  This could be done for performance reasons or to move selected databases to a machine that does not have enough space to restore the entire cluster backup.</p>
 
-            <p>To demonstrate this feature two databases are created: test1 and test2.  A fresh backup is run so <backrest/> is aware of the new databases.</p>
+            <p>To demonstrate this feature two databases are created: test1 and test2.</p>
 
             <execute-list host="{[host-pg1]}">
-                <title>Create two test databases and perform a backup</title>
+                <title>Create two test databases</title>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>
@@ -1720,10 +1760,6 @@
                     <exe-cmd>
                         psql -c "create database test2;"
                     </exe-cmd>
-                </execute>
-
-                <execute user="postgres">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=incr backup</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -1744,6 +1780,16 @@
                         psql -c "create table test2_table (id int);
                                  insert into test2_table (id) values (2);" test2
                     </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>A fresh backup is run so <backrest/> is aware of the new databases.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Perform a backup</title>
+
+                <execute user="postgres">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=incr backup</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -1783,6 +1829,8 @@
 
             <p>Stop the cluster and restore only the test2 database.  Built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</p>
 
+            <admonition type="warning">Recovery may error unless <br-option>--type=immediate</br-option> is specified. This is because after consistency is reached <postgres/> will flag zeroed pages as errors even for a full-page write. For <postgres/> &amp;ge; <proper>13</proper> the <pg-option>ignore_invalid_pages</pg-option> setting may be used to ignore invalid pages. In this case it is important to check the logs after recovery to ensure that no invalid pages were reported in the selected databases.</admonition>
+
             <execute-list host="{[host-pg1]}">
                 <title>Restore from last backup including only the test2 database</title>
 
@@ -1792,7 +1840,7 @@
 
                 <execute user="postgres">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                        {[dash]}-db-include=test2 restore</exe-cmd>
+                        {[dash]}-db-include=test2 {[dash]}-type=immediate {[dash]}-target-action=promote restore</exe-cmd>
                 </execute>
 
                 <execute user="root">
@@ -1956,7 +2004,7 @@
             </execute>
         </execute-list>
 
-        <p><backrest/> has automatically generated the recovery settings in <file>{[pg-recovery-file-demo]}</file> so <postgres/> can be started immediately. Once <postgres/> has finished recovery the table will exist again and can be queried.</p>
+        <p><backrest/> has automatically generated the recovery settings in <file>{[pg-recovery-file-demo]}</file> so <postgres/> can be started immediately. <id>%f</id> is how <postgres/> specifies the WAL segment it needs and <id>%p</id> is the location where it should be copied. Once <postgres/> has finished recovery the table will exist again and can be queried.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Start <postgres/> and check that the important table exists</title>
@@ -2109,10 +2157,24 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="azure-support" if="'{[azure-all]}' ne 'y'" depend="/quickstart/configure-archiving">
+    <section id="multi-repo" if="!{[object-any-all]}">
+        <title>Multiple Repositories</title>
+
+        <p>Multiple repositories may be configured as demonstrated in <link section="/s3-support">S3 Support</link>. A potential benefit is the ability to have a local repository for fast restores and a remote repository for redundancy.</p>
+
+        <p>Some commands, e.g. <cmd>stanza-create</cmd>/<cmd>stanza-update</cmd>, will automatically work with all configured repositories while others, e.g. <link section="/delete-stanza">stanza-delete</link>, will require a repository to be specified using the <br-option>repo</br-option> option. See the <link url="command.html">command reference</link> for details on which commands require the repository to be specified.</p>
+
+        <p>Note that the <br-option>repo</br-option> option is not required when only <br-option>repo1</br-option> is configured in order to maintain backward compatibility. However, the <br-option>repo</br-option> option <i>is</i> required when a single repo is configured as, e.g. <br-option>repo2</br-option>. This is to prevent command breakage if a new repository is added later.</p>
+
+        <p>The <cmd>archive-push</cmd> command will always push WAL to the archive in all configured repositories but backups will need to be scheduled individually for each repository. In many cases this is desirable since backup types and retention will vary by repository. Likewise, restores must specify a repository. It is generally better to specify a repository for restores that has low latency/cost even if that means more recovery time. Only restore testing can determine which repository will be most efficient.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="azure-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
         <title>Azure-Compatible Object Store Support</title>
 
         <block id="azure-setup">
+            <block-variable-replace key="azure-setup-repo-id">2</block-variable-replace>
             <block-variable-replace key="azure-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="azure-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="azure-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -2136,25 +2198,28 @@
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
             <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
-                    --log-level-console=info backup</exe-cmd>
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=2
+                    --log-level-console=info backup
+                </exe-cmd>
                 <exe-highlight>no prior backup exists|full backup size</exe-highlight>
             </execute>
         </execute-list>
     </section>
 
     <!-- SECTION => S3-SUPPORT -->
-    <section id="s3-support" if="'{[s3-all]}' ne 'y'" depend="/quickstart/configure-archiving">
+    <section id="s3-support" if="!{[object-any-all]}" depend="/azure-support">
         <title>S3-Compatible Object Store Support</title>
 
         <block id="s3-setup">
+            <block-variable-replace key="s3-setup-repo-id">3</block-variable-replace>
             <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
             <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
         </block>
 
-        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible. If the role is associated with an instance in <proper>AWS</proper> then <backrest/> will automatically retrieve temporary credentials when <br-option>repo1-s3-key-type=auto</br-option>, which means that keys do not need to be explicitly set in <file>{[backrest-config-demo]}</file>.</p>
+        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible. If the role is associated with an instance in <proper>AWS</proper> then <backrest/> will automatically retrieve temporary credentials when <br-option>repo3-s3-key-type=auto</br-option>, which means that keys do not need to be explicitly set in <file>{[backrest-config-demo]}</file>.</p>
 
         <p>This sample <proper>Amazon S3</proper> policy will restrict all reads and writes to the bucket and repository path.</p>
 
@@ -2230,15 +2295,31 @@
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
             <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=3
                     --log-level-console=info backup</exe-cmd>
                 <exe-highlight>no prior backup exists|full backup size</exe-highlight>
             </execute>
         </execute-list>
     </section>
 
-    <!-- SECTION => REPOSITORY HOST -->
-    <section id="delete-stanza" depend="/quickstart/create-stanza">
+    <!-- ======================================================================================================================= -->
+    <section id="gcs-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
+        <title>GCS-Compatible Object Store Support</title>
+
+        <block id="gcs-setup">
+            <block-variable-replace key="gcs-setup-repo-id">4</block-variable-replace>
+            <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
+            <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
+        </block>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
         <title>Delete a Stanza</title>
 
         <cmd-description key="stanza-delete"/>
@@ -2261,10 +2342,13 @@
         </execute-list>
 
         <execute-list host="{[host-pg1]}">
-            <title>Delete the stanza</title>
+            <title>Delete the stanza from one repository</title>
 
             <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-delete</exe-cmd>
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=1
+                    {[dash]}-log-level-console=info stanza-delete
+                </exe-cmd>
                 <exe-highlight>completed successfully</exe-highlight>
             </execute>
 
@@ -2299,10 +2383,10 @@
                 <execute if="{[os-type-is-debian]}" user="root">
                     <exe-cmd>adduser --disabled-password --gecos "" {[br-user]}</exe-cmd>
                 </execute>
-                <execute if="{[os-type-is-centos]}" user="root">
+                <execute if="{[os-type-is-rhel]}" user="root">
                     <exe-cmd>groupadd {[br-group]}</exe-cmd>
                 </execute>
-                <execute if="{[os-type-is-centos]}" user="root">
+                <execute if="{[os-type-is-rhel]}" user="root">
                     <exe-cmd>adduser -g{[br-group]} -n {[br-user]}</exe-cmd>
                 </execute>
             </execute-list>
@@ -2417,38 +2501,36 @@
             <p if="'{[azure-all]}' eq 'y'">Configure Azure-compatible object store if required.</p>
 
             <block id="azure-setup" if="'{[azure-all]}' eq 'y'">
+                <block-variable-replace key="azure-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="azure-setup-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-create-container">n</block-variable-replace>
             </block>
 
+            <p if="'{[gcs-all]}' eq 'y'">Configure GCS-compatible object store if required.</p>
+
+            <block id="gcs-setup" if="'{[gcs-all]}' eq 'y'">
+                <block-variable-replace key="gcs-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="gcs-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
+            </block>
+
             <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
 
             <block id="s3-setup" if="'{[s3-all]}' eq 'y'">
+                <block-variable-replace key="s3-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="s3-setup-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
             </block>
 
-            <p>Create the stanza in the new repository.</p>
+            <p if="!{[object-any-all]}">Create the stanza in the new repository.</p>
 
-            <execute-list host="{[host-repo1]}">
+            <execute-list host="{[host-repo1]}" if="!{[object-any-all]}">
                 <title>Create the stanza</title>
-
-                <!-- Delete the azure stanza so the server can be reused -->
-                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stop</exe-cmd>
-                </execute>
-
-                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-force stanza-delete</exe-cmd>
-                </execute>
-
-                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} start</exe-cmd>
-                </execute>
 
                 <!-- Create the stanza -->
                 <execute user="{[br-user]}" output="y" filter="n">
@@ -2661,7 +2743,7 @@
                 <execute if="{[os-type-is-debian]}" user="root">
                     <exe-cmd>adduser {[dash]}-ingroup {[pg-group]} {[dash]}-disabled-password {[dash]}-gecos "" {[br-user]}</exe-cmd>
                 </execute>
-                <execute if="{[os-type-is-centos]}" user="root">
+                <execute if="{[os-type-is-rhel]}" user="root">
                     <exe-cmd>adduser -g{[pg-group]} -n {[br-user]}</exe-cmd>
                 </execute>
             </execute-list> -->
@@ -2726,9 +2808,9 @@
                 </execute>
             </execute-list>
 
-            <p if="{[os-type-is-centos]}">Create the path where <postgres/> will be restored.</p>
+            <p if="{[os-type-is-rhel]}">Create the path where <postgres/> will be restored.</p>
 
-            <execute-list if="{[os-type-is-centos]}" host="{[host-pg2]}">
+            <execute-list if="{[os-type-is-rhel]}" host="{[host-pg2]}">
                 <title>Create <postgres/> path</title>
 
                 <execute user="postgres">
@@ -2749,7 +2831,7 @@
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
                 </execute>
 
-                <execute user="postgres" if="{[os-type-is-centos]}">
+                <execute user="postgres" if="{[os-type-is-rhel]}">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
                 </execute>
 
@@ -2949,9 +3031,9 @@
 
             <admonition type="note">The <pg-setting>primary_conninfo</pg-setting> setting has been written into the <file>{[pg-recovery-file-demo]}</file> file because it was configured as a <br-option>recovery-option</br-option> in <file>{[project-exe]}.conf</file>. The <br-setting>{[dash]}-type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>{[pg-recovery-file-demo]}</file> file in place if that behavior is preferred.</admonition>
 
-            <p if="{[os-type-is-centos]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
+            <p if="{[os-type-is-rhel]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory.  That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again.  Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
 
-            <postgres-config host="{[host-pg2]}" if="{[os-type-is-centos]}" file="{[postgres-config-demo]}">
+            <postgres-config host="{[host-pg2]}" if="{[os-type-is-rhel]}" file="{[postgres-config-demo]}">
                 <title>Enable <pg-option>hot_standby</pg-option></title>
 
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
@@ -3150,7 +3232,7 @@
                 </execute>
                 <execute user="postgres" output="y">
                     <exe-cmd>cat /var/log/pgbackrest/demo-archive-get-async.log</exe-cmd>
-                    <exe-highlight>found [0-F]{24} in the archive</exe-highlight>
+                    <exe-highlight>found [0-F]{24} in the .* archive</exe-highlight>
                 </execute>
             </execute-list>
         </section>
@@ -3253,7 +3335,7 @@
                 <exe-highlight>Upgrade Complete</exe-highlight>
             </execute>
 
-            <execute user="postgres" output="y" if="{[os-type-is-centos]}">
+            <execute user="postgres" output="y" if="{[os-type-is-rhel]}">
                 <exe-cmd>sh -c 'cd /var/lib/pgsql &amp;&amp;
                         /usr/pgsql-{[pg-version-upgrade]}/bin/pg_upgrade
                             {[dash]}-old-bindir=/usr/pgsql-{[pg-version]}/bin
@@ -3313,12 +3395,12 @@
             </execute>
         </execute-list>
 
-        <p>Before starting the new cluster, the <cmd>stanza-upgrade</cmd> command must be run on the server where the <backrest/> repository is located.</p>
+        <p>Before starting the new cluster, the <cmd>stanza-upgrade</cmd> command must be run.</p>
 
-        <execute-list host="{[host-repo1]}">
+        <execute-list host="{[host-pg1]}">
             <title>Upgrade the stanza</title>
 
-            <execute user="{[br-user]}" output="y">
+            <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-no-online
                     {[dash]}-log-level-console=info stanza-upgrade</exe-cmd>
                 <exe-highlight>completed successfully</exe-highlight>
@@ -3358,7 +3440,7 @@
                 <exe-cmd>pg_dropcluster {[pg-version]} {[postgres-cluster-demo]}</exe-cmd>
             </execute>
 
-            <execute if="{[os-type-is-centos]}" user="root">
+            <execute if="{[os-type-is-rhel]}" user="root">
                 <exe-cmd>rm -rf {[pg-path]}</exe-cmd>
             </execute>
         </execute-list>
@@ -3372,11 +3454,11 @@
                 <exe-cmd>pg_dropcluster {[pg-version]} {[postgres-cluster-demo]}</exe-cmd>
             </execute>
 
-            <execute if="{[os-type-is-centos]}" user="root">
+            <execute if="{[os-type-is-rhel]}" user="root">
                 <exe-cmd>rm -rf {[pg-path]}</exe-cmd>
             </execute>
 
-            <execute user="postgres" if="{[os-type-is-centos]}">
+            <execute user="postgres" if="{[os-type-is-rhel]}">
                 <exe-cmd>
                     mkdir -p -m 700 {[pg-bin-upgrade-path]}
                 </exe-cmd>
@@ -3414,7 +3496,7 @@
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta --type=standby restore</exe-cmd>
             </execute>
 
-            <execute user="postgres" if="{[os-type-is-centos]}">
+            <execute user="postgres" if="{[os-type-is-rhel]}">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
             </execute>
         </execute-list>

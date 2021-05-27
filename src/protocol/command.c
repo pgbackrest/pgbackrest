@@ -8,7 +8,6 @@ Protocol Command
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 #include "protocol/command.h"
 
 /***********************************************************************************************************************************
@@ -23,22 +22,19 @@ Object type
 struct ProtocolCommand
 {
     MemContext *memContext;
-    const String *command;
+    StringId command;
     PackWrite *pack;
 };
 
-OBJECT_DEFINE_MOVE(PROTOCOL_COMMAND);
-OBJECT_DEFINE_FREE(PROTOCOL_COMMAND);
-
 /**********************************************************************************************************************************/
 ProtocolCommand *
-protocolCommandNew(const String *command)
+protocolCommandNew(const StringId command)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, command);
+        FUNCTION_TEST_PARAM(STRING_ID, command);
     FUNCTION_TEST_END();
 
-    ASSERT(command != NULL);
+    ASSERT(command != 0);
 
     ProtocolCommand *this = NULL;
 
@@ -49,7 +45,7 @@ protocolCommandNew(const String *command)
         *this = (ProtocolCommand)
         {
             .memContext = memContextCurrent(),
-            .command = strDup(command),
+            .command = command,
             .pack = pckWriteNewBuf(bufNew(1024)),
         };
     }
@@ -58,6 +54,7 @@ protocolCommandNew(const String *command)
     FUNCTION_TEST_RETURN(this);
 }
 
+/**********************************************************************************************************************************/
 void
 protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
 {
@@ -71,7 +68,8 @@ protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
     // Write the command and flush to be sure the command gets sent immediately
     PackWrite *commandPack = pckWriteNew(write);
 
-    pckWriteStrP(commandPack, this->command);
+    // !!! CONVERT TO STRID
+    pckWriteStrP(commandPack, strIdToStr(this->command));
 
     // Only write params if there were any
     if (!pckWriteEmpty(this->pack))
@@ -102,5 +100,5 @@ protocolCommandParam(ProtocolCommand *this)
 String *
 protocolCommandToLog(const ProtocolCommand *this)
 {
-    return strNewFmt("{command: %s}", strZ(this->command));
+    return strNewFmt("{command: %s}", strZ(strIdToStr(this->command)));
 }

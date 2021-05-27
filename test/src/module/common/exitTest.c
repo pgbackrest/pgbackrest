@@ -47,9 +47,9 @@ testRun(void)
     if (testBegin("exitSafe()"))
     {
         harnessCfgLoad(cfgCmdHelp, strLstNew());
-        cfgCommandSet(cfgCmdNone, cfgCmdRoleDefault);
+        cfgCommandSet(cfgCmdNone, cfgCmdRoleMain);
 
-        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command")
+        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
@@ -57,11 +57,11 @@ testRun(void)
         hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
-        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error")
-        harnessLogResult("P00   INFO: archive-push command end: completed successfully");
+        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error");
+        TEST_RESULT_LOG("P00   INFO: archive-push command end: completed successfully");
 
-        TEST_RESULT_INT(exitSafe(1, false, signalTypeNone), 1, "exit with no error")
-        harnessLogResult("P00   INFO: archive-push command end: completed successfully");
+        TEST_RESULT_INT(exitSafe(1, false, signalTypeNone), 1, "exit with no error");
+        TEST_RESULT_LOG("P00   INFO: archive-push command end: completed successfully");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()
@@ -71,7 +71,7 @@ testRun(void)
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            harnessLogResult(
+            TEST_RESULT_LOG(
                 "P00  ERROR: [122]: test error message\n"
                 "P00   INFO: archive-push command end: aborted with exception [122]");
         }
@@ -94,8 +94,8 @@ testRun(void)
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            harnessLogResult(
-                "P00  DEBUG:     common/exit::exitSafe: (result: 0, error: true, signalType: 0)\n"
+            TEST_RESULT_LOG(
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/exit::exitSafe: (result: 0, error: true, signalType: 0)\n"
                 "P00  ERROR: [122]: test debug error message\n"
                 "            --------------------------------------------------------------------\n"
                 "            If SUBMITTING AN ISSUE please provide the following information:\n"
@@ -105,13 +105,13 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            test/module/common/exitTest:testRun:92:(void)\n"
-                "            test:main:(argListSize: 1, argList: (char *[]))\n"
+                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:92:(void)\n"
+                "            test.c:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [122]\n"
-                "P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)\n"
-                "P00  DEBUG:     common/lock::lockRelease: => false\n"
-                "P00  DEBUG:     common/exit::exitSafe: => 122");
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: (failOnNoLock: false)\n"
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: => false\n"
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/exit::exitSafe: => 122");
         }
         TRY_END();
 
@@ -125,7 +125,7 @@ testRun(void)
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            harnessLogResult(
+            TEST_RESULT_LOG(
                 "P00 ASSERT: [025]: test assert message\n"
                 "            --------------------------------------------------------------------\n"
                 "            If SUBMITTING AN ISSUE please provide the following information:\n"
@@ -135,8 +135,8 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            test/module/common/exitTest:testRun:123:(void)\n"
-                "            test:main:(argListSize: 1, argList: (char *[]))\n"
+                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:123:(void)\n"
+                "            test.c:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [025]");
         }
@@ -145,13 +145,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeNone), errorTypeCode(&TermError), "exit on term with no signal");
-        harnessLogResult("P00   INFO: archive-push:async command end: terminated on signal from child process");
+        TEST_RESULT_LOG("P00   INFO: archive-push:async command end: terminated on signal from child process");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeTerm), errorTypeCode(&TermError), "exit on term with SIGTERM");
-        harnessLogResult("P00   INFO: archive-push:async command end: terminated on signal [SIGTERM]");
+        TEST_RESULT_LOG("P00   INFO: archive-push:async command end: terminated on signal [SIGTERM]");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

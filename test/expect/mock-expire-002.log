@@ -476,13 +476,13 @@ Upgrade stanza and expire only earliest db backup and archive
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=3 --repo1-retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=full --repo1-retention-full=3 --stanza=db
-P00   INFO: expire full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
-P00   INFO: remove expired backup [BACKUP-INCR-1]
-P00   INFO: remove expired backup [BACKUP-FULL-1]
-P00 DETAIL: archive retention on backup [BACKUP-FULL-2], archiveId = 9.2-1, start = 00000001000000000000000C
-P00 DETAIL: remove archive: archiveId = 9.2-1, start = 000000010000000000000000, stop = 00000001000000000000000B
-P00 DETAIL: archive retention on backup [BACKUP-FULL-3], archiveId = 9.3-2, start = 000000010000000000000000
-P00 DETAIL: no archive to remove, archiveId = 9.3-2
+P00   INFO: repo1: expire full backup set [BACKUP-FULL-1], [BACKUP-INCR-1]
+P00   INFO: repo1: remove expired backup [BACKUP-INCR-1]
+P00   INFO: repo1: remove expired backup [BACKUP-FULL-1]
+P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-2], start = 00000001000000000000000C
+P00 DETAIL: repo1: 9.2-1 remove archive, start = 000000010000000000000000, stop = 00000001000000000000000B
+P00 DETAIL: repo1: 9.3-2 archive retention on backup [BACKUP-FULL-3], start = 000000010000000000000000
+P00 DETAIL: repo1: 9.3-2 no archive to remove
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -1149,16 +1149,16 @@ Upgrade the stanza, create full back - earliest db orphaned archive removed and 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=2 --repo1-retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
-P00   INFO: expire full backup [BACKUP-FULL-2]
-P00   INFO: expire full backup set: [BACKUP-FULL-3], [BACKUP-INCR-2]
-P00   INFO: remove expired backup [BACKUP-INCR-2]
-P00   INFO: remove expired backup [BACKUP-FULL-3]
-P00   INFO: remove expired backup [BACKUP-FULL-2]
-P00   INFO: remove archive path: [TEST_PATH]/db-primary/repo/archive/db/9.2-1
-P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
-P00 DETAIL: remove archive: archiveId = 9.3-2, start = 000000010000000000000000, stop = 0000000100000000000000FE
-P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 10-3, start = 000000010000000000000000
-P00 DETAIL: no archive to remove, archiveId = 10-3
+P00   INFO: repo1: expire full backup [BACKUP-FULL-2]
+P00   INFO: repo1: expire full backup set [BACKUP-FULL-3], [BACKUP-INCR-2]
+P00   INFO: repo1: remove expired backup [BACKUP-INCR-2]
+P00   INFO: repo1: remove expired backup [BACKUP-FULL-3]
+P00   INFO: repo1: remove expired backup [BACKUP-FULL-2]
+P00   INFO: repo1: remove archive path [TEST_PATH]/db-primary/repo/archive/db/9.2-1
+P00 DETAIL: repo1: 9.3-2 archive retention on backup [BACKUP-FULL-4], start = 0000000100000000000000FF
+P00 DETAIL: repo1: 9.3-2 remove archive, start = 000000010000000000000000, stop = 0000000100000000000000FE
+P00 DETAIL: repo1: 10-3 archive retention on backup [BACKUP-FULL-5], start = 000000010000000000000000
+P00 DETAIL: repo1: 10-3 no archive to remove
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -1304,13 +1304,13 @@ Expire all archive last full backup through pitr
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=3 --repo1-retention-diff=1 --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=3 --stanza=db
-P00   INFO: expire diff backup [BACKUP-DIFF-1]
-P00   INFO: remove expired backup [BACKUP-DIFF-1]
-P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.3-2, start = 0000000100000000000000FF
-P00 DETAIL: no archive to remove, archiveId = 9.3-2
-P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 10-3, start = 000000010000000000000000, stop = 000000010000000000000002
-P00 DETAIL: archive retention on backup [BACKUP-FULL-6], archiveId = 10-3, start = 000000010000000000000006
-P00 DETAIL: remove archive: archiveId = 10-3, start = 000000010000000000000003, stop = 000000010000000000000005
+P00   INFO: repo1: expire diff backup [BACKUP-DIFF-1]
+P00   INFO: repo1: remove expired backup [BACKUP-DIFF-1]
+P00 DETAIL: repo1: 9.3-2 archive retention on backup [BACKUP-FULL-4], start = 0000000100000000000000FF
+P00 DETAIL: repo1: 9.3-2 no archive to remove
+P00 DETAIL: repo1: 10-3 archive retention on backup [BACKUP-FULL-5], start = 000000010000000000000000, stop = 000000010000000000000002
+P00 DETAIL: repo1: 10-3 archive retention on backup [BACKUP-FULL-6], start = 000000010000000000000006
+P00 DETAIL: repo1: 10-3 remove archive, start = 000000010000000000000003, stop = 000000010000000000000005
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -1451,11 +1451,11 @@ Expire all archive except for the current database
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=2 --repo1-retention-archive-type=full expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=full --repo1-retention-full=2 --stanza=db
-P00   INFO: expire full backup [BACKUP-FULL-4]
-P00   INFO: remove expired backup [BACKUP-FULL-4]
-P00   INFO: remove archive path: [TEST_PATH]/db-primary/repo/archive/db/9.3-2
-P00 DETAIL: archive retention on backup [BACKUP-FULL-5], archiveId = 10-3, start = 000000010000000000000000
-P00 DETAIL: no archive to remove, archiveId = 10-3
+P00   INFO: repo1: expire full backup [BACKUP-FULL-4]
+P00   INFO: repo1: remove expired backup [BACKUP-FULL-4]
+P00   INFO: repo1: remove archive path [TEST_PATH]/db-primary/repo/archive/db/9.3-2
+P00 DETAIL: repo1: 10-3 archive retention on backup [BACKUP-FULL-5], start = 000000010000000000000000
+P00 DETAIL: repo1: 10-3 no archive to remove
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info

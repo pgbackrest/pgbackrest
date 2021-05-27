@@ -10,16 +10,13 @@ Socket Session
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/io/socket/client.h"
-#include "common/io/session.intern.h"
+#include "common/io/session.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define SOCKET_SESSION_TYPE                                         SocketSession
-#define SOCKET_SESSION_PREFIX                                       sckSession
-
 typedef struct SocketSession
 {
     MemContext *memContext;                                         // Mem context
@@ -52,11 +49,21 @@ sckSessionToLog(const THIS_VOID)
 /***********************************************************************************************************************************
 Free connection
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(SOCKET_SESSION, LOG, logLevelTrace)
+static void
+sckSessionFreeResource(THIS_VOID)
 {
+    THIS(SocketSession);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(SOCKET_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     close(this->fd);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 static void
@@ -147,7 +154,7 @@ sckSessionRole(const THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoSessionInterface sckSessionInterface =
 {
-    .type = &IO_CLIENT_SOCKET_TYPE_STR,
+    .type = IO_CLIENT_SOCKET_TYPE,
     .close = sckSessionClose,
     .fd = sckSessionFd,
     .ioRead = sckSessionIoRead,
@@ -160,7 +167,7 @@ IoSession *
 sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(ENUM, role);
+        FUNCTION_LOG_PARAM(STRING_ID, role);
         FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);

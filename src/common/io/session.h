@@ -7,54 +7,86 @@ be closed when work with them is done but they also contain destructors to do cl
 #ifndef COMMON_IO_SESSION_H
 #define COMMON_IO_SESSION_H
 
+#include "common/type/stringId.h"
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_SESSION_TYPE                                             IoSession
-#define IO_SESSION_PREFIX                                           ioSession
-
 typedef struct IoSession IoSession;
-
-#include "common/io/read.h"
-#include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Session roles
 ***********************************************************************************************************************************/
 typedef enum
 {
-    ioSessionRoleClient,                                            // Client session
-    ioSessionRoleServer,                                            // Server session
+    ioSessionRoleClient = STRID5("client", 0x28e2a5830),            // Client session
+    ioSessionRoleServer = STRID5("server", 0x245b48b30),            // Server session
 } IoSessionRole;
+
+#include "common/io/read.h"
+#include "common/io/session.intern.h"
+#include "common/io/write.h"
+#include "common/type/object.h"
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct IoSessionPub
+{
+    MemContext *memContext;                                         // Mem context
+    void *driver;                                                   // Driver object
+    const IoSessionInterface *interface;                            // Driver interface
+} IoSessionPub;
+
+// Session file descriptor, -1 if none
+int ioSessionFd(IoSession *this);
+
+// Read interface
+__attribute__((always_inline)) static inline IoRead *
+ioSessionIoRead(IoSession *const this)
+{
+    return THIS_PUB(IoSession)->interface->ioRead(THIS_PUB(IoSession)->driver);
+}
+
+// Write interface
+__attribute__((always_inline)) static inline IoWrite *
+ioSessionIoWrite(IoSession *const this)
+{
+    return THIS_PUB(IoSession)->interface->ioWrite(THIS_PUB(IoSession)->driver);
+}
+
+// Session role
+__attribute__((always_inline)) static inline IoSessionRole
+ioSessionRole(const IoSession *const this)
+{
+    return THIS_PUB(IoSession)->interface->role(THIS_PUB(IoSession)->driver);
+}
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Close the session
-void ioSessionClose(IoSession *this);
+__attribute__((always_inline)) static inline void
+ioSessionClose(IoSession *const this)
+{
+    return THIS_PUB(IoSession)->interface->close(THIS_PUB(IoSession)->driver);
+}
 
 // Move to a new parent mem context
-IoSession *ioSessionMove(IoSession *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Session file descriptor, -1 if none
-int ioSessionFd(IoSession *this);
-
-// Read interface
-IoRead *ioSessionIoRead(IoSession *this);
-
-// Write interface
-IoWrite *ioSessionIoWrite(IoSession *this);
-
-// Session role
-IoSessionRole ioSessionRole(const IoSession *this);
+__attribute__((always_inline)) static inline IoSession *
+ioSessionMove(IoSession *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioSessionFree(IoSession *this);
+__attribute__((always_inline)) static inline void
+ioSessionFree(IoSession *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

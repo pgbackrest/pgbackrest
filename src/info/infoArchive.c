@@ -12,8 +12,9 @@ Archive Info Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/ini.h"
+#include "common/io/bufferWrite.h"
+#include "common/io/io.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -31,12 +32,8 @@ Object type
 ***********************************************************************************************************************************/
 struct InfoArchive
 {
-    MemContext *memContext;                                         // Mem context
-    InfoPg *infoPg;                                                 // Contents of the DB data
+    InfoArchivePub pub;                                             // Publicly accessible variables
 };
-
-OBJECT_DEFINE_MOVE(INFO_ARCHIVE);
-OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 
 /***********************************************************************************************************************************
 Internal constructor
@@ -50,7 +47,10 @@ infoArchiveNewInternal(void)
 
     *this = (InfoArchive)
     {
-        .memContext = memContextCurrent(),
+        .pub =
+        {
+            .memContext = memContextCurrent(),
+        },
     };
 
     FUNCTION_TEST_RETURN(this);
@@ -75,7 +75,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
         this = infoArchiveNewInternal();
 
         // Initialize the pg data
-        this->infoPg = infoPgNew(infoPgArchive, cipherPassSub);
+        this->pub.infoPg = infoPgNew(infoPgArchive, cipherPassSub);
         infoArchivePgSet(this, pgVersion, pgSystemId);
     }
     MEM_CONTEXT_NEW_END();
@@ -98,7 +98,7 @@ infoArchiveNewLoad(IoRead *read)
     MEM_CONTEXT_NEW_BEGIN("InfoArchive")
     {
         this = infoArchiveNewInternal();
-        this->infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);
+        this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -186,45 +186,6 @@ infoArchiveSave(InfoArchive *this, IoWrite *write)
 }
 
 /**********************************************************************************************************************************/
-const String *
-infoArchiveId(const InfoArchive *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg)));
-}
-
-/**********************************************************************************************************************************/
-const String *
-infoArchiveCipherPass(const InfoArchive *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
-}
-
-/**********************************************************************************************************************************/
-InfoPg *
-infoArchivePg(const InfoArchive *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->infoPg);
-}
-
-/**********************************************************************************************************************************/
 InfoArchive *
 infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
@@ -236,7 +197,7 @@ infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 
     ASSERT(this != NULL);
 
-    this->infoPg = infoPgSet(this->infoPg, infoPgArchive, pgVersion, pgSystemId, 0);
+    this->pub.infoPg = infoPgSet(infoArchivePg(this), infoPgArchive, pgVersion, pgSystemId, 0);
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
@@ -291,7 +252,7 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
@@ -345,7 +306,7 @@ infoArchiveSaveFile(
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, infoArchive);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
@@ -356,13 +317,15 @@ infoArchiveSaveFile(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Save the file
-        IoWrite *write = storageWriteIo(storageNewWriteP(storage, fileName));
+        // Write output into a buffer since it needs to be saved to storage twice
+        Buffer *buffer = bufNew(ioBufferSize());
+        IoWrite *write = ioBufferWriteNew(buffer);
         cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
         infoArchiveSave(infoArchive, write);
 
-        // Make a copy of the file
-        storageCopy(storageNewReadP(storage, fileName), storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))));
+        // Save the file and make a copy
+        storagePutP(storageNewWriteP(storage, fileName), buffer);
+        storagePutP(storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))), buffer);
     }
     MEM_CONTEXT_TEMP_END();
 

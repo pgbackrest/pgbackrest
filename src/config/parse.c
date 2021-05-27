@@ -16,7 +16,6 @@ Command and Option Parse
 #include "common/regExp.h"
 #include "config/config.intern.h"
 #include "config/parse.h"
-#include "storage/helper.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -37,8 +36,7 @@ typedef enum
 /***********************************************************************************************************************************
 Standard config file name and old default path and name
 ***********************************************************************************************************************************/
-#define PGBACKREST_CONFIG_FILE                                      PROJECT_BIN ".conf"
-#define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PGBACKREST_CONFIG_FILE
+#define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PROJECT_CONFIG_FILE
     STRING_STATIC(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR,             PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
 /***********************************************************************************************************************************
@@ -49,11 +47,6 @@ Prefix for environment variables
 
 // In some environments this will not be extern'd
 extern char **environ;
-
-/***********************************************************************************************************************************
-Standard config include path name
-***********************************************************************************************************************************/
-#define PGBACKREST_CONFIG_INCLUDE_PATH                              "conf.d"
 
 /***********************************************************************************************************************************
 Option value constants
@@ -184,8 +177,8 @@ typedef enum
 #define PARSE_RULE_OPTION_GROUP_ID(groupIdParam)                                                                                   \
     .groupId = groupIdParam
 
-#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST(...)                                                                     \
-    .commandRoleValid[cfgCmdRoleDefault] = 0 __VA_ARGS__
+#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST(...)                                                                        \
+    .commandRoleValid[cfgCmdRoleMain] = 0 __VA_ARGS__
 
 #define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST(...)                                                                       \
     .commandRoleValid[cfgCmdRoleAsync] = 0 __VA_ARGS__
@@ -402,7 +395,7 @@ Find an option by name in the option list
 ***********************************************************************************************************************************/
 // Helper to parse the option info into a structure
 __attribute__((always_inline)) static inline CfgParseOptionResult
-cfgParseOptionInfo(int info)
+cfgParseOptionInfo(const int info)
 {
     return (CfgParseOptionResult)
     {
@@ -416,15 +409,16 @@ cfgParseOptionInfo(int info)
 }
 
 CfgParseOptionResult
-cfgParseOption(const String *optionName)
+cfgParseOption(const String *const optionName, const CfgParseOptionParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, optionName);
+        FUNCTION_TEST_PARAM(BOOL, param.prefixMatch);
     FUNCTION_TEST_END();
 
     ASSERT(optionName != NULL);
 
-    // Search for the option
+    // Search for an exact match
     unsigned int findIdx = 0;
 
     while (optionList[findIdx].name != NULL)
@@ -438,6 +432,29 @@ cfgParseOption(const String *optionName)
     // If the option was found
     if (optionList[findIdx].name != NULL)
         FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findIdx].val));
+
+    // Search for a single partial match if requested
+    if (param.prefixMatch)
+    {
+        unsigned int findPartialIdx = 0;
+        unsigned int findPartialTotal = 0;
+
+        for (findIdx = 0; findIdx < sizeof(optionList) / sizeof(struct option) - 1; findIdx++)
+        {
+            if (strBeginsWith(STR(optionList[findIdx].name), optionName))
+            {
+                findPartialIdx = findIdx;
+                findPartialTotal++;
+
+                if (findPartialTotal > 1)
+                    break;
+            }
+        }
+
+        // If a single partial match was found
+        if (findPartialTotal == 1)
+            FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findPartialIdx].val));
+    }
 
     FUNCTION_TEST_RETURN((CfgParseOptionResult){0});
 }
@@ -476,7 +493,7 @@ cfgParseOptionId(const char *optionName)
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         if (strcmp(optionName, parseRuleOption[optionId].name) == 0)
-            result = optionId;
+            result = (int)optionId;
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -597,40 +614,28 @@ sizeQualifierToMultiplier(char qualifier)
     switch (qualifier)
     {
         case 'b':
-        {
             result = 1;
             break;
-        }
 
         case 'k':
-        {
             result = 1024;
             break;
-        }
 
         case 'm':
-        {
             result = 1024 * 1024;
             break;
-        }
 
         case 'g':
-        {
             result = 1024 * 1024 * 1024;
             break;
-        }
 
         case 't':
-        {
             result = 1024LL * 1024LL * 1024LL * 1024LL;
             break;
-        }
 
         case 'p':
-        {
             result = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
             break;
-        }
 
         default:
             THROW_FMT(AssertError, "'%c' is not a valid size qualifier", qualifier);
@@ -740,7 +745,7 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
 
             // Create the result config file
             if (*config == NULL)
-                *config = strNew("");
+                *config = strNew();
             // Else add an LF in case the previous file did not end with one
             else
 
@@ -755,12 +760,14 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
 
 static String *
 cfgFileLoad(                                                        // NOTE: Passing defaults to enable more complete test coverage
+    const Storage *storage,                                         // Storage to load configs
     const ParseOption *optionList,                                  // All options and their current settings
     const String *optConfigDefault,                                 // Current default for --config option
     const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
     const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM_P(PARSE_OPTION, optionList);
         FUNCTION_LOG_PARAM(STRING, optConfigDefault);
         FUNCTION_LOG_PARAM(STRING, optConfigIncludePathDefault);
@@ -793,7 +800,7 @@ cfgFileLoad(                                                        // NOTE: Pas
         optConfigDefault = strNewFmt(
             "%s/%s", strZ(strLstGet(optionList[cfgOptConfigPath].indexList[0].valueList, 0)), strBaseZ(optConfigDefault));
         optConfigIncludePathDefault = strNewFmt(
-            "%s/%s", strZ(strLstGet(optionList[cfgOptConfigPath].indexList[0].valueList, 0)), PGBACKREST_CONFIG_INCLUDE_PATH);
+            "%s/%s", strZ(strLstGet(optionList[cfgOptConfigPath].indexList[0].valueList, 0)), PROJECT_CONFIG_INCLUDE_PATH);
     }
 
     // If the --no-config option was passed then do not load the config file
@@ -825,7 +832,7 @@ cfgFileLoad(                                                        // NOTE: Pas
             configFileName = optConfigDefault;
 
         // Load the config file
-        Buffer *buffer = storageGetP(storageNewReadP(storageLocal(), configFileName, .ignoreMissing = !configRequired));
+        Buffer *buffer = storageGetP(storageNewReadP(storage, configFileName, .ignoreMissing = !configRequired));
 
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
@@ -833,7 +840,7 @@ cfgFileLoad(                                                        // NOTE: Pas
         else if (strEq(configFileName, optConfigDefaultCurrent))
         {
             // If config is current default and it was not found, attempt to load the config file from the old default location
-            buffer = storageGetP(storageNewReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
+            buffer = storageGetP(storageNewReadP(storage, origConfigDefault, .ignoreMissing = !configRequired));
 
             if (buffer != NULL)
                 result = strNewBuf(buffer);
@@ -860,11 +867,11 @@ cfgFileLoad(                                                        // NOTE: Pas
 
         // Get a list of conf files from the specified path -error on missing directory if the option was passed on the command line
         StringList *list = storageListP(
-            storageLocal(), configIncludePath, .expression = STRDEF(".+\\.conf$"), .errorOnMissing = configIncludeRequired,
+            storage, configIncludePath, .expression = STRDEF(".+\\.conf$"), .errorOnMissing = configIncludeRequired,
             .nullOnMissing = !configIncludeRequired);
 
         // If conf files are found, then add them to the config string
-        if (list != NULL && strLstSize(list) > 0)
+        if (list != NULL && !strLstEmpty(list))
         {
             // Sort the list for reproducibility only -- order does not matter
             strLstSort(list, sortOrderAsc);
@@ -875,7 +882,7 @@ cfgFileLoad(                                                        // NOTE: Pas
                     &result,
                     storageGetP(
                         storageNewReadP(
-                            storageLocal(), strNewFmt("%s/%s", strZ(configIncludePath), strZ(strLstGet(list, listIdx))),
+                            storage, strNewFmt("%s/%s", strZ(configIncludePath), strZ(strLstGet(list, listIdx))),
                             .ignoreMissing = true)));
             }
         }
@@ -889,11 +896,13 @@ cfgFileLoad(                                                        // NOTE: Pas
 logic to this critical path code.
 ***********************************************************************************************************************************/
 void
-configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
+configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(UINT, argListSize);
         FUNCTION_LOG_PARAM(CHARPY, argList);
+        FUNCTION_LOG_PARAM(BOOL, resetLogLevel);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -909,210 +918,219 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             {
                 .memContext = MEM_CONTEXT_NEW(),
                 .command = cfgCmdNone,
-                .exe = strNew(argList[0]),
+                .exe = strNewZ(argList[0]),
             };
         }
         MEM_CONTEXT_NEW_END();
 
         // Phase 1: parse command line parameters
         // -------------------------------------------------------------------------------------------------------------------------
-        int optionValue;                                                // Value returned by getopt_long
-        int optionListIdx;                                              // Index of option in list (if an option was returned)
-        bool argFound = false;                                          // Track args found to decide on error or help at the end
-
-        // Reset optind to 1 in case getopt_long has been called before
-        optind = 1;
-
-        // Don't error automatically on unknown options - they will be processed in the loop below
-        opterr = false;
-
         // List of parsed options
         ParseOption parseOptionList[CFG_OPTION_TOTAL] = {{0}};
 
         // Only the first non-option parameter should be treated as a command so track if the command has been set
         bool commandSet = false;
 
-        while ((optionValue = getopt_long((int)argListSize, (char **)argList, "-:", optionList, &optionListIdx)) != -1)
+        for (unsigned int argListIdx = 1; argListIdx < argListSize; argListIdx++)
         {
-            switch (optionValue)
+            const char *arg = argList[argListIdx];
+
+            // If an option
+            if (arg[0] == '-')
             {
-                // Parse arguments that are not options, i.e. commands and parameters passed to commands
-                case 1:
+                // Options must start with --
+                if (arg[1] != '-')
+                    THROW_FMT(OptionInvalidError, "option '%s' must begin with --", arg);
+
+                // Consume --
+                arg += 2;
+
+                // Get the option name and the value when separated by =
+                const String *optionName = NULL;
+                const String *optionArg = NULL;
+
+                const char *const equalPtr = strchr(arg, '=');
+
+                if (equalPtr)
                 {
-                    // The first argument should be the command
-                    if (!commandSet)
+                    optionName = strNewN(arg, (size_t)(equalPtr - arg));
+                    optionArg = strNewZ(equalPtr + 1);
+                }
+                else
+                    optionName = strNewZ(arg);
+
+                // Lookup the option name
+                CfgParseOptionResult option = cfgParseOptionP(optionName, true);
+
+                if (!option.found)
+                    THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
+
+                // If the option requires an argument
+                if (parseRuleOption[option.id].type != cfgOptTypeBoolean && !option.negate && !option.reset)
+                {
+                    // If no argument was found with the option then try the next argument
+                    if (optionArg == NULL)
                     {
-                        const char *command = argList[optind - 1];
+                        // Error if there are no more arguments in the list
+                        if (argListIdx == argListSize - 1)
+                            THROW_FMT(OptionInvalidError, "option '--%s' requires an argument", strZ(optionName));
 
-                        // Try getting the command from the valid command list
-                        config->command = cfgCommandId(command);
-                        config->commandRole = cfgCmdRoleDefault;
-
-                        // If not successful then a command role may be appended
-                        if (config->command == cfgCmdNone)
-                        {
-                            const StringList *commandPart = strLstNewSplit(STR(command), COLON_STR);
-
-                            if (strLstSize(commandPart) == 2)
-                            {
-                                // Get command id
-                                config->command = cfgCommandId(strZ(strLstGet(commandPart, 0)));
-
-                                // If command id is valid then get command role id
-                                if (config->command != cfgCmdNone)
-                                    config->commandRole = cfgCommandRoleEnum(strLstGet(commandPart, 1));
-                            }
-                        }
-
-                        // Error when command does not exist
-                        if (config->command == cfgCmdNone)
-                            THROW_FMT(CommandInvalidError, "invalid command '%s'", command);
-
-                        // Error when role is not valid for the command
-                        if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
-                            THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", command);
-
-                        if (config->command == cfgCmdHelp)
-                            config->help = true;
-                        else
-                            commandSet = true;
+                        optionArg = strNewZ(argList[++argListIdx]);
                     }
-                    // Additional arguments are command arguments
-                    else
-                    {
-                        if (config->paramList == NULL)
-                        {
-                            MEM_CONTEXT_BEGIN(config->memContext)
-                            {
-                                config->paramList = strLstNew();
-                            }
-                            MEM_CONTEXT_END();
-                        }
+                }
+                // Else error if an argument was found with the option
+                else if (optionArg != NULL)
+                    THROW_FMT(OptionInvalidError, "option '%s' does not allow an argument", strZ(optionName));
 
-                        strLstAdd(config->paramList, strNew(argList[optind - 1]));
-                    }
-
-                    break;
+                // Error if this option is secure and cannot be passed on the command line
+                if (cfgParseOptionSecure(option.id))
+                {
+                    THROW_FMT(
+                        OptionInvalidError,
+                        "option '%s' is not allowed on the command-line\n"
+                        "HINT: this option could expose secrets in the process list.\n"
+                        "HINT: specify the option in a configuration file or an environment variable instead.",
+                        cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                 }
 
-                // If the option is unknown then error
-                case '?':
-                    THROW_FMT(OptionInvalidError, "invalid option '%s'", argList[optind - 1]);
+                // If the option has not been found yet then set it
+                ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
 
-                // If the option is missing an argument then error
-                case ':':
-                    THROW_FMT(OptionInvalidError, "option '%s' requires argument", argList[optind - 1]);
-
-                // Parse valid option
-                default:
+                if (!optionValue->found)
                 {
-                    // Get option id and flags from the option code
-                    CfgParseOptionResult option = cfgParseOptionInfo(optionValue);
+                    *optionValue = (ParseOptionValue)
+                    {
+                        .found = true,
+                        .negate = option.negate,
+                        .reset = option.reset,
+                        .source = cfgSourceParam,
+                    };
 
-                    // Make sure the option id is valid
-                    ASSERT(option.id < CFG_OPTION_TOTAL);
-
-                    // Error if this option is secure and cannot be passed on the command line
-                    if (cfgParseOptionSecure(option.id))
+                    // Only set the argument if the option has one
+                    if (optionArg != NULL)
+                    {
+                        optionValue->valueList = strLstNew();
+                        strLstAdd(optionValue->valueList, optionArg);
+                    }
+                }
+                else
+                {
+                    // Make sure option is not negated more than once. It probably wouldn't hurt anything to accept this case but
+                    // there's no point in allowing the user to be sloppy.
+                    if (optionValue->negate && option.negate)
                     {
                         THROW_FMT(
-                            OptionInvalidError,
-                            "option '%s' is not allowed on the command-line\n"
-                            "HINT: this option could expose secrets in the process list.\n"
-                            "HINT: specify the option in a configuration file or an environment variable instead.",
+                            OptionInvalidError, "option '%s' is negated multiple times",
                             cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                     }
 
-                    // If the option has not been found yet then set it
-                    ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
-
-                    if (!optionValue->found)
+                    // Make sure option is not reset more than once. Same justification as negate.
+                    if (optionValue->reset && option.reset)
                     {
-                        *optionValue = (ParseOptionValue)
-                        {
-                            .found = true,
-                            .negate = option.negate,
-                            .reset = option.reset,
-                            .source = cfgSourceParam,
-                        };
-
-                        // Only set the argument if the option requires one
-                        if (optionList[optionListIdx].has_arg == required_argument)
-                        {
-                            optionValue->valueList = strLstNew();
-                            strLstAdd(optionValue->valueList, STR(optarg));
-                        }
+                        THROW_FMT(
+                            OptionInvalidError, "option '%s' is reset multiple times",
+                            cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                     }
+
+                    // Don't allow an option to be both negated and reset
+                    if ((optionValue->reset && option.negate) || (optionValue->negate && option.reset))
+                    {
+                        THROW_FMT(
+                            OptionInvalidError, "option '%s' cannot be negated and reset",
+                            cfgParseOptionKeyIdxName(option.id, option.keyIdx));
+                    }
+
+                    // Don't allow an option to be both set and negated
+                    if (optionValue->negate != option.negate)
+                    {
+                        THROW_FMT(
+                            OptionInvalidError, "option '%s' cannot be set and negated",
+                            cfgParseOptionKeyIdxName(option.id, option.keyIdx));
+                    }
+
+                    // Don't allow an option to be both set and reset
+                    if (optionValue->reset != option.reset)
+                    {
+                        THROW_FMT(
+                            OptionInvalidError, "option '%s' cannot be set and reset",
+                            cfgParseOptionKeyIdxName(option.id, option.keyIdx));
+                    }
+
+                    // Add the argument
+                    if (optionArg != NULL && parseRuleOption[option.id].multi)
+                    {
+                        strLstAdd(optionValue->valueList, optionArg);
+                    }
+                    // Error if the option does not accept multiple arguments
                     else
                     {
-                        // Make sure option is not negated more than once.  It probably wouldn't hurt anything to accept this case
-                        // but there's no point in allowing the user to be sloppy.
-                        if (optionValue->negate && option.negate)
-                        {
-                            THROW_FMT(
-                                OptionInvalidError, "option '%s' is negated multiple times",
-                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
-                        }
+                        THROW_FMT(
+                            OptionInvalidError, "option '%s' cannot be set multiple times",
+                            cfgParseOptionKeyIdxName(option.id, option.keyIdx));
+                    }
+                }
+            }
+            // Else command or parameter
+            else
+            {
+                // The first argument should be the command
+                if (!commandSet)
+                {
+                    // Try getting the command from the valid command list
+                    config->command = cfgCommandId(arg);
+                    config->commandRole = cfgCmdRoleMain;
 
-                        // Make sure option is not reset more than once.  Same justification as negate.
-                        if (optionValue->reset && option.reset)
-                        {
-                            THROW_FMT(
-                                OptionInvalidError, "option '%s' is reset multiple times",
-                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
-                        }
+                    // If not successful then a command role may be appended
+                    if (config->command == cfgCmdNone)
+                    {
+                        const StringList *commandPart = strLstNewSplit(STR(arg), COLON_STR);
 
-                        // Don't allow an option to be both negated and reset
-                        if ((optionValue->reset && option.negate) || (optionValue->negate && option.reset))
+                        if (strLstSize(commandPart) == 2)
                         {
-                            THROW_FMT(
-                                OptionInvalidError, "option '%s' cannot be negated and reset",
-                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
-                        }
+                            // Get command id
+                            config->command = cfgCommandId(strZ(strLstGet(commandPart, 0)));
 
-                        // Don't allow an option to be both set and negated
-                        if (optionValue->negate != option.negate)
-                        {
-                            THROW_FMT(
-                                OptionInvalidError, "option '%s' cannot be set and negated",
-                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
-                        }
-
-                        // Don't allow an option to be both set and reset
-                        if (optionValue->reset != option.reset)
-                        {
-                            THROW_FMT(
-                                OptionInvalidError, "option '%s' cannot be set and reset",
-                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
-                        }
-
-                        // Add the argument
-                        if (optionList[optionListIdx].has_arg == required_argument && parseRuleOption[option.id].multi)
-                        {
-                            strLstAdd(optionValue->valueList, strNew(optarg));
-                        }
-                        // Error if the option does not accept multiple arguments
-                        else
-                        {
-                            THROW_FMT(
-                                OptionInvalidError, "option '%s' cannot be set multiple times",
-                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
+                            // If command id is valid then get command role id
+                            if (config->command != cfgCmdNone)
+                                config->commandRole = cfgCommandRoleEnum(strLstGet(commandPart, 1));
                         }
                     }
 
-                    break;
+                    // Error when command does not exist
+                    if (config->command == cfgCmdNone)
+                        THROW_FMT(CommandInvalidError, "invalid command '%s'", arg);
+
+                    // Error when role is not valid for the command
+                    if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
+                        THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", arg);
+
+                    if (config->command == cfgCmdHelp)
+                        config->help = true;
+                    else
+                        commandSet = true;
+                }
+                // Additional arguments are command arguments
+                else
+                {
+                    if (config->paramList == NULL)
+                    {
+                        MEM_CONTEXT_BEGIN(config->memContext)
+                        {
+                            config->paramList = strLstNew();
+                        }
+                        MEM_CONTEXT_END();
+                    }
+
+                    strLstAddZ(config->paramList, arg);
                 }
             }
-
-            // Arg has been found
-            argFound = true;
         }
 
         // Handle command not found
         if (!commandSet && !config->help)
         {
             // If there are args then error
-            if (argFound)
+            if (argListSize > 1)
                 THROW_FMT(CommandRequiredError, "no command found");
 
             // Otherwise set the command to help
@@ -1123,8 +1141,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         if (config->paramList != NULL && !config->help && !parseRuleCommand[config->command].parameterAllowed)
             THROW(ParamInvalidError, "command does not allow parameters");
 
-        // Enable logging (except for local and remote commands) so config file warnings will be output
-        if (config->commandRole != cfgCmdRoleLocal && config->commandRole != cfgCmdRoleRemote && resetLogLevel)
+        // Enable logging for main role so config file warnings will be output
+        if (resetLogLevel && config->commandRole == cfgCmdRoleMain)
             logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 0, 1, false);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a
@@ -1154,7 +1172,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     const String *value = STR(equalPtr + 1);
 
                     // Find the option
-                    CfgParseOptionResult option = cfgParseOption(key);
+                    CfgParseOptionResult option = cfgParseOptionP(key);
 
                     // Warn if the option not found
                     if (!option.found)
@@ -1217,7 +1235,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             // ---------------------------------------------------------------------------------------------------------------------
             // Load the configuration file(s)
             String *configString = cfgFileLoad(
-                parseOptionList, STR(cfgParseOptionDefault(config->command, cfgOptConfig)),
+                storage, parseOptionList, STR(cfgParseOptionDefault(config->command, cfgOptConfig)),
                 STR(cfgParseOptionDefault(config->command, cfgOptConfigIncludePath)), PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
 
             if (configString != NULL)
@@ -1255,7 +1273,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         String *key = strLstGet(keyList, keyIdx);
 
                         // Find the optionName in the main list
-                        CfgParseOptionResult option = cfgParseOption(key);
+                        CfgParseOptionResult option = cfgParseOptionP(key);
 
                         // Warn if the option not found
                         if (!option.found)
@@ -1682,6 +1700,13 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                 {
                                     int64_t valueInt64 = 0;
 
+                                    // Preserve original value to display
+                                    MEM_CONTEXT_BEGIN(config->memContext)
+                                    {
+                                        configOptionValue->display = strDup(value);
+                                    }
+                                    MEM_CONTEXT_END();
+
                                     // Check that the value can be converted
                                     TRY_BEGIN()
                                     {
@@ -1741,7 +1766,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
                                 }
-                                // Else if path make sure it is valid
+                                // Else if string make sure it is valid
                                 else
                                 {
                                     // Make sure it is long enough to be a path
@@ -1752,6 +1777,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
 
+                                    // If path make sure it is valid
                                     if (optionType == cfgOptTypePath)
                                     {
                                         // Make sure it starts with /
@@ -1864,15 +1890,22 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         {
             ASSERT(groupId == cfgOptGrpPg || groupId == cfgOptGrpRepo);
 
-            // The repo default is always key 1 since only one is allowed
-            if (groupId == cfgOptGrpRepo)
-                continue;
+            // Get the group default option
+            unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPg : cfgOptRepo;
+
+            // Does a default always exist?
+            config->optionGroup[groupId].indexDefaultExists =
+                // A default always exists for the pg group
+                groupId == cfgOptGrpPg ||
+                // The repo group allows a default when the repo option is valid, i.e. either repo1 is the only key set or a repo
+                // is specified
+                cfgOptionValid(cfgOptRepo);
 
             // Does the group default option exist?
-            if (cfgOptionTest(cfgOptPg))
+            if (cfgOptionTest(defaultOptionId))
             {
                 // Search for the key
-                unsigned int optionKeyIdx = cfgOptionUInt(cfgOptPg) - 1;
+                unsigned int optionKeyIdx = cfgOptionUInt(defaultOptionId) - 1;
                 unsigned int index = 0;
 
                 for (; index < cfgOptionGroupIdxTotal(groupId); index++)
@@ -1885,12 +1918,13 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 if (index == cfgOptionGroupIdxTotal(groupId))
                 {
                     THROW_FMT(
-                        OptionInvalidValueError, "key '%u' is not valid for '%s' option", cfgOptionUInt(cfgOptPg),
-                        cfgOptionName(cfgOptPg));
+                        OptionInvalidValueError, "key '%s' is not valid for '%s' option", strZ(cfgOptionDisplay(defaultOptionId)),
+                        cfgOptionName(defaultOptionId));
                 }
 
                 // Set the default
                 config->optionGroup[groupId].indexDefault = index;
+                config->optionGroup[groupId].indexDefaultExists = true;
             }
         }
     }

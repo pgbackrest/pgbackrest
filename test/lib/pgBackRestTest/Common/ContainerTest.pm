@@ -31,9 +31,11 @@ use pgBackRestTest::Common::VmTest;
 use constant TEST_USER                                              => getpwuid($UID) . '';
     push @EXPORT, qw(TEST_USER);
 use constant TEST_USER_ID                                           => $UID;
+    push @EXPORT, qw(TEST_USER_ID);
 use constant TEST_GROUP                                             => getgrgid((getpwnam(TEST_USER))[3]) . '';
     push @EXPORT, qw(TEST_GROUP);
 use constant TEST_GROUP_ID                                          => getgrnam(TEST_GROUP) . '';
+    push @EXPORT, qw(TEST_GROUP_ID);
 
 ####################################################################################################################################
 # Cert file constants
@@ -108,7 +110,8 @@ sub containerWrite
 
         foreach my $strBuild (reverse(keys(%{$hContainerCache})))
         {
-            if (defined($hContainerCache->{$strBuild}{$strOS}) && $hContainerCache->{$strBuild}{$strOS} eq $strScriptSha1)
+            if (defined($hContainerCache->{$strBuild}{hostArch()}{$strOS}) &&
+                $hContainerCache->{$strBuild}{hostArch()}{$strOS} eq $strScriptSha1)
             {
                 &log(INFO, "Using cached ${strTag}-${strBuild} image (${strScriptSha1}) ...");
 
@@ -142,7 +145,7 @@ sub groupCreate
     my $strName = shift;
     my $iId = shift;
 
-    return "groupadd -g${iId} ${strName}";
+    return "groupadd -f -g${iId} ${strName}";
 }
 
 sub userCreate
@@ -347,7 +350,7 @@ sub containerBuild
             if ($strOS eq VM_CO7)
             {
                 $strScript .=
-                    "    yum -y install epel-release && \\\n";
+                    "    yum -y install centos-release-scl-rh epel-release && \\\n";
             }
 
             $strScript .=
@@ -464,15 +467,14 @@ sub containerBuild
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-3.noarch.rpm \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
                 elsif ($strOS eq VM_F32)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-32-x86_64/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-32-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -482,7 +484,7 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' .
+                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . ($strOS eq VM_U18 ? ' 14' : '') .
                         "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .

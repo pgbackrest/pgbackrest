@@ -34,10 +34,10 @@ jobs:
           - param: test --vm=u18 --param=build-package --param=module=mock --param=module=real
 
           # All unit tests (with coverage) on the newest gcc available
-          - param: test --vm=f32 --param=c-only --param=no-performance --param=tz=America/New_York
+          - param: test --vm=f32 --param=c-only --param=tz=America/New_York
 
-          # RHEL/CentOS 7 documentation
-          - param: doc --vm=co7
+          # RHEL/CentOS 8 documentation
+          - param: doc --vm=co8
 
           # All integration tests
           - param: test --vm=co7 --param=module=mock --param=module=real
@@ -49,4 +49,4 @@ jobs:
           path: pgbackrest
 
       - name: Run Test
-        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}}
+        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2

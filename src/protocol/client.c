@@ -9,7 +9,6 @@ Protocol Client
 #include "common/time.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 #include "protocol/client.h"
 #include "protocol/server.h"
 #include "version.h"
@@ -21,9 +20,6 @@ STRING_EXTERN(PROTOCOL_GREETING_NAME_STR,                           PROTOCOL_GRE
 STRING_EXTERN(PROTOCOL_GREETING_SERVICE_STR,                        PROTOCOL_GREETING_SERVICE);
 STRING_EXTERN(PROTOCOL_GREETING_VERSION_STR,                        PROTOCOL_GREETING_VERSION);
 
-STRING_EXTERN(PROTOCOL_COMMAND_NOOP_STR,                            PROTOCOL_COMMAND_NOOP);
-STRING_EXTERN(PROTOCOL_COMMAND_EXIT_STR,                            PROTOCOL_COMMAND_EXIT);
-
 STRING_EXTERN(PROTOCOL_ERROR_STR,                                   PROTOCOL_ERROR);
 STRING_EXTERN(PROTOCOL_ERROR_STACK_STR,                             PROTOCOL_ERROR_STACK);
 
@@ -34,30 +30,35 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolClient
 {
-    MemContext *memContext;
+    ProtocolClientPub pub;                                          // Publicly accessible variables
     const String *name;
     const String *errorPrefix;
-    IoRead *read;
-    IoWrite *write;
     TimeMSec keepAliveTime;
 };
-
-OBJECT_DEFINE_MOVE(PROTOCOL_CLIENT);
-OBJECT_DEFINE_FREE(PROTOCOL_CLIENT);
 
 /***********************************************************************************************************************************
 Close protocol connection
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(PROTOCOL_CLIENT, LOG, logLevelTrace)
+static void
+protocolClientFreeResource(THIS_VOID)
 {
+    THIS(ProtocolClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT_STR));
+        protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT));
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 ProtocolClient *
@@ -82,18 +83,21 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 
         *this = (ProtocolClient)
         {
-            .memContext = memContextCurrent(),
+            .pub =
+            {
+                .memContext = memContextCurrent(),
+                .read = read,
+                .write = write,
+            },
             .name = strDup(name),
             .errorPrefix = strNewFmt("raised from %s", strZ(name)),
-            .read = read,
-            .write = write,
             .keepAliveTime = timeMSec(),
         };
 
         // Read, parse, and check the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *greeting = ioReadLine(this->read);
+            String *greeting = ioReadLine(protocolClientIoRead(this));
             KeyValue *greetingKv = jsonToKv(greeting);
 
             const String *expected[] =
@@ -132,7 +136,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         protocolClientNoOp(this);
 
         // Set a callback to shutdown the protocol
-        memContextCallbackSet(this->memContext, protocolClientFreeResource, this);
+        memContextCallbackSet(this->pub.memContext, protocolClientFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -195,7 +199,7 @@ protocolClientResult(ProtocolClient *this, bool resultRequired)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *response = pckReadNew(this->read);
+        PackRead *response = pckReadNew(protocolClientIoRead(this));
         ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -223,7 +227,7 @@ protocolClientResponse(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *response = pckReadNew(this->read);
+        PackRead *response = pckReadNew(protocolClientIoRead(this));
         ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
         pckReadEndP(response);
 
@@ -249,7 +253,7 @@ protocolClientReadOutputVar(ProtocolClient *this, bool outputRequired)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Read the response
-        String *response = ioReadLine(this->read);
+        String *response = ioReadLine(protocolClientIoRead(this));
         KeyValue *responseKv = varKv(jsonToVar(response));
 
         // Process error if any
@@ -291,7 +295,7 @@ protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command)
     pckWriteEndP(protocolCommandParam(command));
 
     // Write out the command
-    protocolCommandWrite(command, this->write);
+    protocolCommandWrite(command, protocolClientIoWrite(this));
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
@@ -329,7 +333,7 @@ protocolClientNoOp(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientExecute(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP_STR), false);
+        protocolClientExecute(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP), false);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -350,7 +354,7 @@ protocolClientReadLine(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = ioReadLine(this->read);
+        result = ioReadLine(protocolClientIoRead(this));
 
         if (strSize(result) == 0)
         {
@@ -378,32 +382,6 @@ protocolClientReadLine(ProtocolClient *this)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING, result);
-}
-
-/**********************************************************************************************************************************/
-IoRead *
-protocolClientIoRead(const ProtocolClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->read);
-}
-
-/**********************************************************************************************************************************/
-IoWrite *
-protocolClientIoWrite(const ProtocolClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->write);
 }
 
 /**********************************************************************************************************************************/

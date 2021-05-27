@@ -7,12 +7,10 @@ Protocol Parallel Executor
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_PARALLEL_TYPE                                      ProtocolParallel
-#define PROTOCOL_PARALLEL_PREFIX                                    protocolParallel
-
 typedef struct ProtocolParallel ProtocolParallel;
 
 #include "common/time.h"
+#include "common/type/object.h"
 #include "protocol/client.h"
 #include "protocol/parallelJob.h"
 
@@ -30,15 +28,6 @@ Constructors
 ProtocolParallel *protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Add client
-void protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client);
-
-// Process jobs
-unsigned int protocolParallelProcess(ProtocolParallel *this);
-
-/***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Are all jobs done?
@@ -48,9 +37,22 @@ bool protocolParallelDone(ProtocolParallel *this);
 ProtocolParallelJob *protocolParallelResult(ProtocolParallel *this);
 
 /***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Add client
+void protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client);
+
+// Process jobs
+unsigned int protocolParallelProcess(ProtocolParallel *this);
+
+/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolParallelFree(ProtocolParallel *this);
+__attribute__((always_inline)) static inline void
+protocolParallelFree(ProtocolParallel *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

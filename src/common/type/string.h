@@ -36,33 +36,27 @@ String object
 typedef struct String String;
 
 #include "common/assert.h"
+#include "common/encode.h"
 #include "common/type/buffer.h"
-
-/***********************************************************************************************************************************
-Fields that are common between dynamically allocated and constant strings
-
-There is nothing user-accessible here but this construct allows constant strings to be created and then handled by the same
-functions that process dynamically allocated strings.
-***********************************************************************************************************************************/
-#define STRING_COMMON                                                                                                              \
-    uint64_t size:32;                                               /* Actual size of the string */                                \
-    uint64_t extra:32;                                              /* Extra space allocated for expansion */                      \
-    char *buffer;                                                   /* String buffer */
-
-typedef struct StringConst
-{
-    STRING_COMMON
-} StringConst;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
+// Create a new empty string
+String *strNew(void);
+
 // Create a new string from a zero-terminated string
-String *strNew(const char *string);
+String *strNewZ(const char *const string);
 
 // Create a new string from a buffer. If the buffer has a NULL character this may not work as expected. All the data will be copied
 // but only the data before the NULL character will be used as a string.
 String *strNewBuf(const Buffer *buffer);
+
+// Create a new string by converting the double value
+String *strNewDbl(double value);
+
+// Create a new string encoded with the specified type (e.g. encodeBase64) from a buffer
+String *strNewEncode(EncodeType type, const Buffer *buffer);
 
 // Create a new string from a format string with parameters (i.e. sprintf)
 String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
@@ -73,6 +67,32 @@ String *strNewN(const char *string, size_t size);
 
 // Duplicate a string
 String *strDup(const String *this);
+
+/***********************************************************************************************************************************
+Getters/setters
+***********************************************************************************************************************************/
+typedef struct StringPub
+{
+    uint64_t size:32;                                               // Actual size of the string
+    uint64_t extra:32;                                              // Extra space allocated for expansion
+    char *buffer;                                                   // String buffer
+} StringPub;
+
+// String size minus null-terminator, i.e. the same value that strlen() would return
+__attribute__((always_inline)) static inline size_t
+strSize(const String *this)
+{
+    return THIS_PUB(String)->size;
+}
+
+// Pointer to zero-terminated string. strZNull() returns NULL when the String is NULL.
+__attribute__((always_inline)) static inline const char *
+strZ(const String *this)
+{
+    return THIS_PUB(String)->buffer;
+}
+
+const char *strZNull(const String *this);
 
 /***********************************************************************************************************************************
 Functions
@@ -92,6 +112,9 @@ String *strCatZ(String *this, const char *cat);
 
 // Append a character
 String *strCatChr(String *this, char cat);
+
+// Append a string encoded with the specified type (e.g. encodeBase64) from a buffer
+String *strCatEncode(String *this, EncodeType type, const Buffer *buffer);
 
 // Append a formatted string
 String *strCatFmt(String *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
@@ -136,30 +159,12 @@ String *strPath(const String *this);
 // Combine with a base path to get an absolute path
 String *strPathAbsolute(const String *this, const String *base);
 
-// Pointer to zero-terminated string. strZNull() returns NULL when the String is NULL.
-__attribute__((always_inline)) static inline const char *
-strZ(const String *this)
-{
-    ASSERT_INLINE(this != NULL);
-    return ((const StringConst *)this)->buffer;
-}
-
-const char *strZNull(const String *this);
-
 // Quote a string
 String *strQuote(const String *this, const String *quote);
 String *strQuoteZ(const String *this, const char *quote);
 
 // Replace a character with another character
 String *strReplaceChr(String *this, char find, char replace);
-
-// String size minus null-terminator, i.e. the same value that strlen() would return
-__attribute__((always_inline)) static inline size_t
-strSize(const String *this)
-{
-    ASSERT_INLINE(this != NULL);
-    return ((const StringConst *)this)->size;
-}
 
 // Format sizes (file, buffer, etc.) in human-readable form
 String *strSizeFormat(const uint64_t fileSize);
@@ -193,11 +198,11 @@ By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/
 // Create a String constant inline from any zero-terminated string
 #define STR(bufferParam)                                                                                                           \
-    ((const String *)&(const StringConst){.buffer = (char *)(bufferParam), .size = (unsigned int)strlen(bufferParam)})
+    ((const String *)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)strlen(bufferParam)})
 
 // Create a String constant inline from a #define or inline string constant
 #define STRDEF(bufferParam)                                                                                                        \
-    ((const String *)&(const StringConst){.buffer = (char *)(bufferParam), .size = (unsigned int)sizeof(bufferParam) - 1})
+    ((const String *)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)sizeof(bufferParam) - 1})
 
 // Used to declare String constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
 #define STRING_EXTERN(name, buffer)                                                                                                \

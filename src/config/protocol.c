@@ -11,55 +11,40 @@ Configuration Protocol Handler
 #include "config/parse.h"
 #include "config/protocol.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_CONFIG_OPTION_STR,                   PROTOCOL_COMMAND_CONFIG_OPTION);
-
 /**********************************************************************************************************************************/
-bool
-configProtocol(const String *command, PackRead *param, ProtocolServer *server)
+void
+configOptionProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(command != NULL);
-
-    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
-    bool found = true;
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_CONFIG_OPTION_STR))
+        VariantList *optionList = varLstNew();
+
+        while (pckReadNext(param))
         {
-            ASSERT(param != NULL);
+            CfgParseOptionResult option = cfgParseOptionP(pckReadStrP(param));
+            CHECK(option.found);
 
-            VariantList *optionList = varLstNew();
-
-            while (pckReadNext(param))
-            {
-                CfgParseOptionResult option = cfgParseOption(pckReadStrP(param));
-                CHECK(option.found);
-
-                varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
-            }
-
-            protocolServerResponseVar(server, varNewVarLst(optionList));
+            varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
         }
-        else
-            found = false;
+
+        protocolServerResponseVar(server, varNewVarLst(optionList));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, found);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 VariantList *
-configProtocolOption(ProtocolClient *client, const VariantList *paramList)
+configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
@@ -70,7 +55,7 @@ configProtocolOption(ProtocolClient *client, const VariantList *paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION);
         PackWrite *param = protocolCommandParam(command);
 
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)

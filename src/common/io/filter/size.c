@@ -6,7 +6,7 @@ IO Size Filter
 #include <stdio.h>
 
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/memContext.h"

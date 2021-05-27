@@ -43,14 +43,14 @@ cmdOption(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            cmdOptionStr = strNew("");
+            cmdOptionStr = strNew();
 
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Add command parameters if they exist
                 const StringList *commandParamList = cfgCommandParam();
 
-                if (strLstSize(commandParamList) != 0)
+                if (!strLstEmpty(commandParamList))
                 {
                     strCatFmt(cmdOptionStr, " [");
 
@@ -126,18 +126,11 @@ cmdOption(void)
                                 {
                                     valueList = strLstNewVarLst(cfgOptionIdxLst(optionId, optionIdx));
                                 }
-                                // Generate time value
-                                else if (cfgParseOptionType(optionId) == cfgOptTypeTime)
-                                {
-                                    valueList = strLstNew();
-                                    strLstAdd(
-                                        valueList, cvtDoubleToStr((double)cfgOptionIdxInt64(optionId, optionIdx) / MSEC_PER_SEC));
-                                }
                                 // Else only one value
                                 else
                                 {
                                     valueList = strLstNew();
-                                    strLstAdd(valueList, varStrForce(cfgOptionIdx(optionId, optionIdx)));
+                                    strLstAdd(valueList, cfgOptionIdxDisplay(optionId, optionIdx));
                                 }
 
                                 // Output options and values
@@ -216,7 +209,7 @@ cmdEnd(int code, const String *errorMessage)
             // Output statistics if there are any
             const KeyValue *statKv = statToKv();
 
-            if (varLstSize(kvKeyList(statKv)) > 0)
+            if (!varLstEmpty(kvKeyList(statKv)))
                 LOG_DETAIL_FMT("statistics: %s", strZ(jsonFromKv(statKv)));
 
             // Basic info on command end

@@ -14,13 +14,6 @@ Db Protocol Handler
 #include "postgres/interface.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_DB_OPEN_STR,                         PROTOCOL_COMMAND_DB_OPEN);
-STRING_EXTERN(PROTOCOL_COMMAND_DB_QUERY_STR,                        PROTOCOL_COMMAND_DB_QUERY);
-STRING_EXTERN(PROTOCOL_COMMAND_DB_CLOSE_STR,                        PROTOCOL_COMMAND_DB_CLOSE);
-
-/***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
 static struct
@@ -29,70 +22,82 @@ static struct
 } dbProtocolLocal;
 
 /**********************************************************************************************************************************/
-bool
-dbProtocol(const String *command, PackRead *param, ProtocolServer *server)
+void
+dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(command != NULL);
-
-    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
-    bool found = true;
+    ASSERT(param == NULL);
+    ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_DB_OPEN_STR))
+        // If the db list does not exist then create it in the prior context (which should be persistent)
+        if (dbProtocolLocal.pgClientList == NULL)
         {
-            // If the db list does not exist then create it in the prior context (which should be persistent)
-            if (dbProtocolLocal.pgClientList == NULL)
+            MEM_CONTEXT_PRIOR_BEGIN()
             {
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    dbProtocolLocal.pgClientList = lstNewP(sizeof(PgClient *));
-                }
-                MEM_CONTEXT_PRIOR_END();
+                dbProtocolLocal.pgClientList = lstNewP(sizeof(PgClient *));
             }
-
-            // Add db to the list
-            unsigned int dbIdx = lstSize(dbProtocolLocal.pgClientList);
-
-            MEM_CONTEXT_BEGIN(lstMemContext(dbProtocolLocal.pgClientList))
-            {
-                // Only a single db is passed to the remote
-                PgClient *pgClient = pgClientNew(
-                    cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
-                    cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
-                pgClientOpen(pgClient);
-
-                lstAdd(dbProtocolLocal.pgClientList, &pgClient);
-            }
-            MEM_CONTEXT_END();
-
-            // Return db index which should be included in subsequent calls
-            protocolServerResponseVar(server, VARUINT(dbIdx));
+            MEM_CONTEXT_PRIOR_END();
         }
-        else if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR) || strEq(command, PROTOCOL_COMMAND_DB_CLOSE_STR))
-        {
-            ASSERT(param != NULL);
 
-            PgClient *pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param));
+        // Add db to the list
+        unsigned int dbIdx = lstSize(dbProtocolLocal.pgClientList);
 
-            if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR))
-                protocolServerResponseVar(server, varNewVarLst(pgClientQuery(pgClient, pckReadStrP(param))));
-            else
-            {
-                pgClientClose(pgClient);
-                protocolServerResponseVar(server, NULL);
-            }
-        }
-        else
-            found = false;
+        // Return db index which should be included in subsequent calls
+        protocolServerResponseVar(server, VARUINT(dbIdx));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, found);
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+dbQueryProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PgClient *const pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param));
+        const String *const query = pckReadStrP(param);
+
+        protocolServerResponseVar(server, varNewVarLst(pgClientQuery(pgClient, query)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+dbCloseProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        pgClientClose(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param)));
+        protocolServerResponseVar(server, NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }

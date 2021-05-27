@@ -6,7 +6,6 @@ Calculate Most Common Value
 #include "common/debug.h"
 #include "common/type/list.h"
 #include "common/type/mcv.h"
-#include "common/type/object.h"
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
@@ -23,8 +22,6 @@ typedef struct MostCommonValueEntry
     const Variant *value;                                           // Value to be counted
     uint64_t total;                                                 // Total count for the value
 } MostCommonValueEntry;
-
-OBJECT_DEFINE_FREE(MOST_COMMON_VALUE);
 
 /**********************************************************************************************************************************/
 MostCommonValue *

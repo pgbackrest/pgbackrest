@@ -8,7 +8,7 @@ Remote Storage Read
 
 #include "common/compress/helper.h"
 #include "common/debug.h"
-#include "common/io/read.intern.h"
+#include "common/io/read.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/convert.h"
@@ -70,7 +70,7 @@ storageReadRemoteOpen(THIS_VOID)
                 ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGz, (int)this->interface.compressLevel));
         }
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
         PackWrite *param = protocolCommandParam(command);
 
         pckWriteStrP(param, this->interface.name);
@@ -210,7 +210,7 @@ storageReadRemoteNew(
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_REMOTE_TYPE_STR,
+                .type = STORAGE_REMOTE_TYPE,
                 .name = strDup(name),
                 .compressible = compressible,
                 .compressLevel = compressLevel,

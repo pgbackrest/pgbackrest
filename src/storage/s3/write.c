@@ -4,7 +4,6 @@ S3 Storage File Write
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
@@ -219,7 +218,7 @@ storageWriteS3Close(THIS_VOID)
             if (this->uploadId != NULL)
             {
                 // If there is anything left in the part buffer then write it
-                if (bufUsed(this->partBuffer) > 0)
+                if (!bufEmpty(this->partBuffer))
                     storageWriteS3PartAsync(this);
 
                 // Complete prior async request, if any
@@ -280,7 +279,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_S3_TYPE_STR,
+                .type = STORAGE_S3_TYPE,
                 .name = strDup(name),
                 .atomic = true,
                 .createPath = true,

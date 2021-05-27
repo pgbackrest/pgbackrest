@@ -62,7 +62,6 @@ SRCS = \
 	common/crypto/hash.c \
 	common/debug.c \
 	common/encode.c \
-	common/encode/base64.c \
 	common/error.c \
 	common/exec.c \
 	common/exit.c \
@@ -85,6 +84,7 @@ SRCS = \
 	common/io/http/request.c \
 	common/io/http/response.c \
 	common/io/http/session.c \
+	common/io/http/url.c \
 	common/io/io.c \
 	common/io/read.c \
 	common/io/session.c \
@@ -108,8 +108,10 @@ SRCS = \
 	common/type/keyValue.c \
 	common/type/list.c \
 	common/type/mcv.c \
+	common/type/object.c \
 	common/type/pack.c \
 	common/type/string.c \
+	common/type/stringId.c \
 	common/type/stringList.c \
 	common/type/variant.c \
 	common/type/variantList.c \
@@ -145,6 +147,7 @@ SRCS = \
 	postgres/interface/v110.c \
 	postgres/interface/v120.c \
 	postgres/interface/v130.c \
+	postgres/interface/v140.c \
 	protocol/client.c \
 	protocol/command.c \
 	protocol/helper.c \
@@ -155,6 +158,9 @@ SRCS = \
 	storage/azure/storage.c \
 	storage/azure/write.c \
 	storage/cifs/storage.c \
+	storage/gcs/read.c \
+	storage/gcs/storage.c \
+	storage/gcs/write.c \
 	storage/posix/read.c \
 	storage/posix/storage.c \
 	storage/posix/write.c \
@@ -175,9 +181,9 @@ SRCS = \
 # Compiler options
 ####################################################################################################################################
 CC = @CC@
-CFLAGS = @CFLAGS@
+CFLAGS = $(CFLAGS_EXTRA) @CFLAGS@
 CPPFLAGS = @CPPFLAGS@ -I@srcdir@
-LDFLAGS = @LDFLAGS@
+LDFLAGS = $(LDFLAGS_EXTRA) @LDFLAGS@
 LIBS = @LIBS@
 
 ####################################################################################################################################
@@ -227,7 +233,6 @@ clean:
 
 # Do clean and also remove all output from configure
 clean-all: clean
-	rm -rf autom4te.cache
 	rm -f build.auto.h config.log config.status Makefile
 
 ####################################################################################################################################

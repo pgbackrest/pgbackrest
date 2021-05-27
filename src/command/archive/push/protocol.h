@@ -9,15 +9,17 @@ Archive Push Protocol Handler
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_ARCHIVE_PUSH                               "archivePush"
-    STRING_DECLARE(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool archivePushProtocol(const String *command, PackRead *param, ProtocolServer *server);
+void archivePushFileProtocol(PackRead *const param, ProtocolServer *const server);
+
+/***********************************************************************************************************************************
+Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
+***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE                          STRID5("ap-f", 0x36e010)
+
+#define PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST                                                                                  \
+    {.command = PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, .handler = archivePushFileProtocol},
 
 #endif

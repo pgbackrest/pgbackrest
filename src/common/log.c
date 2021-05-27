@@ -29,16 +29,16 @@ static LogLevel logLevelAny = logLevelError;
 // Log file descriptors
 static int logFdStdOut = STDOUT_FILENO;
 static int logFdStdErr = STDERR_FILENO;
-DEBUG_UNIT_EXTERN int logFdFile = -1;
+static int logFdFile = -1;
 
 // Has the log file banner been written yet?
-DEBUG_UNIT_EXTERN bool logFileBanner = false;
+static bool logFileBanner = false;
 
 // Is the timestamp printed in the log?
 static bool logTimestamp = false;
 
 // Default process id if none is specified
-DEBUG_UNIT_EXTERN unsigned int logProcessId = 0;
+static unsigned int logProcessId = 0;
 
 // Size of the process id field
 static int logProcessSize = 2;
@@ -114,7 +114,7 @@ logLevelStr(LogLevel logLevel)
 }
 
 /**********************************************************************************************************************************/
-DEBUG_UNIT_EXTERN void
+static void
 logAnySet(void)
 {
     FUNCTION_TEST_VOID();

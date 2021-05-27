@@ -200,10 +200,12 @@ sub renderOptional
     {
         $strBuildSourceOptional .=
             (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
-            "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(\"" .
+            "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(" .
+            ($rhOptional->{&CFGDEF_DEFAULT_LITERAL} ? '' : '"') .
             (defined($rhOptional->{&CFGDEF_TYPE}) && $rhOptional->{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ?
                 $rhOptional->{&CFGDEF_DEFAULT} * 1000 : $rhOptional->{&CFGDEF_DEFAULT}) .
-            "\"),\n";
+            ($rhOptional->{&CFGDEF_DEFAULT_LITERAL} ? '' : '"') .
+            "),\n";
 
         $bSingleLine = true;
     }
@@ -359,7 +361,7 @@ sub buildConfigParse
         #---------------------------------------------------------------------------------------------------------------------------
         my $strBuildSourceSub = "";
 
-        foreach my $strCommandRole (CFGCMD_ROLE_DEFAULT, CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
+        foreach my $strCommandRole (CFGCMD_ROLE_MAIN, CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
         {
             $strBuildSourceSub = "";
 
@@ -447,9 +449,9 @@ sub buildConfigParse
 
         my @stryOptionName = ($strOption);
 
-        if (defined($rhOption->{&CFGDEF_NAME_ALT}))
+        if (defined($rhOption->{&CFGDEF_DEPRECATE}))
         {
-            foreach my $strOptionNameAlt (sort(keys(%{$rhOption->{&CFGDEF_NAME_ALT}})))
+            foreach my $strOptionNameAlt (sort(keys(%{$rhOption->{&CFGDEF_DEPRECATE}})))
             {
                 push(@stryOptionName, $strOptionNameAlt);
             }
@@ -465,7 +467,7 @@ sub buildConfigParse
             for (my $iOptionNameIdx = 0; $iOptionNameIdx < @stryOptionName; $iOptionNameIdx++)
             {
                 my $strOptionName = $stryOptionName[$iOptionNameIdx];
-                my $rhNameAlt = $rhOption->{&CFGDEF_NAME_ALT}{$strOptionName};
+                my $rhNameAlt = $rhOption->{&CFGDEF_DEPRECATE}{$strOptionName};
 
                 # Skip alt name if it is not valid for this option index
                 if ($iOptionNameIdx > 0 && defined($rhNameAlt->{&CFGDEF_INDEX}) && $rhNameAlt->{&CFGDEF_INDEX} != $iOptionIdx)

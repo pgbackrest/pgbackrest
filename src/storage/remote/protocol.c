@@ -23,19 +23,6 @@ Remote Storage Protocol Handler
 #include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_STR,                    PROTOCOL_COMMAND_STORAGE_INFO);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR,               PROTOCOL_COMMAND_STORAGE_INFO_LIST);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR,             PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR,             PROTOCOL_COMMAND_STORAGE_PATH_REMOVE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR,               PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_REMOVE_STR,                  PROTOCOL_COMMAND_STORAGE_REMOVE);
-
-/***********************************************************************************************************************************
 Regular expressions
 ***********************************************************************************************************************************/
 STRING_STATIC(BLOCK_REG_EXP_STR,                                    PROTOCOL_BLOCK_HEADER "-1|[0-9]+");
@@ -46,7 +33,7 @@ Local variables
 static struct
 {
     MemContext *memContext;                                         // Mem context
-    RegExp *blockRegExp;                                            // Regular expression to check block messages
+    void *driver;                                                   // Storage driver used for requests
 } storageRemoteProtocolLocal;
 
 /***********************************************************************************************************************************
@@ -218,253 +205,386 @@ storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
 }
 
 /**********************************************************************************************************************************/
-bool
-storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *server)
+void
+storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(command != NULL);
-
-    // Determine which storage should be used
-    const Storage *storage = protocolStorageTypeEnum(
-        cfgOptionStr(cfgOptRemoteType)) == protocolStorageTypeRepo ? storageRepo() : storagePg();
-    StorageInterface interface = storageInterface(storage);
-    void *driver = storageDriver(storage);
-
-    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
-    bool found = true;
+    ASSERT(param == NULL);
+    ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
+        // Get storage based on remote type
+        const Storage *storage =
+            cfgOptionStrId(cfgOptRemoteType) == protocolStorageTypeRepo ? storageRepoWrite() : storagePgWrite();
+
+        // Store local variables in the server context
+        if (storageRemoteProtocolLocal.memContext == NULL)
         {
-            PackWrite *result = pckWriteNewBuf(bufNew(512));
-            pckWriteStrP(result, storagePathP(storage, NULL));
-            pckWriteU64P(result, interface.feature);
-
-            protocolServerResult(server, result);
-            protocolServerResponse(server);
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
-        {
-            ASSERT(param != NULL);
-
-            const String *file = pckReadStrP(param);
-            StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
-            bool followLink = pckReadBoolP(param);
-
-            StorageInfo info = storageInterfaceInfoP(driver, file, level, .followLink = followLink);
-
-            PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
-            pckWriteBoolP(write, info.exists, .defaultWrite = true);
-
-            if (info.exists)
+            MEM_CONTEXT_PRIOR_BEGIN()
             {
-                pckWriteObjBeginP(write);
-                storageRemoteInfoWrite(&(StorageRemoteProtocolInfoListCallbackData){.write = write}, &info);
-                pckWriteObjEndP(write);
+                MEM_CONTEXT_NEW_BEGIN("StorageRemoteProtocol")
+                {
+                    storageRemoteProtocolLocal.memContext = memContextCurrent();
+                    storageRemoteProtocolLocal.driver = storageDriver(storage);
+                }
+                MEM_CONTEXT_NEW_END();
             }
-
-            pckWriteEndP(write);
-            ioWriteFlush(protocolServerIoWrite(server));
+            MEM_CONTEXT_PRIOR_END();
         }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
-        {
-            ASSERT(param != NULL);
 
-            PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
-            pckWriteArrayBeginP(write);
+        // Return storage features
+        PackWrite *result = pckWriteNewBuf(bufNew(512));
+        pckWriteStrP(result, storagePathP(storage, NULL));
+        pckWriteU64P(result, storageInterface(storage).feature);
 
-            StorageRemoteProtocolInfoListCallbackData data = {.write = write, .memContext = memContextCurrent()};
-
-            const String *path = pckReadStrP(param);
-            StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
-
-            bool result = storageInterfaceInfoListP(driver, path, level, storageRemoteProtocolInfoListCallback, &data);
-
-            pckWriteArrayEndP(write);
-            pckWriteBoolP(write, result, .defaultWrite = true);
-            pckWriteEndP(write);
-            ioWriteFlush(protocolServerIoWrite(server));
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
-        {
-            ASSERT(param != NULL);
-
-            const String *file = pckReadStrP(param);
-            bool ignoreMissing = pckReadBoolP(param);
-            const Variant *limit = jsonToVar(pckReadStrP(param));
-            const Variant *filter = jsonToVar(pckReadStrP(param));
-
-            // Create the read object
-            IoRead *fileRead = storageReadIo(storageInterfaceNewReadP(driver, file, ignoreMissing, .limit = limit));
-
-            // Set filter group based on passed filters
-            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), filter);
-
-            // Check if the file exists
-            bool exists = ioReadOpen(fileRead);
-            protocolServerResponseVar(server, VARBOOL(exists));
-
-            // Transfer the file if it exists
-            if (exists)
-            {
-                Buffer *buffer = bufNew(ioBufferSize());
-
-                // Write file out to protocol layer
-                do
-                {
-                    ioRead(fileRead, buffer);
-
-                    if (bufUsed(buffer) > 0)
-                    {
-                        ioWriteStrLine(protocolServerIoWrite(server), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
-                        ioWrite(protocolServerIoWrite(server), buffer);
-                        ioWriteFlush(protocolServerIoWrite(server));
-
-                        bufUsedZero(buffer);
-                    }
-                }
-                while (!ioReadEof(fileRead));
-
-                ioReadClose(fileRead);
-
-                // Write a zero block to show file is complete
-                ioWriteLine(protocolServerIoWrite(server), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
-                ioWriteFlush(protocolServerIoWrite(server));
-
-                // Push filter results
-                protocolServerResponseVar(server, ioFilterGroupResultAll(ioReadFilterGroup(fileRead)));
-            }
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR))
-        {
-            ASSERT(param != NULL);
-
-            // Create the write object
-            const String *file = pckReadStrP(param);
-            mode_t modeFile = pckReadU32P(param);
-            mode_t modePath = pckReadU32P(param);
-            const String *user = pckReadStrP(param);
-            const String *group = pckReadStrP(param);
-            time_t timeModified = pckReadTimeP(param);
-            bool createPath = pckReadBoolP(param);
-            bool syncFile = pckReadBoolP(param);
-            bool syncPath = pckReadBoolP(param);
-            bool atomic = pckReadBoolP(param);
-            const Variant *filter = jsonToVar(pckReadStrP(param));
-
-            IoWrite *fileWrite = storageWriteIo(
-                storageInterfaceNewWriteP(
-                    driver, file, .modeFile = modeFile, .modePath = modePath, .user = user, .group = group,
-                    .timeModified = timeModified, .createPath = createPath, .syncFile = syncFile, .syncPath = syncPath,
-                    .atomic = atomic));
-
-            // Set filter group based on passed filters
-            storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), filter);
-
-            // Open file
-            ioWriteOpen(fileWrite);
-            protocolServerResponseVar(server, NULL);
-
-            // Write data
-            Buffer *buffer = bufNew(ioBufferSize());
-            ssize_t remaining;
-
-            do
-            {
-                // How much data is remaining to write?
-                remaining = storageRemoteProtocolBlockSize(ioReadLine(protocolServerIoRead(server)));
-
-                // Write data
-                if (remaining > 0)
-                {
-                    size_t bytesToCopy = (size_t)remaining;
-
-                    do
-                    {
-                        if (bytesToCopy < bufSize(buffer))
-                            bufLimitSet(buffer, bytesToCopy);
-
-                        bytesToCopy -= ioRead(protocolServerIoRead(server), buffer);
-                        ioWrite(fileWrite, buffer);
-
-                        bufUsedZero(buffer);
-                        bufLimitClear(buffer);
-                    }
-                    while (bytesToCopy > 0);
-                }
-                // Close when all data has been written
-                else if (remaining == 0)
-                {
-                    ioWriteClose(fileWrite);
-
-                    // Push filter results
-                    protocolServerResponseVar(server, ioFilterGroupResultAll(ioWriteFilterGroup(fileWrite)));
-                }
-                // Write was aborted so free the file
-                else
-                {
-                    ioWriteFree(fileWrite);
-                    protocolServerResponseVar(server, NULL);
-                }
-            }
-            while (remaining > 0);
-
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR))
-        {
-            ASSERT(param != NULL);
-
-            const String *path = pckReadStrP(param);
-            bool errorOnExists = pckReadBoolP(param);
-            bool noParentCreate = pckReadBoolP(param);
-            mode_t mode = pckReadU32P(param);
-
-            storageInterfacePathCreateP(driver, path, errorOnExists, noParentCreate, mode);
-
-            protocolServerResponseVar(server, NULL);
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
-        {
-            ASSERT(param != NULL);
-
-            const String *path = pckReadStrP(param);
-            bool recurse = pckReadBoolP(param);
-
-            protocolServerResponseVar(server, VARBOOL(storageInterfacePathRemoveP(driver, path, recurse)));
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
-        {
-            ASSERT(param != NULL);
-
-            const String *path = pckReadStrP(param);
-
-            storageInterfacePathSyncP(driver, path);
-
-            protocolServerResponseVar(server, NULL);
-        }
-        else if (strEq(command, PROTOCOL_COMMAND_STORAGE_REMOVE_STR))
-        {
-            ASSERT(param != NULL);
-
-            const String *file = pckReadStrP(param);
-            bool errorOnMissing = pckReadBoolP(param);
-
-            storageInterfaceRemoveP(driver, file, .errorOnMissing = errorOnMissing);
-
-            protocolServerResponseVar(server, NULL);
-        }
-        else
-            found = false;
+        protocolServerResult(server, result);
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, found);
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *file = pckReadStrP(param);
+        StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
+        bool followLink = pckReadBoolP(param);
+
+        StorageInfo info = storageInterfaceInfoP(storageRemoteProtocolLocal.driver, file, level, .followLink = followLink);
+
+        PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
+        pckWriteBoolP(write, info.exists, .defaultWrite = true);
+
+        if (info.exists)
+        {
+            pckWriteObjBeginP(write);
+            storageRemoteInfoWrite(&(StorageRemoteProtocolInfoListCallbackData){.write = write}, &info);
+            pckWriteObjEndP(write);
+        }
+
+        pckWriteEndP(write);
+        ioWriteFlush(protocolServerIoWrite(server));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageRemoteInfoListProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
+        pckWriteArrayBeginP(write);
+
+        StorageRemoteProtocolInfoListCallbackData data = {.write = write, .memContext = memContextCurrent()};
+
+        const String *path = pckReadStrP(param);
+        StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
+
+        bool result = storageInterfaceInfoListP(
+            storageRemoteProtocolLocal.driver, path, level, storageRemoteProtocolInfoListCallback, &data);
+
+        pckWriteArrayEndP(write);
+        pckWriteBoolP(write, result, .defaultWrite = true);
+        pckWriteEndP(write);
+        ioWriteFlush(protocolServerIoWrite(server));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *file = pckReadStrP(param);
+        bool ignoreMissing = pckReadBoolP(param);
+        const Variant *limit = jsonToVar(pckReadStrP(param));
+        const Variant *filter = jsonToVar(pckReadStrP(param));
+
+        // Create the read object
+        IoRead *fileRead = storageReadIo(
+            storageInterfaceNewReadP(storageRemoteProtocolLocal.driver, file, ignoreMissing, .limit = limit));
+
+        // Set filter group based on passed filters
+        storageRemoteFilterGroup(ioReadFilterGroup(fileRead), filter);
+
+        // Check if the file exists
+        bool exists = ioReadOpen(fileRead);
+        protocolServerResponseVar(server, VARBOOL(exists));
+
+        // Transfer the file if it exists
+        if (exists)
+        {
+            Buffer *buffer = bufNew(ioBufferSize());
+
+            // Write file out to protocol layer
+            do
+            {
+                ioRead(fileRead, buffer);
+
+                if (!bufEmpty(buffer))
+                {
+                    ioWriteStrLine(protocolServerIoWrite(server), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
+                    ioWrite(protocolServerIoWrite(server), buffer);
+                    ioWriteFlush(protocolServerIoWrite(server));
+
+                    bufUsedZero(buffer);
+                }
+            }
+            while (!ioReadEof(fileRead));
+
+            ioReadClose(fileRead);
+
+            // Write a zero block to show file is complete
+            ioWriteLine(protocolServerIoWrite(server), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
+            ioWriteFlush(protocolServerIoWrite(server));
+
+            // Push filter results
+            protocolServerResponseVar(server, ioFilterGroupResultAll(ioReadFilterGroup(fileRead)));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Create the write object
+        const String *file = pckReadStrP(param);
+        mode_t modeFile = pckReadU32P(param);
+        mode_t modePath = pckReadU32P(param);
+        const String *user = pckReadStrP(param);
+        const String *group = pckReadStrP(param);
+        time_t timeModified = pckReadTimeP(param);
+        bool createPath = pckReadBoolP(param);
+        bool syncFile = pckReadBoolP(param);
+        bool syncPath = pckReadBoolP(param);
+        bool atomic = pckReadBoolP(param);
+        const Variant *filter = jsonToVar(pckReadStrP(param));
+
+        IoWrite *fileWrite = storageWriteIo(
+            storageInterfaceNewWriteP(
+                storageRemoteProtocolLocal.driver, file, .modeFile = modeFile, .modePath = modePath, .user = user, .group = group,
+                .timeModified = timeModified, .createPath = createPath, .syncFile = syncFile, .syncPath = syncPath,
+                .atomic = atomic));
+
+        // Set filter group based on passed filters
+        storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), filter);
+
+        // Open file
+        ioWriteOpen(fileWrite);
+        protocolServerResponseVar(server, NULL);
+
+        // Write data
+        Buffer *buffer = bufNew(ioBufferSize());
+        ssize_t remaining;
+
+        do
+        {
+            // How much data is remaining to write?
+            remaining = storageRemoteProtocolBlockSize(ioReadLine(protocolServerIoRead(server)));
+
+            // Write data
+            if (remaining > 0)
+            {
+                size_t bytesToCopy = (size_t)remaining;
+
+                do
+                {
+                    if (bytesToCopy < bufSize(buffer))
+                        bufLimitSet(buffer, bytesToCopy);
+
+                    bytesToCopy -= ioRead(protocolServerIoRead(server), buffer);
+                    ioWrite(fileWrite, buffer);
+
+                    bufUsedZero(buffer);
+                    bufLimitClear(buffer);
+                }
+                while (bytesToCopy > 0);
+            }
+            // Close when all data has been written
+            else if (remaining == 0)
+            {
+                ioWriteClose(fileWrite);
+
+                // Push filter results
+                protocolServerResponseVar(server, ioFilterGroupResultAll(ioWriteFilterGroup(fileWrite)));
+            }
+            // Write was aborted so free the file
+            else
+            {
+                ioWriteFree(fileWrite);
+                protocolServerResponseVar(server, NULL);
+            }
+        }
+        while (remaining > 0);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *path = pckReadStrP(param);
+        bool errorOnExists = pckReadBoolP(param);
+        bool noParentCreate = pckReadBoolP(param);
+        mode_t mode = pckReadU32P(param);
+
+        storageInterfacePathCreateP(storageRemoteProtocolLocal.driver, path, errorOnExists, noParentCreate, mode);
+
+        protocolServerResponseVar(server, NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageRemotePathRemoveProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *path = pckReadStrP(param);
+        bool recurse = pckReadBoolP(param);
+
+        protocolServerResponseVar(server, VARBOOL(storageInterfacePathRemoveP(storageRemoteProtocolLocal.driver, path, recurse)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageRemotePathSyncProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *path = pckReadStrP(param);
+
+        storageInterfacePathSyncP(storageRemoteProtocolLocal.driver, path);
+        protocolServerResponseVar(server, NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *file = pckReadStrP(param);
+        bool errorOnMissing = pckReadBoolP(param);
+
+        storageInterfaceRemoveP(storageRemoteProtocolLocal.driver, file, .errorOnMissing = errorOnMissing);
+        protocolServerResponseVar(server, NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -477,23 +597,21 @@ storageRemoteProtocolBlockSize(const String *message)
 
     ASSERT(message != NULL);
 
+    // Regular expression to check block messages
+    static RegExp *blockRegExp = NULL;
+
     // Create block regular expression if it has not been created yet
-    if (storageRemoteProtocolLocal.memContext == NULL)
+    if (blockRegExp == NULL)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN("StorageRemoteFileReadLocal")
-            {
-                storageRemoteProtocolLocal.memContext = memContextCurrent();
-                storageRemoteProtocolLocal.blockRegExp = regExpNew(BLOCK_REG_EXP_STR);
-            }
-            MEM_CONTEXT_NEW_END();
+            blockRegExp = regExpNew(BLOCK_REG_EXP_STR);
         }
         MEM_CONTEXT_END();
     }
 
     // Validate the header block size message
-    if (!regExpMatch(storageRemoteProtocolLocal.blockRegExp, message))
+    if (!regExpMatch(blockRegExp, message))
         THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strZ(message));
 
     FUNCTION_LOG_RETURN(SSIZE, (ssize_t)cvtZToInt(strZ(message) + sizeof(PROTOCOL_BLOCK_HEADER) - 1));

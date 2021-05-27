@@ -10,23 +10,6 @@ Debug Routines
 #include "common/type/stringz.h"
 
 /***********************************************************************************************************************************
-NDEBUG indicates to C library routines that debugging is off -- set a more readable flag to use when debugging is on
-***********************************************************************************************************************************/
-#ifndef NDEBUG
-    #define DEBUG
-#endif
-
-/***********************************************************************************************************************************
-Extern variables that are needed for unit testing
-***********************************************************************************************************************************/
-#ifdef DEBUG_UNIT
-    #define DEBUG_UNIT_EXTERN
-#else
-    #define DEBUG_UNIT_EXTERN                                                                                                      \
-        static
-#endif
-
-/***********************************************************************************************************************************
 Base function debugging macros
 
 In debug mode parameters will always be recorded in the stack trace while in production mode they will only be recorded when the log
@@ -269,6 +252,18 @@ Macros to return function results (or void)
 #define FUNCTION_LOG_RETURN_CONST_PP(typeMacroPrefix, result)                                                                      \
     FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, **, result)
 
+#define FUNCTION_LOG_RETURN_STRUCT(result)                                                                                         \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        STACK_TRACE_POP(false);                                                                                                    \
+                                                                                                                                   \
+        IF_LOG_ANY(FUNCTION_LOG_LEVEL())                                                                                           \
+            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "=> struct");                                                                         \
+                                                                                                                                   \
+        return result;                                                                                                             \
+    }                                                                                                                              \
+    while (0)
+
 #define FUNCTION_LOG_RETURN_VOID()                                                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
@@ -281,10 +276,18 @@ Macros to return function results (or void)
 /***********************************************************************************************************************************
 Function Test Macros
 
-In debug builds these macros will update the stack trace with function names and parameters but not log.  In production builds all
-test macros are compiled out (except for return statements).
+In debug builds these macros will update the stack trace with function names and parameters but will not log. In production builds
+all test macros are compiled out (except for return statements).
+
+Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying functions that support the macros will not be present.
 ***********************************************************************************************************************************/
+#ifdef DEBUG
 #ifdef DEBUG_TEST_TRACE
+    #define DEBUG_TEST_TRACE_MACRO
+#endif // DEBUG_TEST_TRACE
+#endif // DEBUG
+
+#ifdef DEBUG_TEST_TRACE_MACRO
     #define FUNCTION_TEST_BEGIN()                                                                                                  \
         if (stackTraceTest())                                                                                                      \
         {                                                                                                                          \
@@ -329,6 +332,6 @@ test macros are compiled out (except for return statements).
     #define FUNCTION_TEST_RETURN(result)                                                                                           \
         return result
     #define FUNCTION_TEST_RETURN_VOID()
-#endif
+#endif // DEBUG_TEST_TRACE_MACRO
 
 #endif

@@ -170,7 +170,7 @@ testRun(void)
     if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
     {
         TEST_RESULT_UINT(sizeof(MemContextAlloc), 8, "check MemContextAlloc size (same for 32/64 bit)");
-        TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER((void *)0), (void *)sizeof(MemContextAlloc), "check buffer macro");
+        TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER((void *)1), (void *)(sizeof(MemContextAlloc) + 1), "check buffer macro");
         TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_HEADER((void *)sizeof(MemContextAlloc)), (void *)0, "check header macro");
 
         memContextSwitch(memContextTop());
@@ -228,7 +228,7 @@ testRun(void)
         TEST_ERROR(
             memFree(NULL), AssertError,
             "assertion '((MemContextAlloc *)buffer - 1) != NULL"
-                " && ((MemContextAlloc *)buffer - 1) != MEM_CONTEXT_ALLOC_HEADER(NULL)"
+                " && (uintptr_t)((MemContextAlloc *)buffer - 1) != (uintptr_t)-sizeof(MemContextAlloc)"
                 " && ((MemContextAlloc *)buffer - 1)->allocIdx <"
                 " memContextStack[memContextCurrentStackIdx].memContext->allocListSize"
                 " && memContextStack[memContextCurrentStackIdx].memContext->allocList[((MemContextAlloc *)buffer - 1)->allocIdx]'"
@@ -325,7 +325,7 @@ testRun(void)
         {
             memContext = MEM_CONTEXT_NEW();
             TEST_RESULT_PTR(memContext, memContextCurrent(), "new mem context is current");
-            TEST_RESULT_Z(memContextName(memContext), memContextTestName, "context is now '%s'", memContextTestName);
+            TEST_RESULT_Z(memContextName(memContext), memContextTestName, "check context name");
         }
         MEM_CONTEXT_NEW_END();
 
@@ -344,7 +344,7 @@ testRun(void)
             MEM_CONTEXT_NEW_BEGIN(memContextTestName)
             {
                 memContext = MEM_CONTEXT_NEW();
-                TEST_RESULT_Z(memContextName(memContext), memContextTestName, "context is now '%s'", memContextTestName);
+                TEST_RESULT_Z(memContextName(memContext), memContextTestName, "check mem context name");
                 THROW(AssertError, "create failed");
             }
             MEM_CONTEXT_NEW_END();
@@ -420,5 +420,5 @@ testRun(void)
 
     memContextFree(memContextTop());
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

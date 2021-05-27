@@ -10,6 +10,7 @@ The general-purpose functions for querying the current configuration are found i
 #define CONFIG_CONFIG_INTERN_H
 
 #include "config/config.h"
+#include "config/parse.auto.h"
 
 /***********************************************************************************************************************************
 The maximum number of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
@@ -25,6 +26,7 @@ typedef struct ConfigOptionValue
     bool negate;                                                // Is the option negated?
     bool reset;                                                 // Is the option reset?
     unsigned int source;                                        // Where the option came from, i.e. ConfigSource enum
+    const String *display;                                      // Current display value, if any. Used for messages, etc.
     const Variant *value;                                       // Value
 } ConfigOptionValue;
 
@@ -46,6 +48,7 @@ typedef struct Config
         const char *name;                                           // Name
         bool valid;                                                 // Is option group valid for the current command?
         unsigned int indexTotal;                                    // Total number of indexes with values in option group
+        bool indexDefaultExists;                                    // Is there a default index for non-indexed functions?
         unsigned int indexDefault;                                  // Default index (usually 0)
         unsigned int indexMap[CFG_OPTION_KEY_MAX];                  // List of index to key index mappings
     } optionGroup[CFG_OPTION_GROUP_TOTAL];
@@ -69,6 +72,12 @@ Init Function
 void cfgInit(Config *config);
 
 /***********************************************************************************************************************************
+Command Functions
+***********************************************************************************************************************************/
+// List of retry intervals for local jobs. The interval for the first retry will always be 0. NULL if there are no retries.
+VariantList *cfgCommandJobRetry(void);
+
+/***********************************************************************************************************************************
 Option Group Functions
 ***********************************************************************************************************************************/
 // Is the option in a group?
@@ -80,6 +89,10 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
+// Format a variant for display using the supplied option type. cfgOptionDisplay()/cfgOptionIdxDisplay() should be used whenever
+// possible, but sometimes the variant needs to be manipulated before being formatted.
+const String *cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType);
+
 // Convert the key used in the original configuration to a group index. This is used when an option key must be translated into the
 // local group index, e.g. during parsing or when getting the value of specific options from a remote.
 unsigned int cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key);

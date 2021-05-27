@@ -8,11 +8,11 @@ TLS Session
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
-#include "common/io/read.intern.h"
-#include "common/io/session.intern.h"
+#include "common/io/read.h"
+#include "common/io/session.h"
 #include "common/io/tls/client.h"
 #include "common/io/tls/session.h"
-#include "common/io/write.intern.h"
+#include "common/io/write.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
@@ -20,9 +20,6 @@ TLS Session
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define TLS_SESSION_TYPE                                            TlsSession
-#define TLS_SESSION_PREFIX                                          tlsSession
-
 typedef struct TlsSession
 {
     MemContext *memContext;                                         // Mem context
@@ -57,11 +54,21 @@ tlsSessionToLog(const THIS_VOID)
 /***********************************************************************************************************************************
 Free connection
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TLS_SESSION, LOG, logLevelTrace)
+static void
+tlsSessionFreeResource(THIS_VOID)
 {
+    THIS(TlsSession);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(TLS_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     SSL_free(this->session);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 static void
@@ -134,19 +141,15 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
 
         // Try again after waiting for read ready
         case SSL_ERROR_WANT_READ:
-        {
             ioReadReadyP(ioSessionIoRead(this->ioSession), .error = true);
             result = 0;
             break;
-        }
 
         // Try again after waiting for write ready
         case SSL_ERROR_WANT_WRITE:
-        {
             ioWriteReadyP(ioSessionIoWrite(this->ioSession), .error = true);
             result = 0;
             break;
-        }
 
         // A syscall failed (this usually indicates unexpected eof)
         case SSL_ERROR_SYSCALL:
@@ -338,7 +341,7 @@ tlsSessionRole(const THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoSessionInterface tlsSessionInterface =
 {
-    .type = &IO_CLIENT_TLS_TYPE_STR,
+    .type = IO_CLIENT_TLS_TYPE,
     .close = tlsSessionClose,
     .ioRead = tlsSessionIoRead,
     .ioWrite = tlsSessionIoWrite,

@@ -12,46 +12,30 @@ Verify Protocol Handler
 #include "config/config.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_VERIFY_FILE_STR,                    PROTOCOL_COMMAND_VERIFY_FILE);
-
 /**********************************************************************************************************************************/
-bool
-verifyProtocol(const String *command, PackRead *param, ProtocolServer *server)
+void
+verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(command != NULL);
-
-    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
-    bool found = true;
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Process any commands received that are for this handler
-        if (strEq(command, PROTOCOL_COMMAND_VERIFY_FILE_STR))
-        {
-            ASSERT(param != NULL);
+        const String *filePathName = pckReadStrP(param);
+        const String *fileChecksum = pckReadStrP(param);
+        uint64_t fileSize = pckReadU64P(param);
+        const String *cipherPass = pckReadStrP(param);
 
-            const String *filePathName = pckReadStrP(param);
-            const String *fileChecksum = pckReadStrP(param);
-            uint64_t fileSize = pckReadU64P(param);
-            const String *cipherPass = pckReadStrP(param);
+        VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
 
-            VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
-
-            protocolServerResponseVar(server, varNewInt(result));
-        }
-        else
-            found = false;
+        protocolServerResponseVar(server, varNewInt(result));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, found);
+    FUNCTION_LOG_RETURN_VOID();
 }

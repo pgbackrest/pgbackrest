@@ -21,13 +21,14 @@ Restore File
 /**********************************************************************************************************************************/
 bool
 restoreFile(
-    const String *repoFile, const String *repoFileReference, CompressType repoFileCompressType, const String *pgFile,
-    const String *pgFileChecksum, bool pgFileZero, uint64_t pgFileSize, time_t pgFileModified, mode_t pgFileMode,
-    const String *pgFileUser, const String *pgFileGroup, time_t copyTimeBegin, bool delta, bool deltaForce,
+    const String *repoFile, unsigned int repoIdx, const String *repoFileReference, CompressType repoFileCompressType,
+    const String *pgFile, const String *pgFileChecksum, bool pgFileZero, uint64_t pgFileSize, time_t pgFileModified,
+    mode_t pgFileMode, const String *pgFileUser, const String *pgFileGroup, time_t copyTimeBegin, bool delta, bool deltaForce,
     const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
         FUNCTION_LOG_PARAM(STRING, repoFileReference);
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);
         FUNCTION_LOG_PARAM(STRING, pgFile);
@@ -164,7 +165,7 @@ restoreFile(
                 // Copy file
                 storageCopyP(
                     storageNewReadP(
-                        storageRepo(),
+                        storageRepoIdx(repoIdx),
                         strNewFmt(
                             STORAGE_REPO_BACKUP "/%s/%s%s", strZ(repoFileReference), strZ(repoFile),
                             strZ(compressExtStr(repoFileCompressType))),

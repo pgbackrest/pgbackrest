@@ -8,7 +8,6 @@ HTTP Query
 #include "common/io/http/query.h"
 #include "common/memContext.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -19,9 +18,6 @@ struct HttpQuery
     KeyValue *kv;                                                   // KeyValue store
     const StringList *redactList;                                   // List of keys to redact values for
 };
-
-OBJECT_DEFINE_MOVE(HTTP_QUERY);
-OBJECT_DEFINE_FREE(HTTP_QUERY);
 
 /**********************************************************************************************************************************/
 HttpQuery *
@@ -268,11 +264,11 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
         {
             const StringList *keyList = httpQueryList(this);
 
-            if (strLstSize(keyList) > 0)
+            if (!strLstEmpty(keyList))
             {
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = strNew("");
+                    result = strNew();
                 }
                 MEM_CONTEXT_PRIOR_END();
 
@@ -300,7 +296,7 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
 String *
 httpQueryToLog(const HttpQuery *this)
 {
-    String *result = strNew("{");
+    String *result = strNewZ("{");
     const StringList *keyList = httpQueryList(this);
 
     for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)

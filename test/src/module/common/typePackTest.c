@@ -240,7 +240,7 @@ testRun(void)
 
         while (pckReadNext(packRead))
         {
-            TEST_RESULT_UINT(pckReadU64P(packRead, .id = pckReadId(packRead)), value, "read %u", value);
+            TEST_RESULT_UINT(pckReadU64P(packRead, .id = pckReadId(packRead)), value, strZ(strNewFmt("read %u", value)));
             value++;
         }
 
@@ -343,5 +343,5 @@ testRun(void)
         TEST_RESULT_BOOL(pckWriteEmpty(packWrite), false, "no empty");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

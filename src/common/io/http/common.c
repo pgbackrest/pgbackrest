@@ -13,8 +13,9 @@ HTTP Common
 Convert the time using the format specified in https://tools.ietf.org/html/rfc7231#section-7.1.1.1 which is used by HTTP 1.1 (the
 only version we support).
 ***********************************************************************************************************************************/
-static const char *httpCommonMonthList[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-static const char *httpCommonDayList[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+static const char *const httpCommonMonthList[] =
+    {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+static const char *const httpCommonDayList[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
 time_t
 httpDateToTime(const String *lastModified)
@@ -80,7 +81,7 @@ httpUriDecode(const String *uri)
     // Decode if the string is not null
     if (uri != NULL)
     {
-        result = strNew("");
+        result = strNew();
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -126,7 +127,7 @@ httpUriEncode(const String *uri, bool path)
     // Encode if the string is not null
     if (uri != NULL)
     {
-        result = strNew("");
+        result = strNew();
 
         // Iterate all characters in the string
         for (unsigned uriIdx = 0; uriIdx < strSize(uri); uriIdx++)

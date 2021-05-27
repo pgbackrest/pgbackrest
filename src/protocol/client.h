@@ -7,13 +7,11 @@ Protocol Client
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_CLIENT_TYPE                                        ProtocolClient
-#define PROTOCOL_CLIENT_PREFIX                                      protocolClient
-
 typedef struct ProtocolClient ProtocolClient;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/object.h"
 #include "protocol/command.h"
 
 /***********************************************************************************************************************************
@@ -26,10 +24,8 @@ Constants
 #define PROTOCOL_GREETING_VERSION                                   "version"
     STRING_DECLARE(PROTOCOL_GREETING_VERSION_STR);
 
-#define PROTOCOL_COMMAND_EXIT                                       "exit"
-    STRING_DECLARE(PROTOCOL_COMMAND_EXIT_STR);
-#define PROTOCOL_COMMAND_NOOP                                       "noop"
-    STRING_DECLARE(PROTOCOL_COMMAND_NOOP_STR);
+#define PROTOCOL_COMMAND_EXIT                                       STRID5("exit", 0xa27050)
+#define PROTOCOL_COMMAND_NOOP                                       STRID5("noop", 0x83dee0)
 
 #define PROTOCOL_ERROR                                              "err"
     STRING_DECLARE(PROTOCOL_ERROR_STR);
@@ -45,13 +41,41 @@ Constructors
 ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ProtocolClientPub
+{
+    MemContext *memContext;                                         // Mem context
+    IoRead *read;                                                   // Read interface
+    IoWrite *write;                                                 // Write interface
+} ProtocolClientPub;
+
+// Read interface
+__attribute__((always_inline)) static inline IoRead *
+protocolClientIoRead(ProtocolClient *const this)
+{
+    return THIS_PUB(ProtocolClient)->read;
+}
+
+// Write interface
+__attribute__((always_inline)) static inline IoWrite *
+protocolClientIoWrite(ProtocolClient *const this)
+{
+    return THIS_PUB(ProtocolClient)->write;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Execute a protocol command and get the output
 const Variant *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool outputRequired);
 
-// Move to new parent mem context
-ProtocolClient *protocolClientMove(ProtocolClient *this, MemContext *parentNew);
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline ProtocolClient *
+protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Send noop to test connection or keep it alive
 void protocolClientNoOp(ProtocolClient *this);
@@ -68,18 +92,13 @@ const Variant *protocolClientReadOutputVar(ProtocolClient *this, bool outputRequ
 void protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command);
 
 /***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Read interface
-IoRead *protocolClientIoRead(const ProtocolClient *this);
-
-// Write interface
-IoWrite *protocolClientIoWrite(const ProtocolClient *this);
-
-/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolClientFree(ProtocolClient *this);
+__attribute__((always_inline)) static inline void
+protocolClientFree(ProtocolClient *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

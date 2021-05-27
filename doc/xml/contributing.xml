@@ -15,6 +15,11 @@
         <variable key="host-contrib-user">{[host-user]}</variable>
         <variable key="host-contrib-image">pgbackrest/doc:contrib</variable>
 
+        <variable key="github-url-test">{[github-url-master]}/test/src</variable>
+        <variable key="github-url-test-common">{[github-url-master]}/test/src/common</variable>
+        <variable key="github-url-src">{[github-url-master]}/src</variable>
+        <variable key="github-url-src-common">{[github-url-src]}/common</variable>
+
         <variable key="cwd" eval="y">use Cwd qw(cwd); cwd()</variable>
     </variable-list>
 
@@ -45,7 +50,15 @@
     <section id="introduction">
         <title>Introduction</title>
 
-        <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.  Coding standards to follow are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link>. At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the <link section="/testing">Testing</link> section below for details.</p>
+        <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.
+
+        Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>. You may want to check the <link url="{[github-url-projects]}">Project Boards</link> to see if your suggestion has already been submitted.
+
+        Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>. Please provide as much information as possible to aid in determining the cause of the problem.
+
+        You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.
+
+        Coding standards are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link> and some important coding details and an example are provided in the <link section="/coding">Coding</link> section below. At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the <link section="/testing">Testing</link> section below for details.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -69,7 +82,7 @@
                 <exe-cmd>
                     apt-get install rsync git devscripts build-essential valgrind lcov autoconf
                     autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config
-                    libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
+                    libxml-checker-perl libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
                     zstd libzstd-dev bzip2 libbz2-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
@@ -83,7 +96,7 @@
             </execute>
         </execute-list>
 
-        <p>Some unit tests and all the integration test require <proper>Docker</proper>.  Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
+        <p>Some unit tests and all the integration tests require <proper>Docker</proper>.  Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
 
         <execute-list host="{[host-contrib]}">
             <title>Install Docker</title>
@@ -118,145 +131,558 @@
                 </exe-cmd>
             </execute>
         </execute-list>
+
+        <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation</quote>. NOTE that the <quote>Install latex (for building PDF)</quote> section is not required since testing of the docs need only be run for HTML output.</p>
     </section>
 
-    <section id="running">
-        <title>Running Tests</title>
+    <section id="coding">
+        <title>Coding</title>
 
-        <section id="without-docker">
-            <title>Without Docker</title>
+        <p>The following sections provide information on some important concepts needed for coding within <backrest/>.</p>
 
-            <p>If <proper>Docker</proper> is not installed, then the available tests can be listed using <setting>--vm-none</setting>.</p>
+        <section id="memory-context">
+            <title>Memory Contexts</title>
 
-            <execute-list host="{[host-contrib]}">
-                <title>List tests that don't require a container</title>
-
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl --vm=none --dry-run</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                    <exe-highlight>[0-9]+ tests selected|DRY RUN COMPLETED SUCCESSFULLY</exe-highlight>
-                </execute>
-            </execute-list>
-
-            <p>Once a test has been selected it can be run by specifying the module and test.  The <setting>--dev</setting> option sets several flags that are appropriate for development rather than test.  Most importantly, it reuses object files from the previous test run to speed testing.  The <setting>--vm-out</setting> option displays the test output.</p>
-
-            <execute-list host="{[host-contrib]}">
-                <title>Run a test</title>
-
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                </execute>
-            </execute-list>
-
-            <p>An entire module can be run by using only the <setting>--module</setting> option.</p>
-
-            <execute-list host="{[host-contrib]}">
-                <title>Run a module</title>
-
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --module=postgres</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                </execute>
-            </execute-list>
+            <p>Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use <code>MEM_CONTEXT_NEW_BEGIN("SomeName")</code> for objects and <code>MEM_CONTEXT_TEMP_BEGIN()</code> for functions. See <link url="{[github-url-src-common]}/memContext.h">memContext.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
 
-        <section id="with-docker" depend="/environment">
-            <title>With Docker</title>
+        <section id="message-logging">
+            <title>Logging</title>
 
-            <p>Build a container to run tests.  The vm must be pre-configured but a variety are available.  The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
+            <p>Logging is used for debugging with the built-in macros <code>FUNCTION_LOG_*()</code> and <code>FUNCTION_TEST_*()</code> which are used to trace parameters passed to/returned from functions. <code>FUNCTION_LOG_*()</code> macros are used for production logging whereas <code>FUNCTION_TEST_*()</code> macros will be compiled out of production code. For functions where no parameter is valuable enough to justify the cost of debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
 
-            <execute-list host="{[host-contrib]}">
-                <title>Build a VM</title>
+            <p>Logging is also used for providing information to the user via the <code>LOG_*()</code> macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via <code>THROW_*()</code> macros for throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+        </section>
 
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u18</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                </execute>
-            </execute-list>
+        <section id="coding-example">
+            <title>Coding Example</title>
 
-            <execute-list host="{[host-contrib]}">
-                <title>Run a Test</title>
+            <p>The example below is not structured like an actual implementation and is intended only to provide an understanding of some of the more common coding practices. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document (<link url="{[github-url-master]}/CODING.md">CODING.md</link>) and sections above for an introduction to the concepts provided here. For an actual implementation, see <link url="{[github-url-src]}/db/db.h">db.h</link> and <link url="{[github-url-src]}/db/db.c">db.c</link>.</p>
 
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u18 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                </execute>
-            </execute-list>
+            <section id="coding-ex1">
+                <title>Example: hypothetical basic object construction</title>
+
+                <code-block type="c">
+/*
+ *  HEADER FILE - see db.h for a complete implementation example
+ */
+
+// Typedef the object declared in the C file
+typedef struct MyObj MyObj;
+
+// Constructor, and any functions in the header file, are all declared on one line
+MyObj *myObjNew(unsigned int myData, const String *secretName);
+
+// Declare the publicly accessible variables in a structure with Pub appended to the name
+typedef struct MyObjPub         // First letter upper case
+{
+    MemContext *memContext;     // Pointer to memContext in which this object resides
+    unsigned int myData;        // Contents of the myData variable
+} MyObjPub;
+
+// Declare getters and setters inline for the publicly visible variables
+// Only setters require "Set" appended to the name
+__attribute__((always_inline)) static inline unsigned int
+myObjMyData(const MyObj *const this)
+{
+    return THIS_PUB(MyObj)->myData;    // Use the built-in THIS_PUB macro
+}
+
+// Destructor
+__attribute__((always_inline)) static inline void
+myObjFree(MyObj *const this)
+{
+    objFree(this);
+}
+
+// TYPE and FORMAT macros for function logging
+#define FUNCTION_LOG_MY_OBJ_TYPE                                            \
+    MyObj *
+#define FUNCTION_LOG_MY_OBJ_FORMAT(value, buffer, bufferSize)               \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, myObjToLog, buffer, bufferSize)
+
+/*
+ * C FILE - see db.c for a more complete and actual implementation example
+ */
+
+// Declare the object type
+struct MyObj
+{
+    MyObjPub pub;               // Publicly accessible variables must be first and named "pub"
+    const String *name;         // Pointer to lightweight string object - see string.h
+};
+
+// Object constructor, and any functions in the C file, have the return type and function signature on separate lines
+MyObj *
+myObjNew(unsigned int myData, const String *secretName)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);              // Use FUNCTION_LOG_BEGIN with a log level for displaying in production
+        FUNCTION_LOG_PARAM(UINT, myData);           // When log level is debug, myData variable will be logged
+        FUNCTION_TEST_PARAM(STRING, secretName);    // FUNCTION_TEST_PARAM will not display secretName value in production logging
+    FUNCTION_LOG_END();
+
+    ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
+
+    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
+
+    MEM_CONTEXT_NEW_BEGIN("MyObj")      // Create a long lasting memory context with the name of the object
+    {
+        this = memNew(sizeof(MyObj));   // Allocate the memory required by the object
+
+        *this = (MyObj)                 // Initialize the object
+        {
+            .pub =
+            {
+                .memContext = memContextCurrent(),      // Set the memory context to the current MyObj memory context
+                .myData = myData,                       // Copy the simple data type to this object
+            },
+            .name = strDup(secretName),     // Duplicate the String data type to the this object's memory context
+        };
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(MyObj, this);
+}
+
+// Function using temporary memory context
+String *
+myObjDisplay(unsigned int myData)
+{
+    FUNCTION_TEST_BEGIN();                      // No parameters passed to this function will be logged in production
+        FUNCTION_TEST_PARAM(UINT, myData);
+    FUNCTION_TEST_END();
+
+    String *result = NULL;     // Result is created in the caller's memory context (referred to as "prior context" below)
+
+    MEM_CONTEXT_TEMP_BEGIN()   // Begin a new temporary context
+    {
+        String *resultStr = strNewZ("Hello");    // Allocate a string in the temporary memory context
+
+        if (myData > 1)
+            resultStr = strCatZ(" World");      // Append a value to the string still in the temporary memory context
+        else
+            LOG_WARN("Am I not your World?");   // Log a warning to the user
+
+        MEM_CONTEXT_PRIOR_BEGIN()           // Switch to the prior context so the string duplication is in the caller's context
+        {
+            result = strDup(resultStr);     // Create a copy of the string in the caller's context
+        }
+        MEM_CONTEXT_PRIOR_END();            // Switch back to the temporary context
+    }
+    MEM_CONTEXT_TEMP_END();      // Free everything created inside this temporary memory context - i.e resultStr
+
+    FUNCTION_TEST_RETURN(STRING, result);    // Return result but do not log the value in production
+}
+
+// Create the logging function for displaying important information from the object
+String *
+myObjToLog(const MyObj *this)
+{
+    return strNewFmt(
+        "{name: %s, myData: %u}", this->name == NULL ? NULL_Z : strZ(this->name), myObjMyData(this));
+}
+                </code-block>
+            </section>
+        </section>
+    </section>
+
+    <section id="testing">
+        <title>Testing</title>
+
+        <p>A list of all possible test combinations can be viewed by running:</p>
+        <code-block>
+            pgbackrest/test/test.pl --dry-run
+        </code-block>
+
+        <p>While some files are automatically generated during <code>make</code>, others are generated by running the test harness as follows:</p>
+
+        <code-block>
+            pgbackrest/test/test.pl --gen-only
+        </code-block>
+
+        <p>Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under <code>pgbackrest/doc/output/html</code>. More details can be found in the <backrest/> <link url="{[github-url-master]}/doc/README.md">doc/README.md</link> file.</p>
+
+        <code-block>
+            pgbackrest/doc/doc.pl --out=html
+        </code-block>
+
+        <admonition type="note"><code>ERROR: [028]</code> regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.</admonition>
+
+        <section id="running">
+            <title>Running Tests</title>
+
+            <p>Examples of test runs are provided in the following sections. There are several important options for running a test:</p>
+            <list>
+                <list-item><setting>--dry-run</setting> - without any other options, this will list all the available tests</list-item>
+                <list-item><setting>--module</setting> - identifies the module in which the test is located</list-item>
+                <list-item><setting>--test</setting> - the actual test set to be run</list-item>
+                <list-item><setting>--run</setting> - a number identifying the run within a test if testing a single run rather than the entire test</list-item>
+                <list-item><setting>--dev</setting> - sets several flags that are appropriate for development but should be omitted when performing final testing prior to submitting a Pull Request to the project. Most importantly, it reuses object files from the previous test run to speed testing.</list-item>
+                <list-item><setting>--vm-out</setting> - displays the test output (helpful for monitoring the progress)</list-item>
+                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code></list-item>
+            </list>
+
+            <p>For more options, run the test or documentation engine with the <setting>--help</setting> option:</p>
+
+            <code-block>
+pgbackrest/test/test.pl --help
+pgbackrest/doc/doc.pl --help
+            </code-block>
+
+            <section id="without-docker">
+                <title>Without Docker</title>
+
+                <p>If <proper>Docker</proper> is not installed, then the available tests can be listed using <setting>--vm=none</setting>, and each test must then be run with <setting>--vm=none</setting>.</p>
+
+                <execute-list host="{[host-contrib]}">
+                    <title>List tests that don't require a container</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl --vm=none --dry-run</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                        <exe-highlight>[0-9]+ tests selected|DRY RUN COMPLETED SUCCESSFULLY</exe-highlight>
+                    </execute>
+                </execute-list>
+
+                <execute-list host="{[host-contrib]}">
+                    <title>Run a test</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+
+                <p>An entire module can be run by using only the <setting>--module</setting> option.</p>
+
+                <execute-list host="{[host-contrib]}">
+                    <title>Run a module</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --module=postgres</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+            </section>
+
+            <section id="with-docker" depend="/environment">
+                <title>With Docker</title>
+
+                <p>Build a container to run tests. The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
+
+                <execute-list host="{[host-contrib]}">
+                    <title>Build a VM</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u18</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+
+                <admonition type="note">to build all the vms, just omit the <setting>--vm</setting> option above.</admonition>
+
+                <execute-list host="{[host-contrib]}">
+                    <title>Run a Specific Test Run</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u18 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+            </section>
+        </section>
+
+        <section id="unit-test">
+            <title>Writing a Unit Test</title>
+
+            <p>The goal of unit testing is to have 100 percent code coverage. Two files will usually be involved in this process:</p>
+
+            <list>
+                <list-item><b>define.yaml</b> - defines the number of tests to be run for each module and test file. There is a comment at the top of the file that provides more information about this file.</list-item>
+                <list-item><b>src/module/somefileTest.c</b> - where <quote>somefile</quote> is the path and name of the test file where the unit tests are located for the code being updated (e.g. <file>src/module/command/expireTest.c</file>).</list-item>
+            </list>
+
+            <section id="define-yaml">
+                <title>define.yaml</title>
+
+                <p>Each module is separated by a line of asterisks (*) and each test within is separated by a line of dashes (-). In the example below, the module is <code>command</code> and the unit test is <code>check</code>. The number of calls to <code>testBegin()</code> in a unit test file will dictate the number following <code>total:</code>, in this case 4. Under <code>coverage:</code>, the list of files that will be tested.</p>
+
+                <code-block>
+  # ********************************************************************************************************************************
+  - name: command
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: check
+        total: 4
+        containerReq: true
+
+        coverage:
+          - command/check/common
+          - command/check/check
+                </code-block>
+            </section>
+
+            <section id="test-file">
+                <title>somefileTest.c</title>
+
+                <p>Unit test files are organized in the <code>test/src/module</code> directory with the same directory structure as the source code being tested. For example, if new code is added to src/<b>command/expire</b>.c then test/src/module/<b>command/expire</b>Test.c will need to be updated.</p>
+
+                <p>Assuming that a test file already exists, new unit tests will either go in a new <code>testBegin()</code> section or be added to an existing section. Each such section is a test run. The comment string passed to <code>testBegin()</code> should reflect the function(s) being tested in the test run. Tests within a run should use <code>TEST_TITLE()</code> with a comment string describing the test.</p>
+
+                <code-block>
+// *****************************************************************************************************************************
+if (testBegin("expireBackup()"))
+{
+    //--------------------------------------------------------------------------------------------------------------------------
+    TEST_TITLE("manifest file removal");
+                </code-block>
+            </section>
+
+            <section id="test-command">
+                <title>Setting up the command to be run</title>
+
+                <p>The <link url="{[github-url-test-common]}/harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command on multiple repositories, one of which is encrypted:</p>
+
+                <code-block>
+StringList *argList = strLstNew();                                  // Create an empty string list
+hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);             // Add the --repo-path option
+hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");   // Add the --repo2-path option
+hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);  // Add the --repo2-cipher-type option
+hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);        // Set environment variable for the --repo2-cipher-pass option
+harnessCfgLoad(cfgCmdInfo, argList);                                // Load the command and option list into the test harness
+                </code-block>
+            </section>
+
+            <section id="test-store">
+                <title>Storing a file</title>
+
+                <p>Sometimes it is desirable to store or manipulate files before or during a test and then confirm the contents. The <link url="{[github-url-test-common]}/harnessStorage.h">harnessStorage.h</link> file contains macros (e.g. <code>HRN_STORAGE_PUT</code> and <code>TEST_STORAGE_GET</code>) for doing this. In addition, <code>HRN_INFO_PUT</code> is convenient for writing out info files (archive.info, backup.info, backup.manifest) since it will automatically add header and checksum information.</p>
+
+                <code-block>
+HRN_STORAGE_PUT_EMPTY(
+    storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+                </code-block>
+            </section>
+
+            <section id="test-results">
+                <title>Testing results</title>
+
+                <p>Tests are run and results confirmed via macros that are described in <link url="{[github-url-test-common]}/harnessTest.h">harnessTest.h</link>. With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:</p>
+
+                <list>
+                    <list-item><id>TEST_RESULT_STR</id> - Test the actual value of the string returned by the function.</list-item>
+                    <list-item><id>TEST_RESULT_UINT</id> / <id>TEST_RESULT_INT</id> - Test for an unsigned integer / integer.</list-item>
+                    <list-item><id>TEST_RESULT_BOOL</id> - Test a boolean value.</list-item>
+                    <list-item><id>TEST_RESULT_PTR</id> / <id>TEST_RESULT_PTR_NE</id> - Test a pointer: useful for testing if the pointer is <id>NULL</id> or not equal (<id>NE</id>) to <id>NULL</id>.</list-item>
+                    <list-item><id>TEST_RESULT_VOID</id> - The function being tested returns a <code>void</code>. This is then usually followed by tests that ensure other actions occurred (e.g. a file was written to disk).</list-item>
+                    <list-item><id>TEST_ERROR</id> / <id>TEST_ERROR_FMT</id> - Test that a specific error code was raised with specific wording.</list-item>
+                </list>
+            </section>
+
+            <section id="test-log">
+                <title>Testing a log message</title>
+
+                <p>If a function being tested logs something with <code>LOG_WARN</code>, <code>LOG_INFO</code> or other <code>LOG_*()</code> macro, then the logged message must be cleared before the end of the test by using the <code>TEST_RESULT_LOG()/TEST_RESULT_LOG_FMT()</code> macros.</p>
+
+                <code-block>
+TEST_RESULT_LOG(
+    "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
+                </code-block>
+            </section>
+
+            <section id="test-child">
+                <title>Testing using child process</title>
+
+                <p>Sometimes it is useful to use a child process for testing. Below is a simple example. See <link url="{[github-url-test-common]}/harnessFork.h">harnessFork.h</link> for more details.</p>
+
+                <code-block>
+HARNESS_FORK_BEGIN()
+{
+    HARNESS_FORK_CHILD_BEGIN(0, false)
+    {
+        TEST_RESULT_INT_NE(
+            lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+            -1, "create backup/expire lock");
+
+        sleepMSec(1000);
+        lockRelease(true);
+    }
+    HARNESS_FORK_CHILD_END();
+
+    HARNESS_FORK_PARENT_BEGIN()
+    {
+        sleepMSec(250);
+
+        harnessCfgLoad(cfgCmdInfo, argListText);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (no valid backups, backup/expire running)\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4): none present\n",
+            "text - single stanza, no valid backups, backup/expire lock detected");
+
+    }
+    HARNESS_FORK_PARENT_END();
+}
+HARNESS_FORK_END();
+                </code-block>
+            </section>
+
+            <section id="test-shim">
+                <title>Testing using a shim</title>
+
+                <p>A <postgres/> libpq shim is provided to simulate interactions with <postgres/>. Below is a simple example. See <link url="{[github-url-test-common]}/harnessPq.h">harnessPq.h</link> for more details.</p>
+
+                <code-block>
+// Set up two standbys but no primary
+harnessPqScriptSet((HarnessPq [])
+{
+    HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+    HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+
+    // Close the "inner" session first (8) then the outer (1)
+    HRNPQ_MACRO_CLOSE(8),
+    HRNPQ_MACRO_CLOSE(1),
+
+    HRNPQ_MACRO_DONE()
+});
+
+TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
+                </code-block>
+            </section>
+        </section>
+
+        <section id="unit-test-run">
+            <title>Running a Unit Test</title>
+
+            <p><b>Code Coverage</b></p>
+            <p>Unit tests are run for all files that are listed in <file>define.yaml</file> and a coverage report generated for each file listed under the tag <code>coverage:</code>. Note that some files are listed in multiple <code>coverage:</code> sections for a module; in this case, each test for the file being modified should be specified for the module in which the file exists (e.g. <code>--module=storage --test=posix --test=gcs</code>, etc.) or, alternatively, simply run the module without the <code>--test</code> option. It is recommended that a <code>--vm</code> be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the <b>define.yaml</b> section detailed above.</p>
+
+            <code-block>
+pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u18
+            </code-block>
+
+<admonition type="note">Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.</admonition>
+
+            <p>Because a test run has not been specified, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage/lcov/index.html</file> and a file with only the highlighted code that has not been covered will be written to <file>test/result/coverage/coverage.html</file>.
+
+            If 100 percent code coverage has not been achieved, an error message will be displayed, for example: <code>ERROR: [125]: c module command/check/check is not fully covered</code></p>
+
+            <p><b>Debugging with files</b></p>
+
+            <p>Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option <code>--no-cleanup</code> provided. Again, continuing with the check command, from <b>define.yaml</b> above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in <path>test/test-0</path> can be inspected.</p>
+
+            <code-block>
+pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --no-cleanup
+            </code-block>
         </section>
     </section>
 
     <section id="option">
         <title>Adding an Option</title>
 
-        <p>Options can be added to a command or multiple commands. Options can be configuration file only, command-line only or valid for both. Once an option is added, <file>config.auto.*</file>, <file>define.auto.*</file> and <file>parse.auto.*</file> files will automatically be generated by the build system.</p>
+        <p>Options can be added to a command or multiple commands. Options can be configuration file only, command-line only or valid for both. Once an option is successfully added, <file>config.auto.*</file>, <file>define.auto.*</file> and <file>parse.auto.*</file> files will automatically be generated by the build system.</p>
 
-        <p> To add an option, two files need be to be modified:</p>
+        <p>To add an option, two files need be to be modified:</p>
         <list>
-            <list-item><file>build/lib/pgBackRestBuild/Config/Data.pm</file></list-item>
+            <list-item><file>src/build/config/config.yaml</file></list-item>
             <list-item><file>doc/xml/reference.xml</file></list-item>
         </list>
 
-        <p>These files are discussed in the following sections.</p>
+        <p>These files are discussed in the following sections along with how to verify the <code>help</code> command output.</p>
 
-        <section id="data-file">
-            <title>Data.pm</title>
+        <section id="config-file">
+            <title>config.yaml</title>
 
-            <p>There is a detailed comment at the top of this file on the configuration definitions which one can refer to in determining how to define the rules for the option.</p>
+            <p>There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of secrets, all configuration file options can be passed on the command line. To configure an option for the configuration file, the <id>section:</id> key must be present.</p>
 
-            <section id="command-line-only">
-                <title>Command Line Only Options</title>
+            <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, two hypothetical examples will be discussed. For more details, see <link url="{[github-url-src]}/build/config/config.yaml">config.yaml</link>.</p>
 
-                <p>Command-line only options are options where <id>CFGDEF_SECTION</id> rule is not defined. There are two sections to be updated when adding a command-line only option, each of which is marked by the comment <code>Command-line only options</code>.</p>
-
-                <list>
-                    <list-item><b>Section 1:</b> Find the first section with the <code>Command-line only options</code> comment. This section defines and exports the constant for the actual option.</list-item>
-                    <list-item><b>Section 2:</b> Find the second section with the <code>Command-line only options</code> comment. This is where the rules for the option are defined.</list-item>
-                </list>
-
-                <p>The steps for how to update these sections are detailed below.</p>
-
-                <p><b>Section 1</b></p>
-
-                <p>Copy the two lines (<quote>use constant</quote>/<quote>push</quote>) of an existing option and paste them where the option would be in alphabetical order and rename it to the same name as the new option name. For example CFGOPT_DRY_RUN, defined as <quote>dry-run</quote>.</p>
-
-                <p><b>Section 2</b></p>
-
-                <p>To better explain this section, <id>CFGOPT_ONLINE</id> will be used as an example:</p>
+            <section id="option-ex1">
+                <title>Example 1: hypothetical command line only option </title>
 
                 <code-block>
-    &amp;CFGOPT_ONLINE =>
-    {
-        &amp;CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &amp;CFGDEF_NEGATE => true,
-        &amp;CFGDEF_DEFAULT => true,
-        &amp;CFGDEF_COMMAND =>
-        {
-            &amp;CFGCMD_BACKUP => {},
-            &amp;CFGCMD_STANZA_CREATE => {},
-            &amp;CFGCMD_STANZA_UPGRADE => {},
-        }
-    },
+  set:
+    type: string
+    command:
+      backup:
+        depend:
+          option: stanza
+        required: false
+      restore:
+        default: latest
+    command-role:
+      main: {}
                 </code-block>
-
-                <p>Note that <id>CFGDEF_SECTION</id> is not present thereby making this a command-line only option. Each line is explained below:</p>
-
-                <list>
-                    <list-item><id>CFGOPT_ONLINE</id> - the name of the option as defined in <b>Section 1</b></list-item>
-                    <list-item><id>CFGDEF_TYPE</id> - the type of the option. Valid types are: <id>CFGDEF_TYPE_BOOLEAN</id>, <id>CFGDEF_TYPE_HASH</id>, <id>CFGDEF_TYPE_INTEGER</id>, <id>CFGDEF_TYPE_LIST</id>, <id>CFGDEF_TYPE_PATH</id>, <id>CFGDEF_TYPE_SIZE</id>, <id>CFGDEF_TYPE_STRING</id>, and <id>CFGDEF_TYPE_TIME</id>
-                    </list-item>
-                    <list-item><id>CFGDEF_NEGATE</id> - being a command-line only boolean option, this rule would automatically default to false so it must be defined if the option is negatable. Ask yourself if negation makes sense, for example, would a --dry-run option make sense as --no-dry-run? If the answer is no, then this rule can be omitted as it would automatically default to false. Any boolean option that cannot be negatable, must be a command-line only and not a configuration file option as all configuration boolean options must be negatable.</list-item>
-                    <list-item><id>CFGDEF_DEFAULT</id> - sets a default for the option if the option is not provided when the command is run. The default can be global or it can be specified for a specific command in the <id>CFGDEF_COMMAND</id> section. For example, if it was desirable for the default to be false for the <id>CFGCMD_STANZA_CREATE</id> then CFGDEF_NEGATE =>  would be set to <id>true</id> in each command listed except for <id>CFGCMD_STANZA_CREATE</id> where it would be <id>false</id> and it would not be specified (as it is here) in the global section (meaning global for all commands listed).</list-item>
-                    <list-item><id>CFGDEF_COMMAND</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it attempted to be used for that command.</list-item>
-                </list>
-
             </section>
+
+            <p>Note that <id>section:</id> is not present thereby making this a command-line only option defined as follows:</p>
+
+            <list>
+                <list-item><id>set</id> - the name of the option</list-item>
+                <list-item><id>type</id> - the type of the option. Valid values for types are: <id>boolean</id>, <id>hash</id>, <id>integer</id>, <id>list</id>, <id>path</id>, <id>size</id>, <id>string</id>, and <id>time</id>
+                </list-item>
+                <list-item><id>command</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are <cmd>backup</cmd> and <cmd>restore</cmd>.
+                </list-item>
+                <list-item><id>backup</id> - details the requirements for the <code>--set</code> option for the <cmd>backup</cmd> command. It is dependent on the option <code>--stanza</code>, meaning it is only allowed to be specified for the <cmd>backup</cmd> command if the <code>--stanza</code> option has been specified. And <code>required: false</code> indicates that the <code>--set</code> option is never required, even with the dependency.
+                </list-item>
+                <list-item><id>restore</id> - details the requirements for the <code>--set</code> option for the <cmd>restore</cmd> command. Since <code>required:</code> is omitted, it is not required to be set by the user but it is required by the command and will default to <code>latest</code> if it has not been specified by the user.
+                </list-item>
+                <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.
+                </list-item>
+            </list>
+
+            <section id="option-ex2">
+                <title>Example 2: hypothetical configuration file option</title>
+
+                <code-block>
+  repo-test-type:
+    section: global
+    type: string
+    group: repo
+    default: full
+    allow-list:
+      - full
+      - diff
+      - incr
+    command:
+      backup: {}
+      restore: {}
+    command-role:
+      main: {}
+                </code-block>
+            </section>
+
+            <list>
+                <list-item><id>repo-test-type</id> - the name of the option
+                </list-item>
+                <list-item><id>section</id> - the section of the configuration file where this option is valid (omitted for command line only options, see <link section="/option/config-file/option-ex1">Example 1</link> above)
+                </list-item>
+                <list-item><id>type</id> - the type of the option. Valid values for types are: <id>boolean</id>, <id>hash</id>, <id>integer</id>, <id>list</id>, <id>path</id>, <id>size</id>, <id>string</id>, and <id>time</id>
+                </list-item>
+                <list-item><id>group</id> - indicates that this option is part of the <code>repo</code> group of indexed options and therefore will follow the indexing rules e.g. <code>repo1-test-type</code>.
+                </list-item>
+                <list-item><id>default</id> - sets a default for the option if the option is not provided when the command is run. The default can be global (as it is here) or it can be specified for a specific command in the command section (as in <link section="/option/config-file/option-ex1">Example 1</link> above).
+                </list-item>
+                <list-item><id>allow-list</id> - lists the allowable values for the option for all commands for which the option is valid.
+                </list-item>
+                <list-item><id>command</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are <cmd>backup</cmd> and <cmd>restore</cmd>.
+                </list-item>
+                <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.
+                </list-item>
+            </list>
+
+            <p>At compile time, the <file>config.auto.h</file> file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
         </section>
 
         <section id="reference-file">
             <title>reference.xml</title>
 
-            <p>All options must be documented or the system will error during the build.  To add an option, find the command section identified by <code>command id="COMMAND"</code> section where <id>COMMAND</id> is the name of the command (e.g. <cmd>expire</cmd>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>operation-general title="General Options"</code> section.</p>
+            <p>All options must be documented or the system will error during the build. To add an option, find the command section identified by <code>command id="COMMAND"</code> section where <id>COMMAND</id> is the name of the command (e.g. <cmd>expire</cmd>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>operation-general title="General Options"</code> section.</p>
 
             <p>To add an option, add the following to the <code>&lt;option-list&gt;</code> section; if it does not exist, then wrap the following in <code>&lt;option-list&gt;</code> <code>&lt;/option-list&gt;</code>. This example uses the boolean option <code>force</code> of the <cmd>restore</cmd> command. Simply replace that with your new option and the appropriate <code>summary</code>, <code>text</code> and <code>example</code>.</p>
 
@@ -269,139 +695,51 @@
     &lt;example>y&lt;/example&gt;
 &lt;/option&gt;
             </code-block>
-            <admonition type="important">currently a period (.) is required to end the <code>summary</code> section.</admonition>
-        </section>
-    </section>
-
-    <section id="testing">
-        <title>Testing</title>
-
-        <p>For testing, it is recommended that Vagrant and Docker be used; instructions are provided in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/test">test</link> directory. A list of all possible test combinations can be viewed by running:</p>
-        <code-block>
-            pgbackrest/test/test.pl --dry-run
-        </code-block>
-
-        <admonition type="warning">currently the <id>BACKREST_USER</id> in <file>ContainerTest.pm</file> must exist, or the test suite will fail with a string concatenation error.</admonition>
-
-        <p>If using a RHEL system, the CPAN XML parser is required for running <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docs need only be run for HTML output.</p>
-
-        <p>While some files are automatically generated during <code>make</code>, others are generated by running the test harness as follows:</p>
-
-        <code-block>
-            pgbackrest/test/test.pl --gen-only
-        </code-block>
-
-        <p>Prior to any submission, the html version of the documentation should also be run.</p>
-
-        <code-block>
-            pgbackrest/doc/doc.pl --out=html
-        </code-block>
-
-        <admonition type="note"><code>ERROR: [028]</code> regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.</admonition>
-
-        <section id="unit-test">
-            <title>Writing a Unit Test</title>
-
-            <p>The goal of unit testing is to have 100 percent coverage. Two files will usually be involved in this process:</p>
-
-            <list>
-                <list-item><b>define.yaml</b> - defines the number of tests to be run for each module and test file. There is a comment at the top of the file that provides more information about this file.</list-item>
-                <list-item><b>src/module/somefileTest.c</b> - where <quote>somefile</quote> is the path and name of the test file where the unit tests are located for the code being updated (e.g. <file>src/module/command/expireTest.c</file>).</list-item>
-            </list>
-
-            <section id="define-yaml">
-                <title>define.yaml</title>
-
-                <p>Each module is separated by a line of asterisks (*) and each test within is separated by a line of dashes (-). In the example below, the module is <code>command</code> and the unit test is <code>check</code>. The number of calls to <code>testBegin()</code> in a unit test file will dictate the number following <code>total:</code>, in this case 2. Under <code>coverage:</code>, the list of files that will be tested must be listed followed by the coverage level, which should always be <code>full</code>.</p>
-
-                <code-block>
-  # ********************************************************************************************************************************
-  - name: command
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: check
-        total: 2
-
-        coverage:
-          command/check/common: full
-          command/check/check: full
-                </code-block>
-
-            </section>
-
-            <section id="test-file">
-                <title>somefileTest.c</title>
-                <p>Assuming that a test file already exists, new unit tests will either go in a new <code>testBegin()</code> section or be added to an existing section.</p>
-
-                <p>Unit test files are organized in the test/src/module directory with the same directory structure as the source code being tested. For example, if new code is added to src/<b>command/expire</b>.c then test/src/module/<b>command/expire</b>Test.c will need to be updated.</p>
-
-                <code-block>
-// *****************************************************************************************************************************
-if (testBegin("expireBackup()"))
-                </code-block>
-
-                <p><b>Setting up the command to be run</b></p>
-                <p>If configuration options are required then a string list with the command and options must be defined and passed to the function <code>harnessCfgLoad()</code>. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command:</p>
-
-                <code-block>
-String *repoPath = strNewFmt("%s/repo", testPath());                    // create a string defining the repo path on the test system
-StringList *argList = strLstNew();                                      // create an empty string list
-strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));       // add the --repo-path option as a formatted string
-strLstAddZ(argList, "info");                                            // add the command
-harnessCfgLoad(cfgCmdExpire, argList);                                  // load the command and option list into the test harness
-
-TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text - no stanzas");  // run the test
-                </code-block>
-
-                <p>Tests are run via macros. All test macros expect the first parameter to be the function to call that is being tested. With the exception of TEST_RESULT_VOID, the second parameter is the expected result, and with the exception of TEST_ERROR, the third parameter is a short description of the test. The most common macros are:</p>
-
-                <list>
-                    <list-item><id>TEST_RESULT_STR</id> - Test the actual value of the string returned by the function.</list-item>
-                    <list-item><id>TEST_RESULT_UINT</id> / <id>TEST_RESULT_INT</id> - Test for an unsigned integer / integer.</list-item>
-                    <list-item><id>TEST_RESULT_BOOL</id> - Test a boolean return value.</list-item>
-                    <list-item><id>TEST_RESULT_PTR</id> / <id>TEST_RESULT_PTR_NE</id> - Test a pointer: useful for testing if the pointer is <id>NULL</id> or not equal (<id>NE</id>) to <id>NULL</id>.</list-item>
-                    <list-item><id>TEST_RESULT_VOID</id> - The function being tested returns a <code>void</code>. This is then usually followed by tests that ensure other actions occurred (e.g. a file was written to disk).</list-item>
-                    <list-item><id>TEST_ERROR</id> / <id>TEST_ERROR_FMT</id> - Test for that a specific error code was raised with specific wording.</list-item>
-                </list>
-
-                <p><b>Storing a file</b></p>
-                <p>Sometimes it is necessary to store a file to the test directory. The following demonstrates that. It is not necessary to wrap the storagePutNP in TEST_RESULT_VOID, but doing so allows a short description to be displayed when running the tests (in this case <quote>store a corrupt backup.info file</quote>).</p>
-
-                <code-block>
-String *content = strNew("bad content");
-TEST_RESULT_VOID(
-    storagePutP(
-        storageNewWriteP(storageTest, strNewFmt("%s/backup/demo/backup.info", strZ(repoPath))), harnessInfoChecksum(content)),
-    "store a corrupt backup.info file");
-                </code-block>
-
-                <p><b>Testing a log message</b></p>
-                <p>If a function being tested logs something with <id>LOG_WARN</id>, <id>LOG_INFO</id> or other <id>LOG_</id> macro, then the logged message must be cleared before the end of the test by using the <code>harnessLogResult()</code> function.</p>
-
-                <code-block>
-harnessLogResult(
-    "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
-                </code-block>
-            </section>
+            <admonition type="important">A period (.) is required to end the <code>summary</code> section.</admonition>
         </section>
 
-        <section id="unit-test-run">
-            <title>Running a Unit Test</title>
+        <section id="help-test">
+            <title>Testing the help</title>
 
-            <p>Unit tests are run, and coverage of the code being tested is provided, by running the following. This example would run the test set from the <b>define.yaml</b> section detailed above.</p>
-
-            <code-block>
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only
-            </code-block>
-
-            <p>Because no test run is specified and <code>--coverage-only</code> has been requested, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage</file> (or <file>test/coverage</file> prior to version 2.25) and will highlight code that has not been tested.</p>
-
-            <p>Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option <code>--no-cleanup</code> provided. Again, continuing with the check command, we see in <b>define.yaml</b> above that there are two tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.</p>
+            <p>It is important to run the <cmd>help</cmd> command unit test after adding an option in case a change is required:</p>
 
             <code-block>
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only --run=1 --no-cleanup
+pgbackrest/test/test.pl --module=command --test=help --vm-out
             </code-block>
+
+            <p>To verify the <cmd>help</cmd> command output, build the <backrest/> executable:</p>
+
+            <code-block>
+pgbackrest/test/test.pl --vm=none --build-only
+            </code-block>
+
+            <p>Use the <backrest/> executable to test the help output:</p>
+
+            <code-block>
+test/bin/none/pgbackrest help backup repo-type
+            </code-block>
+        </section>
+
+        <section id="doc-test">
+            <title>Testing the documentation</title>
+
+            <p>To quickly view the HTML documentation, the <code>--no-exe</code> option can be passed to the documentation generator in order to bypass executing the code elements:</p>
+
+            <code-block>
+pgbackrest/doc/doc.pl --output=html --no-exe
+            </code-block>
+
+            <p>The generated HTML files will be placed in the <file>doc/output/html</file> directory where they can be viewed locally in a browser.</p>
+
+            <p>If Docker is installed, it will be used by the documentation generator to execute the code elements while building the documentation. <setting>--no-cache</setting> may be used to force a full build even when no code elements have changed since the last build. <setting>--pre</setting> will reuse the container definitions from the prior build and saves time during development.</p>
+
+            <p>The containers created for documentation builds can be useful for manually testing or trying out new code or features. The following demonstrates building through just the <code>quickstart</code> section of the <file>user-guide</file> without encryption.</p>
+
+            <code-block>
+pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
+            </code-block>
+
+            <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec doc-pg-primary bash</code>.  Additionally, the <code>-u</code> option can be added for entering the container as a specific user (e.g. <code>postgres</code>).</p>
         </section>
     </section>
 </doc>
