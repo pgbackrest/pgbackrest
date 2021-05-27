@@ -127,6 +127,17 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <github-pull-request id="1416"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Change archive expiration logging from detail to info level.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1357"/>
                         <github-pull-request id="1386"/>
 
