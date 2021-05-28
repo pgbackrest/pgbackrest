@@ -319,7 +319,7 @@ hrnTestLogTitle(int lineNo)
         putchar('-');
 
     // Output line number
-    printf(" l%04d", lineNo);
+    printf(" L%04d", lineNo);
 
     // Increment testSub and reset log time
     testRunSub++;
@@ -363,7 +363,7 @@ hrnTestLogPrefix(const int lineNo)
     harnessTestLocal.logLastLineNo = lineNo;
 
     // Add line number and padding
-    printf("l%04d     ", lineNo);
+    printf("L%04d     ", lineNo);
     fflush(stdout);
 
     FUNCTION_HARNESS_RETURN_VOID();
