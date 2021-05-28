@@ -179,7 +179,7 @@ testStorageGet(
     const int line, const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param)
 {
     hrnTestLogPrefix(line);
-    hrnTestResultBegin(__func__, line, false);
+    hrnTestResultBegin(__func__, false);
 
     const String *const fileFull = storagePathP(storage, STR(file));
     printf("test content of '%s'\n", strZ(fileFull));
@@ -218,10 +218,10 @@ hrnStorageList(
 {
     // Log list test
     hrnTestLogPrefix(line);
-    hrnTestResultBegin(__func__, line, false);
+    hrnTestResultBegin(__func__, false);
 
     const String *const pathFull = storagePathP(storage, STR(path));
-    printf("list%s contents of '%s'", param.remove ? "/remove": "", strZ(pathFull));
+    printf("list%s contents of '%s'\n", param.remove ? "/remove": "", strZ(pathFull));
     fflush(stdout);
 
     // Generate a list of files/paths/etc
@@ -287,7 +287,7 @@ void
 hrnStorageMode(const int line, const Storage *const storage, const char *const path, HrnStorageModeParam param)
 {
     hrnTestLogPrefix(line);
-    hrnTestResultBegin(__func__, line, false);
+    hrnTestResultBegin(__func__, false);
 
     const char *const pathFull = strZ(storagePathP(storage, STR(path)));
 
@@ -382,7 +382,7 @@ void
 hrnStorageTime(const int line, const Storage *const storage, const char *const path, const time_t modified)
 {
     hrnTestLogPrefix(line);
-    hrnTestResultBegin(__func__, line, false);
+    hrnTestResultBegin(__func__, false);
 
     const char *const pathFull = strZ(storagePathP(storage, path == NULL ? NULL : STR(path)));
 

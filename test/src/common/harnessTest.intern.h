@@ -52,7 +52,7 @@ void hrnTestLogTitle(int lineNo);
 void hrnTestLogPrefix(const int lineNo);
 
 // Begin/end result test so an exception during the test will give a useful message about what happened and where
-void hrnTestResultBegin(const char *statement, int lineNo, bool result);
+void hrnTestResultBegin(const char *const statement, const bool result);
 bool hrnTestResultException(void);
 void hrnTestResultEnd(void);
 
