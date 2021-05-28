@@ -301,7 +301,7 @@ Nothing to expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-1], start = 000000010000000000000000
-P00 DETAIL: repo1: 9.2-1 no archive to remove
+P00   INFO: repo1: 9.2-1 no archive to remove
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -907,7 +907,7 @@ P00   INFO: repo1: expire full backup set [BACKUP-FULL-1], [BACKUP-INCR-1]
 P00   INFO: repo1: remove expired backup [BACKUP-INCR-1]
 P00   INFO: repo1: remove expired backup [BACKUP-FULL-1]
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 0000000100000000, stop = 0000000100000000
+P00   INFO: repo1: 9.2-1 remove archive, start = 0000000100000000, stop = 0000000100000000
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -1272,7 +1272,7 @@ P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE]
 P00   INFO: repo1: expire diff backup [BACKUP-DIFF-1]
 P00   INFO: repo1: remove expired backup [BACKUP-DIFF-1]
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-2], start = 000000010000000100000000
-P00 DETAIL: repo1: 9.2-1 no archive to remove
+P00   INFO: repo1: 9.2-1 no archive to remove
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -1927,8 +1927,8 @@ P00   INFO: repo1: remove expired backup [BACKUP-DIFF-2]
 P00   INFO: repo1: remove expired backup [BACKUP-FULL-2]
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-DIFF-3], start = 000000010000000200000016
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 0000000100000001, stop = 00000001000000020000000F
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 000000010000000200000013, stop = 000000010000000200000015
+P00   INFO: repo1: 9.2-1 remove archive, start = 0000000100000001, stop = 00000001000000020000000F
+P00   INFO: repo1: 9.2-1 remove archive, start = 000000010000000200000013, stop = 000000010000000200000015
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -2049,7 +2049,7 @@ P00   INFO: repo1: remove expired backup [BACKUP-INCR-2]
 P00   INFO: repo1: remove expired backup [BACKUP-DIFF-3]
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 000000010000000200000016, stop = 00000001000000020000001D
+P00   INFO: repo1: 9.2-1 remove archive, start = 000000010000000200000016, stop = 00000001000000020000001D
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -2160,7 +2160,7 @@ P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE]
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-3], start = 000000010000000200000010, stop = 000000010000000200000012
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-DIFF-4], start = 00000001000000020000001E, stop = 000000010000000200000020
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-INCR-3], start = 000000010000000200000024
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 000000010000000200000021, stop = 000000010000000200000023
+P00   INFO: repo1: 9.2-1 remove archive, start = 000000010000000200000021, stop = 000000010000000200000023
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -2304,8 +2304,8 @@ P00   INFO: repo1: remove expired backup [BACKUP-DIFF-4]
 P00   INFO: repo1: remove expired backup [BACKUP-FULL-3]
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-4], start = 00000001000000020000002A, stop = 00000001000000020000002C
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-5], start = 000000010000000200000036
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 000000010000000200000010, stop = 000000010000000200000029
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 00000001000000020000002D, stop = 000000010000000200000035
+P00   INFO: repo1: 9.2-1 remove archive, start = 000000010000000200000010, stop = 000000010000000200000029
+P00   INFO: repo1: 9.2-1 remove archive, start = 00000001000000020000002D, stop = 000000010000000200000035
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -2440,9 +2440,9 @@ P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-5], start = 00
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-6], start = 00000001000000020000003C, stop = 00000001000000020000003E
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-DIFF-6], start = 000000010000000200000042, stop = 000000010000000200000044
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-DIFF-7], start = 000000010000000200000048
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 000000010000000200000039, stop = 00000001000000020000003B
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 00000001000000020000003F, stop = 000000010000000200000041
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 000000010000000200000045, stop = 000000010000000200000047
+P00   INFO: repo1: 9.2-1 remove archive, start = 000000010000000200000039, stop = 00000001000000020000003B
+P00   INFO: repo1: 9.2-1 remove archive, start = 00000001000000020000003F, stop = 000000010000000200000041
+P00   INFO: repo1: 9.2-1 remove archive, start = 000000010000000200000045, stop = 000000010000000200000047
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info
@@ -2598,8 +2598,8 @@ P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-DIFF-6], start = 00
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-DIFF-7], start = 000000010000000200000048, stop = 00000001000000020000004A
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-7], start = 00000001000000020000004E, stop = 000000010000000200000050
 P00 DETAIL: repo1: 9.2-1 archive retention on backup [BACKUP-FULL-8], start = 000000010000000200000054
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 00000001000000020000004B, stop = 00000001000000020000004D
-P00 DETAIL: repo1: 9.2-1 remove archive, start = 000000010000000200000051, stop = 000000010000000200000053
+P00   INFO: repo1: 9.2-1 remove archive, start = 00000001000000020000004B, stop = 00000001000000020000004D
+P00   INFO: repo1: 9.2-1 remove archive, start = 000000010000000200000051, stop = 000000010000000200000053
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info

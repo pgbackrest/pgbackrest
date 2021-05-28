@@ -355,7 +355,7 @@ logExpire(ArchiveExpired *archiveExpire, String *archiveId, unsigned int repoIdx
     if (archiveExpire->start != NULL)
     {
         // Force out any remaining message
-        LOG_DETAIL_FMT(
+        LOG_INFO_FMT(
             "repo%u: %s remove archive, start = %s, stop = %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(archiveId),
             strZ(archiveExpire->start), strZ(archiveExpire->stop));
 
@@ -733,7 +733,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                             // Log if no archive was expired
                             if (archiveExpire.total == 0)
                             {
-                                LOG_DETAIL_FMT(
+                                LOG_INFO_FMT(
                                     "repo%u: %s no archive to remove", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
                                     strZ(archiveId));
                             }
@@ -767,7 +767,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                             strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(historyFile)));
                                     }
 
-                                    LOG_DETAIL_FMT(
+                                    LOG_INFO_FMT(
                                         "repo%u: %s remove history file %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
                                         strZ(archiveId), strZ(historyFile));
                                 }
