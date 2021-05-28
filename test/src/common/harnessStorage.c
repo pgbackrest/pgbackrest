@@ -388,6 +388,28 @@ hrnStoragePut(
 
 /**********************************************************************************************************************************/
 void
+hrnStoragePathCreate(const Storage *const storage, const char *const path, HrnStoragePathCreateParam param)
+{
+    hrnTestResultBegin(__func__, false);
+
+    ASSERT(storage != NULL);
+
+    const String *const pathFull = storagePathP(storage, STR(path));
+
+    printf("create path '%s'", strZ(pathFull));
+
+    if (param.mode != 0)
+        printf(" mode '%04o'", param.mode);
+
+    hrnTestResultComment(param.comment);
+
+    storagePathCreateP(storage, pathFull, .mode = param.mode, .errorOnExists = !param.noErrorOnExists);
+
+    hrnTestResultEnd();
+}
+
+/**********************************************************************************************************************************/
+void
 hrnStorageRemove(const Storage *const storage, const char *const file, const TestStorageRemoveParam param)
 {
     hrnTestResultBegin(__func__, false);

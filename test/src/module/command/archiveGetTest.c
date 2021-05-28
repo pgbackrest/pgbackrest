@@ -37,7 +37,7 @@ testRun(void)
             PathMissingError, "unable to list file info for missing path '" TEST_PATH "/spool/archive/test1/in'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN));
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_RESULT_STRLST_Z(
             queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
@@ -169,7 +169,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on path permission");
 
-        storagePathCreateP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
+        HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-1", .mode = 0400);
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "get async");
 
@@ -369,7 +369,7 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
 
-        storagePathCreateP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
+        HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1", .mode = 0400);
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FF-efefefefefefefefefefefefefefefefefefefef");
@@ -463,7 +463,7 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}\n");
-        storagePathCreateP(storageRepoIdxWrite(2), STRDEF("10-1"), .mode = 0400);
+        HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(2), "10-1", .mode = 0400);
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
@@ -604,8 +604,6 @@ testRun(void)
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
-        storagePathCreateP(storagePgWrite(), STRDEF("pg_wal"));
-
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -673,6 +671,7 @@ testRun(void)
 
         // Write out a WAL segment for success
         // -------------------------------------------------------------------------------------------------------------------------
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal");
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "SHOULD-BE-A-REAL-WAL-FILE");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
@@ -996,7 +995,7 @@ testRun(void)
             "[db:history]\n"
             "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
 
-        storagePathCreateP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_ARCHIVE "/10-2"), .mode = 0400);
+        HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-2", .mode = 0400);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
