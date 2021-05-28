@@ -388,6 +388,19 @@ hrnTestResultBegin(const char *const statement, const bool result)
     harnessTestLocal.logLastLineNo = 0;
 }
 
+/**********************************************************************************************************************************/
+void
+hrnTestResultComment(const char *const comment)
+{
+    if (comment != NULL)
+        printf(" (%s)\n", comment);
+    else
+        puts("");
+
+    fflush(stdout);
+}
+
+/**********************************************************************************************************************************/
 bool
 hrnTestResultException(void)
 {

@@ -10,9 +10,13 @@ Harness for Generating Test Info Files
 Write info to a file and add the checksum
 ***********************************************************************************************************************************/
 #define HRN_INFO_PUT(storage, file, info, ...)                                                                                     \
-    TEST_RESULT_VOID(                                                                                                              \
-        hrnStoragePut(storage, file, harnessInfoChecksumZ(info), (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}),               \
-        strZ(strNewFmt("put info %s", hrnStoragePutLog(storage, file, LF_BUF, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}))))
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnStoragePut(                                                                                                             \
+            storage, file, harnessInfoChecksumZ(info), "put info", (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__});             \
+    }                                                                                                                              \
+    while (0)
 
 /***********************************************************************************************************************************
 Functions

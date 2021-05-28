@@ -175,20 +175,39 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 
 /**********************************************************************************************************************************/
 void
-testStorageGet(
-    const int line, const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param)
+testStorageGet(const Storage *const storage, const char *const file, const char *const expected, const TestStorageGetParam param)
 {
-    hrnTestLogPrefix(line);
     hrnTestResultBegin(__func__, false);
 
+    ASSERT(storage != NULL);
+    ASSERT(file != NULL);
+
     const String *const fileFull = storagePathP(storage, STR(file));
-    printf("test content of '%s'\n", strZ(fileFull));
-    fflush(stdout);
+
+    printf("test content of '%s'", strZ(fileFull));
+    hrnTestResultComment(param.comment);
 
     hrnTestResultZ(strZ(strNewBuf(storageGetP(storageNewReadP(storage, fileFull)))), expected, harnessTestResultOperationEq);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);
+}
+
+/**********************************************************************************************************************************/
+void
+testStorageExists(const Storage *const storage, const char *const file, const TestStorageExistsParam param)
+{
+    hrnTestResultBegin(__func__, false);
+
+    ASSERT(storage != NULL);
+    ASSERT(file != NULL);
+
+    const String *const fileFull = storagePathP(storage, STR(file));
+
+    printf("file exists '%s'", strZ(fileFull));
+    hrnTestResultComment(param.comment);
+
+    hrnTestResultBool(storageExistsP(storage, fileFull), true);
 }
 
 /**********************************************************************************************************************************/
@@ -213,21 +232,21 @@ hrnStorageListCallback(void *list, const StorageInfo *info)
 
 void
 hrnStorageList(
-    const int line, const Storage *const storage, const char *const path, const char *const expected,
-    const HrnStorageListParam param)
+    const Storage *const storage, const char *const path, const char *const expected, const HrnStorageListParam param)
 {
     // Log list test
-    hrnTestLogPrefix(line);
     hrnTestResultBegin(__func__, false);
 
+    ASSERT(storage != NULL);
+
     const String *const pathFull = storagePathP(storage, STR(path));
-    printf("list%s contents of '%s'\n", param.remove ? "/remove": "", strZ(pathFull));
-    fflush(stdout);
+    printf("list%s contents of '%s'", param.remove ? "/remove": "", strZ(pathFull));
+    hrnTestResultComment(param.comment);
 
     // Generate a list of files/paths/etc
     List *list = lstNewP(sizeof(StorageInfo));
 
-    storageInfoListP(storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = true);
+    storageInfoListP(storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse);
 
     // Remove files if requested
     if (param.remove)
@@ -284,10 +303,11 @@ hrnStorageList(
 
 /**********************************************************************************************************************************/
 void
-hrnStorageMode(const int line, const Storage *const storage, const char *const path, HrnStorageModeParam param)
+hrnStorageMode(const Storage *const storage, const char *const path, HrnStorageModeParam param)
 {
-    hrnTestLogPrefix(line);
     hrnTestResultBegin(__func__, false);
+
+    ASSERT(storage != NULL);
 
     const char *const pathFull = strZ(storagePathP(storage, STR(path)));
 
@@ -304,8 +324,8 @@ hrnStorageMode(const int line, const Storage *const storage, const char *const p
             param.mode = STORAGE_MODE_FILE_DEFAULT;
     }
 
-    printf("chmod '%04o' on '%s'\n", param.mode, pathFull);
-    fflush(stdout);
+    printf("chmod '%04o' on '%s'", param.mode, pathFull);
+    hrnTestResultComment(param.comment);
 
     THROW_ON_SYS_ERROR_FMT(chmod(pathFull, param.mode) == -1, FileModeError, "unable to set mode on '%s'", pathFull);
 
@@ -314,8 +334,15 @@ hrnStorageMode(const int line, const Storage *const storage, const char *const p
 
 /**********************************************************************************************************************************/
 void
-hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param)
+hrnStoragePut(
+    const Storage *const storage, const char *const file, const Buffer *const buffer, const char *const logPrefix,
+    HrnStoragePutParam param)
 {
+    hrnTestResultBegin(__func__, false);
+
+    ASSERT(storage != NULL);
+    ASSERT(file != NULL);
+
     // Add compression extension to file name
     String *fileStr = strNewZ(file);
     compressExtCat(fileStr, param.compressType);
@@ -325,10 +352,14 @@ hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, Hr
     IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
 
     // Add compression filter
+    String *const filter = strNew();
+
     if (param.compressType != compressTypeNone)
     {
         ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
         ioFilterGroupAdd(filterGroup, compressFilter(param.compressType, 1));
+
+        strCatFmt(filter, "cmp[%s]", strZ(compressTypeStr(param.compressType)));
     }
 
     // Add encrypted filter
@@ -339,55 +370,51 @@ hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, Hr
             param.cipherPass = TEST_CIPHER_PASS;
 
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, param.cipherType, BUFSTRZ(param.cipherPass), NULL));
+
+        strCatFmt(filter, "%senc[%s,%s]", strEmpty(filter) ? "" : "/", strZ(strIdToStr(param.cipherType)), param.cipherPass);
     }
+
+    // Add file name
+    printf(
+        "%s %s%s%s'%s%s'", logPrefix != NULL ? logPrefix : "put file", buffer == NULL || bufEmpty(buffer) ? "(empty) " : "",
+        strZ(filter), strEmpty(filter) ? "" : " ", strZ(storagePathP(storage, fileStr)), strZ(compressExtStr(param.compressType)));
+    hrnTestResultComment(param.comment);
 
     // Put file
     storagePutP(destination, buffer);
-}
 
-const char *
-hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param)
-{
-    // Empty if buffer is NULL
-    String *log = strNewZ(buffer == NULL || bufEmpty(buffer) ? "(empty) " : "");
-
-    // Add compression detail
-    if (param.compressType != compressTypeNone)
-        strCatFmt(log, "cmp[%s]", strZ(compressTypeStr(param.compressType)));
-
-    // Add encryption detail
-    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
-    {
-        if (param.cipherPass == NULL)
-            param.cipherPass = TEST_CIPHER_PASS;
-
-        if (param.compressType != compressTypeNone)
-            strCatZ(log, "/");
-
-        strCatFmt(log, "enc[%s,%s]", strZ(strIdToStr(param.cipherType)), param.cipherPass);
-    }
-
-    // Add a space if compression/encryption defined
-    if (param.compressType != compressTypeNone || (param.cipherType != 0 && param.cipherType != cipherTypeNone))
-        strCatZ(log, " ");
-
-    // Add file name
-    strCatFmt(log, "'%s%s'", strZ(storagePathP(storage, STR(file))), strZ(compressExtStr(param.compressType)));
-
-    return strZ(log);
+    hrnTestResultEnd();
 }
 
 /**********************************************************************************************************************************/
 void
-hrnStorageTime(const int line, const Storage *const storage, const char *const path, const time_t modified)
+hrnStorageRemove(const Storage *const storage, const char *const file, const TestStorageRemoveParam param)
 {
-    hrnTestLogPrefix(line);
     hrnTestResultBegin(__func__, false);
+
+    ASSERT(storage != NULL);
+    ASSERT(file != NULL);
+
+    printf("remove file '%s'", strZ(storagePathP(storage, STR(file))));
+    hrnTestResultComment(param.comment);
+
+    storageRemoveP(storage, STR(file), .errorOnMissing = true);
+
+    hrnTestResultEnd();
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageTime(const Storage *const storage, const char *const path, const time_t modified, const HrnStorageTimeParam param)
+{
+    hrnTestResultBegin(__func__, false);
+
+    ASSERT(storage != NULL);
 
     const char *const pathFull = strZ(storagePathP(storage, path == NULL ? NULL : STR(path)));
 
-    printf("time '%" PRId64 "' on '%s'\n", (int64_t)modified, pathFull);
-    fflush(stdout);
+    printf("time '%" PRId64 "' on '%s'", (int64_t)modified, pathFull);
+    hrnTestResultComment(param.comment);
 
     THROW_ON_SYS_ERROR_FMT(
         utime(pathFull, &((struct utimbuf){.actime = modified, .modtime = modified})) == -1, FileInfoError,

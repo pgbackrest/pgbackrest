@@ -11,28 +11,47 @@ Helper functions for testing storage and related functions.
 #include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************
-Check file exists
-***********************************************************************************************************************************/
-#define TEST_STORAGE_EXISTS(storage, file)                                                                                         \
-    TEST_RESULT_BOOL(                                                                                                              \
-        storageExistsP(storage, STR(file)), true, strZ(strNewFmt("file exists '%s'", strZ(storagePathP(storage, STR(file))))))
-
-/***********************************************************************************************************************************
 Get a file and test it against the specified content
 ***********************************************************************************************************************************/
 typedef struct TestStorageGetParam
 {
     VAR_PARAM_HEADER;
     bool remove;                                                    // Remove file after testing?
+    const char *comment;                                            // Comment
 } TestStorageGetParam;
 
 #define TEST_STORAGE_GET(storage, file, content, ...)                                                                              \
-    testStorageGet(__LINE__, storage, file, content, (TestStorageGetParam){VAR_PARAM_INIT, __VA_ARGS__})
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        testStorageGet(storage, file, content, (TestStorageGetParam){VAR_PARAM_INIT, __VA_ARGS__});                                \
+    }                                                                                                                              \
+    while (0)
+
 #define TEST_STORAGE_GET_EMPTY(storage, file, ...)                                                                                 \
     TEST_STORAGE_GET(storage, file, "", __VA_ARGS__)
 
 void testStorageGet(
-    const int line, const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param);
+    const Storage *const storage, const char *const file, const char *const expected, const TestStorageGetParam param);
+
+/***********************************************************************************************************************************
+Check file exists
+***********************************************************************************************************************************/
+typedef struct TestStorageExistsParam
+{
+    VAR_PARAM_HEADER;
+    const char *comment;                                            // Comment
+} TestStorageExistsParam;
+
+#define TEST_STORAGE_EXISTS(storage, file, ...)                                                                                    \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        testStorageExists(storage, file, (TestStorageExistsParam){VAR_PARAM_INIT, __VA_ARGS__});                                   \
+    }                                                                                                                              \
+    while (0)
+
+void testStorageExists(const Storage *const storage, const char *const file, const TestStorageExistsParam param);
 
 /***********************************************************************************************************************************
 List files in a path and optionally remove them
@@ -40,18 +59,24 @@ List files in a path and optionally remove them
 typedef struct HrnStorageListParam
 {
     VAR_PARAM_HEADER;
-    bool remove;
+    bool remove;                                                    // Remove files after testing?
+    bool noRecurse;                                                 // Do not recurse into subdirectories
+    const char *comment;                                            // Comment
 } HrnStorageListParam;
 
 #define TEST_STORAGE_LIST(storage, path, expected, ...)                                                                            \
-    hrnStorageList(__LINE__, storage, path, expected, (HrnStorageListParam){VAR_PARAM_INIT, __VA_ARGS__})
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnStorageList(storage, path, expected, (HrnStorageListParam){VAR_PARAM_INIT, __VA_ARGS__});                               \
+    }                                                                                                                              \
+    while (0)
 
 #define TEST_STORAGE_LIST_EMPTY(storage, path, ...)                                                                                \
     TEST_STORAGE_LIST(storage, path, NULL, __VA_ARGS__)
 
 void hrnStorageList(
-    const int line, const Storage *const storage, const char *const path, const char *const expected,
-    const HrnStorageListParam param);
+    const Storage *const storage, const char *const path, const char *const expected, const HrnStorageListParam param);
 
 /***********************************************************************************************************************************
 Change the mode of a path/file
@@ -60,12 +85,18 @@ typedef struct HrnStorageModeParam
 {
     VAR_PARAM_HEADER;
     mode_t mode;                                                    // Mode to set -- reset to default if not provided
+    const char *comment;                                            // Comment
 } HrnStorageModeParam;
 
 #define HRN_STORAGE_MODE(storage, path, ...)                                                                                       \
-    hrnStorageMode(__LINE__, storage, path, (HrnStorageModeParam){VAR_PARAM_INIT, __VA_ARGS__})
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnStorageMode(storage, path, (HrnStorageModeParam){VAR_PARAM_INIT, __VA_ARGS__});                                         \
+    }                                                                                                                              \
+    while (0)
 
-void hrnStorageMode(const int line, const Storage *const storage, const char *const path, HrnStorageModeParam param);
+void hrnStorageMode(const Storage *const storage, const char *const path, HrnStorageModeParam param);
 
 /***********************************************************************************************************************************
 Put a file with optional compression and/or encryption
@@ -76,12 +107,16 @@ typedef struct HrnStoragePutParam
     CompressType compressType;
     CipherType cipherType;
     const char *cipherPass;
+    const char *comment;                                            // Comment
 } HrnStoragePutParam;
 
 #define HRN_STORAGE_PUT(storage, file, buffer, ...)                                                                                \
-    TEST_RESULT_VOID(                                                                                                              \
-        hrnStoragePut(storage, file, buffer, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}),                                   \
-        strZ(strNewFmt("put file %s", hrnStoragePutLog(storage, file, buffer, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}))))
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnStoragePut(storage, file, buffer, NULL, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__});                             \
+    }                                                                                                                              \
+    while (0)
 
 #define HRN_STORAGE_PUT_EMPTY(storage, file, ...)                                                                                  \
     HRN_STORAGE_PUT(storage, file, NULL, __VA_ARGS__)
@@ -89,24 +124,47 @@ typedef struct HrnStoragePutParam
 #define HRN_STORAGE_PUT_Z(storage, file, stringz, ...)                                                                             \
     HRN_STORAGE_PUT(storage, file, BUFSTRZ(stringz), __VA_ARGS__)
 
-void hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param);
-const char *hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param);
+void hrnStoragePut(
+    const Storage *const storage, const char *const file, const Buffer *const buffer, const char *const logPrefix,
+    HrnStoragePutParam param);
 
 /***********************************************************************************************************************************
 Remove a file and error if it does not exist
 ***********************************************************************************************************************************/
-#define TEST_STORAGE_REMOVE(storage, path)                                                                                         \
-    TEST_RESULT_VOID(                                                                                                              \
-        storageRemoveP(storage, STR(path), .errorOnMissing = true),                                                                \
-        strZ(strNewFmt("remove file '%s'", strZ(storagePathP(storage, STR(path))))))
+typedef struct TestStorageRemoveParam
+{
+    VAR_PARAM_HEADER;
+    const char *comment;                                            // Comment
+} TestStorageRemoveParam;
+
+#define TEST_STORAGE_REMOVE(storage, file, ...)                                                                                    \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnStorageRemove(storage, file, (TestStorageRemoveParam){VAR_PARAM_INIT, __VA_ARGS__});                                    \
+    }                                                                                                                              \
+    while (0)
+
+void hrnStorageRemove(const Storage *const storage, const char *const file, const TestStorageRemoveParam param);
 
 /***********************************************************************************************************************************
 Change the time of a path/file
 ***********************************************************************************************************************************/
-#define HRN_STORAGE_TIME(storage, path, time)                                                                                      \
-    hrnStorageTime(__LINE__, storage, path, time)
+typedef struct HrnStorageTimeParam
+{
+    VAR_PARAM_HEADER;
+    const char *comment;                                            // Comment
+} HrnStorageTimeParam;
 
-void hrnStorageTime(const int line, const Storage *const storage, const char *const path, const time_t modified);
+#define HRN_STORAGE_TIME(storage, path, time, ...)                                                                                 \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnStorageTime(storage, path, time, (HrnStorageTimeParam){VAR_PARAM_INIT, __VA_ARGS__});                                   \
+    }                                                                                                                              \
+    while (0)
+
+void hrnStorageTime(const Storage *const storage, const char *const path, const time_t modified, const HrnStorageTimeParam param);
 
 /***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers. All required functions are stubbed out so this interface can be copied and
