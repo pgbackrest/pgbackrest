@@ -178,7 +178,7 @@ void
 testStorageGet(
     const int line, const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param)
 {
-    hrnTestLogPrefix(line, true);
+    hrnTestLogPrefix(line);
     hrnTestResultBegin(__func__, line, false);
 
     const String *const fileFull = storagePathP(storage, STR(file));
@@ -217,7 +217,7 @@ hrnStorageList(
     const HrnStorageListParam param)
 {
     // Log list test
-    hrnTestLogPrefix(line, true);
+    hrnTestLogPrefix(line);
     hrnTestResultBegin(__func__, line, false);
 
     const String *const pathFull = storagePathP(storage, STR(path));
@@ -286,7 +286,7 @@ hrnStorageList(
 void
 hrnStorageMode(const int line, const Storage *const storage, const char *const path, HrnStorageModeParam param)
 {
-    hrnTestLogPrefix(line, true);
+    hrnTestLogPrefix(line);
     hrnTestResultBegin(__func__, line, false);
 
     const char *const pathFull = strZ(storagePathP(storage, STR(path)));
@@ -381,7 +381,7 @@ hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer,
 void
 hrnStorageTime(const int line, const Storage *const storage, const char *const path, const time_t modified)
 {
-    hrnTestLogPrefix(line, true);
+    hrnTestLogPrefix(line);
     hrnTestResultBegin(__func__, line, false);
 
     const char *const pathFull = strZ(storagePathP(storage, path == NULL ? NULL : STR(path)));

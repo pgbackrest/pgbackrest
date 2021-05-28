@@ -32,7 +32,7 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     storageHelperFree();
 
     // Log parameters
-    hrnTestLogPrefix(__LINE__, true);
+    hrnTestLogPrefix(__LINE__);
 
     printf("config load:");
 

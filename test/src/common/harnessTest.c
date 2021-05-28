@@ -326,11 +326,10 @@ hrnTestLogTitle(int lineNo)
 
 /**********************************************************************************************************************************/
 void
-hrnTestLogPrefix(int lineNo, bool padding)
+hrnTestLogPrefix(const int lineNo)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, lineNo);
-        FUNCTION_HARNESS_PARAM(BOOL, padding);
     FUNCTION_HARNESS_END();
 
     // Always indent at the beginning
@@ -360,7 +359,8 @@ hrnTestLogPrefix(int lineNo, bool padding)
     }
 
     // Add line number and padding
-    printf("l%04d %s", lineNo, padding ? "    " : "");
+    printf("l%04d     ", lineNo);
+    fflush(stdout);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
