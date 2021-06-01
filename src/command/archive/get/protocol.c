@@ -27,43 +27,33 @@ archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // !!! BROKEN
-        // const String *request = varStr(varLstGet(paramList, 0));
-        //
-        // const unsigned int paramFixed = 1;                          // Fixed params before the actual list
-        // const unsigned int paramActual = 5;                         // Parameters in each index of the actual list
-        //
-        // // Check that the correct number of list parameters were passed
-        // CHECK((varLstSize(paramList) - paramFixed) % paramActual == 0);
-        //
-        // // Build the actual list
-        // List *actualList = lstNewP(sizeof(ArchiveGetFile));
-        // unsigned int actualListSize = (varLstSize(paramList) - paramFixed) / paramActual;
-        //
-        // for (unsigned int actualIdx = 0; actualIdx < actualListSize; actualIdx++)
-        // {
-        //     ASSERT(param != NULL);
-        //
-        //     const String *walSegment = pckReadStrP(param);
-        //
-        //     protocolServerResponseVar(
-        //         server,
-        //         VARINT(
-        //             archiveGetFile(
-        //                 storageSpoolWrite(), walSegment, strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)), true,
-        //                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass))));
-        // }
-        //
-        // // Return result
-        // ArchiveGetFileResult fileResult = archiveGetFile(
-        //     storageSpoolWrite(), request, actualList,
-        //     strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s." STORAGE_FILE_TEMP_EXT, strZ(request)));
-        //
-        // VariantList *result = varLstNew();
-        // varLstAdd(result, varNewUInt(fileResult.actualIdx));
-        // varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.warnList)));
-        //
-        // protocolServerResponse(server, varNewVarLst(result));
+        // Get request
+        const String *const request = pckReadStrP(param);
+
+        // Build the actual list
+        List *actualList = lstNewP(sizeof(ArchiveGetFile));
+
+        while (!pckReadNullP(param))
+        {
+            ArchiveGetFile actual = {.file = pckReadStrP(param)};
+            actual.repoIdx = pckReadU32P(param);
+            actual.archiveId = pckReadStrP(param);
+            actual.cipherType = pckReadU64P(param);
+            actual.cipherPassArchive = pckReadStrP(param);
+
+            lstAdd(actualList, &actual);
+        }
+
+        // Return result
+        ArchiveGetFileResult fileResult = archiveGetFile(
+            storageSpoolWrite(), request, actualList,
+            strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s." STORAGE_FILE_TEMP_EXT, strZ(request)));
+
+        VariantList *result = varLstNew();
+        varLstAdd(result, varNewUInt(fileResult.actualIdx));
+        varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.warnList)));
+
+        protocolServerResponseVar(server, varNewVarLst(result));
     }
     MEM_CONTEXT_TEMP_END();
 

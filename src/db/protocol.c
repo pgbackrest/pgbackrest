@@ -46,10 +46,20 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         // Add db to the list
-        unsigned int dbIdx = lstSize(dbProtocolLocal.pgClientList);
+        MEM_CONTEXT_BEGIN(lstMemContext(dbProtocolLocal.pgClientList))
+        {
+            // Only a single db is passed to the remote
+            PgClient *pgClient = pgClientNew(
+                cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
+                cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
+            pgClientOpen(pgClient);
 
-        // Return db index which should be included in subsequent calls
-        protocolServerResponseVar(server, VARUINT(dbIdx));
+            lstAdd(dbProtocolLocal.pgClientList, &pgClient);
+        }
+        MEM_CONTEXT_END();
+
+        // Return db index which should be   included in subsequent calls
+        protocolServerResponseVar(server, VARUINT(lstSize(dbProtocolLocal.pgClientList) - 1));
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -460,19 +460,42 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
         jobData->walFileIdx++;
 
-        // !!! BROKEN
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
-        // PackWrite *param = protocolCommandParam(command);
-        //
-        // pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
-        // pckWriteStrP(param, jobData->archiveInfo.archiveId);
-        // pckWriteU32P(param, jobData->archiveInfo.pgVersion);
-        // pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
-        // pckWriteStrP(param, walFile);
-        // pckWriteU32P(param, jobData->cipherType);
-        // pckWriteStrP(param, jobData->archiveInfo.archiveCipherPass);
-        // pckWriteU32P(param, jobData->compressType);
-        // pckWriteI32P(param, jobData->compressLevel);
+        // Command parameters
+        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
+        PackWrite *const param = protocolCommandParam(command);
+
+        pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
+        pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveHeaderCheck));
+        pckWriteU32P(param, jobData->archiveInfo.pgVersion);
+        pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
+        pckWriteStrP(param, walFile);
+        pckWriteU32P(param, jobData->compressType);
+        pckWriteI32P(param, jobData->compressLevel);
+
+        // Write error list
+        pckWriteArrayBeginP(param);
+
+        for (unsigned int errorIdx = 0; errorIdx < strLstSize(jobData->archiveInfo.errorList); errorIdx++)
+            pckWriteStrP(param, strLstGet(jobData->archiveInfo.errorList, errorIdx));
+
+        pckWriteArrayEndP(param);
+
+        // Write data for each repo to push to
+        pckWriteArrayBeginP(param);
+
+        for (unsigned int repoListIdx = 0; repoListIdx < lstSize(jobData->archiveInfo.repoList); repoListIdx++)
+        {
+            ArchivePushFileRepoData *data = lstGet(jobData->archiveInfo.repoList, repoListIdx);
+
+            pckWriteObjBeginP(param);
+            pckWriteU32P(param, data->repoIdx);
+            pckWriteStrP(param, data->archiveId);
+            pckWriteU64P(param, data->cipherType);
+            pckWriteStrP(param, data->cipherPass);
+            pckWriteObjEndP(param);
+        }
+
+        pckWriteArrayEndP(param);
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));
     }
