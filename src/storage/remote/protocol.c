@@ -124,8 +124,8 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
         // Write user id/name
         pckWriteU32P(data->write, info->userId, .defaultValue = data->userIdLast);
 
-        if (info->user == NULL)
-            pckWriteBoolP(data->write, true);
+        if (info->user == NULL)                                                                                     // {vm_covered}
+            pckWriteBoolP(data->write, true);                                                                       // {vm_covered}
         else
         {
             pckWriteNullP(data->write);
@@ -135,8 +135,8 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
         // Write group id/name
         pckWriteU32P(data->write, info->groupId, .defaultValue = data->groupIdLast);
 
-        if (info->group == NULL)
-            pckWriteBoolP(data->write, true);
+        if (info->group == NULL)                                                                                    // {vm_covered}
+            pckWriteBoolP(data->write, true);                                                                       // {vm_covered}
         else
         {
             pckWriteNullP(data->write);
@@ -157,7 +157,7 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
         data->userIdLast = info->userId;
         data->groupIdLast = info->groupId;
 
-        if (!strEq(info->user, data->user) && info->user != NULL)
+        if (!strEq(info->user, data->user) && info->user != NULL)                                                   // {vm_covered}
         {
             strFree(data->user);
 
@@ -168,7 +168,7 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
             MEM_CONTEXT_END();
         }
 
-        if (!strEq(info->group, data->group) && info->group != NULL)
+        if (!strEq(info->group, data->group) && info->group != NULL)                                                // {vm_covered}
         {
             strFree(data->group);
 

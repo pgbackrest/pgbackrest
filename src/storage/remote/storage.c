@@ -63,16 +63,16 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
         // Read user id/name
         info->userId = pckReadU32P(data->read, .defaultValue = data->userIdLast);
 
-        if (pckReadBoolP(data->read))
-            info->user = NULL;
+        if (pckReadBoolP(data->read))                                                                               // {vm_covered}
+            info->user = NULL;                                                                                      // {vm_covered}
         else
             info->user = pckReadStrP(data->read, .defaultValue = data->user);
 
         // Read group id/name
         info->groupId = pckReadU32P(data->read, .defaultValue = data->groupIdLast);
 
-        if (pckReadBoolP(data->read))
-            info->group = NULL;
+        if (pckReadBoolP(data->read))                                                                               // {vm_covered}
+            info->group = NULL;                                                                                     // {vm_covered}
         else
             info->group = pckReadStrP(data->read, .defaultValue = data->group);
 
@@ -87,13 +87,13 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
     data->userIdLast = info->userId;
     data->groupIdLast = info->groupId;
 
-    if (!strEq(info->user, data->user) && info->user != NULL)
+    if (!strEq(info->user, data->user) && info->user != NULL)                                                       // {vm_covered}
     {
         strFree(data->user);
         data->user = strDup(info->user);
     }
 
-    if (!strEq(info->group, data->group) && info->group != NULL)
+    if (!strEq(info->group, data->group) && info->group != NULL)                                                    // {vm_covered}
     {
         strFree(data->group);
         data->group = strDup(info->group);
