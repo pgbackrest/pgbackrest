@@ -52,7 +52,12 @@ testServerRequestSimpleProtocol(PackRead *const param, ProtocolServer *const ser
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerResponseVar(server, varNewBool(true));
+        // Return storage features
+        PackWrite *result = pckWriteNewBuf(bufNew(512));
+        pckWriteBoolP(result, true);
+
+        protocolServerResult(server, result);
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -438,10 +443,29 @@ testRun(void)
                 ioWriteStrLine(write, STRDEF("{\"out\":[\"bogus\"]}"));
                 ioWriteFlush(write);
 
-                // Send output
+                // Send output !!! REMOVE WHEN NO VAR
                 TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:test", "test command");
                 ioWriteStrLine(write, STRDEF(".OUTPUT"));
                 ioWriteStrLine(write, STRDEF("{\"out\":[\"value1\",\"value2\"]}"));
+                ioWriteFlush(write);
+
+                // Send output
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:test", "test command");
+
+                PackWrite *resultPayloadPack = pckWriteNewBuf(bufNew(512));
+                pckWriteStrP(resultPayloadPack, STRDEF("value1"));
+                pckWriteStrP(resultPayloadPack, STRDEF("value2"));
+                pckWriteEndP(resultPayloadPack);
+
+                PackWrite *resultPack = pckWriteNew(write);
+                pckWriteU32P(resultPack, protocolServerTypeResult, .defaultWrite = true);
+                pckWritePackP(resultPack, resultPayloadPack);
+                pckWriteEndP(resultPack);
+
+                PackWrite *responsePack = pckWriteNew(write);
+                pckWriteU32P(responsePack, protocolServerTypeResponse, .defaultWrite = true);
+                pckWriteEndP(responsePack);
+
                 ioWriteFlush(write);
 
                 // invalid line
@@ -531,7 +555,7 @@ testRun(void)
                 // No output expected
                 TEST_ERROR(protocolClientNoOp(client), AssertError, "no output required by command");
 
-                // Get command output
+                // Get command output !!! REMOVE WHEN NO VAR
                 const VariantList *output = NULL;
 
                 TEST_RESULT_VOID(
@@ -542,6 +566,13 @@ testRun(void)
                 TEST_RESULT_UINT(varLstSize(output), 2, "check output size");
                 TEST_RESULT_STR_Z(varStr(varLstGet(output, 0)), "value1", "check value1");
                 TEST_RESULT_STR_Z(varStr(varLstGet(output, 1)), "value2", "check value2");
+
+                // Get command output
+                TEST_RESULT_VOID(
+                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "test"))),
+                    "execute command with output");
+                TEST_RESULT_STR_Z(hrnPackToStr(protocolClientResult(client, true)), "1:str:value1, 2:str:value2", "    result");
+                TEST_RESULT_VOID(protocolClientResponse(client), "    response");
 
                 // Invalid line
                 TEST_RESULT_VOID(
@@ -619,7 +650,8 @@ testRun(void)
                 pckWriteEndP(protocolCommandParam(command));
 
                 TEST_RESULT_VOID(protocolCommandWrite(command, write), "write simple request");
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "simple request result");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:u32:0, 2:pack:<1:bool:true>", "simple request result");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:u32:1", "simple request response");
 
                 // Throw an assert error which will include a stack trace
                 command = protocolCommandNew(strIdFromZ(stringIdBit5, "assert"));

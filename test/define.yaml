@@ -581,7 +581,6 @@ unit:
           - storage/storage
 
         include:
-          - protocol/helper
           - storage/read
           - storage/write
 
