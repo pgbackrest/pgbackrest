@@ -1,12 +1,8 @@
 /***********************************************************************************************************************************
 Test Archive Get Command
 ***********************************************************************************************************************************/
-#include "common/compress/helper.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
-#include "postgres/interface.h"
-#include "postgres/version.h"
-#include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -23,8 +19,6 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-
     // *****************************************************************************************************************************
     if (testBegin("queueNeed()"))
     {
@@ -33,7 +27,7 @@ testRun(void)
         strLstAddZ(argList, "--archive-async");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");
         strLstAddZ(argList, "--spool-path=" TEST_PATH "/spool");
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         size_t queueSize = 16 * 1024 * 1024;
         size_t walSegmentSize = 16 * 1024 * 1024;
@@ -43,7 +37,7 @@ testRun(void)
             PathMissingError, "unable to list file info for missing path '" TEST_PATH "/spool/archive/test1/in'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN));
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_RESULT_STRLST_Z(
             queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
@@ -123,7 +117,7 @@ testRun(void)
 
         StringList *argList = strLstDup(argBaseList);
         hrnCfgArgRawZ(argList, cfgOptPgHost, BOGUS_STR);
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchiveGetAsync(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
 
@@ -136,7 +130,7 @@ testRun(void)
         TEST_TITLE("error on no segments");
 
         argList = strLstDup(argBaseList);
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
 
@@ -161,7 +155,7 @@ testRun(void)
             "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
 
         strLstAddZ(argList, "000000010000000100000001");
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "get async");
 
@@ -175,7 +169,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on path permission");
 
-        storagePathCreateP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
+        HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-1", .mode = 0400);
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "get async");
 
@@ -323,7 +317,7 @@ testRun(void)
         strLstAddZ(argList, "0000000100000001000000FE");
         strLstAddZ(argList, "0000000100000001000000FF");
         strLstAddZ(argList, "000000010000000200000000");
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
@@ -375,7 +369,7 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
 
-        storagePathCreateP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
+        HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1", .mode = 0400);
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FF-efefefefefefefefefefefefefefefefefefefef");
@@ -427,7 +421,7 @@ testRun(void)
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "000000010000000200000000");
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
 
@@ -460,7 +454,7 @@ testRun(void)
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "000000010000000200000000");
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(2), INFO_ARCHIVE_PATH_FILE,
@@ -469,7 +463,7 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}\n");
-        storagePathCreateP(storageRepoIdxWrite(2), STRDEF("10-1"), .mode = 0400);
+        HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(2), "10-1", .mode = 0400);
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
@@ -540,17 +534,15 @@ testRun(void)
         hrnProtocolLocalShimUninstall();
 
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest-bogus");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test2");
-        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
         strLstAddZ(argList, "0000000100000001000000FE");
         strLstAddZ(argList, "0000000100000001000000FF");
         strLstAddZ(argList, "000000010000000200000000");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync, .exeBogus = true);
 
         TEST_ERROR(
             cmdArchiveGetAsync(), ExecuteError,
@@ -575,33 +567,30 @@ testRun(void)
 
         // Arguments that must be included. Use raw config here because we need to keep the
         StringList *argBaseList = strLstNew();
-        strLstAddZ(argBaseList, "pgbackrest-bogus");
         hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawZ(argBaseList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argBaseList, cfgOptArchiveTimeout, "1");
-        hrnCfgArgRawZ(argBaseList, cfgOptLockPath, HRN_PATH "/lock");
-        strLstAddZ(argBaseList, CFGCMD_ARCHIVE_GET);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command must be run on the pg host");
 
         StringList *argList = strLstDup(argBaseList);
         hrnCfgArgRawZ(argList, cfgOptPgHost, BOGUS_STR);
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argBaseList);
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "WAL segment to get required");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "000000010000000100000001");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
 
@@ -610,10 +599,8 @@ testRun(void)
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
-        storagePathCreateP(storageTest, STRDEF(TEST_PATH "/pg/pg_wal"));
-
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
@@ -634,7 +621,7 @@ testRun(void)
         strLstAddZ(argList, "00000001.history");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYHISTORY");
         strLstAddZ(argList, "--archive-async");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
@@ -657,7 +644,7 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
@@ -679,6 +666,7 @@ testRun(void)
 
         // Write out a WAL segment for success
         // -------------------------------------------------------------------------------------------------------------------------
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal");
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "SHOULD-BE-A-REAL-WAL-FILE");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
@@ -686,12 +674,12 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: found 000000010000000100000001 in the archive asynchronously");
 
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // Write more WAL segments (in this case queue should be full)
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--archive-get-queue-max=48");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "SHOULD-BE-A-REAL-WAL-FILE");
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "0\nwarning about x");
@@ -703,7 +691,7 @@ testRun(void)
             "P00   WARN: warning about x\n"
             "P00   INFO: found 000000010000000100000001 in the archive asynchronously");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n", .remove = true);
 
         // Make sure the process times out when it can't get a lock
@@ -756,7 +744,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, BOGUS_STR);
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), ParamInvalidError, "extra parameters found");
 
@@ -783,7 +771,7 @@ testRun(void)
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "01ABCDEF01ABCDEF01ABCDEF");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
@@ -815,7 +803,7 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: unable to find 01ABCDEF01ABCDEF01ABCDEF in the archive");
 
-        TEST_STORAGE_LIST_EMPTY(storageTest, TEST_PATH_PG "/pg_wal");
+        TEST_STORAGE_LIST_EMPTY(storagePg(), "pg_wal");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get WAL segment");
@@ -832,9 +820,8 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
-        TEST_RESULT_UINT(
-            storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on duplicate WAL segment");
@@ -849,7 +836,7 @@ testRun(void)
                 ", 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "HINT: are multiple primaries archiving to this stanza?");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", NULL);
+        TEST_STORAGE_LIST(storagePg(), "pg_wal", NULL);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
@@ -871,7 +858,7 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get from current db-id");
@@ -883,7 +870,7 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-4 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         TEST_STORAGE_REMOVE(
@@ -904,13 +891,13 @@ testRun(void)
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "000000010000000100000001.partial");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
         TEST_RESULT_LOG("P00   INFO: found 000000010000000100000001.partial in the repo1: 10-4 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(),
             STORAGE_REPO_ARCHIVE "/10-4/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -921,13 +908,13 @@ testRun(void)
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "00000001.history");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYHISTORY");
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_INT(cmdArchiveGet(), 1, "get");
 
         TEST_RESULT_LOG("P00   INFO: unable to find 00000001.history in the archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", NULL);
+        TEST_STORAGE_LIST(storagePg(), "pg_wal", NULL);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get history");
@@ -938,8 +925,8 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: found 00000001.history in the repo1: 10-1 archive");
 
-        TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYHISTORY")).size, 7, "check size");
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYHISTORY\n", .remove = true);
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYHISTORY")).size, 7, "check size");
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYHISTORY\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get compressed and encrypted WAL segment with invalid repo");
@@ -970,7 +957,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         strLstAddZ(argList, "01ABCDEF01ABCDEF01ABCDEF");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
@@ -989,9 +976,8 @@ testRun(void)
                 " archiving scheme.\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
-        TEST_RESULT_UINT(
-            storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo1 has info but bad permissions");
@@ -1004,7 +990,7 @@ testRun(void)
             "[db:history]\n"
             "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
 
-        storagePathCreateP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_ARCHIVE "/10-2"), .mode = 0400);
+        HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-2", .mode = 0400);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
@@ -1013,7 +999,7 @@ testRun(void)
                 "/01ABCDEF01ABCDEF': [13] Permission denied\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("all repos have info but bad permissions");
@@ -1070,7 +1056,7 @@ testRun(void)
 
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
@@ -1090,7 +1076,7 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,

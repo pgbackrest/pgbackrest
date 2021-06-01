@@ -25,7 +25,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_STR_Z(lockStopFileName(NULL), HRN_PATH "/lock/all" STOP_FILE_EXT, "stop file for all stanzas");
         TEST_RESULT_STR_Z(lockStopFileName(STRDEF("db")), HRN_PATH "/lock/db" STOP_FILE_EXT, "stop file for on stanza");
@@ -35,7 +35,7 @@ testRun(void)
     if (testBegin("lockStopTest(), cmdStart()"))
     {
         StringList *argList = strLstNew();
-        harnessCfgLoad(cfgCmdStart, argList);
+        HRN_CFG_LOAD(cfgCmdStart, argList);
 
         TEST_RESULT_VOID(lockStopTest(), "no stop files without stanza");
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - no stanza, no stop files");
@@ -48,7 +48,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
-        harnessCfgLoad(cfgCmdStart, argList);
+        HRN_CFG_LOAD(cfgCmdStart, argList);
 
         TEST_RESULT_VOID(lockStopTest(), "no stop files with stanza");
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - stanza, no stop files");
@@ -70,7 +70,7 @@ testRun(void)
     {
         const String *lockPath = STRDEF(HRN_PATH "/lock");
         StringList *argList = strLstNew();
-        harnessCfgLoad(cfgCmdStop, argList);
+        HRN_CFG_LOAD(cfgCmdStop, argList);
 
         TEST_RESULT_VOID(cmdStop(), "no stanza, create stop file");
         StorageInfo info = {0};
@@ -97,7 +97,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         String *stanzaStopFile = strNewFmt("%s/db" STOP_FILE_EXT, strZ(lockPath));
         strLstAddZ(argList, "--stanza=db");
-        harnessCfgLoad(cfgCmdStop, argList);
+        HRN_CFG_LOAD(cfgCmdStop, argList);
 
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file");
         TEST_RESULT_BOOL(storageExistsP(hrnStorage, stanzaStopFile), true, "    stanza stop file created");
@@ -114,7 +114,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--force");
-        harnessCfgLoad(cfgCmdStop, argList);
+        HRN_CFG_LOAD(cfgCmdStop, argList);
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file, force");
         TEST_RESULT_VOID(storageRemoveP(hrnStorage, stanzaStopFile), "    remove stop file");
 

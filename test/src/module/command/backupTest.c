@@ -474,7 +474,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         strLstAddZ(argList, "--repo1-retention-full=1");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create the pg path
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
@@ -748,7 +748,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         // Create the pg path
@@ -837,7 +837,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         time_t timestamp = 1575401652;
         String *backupLabel = backupLabelFormat(backupTypeFull, NULL, timestamp);
@@ -918,7 +918,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
             backupInit(infoBackupNew(PG_VERSION_91, 1000000000000000910, hrnPgCatalogVersion(PG_VERSION_91), NULL)), ConfigError,
@@ -939,7 +939,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, hrnPgCatalogVersion(PG_VERSION_92), NULL)),
@@ -963,7 +963,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
             backupInit(infoBackupNew(PG_VERSION_11, 1000000000000001100, hrnPgCatalogVersion(PG_VERSION_11), NULL)),
@@ -991,7 +991,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--" CFGOPT_START_FAST);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, hrnPgCatalogVersion(PG_VERSION_83), NULL)),
@@ -1015,7 +1015,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, hrnPgCatalogVersion(PG_VERSION_84), NULL)),
@@ -1038,7 +1038,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1070,7 +1070,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_CHECKSUM_PAGE);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1118,7 +1118,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create pg_control
         storagePutP(
@@ -1165,7 +1165,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when manifest and copy are missing");
@@ -1367,7 +1367,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1381,7 +1381,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR), BUFSTRDEF("PID"));
 
@@ -1403,7 +1403,7 @@ testRun(void)
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_FORCE);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postgresql.conf")), BUFSTRDEF("CONFIGSTUFF"));
 
@@ -1437,7 +1437,7 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_COMPRESS);
         hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(cmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
@@ -1458,7 +1458,7 @@ testRun(void)
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VER"));
 
@@ -1485,7 +1485,7 @@ testRun(void)
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VR2"));
@@ -1511,7 +1511,7 @@ testRun(void)
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo2");
@@ -1523,7 +1523,7 @@ testRun(void)
         // With repo2 the only repo configured, ensure it is chosen by confirming diff is changed to full due to no prior backups
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
         TEST_RESULT_LOG(
@@ -1539,7 +1539,7 @@ testRun(void)
         // Add repo1 to the configuration
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
         TEST_RESULT_LOG(
@@ -1555,7 +1555,7 @@ testRun(void)
 
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VER"));
 
@@ -1619,7 +1619,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-            harnessCfgLoad(cfgCmdStanzaCreate, argList);
+            HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
             cmdStanzaCreate();
             TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1634,7 +1634,7 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--no-" CFGOPT_ARCHIVE_CHECK);
-            harnessCfgLoad(cfgCmdBackup, argList);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Add files
             storagePutP(
@@ -1731,7 +1731,7 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
-            harnessCfgLoad(cfgCmdBackup, argList);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
@@ -1922,7 +1922,7 @@ testRun(void)
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            harnessCfgLoad(cfgCmdBackup, argList);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
             const String *manifestPriorFile = STRDEF(STORAGE_REPO_BACKUP "/latest/" BACKUP_MANIFEST_FILE);
@@ -2087,7 +2087,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-            harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
+            HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
             TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
@@ -2104,7 +2104,7 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
             strLstAddZ(argList, "--" CFGOPT_START_FAST);
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
-            harnessCfgLoad(cfgCmdBackup, argList);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
             // but no bytes will be copied.
@@ -2236,7 +2236,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-            harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
+            HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
             TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
@@ -2251,7 +2251,7 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             strLstAddZ(argList, "--" CFGOPT_MANIFEST_SAVE_THRESHOLD "=1");
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
-            harnessCfgLoad(cfgCmdBackup, argList);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Move pg1-path and put a link in its place. This tests that backup works when pg1-path is a symlink yet should be
             // completely invisible in the manifest and logging.
@@ -2441,7 +2441,7 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            harnessCfgLoad(cfgCmdBackup, argList);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .errorAfterStart = true);
@@ -2480,7 +2480,7 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             strLstAddZ(argList, "--" CFGOPT_DELTA);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            harnessCfgLoad(cfgCmdBackup, argList);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Update pg_control timestamp
             HRN_STORAGE_TIME(storagePg(), "global/pg_control", backupTimeStart);

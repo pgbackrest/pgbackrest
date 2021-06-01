@@ -34,7 +34,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
                 strLstAddZ(argList, "--repo1-host=repo-host");
                 strLstAddZ(argList, "--repo1-host-user=repo-host-user");
-                harnessCfgLoad(cfgCmdArchiveGet, argList);
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
                 ProtocolServer *server = protocolServerNew(STRDEF("test"), STRDEF("config"), read, write);
 

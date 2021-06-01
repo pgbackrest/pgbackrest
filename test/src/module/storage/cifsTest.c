@@ -20,7 +20,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--repo1-type=cifs");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH);
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, true), "get cifs repo storage");

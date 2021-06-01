@@ -451,7 +451,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--repo-path=" TEST_PATH);
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // Create manifest for upgrade db (id=2), save to disk
         manifestContent = harnessInfoChecksumZ

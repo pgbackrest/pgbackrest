@@ -36,20 +36,20 @@ testRun(void)
         StringList *argListText = strLstDup(argList);
 
         strLstAddZ(argList, "--output=json");
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         // No stanzas have been created
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(infoRender(), "[]", "json - repo but no stanzas");
 
-        harnessCfgLoad(cfgCmdInfo, argListText);
+        HRN_CFG_LOAD(cfgCmdInfo, argListText);
         TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text - no stanzas");
 
         // Repo is still empty but stanza option is specified
         //--------------------------------------------------------------------------------------------------------------------------
         StringList *argListStanzaOpt = strLstDup(argList);
         strLstAddZ(argListStanzaOpt, "--stanza=stanza1");
-        harnessCfgLoad(cfgCmdInfo, argListStanzaOpt);
+        HRN_CFG_LOAD(cfgCmdInfo, argListStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
             "["
@@ -80,7 +80,7 @@ testRun(void)
 
         StringList *argListTextStanzaOpt = strLstDup(argListText);
         strLstAddZ(argListTextStanzaOpt, "--stanza=stanza1");
-        harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
+        HRN_CFG_LOAD(cfgCmdInfo, argListTextStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -101,7 +101,7 @@ testRun(void)
             "    cipher: none\n",
             "text - missing stanza data");
 
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
         TEST_RESULT_STR_Z(
             infoRender(),
             "["
@@ -190,7 +190,7 @@ testRun(void)
             "]", strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path)),
             "json - other error, single repo");
 
-        harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
+        HRN_CFG_LOAD(cfgCmdInfo, argListTextStanzaOpt);
         TEST_RESULT_STR(
             infoRender(), strNewFmt(
             "stanza: stanza1\n"
@@ -251,7 +251,7 @@ testRun(void)
             {
                 sleepMSec(250);
 
-                harnessCfgLoad(cfgCmdInfo, argList);
+                HRN_CFG_LOAD(cfgCmdInfo, argList);
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "["
@@ -303,7 +303,7 @@ testRun(void)
                     "]",
                     "json - single stanza, no valid backups, backup/expire lock detected");
 
-                harnessCfgLoad(cfgCmdInfo, argListText);
+                HRN_CFG_LOAD(cfgCmdInfo, argListText);
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
@@ -332,7 +332,7 @@ testRun(void)
         strLstAddZ(argList2, "--stanza=stanza1");
         hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -351,7 +351,7 @@ testRun(void)
         strLstAddZ(argList2, "--stanza=stanza1");
         hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -388,7 +388,7 @@ testRun(void)
             "touch %s",
             strZ(strNewFmt("%s/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archiveDb2_1))));
 
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
         content = STRDEF
         (
             "[db]\n"
@@ -447,7 +447,7 @@ testRun(void)
             {
                 sleepMSec(250);
 
-                harnessCfgLoad(cfgCmdInfo, argList);
+                HRN_CFG_LOAD(cfgCmdInfo, argList);
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "["
@@ -584,7 +584,7 @@ testRun(void)
                     "]",
                     "json - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
 
-                harnessCfgLoad(cfgCmdInfo, argListText);
+                HRN_CFG_LOAD(cfgCmdInfo, argListText);
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
@@ -1101,7 +1101,7 @@ testRun(void)
             {
                 sleepMSec(250);
 
-                harnessCfgLoad(cfgCmdInfo, argListMultiRepoJson);
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoJson);
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "["
@@ -1519,7 +1519,7 @@ testRun(void)
             {
                 sleepMSec(250);
 
-                harnessCfgLoad(cfgCmdInfo, argListMultiRepo);
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepo);
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
@@ -1611,7 +1611,7 @@ testRun(void)
         argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=bogus");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -1628,7 +1628,7 @@ testRun(void)
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
         strLstAddZ(argList2, "--repo=1");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -1660,7 +1660,7 @@ testRun(void)
         argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20201116-200000F");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -1690,7 +1690,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList2, "--output=json");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_ERROR(strZ(infoRender()), ConfigError, "option 'set' is currently only valid for text output");
 
@@ -1700,7 +1700,7 @@ testRun(void)
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
         strLstAddZ(argList2, "--repo=1");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_TARGET_NO_LINK                                                                                       \
             "\n"                                                                                                                   \
@@ -1769,7 +1769,7 @@ testRun(void)
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
         strLstAddZ(argList2, "--repo=1");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_NO_DB                                                                                                \
             "\n"                                                                                                                   \
@@ -1836,7 +1836,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argList);
         strLstAddZ(argList2, "--stanza=stanza2");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
             "["
@@ -1892,7 +1892,7 @@ testRun(void)
 
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza2");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza2\n"
@@ -1934,7 +1934,7 @@ testRun(void)
 
         argList2 = strLstDup(argListMultiRepo);
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -2048,7 +2048,7 @@ testRun(void)
 
         argList2 = strLstDup(argListMultiRepo);
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza4");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2131,7 +2131,7 @@ testRun(void)
 
         argList2 = strLstDup(argListMultiRepo);
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2169,7 +2169,7 @@ testRun(void)
             "text - multi-repo, database mismatch, repo2 stanza-upgrade needed");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2363,7 +2363,7 @@ testRun(void)
         argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--repo-cipher-type=aes-256-cbc");
         strLstAddZ(argList2, "--config=" TEST_PATH "/pgbackrest.conf");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR(
             infoRender(), strNewFmt(
@@ -2430,7 +2430,7 @@ testRun(void)
 
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
         hrnCfgArgRawZ(argList2, cfgOptSet, "20201110-100000F");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR(
             infoRender(), strNewFmt(
@@ -2460,7 +2460,7 @@ testRun(void)
 
         argList2 = strLstDup(argListMultiRepo);
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR(
             infoRender(), strNewFmt(
@@ -2610,7 +2610,7 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
         hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        harnessCfgLoad(cfgCmdInfo, argList2);
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         // Note that although the time on the backup in repo2 > repo1, repo1 current db is not the same because of the version so
         // the repo1, since read first, will be considered the current PG
@@ -2724,7 +2724,7 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--repo-path=%s", strZ(repoPath)));
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         storagePathCreateP(storageLocalWrite(), archivePath);
         storagePathCreateP(storageLocalWrite(), backupPath);
@@ -2749,7 +2749,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--set=bogus");
 
-        TEST_ERROR(harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
+        TEST_ERROR(hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo-level error");
@@ -2760,7 +2760,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2771,7 +2771,7 @@ testRun(void)
             "text - invalid stanza");
 
         hrnCfgArgRawZ(argList, cfgOptOutput, "json");
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2805,7 +2805,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptStanza, "stanza1");
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2816,7 +2816,7 @@ testRun(void)
             "text - stanza requested");
 
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_RESULT_STR_Z(
             infoRender(),

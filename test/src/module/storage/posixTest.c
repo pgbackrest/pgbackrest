@@ -1149,7 +1149,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--repo-path=" TEST_PATH);
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;
 
@@ -1184,7 +1184,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "--repo-path=" TEST_PATH);
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_ASSIGN(storage, storageRepo(), "new repo storage no stanza");
         TEST_RESULT_STR(storageHelper.stanza, NULL, "stanza NULL");
@@ -1220,7 +1220,7 @@ testRun(void)
         strLstAddZ(argList, "--spool-path=" TEST_PATH);
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/db");
         strLstAddZ(argList, "--pg2-path=" TEST_PATH "/db2");
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_PTR(storageHelper.storageSpool, NULL, "storage not cached");
         TEST_ASSIGN(storage, storageSpool(), "new storage");
@@ -1288,7 +1288,7 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--repo-path=" TEST_PATH);
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_ERROR(storageSpool(), AssertError, "stanza cannot be NULL for this storage object");
         TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");

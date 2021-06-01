@@ -46,7 +46,7 @@ testRun(void)
         strLstAdd(argList, pg1PathOpt);
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--archive-timeout=.5");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Set up harness to expect a failure to connect to the database
         harnessPqScriptSet((HarnessPq [])
@@ -83,7 +83,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--repo2-host=repo.domain.com");
         strLstAddZ(argList, "--archive-timeout=.5");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Two standbys found but no primary
         harnessPqScriptSet((HarnessPq [])
@@ -106,7 +106,7 @@ testRun(void)
         strLstAdd(argList, pg1PathOpt);
         strLstAddZ(argList, "--repo1-host=repo.domain.com");
         strLstAddZ(argList, "--archive-timeout=.5");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -126,7 +126,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--archive-timeout=.5");
         strLstAddZ(argList, "--backup-standby");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Primary database connection ok
         harnessPqScriptSet((HarnessPq [])
@@ -155,7 +155,7 @@ testRun(void)
         strLstAddZ(argList, "--archive-timeout=.5");
         strLstAdd(argList, pg8PathOpt);
         strLstAddZ(argList, "--pg8-port=5433");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Standby database path doesn't match pg_control
         harnessPqScriptSet((HarnessPq [])
@@ -231,7 +231,7 @@ testRun(void)
         // Multi-repo - add a second repo (repo2)
         StringList *argListRepo2 = strLstDup(argList);
         strLstAddZ(argListRepo2, "--repo2-path=" TEST_PATH "/repo2");
-        harnessCfgLoad(cfgCmdCheck, argListRepo2);
+        HRN_CFG_LOAD(cfgCmdCheck, argListRepo2);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -269,7 +269,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--repo2-path=" TEST_PATH "/repo2");
         strLstAddZ(argList, "--archive-timeout=.5");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Create stanza files on repo2
         storagePutP(storageNewWriteP(storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
@@ -350,7 +350,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 5, "pgbackrest-bogus");
         strLstAddZ(argList, "--pg5-path=/path/to/pg5");
         strLstAddZ(argList, "--pg5-host-user=" TEST_USER);
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Placeholder test for manifest
         TEST_ERROR(
@@ -382,7 +382,7 @@ testRun(void)
         strLstAdd(argList, pg8PathOpt);
         strLstAddZ(argList, "--pg8-port=5433");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         DbGetResult db = {0};
 
@@ -421,7 +421,7 @@ testRun(void)
         // archive-check=false
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--no-archive-check");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config --no-archive-check");
 
@@ -433,7 +433,7 @@ testRun(void)
         strLstAdd(argList, pg8PathOpt);
         strLstAddZ(argList, "--pg8-port=5433");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         TEST_RESULT_VOID(
             checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config, archive-check not valid for command");
@@ -447,7 +447,7 @@ testRun(void)
         strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -465,7 +465,7 @@ testRun(void)
         TEST_TITLE("disable archive_mode=always check");
 
         strLstAddZ(argList, "--no-archive-mode-check");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "check");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
@@ -539,7 +539,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
         storagePutP(

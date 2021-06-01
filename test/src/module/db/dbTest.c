@@ -75,7 +75,7 @@ testRun(void)
                 strLstAddZ(argList, "--pg1-database=testdb");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
                 strLstAddZ(argList, "--process=0");
-                harnessCfgLoadRole(cfgCmdBackup, cfgCmdRoleRemote, argList);
+                HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleRemote);
 
                 // Set script
                 harnessPqScriptSet((HarnessPq [])
@@ -149,7 +149,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/pg1");
         strLstAddZ(argList, "--pg1-database=backupdb");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when unable to select any pg_settings");
@@ -365,7 +365,7 @@ testRun(void)
         strLstAddZ(argList, "--pg1-path=/pg1");
         strLstAddZ(argList, "--pg2-path=/pg2");
         strLstAddZ(argList, "--pg2-port=5433");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -504,7 +504,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/path/to/pg");
         strLstAddZ(argList, "--pg1-user=bob");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -581,7 +581,7 @@ testRun(void)
         strLstAddZ(argList, "--pg1-path=/path/to/pg1");
         strLstAddZ(argList, "--pg8-path=/path/to/pg2");
         strLstAddZ(argList, "--pg8-port=5433");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -646,7 +646,7 @@ testRun(void)
         strLstAddZ(argList, "--pg5-path=/path/to/pg5");
         strLstAddZ(argList, "--pg8-path=/path/to/pg8");
         strLstAddZ(argList, "--pg8-port=5434");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {

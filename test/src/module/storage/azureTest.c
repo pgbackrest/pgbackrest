@@ -183,7 +183,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
         hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
         hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
-        harnessCfgLoad(cfgCmdArchivePush, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
@@ -293,7 +293,7 @@ testRun(void)
                 hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
-                harnessCfgLoad(cfgCmdArchivePush, argList);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
@@ -731,7 +731,7 @@ testRun(void)
 
                 hrnCfgArgRawStrId(argList, cfgOptRepoAzureKeyType, storageAzureKeyTypeSas);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SAS);
-                harnessCfgLoad(cfgCmdArchivePush, argList);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 

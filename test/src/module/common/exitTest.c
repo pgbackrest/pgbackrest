@@ -29,7 +29,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
-        harnessCfgLoad(cfgCmdHelp, strLstNew());
+        HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
 
         HARNESS_FORK_BEGIN()
         {
@@ -46,7 +46,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitSafe()"))
     {
-        harnessCfgLoad(cfgCmdHelp, strLstNew());
+        HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
         cfgCommandSet(cfgCmdNone, cfgCmdRoleMain);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
@@ -55,7 +55,7 @@ testRun(void)
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
-        harnessCfgLoad(cfgCmdArchivePush, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error");
         TEST_RESULT_LOG("P00   INFO: archive-push command end: completed successfully");
@@ -79,11 +79,9 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, PROJECT_BIN);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         strLstAddZ(argList, "--" CFGOPT_PROCESS_MAX "=4");
-        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_ASYNC);
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync, .noStd = true);
 
         harnessLogLevelSet(logLevelDebug);
 
@@ -105,7 +103,7 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:92:(void)\n"
+                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:90:(void)\n"
                 "            test.c:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [122]\n"
@@ -135,7 +133,7 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:123:(void)\n"
+                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:121:(void)\n"
                 "            test.c:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [025]");

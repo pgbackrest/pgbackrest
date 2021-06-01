@@ -1635,14 +1635,14 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "detail");
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdInfo, argList), "info command");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_RESULT_BOOL(cfgLogFile(), true, "    check logging");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("version command does not do file logging");
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdVersion, strLstNew()), "version command");
+        HRN_CFG_LOAD(cfgCmdVersion, strLstNew());
         TEST_RESULT_BOOL(cfgLogFile(), false, "    check logging");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1652,7 +1652,7 @@ testRun(void)
         // hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         // hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
         // hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
-        // TEST_RESULT_VOID(harnessCfgLoad(cfgCmdCheck, argList), "check command");
+        // HRN_CFG_LOAD(cfgCmdCheck, argList);
         //
         // TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/pg2", "check pg1-path");
         // TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 8)), "/pg8", "check pg8-path");
@@ -1666,7 +1666,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
         hrnCfgArgRawZ(argList, cfgOptPg, "4");
         TEST_ERROR(
-            harnessCfgLoadRole(cfgCmdBackup, cfgCmdRoleLocal, argList), OptionInvalidValueError,
+            hrnCfgLoadP(cfgCmdBackup, argList, .role = cfgCmdRoleLocal), OptionInvalidValueError,
             "key '4' is not valid for 'pg' option");
     }
 

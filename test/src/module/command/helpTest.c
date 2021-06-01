@@ -1,12 +1,32 @@
 /***********************************************************************************************************************************
 Test Help Command
 ***********************************************************************************************************************************/
+#include "config/load.h"
 #include "config/parse.h"
+#include "storage/helper.h"
 #include "storage/posix/storage.h"
-#include "storage/storage.h"
 #include "version.h"
 
 #include "common/harnessConfig.h"
+
+/***********************************************************************************************************************************
+Configuration load with just enough funcionality to test help
+***********************************************************************************************************************************/
+static void
+testCfgLoad(const StringList *const argList)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING_LIST, argList);
+    FUNCTION_HARNESS_END();
+
+    // Parse config
+    configParse(storageLocal(), strLstSize(argList), strLstPtr(argList), false);
+
+    // Apply special option rules
+    cfgLoadUpdateOption();
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -111,13 +131,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
-        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help from empty command line");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help from empty command line");
         TEST_RESULT_STR_Z(helpRender(), generalHelp, "    check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
-        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help from help command");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help from help command");
         TEST_RESULT_STR_Z(helpRender(), generalHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -134,7 +154,7 @@ testRun(void)
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "version");
-        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for version command");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for version command");
         TEST_RESULT_STR_Z(helpRender(), commandHelp, "    check text");
 
         // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
@@ -291,7 +311,7 @@ testRun(void)
         strLstAddZ(argList, "--link-map=/link2=/dest2");
         strLstAddZ(argList, "--db-include=db1");
         strLstAddZ(argList, "--db-include=db2");
-        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for restore command");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command");
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
         TEST_RESULT_STR_Z(helpRender(), commandHelp, "    check text");
 
@@ -302,7 +322,7 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "buffer-size");
         strLstAddZ(argList, "buffer-size");
-        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse too many options");
+        TEST_RESULT_VOID(testCfgLoad(argList), "parse too many options");
         TEST_ERROR(helpRender(), ParamInvalidError, "only one option allowed for option help");
 
         argList = strLstNew();
@@ -310,7 +330,7 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, BOGUS_STR);
-        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse bogus option");
+        TEST_RESULT_VOID(testCfgLoad(argList), "parse bogus option");
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
 
         argList = strLstNew();
@@ -318,7 +338,7 @@ testRun(void)
         strLstAddZ(argList, CFGCMD_HELP);
         strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH);
         strLstAddZ(argList, CFGOPT_PROCESS);
-        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse option invalid for command");
+        TEST_RESULT_VOID(testCfgLoad(argList), "parse option invalid for command");
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'process' is not valid for command 'archive-push'");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -344,13 +364,11 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "buffer-size");
-        TEST_RESULT_VOID(
-            harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, buffer-size option");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(helpRender(), strNewFmt("%s\ndefault: 1048576\n", optionHelp), "    check text");
 
         strLstAddZ(argList, "--buffer-size=32768");
-        TEST_RESULT_VOID(
-            harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, buffer-size option");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 1048576\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -376,8 +394,7 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "repo1-s3-host");
-        TEST_RESULT_VOID(
-            harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         optionHelp = strZ(strNewFmt(
@@ -389,8 +406,7 @@ testRun(void)
 
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAddZ(argList, "--repo1-s3-host=s3-host");
-        TEST_RESULT_VOID(
-            harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -411,8 +427,7 @@ testRun(void)
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "supersecret", true);
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "repo-cipher-pass");
-        TEST_RESULT_VOID(
-            harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
@@ -437,8 +452,7 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "repo-hardlink");
-        TEST_RESULT_VOID(
-            harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for backup command, repo-hardlink option");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, repo-hardlink option");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         argList = strLstNew();
@@ -446,8 +460,7 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "hardlink");
-        TEST_RESULT_VOID(
-            harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for backup command, deprecated hardlink option");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, deprecated hardlink option");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         // Check admonition
@@ -482,8 +495,7 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "repo-retention-archive");
-        TEST_RESULT_VOID(
-            harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for backup command, repo-retention-archive option");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, repo-retention-archive option");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check admonition text");
     }
 
@@ -492,7 +504,7 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
-        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse help from empty command line");
+        TEST_RESULT_VOID(testCfgLoad(argList), "parse help from empty command line");
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);

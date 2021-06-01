@@ -42,10 +42,10 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdStanzaCreate, argList), OptionInvalidError, "option 'repo' not valid for command 'stanza-create'");
+            hrnCfgLoadP(cfgCmdStanzaCreate, argList), OptionInvalidError, "option 'repo' not valid for command 'stanza-create'");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        harnessCfgLoad(cfgCmdStanzaCreate, argListBase);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argListBase);
 
         // Create the stop file
         TEST_RESULT_VOID(
@@ -58,7 +58,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
         storagePutP(
@@ -130,7 +130,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist on repo1 and both are valid");
         TEST_RESULT_LOG(
@@ -250,14 +250,14 @@ testRun(void)
         hrnCfgArgKeyRawFmt(argListCmd, cfgOptPgPath, 1, TEST_PATH "/%s", strZ(stanza));
 
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdStanzaDelete, argListCmd), OptionRequiredError,
+            hrnCfgLoadP(cfgCmdStanzaDelete, argListCmd), OptionRequiredError,
             "stanza-delete command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
 
         // Add the repo option
         StringList *argListDelete = strLstDup(argListCmd);
         hrnCfgArgRawZ(argListDelete, cfgOptRepo, "4");
-        harnessCfgLoad(cfgCmdStanzaDelete, argListDelete);
+        HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
 
         TEST_ERROR(
             cmdStanzaDelete(), FileMissingError,
@@ -282,7 +282,7 @@ testRun(void)
         // Stanza with directories only
         argListDelete = strLstDup(argListCmd);
         hrnCfgArgRawZ(argListDelete, cfgOptRepo, "3");
-        harnessCfgLoad(cfgCmdStanzaDelete, argListDelete);
+        HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
 
         TEST_RESULT_VOID(
             storagePathCreateP(storageTest, strNewFmt("repo3/archive/%s/9.6-1/1234567812345678", strZ(stanza))),
@@ -307,7 +307,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Backup files removed - archive.info and archive.info.copy exist repo2
         TEST_RESULT_VOID(
@@ -339,7 +339,7 @@ testRun(void)
         // Delete the last repo so only 1 remains
         argListDelete = strLstDup(argListCmd);
         hrnCfgArgRawZ(argListDelete, cfgOptRepo, "2");
-        harnessCfgLoad(cfgCmdStanzaDelete, argListDelete);
+        HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
 
         // Create the stop file
         TEST_RESULT_VOID(
@@ -353,7 +353,7 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Archive files removed - backup.info exists
         TEST_RESULT_VOID(
@@ -546,7 +546,7 @@ testRun(void)
         // Repeat last test using --force (deprecated)
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--force");
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
         TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
         TEST_RESULT_LOG(
             "P00   WARN: option --force is no longer supported\n"
@@ -564,7 +564,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pg1Path)));
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // pgControl and database match
         //--------------------------------------------------------------------------------------------------------------------------
@@ -584,7 +584,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, strNewFmt("repo/archive/%s/archive.info", strZ(stanza))), true, "    stanza created");
 
-        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), false, NULL, NULL),
@@ -644,7 +644,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg2-path=%s", strZ(pg1Path)));
         strLstAddZ(argList, "--pg2-port=5434");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for primary
         storagePutP(
@@ -686,11 +686,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdStanzaUpgrade, argList), OptionInvalidError,
+            hrnCfgLoadP(cfgCmdStanzaUpgrade, argList), OptionInvalidError,
             "option 'repo' not valid for command 'stanza-upgrade'");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        harnessCfgLoad(cfgCmdStanzaUpgrade, argListBase);
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argListBase);
 
         // Create the stop file
         TEST_RESULT_VOID(
@@ -1007,7 +1007,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanzaOther)));
         strLstAdd(argList, strNewFmt("--pg1-path=" TEST_PATH "/%s", strZ(stanzaOther)));
         strLstAddZ(argList, "--no-online");
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for stanza-create
         storagePutP(
@@ -1020,7 +1020,7 @@ testRun(void)
         argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));
         strLstAdd(argList, strNewFmt("--pg1-path=" TEST_PATH "/%s", strZ(stanza)));
-        harnessCfgLoad(cfgCmdStanzaDelete, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaDelete, argList);
 
         // stanza already deleted
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1132,7 +1132,7 @@ testRun(void)
         StringList *argListDel = strLstDup(argList);
         hrnCfgArgKeyRawZ(argListDel, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argListDel, cfgOptRepo, "2");
-        harnessCfgLoad(cfgCmdStanzaDelete, argListDel);
+        HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDel);
 
         TEST_RESULT_VOID(
             storagePutP(
@@ -1151,7 +1151,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         strLstAddZ(argList,"--force");
-        harnessCfgLoad(cfgCmdStanzaDelete, argList);
+        HRN_CFG_LOAD(cfgCmdStanzaDelete, argList);
 
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete --force");
         TEST_RESULT_BOOL(

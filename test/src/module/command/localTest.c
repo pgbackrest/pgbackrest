@@ -35,7 +35,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
                 strLstAddZ(argList, "--process=1");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-                harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
                 cmdLocal(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }

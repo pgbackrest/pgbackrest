@@ -442,7 +442,7 @@ if (testBegin("expireBackup()"))
             <section id="test-command">
                 <title>Setting up the command to be run</title>
 
-                <p>The <link url="{[github-url-test-common]}/harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command on multiple repositories, one of which is encrypted:</p>
+                <p>The <link url="{[github-url-test-common]}/harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the <code>HRN_CFG_LOAD()</code> macro with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command on multiple repositories, one of which is encrypted:</p>
 
                 <code-block>
 StringList *argList = strLstNew();                                  // Create an empty string list
@@ -450,7 +450,7 @@ hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);             // Add the -
 hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");   // Add the --repo2-path option
 hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);  // Add the --repo2-cipher-type option
 hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);        // Set environment variable for the --repo2-cipher-pass option
-harnessCfgLoad(cfgCmdInfo, argList);                                // Load the command and option list into the test harness
+HRN_CFG_LOAD(cfgCmdInfo, argList);                                  // Load the command and option list into the test harness
                 </code-block>
             </section>
 
@@ -514,7 +514,7 @@ HARNESS_FORK_BEGIN()
     {
         sleepMSec(250);
 
-        harnessCfgLoad(cfgCmdInfo, argListText);
+        HRN_CFG_LOAD(cfgCmdInfo, argListText);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
