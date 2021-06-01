@@ -63,7 +63,7 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = varVarLst(protocolClientExecute(client, command, true));
+            result = varVarLst(protocolClientExecuteVar(client, command, true));
         }
         MEM_CONTEXT_PRIOR_END();
     }

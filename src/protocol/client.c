@@ -238,6 +238,7 @@ protocolClientResponse(ProtocolClient *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+// !!! TO BE REMOVED
 const Variant *
 protocolClientReadOutputVar(ProtocolClient *this, bool outputRequired)
 {
@@ -304,8 +305,9 @@ protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command)
 }
 
 /**********************************************************************************************************************************/
+// !!! TO BE REMOVED
 const Variant *
-protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool outputRequired)
+protocolClientExecuteVar(ProtocolClient *this, ProtocolCommand *command, bool outputRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -333,7 +335,7 @@ protocolClientNoOp(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientExecute(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP), false);
+        protocolClientExecuteVar(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP), false);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -68,7 +68,8 @@ protocolClientIoWrite(ProtocolClient *const this)
 Functions
 ***********************************************************************************************************************************/
 // Execute a protocol command and get the output
-const Variant *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool outputRequired);
+// !!! TO BE REMOVED
+const Variant *protocolClientExecuteVar(ProtocolClient *this, ProtocolCommand *command, bool outputRequired);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolClient *
@@ -86,6 +87,7 @@ String *protocolClientReadLine(ProtocolClient *this);
 // Read the command output
 PackRead *protocolClientResult(ProtocolClient *this, bool resultRequired);
 void protocolClientResponse(ProtocolClient *this);
+// !!! TO BE REMOVED
 const Variant *protocolClientReadOutputVar(ProtocolClient *this, bool outputRequired);
 
 // Write the protocol command

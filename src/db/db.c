@@ -48,7 +48,7 @@ dbFreeResource(THIS_VOID)
     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE);
     pckWriteU32P(protocolCommandParam(command), this->remoteIdx);
 
-    protocolClientExecute(this->remoteClient, command, false);
+    protocolClientExecuteVar(this->remoteClient, command, false);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -114,7 +114,7 @@ dbQuery(Db *this, const String *query)
         pckWriteU32P(param, this->remoteIdx);
         pckWriteStrP(param, query);
 
-        result = varVarLst(protocolClientExecute(this->remoteClient, command, true));
+        result = varVarLst(protocolClientExecuteVar(this->remoteClient, command, true));
     }
     // Else locally
     else
@@ -201,7 +201,7 @@ dbOpen(Db *this)
         if (this->remoteClient != NULL)
         {
             ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_OPEN);
-            this->remoteIdx = varUIntForce(protocolClientExecute(this->remoteClient, command, true));
+            this->remoteIdx = varUIntForce(protocolClientExecuteVar(this->remoteClient, command, true));
 
             // Set a callback to notify the remote when a connection is closed
             memContextCallbackSet(this->pub.memContext, dbFreeResource, this);

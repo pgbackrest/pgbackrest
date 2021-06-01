@@ -313,7 +313,7 @@ storageRemotePathCreate(
         pckWriteBoolP(commandParam, noParentCreate);
         pckWriteU32P(commandParam, mode);
 
-        protocolClientExecute(this->client, command, false);
+        protocolClientExecuteVar(this->client, command, false);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -346,7 +346,7 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInte
         pckWriteStrP(commandParam, path);
         pckWriteBoolP(commandParam, recurse);
 
-        result = varBool(protocolClientExecute(this->client, command, true));
+        result = varBool(protocolClientExecuteVar(this->client, command, true));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -373,7 +373,7 @@ storageRemotePathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPar
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
         pckWriteStrP(protocolCommandParam(command), path);
 
-        protocolClientExecute(this->client, command, false);
+        protocolClientExecuteVar(this->client, command, false);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -403,7 +403,7 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
         pckWriteStrP(commandParam, file);
         pckWriteBoolP(commandParam, param.errorOnMissing);
 
-        protocolClientExecute(this->client, command, false);
+        protocolClientExecuteVar(this->client, command, false);
     }
     MEM_CONTEXT_TEMP_END();
 

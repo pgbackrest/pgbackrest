@@ -78,7 +78,7 @@ storageReadRemoteOpen(THIS_VOID)
         pckWriteStrP(param, jsonFromVar(this->interface.limit));
         pckWriteStrP(param, jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read)))));
 
-        result = varBool(protocolClientExecute(this->client, command, true));
+        result = varBool(protocolClientExecuteVar(this->client, command, true));
 
         // Clear filters since they will be run on the remote side
         ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
