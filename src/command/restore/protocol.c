@@ -26,29 +26,28 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // !!! BROKEN
-        // const String *repoFile = pckReadStrP(param);
-        // const String *repoFileReference = pckReadStrP(param);
-        // CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
-        // const String *pgFile = pckReadStrP(param);
-        // const String *pgFileChecksum = pckReadStrP(param);
-        // bool pgFileZero = pckReadBoolP(param);
-        // uint64_t pgFileSize = pckReadU64P(param);
-        // time_t pgFileModified = pckReadTimeP(param);
-        // mode_t pgFileMode = pckReadU32P(param);
-        // const String *pgFileUser = pckReadStrP(param);
-        // const String *pgFileGroup = pckReadStrP(param);
-        // time_t copyTimeBegin = pckReadTimeP(param);
-        // bool delta = pckReadBoolP(param);
-        // bool deltaForce = pckReadBoolP(param);
-        // const String *cipherPass = pckReadStrP(param);
-        //
-        // protocolServerResponseVar(
-        //     server,
-        //     VARBOOL(
-        //         restoreFile(
-        //             repoFile, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum, pgFileZero, pgFileSize,
-        //             pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass)));
+        const String *const repoFile = pckReadStrP(param);
+        const unsigned int repoIdx = pckReadU32P(param);
+        const String *const repoFileReference = pckReadStrP(param);
+        const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
+        const String *const pgFile = pckReadStrP(param);
+        const String *const pgFileChecksum = pckReadStrP(param);
+        const bool pgFileZero = pckReadBoolP(param);
+        const uint64_t pgFileSize = pckReadU64P(param);
+        const time_t pgFileModified = pckReadTimeP(param);
+        const mode_t pgFileMode = pckReadU32P(param);
+        const String *const pgFileUser = pckReadStrP(param);
+        const String *const pgFileGroup = pckReadStrP(param);
+        const time_t copyTimeBegin = pckReadTimeP(param);
+        const bool delta = pckReadBoolP(param);
+        const bool deltaForce = pckReadBoolP(param);
+        const String *const cipherPass = pckReadStrP(param);
+
+        const bool result = restoreFile(
+            repoFile, repoIdx, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum, pgFileZero, pgFileSize,
+            pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass);
+
+        protocolServerResponseVar(server, VARBOOL(result));
     }
     MEM_CONTEXT_TEMP_END();
 

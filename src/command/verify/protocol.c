@@ -26,14 +26,14 @@ verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *filePathName = pckReadStrP(param);
-        const String *fileChecksum = pckReadStrP(param);
-        uint64_t fileSize = pckReadU64P(param);
-        const String *cipherPass = pckReadStrP(param);
+        const String *const filePathName = pckReadStrP(param);
+        const String *const fileChecksum = pckReadStrP(param);
+        const uint64_t fileSize = pckReadU64P(param);
+        const String *const cipherPass = pckReadStrP(param);
 
-        VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
+        const VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
 
-        protocolServerResponseVar(server, varNewInt(result));
+        protocolServerResponseVar(server, VARUINT(result));
     }
     MEM_CONTEXT_TEMP_END();
 

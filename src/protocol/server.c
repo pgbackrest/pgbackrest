@@ -252,7 +252,7 @@ protocolServerResult(ProtocolServer *this, PackWrite *resultPack)
     // End the pack
     pckWriteEndP(resultPack);
 
-    // Write the response and flush to be sure it gets sent immediately
+    // Write the result
     PackWrite *responsePack = pckWriteNew(protocolServerIoWrite(this));
     pckWriteU32P(responsePack, protocolServerTypeResult, .defaultWrite = true);
     pckWritePackP(responsePack, resultPack);

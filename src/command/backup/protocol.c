@@ -27,23 +27,23 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Backup the file
-        const String *pgFile = pckReadStrP(param);
-        bool pgFileIgnoreMissing = pckReadBoolP(param);
-        uint64_t pgFileSize = pckReadU64P(param);
-        bool pgFileCopyExactSize = pckReadBoolP(param);
-        const String *pgFileChecksum = pckReadStrP(param);
-        bool pgFileChecksumPage = pckReadBoolP(param);
-        uint64_t pgFileChecksumPageLsnLimit = pckReadU64P(param);
-        const String *repoFile = pckReadStrP(param);
-        bool repoFileHasReference = pckReadBoolP(param);
-        CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
-        int repoFileCompressLevel = pckReadI32P(param);
-        const String *backupLabel = pckReadStrP(param);
-        bool delta = pckReadBoolP(param);
-        CipherType cipherType = (CipherType)pckReadU64P(param);
-        const String *cipherPass = pckReadStrP(param);
+        const String *const pgFile = pckReadStrP(param);
+        const bool pgFileIgnoreMissing = pckReadBoolP(param);
+        const uint64_t pgFileSize = pckReadU64P(param);
+        const bool pgFileCopyExactSize = pckReadBoolP(param);
+        const String *const pgFileChecksum = pckReadStrP(param);
+        const bool pgFileChecksumPage = pckReadBoolP(param);
+        const uint64_t pgFileChecksumPageLsnLimit = pckReadU64P(param);
+        const String *const repoFile = pckReadStrP(param);
+        const bool repoFileHasReference = pckReadBoolP(param);
+        const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
+        const int repoFileCompressLevel = pckReadI32P(param);
+        const String *const backupLabel = pckReadStrP(param);
+        const bool delta = pckReadBoolP(param);
+        const CipherType cipherType = (CipherType)pckReadU64P(param);
+        const String *const cipherPass = pckReadStrP(param);
 
-        BackupFileResult result = backupFile(
+        const BackupFileResult result = backupFile(
             pgFile, pgFileIgnoreMissing, pgFileSize, pgFileCopyExactSize, pgFileChecksum, pgFileChecksumPage,
             pgFileChecksumPageLsnLimit, repoFile, repoFileHasReference, repoFileCompressType, repoFileCompressLevel,
             backupLabel, delta, cipherType, cipherPass);
