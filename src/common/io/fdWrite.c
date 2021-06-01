@@ -133,21 +133,6 @@ ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
     FUNCTION_LOG_RETURN(IO_WRITE, this);
 }
 
-IoWrite *
-ioFdWriteNewOpen(const String *name, int fd, TimeMSec timeout)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(INT, fd);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-    FUNCTION_LOG_END();
-
-    IoWrite *this = ioFdWriteNew(name, fd, timeout);
-    ioWriteOpen(this);
-
-    FUNCTION_LOG_RETURN(IO_WRITE, this);
-}
-
 /**********************************************************************************************************************************/
 void
 ioFdWriteOneStr(int fd, const String *string)

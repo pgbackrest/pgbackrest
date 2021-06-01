@@ -176,18 +176,3 @@ ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 
     FUNCTION_LOG_RETURN(IO_READ, this);
 }
-
-IoRead *
-ioFdReadNewOpen(const String *name, int fd, TimeMSec timeout)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(INT, fd);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
-    FUNCTION_LOG_END();
-
-    IoRead *this = ioFdReadNew(name, fd, timeout);
-    ioReadOpen(this);
-
-    FUNCTION_LOG_RETURN(IO_READ, this);
-}
