@@ -66,8 +66,7 @@ protocolLocalExec(
         {
             // Load configuration
             StringList *const paramList = protocolLocalParam(protocolStorageType, hostIdx, processId);
-            strLstInsert(paramList, 0, cfgExe());
-            harnessCfgLoadRaw(strLstSize(paramList), strLstPtr(paramList));
+            hrnCfgLoadP(cfgCmdNone, paramList, .noStd = true);
 
             // Change log process id to aid in debugging
             hrnLogProcessIdSet(processId);
@@ -163,8 +162,7 @@ protocolRemoteExec(
         {
             // Load configuration
             StringList *const paramList = protocolRemoteParam(protocolStorageType, hostIdx);
-            strLstInsert(paramList, 0, cfgExe());
-            harnessCfgLoadRaw(strLstSize(paramList), strLstPtr(paramList));
+            hrnCfgLoadP(cfgCmdNone, paramList, .noStd = true);
 
             // Change log process id to aid in debugging
             hrnLogProcessIdSet(processId);

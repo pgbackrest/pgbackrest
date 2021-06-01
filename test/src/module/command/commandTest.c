@@ -26,14 +26,12 @@ testRun(void)
         TEST_TITLE("single parameter");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, PROJECT_BIN);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "10");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
         strLstAddZ(argList, "param1");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameter");
         TEST_RESULT_LOG(
@@ -44,14 +42,12 @@ testRun(void)
         TEST_TITLE("multiple parameters");
 
         argList = strLstNew();
-        strLstAddZ(argList, PROJECT_BIN);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
         strLstAddZ(argList, "param1");
         strLstAddZ(argList, "param 2");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameters");
         TEST_RESULT_LOG(
@@ -62,7 +58,6 @@ testRun(void)
         TEST_TITLE("reset, negate, list, hash options");
 
         argList = strLstNew();
-        strLstAddZ(argList, PROJECT_BIN);
         hrnCfgArgRawNegate(argList, cfgOptConfig);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
@@ -74,9 +69,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptDbInclude, "db2");
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "standby_mode=on");
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "primary_conninfo=blah");
-        strLstAddZ(argList, CFGCMD_RESTORE);
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, "SECRET-STUFF");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdRestore, argList, .noStd = true);
 
         TEST_RESULT_VOID(cmdBegin(), "command begin");
 

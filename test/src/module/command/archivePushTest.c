@@ -32,7 +32,7 @@ testRun(void)
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/db");
         strLstAddZ(argList, "--spool-path=" TEST_PATH "/spool");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         storagePathCreateP(storagePgWrite(), STRDEF("pg_wal/archive_status"));
         storagePathCreateP(storageTest, STRDEF("spool/archive/db/out"));
@@ -69,7 +69,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListDrop = strLstDup(argList);
         strLstAdd(argListDrop, strNewFmt("--archive-push-queue-max=%zu", (size_t)1024 * 1024 * 1024));
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListDrop);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListDrop, .role = cfgCmdRoleAsync);
 
         // Write the files that we claim are in pg_wal
         Buffer *walBuffer = bufNew((size_t)16 * 1024 * 1024);
@@ -90,7 +90,7 @@ testRun(void)
         // Now set queue max low enough that WAL will be dropped
         argListDrop = strLstDup(argList);
         strLstAdd(argListDrop, strNewFmt("--archive-push-queue-max=%zu", (size_t)16 * 1024 * 1024 * 2));
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListDrop);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListDrop, .role = cfgCmdRoleAsync);
 
         TEST_RESULT_BOOL(
             archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), true,
@@ -104,7 +104,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        harnessCfgLoad(cfgCmdArchivePush, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         // Check mismatched pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
@@ -175,7 +175,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--repo2-path=" TEST_PATH "/repo2");
         strLstAddZ(argList, "--repo4-path=" TEST_PATH "/repo4");
-        harnessCfgLoad(cfgCmdArchivePush, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         // repo2 has correct info
         storagePutP(
@@ -255,21 +255,21 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgHost, "host");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleMain, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleMain);
 
         TEST_ERROR(cmdArchivePush(), HostInvalidError, "archive-push command must be run on the PostgreSQL host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test");
-        harnessCfgLoad(cfgCmdArchivePush, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_ERROR(cmdArchivePush(), ParamRequiredError, "WAL segment to push required");
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         TEST_ERROR(
             cmdArchivePush(), OptionRequiredError,
@@ -284,7 +284,7 @@ testRun(void)
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         storagePutP(
             storageNewWriteP(storageTest, STRDEF("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
@@ -332,7 +332,7 @@ testRun(void)
         argListTemp = strLstDup(argList);
         hrnCfgArgRawNegate(argListTemp, cfgOptArchiveHeaderCheck);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
@@ -349,7 +349,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
@@ -396,7 +396,7 @@ testRun(void)
         strLstAddZ(argListTemp, "--" CFGOPT_STANZA "=test");
         hrnCfgArgRawZ(argListTemp, cfgOptRepoPath, TEST_PATH "/repo");
         strLstAddZ(argListTemp, TEST_PATH "/pg/pg_wal/000000010000000100000002");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, STRDEF("pg/pg_wal/000000010000000100000002")), walBuffer2), "write WAL");
@@ -428,7 +428,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/00000001.history");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_wal/00000001.history")), BUFSTRDEF("FAKEHISTORY"));
 
@@ -446,7 +446,7 @@ testRun(void)
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=16m");
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "drop WAL file");
         TEST_RESULT_LOG("P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");
@@ -454,7 +454,7 @@ testRun(void)
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=1GB");
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push WAL file again");
         TEST_RESULT_LOG(
@@ -507,7 +507,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argListTemp, cfgOptRepoPath, 3, TEST_PATH "/repo3");
         hrnCfgArgRawNegate(argListTemp, cfgOptCompress);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
@@ -642,7 +642,7 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_SPOOL_PATH "=/spool");
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchivePush(), HostInvalidError, "archive-push command must be run on the PostgreSQL host");
 
@@ -654,24 +654,21 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAddZ(argList, "/000000010000000100000001");
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchivePush(), OptionRequiredError, "'archive-push' command in async mode requires option 'pg1-path'");
 
         // Call with a bogus exe name so the async process will error out and we can make sure timeouts work
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest-bogus");
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--archive-timeout=1");
-        strLstAddZ(argList, "--lock-path=" TEST_PATH "/lock");
         strLstAddZ(argList, "--spool-path=" TEST_PATH " /spool");
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "pg_wal/bogus");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .exeBogus = true);
 
         storagePathCreateP(storageTest, cfgOptionStr(cfgOptPgPath));
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
@@ -708,7 +705,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         storagePathCreateP(storagePgWrite(), STRDEF("pg_xlog/archive_status"));
 
@@ -725,7 +722,7 @@ testRun(void)
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
         strLstAddZ(argListTemp, "--archive-timeout=1");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
@@ -776,7 +773,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
-        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
 
@@ -806,7 +803,7 @@ testRun(void)
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--log-subprocess");
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchivePushAsync(), ParamRequiredError, "WAL path to push required");
 
@@ -820,7 +817,7 @@ testRun(void)
         storagePathCreateP(storagePgWrite(), STRDEF("pg_xlog/archive_status"));
 
         strLstAddZ(argList, TEST_PATH "/pg/pg_xlog");
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchivePushAsync(), AssertError, "no WAL files to process");
 
@@ -837,7 +834,7 @@ testRun(void)
 
         // Add repo3
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         storagePutP(
             storageNewWriteP(storageTest, STRDEF("repo3/archive/test/archive.info")),
@@ -897,7 +894,7 @@ testRun(void)
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=1gb");
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         TEST_RESULT_LOG(
@@ -972,7 +969,7 @@ testRun(void)
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=16m");
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListTemp);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         TEST_RESULT_LOG(

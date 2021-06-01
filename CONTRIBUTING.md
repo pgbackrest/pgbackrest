@@ -234,7 +234,7 @@ pgbackrest/test/test.pl --vm=none --dry-run
     P00   INFO: test begin - log level info
     P00   INFO: builds required: bin
 --> P00   INFO: 68 tests selected
-
+                
     P00   INFO: P1-T01/68 - vm=none, module=common, test=error
            [filtered 65 lines of output]
     P00   INFO: P1-T67/68 - vm=none, module=performance, test=type
@@ -253,12 +253,12 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
     P00   INFO: 1 test selected
-
+                
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
-
+                
         run 1 - waitNew(), waitMore, and waitFree()
             l0018     expect AssertError: assertion 'waitTime <= 999999000' failed
-
+        
         run 1/1 ------------- l0021 0ms wait
             l0025     new wait
             l0026         check remaining time
@@ -283,9 +283,9 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
             l0062         lower range check
             l0063         upper range check
             l0065         free wait
-
+        
         TESTS COMPLETED SUCCESSFULLY
-
+    
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
     P00   INFO: tested modules have full coverage
     P00   INFO: writing C coverage report
@@ -305,7 +305,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
     P00   INFO: 2 tests selected
-
+                
     P00   INFO: P1-T1/2 - vm=none, module=postgres, test=client
     P00   INFO: P1-T2/2 - vm=none, module=postgres, test=interface
     P00   INFO: tested modules have full coverage
@@ -345,7 +345,7 @@ pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
     P00   INFO:     bin dependencies have changed for none, rebuilding...
     P00   INFO:     build bin for none (/home/vagrant/test/bin/none)
     P00   INFO: 1 test selected
-
+                
     P00   INFO: P1-T1/1 - vm=u18, module=mock, test=archive, run=2
     P00   INFO: no code modules had all tests run required for coverage
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
@@ -392,14 +392,14 @@ if (testBegin("expireBackup()"))
 
 #### Setting up the command to be run
 
-The [harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the function `harnessCfgLoad()` with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command on multiple repositories, one of which is encrypted:
+The [harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the `HRN_CFG_LOAD()` macro with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command on multiple repositories, one of which is encrypted:
 ```
 StringList *argList = strLstNew();                                  // Create an empty string list
 hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);             // Add the --repo-path option
 hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");   // Add the --repo2-path option
 hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);  // Add the --repo2-cipher-type option
 hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);        // Set environment variable for the --repo2-cipher-pass option
-harnessCfgLoad(cfgCmdInfo, argList);                                // Load the command and option list into the test harness
+HRN_CFG_LOAD(cfgCmdInfo, argList);                                  // Load the command and option list into the test harness
 ```
 
 #### Storing a file
@@ -455,7 +455,7 @@ HARNESS_FORK_BEGIN()
     {
         sleepMSec(250);
 
-        harnessCfgLoad(cfgCmdInfo, argListText);
+        HRN_CFG_LOAD(cfgCmdInfo, argListText);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -531,7 +531,7 @@ There are detailed comment blocks above each section that explain the rules for 
 
 The `option:` section is broken into sub-sections by a simple comment divider (e.g. `# Repository options`) under which the options are organized alphabetically by option name. To better explain this section, two hypothetical examples will be discussed. For more details, see [config.yaml](https://github.com/pgbackrest/pgbackrest/blob/master/src/build/config/config.yaml).
 
-#### Example 1: hypothetical command line only option
+#### Example 1: hypothetical command line only option 
 ```
 set:
     type: string

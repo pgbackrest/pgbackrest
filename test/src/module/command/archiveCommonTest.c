@@ -29,7 +29,7 @@ testRun(void)
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
-        harnessCfgLoad(cfgCmdArchivePush, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         const String *segment = STRDEF("000000010000000100000001");
@@ -138,7 +138,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         const String *walSegment = STRDEF("000000010000000100000001");
 
@@ -238,7 +238,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--repo-path=" TEST_PATH);
         strLstAddZ(argList, "archive-get");
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_STR(walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no path");
 

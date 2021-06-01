@@ -165,7 +165,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // Create the pg path
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
@@ -337,7 +337,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restorePathValidate(), PathMissingError, "$PGDATA directory '" TEST_PATH "/pg' does not exist");
 
@@ -365,7 +365,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--delta");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with invalid PGDATA");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "--delta set to false");
@@ -374,7 +374,7 @@ testRun(void)
                 " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                 " exist in the destination directories the restore will be aborted.");
 
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("backup.manifest")), NULL);
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with valid PGDATA");
         storageRemoveP(storagePgWrite(), STRDEF("backup.manifest"), .errorOnMissing = true);
@@ -384,7 +384,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         strLstAddZ(argList, "--force");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with invalid PGDATA");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "--force set to false");
@@ -393,7 +393,7 @@ testRun(void)
                 " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                 " exist in the destination directories the restore will be aborted.");
 
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION)), NULL);
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with valid PGDATA");
         storageRemoveP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION), .errorOnMissing = true);
@@ -447,7 +447,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when no backups are present");
@@ -470,7 +470,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--set=BOGUS");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "backup set BOGUS is not valid");
 
@@ -488,7 +488,7 @@ testRun(void)
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
 
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // Write out backup.info with no current backups to repo1
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
@@ -508,7 +508,7 @@ testRun(void)
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
 
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
         TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212803D", "backup set found");
@@ -525,7 +525,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "time");
         hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:27:30-0500");
 
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         #define TEST_RESTORE_BACKUP_INFO_NEWEST                                                                                    \
             "[backup:current]\n"                                                                                                   \
@@ -553,7 +553,7 @@ testRun(void)
 
         // Request repo2 - latest from repo2 will be chosen
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
         TEST_RESULT_STR_Z(backupData.backupSet, "20201212-201243F", "default to latest backup set");
@@ -571,7 +571,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "time");
         hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:27:30-0500");
 
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
         TEST_RESULT_STR_Z(backupData.backupSet, "20201212-201243F", "default to latest backup set");
@@ -588,7 +588,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "time");
         hrnCfgArgRawZ(argList, cfgOptTarget, "Tue, 15 Nov 1994 12:45:26");
 
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
         TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "time invalid format, default latest");
@@ -610,7 +610,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "time");
         hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:27:30-0500");
 
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // Write out backup.info with no current backups to repo1 and repo2
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
@@ -650,7 +650,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is not remapped");
         TEST_RESULT_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is not remapped");
@@ -662,7 +662,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is remapped");
         TEST_RESULT_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is remapped");
@@ -676,7 +676,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--tablespace-map=bogus=/bogus");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreManifestMap(manifest), TablespaceMapError, "unable to remap invalid tablespace 'bogus'");
 
@@ -701,7 +701,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--tablespace-map=2=/2");
         strLstAddZ(argList, "--tablespace-map=ts2=/ts2");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
             restoreManifestMap(manifest), TablespaceMapError, "tablespace remapped by name 'ts2' and id 2 with different paths");
@@ -713,7 +713,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--tablespace-map=1=/1-2");
         strLstAddZ(argList, "--tablespace-map=ts2=/2-2");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
         TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/1-2", "    check tablespace 1 target");
@@ -734,7 +734,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--tablespace-map=2=/2-3");
         strLstAddZ(argList, "--tablespace-map-all=/all");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
         TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all/1", "    check tablespace 1 target");
@@ -756,7 +756,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--tablespace-map-all=/all2");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
         TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all2/1", "    check tablespace 1 target");
@@ -779,7 +779,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--link-map=bogus=bogus");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreManifestMap(manifest), LinkMapError, "unable to remap invalid link 'bogus'");
 
@@ -801,7 +801,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--link-map=pg_hba.conf=bogus");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
             restoreManifestMap(manifest), LinkMapError,
@@ -816,7 +816,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--link-map=pg_hba.conf=../conf2/pg_hba2.conf");
         strLstAddZ(argList, "--link-map=pg_wal=/wal2");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap links");
         TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
@@ -837,7 +837,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--link-all");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "leave links as they are");
         TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
@@ -853,7 +853,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remove all links");
         TEST_ERROR(
@@ -931,7 +931,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-path=/repo");
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
         userLocalData.userRoot = true;
@@ -1020,7 +1020,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0600);
 
@@ -1108,7 +1108,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=preserve");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
@@ -1169,7 +1169,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
@@ -1195,7 +1195,7 @@ testRun(void)
 
         StringList *argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-include=" UTF8_DB_NAME);
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         Manifest *manifest = NULL;
 
@@ -1243,7 +1243,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-exclude=" UTF8_DB_NAME);
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to exclude '" UTF8_DB_NAME "' does not exist");
 
@@ -1261,7 +1261,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-include=" UTF8_DB_NAME);
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
 
@@ -1274,7 +1274,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-include=1");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
             restoreSelectiveExpression(manifest), DbInvalidError,
@@ -1287,7 +1287,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-include=16385");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
             restoreSelectiveExpression(manifest), DbInvalidError,
@@ -1300,7 +1300,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-include=postgres");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
             restoreSelectiveExpression(manifest), DbInvalidError,
@@ -1313,7 +1313,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-include=7777777");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include '7777777' does not exist");
 
@@ -1332,7 +1332,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-include=16384");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)", "check expression");
 
@@ -1391,7 +1391,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-exclude=16384");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
@@ -1407,7 +1407,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-exclude=" UTF8_DB_NAME);
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
@@ -1423,7 +1423,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-exclude=16385");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
@@ -1439,7 +1439,7 @@ testRun(void)
 
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-exclude=7777777");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to exclude '7777777' does not exist");
 
@@ -1451,7 +1451,7 @@ testRun(void)
         argList = strLstDup(argListClean);
         strLstAddZ(argList, "--db-include=test2");
         strLstAddZ(argList, "--db-exclude=test2");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbInvalidError, "database to include '32768' is in the exclude list");
 
@@ -1465,7 +1465,7 @@ testRun(void)
         strLstAddZ(argList, "--db-exclude=1");
         strLstAddZ(argList, "--db-exclude=16385");
         strLstAddZ(argList, "--db-exclude=32768");  // user databases excluded will be silently ignored
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
@@ -1497,7 +1497,7 @@ testRun(void)
         StringList *argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--recovery-option=a-setting=a");
         strLstAddZ(argList, "--recovery-option=b_setting=b");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
@@ -1513,7 +1513,7 @@ testRun(void)
 
         strLstAddZ(argBaseList, "--recovery-option=restore-command=my_restore_command");
         argList = strLstDup(argBaseList);
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
@@ -1526,7 +1526,7 @@ testRun(void)
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=immediate");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
@@ -1542,7 +1542,7 @@ testRun(void)
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=TIME");
         strLstAddZ(argList, "--target-timeline=3");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
@@ -1559,7 +1559,7 @@ testRun(void)
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=TIME");
         strLstAddZ(argList, "--target-exclusive");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
@@ -1575,7 +1575,7 @@ testRun(void)
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=name");
         strLstAddZ(argList, "--target=NAME");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
@@ -1590,7 +1590,7 @@ testRun(void)
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=immediate");
         strLstAddZ(argList, "--target-action=shutdown");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_95, restoreLabel),
@@ -1610,7 +1610,7 @@ testRun(void)
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=immediate");
         strLstAddZ(argList, "--target-action=promote");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
@@ -1629,7 +1629,7 @@ testRun(void)
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=standby");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
@@ -1644,7 +1644,7 @@ testRun(void)
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=standby");
         strLstAddZ(argList, "--target-timeline=current");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
@@ -1659,7 +1659,7 @@ testRun(void)
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--archive-mode=off");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel), OptionInvalidError,
@@ -1672,7 +1672,7 @@ testRun(void)
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=standby");
         strLstAddZ(argList, "--archive-mode=off");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_12, restoreLabel),
@@ -1700,7 +1700,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=default");
         strLstAddZ(argList, "--recovery-option=standby-mode=on");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
             restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel), OptionInvalidError,
@@ -1717,7 +1717,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-path=/repo");
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=none");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
 
@@ -1772,7 +1772,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--recovery-option=restore-command=my_restore_command");
         strLstAddZ(argList, "--type=standby");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
 
@@ -1805,7 +1805,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-path=/repo");
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=preserve");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         restoreRecoveryWrite(manifest);
 
@@ -1828,7 +1828,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-path=/repo");
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         restoreRecoveryWrite(manifest);
 
@@ -1869,7 +1869,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--pg1-host=pg1");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(cmdRestore(), HostInvalidError, "restore command must be run on the PostgreSQL host");
 
@@ -1884,7 +1884,7 @@ testRun(void)
         strLstAddZ(argList, "--set=20161219-212741F");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         #define TEST_LABEL                                          "20161219-212741F"
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
@@ -2050,7 +2050,7 @@ testRun(void)
         strLstAddZ(argList, "--force");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // Store backup.info to repo1 - repo1 will be selected because of the priority order
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
@@ -2175,7 +2175,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, CFGOPTVAL_TYPE_PRESERVE);
         strLstAddZ(argList, "--" CFGOPT_SET "=20161219-212741F");
         strLstAddZ(argList, "--" CFGOPT_FORCE);
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         cmdRestore();
 
@@ -2229,7 +2229,7 @@ testRun(void)
         strLstAddZ(argList, "--link-map=pg_wal=../wal");
         strLstAddZ(argList, "--link-map=postgresql.conf=../config/postgresql.conf");
         strLstAddZ(argList, "--link-map=pg_hba.conf=../config/pg_hba.conf");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         #define TEST_LABEL                                          "20161219-212741F_20161219-212918I"
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
@@ -2599,7 +2599,7 @@ testRun(void)
         strLstAddZ(argList, "--link-map=postgresql.conf=../config/postgresql.conf");
         strLstAddZ(argList, "--link-map=pg_hba.conf=../config/pg_hba.conf");
         strLstAddZ(argList, "--db-include=16384");
-        harnessCfgLoad(cfgCmdRestore, argList);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // Move pg1-path and put a link in its place. This tests that restore works when pg1-path is a symlink yet should be
         // completely invisible in the manifest and logging.

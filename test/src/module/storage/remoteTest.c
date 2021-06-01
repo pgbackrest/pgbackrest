@@ -42,7 +42,7 @@ testRun(void)
     strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
     strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
     hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-    harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
+    HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
     const Storage *const storageRepoWrite = storageRepoGet(0, true);
     const Storage *const storageRepo = storageRepoGet(0, false);
@@ -57,7 +57,7 @@ testRun(void)
     hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 2, TEST_USER);
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH_PG "2");
     hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-    harnessCfgLoad(cfgCmdBackup, argList);
+    HRN_CFG_LOAD(cfgCmdBackup, argList);
 
     const Storage *const storagePgWrite = storagePgGet(1, true);
 

@@ -35,7 +35,7 @@ testRun(void)
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--process=1");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-                harnessCfgLoadRole(cfgCmdInfo, cfgCmdRoleRemote, argList);
+                HRN_CFG_LOAD(cfgCmdInfo, argList, .role = cfgCmdRoleRemote);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -64,14 +64,12 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, testProjectExe());
                 strLstAddZ(argList, "--process=0");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 strLstAddZ(argList, "--lock-path=/bogus");
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-                strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_REMOTE);
-                harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -101,13 +99,11 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, testProjectExe());
                 strLstAddZ(argList, "--stanza=test");
                 strLstAddZ(argList, "--process=0");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 strLstAddZ(argList, "--lock-path=/bogus");
-                strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_REMOTE);
-                harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -140,7 +136,7 @@ testRun(void)
                 strLstAddZ(argList, "--process=0");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-                harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }
@@ -178,7 +174,7 @@ testRun(void)
                 strLstAddZ(argList, "--stanza=test");
                 strLstAddZ(argList, "--process=0");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-                harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
             }

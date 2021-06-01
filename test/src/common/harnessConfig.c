@@ -7,11 +7,6 @@ Harness for Loading Test Configurations
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common/harnessConfig.h"
-#include "common/harnessDebug.h"
-#include "common/harnessLog.h"
-#include "common/harnessTest.h"
-
 #include "common/io/io.h"
 #include "config/config.intern.h"
 #include "config/load.h"
@@ -19,32 +14,63 @@ Harness for Loading Test Configurations
 #include "storage/helper.h"
 #include "version.h"
 
+#include "common/harnessConfig.h"
+#include "common/harnessDebug.h"
+#include "common/harnessLog.h"
+#include "common/harnessTest.h"
+
 /**********************************************************************************************************************************/
 void
-harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
+hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfgLoadParam param)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(UINT, argListSize);
-        FUNCTION_HARNESS_PARAM(CHARPY, argList);
+        FUNCTION_HARNESS_PARAM(ENUM, commandId);
+        FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
+        FUNCTION_HARNESS_PARAM(ENUM, param.role);
     FUNCTION_HARNESS_END();
+
+    // Make a copy of the arg list that we can modify
+    StringList *argList = strLstDup(argListParam);
+
+    // Add standard options needed in most cases
+    if (!param.noStd)
+    {
+        // Set job retry to 0 if it is valid
+        if (cfgParseOptionValid(commandId, param.role, cfgOptJobRetry))
+            strLstInsert(argList, 0, STRDEF("--" CFGOPT_JOB_RETRY "=0"));
+
+        // Set log path if valid
+        if (cfgParseOptionValid(commandId, param.role, cfgOptLogPath))
+            strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOG_PATH "=%s", hrnPath()));
+
+        // Set lock path if valid
+        if (cfgParseOptionValid(commandId, param.role, cfgOptLockPath))
+            strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", hrnPath()));
+    }
+
+    // Insert the command so it does not interfere with parameters
+    if (commandId != cfgCmdNone)
+        strLstInsert(argList, 0, cfgCommandRoleNameParam(commandId, param.role, COLON_STR));
+
+    // Insert the project exe
+    strLstInsert(argList, 0, param.exeBogus ? STRDEF("pgbackrest-bogus") : STRDEF(testProjectExe()));
+
+    // Log parameters
+    if (param.log)
+    {
+        printf("config load:");
+
+        for (unsigned int argIdx = 0; argIdx < strLstSize(argList); argIdx++)
+            printf(" %s", strZ(strLstGet(argList, argIdx)));
+
+        hrnTestResultComment(param.comment);
+    }
 
     // Free objects in storage helper
     storageHelperFree();
 
-    // Log parameters
-    hrnTestLogPrefix(__LINE__);
-
-    printf("config load:");
-
-    for (unsigned int argIdx = 0; argIdx < argListSize; argIdx++)
-        printf(" %s", argList[argIdx]);
-
-    printf("\n");
-
-    fflush(stdout);
-
     // Parse config
-    configParse(storageLocal(), argListSize, argList, false);
+    configParse(storageLocal(), strLstSize(argList), strLstPtr(argList), false);
 
     // Set dry-run mode for storage and logging
     harnessLogDryRunSet(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
@@ -61,56 +87,6 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     // Use a static exec-id for testing if it is not set explicitly
     if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
         cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTRDEF("1-test"));
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, const StringList *argListParam)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(ENUM, commandId);
-        FUNCTION_HARNESS_PARAM(ENUM, commandRoleId);
-        FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
-    FUNCTION_HARNESS_END();
-
-    // Make a copy of the arg list that we can modify
-    StringList *argList = strLstDup(argListParam);
-
-    // Set job retry to 0 if it is valid
-    if (cfgParseOptionValid(commandId, commandRoleId, cfgOptJobRetry))
-        strLstInsert(argList, 0, STRDEF("--" CFGOPT_JOB_RETRY "=0"));
-
-    // Set log path if valid
-    if (cfgParseOptionValid(commandId, commandRoleId, cfgOptLogPath))
-        strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOG_PATH "=%s", hrnPath()));
-
-    // Set lock path if valid
-    if (cfgParseOptionValid(commandId, commandRoleId, cfgOptLockPath))
-        strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", hrnPath()));
-
-    // Insert the command so it does not interfere with parameters
-    strLstInsert(argList, 0, cfgCommandRoleNameParam(commandId, commandRoleId, COLON_STR));
-
-    // Insert the project exe
-    strLstInsert(argList, 0, STRDEF(testProjectExe()));
-
-    harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-harnessCfgLoad(ConfigCommand commandId, const StringList *argListParam)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(ENUM, commandId);
-        FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
-    FUNCTION_HARNESS_END();
-
-    harnessCfgLoadRole(commandId, cfgCmdRoleMain, argListParam);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -1,6 +1,9 @@
 /***********************************************************************************************************************************
 Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
+#ifndef TEST_COMMON_HARNESS_CONFIG_H
+#define TEST_COMMON_HARNESS_CONFIG_H
+
 #include "config/config.h"
 
 /***********************************************************************************************************************************
@@ -19,17 +22,36 @@ Config option constants
 #define TEST_CIPHER_PASS_ARCHIVE                                    "xarchivex"
 
 /***********************************************************************************************************************************
-Load a test configuration without any side effects
+Load a test configuration
 
-There's no need to open log files, acquire locks, reset log levels, etc.
+Automatically adds the exe, command (and role), lock-path, and log-path so executing the binary works locally or in a container.
+There is no need to open log files, acquire locks, reset log levels, etc.
+
+HRN_CFG_LOAD() is the preferred macro but if a configuration error is being tested with TEST_ERROR() then use hrnCfgLoadP() instead
+since it will not log to the console and clutter the error log message.
 ***********************************************************************************************************************************/
-// Low-level version used when it is important that only the options set explicity by the test are present in the config. The
-// additional options set by harnessCfgLoad() can make these tests harder to write. Most tests should use harnessCfgLoad().
-void harnessCfgLoadRaw(unsigned int argListSize, const char *argList[]);
+typedef struct HrnCfgLoadParam
+{
+    VAR_PARAM_HEADER;
+    ConfigCommandRole role;                                         // Command role (defaults to main)
+    bool exeBogus;                                                  // Use pgbackrest-bogus as exe parameter
+    bool noStd;                                                     // Do not add standard options, e.g. lock-path
+    bool log;                                                       // Log parameters? (used internally by HRN_CFG_LOAD())
+    const char *comment;                                            // Comment
+} HrnCfgLoadParam;
 
-// Automatically adds the exe, command (and role), lock-path, and log-path so executing the binary works locally or in a container.
-void harnessCfgLoad(ConfigCommand commandId, const StringList *argList);
-void harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, const StringList *argList);
+#define hrnCfgLoadP(commandId, argList, ...)                                                                                       \
+    hrnCfgLoad(commandId, argList, (HrnCfgLoadParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+#define HRN_CFG_LOAD(commandId, argList, ...)                                                                                      \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnCfgLoad(commandId, argList, (HrnCfgLoadParam){.log = true, __VA_ARGS__});                                               \
+    }                                                                                                                              \
+    while (0)
+
+void hrnCfgLoad(ConfigCommand commandId, const StringList *argList, const HrnCfgLoadParam param);
 
 /***********************************************************************************************************************************
 Configuration helper functions
@@ -74,3 +96,5 @@ void hrnCfgEnvKeyRawZ(ConfigOption optionId, unsigned optionKey, const char *val
 
 void hrnCfgEnvRemoveRaw(ConfigOption optionId);
 void hrnCfgEnvKeyRemoveRaw(ConfigOption optionId, unsigned optionKey);
+
+#endif
