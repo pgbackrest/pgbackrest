@@ -920,6 +920,32 @@ pckReadStr(PackRead *this, PckReadStrParam param)
 }
 
 /**********************************************************************************************************************************/
+StringList *
+pckReadStrLst(PackRead *const this, PckReadStrLstParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(NULL);
+
+    pckReadArrayBeginP(this, .id = param.id);
+
+    StringList *const result = strLstNew();
+
+    while (!pckReadNullP(this))
+        strLstAdd(result, pckReadStrP(this));
+
+    pckReadArrayEndP(this);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
 time_t
 pckReadTime(PackRead *this, PckReadTimeParam param)
 {
@@ -1656,6 +1682,33 @@ pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
             pckWriteUInt64Internal(this, strSize(value));
             pckWriteBuffer(this, BUF(strZ(value), strSize(value)));
         }
+    }
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteStrLst(PackWrite *const this, const StringList *const value, const PckWriteStrLstParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(STRING_LIST, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!pckWriteDefaultNull(this, false, value == NULL))
+    {
+        ASSERT(value != NULL);
+
+        pckWriteArrayBeginP(this, .id = param.id);
+
+        for (unsigned int valueIdx = 0; valueIdx < strLstSize(value); valueIdx++)
+            pckWriteStrP(this, strLstGet(value, valueIdx));
+
+        pckWriteArrayEndP(this);
     }
 
     FUNCTION_TEST_RETURN(this);

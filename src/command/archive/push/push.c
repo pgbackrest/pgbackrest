@@ -471,14 +471,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         pckWriteStrP(param, walFile);
         pckWriteU32P(param, jobData->compressType);
         pckWriteI32P(param, jobData->compressLevel);
-
-        // Write error list
-        pckWriteArrayBeginP(param);
-
-        for (unsigned int errorIdx = 0; errorIdx < strLstSize(jobData->archiveInfo.errorList); errorIdx++)
-            pckWriteStrP(param, strLstGet(jobData->archiveInfo.errorList, errorIdx));
-
-        pckWriteArrayEndP(param);
+        pckWriteStrLstP(param, jobData->archiveInfo.errorList);
 
         // Write data for each repo to push to
         pckWriteArrayBeginP(param);

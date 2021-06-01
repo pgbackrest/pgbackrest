@@ -94,6 +94,14 @@ testRun(void)
         TEST_RESULT_VOID(pckWritePackP(packWrite, packSub), "write pack");
         TEST_RESULT_VOID(pckWritePackP(packWrite, NULL), "write null pack");
 
+        // Write string list
+        StringList *const strList = strLstNew();
+        strLstAddZ(strList, "a");
+        strLstAddZ(strList, "bcd");
+
+        TEST_RESULT_VOID(pckWriteStrLstP(packWrite, strList), "write string list");
+        TEST_RESULT_VOID(pckWriteStrLstP(packWrite, NULL), "write null string list");
+
         // End pack
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "end");
         TEST_RESULT_VOID(pckWriteEmpty(packWrite), "not empty");
@@ -147,7 +155,8 @@ testRun(void)
             "]"
             ", 49:bin:050403020100"
             ", 51:bin:"
-            ", 52:pack:<1:u64:345, 3:str:sub>",
+            ", 52:pack:<1:u64:345, 3:str:sub>"
+            ", 54:array:[1:str:a, 2:str:bcd]",
             "check pack string");
 
         TEST_RESULT_STR_Z(
@@ -193,6 +202,7 @@ testRun(void)
             "2806050403020100"                                      // 49,  bin, 0x050403020100
             "21"                                                    // 51,  bin, zero length
             "c009b8d902890373756200"                                // 52,  pack, 1:u64:345, 3:str:sub
+            "11880161880362636400"                                  // 54,  strlst, 1:str:a, 2:str:bcd
             "00",                                                   // end
             "check pack hex");
 
@@ -277,6 +287,9 @@ testRun(void)
 
         TEST_RESULT_STR_Z(hrnPackToStr(pckReadPackP(packRead)), "1:u64:345, 3:str:sub", "read pack");
         TEST_RESULT_PTR(pckReadPackP(packRead), NULL, "read null pack");
+
+        TEST_RESULT_STRLST_Z(pckReadStrLstP(packRead), "a\nbcd\n", "read string list");
+        TEST_RESULT_PTR(pckReadStrLstP(packRead), NULL, "read null string list");
 
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 999), true, "field 999 is null");
         TEST_RESULT_UINT(pckReadU64P(packRead, .id = 1000), 0, "field 1000 default is 0");

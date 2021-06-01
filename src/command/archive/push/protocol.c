@@ -34,16 +34,7 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
         const String *const archiveFile = pckReadStrP(param);
         const CompressType compressType = pckReadU32P(param);
         const int compressLevel = pckReadI32P(param);
-
-        // Read error list
-        StringList *const priorErrorList = strLstNew();
-
-        pckReadArrayBeginP(param);
-
-        while (!pckReadNullP(param))
-            strLstAdd(priorErrorList, pckReadStrP(param));
-
-        pckReadArrayEndP(param);
+        const StringList *const priorErrorList = pckReadStrLstP(param);
 
         // Read repo data
         List *repoList = lstNewP(sizeof(ArchivePushFileRepoData));

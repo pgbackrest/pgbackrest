@@ -270,6 +270,18 @@ typedef struct PckReadStrParam
 
 String *pckReadStr(PackRead *this, PckReadStrParam param);
 
+// Read string list
+typedef struct PckReadStrLstParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+} PckReadStrLstParam;
+
+#define pckReadStrLstP(this, ...)                                                                                                  \
+    pckReadStrLst(this, (PckReadStrLstParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+StringList *pckReadStrLst(PackRead *const this, PckReadStrLstParam param);
+
 // Read time
 typedef struct PckReadTimeParam
 {
@@ -457,6 +469,18 @@ typedef struct PckWriteStrParam
     pckWriteStr(this, value, (PckWriteStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param);
+
+// Write string list
+typedef struct PckWriteStrLstParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+} PckWriteStrLstParam;
+
+#define pckWriteStrLstP(this, value, ...)                                                                                          \
+    pckWriteStrLst(this, value, (PckWriteStrLstParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteStrLst(PackWrite *const this, const StringList *const value, const PckWriteStrLstParam param);
 
 // Write time
 typedef struct PckWriteTimeParam
