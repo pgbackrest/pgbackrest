@@ -403,12 +403,11 @@ testRun(void)
         // Put some files in the backup directories
         HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152100F/" BOGUS_STR, BOGUS_STR);
         HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BOGUS_STR "2", BOGUS_STR);
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152100F_20181119-152152D")),
-            "empty backup directory must not error on delete");
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" BOGUS_STR)),
-            "other path must not be removed");
+        HRN_STORAGE_PATH_CREATE(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152100F_20181119-152152D",
+            .comment = "empty backup directory must not error on delete");
+        HRN_STORAGE_PATH_CREATE(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/" BOGUS_STR, .comment = "other path must not be removed");
 
 // CSHANG When HRN_ put is updated, then add the optional comment: "directory look-alike file must not be removed"
         HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181118-152100F_20181119-152152D.save", BOGUS_STR);
