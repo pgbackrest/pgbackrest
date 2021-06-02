@@ -370,7 +370,7 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Create backup.info
         HRN_INFO_PUT(
