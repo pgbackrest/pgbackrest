@@ -120,6 +120,27 @@ typedef struct HrnStoragePathCreateParam
 void hrnStoragePathCreate(const Storage *const storage, const char *const path, HrnStoragePathCreateParam param);
 
 /***********************************************************************************************************************************
+Remove a path
+***********************************************************************************************************************************/
+typedef struct HrnStoragePathRemoveParam
+{
+    VAR_PARAM_HEADER;
+    bool errorOnMissing;                                            // Error if the path is missing
+    bool recurse;                                                   // Delete the path and all subpaths/files
+    const char *comment;                                            // Comment
+} HrnStoragePathRemoveParam;
+
+#define HRN_STORAGE_PATH_REMOVE(storage, path, ...)                                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnStoragePathRemove(storage, path, (HrnStoragePathRemoveParam){VAR_PARAM_INIT, __VA_ARGS__});                             \
+    }                                                                                                                              \
+    while (0)
+
+void hrnStoragePathRemove(const Storage *const storage, const char *const path, HrnStoragePathRemoveParam param);
+
+/***********************************************************************************************************************************
 Put a file with optional compression and/or encryption
 ***********************************************************************************************************************************/
 typedef struct HrnStoragePutParam

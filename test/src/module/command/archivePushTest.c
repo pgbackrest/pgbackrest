@@ -466,7 +466,7 @@ testRun(void)
         TEST_TITLE("multiple repos, one encrypted");
 
         // Remove old repo
-        storagePathRemoveP(storageTest, STRDEF("repo"), .errorOnMissing = true, .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, "repo", .errorOnMissing = true, .recurse = true);
 
         // repo2 is encrypted
         StorageWrite *infoWrite = storageNewWriteP(storageTest, STRDEF("repo2/archive/test/archive.info"));
@@ -810,10 +810,10 @@ testRun(void)
         // Check that global.error is created
         // -------------------------------------------------------------------------------------------------------------------------
         // Remove data from prior tests
-        storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR, .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
-        storagePathRemoveP(storagePgWrite(), STRDEF("pg_xlog/archive_status"), .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
         storagePathCreateP(storagePgWrite(), STRDEF("pg_xlog/archive_status"));
 
         strLstAddZ(argList, TEST_PATH "/pg/pg_xlog");
@@ -964,7 +964,7 @@ testRun(void)
         // Check that drop functionality works
         // -------------------------------------------------------------------------------------------------------------------------
         // Remove status files
-        storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR, .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
         argListTemp = strLstDup(argList);
