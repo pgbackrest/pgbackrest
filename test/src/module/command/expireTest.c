@@ -15,7 +15,7 @@ Test Expire Command
 Helper functions
 ***********************************************************************************************************************************/
 void
-archiveGenerate(
+archiveGenerate( // CSHANG Is it possible to use storageRepoWrite when calling this function?
     Storage *storageTest, const String *archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
     const char *majorWal)
 {
@@ -69,9 +69,9 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
-// cshang - try to avoid using storageTest - if use storageRepo, there are built in stuff for me
+// CSHANG - try to avoid using storageTest - if use storageRepo, there are built in stuff for me
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-// cshang - paths as constant - get rid of strings and use constants like INFO_BACKUP_PATH_FILE and INFO_ARCHIVE_PATH_FILE
+// CSHANG - paths as constant - get rid of strings and use constants like INFO_BACKUP_PATH_FILE and INFO_ARCHIVE_PATH_FILE
     const String *backupStanzaPath = STRDEF("repo/backup/db"); // cshang STORAGE_REPO_BACKUP
     String *backupInfoFileName = strNewFmt("%s/backup.info", strZ(backupStanzaPath));
     const String *archiveStanzaPath = STRDEF("repo/archive/db");
@@ -136,7 +136,7 @@ testRun(void)
         "\"backup-archive-stop\":\"000000010000000000000011\",\"backup-info-repo-size\":2369186,"
         "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
         "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
-        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"diff\","
+        "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"incr\","
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "\n"
@@ -184,7 +184,8 @@ testRun(void)
 
         // Expire 20181119-152138F - only manifest files removed (extra file remains)
         TEST_RESULT_VOID(expireBackup(infoBackup, STRDEF("20181119-152138F"), 0), "expire backup with both manifest files");
-        TEST_STORAGE_LIST(storageRepo(), STORAGE_REPO_BACKUP "/20181119-152138F", BOGUS_STR "\n");
+        TEST_STORAGE_LIST(storageRepo(), STORAGE_REPO_BACKUP "/20181119-152138F", BOGUS_STR "\n",
+            .comment = "file in backup remains - only manifest files removed");
 
         TEST_RESULT_VOID(
             expireBackup(infoBackup, STRDEF("20181119-152800F"), 0), "expire backup with no manifest - does not error");
@@ -228,7 +229,7 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, NULL),
             "20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n20181119-152900F\n"
                 "20181119-152900F_20181119-152600D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment
+            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
         TEST_RESULT_LOG("P00   INFO: repo1: expire full backup 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -242,7 +243,7 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "current backups reduced by 1 full and dependencies");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152900F\n20181119-152900F_20181119-152600D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment
+            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D,"
                 " 20181119-152800F_20181119-152155I");
@@ -253,7 +254,7 @@ testRun(void)
         TEST_RESULT_UINT(expireFullBackup(infoBackup, 0), 0, "retention-full=1 - not enough backups to expire any");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152900F\n20181119-152900F_20181119-152600D\n",
-            "  remaining backups correct"); // CSHANG maybe remove this comment
+            "  remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
     }
 
     // *****************************************************************************************************************************
@@ -270,8 +271,8 @@ testRun(void)
         StringList *argList = strLstDup(argListAvoidWarn);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff not set - nothing expired"); // CSHANG maybe remove this comment
-        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired"); // CSHANG maybe remove this comment
+        TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff not set - nothing expired"); // CSHANG maybe remove this comment when comment becomes optional
+        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired"); // CSHANG maybe remove this comment when comment becomes optional
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff set - nothing yet to expire");
@@ -281,8 +282,8 @@ testRun(void)
         hrnCfgArgRawZ(argListTemp, cfgOptRepoRetentionDiff, "6");
         HRN_CFG_LOAD(cfgCmdExpire, argListTemp);
 
-        TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff set - too soon to expire"); // CSHANG maybe remove this comment
-        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired"); // CSHANG maybe remove this comment
+        TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff set - too soon to expire"); // CSHANG maybe remove this comment when comment becomes optional
+        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired"); // CSHANG maybe remove this comment when comment becomes optional
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff set - diff and dependent incr expired");
@@ -295,7 +296,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
             "20181119-152138F\n20181119-152800F\n20181119-152900F\n20181119-152900F_20181119-152600D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment
+            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire diff backup set 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I");
 
@@ -357,7 +358,7 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "current backups reduced by one");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152800F\n20181119-152800F_20181119-152155D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment
+            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
         TEST_RESULT_LOG("P00   INFO: repo1: expire diff backup 20181119-152800F_20181119-152152D");
     }
 
@@ -408,9 +409,9 @@ testRun(void)
             .comment = "empty backup directory must not error on delete");
         HRN_STORAGE_PATH_CREATE(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/" BOGUS_STR, .comment = "other path must not be removed");
-
-// CSHANG When HRN_ put is updated, then add the optional comment: "directory look-alike file must not be removed"
-        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181118-152100F_20181119-152152D.save", BOGUS_STR);
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181118-152100F_20181119-152152D.save", BOGUS_STR,
+        .comment = "directory look-alike file must not be removed");
 
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL, 0), "remove backups not in backup.info current");
 
@@ -624,7 +625,7 @@ testRun(void)
                 "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
                 "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, true, 0), "no archive on disk"); // CSHANG maybe remove this comment
+        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, true, 0), "no archive on disk");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - remove archives across timelines");
@@ -639,32 +640,16 @@ testRun(void)
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=3");
-// CSHANG want to have a comment here: "only 9.4-1/0000000100000000/000000010000000000000001 removed"
-        TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 10, "0000000100000000")));
-// CSHANG want to have a comment here: "none removed from 9.4-1/0000000200000000 - crossing timelines to play through PITR"
-        TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(archiveExpectList(1, 10, "0000000200000000")));
-// CSHANG want to have a comment here: "000000010000000000000001 and 000000010000000000000002 removed from 10-2/0000000100000000"
-        TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")));
 
-// CSHANG Remove these after can add comment to above
-        // TEST_RESULT_STRLST_STR(
-        //     strLstSort(storageListP(
-        //         storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
-        //     archiveExpectList(2, 10, "0000000100000000"), "only 9.4-1/0000000100000000/000000010000000000000001 removed");
-        // TEST_RESULT_STRLST_STR(
-        //     strLstSort(storageListP(
-        //         storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
-        //     archiveExpectList(1, 10, "0000000200000000"),
-        //     "none removed from 9.4-1/0000000200000000 - crossing timelines to play through PITR");
-        // TEST_RESULT_STRLST_STR(
-        //     strLstSort(storageListP(
-        //         storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
-        //     archiveExpectList(3, 10, "0000000100000000"),
-        //     "000000010000000000000001 and 000000010000000000000002 removed from 10-2/0000000100000000");
-
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 10, "0000000100000000")),
+            .comment = "only 9.4-1/0000000100000000/000000010000000000000001 removed");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(archiveExpectList(1, 10, "0000000200000000")),
+            .comment = "none removed from 9.4-1/0000000200000000 - crossing timelines to play through PITR");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            .comment = "000000010000000000000001 and 000000010000000000000002 removed from 10-2/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00   INFO: repo1: 10-2 remove archive, start = 000000010000000000000001, stop = 000000010000000000000002");
@@ -679,32 +664,15 @@ testRun(void)
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=2");
 
-// CSHANG want to have a comment here: "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1"
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")));
-// CSHANG want to have a comment here: "only 9.4-1/0000000200000000/000000010000000000000001 removed from major wal 2"
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")),
+            .comment = "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(archiveExpectList(2, 10, "0000000200000000")));
-// CSHANG want to have a comment here: "none removed from 10-2/0000000100000000"
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(archiveExpectList(2, 10, "0000000200000000")),
+            .comment = "only 9.4-1/0000000200000000/000000010000000000000001 removed from major wal 2");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")));
-
-// CSHANG Remove these after can add comment to above
-        // TEST_RESULT_STRLST_STR(
-        //     strLstSort(storageListP(
-        //         storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
-        //     archiveExpectList(2, 2, "0000000100000000"),
-        //     "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
-        // TEST_RESULT_STRLST_STR(
-        //     strLstSort(storageListP(
-        //         storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
-        //     archiveExpectList(2, 10, "0000000200000000"),
-        //     "only 9.4-1/0000000200000000/000000010000000000000001 removed from major wal 2");
-        // TEST_RESULT_STRLST_STR(
-        //     strLstSort(storageListP(
-        //         storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
-        //     archiveExpectList(3, 10, "0000000100000000"),
-        //     "none removed from 10-2/0000000100000000");
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            .comment = "none removed from 10-2/0000000100000000");
         // Only last 2 full backups and dependents are PITRable, first full backup is not
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000003, stop = 000000020000000000000001\n"
@@ -720,41 +688,27 @@ testRun(void)
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=1");
 
-// CSHANG want to have a comment here: "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1"
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")));
-// CSHANG want to have a comment here: "nothing removed from 9.4-1/0000000200000000 major wal 2 - each archiveId must have one backup to play through PITR"
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")),
+            .comment = "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(archiveExpectList(2, 10, "0000000200000000")));
-// CSHANG want to have a comment here: "none removed from 10-2/0000000100000000"
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(archiveExpectList(2, 10, "0000000200000000")),
+            .comment = "nothing removed from 9.4-1/0000000200000000 major wal 2 - each archiveId must have one backup to play"
+            " through PITR");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")));
-
-        // TEST_RESULT_STRLST_STR(
-        //     strLstSort(storageListP(
-        //         storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
-        //     archiveExpectList(2, 2, "0000000100000000"),
-        //     "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
-        // TEST_RESULT_STRLST_STR(
-        //     strLstSort(storageListP(
-        //         storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
-        //     archiveExpectList(2, 10, "0000000200000000"),
-        //     "nothing removed from 9.4-1/0000000200000000 major wal 2 - each archiveId must have one backup to play through PITR");
-        // TEST_RESULT_STRLST_STR(
-        //     strLstSort(storageListP(
-        //         storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
-        //     archiveExpectList(3, 10, "0000000100000000"), "none removed from 10-2/0000000100000000");
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            .comment = "none removed from 10-2/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 9.4-1 no archive to remove\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
-// CSHANG STOPPED HERE
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive, retention-archive-type=diff, retention-diff set");
 
         argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=2");
-        strLstAddZ(argList, "--repo1-retention-archive-type=diff");
-        strLstAddZ(argList, "--repo1-retention-diff=2");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "2");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "diff");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionDiff, "2");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
@@ -768,19 +722,15 @@ testRun(void)
             strZ(archiveExpectList(2, 2, "0000000200000000")), strZ(archiveExpectList(4, 5, "0000000200000000")),
             strZ(archiveExpectList(7, 7, "0000000200000000")), strZ(archiveExpectList(9, 10, "0000000200000000")));
 
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
-            archiveExpectList(2, 2, "0000000100000000"),
-            "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
-            result, "all in-between removed from 9.4-1/0000000200000000 major wal 2 - last backup able to play through PITR");
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
-            archiveExpectList(3, 10, "0000000100000000"), "none removed from 10-2/0000000100000000");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")),
+            .comment = "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(result),
+            .comment = "all in-between removed from 9.4-1/0000000200000000 major wal 2 - last backup able to play through PITR");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            .comment = "none removed from 10-2/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000003, stop = 000000020000000000000003\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000006, stop = 000000020000000000000006\n"
@@ -791,8 +741,8 @@ testRun(void)
         TEST_TITLE("retention-archive, retention-archive-type=incr");
 
         argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=4");
-        strLstAddZ(argList, "--repo1-retention-archive-type=incr");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "4");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "incr");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Regenerate archive
@@ -807,19 +757,15 @@ testRun(void)
             strZ(archiveExpectList(2, 2, "0000000200000000")), strZ(archiveExpectList(4, 5, "0000000200000000")),
             strZ(archiveExpectList(7, 10, "0000000200000000")));
 
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
-            archiveExpectList(2, 2, "0000000100000000"),
-            "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
-            result, "incremental and after remain in 9.4-1/0000000200000000 major wal 2");
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
-            archiveExpectList(3, 10, "0000000100000000"), "none removed from 10-2/0000000100000000");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")),
+            .comment = "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(result),
+            .comment = "incremental and after remain in 9.4-1/0000000200000000 major wal 2");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            .comment = "none removed from 10-2/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000001, stop = 000000020000000000000001\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000003, stop = 000000020000000000000003\n"
@@ -829,43 +775,30 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - dry run");
 
+        // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152500I/" BACKUP_MANIFEST_FILE);
+
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAddZ(argList, "--repo1-retention-diff=3");
-        strLstAddZ(argList, "--repo1-retention-archive=2");
-        strLstAddZ(argList, "--repo1-retention-archive-type=diff");
-        strLstAddZ(argList, "--dry-run");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionDiff, "3");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "2");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "diff");
+        hrnCfgArgRawBool(argList, cfgOptDryRun, true);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F_20181119-152500I/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) do not remove last backup in archive sub path or sub path");
+
         TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1/0000000100000000")), true,
+            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), true,
             "archive sub path not removed because of dry-run, else would be removed");
         TEST_RESULT_BOOL(
-            storageExistsP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))), true,
+            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE)), true,
             "backup not removed because of dry-run, else would be removed");
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire full backup 20181119-152138F\n"
@@ -874,19 +807,60 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove");
 
+/* CSHANG Something seems off above. We've changed archive removal to INFO level so now see this but is removing
+9.4-1/0000000200000000/000000020000000000000008 correct?
+
+20181119-152138F="backup-archive-start":"000000010000000000000002","backup-archive-stop":"000000010000000000000002"
+20181119-152800F="backup-archive-start":"000000020000000000000002","backup-archive-stop":"000000020000000000000002"
+20181119-152800F_20181119-152152D="backup-archive-start":"000000020000000000000004","backup-archive-stop":"000000020000000000000005"
+20181119-152800F_20181119-152155I="backup-archive-start":"000000020000000000000007","backup-archive-stop":"000000020000000000000007"
+20181119-152800F_20181119-152252D="backup-archive-start":"000000020000000000000009","backup-archive-stop":"000000020000000000000009"
+20181119-152900F="backup-archive-start":"000000010000000000000003","backup-archive-stop":"000000010000000000000004"
+20181119-152900F_20181119-152500I="backup-archive-start":"000000010000000000000006","backup-archive-stop":"000000010000000000000006"
+
+test/test-0/repo/archive/db/9.4-1/0000000100000000:
+total 4
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000002-9baedd24b61aa15305732ac678c4e2c102435a09
+
+test/test-0/repo/archive/db/9.4-1/0000000200000000:
+total 28
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000002-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000004-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000005-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000007-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000008-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09
+
+test/test-0/repo/archive/db/10-2/0000000100000000:
+total 32
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000003-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000004-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000005-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000006-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000007-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000008-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09
+-rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09
+
+config load: /home/vagrant/test/bin/f32/pgbackrest expire --lock-path=/home/vagrant/test/data-0/lock --log-path=/home/vagrant/test/data-0 --stanza=db --repo1-path=/home/vagrant/test/test-0/repo --repo1-retention-full=2 --repo1-retention-diff=3 --repo1-retention-archive=2 --repo1-retention-archive-type=diff --dry-run
+
+Archive retention is 2 and type is diff, so if we remove the oldest backup 20181119-152138F during backup expiration, then move on to archive expiration, then is 20181119-152900F and 20181119-152800F_20181119-152252D the two "diff" backups to retain?
+*/
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire via backup command");
 
         // Copy the repo to another repo
         HRN_SYSTEM("mkdir " TEST_PATH "/repo2");
-        HRN_SYSTEM("cp -r " TEST_PATH "/repo/* " TEST_PATH "/repo2/");
+        HRN_SYSTEM("cp -r " TEST_PATH_REPO "/* " TEST_PATH "/repo2/");
 
         // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAddZ(argList, "--repo1-retention-diff=3");
-        strLstAddZ(argList, "--repo1-retention-archive=2");
-        strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 1, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 1, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchiveType, 1, "diff");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "3");
@@ -895,30 +869,38 @@ testRun(void)
 
         StringList *argList2 = strLstDup(argList);
         hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
-        strLstAddZ(argList2, "--pg1-path=" TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList2, cfgOptPgPath, TEST_PATH_PG);
         HRN_CFG_LOAD(cfgCmdBackup, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
+
         TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, STRDEF("repo2/archive/db/9.4-1/0000000100000000")), false,
+            storagePathExistsP(storageRepoIdx(1), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), false,
             "archive sub path removed repo2");
         TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanzaPath))), true,
-            "archive sub path repo1 not removed");
+            storagePathExistsP(storageRepoIdx(0), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), true,
+            "archive sub path repo1 not removed"); // CSHANG WTF - why is using storageRepo() not correct but is in the no dry-run test below? Is it b/c going through backup command?
+        // TEST_RESULT_BOOL(
+        //     storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), true,
+        //     "archive sub path repo1 not removed"); // CSHANG WTF - why is this returning Not Exist when is does exist on repo1
 
-        const String *backupLabel = STRDEF("20181119-152138F");
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, STRDEF("repo2/backup/db/backup.info"), cipherTypeNone, NULL),
+            infoBackup, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "get backup.info repo2");
-        TEST_RESULT_BOOL(strLstExists(infoBackupDataLabelList(infoBackup, NULL), backupLabel), false, "backup removed from repo2");
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info repo1");
-        TEST_RESULT_BOOL(strLstExists(infoBackupDataLabelList(infoBackup, NULL), backupLabel), true, "backup exists repo1");
+        TEST_RESULT_BOOL(
+            strLstExists(infoBackupDataLabelList(infoBackup, NULL), STRDEF("20181119-152138F")), false,
+            "backup removed from repo2");
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
+            "get backup.info repo1");
+        TEST_RESULT_BOOL(
+            strLstExists(infoBackupDataLabelList(infoBackup, NULL), STRDEF("20181119-152138F")), true, "backup exists repo1");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo2: expire full backup 20181119-152138F\n"
             "P00   INFO: repo2: remove expired backup 20181119-152138F\n"
             "P00   INFO: repo2: 9.4-1 remove archive, start = 0000000100000000, stop = 0000000100000000\n"
-            "P00   INFO: repo2: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
+            "P00   INFO: repo2: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"  // CSHANG This is still troubling
             "P00   INFO: repo2: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -930,93 +912,87 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1/0000000100000000")), false,
-            "archive sub path removed");
+            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), false,
+            "archive sub path removed repo1");
+
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 0000000100000000, stop = 0000000100000000\n"
-            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"  // CSHANG This is still troubling
             "P00   INFO: repo1: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo errors, continue to next repo after error");
 
         argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchiveType, 2, "diff");
 
-        argList2 = strLstDup(argList);
-        strLstAddZ(argList2, "--dry-run");
-        HRN_CFG_LOAD(cfgCmdExpire, argList2);
-
         harnessLogLevelSet(logLevelDetail);
 
         // Rename backup.info files on repo1 to cause error
-        TEST_RESULT_VOID(
-            storageMoveP(storageTest,
-                storageNewReadP(storageTest, backupInfoFileName),
-                storageNewWriteP(storageTest, strNewFmt("%s.save", strZ(backupInfoFileName)))),
-            "repo1: backup.info moved to backup.info.save");
-        TEST_RESULT_VOID(
-            storageMoveP(storageTest,
-                storageNewReadP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
-                storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT ".save", strZ(backupInfoFileName)))),
-            "repo1: backup.info.copy moved to backup.info.copy.save");
+        HRN_SYSTEM("mv " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE " " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE ".save");
+        HRN_SYSTEM(
+            "mv " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT " " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
+            INFO_COPY_EXT ".save");
 
         // Rename archive.info file on repo2 to cause error
-        const String *archiveInfoFileNameRepo2 = STRDEF("repo2/archive/db/archive.info");
-        TEST_RESULT_VOID(
-            storageMoveP(storageTest,
-                storageNewReadP(storageTest, archiveInfoFileNameRepo2),
-                storageNewWriteP(storageTest, strNewFmt("%s.save", strZ(archiveInfoFileNameRepo2)))),
-            "repo2: archive.info moved to archive.info.save");
+        HRN_SYSTEM(
+            "mv " TEST_PATH_REPO "2/archive/db/" INFO_ARCHIVE_FILE " " TEST_PATH_REPO "2/archive/db/" INFO_ARCHIVE_FILE ".save");
+
+        // Configure dry-run
+        argList2 = strLstDup(argList);
+        hrnCfgArgRawBool(argList2, cfgOptDryRun, true);
+        HRN_CFG_LOAD(cfgCmdExpire, argList2);
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 2 error(s), check the log file for details");
-        TEST_RESULT_LOG_FMT(
-            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/%s' or '" TEST_PATH "/%s':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
+        TEST_RESULT_LOG(
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE "' or '"
+                         TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT"':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
+                         "' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
+                         INFO_COPY_EXT "' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
             "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
                 " 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
-            "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH "/%s' or '" TEST_PATH "/%s':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH_REPO "2/archive/db/" INFO_ARCHIVE_FILE
+                         "' or '" TEST_PATH_REPO "2/archive/db/" INFO_ARCHIVE_FILE INFO_COPY_EXT "':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "2/archive/db/" INFO_ARCHIVE_FILE
+                         "' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "2/archive/db/" INFO_ARCHIVE_FILE
+                         INFO_COPY_EXT "' for read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
             "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
-                " archiving scheme.",
-            strZ(backupInfoFileName), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))), strZ(backupInfoFileName),
-            strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))), strZ(archiveInfoFileNameRepo2),
-            strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))), strZ(archiveInfoFileNameRepo2),
-            strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))));
+                         " archiving scheme.");
 
         // Restore saved archive.info file
-        TEST_RESULT_VOID(
-            storageMoveP(storageTest,
-                storageNewReadP(storageTest, strNewFmt("%s.save", strZ(archiveInfoFileNameRepo2))),
-                storageNewWriteP(storageTest, archiveInfoFileNameRepo2)),
-            "repo2: archive.info.save moved to archive.info");
+        HRN_SYSTEM(
+            "mv " TEST_PATH_REPO "2/archive/db/" INFO_ARCHIVE_FILE ".save " TEST_PATH_REPO "2/archive/db/" INFO_ARCHIVE_FILE);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, continue to next repo after error");
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
-        TEST_RESULT_LOG_FMT(
-            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/%s' or '" TEST_PATH "/%s':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/%s' for read\n"
+        TEST_RESULT_LOG(
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE "' or '"
+                         TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT"':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
+                         "' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
+                         INFO_COPY_EXT "' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
             "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
@@ -1030,47 +1006,65 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004,"
                 " stop = 000000020000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
-            "P00   INFO: [DRY-RUN] repo2: 10-2 no archive to remove",
-            strZ(backupInfoFileName), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))), strZ(backupInfoFileName),
-            strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))));
+            "P00   INFO: [DRY-RUN] repo2: 10-2 no archive to remove");
 
         // Restore saved backup.info files
-        TEST_RESULT_VOID(
-            storageMoveP(storageTest,
-                storageNewReadP(storageTest, strNewFmt("%s.save", strZ(backupInfoFileName))),
-                storageNewWriteP(storageTest, backupInfoFileName)),
-            "repo1: backup.info.save moved to backup.info");
-        TEST_RESULT_VOID(
-            storageMoveP(storageTest,
-                storageNewReadP(storageTest, strNewFmt("%s" INFO_COPY_EXT ".save", strZ(backupInfoFileName))),
-                storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)))),
-            "repo1: backup.info.copy.save moved to backup.info.copy");
+        HRN_SYSTEM("mv " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE ".save " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE);
+        HRN_SYSTEM(
+            "mv " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
+            INFO_COPY_EXT);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, dry run: archive and backups not removed");
 
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) - log expired backups and archive path to remove");
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1")), true,
-            "archive path not removed");
-        TEST_RESULT_BOOL(
-            (storageExistsP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)))),
-            true, "backup not removed");
 
-        TEST_RESULT_LOG_FMT(
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\n", .noRecurse = true,
+            .comment = "repo1: 9.4-1 archive path not removed");
+        TEST_STORAGE_LIST(
+            storageRepoIdx(1), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\n", .noRecurse = true,
+            .comment = "repo2: 9.4-1 archive path not removed");
+        TEST_STORAGE_LIST(
+            storageRepoIdx(1), STORAGE_REPO_ARCHIVE "/9.4-1/",
+            "0000000200000000/\n"
+            "0000000200000000/000000020000000000000002-9baedd24b61aa15305732ac678c4e2c102435a09\n"
+            "0000000200000000/000000020000000000000004-9baedd24b61aa15305732ac678c4e2c102435a09\n"
+            "0000000200000000/000000020000000000000005-9baedd24b61aa15305732ac678c4e2c102435a09\n"
+            "0000000200000000/000000020000000000000007-9baedd24b61aa15305732ac678c4e2c102435a09\n"
+            "0000000200000000/000000020000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09\n"
+            "0000000200000000/000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09\n",
+            .comment = "repo2: 9.4-1 nothing removed");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20181119-152800F/\n"
+            "20181119-152800F_20181119-152152D/\n"
+            "20181119-152800F_20181119-152155I/\n"
+            "20181119-152800F_20181119-152252D/\n"
+            "20181119-152900F/\n"
+            "20181119-152900F_20181119-152500I/\n"
+            "backup.info\n"
+            "backup.info.copy\n", .noRecurse = true, .comment = "repo1: backups not removed");
+        TEST_STORAGE_LIST(
+            storageRepoIdx(1), STORAGE_REPO_BACKUP,
+            "20181119-152800F/\n"
+            "20181119-152800F_20181119-152152D/\n"
+            "20181119-152800F_20181119-152155I/\n"
+            "20181119-152800F_20181119-152252D/\n"
+            "20181119-152900F/\n"
+            "20181119-152900F_20181119-152500I/\n"
+            "backup.info\n"
+            "backup.info.copy\n", .noRecurse = true, .comment = "repo2: backups not removed");
+
+        TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D, "
                 "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F\n"
-            "P00   INFO: [DRY-RUN] repo1: remove archive path " TEST_PATH "/%s/9.4-1\n"
+            "P00   INFO: [DRY-RUN] repo1: remove archive path " TEST_PATH_REPO "/archive/db/9.4-1\n"
             "P00 DETAIL: [DRY-RUN] repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove\n"
             "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
@@ -1084,8 +1078,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004,"
                 " stop = 000000020000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
-            "P00   INFO: [DRY-RUN] repo2: 10-2 no archive to remove",
-            strZ(archiveStanzaPath));
+            "P00   INFO: [DRY-RUN] repo2: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, archive and backups removed");
@@ -1094,18 +1087,29 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire backups and remove archive path");
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1")),
-            false, "archive path removed");
 
-        TEST_RESULT_LOG_FMT(
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE, "10-2/\narchive.info\n", .noRecurse = true,
+            .comment = "repo1: retention-archive-type=full so 9.4-1 archive path removed");
+        TEST_STORAGE_LIST(
+            storageRepoIdx(1), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\n", .noRecurse = true,
+            .comment = "repo2: retention-archive-type=diff so 9.4-1 archive path not removed");
+        TEST_STORAGE_LIST(
+            storageRepoIdx(1), STORAGE_REPO_ARCHIVE "/9.4-1/",
+            "0000000200000000/\n"
+            "0000000200000000/000000020000000000000002-9baedd24b61aa15305732ac678c4e2c102435a09\n"
+            "0000000200000000/000000020000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09\n"
+            "0000000200000000/000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09\n",
+            .comment = "repo2: 9.4-1 only archives not meeting retention for archive-retention-type=diff are removed");
+
+        TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D, "
                 "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"
-            "P00   INFO: repo1: remove archive path " TEST_PATH "/%s/9.4-1\n"
+            "P00   INFO: repo1: remove archive path " TEST_PATH_REPO "/archive/db/9.4-1\n"
             "P00 DETAIL: repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: repo1: 10-2 no archive to remove\n"
             "P00   INFO: repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
@@ -1118,14 +1122,24 @@ testRun(void)
                 " start = 000000020000000000000009\n"
             "P00   INFO: repo2: 9.4-1 remove archive, start = 000000020000000000000004, stop = 000000020000000000000007\n"
             "P00 DETAIL: repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
-            "P00   INFO: repo2: 10-2 no archive to remove",
-            strZ(archiveStanzaPath));
+            "P00   INFO: repo2: 10-2 no archive to remove");
 
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
-        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup.info updated on disk");
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
+            "repo1: get backup.info");
+        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "repo1: backup.info updated on disk");
         TEST_RESULT_STRLST_Z(
             strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
-            "20181119-152900F\n20181119-152900F_20181119-152500I\n", "remaining current backups correct");
+            "20181119-152900F\n20181119-152900F_20181119-152500I\n", "repo1: remaining current backups correct");
+
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
+            "repo2: get backup.info");
+        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 4, "repo2: backup.info updated on disk");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
+            "20181119-152800F\n20181119-152800F_20181119-152252D\n20181119-152900F\n20181119-152900F_20181119-152500I\n",
+            "repo2: remaining current backups correct");
 
         harnessLogLevelReset();
 
@@ -1174,7 +1188,7 @@ testRun(void)
 
         // Incorrect backup label format provided
         argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--set=" BOGUS_STR);
+        hrnCfgArgRawZ(argList, cfgOptSet, BOGUS_STR);
 
         HRN_CFG_LOAD(cfgCmdExpire, argList);
         TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
@@ -1184,18 +1198,18 @@ testRun(void)
 
         archiveGenerate(storageTest, archiveStanzaPath, 1, 1, "9.4-1", "0000000100000000");
         argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=1");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
-        TEST_RESULT_LOG_FMT(
-            "P00   INFO: repo1: remove archive path " TEST_PATH "/%s/9.4-1\n"
-            "P00   INFO: repo1: 10-2 no archive to remove", strZ(archiveStanzaPath));
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: remove archive path " TEST_PATH_REPO "/archive/db/9.4-1\n"
+            "P00   INFO: repo1: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
-            harnessInfoChecksumZ(
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
                 "[backup:current]\n"
                 "20181119-152138F={"
                 "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
@@ -1232,9 +1246,10 @@ testRun(void)
                 "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
                     "\"db-version\":\"9.4\"}\n"
                 "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                    "\"db-version\":\"10\"}\n"));
+                    "\"db-version\":\"10\"}\n");
 
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info"); // CSHANG maybe remove this comment when comment becomes optional
 
         archiveGenerate(storageTest, archiveStanzaPath, 1, 5, "9.4-1", "0000000100000000");
 
@@ -1242,23 +1257,22 @@ testRun(void)
         TEST_TITLE("retention backup no archive-start");
 
         argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=2");
-        strLstAddZ(argList, "--repo1-retention-archive-type=full");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "2");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "full");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "backup selected for retention does not have archive-start so do nothing");
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
-            archiveExpectList(1, 5, "0000000100000000"), "nothing removed from 9.4-1/0000000100000000");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(1, 5, "0000000100000000")),
+            .comment = "nothing removed from 9.4-1/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("prior backup has no archive-start");
 
         argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=1");
-        strLstAddZ(argList, "--repo1-retention-archive-type=full");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "full");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
         harnessLogLevelSet(logLevelDetail);
 
@@ -1270,7 +1284,7 @@ testRun(void)
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000004\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000003, stop = 000000010000000000000003");
-
+// CSHANG STOPPED HERE
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire history files - dry run");
 
