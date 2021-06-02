@@ -29,6 +29,12 @@ typedef struct ProtocolServer ProtocolServer;
 #include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
+This size should be safe for most results without wasting a lot of space. If binary data is being transferred then this size can be
+added to the expected binary size to account for overhead.
+***********************************************************************************************************************************/
+#define PROTOCOL_SERVER_RESULT_SIZE                                 1024
+
+/***********************************************************************************************************************************
 Protocol command handler type and structure
 
 An array of this struct must be passed to protocolServerProcess() for the server to process commands. Each command handler should
@@ -84,8 +90,24 @@ void protocolServerProcess(
     ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *const handlerList,
     const unsigned int handlerListSize);
 
-// Respond to request with output if provided
+// Result pack large enough for standard results. Note that the buffer will automatically resize when required.
+__attribute__((always_inline)) static inline PackWrite *
+protocolServerResultPack(void)
+{
+    return pckWriteNewBuf(bufNew(PROTOCOL_SERVER_RESULT_SIZE));
+}
+
+// !!! Respond to request with output if provided
 void protocolServerResult(ProtocolServer *this, PackWrite *resultPack);
+
+__attribute__((always_inline)) static inline void
+protocolServerResultBool(ProtocolServer *this, bool result)
+{
+    PackWrite *resultPack = protocolServerResultPack();
+    pckWriteBoolP(resultPack, result);
+    protocolServerResult(this, resultPack);
+}
+
 void protocolServerResponse(ProtocolServer *this);
 void protocolServerResponseVar(ProtocolServer *this, const Variant *output);
 

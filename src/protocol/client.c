@@ -188,11 +188,10 @@ protocolClientProcessError(ProtocolClient *this, KeyValue *errorKv)
 }
 
 PackRead *
-protocolClientResult(ProtocolClient *this, bool resultRequired)
+protocolClientResult(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(BOOL, resultRequired);
     FUNCTION_LOG_END();
 
     PackRead *result = NULL;
@@ -211,7 +210,7 @@ protocolClientResult(ProtocolClient *this, bool resultRequired)
         pckReadEndP(response);
 
         CHECK(type == protocolServerTypeResult);
-        CHECK(!resultRequired || result != NULL);
+        CHECK(result != NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -219,7 +218,7 @@ protocolClientResult(ProtocolClient *this, bool resultRequired)
 }
 
 void
-protocolClientResponse(ProtocolClient *this)
+protocolClientResponse(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -321,6 +320,33 @@ protocolClientExecuteVar(ProtocolClient *this, ProtocolCommand *command, bool ou
     protocolClientWriteCommand(this, command);
 
     FUNCTION_LOG_RETURN_CONST(VARIANT, protocolClientReadOutputVar(this, outputRequired));
+}
+
+PackRead *
+protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command, const bool resultRequired)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
+        FUNCTION_LOG_PARAM(BOOL, resultRequired);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(command != NULL);
+
+    // Send the command
+    protocolClientWriteCommand(this, command);
+
+    // Read result if required
+    PackRead *result = NULL;
+
+    if (resultRequired)
+        result = protocolClientResult(this);
+
+    // Read response
+    protocolClientResponse(this);
+
+    FUNCTION_LOG_RETURN(PACK_READ, result);
 }
 
 /**********************************************************************************************************************************/

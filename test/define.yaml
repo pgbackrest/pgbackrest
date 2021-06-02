@@ -462,7 +462,6 @@ unit:
         binReq: true
 
         coverage:
-          - protocol/client
           - protocol/command
           - protocol/helper
           - protocol/parallel
@@ -471,6 +470,8 @@ unit:
 
         include:
           - common/exec
+          # !!! MOVE THIS BACK
+          - protocol/client
 
   # ********************************************************************************************************************************
   - name: config

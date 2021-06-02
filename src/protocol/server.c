@@ -242,25 +242,26 @@ protocolServerProcess(
 
 /**********************************************************************************************************************************/
 void
-protocolServerResult(ProtocolServer *this, PackWrite *resultPack)
+protocolServerResult(ProtocolServer *this, PackWrite *result)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_LOG_PARAM(PACK_WRITE, resultPack);
+        FUNCTION_LOG_PARAM(PACK_WRITE, result);
     FUNCTION_LOG_END();
 
     // End the pack
-    pckWriteEndP(resultPack);
+    pckWriteEndP(result);
 
     // Write the result
-    PackWrite *responsePack = pckWriteNew(protocolServerIoWrite(this));
-    pckWriteU32P(responsePack, protocolServerTypeResult, .defaultWrite = true);
-    pckWritePackP(responsePack, resultPack);
-    pckWriteEndP(responsePack);
+    PackWrite *resultMessage = pckWriteNew(protocolServerIoWrite(this));
+    pckWriteU32P(resultMessage, protocolServerTypeResult, .defaultWrite = true);
+    pckWritePackP(resultMessage, result);
+    pckWriteEndP(resultMessage);
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 protocolServerResponse(ProtocolServer *this)
 {
@@ -269,9 +270,9 @@ protocolServerResponse(ProtocolServer *this)
     FUNCTION_LOG_END();
 
     // Write the response and flush to be sure it gets sent immediately
-    PackWrite *responsePack = pckWriteNew(protocolServerIoWrite(this));
-    pckWriteU32P(responsePack, protocolServerTypeResponse, .defaultWrite = true);
-    pckWriteEndP(responsePack);
+    PackWrite *response = pckWriteNew(protocolServerIoWrite(this));
+    pckWriteU32P(response, protocolServerTypeResponse, .defaultWrite = true);
+    pckWriteEndP(response);
 
     ioWriteFlush(protocolServerIoWrite(this));
 

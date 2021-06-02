@@ -67,9 +67,10 @@ protocolClientIoWrite(ProtocolClient *const this)
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Execute a protocol command and get the output
+// Execute a protocol command and get the result
 // !!! TO BE REMOVED
 const Variant *protocolClientExecuteVar(ProtocolClient *this, ProtocolCommand *command, bool outputRequired);
+PackRead *protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command, const bool resultRequired);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolClient *
@@ -84,9 +85,10 @@ void protocolClientNoOp(ProtocolClient *this);
 // Read a line
 String *protocolClientReadLine(ProtocolClient *this);
 
-// Read the command output
-PackRead *protocolClientResult(ProtocolClient *this, bool resultRequired);
-void protocolClientResponse(ProtocolClient *this);
+// !!! Read the command output
+PackRead *protocolClientResult(ProtocolClient *const this);
+void protocolClientResponse(ProtocolClient *const this);
+
 // !!! TO BE REMOVED
 const Variant *protocolClientReadOutputVar(ProtocolClient *this, bool outputRequired);
 

@@ -460,12 +460,8 @@ storageRemoteNew(
         // Get storage features from the remote
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Send command
-            protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE));
-
-            // Get result and acknowledge command compeleted
-            PackRead *result = protocolClientResult(driver->client, true);
-            protocolClientResponse(driver->client);
+            // Execute command and get result
+            PackRead *result = protocolClientExecute(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE), true);
 
             // Get path in parent context
             MEM_CONTEXT_PRIOR_BEGIN()

@@ -238,7 +238,7 @@ storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server
         }
 
         // Return storage features
-        PackWrite *result = pckWriteNewBuf(bufNew(512));
+        PackWrite *result = protocolServerResultPack();
         pckWriteStrP(result, storagePathP(storage, NULL));
         pckWriteU64P(result, storageInterface(storage).feature);
 
