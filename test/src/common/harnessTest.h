@@ -60,7 +60,7 @@ Test that an expected error is actually thrown and error when it isn't
     /* Set the line number for the current function in the stack trace */                                                          \
     FUNCTION_HARNESS_STACK_TRACE_LINE_SET(__LINE__);                                                                               \
                                                                                                                                    \
-    hrnTestLogPrefix(__LINE__, true);                                                                                              \
+    hrnTestLogPrefix(__LINE__);                                                                                                    \
     printf("expect %s: %s\n", errorTypeName(&errorTypeExpected), errorMessageExpected);                                            \
     fflush(stdout);                                                                                                                \
                                                                                                                                    \
@@ -104,7 +104,7 @@ Test error with a formatted expected message
 Output information about the test
 ***********************************************************************************************************************************/
 #define TEST_RESULT_INFO(comment)                                                                                                  \
-    hrnTestLogPrefix(__LINE__, true);                                                                                              \
+    hrnTestLogPrefix(__LINE__);                                                                                                    \
     puts(comment);                                                                                                                 \
     fflush(stdout);
 
@@ -114,7 +114,7 @@ Test that a void statement returns and does not throw an error
 #define TEST_RESULT_VOID(statement, comment)                                                                                       \
 {                                                                                                                                  \
     TEST_RESULT_INFO(comment);                                                                                                     \
-    hrnTestResultBegin(#statement, __LINE__, false);                                                                               \
+    hrnTestResultBegin(#statement, false);                                                                                         \
     statement;                                                                                                                     \
     hrnTestResultEnd();                                                                                                            \
 }
@@ -125,7 +125,7 @@ Test that a statement does not error and assign it to the specified variable if 
 #define TEST_ASSIGN(lValue, statement, comment)                                                                                    \
 {                                                                                                                                  \
     TEST_RESULT_INFO(comment);                                                                                                     \
-    hrnTestResultBegin(#statement, __LINE__, true);                                                                                \
+    hrnTestResultBegin(#statement, true);                                                                                          \
     lValue = statement;                                                                                                            \
     hrnTestResultEnd();                                                                                                            \
 }
@@ -137,7 +137,7 @@ Macros to compare results of common data types
     do                                                                                                                             \
     {                                                                                                                              \
         TEST_RESULT_INFO(comment);                                                                                                 \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultBool(statement, expected);                                                                                    \
     }                                                                                                                              \
     while (0)
@@ -149,7 +149,7 @@ Macros to compare results of common data types
     do                                                                                                                             \
     {                                                                                                                              \
         TEST_RESULT_INFO(comment);                                                                                                 \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultDouble(statement, expected);                                                                                  \
     }                                                                                                                              \
     while (0)
@@ -161,7 +161,7 @@ Macros to compare results of common data types
     do                                                                                                                             \
     {                                                                                                                              \
         TEST_RESULT_INFO(comment);                                                                                                 \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultInt64(statement, expected, operation);                                                                        \
     }                                                                                                                              \
     while (0)
@@ -175,7 +175,7 @@ Macros to compare results of common data types
     do                                                                                                                             \
     {                                                                                                                              \
         TEST_RESULT_INFO(comment);                                                                                                 \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultPtr(statement, expected, operation);                                                                          \
     }                                                                                                                              \
     while (0)
@@ -191,7 +191,7 @@ Macros to compare results of common data types
     do                                                                                                                             \
     {                                                                                                                              \
         TEST_RESULT_INFO(comment);                                                                                                 \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultZ(statement, expected, operation);                                                                            \
     }                                                                                                                              \
     while (0)
@@ -217,7 +217,7 @@ Macros to compare results of common data types
     do                                                                                                                             \
     {                                                                                                                              \
         TEST_RESULT_INFO(comment);                                                                                                 \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultStringList(statement, resultExpected, harnessTestResultOperationEq);                                          \
     }                                                                                                                              \
     while (0)
@@ -229,7 +229,7 @@ Macros to compare results of common data types
     do                                                                                                                             \
     {                                                                                                                              \
         TEST_RESULT_INFO(comment);                                                                                                 \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultUInt64(statement, expected, operation);                                                                       \
     }                                                                                                                              \
     while (0)
@@ -241,7 +241,7 @@ Macros to compare results of common data types
     do                                                                                                                             \
     {                                                                                                                              \
         TEST_RESULT_INFO(comment);                                                                                                 \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultBegin(#statement, true);                                                                                      \
         hrnTestResultUInt64Int64(statement, expected, operation);                                                                  \
     }                                                                                                                              \
     while (0)
@@ -314,7 +314,7 @@ Logging macros
 #define TEST_LOG(message)                                                                                                          \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, true);                                                                                          \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
         printf("%s\n", message);                                                                                                   \
         fflush(stdout);                                                                                                            \
     } while (0)
@@ -322,7 +322,7 @@ Logging macros
 #define TEST_LOG_FMT(format, ...)                                                                                                  \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, true);                                                                                          \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
         printf(format "\n", __VA_ARGS__);                                                                                          \
         fflush(stdout);                                                                                                            \
     } while (0)

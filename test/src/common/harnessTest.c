@@ -42,6 +42,7 @@ static const char *testRepoPathData = NULL;
 static struct HarnessTestLocal
 {
     uint64_t logLastBeginTime;                                      // Store the begin time of the last log for deltas
+    int logLastLineNo;                                              // Store the line number to be used in debugging
 
     struct HarnessTestResult
     {
@@ -318,7 +319,7 @@ hrnTestLogTitle(int lineNo)
         putchar('-');
 
     // Output line number
-    printf(" l%04d", lineNo);
+    printf(" L%04d", lineNo);
 
     // Increment testSub and reset log time
     testRunSub++;
@@ -326,11 +327,10 @@ hrnTestLogTitle(int lineNo)
 
 /**********************************************************************************************************************************/
 void
-hrnTestLogPrefix(int lineNo, bool padding)
+hrnTestLogPrefix(const int lineNo)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, lineNo);
-        FUNCTION_HARNESS_PARAM(BOOL, padding);
     FUNCTION_HARNESS_END();
 
     // Always indent at the beginning
@@ -359,26 +359,48 @@ hrnTestLogPrefix(int lineNo, bool padding)
         harnessTestLocal.logLastBeginTime = currentTime;
     }
 
+    // Store line number for
+    harnessTestLocal.logLastLineNo = lineNo;
+
     // Add line number and padding
-    printf("l%04d %s", lineNo, padding ? "    " : "");
+    printf("L%04d     ", lineNo);
+    fflush(stdout);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 void
-hrnTestResultBegin(const char *statement, int lineNo, bool result)
+hrnTestResultBegin(const char *const statement, const bool result)
 {
     ASSERT(!harnessTestLocal.result.running);
+    ASSERT(harnessTestLocal.logLastLineNo != 0);
 
     // Set the line number for the current function in the stack trace
-    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(lineNo);
+    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(harnessTestLocal.logLastLineNo);
 
     // Set info to report if an error is thrown
     harnessTestLocal.result =
-        (struct HarnessTestResult){.running = true, .statement = statement, .lineNo = lineNo, .result = result};
+        (struct HarnessTestResult){
+            .running = true, .statement = statement, .lineNo = harnessTestLocal.logLastLineNo, .result = result};
+
+    // Reset line number so it is not used by another test
+    harnessTestLocal.logLastLineNo = 0;
 }
 
+/**********************************************************************************************************************************/
+void
+hrnTestResultComment(const char *const comment)
+{
+    if (comment != NULL)
+        printf(" (%s)\n", comment);
+    else
+        puts("");
+
+    fflush(stdout);
+}
+
+/**********************************************************************************************************************************/
 bool
 hrnTestResultException(void)
 {

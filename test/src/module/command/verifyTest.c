@@ -242,7 +242,7 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
@@ -773,7 +773,7 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, neither backup copy nor archive infos exist");
@@ -878,7 +878,7 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyFile()");
@@ -917,7 +917,7 @@ testRun(void)
         // Load Parameters with multi-repo
         StringList *argList = strLstDup(argListBase);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
-        harnessCfgLoad(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         // Store valid archive/backup info files
         TEST_RESULT_VOID(
@@ -1047,7 +1047,7 @@ testRun(void)
 
         // Load Parameters - single default repo
         argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         TEST_RESULT_VOID(
             storagePutP(
@@ -1089,7 +1089,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
         hrnCfgArgRawFmt(argList, cfgOptStanza, "%s", strZ(stanza));
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        harnessCfgLoad(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         TEST_RESULT_VOID(
             storagePutP(
@@ -1283,7 +1283,7 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         // Backup labels
         const String *backupLabelFull = STRDEF("20181119-152900F");
@@ -1415,7 +1415,7 @@ testRun(void)
 
         // Set process max to 1 and add more files to check so first backup completes before second is checked
         strLstAddZ(argList, "--process-max=1");
-        harnessCfgLoad(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         contentLoad = harnessInfoChecksumZ
         (

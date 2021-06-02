@@ -21,7 +21,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadLogSetting()"))
     {
-        harnessCfgLoad(cfgCmdVersion, strLstNew());
+        HRN_CFG_LOAD(cfgCmdVersion, strLstNew());
 
         TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings all defaults");
 
@@ -40,7 +40,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidError, "option 'repo' not valid for command 'check'");
+        TEST_ERROR(hrnCfgLoadP(cfgCmdCheck, argList), OptionInvalidError, "option 'repo' not valid for command 'check'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when repo option not set and repo total > 1 or first repo index != 1");
@@ -51,19 +51,19 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
+            hrnCfgLoadP(cfgCmdStanzaDelete, argList), OptionRequiredError,
             "stanza-delete command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
 
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdStanzaDelete, argList), "load stanza-delete with repo set");
+        HRN_CFG_LOAD(cfgCmdStanzaDelete, argList, .comment = "load stanza-delete with repo set");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
+            hrnCfgLoadP(cfgCmdStanzaDelete, argList), OptionRequiredError,
             "stanza-delete command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
 
@@ -71,12 +71,12 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdStanzaDelete, argList), "load stanza-delete with single repo, repo option not set");
+        HRN_CFG_LOAD(cfgCmdStanzaDelete, argList, .comment = "load stanza-delete with single repo, repo option not set");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdInfo, argList), "load info config -- option repo not required");
+        HRN_CFG_LOAD(cfgCmdInfo, argList, .comment = "load info config -- option repo not required");
         TEST_RESULT_BOOL(cfgCommand() == cfgCmdInfo, true, "    command is info");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "host2");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdRestore, argList), OptionInvalidValueError,
+            hrnCfgLoadP(cfgCmdRestore, argList), OptionInvalidValueError,
             "local repo3 and repo4 paths are both '/repo4' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -103,8 +103,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
-
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local default repo paths for cifs repo type must be different");
@@ -114,7 +113,7 @@ testRun(void)
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 1, STORAGE_CIFS_TYPE);
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 2, STORAGE_CIFS_TYPE);
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidValueError,
+            hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidValueError,
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -130,7 +129,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 3, "endpoint");
         hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 3, "mykey");
         hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 3, "mysecretkey");
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 3);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 3);
@@ -141,7 +140,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         cfgOptionIdxSet(cfgOptRepoHost, 0, cfgSourceParam, varNewStrZ("repo-host"));
 
@@ -163,7 +162,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "pg2");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 2, "pg2-exe");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 0), testProjectExe(), "    check pg1-host-cmd");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 1), "pg2-exe", "    check pg2-host-cmd");
@@ -175,7 +174,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         cfgOptionInvalidate(cfgOptProtocolTimeout);
         cfgLoadUpdateOption();
@@ -189,7 +188,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "100");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         cfgOptionInvalidate(cfgOptDbTimeout);
         cfgLoadUpdateOption();
@@ -203,7 +202,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100000");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 100030000, "check protocol-timeout");
 
@@ -216,7 +215,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100000");
         hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "50.5");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError,
+            hrnCfgLoadP(cfgCmdCheck, argList), OptionInvalidValueError,
             "'50.5' is not valid for 'protocol-timeout' option\n"
                 "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
 
@@ -227,7 +226,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "11");
-        harnessCfgLoad(cfgCmdCheck, argList);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 11000, "check protocol-timeout");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptDbTimeout), 5500, "check db-timeout");
@@ -241,7 +240,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 4, "/pg4");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 4, "pg4");
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo1");
-        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), ConfigError, "pg and repo hosts cannot both be configured as remote");
+        TEST_ERROR(hrnCfgLoadP(cfgCmdCheck, argList), ConfigError, "pg and repo hosts cannot both be configured as remote");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("only pg can be remote");
@@ -256,7 +255,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo1");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        harnessCfgLoad(cfgCmdInfo, argList);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -264,7 +263,7 @@ testRun(void)
         strLstAddZ(argList, "process-max");
 
         harnessLogLevelSet(logLevelWarn);
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdHelp, argList), "load help config -- no retention warning");
+        HRN_CFG_LOAD(cfgCmdHelp, argList, .comment = "load help config -- no retention warning");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    command is help");
 
         argList = strLstNew();
@@ -272,7 +271,7 @@ testRun(void)
         strLstAddZ(argList, "--no-log-timestamp");
 
         harnessLogLevelSet(logLevelWarn);
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
+        HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
                 " of space\n"
@@ -281,8 +280,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
 
         strLstAddZ(argList, "--repo1-retention-full=1");
+        HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config no retention warning");
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config no retention warning");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 1, "    repo1-retention-archive set");
 
         // Munge repo-type for coverage.  This will go away when there are multiple repos.
@@ -293,8 +292,8 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--no-log-timestamp");
         strLstAddZ(argList, "--repo1-retention-archive-type=incr");
+        HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
                 " of space\n"
@@ -308,8 +307,8 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--no-log-timestamp");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
                 " of space\n"
@@ -320,8 +319,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
 
         strLstAddZ(argList, "--repo1-retention-diff=2");
+        HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
                 " of space\n"
@@ -335,8 +334,8 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
         strLstAddZ(argList, "--repo1-retention-archive=3");
         strLstAddZ(argList, "--repo1-retention-full=1");
+        HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
@@ -349,8 +348,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=3");
         strLstAddZ(argList, "--repo1-retention-diff=2");
         strLstAddZ(argList, "--repo1-retention-full=1");
-
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config with success");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
@@ -358,8 +356,8 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--repo1-retention-full-type=time");
         harnessLogLevelSet(logLevelWarn);
+        HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config: retention-full-type=time, retention-full is set");
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config: retention-full-type=time, retention-full is set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -377,7 +375,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdArchiveGet, argList), OptionInvalidValueError,
+            hrnCfgLoadP(cfgCmdArchiveGet, argList), OptionInvalidValueError,
             "'bogus.bucket' is not valid for option 'repo2-s3-bucket'"
                 "\nHINT: RFC-2818 forbids dots in wildcard matches."
                 "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
@@ -399,8 +397,8 @@ testRun(void)
         strLstAddZ(argList, "--repo1-s3-endpoint=endpoint");
         strLstAddZ(argList, "--no-repo1-s3-verify-ssl");
         strLstAddZ(argList, "--repo1-path=/repo");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .comment = "invalid bucket with no verification");
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "invalid bucket with no verification");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "bogus.bucket", "    check bucket value");
 
         // Valid bucket name
@@ -412,8 +410,8 @@ testRun(void)
         strLstAddZ(argList, "--repo1-s3-region=region");
         strLstAddZ(argList, "--repo1-s3-endpoint=endpoint");
         strLstAddZ(argList, "--repo1-path=/repo");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .comment = "valid bucket name");
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchiveGet, argList), "valid bucket name");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "cool-bucket", "    check bucket value");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
 
@@ -426,8 +424,8 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "    compress-type=none");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 0, "    compress-level=0");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
@@ -439,8 +437,8 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
         strLstAddZ(argList, "--" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_COMPRESS_LEVEL "=9");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    compress-type=gz");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 9, "    compress-level=9");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
@@ -452,8 +450,8 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_COMPRESS_TYPE "=gz");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdArchivePush, argList), "load config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "    compress-type=gz");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 6, "    compress-level=6");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");

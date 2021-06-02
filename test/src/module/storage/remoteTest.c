@@ -42,7 +42,7 @@ testRun(void)
     strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
     strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
     hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-    harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
+    HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
     const Storage *const storageRepoWrite = storageRepoGet(0, true);
     const Storage *const storageRepo = storageRepoGet(0, false);
@@ -57,7 +57,7 @@ testRun(void)
     hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 2, TEST_USER);
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH_PG "2");
     hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-    harnessCfgLoad(cfgCmdBackup, argList);
+    HRN_CFG_LOAD(cfgCmdBackup, argList);
 
     const Storage *const storagePgWrite = storagePgGet(1, true);
 
@@ -210,6 +210,11 @@ testRun(void)
 
         storagePutP(storageNewWriteP(storagePgWrite, STRDEF("test"), .timeModified = 1555160001), BUFSTRDEF("TESTME"));
 
+#ifdef TEST_CONTAINER_REQUIRED
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF("noname"), .timeModified = 1555160002), BUFSTRDEF("NONAME"));
+        HRN_SYSTEM_FMT("sudo chown 99999:99999 %s", strZ(storagePathP(storagePgWrite, STRDEF("noname"))));
+#endif // TEST_CONTAINER_REQUIRED
+
         // Path timestamp must be set after file is created since file creation updates it
         HRN_STORAGE_TIME(storagePgWrite, NULL, 1555160000);
 
@@ -219,6 +224,9 @@ testRun(void)
         TEST_RESULT_STR_Z(
             callbackData.content,
             ". {path, m=0750, u=" TEST_USER ", g=" TEST_GROUP "}\n"
+#ifdef TEST_CONTAINER_REQUIRED
+            "noname {file, s=6, m=0640, t=1555160002, u=99999, g=99999}\n"
+#endif // TEST_CONTAINER_REQUIRED
             "test {file, s=6, m=0640, t=1555160001, u=" TEST_USER ", g=" TEST_GROUP "}\n",
             "check content");
     }

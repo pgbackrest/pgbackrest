@@ -172,7 +172,7 @@ testRun(void)
 
         // Load Parameters
         StringList *argList = strLstDup(argListAvoidWarn);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Write out manifest files so they exist for full backup
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE);
@@ -207,7 +207,7 @@ testRun(void)
 
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup, 0), 0, "retention-full not set");
         TEST_RESULT_LOG(
@@ -220,7 +220,7 @@ testRun(void)
         TEST_TITLE("retention-full set - full backup no dependencies expired");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup, 0), 1, "retention-full=2 - one full backup expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 5, "current backups reduced by 1 full - no dependencies");
@@ -236,7 +236,7 @@ testRun(void)
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup, 0), 3, "retention-full=1 - one full backup and dependencies expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "current backups reduced by 1 full and dependencies");
@@ -268,7 +268,7 @@ testRun(void)
 
         // Load Parameters
         StringList *argList = strLstDup(argListAvoidWarn);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff not set - nothing expired"); // CSHANG maybe remove this comment
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired"); // CSHANG maybe remove this comment
@@ -279,7 +279,7 @@ testRun(void)
         // Add retention-diff
         StringList *argListTemp = strLstDup(argList);
         hrnCfgArgRawZ(argListTemp, cfgOptRepoRetentionDiff, "6");
-        harnessCfgLoad(cfgCmdExpire, argListTemp);
+        HRN_CFG_LOAD(cfgCmdExpire, argListTemp);
 
         TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff set - too soon to expire"); // CSHANG maybe remove this comment
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired"); // CSHANG maybe remove this comment
@@ -288,7 +288,7 @@ testRun(void)
         TEST_TITLE("retention-diff set - diff and dependent incr expired");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionDiff, "2");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 2, "retention-diff=2 - full considered in diff");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 4, "current backups reduced by 2 - one diff and its dependent increment");
@@ -351,7 +351,7 @@ testRun(void)
         // Load parameters
         argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionDiff, "1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 1, "retention-diff set - only oldest diff expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "current backups reduced by one");
@@ -464,7 +464,7 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "/repo/not/local");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_ERROR(cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
 
@@ -472,7 +472,7 @@ testRun(void)
         TEST_TITLE("check stop file");
 
         argList = strLstDup(argListAvoidWarn);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Create the stop file
         HRN_STORAGE_PUT_EMPTY(storageLocalWrite(), strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
@@ -487,7 +487,7 @@ testRun(void)
 
         // Load Parameters
         argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Create backup.info without current backups
         const Buffer *backupInfoContent = harnessInfoChecksumZ
@@ -523,7 +523,7 @@ testRun(void)
 
         // Set archive retention, archive retention type default but no current backups - code path test
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "4");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "archive retention set, retention type default, no current backups");
@@ -636,7 +636,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "3");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=3");
@@ -675,7 +675,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "2");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=2");
@@ -716,7 +716,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=1");
@@ -756,7 +756,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
         strLstAddZ(argList, "--repo1-retention-diff=2");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0),
@@ -794,7 +794,7 @@ testRun(void)
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=4");
         strLstAddZ(argList, "--repo1-retention-archive-type=incr");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Regenerate archive
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
@@ -836,7 +836,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
         strLstAddZ(argList, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk
         storagePutP(
@@ -897,7 +897,7 @@ testRun(void)
         StringList *argList2 = strLstDup(argList);
         hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
         strLstAddZ(argList2, "--pg1-path=" TEST_PATH "/pg");
-        harnessCfgLoad(cfgCmdBackup, argList2);
+        HRN_CFG_LOAD(cfgCmdBackup, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
@@ -927,7 +927,7 @@ testRun(void)
 
         // Add to previous list and specify repo
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
@@ -953,7 +953,7 @@ testRun(void)
 
         argList2 = strLstDup(argList);
         strLstAddZ(argList2, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList2);
+        HRN_CFG_LOAD(cfgCmdExpire, argList2);
 
         harnessLogLevelSet(logLevelDetail);
 
@@ -1092,7 +1092,7 @@ testRun(void)
         TEST_TITLE("expire command - multi-repo, archive and backups removed");
 
         // Rerun previous test without dry-run
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire backups and remove archive path");
         TEST_RESULT_BOOL(
@@ -1136,7 +1136,7 @@ testRun(void)
         // With multi-repo config from previous test, adhoc expire on backup that doesn't exist
         argList2 = strLstDup(argList);
         hrnCfgArgRawZ(argList2, cfgOptSet, "20201119-123456F_20201119-234567I");
-        harnessCfgLoad(cfgCmdExpire, argList2);
+        HRN_CFG_LOAD(cfgCmdExpire, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on any repo");
         TEST_RESULT_LOG(
@@ -1148,7 +1148,7 @@ testRun(void)
 
         // Rerun on single repo
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
-        harnessCfgLoad(cfgCmdExpire, argList2);
+        HRN_CFG_LOAD(cfgCmdExpire, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on requested repo");
         TEST_RESULT_LOG(
@@ -1160,7 +1160,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F_20181119-152500I");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Incremental removed but no archives expired because the only remaining full backups must be able to play through PITR
         TEST_RESULT_VOID(cmdExpire(), "label format OK and expired on specified repo");
@@ -1177,7 +1177,7 @@ testRun(void)
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--set=" BOGUS_STR);
 
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
         TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1187,7 +1187,7 @@ testRun(void)
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
         TEST_RESULT_LOG_FMT(
@@ -1245,7 +1245,7 @@ testRun(void)
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=full");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "backup selected for retention does not have archive-start so do nothing");
@@ -1260,7 +1260,7 @@ testRun(void)
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
         strLstAddZ(argList, "--repo1-retention-archive-type=full");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
         harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(
@@ -1279,7 +1279,7 @@ testRun(void)
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
         strLstAddZ(argList, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Create backup.info and archives spread over different timelines
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
@@ -1368,7 +1368,7 @@ testRun(void)
         // Load Parameters
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove 00000002.history file");
         TEST_RESULT_BOOL(
@@ -1392,7 +1392,7 @@ testRun(void)
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), BUFSTRDEF("tmp"));
@@ -1444,7 +1444,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
         hrnCfgArgRawFmt(argList, cfgOptRepoRetentionHistory, "%u", historyRetentionDays);
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire");
 
@@ -1479,7 +1479,7 @@ testRun(void)
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
         hrnCfgArgRawFmt(argList, cfgOptRepoRetentionHistory, "%u", historyRetentionDays);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2019/20191119-152138F.manifest.gz", "tmp");
 
@@ -1514,7 +1514,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2017/20171119-152138F.manifest.gz", "tmp");
 
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        harnessCfgLoad(cfgCmdBackup, argList);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire");
 
@@ -1546,7 +1546,7 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
             harnessInfoChecksumZ(
@@ -1741,7 +1741,7 @@ testRun(void)
 
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Here, although backup 20181119-152138F of 10-1 will be expired, the WAL in 10-1 will not since the archive.info
         // does not know about that dir. Again, not really realistic since if it is on disk and reconstructed it would have. So
@@ -1951,7 +1951,7 @@ testRun(void)
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--set=20181119-152800F_20181119-152152D");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Set the log level to detail so archive expiration messages are seen
         harnessLogLevelSet(logLevelDetail);
@@ -1996,7 +1996,7 @@ testRun(void)
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--set=20181119-152138F");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire full backup");
         TEST_RESULT_BOOL(
@@ -2028,7 +2028,7 @@ testRun(void)
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--set=20181119-152900F");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         String *archiveRemaining = strNew();
         strCatFmt(
@@ -2071,7 +2071,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--set=20181119-152850F");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
@@ -2084,7 +2084,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--set=20181119-152800F");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire last prior db-id backup");
         TEST_RESULT_BOOL(
@@ -2107,7 +2107,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--set=20181119-152850F");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
@@ -2155,7 +2155,7 @@ testRun(void)
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--set=20181119-152850F_20181119-152252D");
         strLstAddZ(argList, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Load the backup info. Do not store a manifest file for the adhoc backup for code coverage
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
@@ -2188,7 +2188,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Create backup.info
         #define TEST_BACKUP_CURRENT                                                                                                \
@@ -2442,7 +2442,7 @@ testRun(void)
         TEST_TITLE("oldest backup not expired");
 
         StringList *argList = strLstDup(argListTime);
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
         TEST_RESULT_VOID(cmdExpire(), "repo-retention-full not set for time-based");
@@ -2464,7 +2464,7 @@ testRun(void)
 
         // Add a time period
         strLstAddZ(argList, "--repo1-retention-full=35");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "oldest backup older but other backups too young");
         TEST_RESULT_STRLST_STR(
@@ -2484,7 +2484,7 @@ testRun(void)
         argList = strLstDup(argListTime);
         strLstAddZ(argList, "--repo1-retention-full=30");
         strLstAddZ(argList, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run");
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
@@ -2493,7 +2493,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003");
 
         strLstAddZ(argList, "--repo1-retention-archive=9999999");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run, retention-archive set to max, no archives expired");
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
@@ -2503,7 +2503,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=30");
         strLstAddZ(argList, "--repo1-retention-archive=1"); // 1-day: expire all non-essential archive prior to newest full backup
         strLstAddZ(argList, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired but retention archive set lower - dry-run");
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
@@ -2527,7 +2527,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
         strLstAddZ(argList, "--repo1-retention-archive=1"); // 1-diff: expire all non-essential archive prior to newest diff backup
         strLstAddZ(argList, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired, retention archive is DIFF - dry-run");
         TEST_RESULT_LOG(
@@ -2556,7 +2556,7 @@ testRun(void)
 
         argList = strLstDup(argListTime);
         strLstAddZ(argList, "--repo1-retention-full=25");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Expire oldest from backup.info only, leaving the backup and archives on disk then save backup.info without oldest backup
         TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (25 * SEC_PER_DAY)), 0), 1, "expire oldest backup");
@@ -2575,7 +2575,7 @@ testRun(void)
 
         argList = strLstDup(argListTime);
         strLstAddZ(argList, "--repo1-retention-full=1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire all but newest");
         TEST_RESULT_LOG(

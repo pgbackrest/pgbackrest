@@ -250,7 +250,7 @@ testRun(void)
         TEST_TITLE("config without token");
 
         StringList *argList = strLstDup(commonArgList);
-        harnessCfgLoad(cfgCmdArchivePush, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         StorageS3 *driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
 
@@ -321,7 +321,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoStorageCaPath, "/path/to/cert");
         hrnCfgArgRawZ(argList, cfgOptRepoStorageCaFile, HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".crt");
         hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
-        harnessCfgLoad(cfgCmdArchivePush, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
 
@@ -385,7 +385,7 @@ testRun(void)
                 StringList *argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
-                harnessCfgLoad(cfgCmdArchivePush, argList);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(0, true);
                 StorageS3 *driver = (StorageS3 *)storageDriver(s3);
@@ -443,7 +443,7 @@ testRun(void)
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeAuto);
-                harnessCfgLoad(cfgCmdArchivePush, argList);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)storageDriver(s3);
@@ -1017,7 +1017,7 @@ testRun(void)
                 hrnCfgArgRaw(argList, cfgOptRepoStorageHost, host);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
-                harnessCfgLoad(cfgCmdArchivePush, argList);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)storageDriver(s3);

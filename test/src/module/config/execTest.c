@@ -15,7 +15,6 @@ testRun(void)
     if (testBegin("cfgExecParam()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "5");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
@@ -26,11 +25,10 @@ testRun(void)
         strLstAddZ(argList, "--reset-neutral-umask");
         strLstAddZ(argList, "--repo-cipher-type=aes-256-cbc");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        strLstAddZ(argList, "archive-get");
 
         // Set repo1-cipher-pass to make sure it is not passed on the command line
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "1234", true);
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
         TEST_RESULT_STRLST_Z(
@@ -48,7 +46,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--pg1-path=" TEST_PATH "/db path");
@@ -57,10 +54,9 @@ testRun(void)
         strLstAddZ(argList, "--recovery-option=a=b");
         strLstAddZ(argList, "--recovery-option=c=d");
         hrnCfgArgRawReset(argList, cfgOptLogPath);
-        strLstAddZ(argList, "restore");
 
         setenv("PGBACKREST_REPO1_HOST", "bogus", true);
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        HRN_CFG_LOAD(cfgCmdRestore, argList, .noStd = true);
         unsetenv("PGBACKREST_REPO1_HOST");
 
         KeyValue *optionReplace = kvNew();

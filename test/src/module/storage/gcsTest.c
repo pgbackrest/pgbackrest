@@ -205,7 +205,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
         hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
         hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
-        harnessCfgLoad(cfgCmdArchivePush, argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
@@ -329,7 +329,7 @@ testRun(void)
                 hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), testPort);
                 hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
-                harnessCfgLoad(cfgCmdArchivePush, argList);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
                 hrnCfgEnvRemoveRaw(cfgOptRepoGcsKey);
 
                 Storage *storage = NULL;
@@ -425,7 +425,7 @@ testRun(void)
 
                 StringList *argListAuto = strLstDup(argList);
                 hrnCfgArgRawStrId(argListAuto, cfgOptRepoGcsKeyType, storageGcsKeyTypeAuto);
-                harnessCfgLoad(cfgCmdArchivePush, argListAuto);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argListAuto);
 
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
@@ -885,7 +885,7 @@ testRun(void)
 
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, "token");
                 hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
-                harnessCfgLoad(cfgCmdArchivePush, argList);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
