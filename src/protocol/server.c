@@ -92,12 +92,14 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     ASSERT(message != NULL);
     ASSERT(stack != NULL);
 
-    KeyValue *error = kvNew();
-    kvPut(error, VARSTR(PROTOCOL_ERROR_STR), VARINT(code));
-    kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTR(message));
-    kvPut(error, VARSTR(PROTOCOL_ERROR_STACK_STR), VARSTR(stack));
+    // Write the error and flush to be sure it gets sent immediately
+    PackWrite *error = pckWriteNew(protocolServerIoWrite(this));
+    pckWriteU32P(error, protocolServerTypeError);
+    pckWriteI32P(error, code);
+    pckWriteStrP(error, message);
+    pckWriteStrP(error, stack);
+    pckWriteEndP(error);
 
-    ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(error));
     ioWriteFlush(protocolServerIoWrite(this));
 
     FUNCTION_LOG_RETURN_VOID();
@@ -279,6 +281,7 @@ protocolServerResponse(ProtocolServer *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+// !!! REMOVE
 void
 protocolServerResponseVar(ProtocolServer *this, const Variant *output)
 {
@@ -287,37 +290,14 @@ protocolServerResponseVar(ProtocolServer *this, const Variant *output)
         FUNCTION_LOG_PARAM(VARIANT, output);
     FUNCTION_LOG_END();
 
-    KeyValue *result = kvNew();
-
     if (output != NULL)
-        kvPut(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
+    {
+        PackWrite *resultPack = protocolServerResultPack();
+        pckWriteStrP(resultPack, jsonFromVar(output));
+        protocolServerResult(this, resultPack);
+    }
 
-    ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(result));
-    ioWriteFlush(protocolServerIoWrite(this));
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-protocolServerWriteLine(ProtocolServer *this, const String *line)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_LOG_PARAM(STRING, line);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Dot indicates the start of an lf-terminated line
-    ioWrite(protocolServerIoWrite(this), DOT_BUF);
-
-    // Write the line if it exists
-    if (line != NULL)
-        ioWriteStr(protocolServerIoWrite(this), line);
-
-    // Terminate with a linefeed
-    ioWrite(protocolServerIoWrite(this), LF_BUF);
+    protocolServerResponse(this);
 
     FUNCTION_LOG_RETURN_VOID();
 }

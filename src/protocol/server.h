@@ -13,8 +13,11 @@ typedef enum
     // One of possibly many results to be returned to the client
     protocolServerTypeResult = 0,
 
-    // Final response that indicates the end of command processing and may also have a result
+    // Final response that indicates the end of command processing
     protocolServerTypeResponse = 1,
+
+    // An error occurred and the command process was terminated
+    protocolServerTypeError = 2,
 } ProtocolServerType;
 
 /***********************************************************************************************************************************
@@ -109,6 +112,8 @@ protocolServerResultBool(ProtocolServer *this, bool result)
 }
 
 void protocolServerResponse(ProtocolServer *this);
+
+// !!! REMOVE
 void protocolServerResponseVar(ProtocolServer *this, const Variant *output);
 
 // Move to a new parent mem context
@@ -117,9 +122,6 @@ protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
-
-// Write a line
-void protocolServerWriteLine(ProtocolServer *this, const String *line);
 
 /***********************************************************************************************************************************
 Destructor

@@ -82,7 +82,7 @@ protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 // Send noop to test connection or keep it alive
 void protocolClientNoOp(ProtocolClient *this);
 
-// Read a line
+// Read a line !!! REMOVE
 String *protocolClientReadLine(ProtocolClient *this);
 
 // !!! Read the command output

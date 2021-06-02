@@ -187,6 +187,39 @@ protocolClientProcessError(ProtocolClient *this, KeyValue *errorKv)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+void
+protocolClientError(ProtocolClient *const this, const ProtocolServerType type, PackRead *const error)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(PACK_READ, error);
+    FUNCTION_LOG_END();
+
+    if (type == protocolServerTypeError)
+    {
+        const ErrorType *type = errorTypeFromCode(pckReadIntP(error));
+        String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
+        const String *const stack = pckReadStrP(error);
+        pckReadEndP(error);
+
+        CHECK(message != NULL);
+
+        // Add stack trace if the error is an assertion or debug-level logging is enabled
+        if (type == &AssertError || logAny(logLevelDebug))
+        {
+            CHECK(stack != NULL);
+
+            strCat(message, LF_STR);
+            strCat(message, stack);
+        }
+
+        THROWP(type, strZ(message));
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 PackRead *
 protocolClientResult(ProtocolClient *const this)
 {
@@ -200,6 +233,8 @@ protocolClientResult(ProtocolClient *const this)
     {
         PackRead *response = pckReadNew(protocolClientIoRead(this));
         ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
+
+        protocolClientError(this, type, response);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -228,6 +263,9 @@ protocolClientResponse(ProtocolClient *const this)
     {
         PackRead *response = pckReadNew(protocolClientIoRead(this));
         ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
+
+        protocolClientError(this, type, response);
+
         pckReadEndP(response);
 
         CHECK(type == protocolServerTypeResponse);
@@ -369,6 +407,7 @@ protocolClientNoOp(ProtocolClient *this)
 }
 
 /**********************************************************************************************************************************/
+// !!! REMOVE
 String *
 protocolClientReadLine(ProtocolClient *this)
 {
