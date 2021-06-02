@@ -146,48 +146,6 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 /**********************************************************************************************************************************/
 // Helper to process errors
 static void
-protocolClientProcessError(ProtocolClient *this, KeyValue *errorKv)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(KEY_VALUE, errorKv);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(errorKv != NULL);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Process error if any
-        const Variant *error = kvGet(errorKv, VARSTR(PROTOCOL_ERROR_STR));
-
-        if (error != NULL)
-        {
-            const ErrorType *type = errorTypeFromCode(varIntForce(error));
-            const String *message = varStr(kvGet(errorKv, VARSTR(PROTOCOL_OUTPUT_STR)));
-
-            // Required part of the message
-            String *throwMessage = strNewFmt(
-                "%s: %s", strZ(this->errorPrefix), message == NULL ? "no details available" : strZ(message));
-
-            // Add stack trace if the error is an assertion or debug-level logging is enabled
-            if (type == &AssertError || logAny(logLevelDebug))
-            {
-                const String *stack = varStr(kvGet(errorKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
-
-                strCat(throwMessage, LF_STR);
-                strCat(throwMessage, stack == NULL ? STRDEF("no stack trace available") : stack);
-            }
-
-            THROWP(type, strZ(throwMessage));
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-void
 protocolClientError(ProtocolClient *const this, const ProtocolServerType type, PackRead *const error)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -198,7 +156,7 @@ protocolClientError(ProtocolClient *const this, const ProtocolServerType type, P
 
     if (type == protocolServerTypeError)
     {
-        const ErrorType *type = errorTypeFromCode(pckReadIntP(error));
+        const ErrorType *type = errorTypeFromCode(pckReadI32P(error));
         String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
         const String *const stack = pckReadStrP(error);
         pckReadEndP(error);
@@ -286,33 +244,14 @@ protocolClientReadOutputVar(ProtocolClient *this, bool outputRequired)
 
     ASSERT(this != NULL);
 
+    // Get result
     const Variant *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Read the response
-        String *response = ioReadLine(protocolClientIoRead(this));
-        KeyValue *responseKv = varKv(jsonToVar(response));
+    if (outputRequired)
+        result = jsonToVar(pckReadStrP(protocolClientResult(this)));
 
-        // Process error if any
-        protocolClientProcessError(this, responseKv);
-
-        // Get output
-        result = kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR));
-
-        if (outputRequired)
-        {
-            // Just move the entire response kv since the output is the largest part if it
-            kvMove(responseKv, memContextPrior());
-        }
-        // Else if no output is required then there should not be any
-        else if (result != NULL)
-            THROW(AssertError, "no output required by command");
-
-        // Reset the keep alive time
-        this->keepAliveTime = timeMSec();
-    }
-    MEM_CONTEXT_TEMP_END();
+    // Get response
+    protocolClientResponse(this);
 
     FUNCTION_LOG_RETURN_CONST(VARIANT, result);
 }
@@ -404,51 +343,6 @@ protocolClientNoOp(ProtocolClient *this)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-// !!! REMOVE
-String *
-protocolClientReadLine(ProtocolClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = ioReadLine(protocolClientIoRead(this));
-
-        if (strSize(result) == 0)
-        {
-            THROW(FormatError, "unexpected empty line");
-        }
-        else if (strZ(result)[0] == '{')
-        {
-            KeyValue *responseKv = varKv(jsonToVar(result));
-
-            // Process expected error
-            protocolClientProcessError(this, responseKv);
-
-            // If not an error then there is probably a protocol bug
-            THROW(FormatError, "expected error but got output");
-        }
-        else if (strZ(result)[0] != '.')
-            THROW_FMT(FormatError, "invalid prefix in '%s'", strZ(result));
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strSub(result, 1);
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

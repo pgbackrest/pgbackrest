@@ -27,6 +27,7 @@ typedef struct ProtocolServer ProtocolServer;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/json.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "common/type/stringId.h"
@@ -104,10 +105,26 @@ protocolServerResultPack(void)
 void protocolServerResult(ProtocolServer *this, PackWrite *resultPack);
 
 __attribute__((always_inline)) static inline void
-protocolServerResultBool(ProtocolServer *this, bool result)
+protocolServerResultBool(ProtocolServer *const this, const bool result)
 {
     PackWrite *resultPack = protocolServerResultPack();
     pckWriteBoolP(resultPack, result);
+    protocolServerResult(this, resultPack);
+}
+
+__attribute__((always_inline)) static inline void
+protocolServerResultUInt(ProtocolServer *const this, const unsigned int result)
+{
+    PackWrite *resultPack = protocolServerResultPack();
+    pckWriteU32P(resultPack, result);
+    protocolServerResult(this, resultPack);
+}
+
+__attribute__((always_inline)) static inline void
+protocolServerResultVar(ProtocolServer *const this, const Variant *const result)
+{
+    PackWrite *resultPack = protocolServerResultPack();
+    pckWriteStrP(resultPack, jsonFromVar(result));
     protocolServerResult(this, resultPack);
 }
 

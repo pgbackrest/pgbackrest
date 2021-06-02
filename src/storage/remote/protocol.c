@@ -503,8 +503,7 @@ storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const ser
         mode_t mode = pckReadU32P(param);
 
         storageInterfacePathCreateP(storageRemoteProtocolLocal.driver, path, errorOnExists, noParentCreate, mode);
-
-        protocolServerResponseVar(server, NULL);
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -529,7 +528,8 @@ storageRemotePathRemoveProtocol(PackRead *const param, ProtocolServer *const ser
         const String *path = pckReadStrP(param);
         bool recurse = pckReadBoolP(param);
 
-        protocolServerResponseVar(server, VARBOOL(storageInterfacePathRemoveP(storageRemoteProtocolLocal.driver, path, recurse)));
+        protocolServerResultBool(server, VARBOOL(storageInterfacePathRemoveP(storageRemoteProtocolLocal.driver, path, recurse)));
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -554,7 +554,7 @@ storageRemotePathSyncProtocol(PackRead *const param, ProtocolServer *const serve
         const String *path = pckReadStrP(param);
 
         storageInterfacePathSyncP(storageRemoteProtocolLocal.driver, path);
-        protocolServerResponseVar(server, NULL);
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -580,7 +580,7 @@ storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server)
         bool errorOnMissing = pckReadBoolP(param);
 
         storageInterfaceRemoveP(storageRemoteProtocolLocal.driver, file, .errorOnMissing = errorOnMissing);
-        protocolServerResponseVar(server, NULL);
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 

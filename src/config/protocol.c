@@ -35,7 +35,8 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
             varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
         }
 
-        protocolServerResponseVar(server, varNewVarLst(optionList));
+        protocolServerResultVar(server, varNewVarLst(optionList));
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -63,7 +64,7 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = varVarLst(protocolClientExecuteVar(client, command, true));
+            result = varVarLst(jsonToVar(pckReadStrP(protocolClientExecute(client, command, true))));
         }
         MEM_CONTEXT_PRIOR_END();
     }
