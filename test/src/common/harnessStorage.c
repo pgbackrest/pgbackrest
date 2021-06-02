@@ -410,6 +410,25 @@ hrnStoragePathCreate(const Storage *const storage, const char *const path, HrnSt
 
 /**********************************************************************************************************************************/
 void
+hrnStoragePathRemove(const Storage *const storage, const char *const path, HrnStoragePathRemoveParam param)
+{
+    hrnTestResultBegin(__func__, false);
+
+    ASSERT(storage != NULL);
+    ASSERT(path != NULL);
+
+    const String *const pathFull = storagePathP(storage, STR(path));
+
+    printf("remove path '%s'", strZ(pathFull));
+    hrnTestResultComment(param.comment);
+
+    storagePathRemoveP(storage, pathFull, .recurse = param.recurse, .errorOnMissing = param.errorOnMissing);
+
+    hrnTestResultEnd();
+}
+
+/**********************************************************************************************************************************/
+void
 hrnStorageRemove(const Storage *const storage, const char *const file, const TestStorageRemoveParam param)
 {
     hrnTestResultBegin(__func__, false);
