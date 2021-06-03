@@ -229,7 +229,7 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, NULL),
             "20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n20181119-152900F\n"
                 "20181119-152900F_20181119-152600D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
+            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional - CAN'T B/C empty line
         TEST_RESULT_LOG("P00   INFO: repo1: expire full backup 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -254,7 +254,7 @@ testRun(void)
         TEST_RESULT_UINT(expireFullBackup(infoBackup, 0), 0, "retention-full=1 - not enough backups to expire any");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152900F\n20181119-152900F_20181119-152600D\n",
-            "  remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
+            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
     }
 
     // *****************************************************************************************************************************
@@ -411,7 +411,7 @@ testRun(void)
             storageRepoWrite(), STORAGE_REPO_BACKUP "/" BOGUS_STR, .comment = "other path must not be removed");
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181118-152100F_20181119-152152D.save", BOGUS_STR,
-        .comment = "directory look-alike file must not be removed");
+            .comment = "directory look-alike file must not be removed");
 
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL, 0), "remove backups not in backup.info current");
 
@@ -616,14 +616,14 @@ testRun(void)
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
-                "[db]\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, true, 0), "no archive on disk");
 
@@ -807,47 +807,6 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove");
 
-/* CSHANG Something seems off above. We've changed archive removal to INFO level so now see this but is removing
-9.4-1/0000000200000000/000000020000000000000008 correct?
-
-20181119-152138F="backup-archive-start":"000000010000000000000002","backup-archive-stop":"000000010000000000000002"
-20181119-152800F="backup-archive-start":"000000020000000000000002","backup-archive-stop":"000000020000000000000002"
-20181119-152800F_20181119-152152D="backup-archive-start":"000000020000000000000004","backup-archive-stop":"000000020000000000000005"
-20181119-152800F_20181119-152155I="backup-archive-start":"000000020000000000000007","backup-archive-stop":"000000020000000000000007"
-20181119-152800F_20181119-152252D="backup-archive-start":"000000020000000000000009","backup-archive-stop":"000000020000000000000009"
-20181119-152900F="backup-archive-start":"000000010000000000000003","backup-archive-stop":"000000010000000000000004"
-20181119-152900F_20181119-152500I="backup-archive-start":"000000010000000000000006","backup-archive-stop":"000000010000000000000006"
-
-test/test-0/repo/archive/db/9.4-1/0000000100000000:
-total 4
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000002-9baedd24b61aa15305732ac678c4e2c102435a09
-
-test/test-0/repo/archive/db/9.4-1/0000000200000000:
-total 28
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000002-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000004-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000005-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000007-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000008-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09
-
-test/test-0/repo/archive/db/10-2/0000000100000000:
-total 32
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000003-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000004-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000005-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000006-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000007-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000008-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09
--rw-r----- 1 vagrant vagrant 5 Jun  2 16:12 000000010000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09
-
-config load: /home/vagrant/test/bin/f32/pgbackrest expire --lock-path=/home/vagrant/test/data-0/lock --log-path=/home/vagrant/test/data-0 --stanza=db --repo1-path=/home/vagrant/test/test-0/repo --repo1-retention-full=2 --repo1-retention-diff=3 --repo1-retention-archive=2 --repo1-retention-archive-type=diff --dry-run
-
-Archive retention is 2 and type is diff, so if we remove the oldest backup 20181119-152138F during backup expiration, then move on to archive expiration, then is 20181119-152900F and 20181119-152800F_20181119-152252D the two "diff" backups to retain?
-*/
-
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire via backup command");
 
@@ -875,14 +834,11 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
 
         TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepoIdx(1), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), false,
-            "archive sub path removed repo2");
+            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), false,
+            "archive sub path removed repo2 (default)");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepoIdx(0), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), true,
-            "archive sub path repo1 not removed"); // CSHANG WTF - why is using storageRepo() not correct but is in the no dry-run test below? Is it b/c going through backup command?
-        // TEST_RESULT_BOOL(
-        //     storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), true,
-        //     "archive sub path repo1 not removed"); // CSHANG WTF - why is this returning Not Exist when is does exist on repo1
+            "archive sub path repo1 not removed");
 
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
@@ -900,7 +856,7 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
             "P00   INFO: repo2: expire full backup 20181119-152138F\n"
             "P00   INFO: repo2: remove expired backup 20181119-152138F\n"
             "P00   INFO: repo2: 9.4-1 remove archive, start = 0000000100000000, stop = 0000000100000000\n"
-            "P00   INFO: repo2: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"  // CSHANG This is still troubling
+            "P00   INFO: repo2: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00   INFO: repo2: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -919,7 +875,7 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 0000000100000000, stop = 0000000100000000\n"
-            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"  // CSHANG This is still troubling
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1210,46 +1166,46 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
         //--------------------------------------------------------------------------------------------------------------------------
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE,
-                "[backup:current]\n"
-                "20181119-152138F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152800F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152900F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "\n"
-                "[db]\n"
-                "db-catalog-version=201707211\n"
-                "db-control-version=1002\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"9.4\"}\n"
-                "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                    "\"db-version\":\"10\"}\n");
+            "[backup:current]\n"
+            "20181119-152138F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152800F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152900F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                "\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info"); // CSHANG maybe remove this comment when comment becomes optional
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
 
         archiveGenerate(storageTest, archiveStanzaPath, 1, 5, "9.4-1", "0000000100000000");
 
@@ -1284,90 +1240,85 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000004\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000003, stop = 000000010000000000000003");
-// CSHANG STOPPED HERE
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire history files - dry run");
 
-        // Load Parameters
-        argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAddZ(argList, "--dry-run");
-        HRN_CFG_LOAD(cfgCmdExpire, argList);
-
         // Create backup.info and archives spread over different timelines
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
-            harnessInfoChecksumZ(
-                "[backup:current]\n"
-                "20181119-152138F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152900F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000030000000000000006\",\"backup-archive-stop\":\"000000030000000000000006\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152900F_20181119-152500I={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000030000000000000008\","
-                "\"backup-archive-stop\":\"000000030000000000000008\",\"backup-info-repo-size\":2369186,"
-                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-                "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
-                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "\n"
-                "[db]\n"
-                "db-catalog-version=201707211\n"
-                "db-control-version=1002\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"9.4\"}\n"
-                "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                    "\"db-version\":\"10\"}\n"));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[backup:current]\n"
+            "20181119-152138F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152900F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000030000000000000006\",\"backup-archive-stop\":\"000000030000000000000006\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152900F_20181119-152500I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000030000000000000008\","
+            "\"backup-archive-stop\":\"000000030000000000000008\",\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
+            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                "\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"10\"}\n");
 
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
 
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE);
 
-        storagePutP(
-            storageNewWriteP(storageTest, archiveInfoFileName),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
-
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
+// CSHANG REPLACE THE STORAGE PATH REMOVE with the macro
         storagePathRemoveP(storageTest, strNewFmt("%s/10-2/0000000100000000", strZ(archiveStanzaPath)), .recurse=true);
         archiveGenerate(storageTest, archiveStanzaPath, 2, 2, "9.4-1", "0000000100000000");
         archiveGenerate(storageTest, archiveStanzaPath, 6, 10, "10-2", "0000000300000000");
 
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), BUFSTRDEF("tmp"));
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/00000002.history");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/00000003.history");
+
+        // Load Parameters
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
+        hrnCfgArgRawBool(argList, cfgOptDryRun, true);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) do not remove 00000002.history file");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), true,
-            "history file not removed");
 
+        TEST_RESULT_BOOL(
+            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000002.history")), true, "history file not removed");
         TEST_RESULT_LOG(
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 no archive to remove\n"
@@ -1380,17 +1331,15 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
 
         // Load Parameters
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=2");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove 00000002.history file");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), false,
-            "00000002.history file removed");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), true,
-            "00000003.history file not removed");
 
+        TEST_RESULT_BOOL(
+            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000002.history")), false, "history file removed");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000003.history")), true, "history file not removed");
         TEST_RESULT_LOG(
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
             "P00   INFO: repo1: 9.4-1 no archive to remove\n"
@@ -1403,21 +1352,19 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
 
         // Load Parameters
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), BUFSTRDEF("tmp"));
+        // Restore the history file
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/00000002.history");
 
         TEST_RESULT_VOID(cmdExpire(), "expire history files via backup command");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), false,
-            "00000002.history file removed again");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), true,
-            "00000003.history file not removed");
 
+        TEST_RESULT_BOOL(
+            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000002.history")), false, "history file removed");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000003.history")), true, "history file not removed");
         TEST_RESULT_LOG(
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
             "P00   INFO: repo1: 9.4-1 no archive to remove\n"
@@ -1434,23 +1381,23 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
         unsigned int historyRetentionDays = (unsigned int)((timeNow - 1542640898) / SEC_PER_DAY) + 20;
 
         // Add history manifests for unexpired backups
-        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181119-152138F.manifest.gz", "tmp");
-        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181119-152900F.manifest.gz", "tmp");
-        HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181119-152900F_20181119-152500I.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181119-152138F.manifest.gz");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181119-152900F.manifest.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181119-152900F_20181119-152500I.manifest.gz");
 
         // Add 21 day-old full backup
-        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181029-152138F.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181029-152138F.manifest.gz");
 
         // Add 15 day-old incr backup
-        HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181029-152138F_20181104-152138I.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181029-152138F_20181104-152138I.manifest.gz");
 
         // Add 14 day-old full backup
-        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181105-152138F.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181105-152138F.manifest.gz");
 
         // Add one year old full backup
-        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2017/20171119-152138F.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2017/20171119-152138F.manifest.gz");
 
         // Load Parameters
         argList = strLstDup(argListBase);
@@ -1494,7 +1441,7 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
         hrnCfgArgRawFmt(argList, cfgOptRepoRetentionHistory, "%u", historyRetentionDays);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2019/20191119-152138F.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2019/20191119-152138F.manifest.gz");
 
         TEST_RESULT_VOID(cmdExpire(), "expire");
 
@@ -1521,10 +1468,10 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
         TEST_TITLE("expire backup history manifests older than 20 days using backup config");
 
         // Add 21 day-old full backup
-        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181029-152138F.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181029-152138F.manifest.gz");
 
         // Add one year old full backup
-        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2017/20171119-152138F.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2017/20171119-152138F.manifest.gz");
 
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
@@ -1558,72 +1505,65 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
 
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=2");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
-            harnessInfoChecksumZ(
-                "[backup:current]\n"
-                "20181119-152138F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152800F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152900F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "\n"
-                "[db]\n"
-                "db-catalog-version=201707211\n"
-                "db-control-version=1002\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"10\"}\n"
-                "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                    "\"db-version\":\"10\"}\n"));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[backup:current]\n"
+            "20181119-152138F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152800F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152900F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702,"
+                "\"db-version\":\"10\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"10\"}\n");
 
         // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk and removeExpiredBackup
         // will find backup directories to remove
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE);
 
-        storagePutP(
-            storageNewWriteP(storageTest, archiveInfoFileName),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=1\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
         // Create 10-1 and 10-2 although 10-2 is not realistic since the archive.info knows nothing about it - it is just to
         // confirm that nothing from disk is removed and it will also be used for the next test.
@@ -1632,134 +1572,125 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc),
-            archiveExpectList(1, 7, "0000000100000000"), "none removed from 10-1/0000000100000000");
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
-            archiveExpectList(1, 7, "0000000100000000"), "none removed from 10-2/0000000100000000");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000000", strZ(archiveExpectList(1, 7, "0000000100000000")),
+            .comment = "none removed from 10-1/0000000100000000");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(1, 7, "0000000100000000")),
+            .comment = "none removed from 10-2/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive.info old history db system id not the same as backup.info");
 
-        storagePutP(
-            storageNewWriteP(storageTest, archiveInfoFileName),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":6626363367545671234,\"db-version\":\"10\"}\n"
-                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6626363367545671234,\"db-version\":\"10\"}\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+
         TEST_RESULT_LOG(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive.info old history db version not the same as backup.info");
 
-        storagePutP(
-            storageNewWriteP(storageTest, archiveInfoFileName),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+
         TEST_RESULT_LOG(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive.info has only current db with same db history id as backup.info");
 
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
-            harnessInfoChecksumZ(
-                "[backup:current]\n"
-                "20181119-152138F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152800F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152900F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "\n"
-                "[db]\n"
-                "db-catalog-version=201707211\n"
-                "db-control-version=1002\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"10\"}\n"
-                "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                    "\"db-version\":\"10\"}\n"));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[backup:current]\n"
+            "20181119-152138F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152800F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152900F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702,"
+                "\"db-version\":\"10\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"10\"}\n");
 
         // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk and removeExpiredBackup
         // will find backup directories to remove
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE);
 
-        storagePutP(
-            storageNewWriteP(storageTest, archiveInfoFileName),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"10\"\n"
-                "\n"
-                "[db:history]\n"
-                "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
-        argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        argList = strLstDup(argListAvoidWarn);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Here, although backup 20181119-152138F of 10-1 will be expired, the WAL in 10-1 will not since the archive.info
         // does not know about that dir. Again, not really realistic since if it is on disk and reconstructed it would have. So
         // here we are testing that things on disk that we are not aware of are not touched.
-        TEST_RESULT_VOID(cmdExpire(), "Expire archive that archive.info is aware of");
+        TEST_RESULT_VOID(cmdExpire(), "expire archive that archive.info is aware of");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
@@ -1767,184 +1698,171 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00   INFO: repo1: 10-2 remove archive, start = 000000010000000000000001, stop = 000000010000000000000005");
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc),
-            archiveExpectList(1, 7, "0000000100000000"), "none removed from 10-1/0000000100000000");
-        TEST_RESULT_STRLST_STR(
-            strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
-            archiveExpectList(6, 7, "0000000100000000"),
-            "all prior to 000000010000000000000006 removed from 10-2/0000000100000000");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000000", strZ(archiveExpectList(1, 7, "0000000100000000")),
+            .comment = "none removed from 10-1/0000000100000000");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(6, 7, "0000000100000000")),
+            .comment = "all prior to 000000010000000000000006 removed from 10-2/0000000100000000");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("expireAdhocBackup()"))
     {
+        // Test setup for this section
+        StringList *argList = strLstDup(argListAvoidWarn);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
         // Create backup.info
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
-            harnessInfoChecksumZ(
-                "[backup:current]\n"
-                "20181119-152138F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000020000000000000001\",\"backup-archive-stop\":\"000000020000000000000001\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152800F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000020000000000000002\",\"backup-archive-stop\":\"000000020000000000000002\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152800F_20181119-152152D={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000004\","
-                "\"backup-archive-stop\":\"000000020000000000000005\",\"backup-info-repo-size\":2369186,"
-                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-                "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
-                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152800F_20181119-152155I={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000007\","
-                "\"backup-archive-stop\":\"000000020000000000000007\",\"backup-info-repo-size\":2369186,"
-                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-                "\"backup-prior\":\"20181119-152800F_20181119-152152D\","
-                "\"backup-reference\":[\"20181119-152800F\",\"20181119-152800F_20181119-152152D\"],"
-                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152800F_20181119-152252D={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000009\","
-                "\"backup-archive-stop\":\"000000020000000000000009\",\"backup-info-repo-size\":2369186,"
-                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-                "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
-                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-                "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152850F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000004\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152900F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000007\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "\n"
-                "[db]\n"
-                "db-catalog-version=201909212\n"
-                "db-control-version=1201\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"12\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"9.4\"}\n"
-                "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"
-                    "\"db-version\":\"12\"}\n"));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[backup:current]\n"
+            "20181119-152138F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000020000000000000001\",\"backup-archive-stop\":\"000000020000000000000001\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152800F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000020000000000000002\",\"backup-archive-stop\":\"000000020000000000000002\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152800F_20181119-152152D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000004\","
+            "\"backup-archive-stop\":\"000000020000000000000005\",\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
+            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152800F_20181119-152155I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000007\","
+            "\"backup-archive-stop\":\"000000020000000000000007\",\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-prior\":\"20181119-152800F_20181119-152152D\","
+            "\"backup-reference\":[\"20181119-152800F\",\"20181119-152800F_20181119-152152D\"],"
+            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152800F_20181119-152252D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000020000000000000009\","
+            "\"backup-archive-stop\":\"000000020000000000000009\",\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-prior\":\"20181119-152800F\",\"backup-reference\":[\"20181119-152800F\"],"
+            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152850F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000004\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152900F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000007\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201909212\n"
+            "db-control-version=1201\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                "\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"
+                    "\"db-version\":\"12\"}\n");
 
         // Add backup directories with manifest file including a resumable backup dependent on last backup
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152850F/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152850F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE);
+
         // Resumable backup
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            strZ(backupStanzaPath))),
-            harnessInfoChecksumZ(
-                "[backup]\n"
-                "backup-archive-start=\"000000010000000000000008\"\n"
-                "backup-label=null\n"
-                "backup-prior=\"20181119-152900F\"\n"
-                "backup-timestamp-copy-start=0\n"
-                "backup-timestamp-start=0\n"
-                "backup-timestamp-stop=0\n"
-                "backup-type=\"incr\"\n"
-                "\n"
-                "[backup:db]\n"
-                "db-catalog-version=201909212\n"
-                "db-control-version=1201\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"12\"\n"
-                "\n"
-                "[backup:option]\n"
-                "option-archive-check=false\n"
-                "option-archive-copy=false\n"
-                "option-checksum-page=false\n"
-                "option-compress=false\n"
-                "option-compress-type=\"none\"\n"
-                "option-hardlink=false\n"
-                "option-online=false\n"
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
-                "\n"
-                "[db]\n"
-                "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
-                "\n"
-                "[target:file:default]\n"
-                "group=\"postgres\"\n"
-                "master=false\n"
-                "mode=\"0600\"\n"
-                "user=\"postgres\"\n"
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                "\n"
-                "[target:path:default]\n"
-                "group=\"postgres\"\n"
-                "mode=\"0700\"\n"
-                "user=\"postgres\"\n"));
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            "[backup]\n"
+            "backup-archive-start=\"000000010000000000000008\"\n"
+            "backup-label=null\n"
+            "backup-prior=\"20181119-152900F\"\n"
+            "backup-timestamp-copy-start=0\n"
+            "backup-timestamp-start=0\n"
+            "backup-timestamp-stop=0\n"
+            "backup-type=\"incr\"\n"
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201909212\n"
+            "db-control-version=1201\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[backup:option]\n"
+            "option-archive-check=false\n"
+            "option-archive-copy=false\n"
+            "option-checksum-page=false\n"
+            "option-compress=false\n"
+            "option-compress-type=\"none\"\n"
+            "option-hardlink=false\n"
+            "option-online=false\n"
+            "\n"
+            "[backup:target]\n"
+            "pg_data={\"path\":\"" TEST_PATH_PG "\",\"type\":\"path\"}\n"
+            "\n"
+            "[db]\n"
+            "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
+            "\n"
+            "[target:file]\n"
+            "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
+            "\n"
+            "[target:file:default]\n"
+            "group=\"postgres\"\n"
+            "master=false\n"
+            "mode=\"0600\"\n"
+            "user=\"postgres\"\n"
+            "\n"
+            "[target:path]\n"
+            "pg_data={}\n"
+            "\n"
+            "[target:path:default]\n"
+            "group=\"postgres\"\n"
+            "mode=\"0700\"\n"
+            "user=\"postgres\"\n");
 
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
 
         // Create "latest" symlink
-        const String *latestLink = storagePathP(storageTest, strNewFmt("%s/latest", strZ(backupStanzaPath)));
+        const String *latestLink = storagePathP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"));
         THROW_ON_SYS_ERROR_FMT(
             symlink(strZ(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel), strZ(latestLink)) == -1,
             FileOpenError, "unable to create symlink '%s' to '%s'", strZ(latestLink),
             strZ(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel));
 
         // Create archive info
-        storagePutP(
-            storageNewWriteP(storageTest, archiveInfoFileName),
-            harnessInfoChecksumZ(
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=2\n"
             "db-system-id=6626363367545678089\n"
@@ -1952,7 +1870,7 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-            "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}"));
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}");
 
         // Create archive directories and generate archive
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
@@ -1961,32 +1879,33 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup and dependent");
 
-        StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--set=20181119-152800F_20181119-152152D");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152800F_20181119-152152D");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Set the log level to detail so archive expiration messages are seen
         harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire only backup and dependent");
-        TEST_RESULT_BOOL(
-            (storageExistsP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152850F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-                strZ(backupStanzaPath))) &&
-            !storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            !storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)))),
-            true, "only adhoc and dependents removed - resumable and all other backups remain");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20181119-152138F/\n"
+            "20181119-152138F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F/\n"
+            "20181119-152800F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F_20181119-152252D/\n"
+            "20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/\n"
+            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152900F/\n"
+            "20181119-152900F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152900F_20181119-153000I/\n"
+            "20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "\n"
+            "backup.info\n"
+            "backup.info.copy\n"
+            "latest>\n",
+            .comment = "only adhoc and dependents removed - resumable and all other backups remain");
+
         TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
             STRDEF("20181119-152900F"), "latest link not updated");
         TEST_RESULT_LOG(
@@ -2007,24 +1926,29 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
         TEST_TITLE("expire full and archive (no dependents)");
 
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--set=20181119-152138F");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152138F");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire full backup");
-        TEST_RESULT_BOOL(
-            (storageExistsP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152850F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-                strZ(backupStanzaPath))) &&
-            !storageExistsP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)))),
-            true, "only adhoc full removed");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20181119-152800F/\n"
+            "20181119-152800F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F_20181119-152252D/\n"
+            "20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/\n"
+            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152900F/\n"
+            "20181119-152900F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152900F_20181119-153000I/\n"
+            "20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "\n"
+            "backup.info\n"
+            "backup.info.copy\n"
+            "latest>\n",
+            .comment = "only adhoc full removed");
+
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire adhoc backup 20181119-152138F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
@@ -2034,13 +1958,13 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
                 " stop = 000000010000000000000004\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152900F, start = 000000010000000000000006\n"
             "P00   INFO: repo1: 12-2 no archive to remove");
-
+// CSHANG STOPPED HERE
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire latest and resumable");
 
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--set=20181119-152900F");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         String *archiveRemaining = strNew();
@@ -2049,16 +1973,20 @@ Archive retention is 2 and type is diff, so if we remove the oldest backup 20181
             strZ(archiveExpectList(6, 10, "0000000100000000")));
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest backup");
-        TEST_RESULT_BOOL(
-            (storageExistsP(storageTest, strNewFmt("%s/20181119-152800F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            !storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))) &&
-            !storageExistsP(
-                storageTest, strNewFmt("%s/20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-                strZ(backupStanzaPath)))),
-            true, "latest and resumable removed");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20181119-152800F/\n"
+            "20181119-152800F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F_20181119-152252D/\n"
+            "20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/\n"
+            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "backup.info\n"
+            "backup.info.copy\n"
+            "latest>\n",
+            .comment = "latest and resumable removed");
+
         TEST_RESULT_LOG(
             "P00   WARN: repo1: expiring latest backup 20181119-152900F - the ability to perform point-in-time-recovery (PITR) may"
                 " be affected\n"
