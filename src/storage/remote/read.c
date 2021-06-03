@@ -30,6 +30,7 @@ typedef struct StorageReadRemote
 
     ProtocolClient *client;                                         // Protocol client for requests
     size_t remaining;                                               // Bytes remaining to be read in block
+    Buffer *block;                                                  // Block currently being read
     bool eof;                                                       // Has the file reached eof?
 
 #ifdef DEBUG
@@ -78,14 +79,23 @@ storageReadRemoteOpen(THIS_VOID)
         pckWriteStrP(param, jsonFromVar(this->interface.limit));
         pckWriteStrP(param, jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read)))));
 
-        result = varBool(protocolClientExecuteVar(this->client, command, true));
+        protocolClientWriteCommand(this->client, command);
 
-        // Clear filters since they will be run on the remote side
-        ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
+        // If the file exists
+        result = pckReadBoolP(protocolClientResult(this->client));
 
-        // If the file is compressible add decompression filter locally
-        if (this->interface.compressible)
-            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGz));
+        if (result)
+        {
+            // Clear filters since they will be run on the remote side
+            ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
+
+            // If the file is compressible add decompression filter locally
+            if (this->interface.compressible)
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGz));
+        }
+        // Else nothing to do
+        else
+            protocolClientResponse(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -121,13 +131,26 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    this->remaining = (size_t)storageRemoteProtocolBlockSize(ioReadLine(protocolClientIoRead(this->client)));
+                    PackRead *const read = protocolClientResult(this->client);
+                    pckReadNext(read);
 
-                    if (this->remaining == 0)
+                    if (pckReadType(read) == pckTypeBin)
                     {
-                        ioFilterGroupResultAllSet(
-                            ioReadFilterGroup(storageReadIo(this->read)), protocolClientReadOutputVar(this->client, true));
+                        MEM_CONTEXT_BEGIN(this->memContext)
+                        {
+                            this->block = pckReadBinP(read);
+                            this->remaining = bufUsed(this->block);
+                        }
+                        MEM_CONTEXT_END();
+                    }
+                    else
+                    {
+                        bufFree(this->block);
+
+                        ioFilterGroupResultAllSet(ioReadFilterGroup(storageReadIo(this->read)), jsonToVar(pckReadStrP(read)));
                         this->eof = true;
+
+                        protocolClientResponse(this->client);
                     }
 
 #ifdef DEBUG
@@ -143,14 +166,21 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                 // If the buffer can contain all remaining bytes
                 if (bufRemains(buffer) >= this->remaining)
                 {
-                    bufLimitSet(buffer, bufUsed(buffer) + this->remaining);
-                    ioRead(protocolClientIoRead(this->client), buffer);
-                    bufLimitClear(buffer);
+                    // LOG_DETAIL_FMT("!!!READ ALL %zu INTO %zu", this->remaining, bufRemains(buffer));
+                    bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, this->remaining);
+
                     this->remaining = 0;
+                    bufFree(this->block);
+                    this->block = NULL;
                 }
                 // Else read what we can
                 else
-                    this->remaining -= ioRead(protocolClientIoRead(this->client), buffer);
+                {
+                    size_t remains = bufRemains(buffer);
+                    // LOG_DETAIL_FMT("!!!READ PARTIAL %zu INTO %zu", this->remaining, remains);
+                    bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, remains);
+                    this->remaining -= remains;
+                }
             }
         }
         while (!this->eof && !bufFull(buffer));

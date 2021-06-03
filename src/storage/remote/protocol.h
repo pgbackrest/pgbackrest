@@ -11,12 +11,12 @@ Remote Storage Protocol Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define PROTOCOL_BLOCK_HEADER                                       "BRBLOCK"
+#define PROTOCOL_BLOCK_HEADER                                       "BRBLOCK" // !!! REMOVE
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Get size of the next transfer block
+// Get size of the next transfer block !!! REMOVE
 ssize_t storageRemoteProtocolBlockSize(const String *message);
 
 // Process storage protocol requests

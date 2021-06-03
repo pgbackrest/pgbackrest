@@ -25,7 +25,7 @@ Remote Storage Protocol Handler
 /***********************************************************************************************************************************
 Regular expressions
 ***********************************************************************************************************************************/
-STRING_STATIC(BLOCK_REG_EXP_STR,                                    PROTOCOL_BLOCK_HEADER "-1|[0-9]+");
+STRING_STATIC(BLOCK_REG_EXP_STR,                                    PROTOCOL_BLOCK_HEADER "-1|[0-9]+"); // REMOVE
 
 /***********************************************************************************************************************************
 Local variables
@@ -353,7 +353,7 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
 
         // Check if the file exists
         bool exists = ioReadOpen(fileRead);
-        protocolServerResponseVar(server, VARBOOL(exists));
+        protocolServerResultBool(server, exists);
 
         // Transfer the file if it exists
         if (exists)
@@ -367,9 +367,9 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
 
                 if (!bufEmpty(buffer))
                 {
-                    ioWriteStrLine(protocolServerIoWrite(server), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
-                    ioWrite(protocolServerIoWrite(server), buffer);
-                    ioWriteFlush(protocolServerIoWrite(server));
+                    PackWrite *write = protocolServerResultPack();
+                    pckWriteBinP(write, buffer);
+                    protocolServerResult(server, write);
 
                     bufUsedZero(buffer);
                 }
@@ -378,13 +378,11 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
 
             ioReadClose(fileRead);
 
-            // Write a zero block to show file is complete
-            ioWriteLine(protocolServerIoWrite(server), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
-            ioWriteFlush(protocolServerIoWrite(server));
-
-            // Push filter results
-            protocolServerResponseVar(server, ioFilterGroupResultAll(ioReadFilterGroup(fileRead)));
+            // Write filter results
+            protocolServerResultVar(server, ioFilterGroupResultAll(ioReadFilterGroup(fileRead)));
         }
+
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
