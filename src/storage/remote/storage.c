@@ -28,7 +28,6 @@ struct StorageRemote
 /**********************************************************************************************************************************/
 typedef struct StorageRemoteInfoParseData
 {
-    PackRead *read;                                                 // Pack to read from protocol
     time_t timeModifiedLast;                                        // timeModified from last call
     mode_t modeLast;                                                // mode from last call
     uid_t userIdLast;                                               // userId from last call
@@ -39,7 +38,7 @@ typedef struct StorageRemoteInfoParseData
 
 // Helper to parse storage info from the protocol output
 static void
-storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
+storageRemoteInfoParse(StorageRemoteInfoParseData *const data, PackRead *const read, StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -47,38 +46,38 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
     FUNCTION_TEST_END();
 
     // Read type and time modified
-    info->type = pckReadU32P(data->read);
-    info->timeModified = pckReadTimeP(data->read) + data->timeModifiedLast;
+    info->type = pckReadU32P(read);
+    info->timeModified = pckReadTimeP(read) + data->timeModifiedLast;
 
     // Read size for files
     if (info->type == storageTypeFile)
-        info->size = pckReadU64P(data->read);
+        info->size = pckReadU64P(read);
 
     // Read fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
         // Read mode
-        info->mode = pckReadU32P(data->read, .defaultValue = data->modeLast);
+        info->mode = pckReadU32P(read, .defaultValue = data->modeLast);
 
         // Read user id/name
-        info->userId = pckReadU32P(data->read, .defaultValue = data->userIdLast);
+        info->userId = pckReadU32P(read, .defaultValue = data->userIdLast);
 
-        if (pckReadBoolP(data->read))                                                                               // {vm_covered}
+        if (pckReadBoolP(read))                                                                                     // {vm_covered}
             info->user = NULL;                                                                                      // {vm_covered}
         else
-            info->user = pckReadStrP(data->read, .defaultValue = data->user);
+            info->user = pckReadStrP(read, .defaultValue = data->user);
 
         // Read group id/name
-        info->groupId = pckReadU32P(data->read, .defaultValue = data->groupIdLast);
+        info->groupId = pckReadU32P(read, .defaultValue = data->groupIdLast);
 
-        if (pckReadBoolP(data->read))                                                                               // {vm_covered}
+        if (pckReadBoolP(read))                                                                                     // {vm_covered}
             info->group = NULL;                                                                                     // {vm_covered}
         else
-            info->group = pckReadStrP(data->read, .defaultValue = data->group);
+            info->group = pckReadStrP(read, .defaultValue = data->group);
 
         // Read link destination
         if (info->type == storageTypeLink)
-            info->linkDestination = pckReadStrP(data->read);
+            info->linkDestination = pckReadStrP(read);
     }
 
     // Store defaults to use for the next call
@@ -131,7 +130,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
         protocolClientWriteCommand(this->client, command);
 
         // Read info from protocol
-        PackRead *read = pckReadNew(protocolClientIoRead(this->client));
+        PackRead *read = protocolClientResult(this->client);
 
         result.exists = pckReadBoolP(read);
 
@@ -142,14 +141,12 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             {
                 result.name = strDup(result.name);
 
-                pckReadObjBeginP(read);
-                storageRemoteInfoParse(&(StorageRemoteInfoParseData){.read = read}, &result);
-                pckReadObjEndP(read);
+                storageRemoteInfoParse(&(StorageRemoteInfoParseData){}, read, &result);
             }
             MEM_CONTEXT_PRIOR_END();
         }
 
-        pckReadEndP(read);
+        protocolClientResponse(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -191,36 +188,32 @@ storageRemoteInfoList(
         protocolClientWriteCommand(this->client, command);
 
         // Read list
-        PackRead *read = pckReadNew(protocolClientIoRead(this->client));
-        StorageRemoteInfoParseData parseData = {.read = read};
+        StorageRemoteInfoParseData parseData = {};
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            pckReadArrayBeginP(read);
+            PackRead *read = protocolClientResult(this->client);
+            pckReadNext(read);
 
-            while (!pckReadNullP(read))
+            while (pckReadType(read) == pckTypeStr)
             {
-                pckReadObjBeginP(read);
-
                 StorageInfo info = {.exists = true, .level = level, .name = pckReadStrP(read)};
 
-                storageRemoteInfoParse(&parseData, &info);
+                storageRemoteInfoParse(&parseData, read, &info);
                 callback(callbackData, &info);
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
                 MEM_CONTEXT_TEMP_RESET(1000);
 
-                pckReadObjEndP(read);
+                read = protocolClientResult(this->client);
+                pckReadNext(read);
             }
 
-            pckReadArrayEndP(read);
+            result = pckReadBoolP(read);
         }
         MEM_CONTEXT_TEMP_END();
 
-        // Get result
-        result = pckReadBoolP(read);
-
-        pckReadEndP(read);
+        protocolClientResponse(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 

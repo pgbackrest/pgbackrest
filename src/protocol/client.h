@@ -27,12 +27,12 @@ Constants
 #define PROTOCOL_COMMAND_EXIT                                       STRID5("exit", 0xa27050)
 #define PROTOCOL_COMMAND_NOOP                                       STRID5("noop", 0x83dee0)
 
-#define PROTOCOL_ERROR                                              "err"
+#define PROTOCOL_ERROR                                              "err" //  !!! REMOVE
     STRING_DECLARE(PROTOCOL_ERROR_STR);
-#define PROTOCOL_ERROR_STACK                                        "errStack"
+#define PROTOCOL_ERROR_STACK                                        "errStack" //  !!! REMOVE
     STRING_DECLARE(PROTOCOL_ERROR_STACK_STR);
 
-#define PROTOCOL_OUTPUT                                             "out"
+#define PROTOCOL_OUTPUT                                             "out" //  !!! REMOVE
     STRING_DECLARE(PROTOCOL_OUTPUT_STR);
 
 /***********************************************************************************************************************************
@@ -50,14 +50,14 @@ typedef struct ProtocolClientPub
     IoWrite *write;                                                 // Write interface
 } ProtocolClientPub;
 
-// Read interface
+// Read interface !!! REMOVE
 __attribute__((always_inline)) static inline IoRead *
 protocolClientIoRead(ProtocolClient *const this)
 {
     return THIS_PUB(ProtocolClient)->read;
 }
 
-// Write interface
+// Write interface !!! REMOVE
 __attribute__((always_inline)) static inline IoWrite *
 protocolClientIoWrite(ProtocolClient *const this)
 {

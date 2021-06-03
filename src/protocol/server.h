@@ -69,14 +69,14 @@ typedef struct ProtocolServerPub
     IoWrite *write;                                                 // Write interface
 } ProtocolServerPub;
 
-// Read interface
+// Read interface !!! REMOVE
 __attribute__((always_inline)) static inline IoRead *
 protocolServerIoRead(ProtocolServer *const this)
 {
     return THIS_PUB(ProtocolServer)->read;
 }
 
-// Write interface
+// Write interface !!! REMOVE
 __attribute__((always_inline)) static inline IoWrite *
 protocolServerIoWrite(ProtocolServer *const this)
 {

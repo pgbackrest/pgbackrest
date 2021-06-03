@@ -77,133 +77,6 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Callback to write info list into the protocol
-***********************************************************************************************************************************/
-typedef struct StorageRemoteProtocolInfoListCallbackData
-{
-    MemContext *memContext;                                         // Mem context used to store values from last call
-    PackWrite *write;                                               // Pack to write into protocol
-    time_t timeModifiedLast;                                        // timeModified from last call
-    mode_t modeLast;                                                // mode from last call
-    uid_t userIdLast;                                               // userId from last call
-    gid_t groupIdLast;                                              // groupId from last call
-    String *user;                                                   // user from last call
-    String *group;                                                  // group from last call
-} StorageRemoteProtocolInfoListCallbackData;
-
-// Helper to write storage info into the protocol. This function is not called unless the info exists so no need to write exists or
-// check for level == storageInfoLevelExists.
-//
-// Fields that do not change from one call to the next are omitted to save bandwidth.
-static void
-storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const StorageInfo *info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    ASSERT(data != NULL);
-    ASSERT(info != NULL);
-
-    // Write type and time
-    pckWriteU32P(data->write, info->type);
-    pckWriteTimeP(data->write, info->timeModified - data->timeModifiedLast);
-
-    // Write size for files
-    if (info->type == storageTypeFile)
-        pckWriteU64P(data->write, info->size);
-
-    // Write fields needed for detail level
-    if (info->level >= storageInfoLevelDetail)
-    {
-        // Write mode
-        pckWriteU32P(data->write, info->mode, .defaultValue = data->modeLast);
-
-        // Write user id/name
-        pckWriteU32P(data->write, info->userId, .defaultValue = data->userIdLast);
-
-        if (info->user == NULL)                                                                                     // {vm_covered}
-            pckWriteBoolP(data->write, true);                                                                       // {vm_covered}
-        else
-        {
-            pckWriteNullP(data->write);
-            pckWriteStrP(data->write, info->user, .defaultValue = data->user);
-        }
-
-        // Write group id/name
-        pckWriteU32P(data->write, info->groupId, .defaultValue = data->groupIdLast);
-
-        if (info->group == NULL)                                                                                    // {vm_covered}
-            pckWriteBoolP(data->write, true);                                                                       // {vm_covered}
-        else
-        {
-            pckWriteNullP(data->write);
-            pckWriteStrP(data->write, info->group, .defaultValue = data->group);
-        }
-
-        // Write link destination
-        if (info->type == storageTypeLink)
-            pckWriteStrP(data->write, info->linkDestination);
-    }
-
-    // Store defaults to use for the next call. If memContext is NULL this function is only being called one time so there is no
-    // point in storing defaults.
-    if (data->memContext != NULL)
-    {
-        data->timeModifiedLast = info->timeModified;
-        data->modeLast = info->mode;
-        data->userIdLast = info->userId;
-        data->groupIdLast = info->groupId;
-
-        if (!strEq(info->user, data->user) && info->user != NULL)                                                   // {vm_covered}
-        {
-            strFree(data->user);
-
-            MEM_CONTEXT_BEGIN(data->memContext)
-            {
-                data->user = strDup(info->user);
-            }
-            MEM_CONTEXT_END();
-        }
-
-        if (!strEq(info->group, data->group) && info->group != NULL)                                                // {vm_covered}
-        {
-            strFree(data->group);
-
-            MEM_CONTEXT_BEGIN(data->memContext)
-            {
-                data->group = strDup(info->group);
-            }
-            MEM_CONTEXT_END();
-        }
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-static void
-storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, dataVoid);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    ASSERT(dataVoid != NULL);
-    ASSERT(info != NULL);
-
-    StorageRemoteProtocolInfoListCallbackData *data = dataVoid;
-
-    pckWriteObjBeginP(data->write);
-    pckWriteStrP(data->write, info->name);
-    storageRemoteInfoWrite(data, info);
-    pckWriteObjEndP(data->write);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 /**********************************************************************************************************************************/
 void
 storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server)
@@ -251,6 +124,108 @@ storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server
 }
 
 /**********************************************************************************************************************************/
+typedef struct StorageRemoteInfoWriteData
+{
+    MemContext *memContext;                                         // Mem context used to store values from last call
+    time_t timeModifiedLast;                                        // timeModified from last call
+    mode_t modeLast;                                                // mode from last call
+    uid_t userIdLast;                                               // userId from last call
+    gid_t groupIdLast;                                              // groupId from last call
+    String *user;                                                   // user from last call
+    String *group;                                                  // group from last call
+} StorageRemoteInfoWriteData;
+
+// Helper to write storage info into the protocol. This function is not called unless the info exists so no need to write exists or
+// check for level == storageInfoLevelExists.
+//
+// Fields that do not change from one call to the next are omitted to save bandwidth.
+static void
+storageRemoteInfoWrite(StorageRemoteInfoWriteData *const data, PackWrite *const write, const StorageInfo *const info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(info != NULL);
+
+    // Write type and time
+    pckWriteU32P(write, info->type);
+    pckWriteTimeP(write, info->timeModified - data->timeModifiedLast);
+
+    // Write size for files
+    if (info->type == storageTypeFile)
+        pckWriteU64P(write, info->size);
+
+    // Write fields needed for detail level
+    if (info->level >= storageInfoLevelDetail)
+    {
+        // Write mode
+        pckWriteU32P(write, info->mode, .defaultValue = data->modeLast);
+
+        // Write user id/name
+        pckWriteU32P(write, info->userId, .defaultValue = data->userIdLast);
+
+        if (info->user == NULL)                                                                                     // {vm_covered}
+            pckWriteBoolP(write, true);                                                                             // {vm_covered}
+        else
+        {
+            pckWriteNullP(write);
+            pckWriteStrP(write, info->user, .defaultValue = data->user);
+        }
+
+        // Write group id/name
+        pckWriteU32P(write, info->groupId, .defaultValue = data->groupIdLast);
+
+        if (info->group == NULL)                                                                                    // {vm_covered}
+            pckWriteBoolP(write, true);                                                                             // {vm_covered}
+        else
+        {
+            pckWriteNullP(write);
+            pckWriteStrP(write, info->group, .defaultValue = data->group);
+        }
+
+        // Write link destination
+        if (info->type == storageTypeLink)
+            pckWriteStrP(write, info->linkDestination);
+    }
+
+    // Store defaults to use for the next call. If memContext is NULL this function is only being called one time so there is no
+    // point in storing defaults.
+    if (data->memContext != NULL)
+    {
+        data->timeModifiedLast = info->timeModified;
+        data->modeLast = info->mode;
+        data->userIdLast = info->userId;
+        data->groupIdLast = info->groupId;
+
+        if (!strEq(info->user, data->user) && info->user != NULL)                                                   // {vm_covered}
+        {
+            strFree(data->user);
+
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->user = strDup(info->user);
+            }
+            MEM_CONTEXT_END();
+        }
+
+        if (!strEq(info->group, data->group) && info->group != NULL)                                                // {vm_covered}
+        {
+            strFree(data->group);
+
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->group = strDup(info->group);
+            }
+            MEM_CONTEXT_END();
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 void
 storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
 {
@@ -265,24 +240,22 @@ storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Get file info
         const String *file = pckReadStrP(param);
         StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
         bool followLink = pckReadBoolP(param);
 
         StorageInfo info = storageInterfaceInfoP(storageRemoteProtocolLocal.driver, file, level, .followLink = followLink);
 
-        PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
+        // Write file info to protocol
+        PackWrite *write = protocolServerResultPack();
         pckWriteBoolP(write, info.exists, .defaultWrite = true);
 
         if (info.exists)
-        {
-            pckWriteObjBeginP(write);
-            storageRemoteInfoWrite(&(StorageRemoteProtocolInfoListCallbackData){.write = write}, &info);
-            pckWriteObjEndP(write);
-        }
+            storageRemoteInfoWrite(&(StorageRemoteInfoWriteData){}, write, &info);
 
-        pckWriteEndP(write);
-        ioWriteFlush(protocolServerIoWrite(server));
+        protocolServerResult(server, write);
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -290,6 +263,33 @@ storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
+typedef struct StorageRemoteProtocolInfoListCallbackData
+{
+    ProtocolServer *const server;
+    StorageRemoteInfoWriteData writeData;
+} StorageRemoteProtocolInfoListCallbackData;
+
+static void
+storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM_P(VOID, dataVoid);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    ASSERT(dataVoid != NULL);
+    ASSERT(info != NULL);
+
+    StorageRemoteProtocolInfoListCallbackData *data = dataVoid;
+
+    PackWrite *write = protocolServerResultPack();
+    pckWriteStrP(write, info->name);
+    storageRemoteInfoWrite(&data->writeData, write, info);
+    protocolServerResult(data->server, write);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 void
 storageRemoteInfoListProtocol(PackRead *const param, ProtocolServer *const server)
 {
@@ -304,21 +304,20 @@ storageRemoteInfoListProtocol(PackRead *const param, ProtocolServer *const serve
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
-        pckWriteArrayBeginP(write);
+        const String *const path = pckReadStrP(param);
+        const StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
 
-        StorageRemoteProtocolInfoListCallbackData data = {.write = write, .memContext = memContextCurrent()};
+        StorageRemoteProtocolInfoListCallbackData data = {.server = server, .writeData = {.memContext = memContextCurrent()}};
 
-        const String *path = pckReadStrP(param);
-        StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
-
-        bool result = storageInterfaceInfoListP(
+        const bool result = storageInterfaceInfoListP(
             storageRemoteProtocolLocal.driver, path, level, storageRemoteProtocolInfoListCallback, &data);
 
-        pckWriteArrayEndP(write);
+        // Indicate whether or not the path was found
+        PackWrite *write = protocolServerResultPack();
         pckWriteBoolP(write, result, .defaultWrite = true);
-        pckWriteEndP(write);
-        ioWriteFlush(protocolServerIoWrite(server));
+        protocolServerResult(server, write);
+
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -588,6 +587,7 @@ storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
+// !!! REMOVE
 ssize_t
 storageRemoteProtocolBlockSize(const String *message)
 {
