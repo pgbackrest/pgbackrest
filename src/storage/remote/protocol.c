@@ -124,7 +124,7 @@ storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageRemoteInfoWriteData
+typedef struct StorageRemoteInfoProcotolWriteData
 {
     MemContext *memContext;                                         // Mem context used to store values from last call
     time_t timeModifiedLast;                                        // timeModified from last call
@@ -133,14 +133,15 @@ typedef struct StorageRemoteInfoWriteData
     gid_t groupIdLast;                                              // groupId from last call
     String *user;                                                   // user from last call
     String *group;                                                  // group from last call
-} StorageRemoteInfoWriteData;
+} StorageRemoteInfoProtocolWriteData;
 
 // Helper to write storage info into the protocol. This function is not called unless the info exists so no need to write exists or
 // check for level == storageInfoLevelExists.
 //
 // Fields that do not change from one call to the next are omitted to save bandwidth.
 static void
-storageRemoteInfoWrite(StorageRemoteInfoWriteData *const data, PackWrite *const write, const StorageInfo *const info)
+storageRemoteInfoProtocolWrite(
+    StorageRemoteInfoProtocolWriteData *const data, PackWrite *const write, const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -252,7 +253,7 @@ storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
         pckWriteBoolP(write, info.exists, .defaultWrite = true);
 
         if (info.exists)
-            storageRemoteInfoWrite(&(StorageRemoteInfoWriteData){}, write, &info);
+            storageRemoteInfoProtocolWrite(&(StorageRemoteInfoProtocolWriteData){}, write, &info);
 
         protocolServerResult(server, write);
         protocolServerResponse(server);
@@ -266,7 +267,7 @@ storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
 typedef struct StorageRemoteProtocolInfoListCallbackData
 {
     ProtocolServer *const server;
-    StorageRemoteInfoWriteData writeData;
+    StorageRemoteInfoProtocolWriteData writeData;
 } StorageRemoteProtocolInfoListCallbackData;
 
 static void
@@ -284,7 +285,7 @@ storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
 
     PackWrite *write = protocolServerResultPack();
     pckWriteStrP(write, info->name);
-    storageRemoteInfoWrite(&data->writeData, write, info);
+    storageRemoteInfoProtocolWrite(&data->writeData, write, info);
     protocolServerResult(data->server, write);
 
     FUNCTION_TEST_RETURN_VOID();
