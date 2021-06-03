@@ -37,6 +37,23 @@ struct ProtocolClient
 };
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Read interface !!! REMOVE
+__attribute__((always_inline)) static inline IoRead *
+protocolClientIoRead(ProtocolClient *const this)
+{
+    return THIS_PUB(ProtocolClient)->read;
+}
+
+// Write interface !!! REMOVE
+__attribute__((always_inline)) static inline IoWrite *
+protocolClientIoWrite(ProtocolClient *const this)
+{
+    return THIS_PUB(ProtocolClient)->write;
+}
+
+/***********************************************************************************************************************************
 Close protocol connection
 ***********************************************************************************************************************************/
 static void
@@ -260,29 +277,6 @@ protocolClientResponse(ProtocolClient *const this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-// !!! TO BE REMOVED
-const Variant *
-protocolClientReadOutputVar(ProtocolClient *this, bool outputRequired)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(BOOL, outputRequired);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // Get result
-    const Variant *result = NULL;
-
-    if (outputRequired)
-        result = jsonToVar(pckReadStrP(protocolClientResult(this)));
-
-    // Get response
-    protocolClientResponse(this);
-
-    FUNCTION_LOG_RETURN_CONST(VARIANT, result);
-}
-
 /**********************************************************************************************************************************/
 void
 protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command)
@@ -298,6 +292,23 @@ protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command)
     // End the pack
     pckWriteEndP(protocolCommandParam(command));
 
+    // Write command
+    protocolClientWriteCommandConst(this, command);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+protocolClientWriteCommandConst(ProtocolClient *const this, const ProtocolCommand *const command)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(command != NULL);
+
     // Write out the command
     protocolCommandWrite(command, protocolClientIoWrite(this));
 
@@ -308,24 +319,6 @@ protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command)
 }
 
 /**********************************************************************************************************************************/
-// !!! TO BE REMOVED
-const Variant *
-protocolClientExecuteVar(ProtocolClient *this, ProtocolCommand *command, bool outputRequired)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
-        FUNCTION_LOG_PARAM(BOOL, outputRequired);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(command != NULL);
-
-    protocolClientWriteCommand(this, command);
-
-    FUNCTION_LOG_RETURN_CONST(VARIANT, protocolClientReadOutputVar(this, outputRequired));
-}
-
 PackRead *
 protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command, const bool resultRequired)
 {

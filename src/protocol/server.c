@@ -326,27 +326,6 @@ protocolServerResponse(ProtocolServer *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-// !!! REMOVE
-void
-protocolServerResponseVar(ProtocolServer *this, const Variant *output)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_LOG_PARAM(VARIANT, output);
-    FUNCTION_LOG_END();
-
-    if (output != NULL)
-    {
-        PackWrite *resultPack = protocolServerResultPack();
-        pckWriteStrP(resultPack, jsonFromVar(output));
-        protocolServerResult(this, resultPack);
-    }
-
-    protocolServerResponse(this);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
 /**********************************************************************************************************************************/
 String *
 protocolServerToLog(const ProtocolServer *this)

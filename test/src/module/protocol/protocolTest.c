@@ -73,7 +73,7 @@ Test protocol request handler
 //
 //     MEM_CONTEXT_TEMP_BEGIN()
 //     {
-//         protocolServerResponseVar(server, varNewBool(false));
+//         protocolServerResponseVar?(server, varNewBool(false));
 //         protocolServerWriteLine(server, STRDEF("LINEOFTEXT"));
 //         protocolServerWriteLine(server, NULL);
 //         ioWriteFlush(protocolServerIoWrite(server));
@@ -102,7 +102,7 @@ Test protocol request handler
 //             THROW(FormatError, "error-until-0");
 //         }
 //
-//         protocolServerResponseVar(server, varNewBool(true));
+//         protocolServerResponseVar?(server, varNewBool(true));
 //     }
 //     MEM_CONTEXT_TEMP_END();
 //
@@ -535,7 +535,7 @@ testRun(void)
         //         MEM_CONTEXT_TEMP_END();
         //
         //         TEST_RESULT_PTR(protocolClientIoRead(client), client->pub.read, "get read io");
-        //         TEST_RESULT_PTR(protocolClientIoWrite(client), client->pub.write, "get write io");
+        //         TEST_RESULT_PTR(protocolClientIoWrite?(client), client->pub.write, "get write io");
         //
         //         // Throw errors
         //         TEST_ERROR(
@@ -557,8 +557,8 @@ testRun(void)
         //         TEST_RESULT_VOID(
         //             protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "test"))),
         //             "execute command with output");
-        //         TEST_RESULT_STR_Z(protocolClientReadLine(client), "OUTPUT", "check output");
-        //         TEST_ASSIGN(output, varVarLst(protocolClientReadOutputVar(client, true)), "execute command with output");
+        //         TEST_RESULT_STR_Z(protocolClientReadLine?(client), "OUTPUT", "check output");
+        //         TEST_ASSIGN(output, varVarLst(protocolClientReadOutputVar?(client, true)), "execute command with output");
         //         TEST_RESULT_UINT(varLstSize(output), 2, "check output size");
         //         TEST_RESULT_STR_Z(varStr(varLstGet(output, 0)), "value1", "check value1");
         //         TEST_RESULT_STR_Z(varStr(varLstGet(output, 1)), "value2", "check value2");
@@ -574,25 +574,25 @@ testRun(void)
         //         TEST_RESULT_VOID(
         //             protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "invalid-line"))),
         //             "execute command that returns invalid line");
-        //         TEST_ERROR(protocolClientReadLine(client), FormatError, "unexpected empty line");
+        //         TEST_ERROR(protocolClientReadLine?(client), FormatError, "unexpected empty line");
         //
         //         // Error instead of output
         //         TEST_RESULT_VOID(
         //             protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "err-i-o"))),
         //             "execute command that returns error instead of output");
-        //         TEST_ERROR(protocolClientReadLine(client), UnknownError, "raised from test client: no details available");
+        //         TEST_ERROR(protocolClientReadLine?(client), UnknownError, "raised from test client: no details available");
         //
         //         // Unexpected output
         //         TEST_RESULT_VOID(
         //             protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "unexp-output"))),
         //             "execute command that returns unexpected output");
-        //         TEST_ERROR(protocolClientReadLine(client), FormatError, "expected error but got output");
+        //         TEST_ERROR(protocolClientReadLine?(client), FormatError, "expected error but got output");
         //
         //         // Invalid prefix
         //         TEST_RESULT_VOID(
         //             protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "i-pr"))),
         //             "execute command that returns an invalid prefix");
-        //         TEST_ERROR(protocolClientReadLine(client), FormatError, "invalid prefix in '~line'");
+        //         TEST_ERROR(protocolClientReadLine?(client), FormatError, "invalid prefix in '~line'");
         //
         //         // Free client
         //         TEST_RESULT_VOID(protocolClientFree(client), "free client");

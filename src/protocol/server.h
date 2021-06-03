@@ -129,9 +129,6 @@ PackRead *protocolServerDataGet(ProtocolServer *const this);
 
 void protocolServerResponse(ProtocolServer *this);
 
-// !!! REMOVE
-void protocolServerResponseVar(ProtocolServer *this, const Variant *output);
-
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolServer *
 protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)

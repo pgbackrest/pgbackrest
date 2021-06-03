@@ -50,26 +50,17 @@ typedef struct ProtocolClientPub
     IoWrite *write;                                                 // Write interface
 } ProtocolClientPub;
 
-// Read interface !!! REMOVE
-__attribute__((always_inline)) static inline IoRead *
-protocolClientIoRead(ProtocolClient *const this)
+// Read file descriptor
+__attribute__((always_inline)) static inline int
+protocolClientIoReadFd(ProtocolClient *const this)
 {
-    return THIS_PUB(ProtocolClient)->read;
-}
-
-// Write interface !!! REMOVE
-__attribute__((always_inline)) static inline IoWrite *
-protocolClientIoWrite(ProtocolClient *const this)
-{
-    return THIS_PUB(ProtocolClient)->write;
+    return ioReadFd(THIS_PUB(ProtocolClient)->read);
 }
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Execute a protocol command and get the result
-// !!! TO BE REMOVED
-const Variant *protocolClientExecuteVar(ProtocolClient *this, ProtocolCommand *command, bool outputRequired);
+// Execute a command and get the result
 PackRead *protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command, const bool resultRequired);
 
 // Move to a new parent mem context
@@ -82,18 +73,13 @@ protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 // Send noop to test connection or keep it alive
 void protocolClientNoOp(ProtocolClient *this);
 
-// Read a line !!! REMOVE
-String *protocolClientReadLine(ProtocolClient *this);
-
 // !!! Read the command output
 PackRead *protocolClientResult(ProtocolClient *const this);
 void protocolClientResponse(ProtocolClient *const this);
 
-// !!! TO BE REMOVED
-const Variant *protocolClientReadOutputVar(ProtocolClient *this, bool outputRequired);
-
 // Write the protocol command
 void protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command);
+void protocolClientWriteCommandConst(ProtocolClient *const this, const ProtocolCommand *const command);
 
 // Put command data
 void protocolClientDataPut(ProtocolClient *const this, PackWrite *const result);

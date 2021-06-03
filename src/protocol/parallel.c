@@ -83,7 +83,7 @@ protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
     ASSERT(client != NULL);
     ASSERT(this->state == protocolParallelJobStatePending);
 
-    if (ioReadFd(protocolClientIoRead(client)) == -1)
+    if (protocolClientIoReadFd(client) == -1)
         THROW(AssertError, "client with read fd is required");
 
     lstAdd(this->clientList, &client);
@@ -128,7 +128,7 @@ protocolParallelProcess(ProtocolParallel *this)
     {
         if (this->clientJobList[clientIdx] != NULL)
         {
-            int fd = ioReadFd(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx)));
+            int fd = protocolClientIoReadFd(*(ProtocolClient **)lstGet(this->clientList, clientIdx));
             FD_SET((unsigned int)fd, &selectSet);
 
             // Find the max file descriptor needed for select()
@@ -159,15 +159,17 @@ protocolParallelProcess(ProtocolParallel *this)
 
                 if (job != NULL &&
                     FD_ISSET(
-                        (unsigned int)ioReadFd(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx))),
+                        (unsigned int)protocolClientIoReadFd(*(ProtocolClient **)lstGet(this->clientList, clientIdx)),
                         &selectSet))
                 {
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
                         TRY_BEGIN()
                         {
-                            protocolParallelJobResultSet(
-                                job, protocolClientReadOutputVar(*(ProtocolClient **)lstGet(this->clientList, clientIdx), true));
+                            ProtocolClient *const client = *(ProtocolClient **)lstGet(this->clientList, clientIdx);
+
+                            protocolParallelJobResultSet(job, jsonToVar(pckReadStrP(protocolClientResult(client))));
+                            protocolClientResponse(client);
                         }
                         CATCH_ANY()
                         {
@@ -208,9 +210,8 @@ protocolParallelProcess(ProtocolParallel *this)
                 lstAdd(this->jobList, &job);
 
                 // Send the job to the client
-                protocolCommandWrite(
-                    protocolParallelJobCommand(job),
-                    protocolClientIoWrite(*(ProtocolClient **)lstGet(this->clientList, clientIdx)));
+                protocolClientWriteCommandConst(
+                    *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
 
                 // Set client id and running state
                 protocolParallelJobProcessIdSet(job, clientIdx + 1);
