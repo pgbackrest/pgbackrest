@@ -13,11 +13,14 @@ typedef enum
     // One of possibly many results to be returned to the client
     protocolServerTypeResult = 0,
 
+    // Data sent to the server in addition to command params
+    protocolServerTypeData = 1,
+
     // Final response that indicates the end of command processing
-    protocolServerTypeResponse = 1,
+    protocolServerTypeResponse = 2,
 
     // An error occurred and the command process was terminated
-    protocolServerTypeError = 2,
+    protocolServerTypeError = 3,
 } ProtocolServerType;
 
 /***********************************************************************************************************************************
@@ -76,13 +79,6 @@ protocolServerIoRead(ProtocolServer *const this)
     return THIS_PUB(ProtocolServer)->read;
 }
 
-// Write interface !!! REMOVE
-__attribute__((always_inline)) static inline IoWrite *
-protocolServerIoWrite(ProtocolServer *const this)
-{
-    return THIS_PUB(ProtocolServer)->write;
-}
-
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
@@ -127,6 +123,9 @@ protocolServerResultVar(ProtocolServer *const this, const Variant *const result)
     pckWriteStrP(resultPack, jsonFromVar(result));
     protocolServerResult(this, resultPack);
 }
+
+// !!!
+PackRead *protocolServerDataGet(ProtocolServer *const this);
 
 void protocolServerResponse(ProtocolServer *this);
 

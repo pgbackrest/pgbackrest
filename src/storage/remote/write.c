@@ -52,9 +52,9 @@ storageWriteRemoteFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "-1"));
-    ioWriteFlush(protocolClientIoWrite(this->client));
-    protocolClientReadOutputVar(this->client, false);
+    protocolClientDataPut(this->client, pckWriteBoolP(pckWriteNewBuf(bufNew(PROTOCOL_SERVER_RESULT_SIZE)), false));
+    protocolClientDataPut(this->client, NULL);
+    protocolClientResponse(this->client);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -94,7 +94,8 @@ storageWriteRemoteOpen(THIS_VOID)
         pckWriteBoolP(param, this->interface.atomic);
         pckWriteStrP(param, jsonFromVar(ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write)))));
 
-        protocolClientExecuteVar(this->client, command, false);
+        protocolClientWriteCommand(this->client, command);
+        protocolClientResult(this->client);
 
         // Clear filters since they will be run on the remote side
         ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
@@ -131,9 +132,7 @@ storageWriteRemote(THIS_VOID, const Buffer *buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    ioWriteStrLine(protocolClientIoWrite(this->client), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
-    ioWrite(protocolClientIoWrite(this->client), buffer);
-    ioWriteFlush(protocolClientIoWrite(this->client));
+    protocolClientDataPut(this->client, pckWriteBinP(pckWriteNewBuf(bufNew(PROTOCOL_SERVER_RESULT_SIZE)), buffer));
 
 #ifdef DEBUG
     this->protocolWriteBytes += bufUsed(buffer);
@@ -159,11 +158,12 @@ storageWriteRemoteClose(THIS_VOID)
     // Close if the file has not already been closed
     if (this->client != NULL)
     {
-        ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
-        ioWriteFlush(protocolClientIoWrite(this->client));
-        ioFilterGroupResultAllSet(ioWriteFilterGroup(storageWriteIo(this->write)), protocolClientReadOutputVar(this->client, true));
-        this->client = NULL;
+        protocolClientDataPut(this->client, NULL);
+        ioFilterGroupResultAllSet(
+            ioWriteFilterGroup(storageWriteIo(this->write)), jsonToVar(pckReadStrP(protocolClientResult(this->client))));
+        protocolClientResponse(this->client);
 
+        this->client = NULL;
         memContextCallbackClear(this->memContext);
     }
 

@@ -26,6 +26,16 @@ struct ProtocolServer
     const String *name;
 };
 
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Write interface
+__attribute__((always_inline)) static inline IoWrite *
+protocolServerIoWrite(ProtocolServer *const this)
+{
+    return this->pub.write;
+}
+
 /**********************************************************************************************************************************/
 ProtocolServer *
 protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write)
@@ -243,6 +253,36 @@ protocolServerProcess(
 }
 
 /**********************************************************************************************************************************/
+PackRead *
+protocolServerDataGet(ProtocolServer *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+    FUNCTION_LOG_END();
+
+    PackRead *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *data = pckReadNew(protocolServerIoRead(this));
+        ProtocolServerType type = (ProtocolServerType)pckReadU32P(data);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = pckReadPackP(data);
+        }
+        MEM_CONTEXT_PRIOR_END();
+
+        pckReadEndP(data);
+
+        CHECK(type == protocolServerTypeData);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PACK_READ, result);
+}
+
+/**********************************************************************************************************************************/
 void
 protocolServerResult(ProtocolServer *this, PackWrite *result)
 {
@@ -252,13 +292,18 @@ protocolServerResult(ProtocolServer *this, PackWrite *result)
     FUNCTION_LOG_END();
 
     // End the pack
-    pckWriteEndP(result);
+    if (result != NULL)
+        pckWriteEndP(result);
 
     // Write the result
     PackWrite *resultMessage = pckWriteNew(protocolServerIoWrite(this));
     pckWriteU32P(resultMessage, protocolServerTypeResult, .defaultWrite = true);
     pckWritePackP(resultMessage, result);
     pckWriteEndP(resultMessage);
+
+    // Flush on NULL result since it might be used to synchronize
+    if (result == NULL)
+        ioWriteFlush(protocolServerIoWrite(this));
 
     FUNCTION_LOG_RETURN_VOID();
 }

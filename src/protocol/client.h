@@ -95,6 +95,9 @@ const Variant *protocolClientReadOutputVar(ProtocolClient *this, bool outputRequ
 // Write the protocol command
 void protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command);
 
+// Put command data
+void protocolClientDataPut(ProtocolClient *const this, PackWrite *const result);
+
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/

@@ -144,6 +144,34 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 }
 
 /**********************************************************************************************************************************/
+void
+protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(PACK_WRITE, data);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // End the pack
+    if (data != NULL)
+        pckWriteEndP(data);
+
+    // Write the data
+    PackWrite *dataMessage = pckWriteNew(protocolClientIoWrite(this));
+    pckWriteU32P(dataMessage, protocolServerTypeData, .defaultWrite = true);
+    pckWritePackP(dataMessage, data);
+    pckWriteEndP(dataMessage);
+
+    // Flush when there is no more data to put
+    if (data == NULL)
+        ioWriteFlush(protocolClientIoWrite(this));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 // Helper to process errors
 static void
 protocolClientError(ProtocolClient *const this, const ProtocolServerType type, PackRead *const error)
@@ -203,7 +231,6 @@ protocolClientResult(ProtocolClient *const this)
         pckReadEndP(response);
 
         CHECK(type == protocolServerTypeResult);
-        CHECK(result != NULL);
     }
     MEM_CONTEXT_TEMP_END();
 

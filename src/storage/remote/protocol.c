@@ -429,51 +429,47 @@ storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const serv
 
         // Open file
         ioWriteOpen(fileWrite);
-        protocolServerResponseVar(server, NULL);
+        protocolServerResult(server, NULL);
 
         // Write data
-        Buffer *buffer = bufNew(ioBufferSize());
-        ssize_t remaining;
-
         do
         {
-            // How much data is remaining to write?
-            remaining = storageRemoteProtocolBlockSize(ioReadLine(protocolServerIoRead(server)));
+            PackRead *read = protocolServerDataGet(server);
 
-            // Write data
-            if (remaining > 0)
-            {
-                size_t bytesToCopy = (size_t)remaining;
-
-                do
-                {
-                    if (bytesToCopy < bufSize(buffer))
-                        bufLimitSet(buffer, bytesToCopy);
-
-                    bytesToCopy -= ioRead(protocolServerIoRead(server), buffer);
-                    ioWrite(fileWrite, buffer);
-
-                    bufUsedZero(buffer);
-                    bufLimitClear(buffer);
-                }
-                while (bytesToCopy > 0);
-            }
-            // Close when all data has been written
-            else if (remaining == 0)
+            // Write is complete
+            if (read == NULL)
             {
                 ioWriteClose(fileWrite);
 
                 // Push filter results
-                protocolServerResponseVar(server, ioFilterGroupResultAll(ioWriteFilterGroup(fileWrite)));
+                protocolServerResultVar(server, ioFilterGroupResultAll(ioWriteFilterGroup(fileWrite)));
+                break;
             }
-            // Write was aborted so free the file
+            // Else more data to write
             else
             {
-                ioWriteFree(fileWrite);
-                protocolServerResponseVar(server, NULL);
+                pckReadNext(read);
+
+                // Write data
+                if (pckReadType(read) == pckTypeBin)
+                {
+                    Buffer *const buffer = pckReadBinP(read);
+
+                    ioWrite(fileWrite, buffer);
+                    bufFree(buffer);
+                }
+                // Else write terminated unexpectedly
+                else
+                {
+                    protocolServerDataGet(server);
+                    ioWriteFree(fileWrite);
+                    break;
+                }
             }
         }
-        while (remaining > 0);
+        while (true);
+
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
