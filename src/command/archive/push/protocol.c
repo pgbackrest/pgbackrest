@@ -64,7 +64,8 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
         VariantList *result = varLstNew();
         varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.warnList)));
 
-        protocolServerResponseVar(server, varNewVarLst(result));
+        protocolServerResultVar(server, varNewVarLst(result));
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 

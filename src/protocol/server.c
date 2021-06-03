@@ -215,7 +215,7 @@ protocolServerProcess(
                             break;
 
                         case PROTOCOL_COMMAND_NOOP:
-                            protocolServerResponseVar(this, NULL);
+                            protocolServerResponse(this);
                             break;
 
                         default:

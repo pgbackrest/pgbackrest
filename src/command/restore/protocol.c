@@ -47,7 +47,8 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
             repoFile, repoIdx, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum, pgFileZero, pgFileSize,
             pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass);
 
-        protocolServerResponseVar(server, VARBOOL(result));
+        protocolServerResultVar(server, VARBOOL(result));
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 

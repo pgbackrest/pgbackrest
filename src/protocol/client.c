@@ -338,7 +338,7 @@ protocolClientNoOp(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientExecuteVar(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP), false);
+        protocolClientExecute(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP), false);
     }
     MEM_CONTEXT_TEMP_END();
 

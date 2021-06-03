@@ -56,7 +56,8 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         varLstAdd(resultList, varNewStr(result.copyChecksum));
         varLstAdd(resultList, result.pageChecksumResult != NULL ? varNewKv(result.pageChecksumResult) : NULL);
 
-        protocolServerResponseVar(server, varNewVarLst(resultList));
+        protocolServerResultVar(server, varNewVarLst(resultList));
+        protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();
 
