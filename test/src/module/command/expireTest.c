@@ -2018,7 +2018,7 @@ testRun(void)
             "P00   INFO: repo1: expire adhoc backup set 20181119-152800F, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"
-            "P00   INFO: repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
+            "P00   INFO: repo1: remove archive path " TEST_PATH_REPO "/archive/db/9.4-1\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
             "P00   INFO: repo1: 12-2 no archive to remove");
 
