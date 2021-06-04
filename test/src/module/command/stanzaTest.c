@@ -28,10 +28,10 @@ testRun(void)
     String *archiveInfoFileName = strNewFmt("%s/archive.info", strZ(archiveStanzaPath));
 
     StringList *argListBase = strLstNew();
-    strLstAddZ(argListBase, "--no-online");
-    strLstAdd(argListBase, strNewFmt("--stanza=%s", strZ(stanza)));
-    strLstAdd(argListBase, strNewFmt("--pg1-path=" TEST_PATH "/%s", strZ(stanza)));
-    strLstAddZ(argListBase, "--repo1-path=" TEST_PATH "/repo");
+    hrnCfgArgRawBool(argListBase, cfgOptOnline, false);
+    hrnCfgArgRawZ(argListBase, cfgOptStanza, "db");
+    hrnCfgArgRawZ(argListBase, cfgOptPgPath, TEST_PATH "/db"); // CSHANG See if can replace with TEST_PATH_PG
+    hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH_REPO);
 
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaCreate(), checkStanzaInfo(), cmdStanzaDelete()"))
