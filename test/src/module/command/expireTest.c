@@ -16,7 +16,7 @@ Helper functions
 ***********************************************************************************************************************************/
 void
 archiveGenerate(
-    Storage *storageTest, const String *archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
+    const Storage *storage, const char *const archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
     const char *majorWal)
 {
     // For simplicity, only allow 2 digits
@@ -33,7 +33,7 @@ archiveGenerate(
             wal = strNewFmt("%s000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
 
         storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/%s/%s/%s", strZ(archiveStanzaPath), archiveId, majorWal, strZ(wal))),
+            storageNewWriteP(storage, strNewFmt("%s/%s/%s/%s", archiveStanzaPath, archiveId, majorWal, strZ(wal))),
             BUFSTRDEF(BOGUS_STR));
     }
 }
@@ -69,10 +69,6 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
-
-    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-
-    const String *archiveStanzaPath = STRDEF("repo/archive/db");
 
     StringList *argListBase = strLstNew();
     hrnCfgArgRawZ(argListBase, cfgOptStanza, "db");
@@ -627,9 +623,9 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - remove archives across timelines");
 
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000100000000");
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "10-2", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000200000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "10-2", "0000000100000000");
 
         argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "3");
@@ -740,7 +736,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Regenerate archive
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000200000000");
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "differential and full count as an incremental");
 
@@ -1143,7 +1139,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - archive removed");
 
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 1, "9.4-1", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 1, "9.4-1", "0000000100000000");
         argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
@@ -1198,7 +1194,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
 
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 5, "9.4-1", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 5, "9.4-1", "0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention backup no archive-start");
@@ -1294,8 +1290,8 @@ testRun(void)
             "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
         HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", .recurse=true);
-        archiveGenerate(storageTest, archiveStanzaPath, 2, 2, "9.4-1", "0000000100000000");
-        archiveGenerate(storageTest, archiveStanzaPath, 6, 10, "10-2", "0000000300000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 2, 2, "9.4-1", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 6, 10, "10-2", "0000000300000000");
 
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/00000002.history");
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/00000003.history");
@@ -1558,8 +1554,8 @@ testRun(void)
 
         // Create 10-1 and 10-2 although 10-2 is not realistic since the archive.info knows nothing about it - it is just to
         // confirm that nothing from disk is removed and it will also be used for the next test.
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 7, "10-1", "0000000100000000");
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 7, "10-2", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 7, "10-1", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 7, "10-2", "0000000100000000");
 
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
@@ -1864,8 +1860,8 @@ testRun(void)
             "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}");
 
         // Create archive directories and generate archive
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "12-2", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000200000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "12-2", "0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup and dependent");
@@ -2214,7 +2210,7 @@ testRun(void)
             strZ(manifestContent));
 
         // archives to repo1
-        archiveGenerate(storageTest, archiveStanzaPath, 2, 10, "12-2", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 2, 10, "12-2", "0000000100000000");
 
         // Create encrypted repo2 with same data from repo1 and ensure results are reported the same. This will test that the
         // manifest can be read on encrypted repos.
@@ -2255,7 +2251,7 @@ testRun(void)
             strZ(manifestContent), .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
 
         // archives to repo2
-        archiveGenerate(storageTest, STRDEF(TEST_PATH "/repo2/archive/db"), 2, 10, "12-2", "0000000100000000");
+        archiveGenerate(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE, 2, 10, "12-2", "0000000100000000");
 
         // Create "latest" symlink, repo2
         latestLink = storagePathP(storageRepoIdx(1), STRDEF(STORAGE_REPO_BACKUP "/latest"));
@@ -2341,7 +2337,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152600D/" BACKUP_MANIFEST_FILE);
 
         // Genreate archive for backups in backup.info
-        archiveGenerate(storageTest, archiveStanzaPath, 1, 11, "9.4-1", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 11, "9.4-1", "0000000100000000");
 
         // Set the log level to detail so archive expiration messages are seen
         harnessLogLevelSet(logLevelDetail);
