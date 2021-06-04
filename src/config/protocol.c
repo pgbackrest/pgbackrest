@@ -35,7 +35,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
             varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
         }
 
-        protocolServerResultVar(server, varNewVarLst(optionList));
+        protocolServerResult(server, pckWriteStrP(protocolPack(), jsonFromVar(varNewVarLst(optionList))));
         protocolServerResponse(server);
     }
     MEM_CONTEXT_TEMP_END();

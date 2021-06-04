@@ -36,6 +36,19 @@ Constants
     STRING_DECLARE(PROTOCOL_OUTPUT_STR);
 
 /***********************************************************************************************************************************
+This size should be safe for most pack data without wasting a lot of space. If binary data is being transferred then this size can
+be added to the expected binary size to account for overhead.
+***********************************************************************************************************************************/
+#define PROTOCOL_PACK_DEFAULT_SIZE                                  1024
+
+// Pack large enough for standard data. Note that the buffer will automatically resize when required.
+__attribute__((always_inline)) static inline PackWrite *
+protocolPack(void)
+{
+    return pckWriteNewBuf(bufNew(PROTOCOL_PACK_DEFAULT_SIZE));
+}
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);

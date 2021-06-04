@@ -141,7 +141,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             {
                 result.name = strDup(result.name);
 
-                storageRemoteInfoParse(&(StorageRemoteInfoParseData){}, read, &result);
+                storageRemoteInfoParse(&(StorageRemoteInfoParseData){0}, read, &result);
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -188,7 +188,7 @@ storageRemoteInfoList(
         protocolClientWriteCommand(this->client, command);
 
         // Read list
-        StorageRemoteInfoParseData parseData = {};
+        StorageRemoteInfoParseData parseData = {0};
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {

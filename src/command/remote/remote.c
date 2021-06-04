@@ -50,8 +50,8 @@ cmdRemote(int fdRead, int fdWrite)
 
         TRY_BEGIN()
         {
-            // Read the command.  No need to parse it since we know this is the first noop.
-            pckReadEnd(pckReadNew(protocolServerIoRead(server)));
+            // Get the command. No need to check parameters since we know this is the first noop.
+            CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_NOOP);
 
             // Only try the lock if this is process 0, i.e. the remote started from the main process
             if (cfgOptionUInt(cfgOptProcess) == 0)

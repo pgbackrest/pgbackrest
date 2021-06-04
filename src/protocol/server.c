@@ -12,7 +12,6 @@ Protocol Server
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
-#include "protocol/client.h"
 #include "protocol/helper.h"
 #include "protocol/server.h"
 #include "version.h"
@@ -29,11 +28,18 @@ struct ProtocolServer
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// Write interface
+// Read interface !!! REMOVE
+__attribute__((always_inline)) static inline IoRead *
+protocolServerIoRead(ProtocolServer *const this)
+{
+    return THIS_PUB(ProtocolServer)->read;
+}
+
+// Write interface !!! REMOVE
 __attribute__((always_inline)) static inline IoWrite *
 protocolServerIoWrite(ProtocolServer *const this)
 {
-    return this->pub.write;
+    return THIS_PUB(ProtocolServer)->write;
 }
 
 /**********************************************************************************************************************************/
@@ -116,6 +122,34 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
 }
 
 /**********************************************************************************************************************************/
+ProtocolServerCommandGetResult
+protocolServerCommandGet(ProtocolServer *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+    FUNCTION_LOG_END();
+
+    ProtocolServerCommandGetResult result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *const command = pckReadNew(protocolServerIoRead(this));
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.id = strIdFromStr(stringIdBit5, pckReadStrP(command));
+            result.param = pckReadPackBufP(command);
+        }
+        MEM_CONTEXT_PRIOR_END();
+
+        pckReadEndP(command);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/**********************************************************************************************************************************/
 void
 protocolServerProcess(
     ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *const handlerList,
@@ -141,19 +175,15 @@ protocolServerProcess(
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Read command
-                PackRead *const commandPack = pckReadNew(protocolServerIoRead(this));
-                // !!! CONVERT TO STRID
-                const StringId command = strIdFromStr(stringIdBit5, pckReadStrP(commandPack));
-                const Buffer *const paramBuf = pckReadPackBufP(commandPack);
-                pckReadEndP(commandPack);
+                // Get command
+                ProtocolServerCommandGetResult command = protocolServerCommandGet(this);
 
                 // Find the handler
                 ProtocolServerCommandHandler handler = NULL;
 
                 for (unsigned int handlerIdx = 0; handlerIdx < handlerListSize; handlerIdx++)
                 {
-                    if (command == handlerList[handlerIdx].command)
+                    if (command.id == handlerList[handlerIdx].command)
                     {
                         handler = handlerList[handlerIdx].handler;
                         break;
@@ -178,7 +208,7 @@ protocolServerProcess(
 
                             TRY_BEGIN()
                             {
-                                handler(pckReadNewBuf(paramBuf), this);
+                                handler(pckReadNewBuf(command.param), this);
                             }
                             CATCH_ANY()
                             {
@@ -218,7 +248,7 @@ protocolServerProcess(
                 // Else check built-in commands
                 else
                 {
-                    switch (command)
+                    switch (command.id)
                     {
                         case PROTOCOL_COMMAND_EXIT:
                             exit = true;
@@ -229,7 +259,8 @@ protocolServerProcess(
                             break;
 
                         default:
-                            THROW_FMT(ProtocolError, "invalid command '%s' (0x%" PRIx64 ")", strZ(strIdToStr(command)), command);
+                            THROW_FMT(
+                                ProtocolError, "invalid command '%s' (0x%" PRIx64 ")", strZ(strIdToStr(command.id)), command.id);
                     }
                 }
 

@@ -5,8 +5,7 @@ Protocol Server
 #define PROTOCOL_SERVER_H
 
 /***********************************************************************************************************************************
-Commands may have multiple processes that work together to implement their functionality.  These roles allow each process to know
-what it is supposed to do.
+!!!
 ***********************************************************************************************************************************/
 typedef enum
 {
@@ -34,12 +33,7 @@ typedef struct ProtocolServer ProtocolServer;
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "common/type/stringId.h"
-
-/***********************************************************************************************************************************
-This size should be safe for most results without wasting a lot of space. If binary data is being transferred then this size can be
-added to the expected binary size to account for overhead.
-***********************************************************************************************************************************/
-#define PROTOCOL_SERVER_RESULT_SIZE                                 1024
+#include "protocol/client.h"
 
 /***********************************************************************************************************************************
 Protocol command handler type and structure
@@ -72,57 +66,29 @@ typedef struct ProtocolServerPub
     IoWrite *write;                                                 // Write interface
 } ProtocolServerPub;
 
-// Read interface !!! REMOVE
-__attribute__((always_inline)) static inline IoRead *
-protocolServerIoRead(ProtocolServer *const this)
-{
-    return THIS_PUB(ProtocolServer)->read;
-}
-
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Return an error
 void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
 
+// Get a command. This is used when the first noop command needs to be processed before running protocolServerProcess(), which
+// allows an error to be returned to the client if initialization fails.
+typedef struct ProtocolServerCommandGetResult
+{
+    StringId id;                                                    // Command identifier
+    Buffer *param;                                                  // Parameter pack
+} ProtocolServerCommandGetResult;
+
+ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *const this);
+
 // Process requests
 void protocolServerProcess(
     ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *const handlerList,
     const unsigned int handlerListSize);
 
-// Result pack large enough for standard results. Note that the buffer will automatically resize when required.
-__attribute__((always_inline)) static inline PackWrite *
-protocolServerResultPack(void)
-{
-    return pckWriteNewBuf(bufNew(PROTOCOL_SERVER_RESULT_SIZE));
-}
-
 // !!! Respond to request with output if provided
 void protocolServerResult(ProtocolServer *this, PackWrite *resultPack);
-
-__attribute__((always_inline)) static inline void
-protocolServerResultBool(ProtocolServer *const this, const bool result)
-{
-    PackWrite *resultPack = protocolServerResultPack();
-    pckWriteBoolP(resultPack, result);
-    protocolServerResult(this, resultPack);
-}
-
-__attribute__((always_inline)) static inline void
-protocolServerResultUInt(ProtocolServer *const this, const unsigned int result)
-{
-    PackWrite *resultPack = protocolServerResultPack();
-    pckWriteU32P(resultPack, result);
-    protocolServerResult(this, resultPack);
-}
-
-__attribute__((always_inline)) static inline void
-protocolServerResultVar(ProtocolServer *const this, const Variant *const result)
-{
-    PackWrite *resultPack = protocolServerResultPack();
-    pckWriteStrP(resultPack, jsonFromVar(result));
-    protocolServerResult(this, resultPack);
-}
 
 // !!!
 PackRead *protocolServerDataGet(ProtocolServer *const this);

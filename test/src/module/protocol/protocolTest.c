@@ -711,7 +711,7 @@ testRun(void)
         //         }
         //         MEM_CONTEXT_TEMP_END();
         //
-        //         TEST_RESULT_PTR(protocolServerIoRead(server), server->pub.read, "get read io");
+        //         TEST_RESULT_PTR(protocolServerIoRead?(server), server->pub.read, "get read io");
         //         TEST_RESULT_PTR(protocolServerIoWrite(server), server->pub.write, "get write io");
         //
         //         ProtocolServerHandler commandHandler[] =
