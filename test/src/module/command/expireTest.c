@@ -15,7 +15,7 @@ Test Expire Command
 Helper functions
 ***********************************************************************************************************************************/
 void
-archiveGenerate( // CSHANG Is it possible to use storageRepoWrite when calling this function?
+archiveGenerate(
     Storage *storageTest, const String *archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
     const char *majorWal)
 {
@@ -69,9 +69,8 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
-// CSHANG - try to avoid using storageTest - if use storageRepo, there are built in stuff for me
+
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-// CSHANG - paths as constant - get rid of strings and use constants like INFO_BACKUP_PATH_FILE and INFO_ARCHIVE_PATH_FILE
 
     const String *archiveStanzaPath = STRDEF("repo/archive/db");
 
@@ -227,7 +226,7 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, NULL),
             "20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n20181119-152900F\n"
                 "20181119-152900F_20181119-152600D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional - CAN'T B/C empty line
+            "remaining backups correct");
         TEST_RESULT_LOG("P00   INFO: repo1: expire full backup 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -241,7 +240,7 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "current backups reduced by 1 full and dependencies");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152900F\n20181119-152900F_20181119-152600D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
+            "remaining backups correct");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D,"
                 " 20181119-152800F_20181119-152155I");
@@ -252,7 +251,7 @@ testRun(void)
         TEST_RESULT_UINT(expireFullBackup(infoBackup, 0), 0, "retention-full=1 - not enough backups to expire any");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152900F\n20181119-152900F_20181119-152600D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
+            "remaining backups correct");
     }
 
     // *****************************************************************************************************************************
@@ -269,8 +268,8 @@ testRun(void)
         StringList *argList = strLstDup(argListAvoidWarn);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff not set - nothing expired"); // CSHANG maybe remove this comment when comment becomes optional
-        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired"); // CSHANG maybe remove this comment when comment becomes optional
+        TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff not set - nothing expired");
+        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff set - nothing yet to expire");
@@ -280,8 +279,8 @@ testRun(void)
         hrnCfgArgRawZ(argListTemp, cfgOptRepoRetentionDiff, "6");
         HRN_CFG_LOAD(cfgCmdExpire, argListTemp);
 
-        TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff set - too soon to expire"); // CSHANG maybe remove this comment when comment becomes optional
-        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired"); // CSHANG maybe remove this comment when comment becomes optional
+        TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff set - too soon to expire");
+        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff set - diff and dependent incr expired");
@@ -294,7 +293,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
             "20181119-152138F\n20181119-152800F\n20181119-152900F\n20181119-152900F_20181119-152600D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
+            "remaining backups correct");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire diff backup set 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I");
 
@@ -356,7 +355,7 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "current backups reduced by one");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152800F\n20181119-152800F_20181119-152155D\n",
-            "remaining backups correct"); // CSHANG maybe remove this comment when comment becomes optional
+            "remaining backups correct");
         TEST_RESULT_LOG("P00   INFO: repo1: expire diff backup 20181119-152800F_20181119-152152D");
     }
 
@@ -1293,8 +1292,8 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
             "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
-// CSHANG REPLACE THE STORAGE PATH REMOVE with the macro
-        storagePathRemoveP(storageTest, strNewFmt("%s/10-2/0000000100000000", strZ(archiveStanzaPath)), .recurse=true);
+
+        HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", .recurse=true);
         archiveGenerate(storageTest, archiveStanzaPath, 2, 2, "9.4-1", "0000000100000000");
         archiveGenerate(storageTest, archiveStanzaPath, 6, 10, "10-2", "0000000300000000");
 
