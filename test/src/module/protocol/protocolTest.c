@@ -53,7 +53,7 @@ Test protocol request handler
 //     MEM_CONTEXT_TEMP_BEGIN()
 //     {
 //         protocolServerResultBool(server, true);
-//         protocolServerResponse(server);
+//         protocolServerResultPut(server);
 //     }
 //     MEM_CONTEXT_TEMP_END();
 //
@@ -567,8 +567,8 @@ testRun(void)
         //         TEST_RESULT_VOID(
         //             protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "test"))),
         //             "execute command with output");
-        //         TEST_RESULT_STR_Z(hrnPackToStr(protocolClientResult(client)), "1:str:value1, 2:str:value2", "    result");
-        //         TEST_RESULT_VOID(protocolClientResponse(client), "    response");
+        //         TEST_RESULT_STR_Z(hrnPackToStr(protocolClientDataGet(client)), "1:str:value1, 2:str:value2", "    result");
+        //         TEST_RESULT_VOID(protocolClientResultGet(client), "    response");
         //
         //         // Invalid line
         //         TEST_RESULT_VOID(

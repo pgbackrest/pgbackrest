@@ -168,8 +168,8 @@ protocolParallelProcess(ProtocolParallel *this)
                         {
                             ProtocolClient *const client = *(ProtocolClient **)lstGet(this->clientList, clientIdx);
 
-                            protocolParallelJobResultSet(job, jsonToVar(pckReadStrP(protocolClientResult(client))));
-                            protocolClientResponse(client);
+                            protocolParallelJobResultSet(job, jsonToVar(pckReadStrP(protocolClientDataGet(client))));
+                            protocolClientResultGet(client);
                         }
                         CATCH_ANY()
                         {

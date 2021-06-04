@@ -47,8 +47,8 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
             repoFile, repoIdx, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum, pgFileZero, pgFileSize,
             pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass);
 
-        protocolServerResult(server, pckWriteStrP(protocolPack(), jsonFromVar(VARBOOL(result))));
-        protocolServerResponse(server);
+        protocolServerDataPut(server, pckWriteStrP(protocolPack(), jsonFromVar(VARBOOL(result))));
+        protocolServerResultPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

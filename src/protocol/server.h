@@ -87,13 +87,14 @@ void protocolServerProcess(
     ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *const handlerList,
     const unsigned int handlerListSize);
 
-// !!! Respond to request with output if provided
-void protocolServerResult(ProtocolServer *this, PackWrite *resultPack);
-
-// !!!
+// Get data sent by the client
 PackRead *protocolServerDataGet(ProtocolServer *const this);
 
-void protocolServerResponse(ProtocolServer *this);
+// Send data to the client
+void protocolServerDataPut(ProtocolServer *this, PackWrite *resultPack);
+
+// Send a result to the client. This ends command processing and no more data should be sent.
+void protocolServerResultPut(ProtocolServer *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolServer *

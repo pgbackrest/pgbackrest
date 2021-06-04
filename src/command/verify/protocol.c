@@ -33,8 +33,8 @@ verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         const VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
 
-        protocolServerResult(server, pckWriteStrP(protocolPack(), jsonFromVar(VARUINT(result))));
-        protocolServerResponse(server);
+        protocolServerDataPut(server, pckWriteStrP(protocolPack(), jsonFromVar(VARUINT(result))));
+        protocolServerResultPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -130,7 +130,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
         protocolClientWriteCommand(this->client, command);
 
         // Read info from protocol
-        PackRead *read = protocolClientResult(this->client);
+        PackRead *read = protocolClientDataGet(this->client);
 
         result.exists = pckReadBoolP(read);
 
@@ -146,7 +146,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             MEM_CONTEXT_PRIOR_END();
         }
 
-        protocolClientResponse(this->client);
+        protocolClientResultGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -192,7 +192,7 @@ storageRemoteInfoList(
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            PackRead *read = protocolClientResult(this->client);
+            PackRead *read = protocolClientDataGet(this->client);
             pckReadNext(read);
 
             while (pckReadType(read) == pckTypeStr)
@@ -205,7 +205,7 @@ storageRemoteInfoList(
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
                 MEM_CONTEXT_TEMP_RESET(1000);
 
-                read = protocolClientResult(this->client);
+                read = protocolClientDataGet(this->client);
                 pckReadNext(read);
             }
 
@@ -213,7 +213,7 @@ storageRemoteInfoList(
         }
         MEM_CONTEXT_TEMP_END();
 
-        protocolClientResponse(this->client);
+        protocolClientResultGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -20,11 +20,6 @@ STRING_EXTERN(PROTOCOL_GREETING_NAME_STR,                           PROTOCOL_GRE
 STRING_EXTERN(PROTOCOL_GREETING_SERVICE_STR,                        PROTOCOL_GREETING_SERVICE);
 STRING_EXTERN(PROTOCOL_GREETING_VERSION_STR,                        PROTOCOL_GREETING_VERSION);
 
-STRING_EXTERN(PROTOCOL_ERROR_STR,                                   PROTOCOL_ERROR); // !!! REMOVE
-STRING_EXTERN(PROTOCOL_ERROR_STACK_STR,                             PROTOCOL_ERROR_STACK); // !!! REMOVE
-
-STRING_EXTERN(PROTOCOL_OUTPUT_STR,                                  PROTOCOL_OUTPUT); // !!! REMOVE
-
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -224,7 +219,7 @@ protocolClientError(ProtocolClient *const this, const ProtocolServerType type, P
 }
 
 PackRead *
-protocolClientResult(ProtocolClient *const this)
+protocolClientDataGet(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -254,8 +249,9 @@ protocolClientResult(ProtocolClient *const this)
     FUNCTION_LOG_RETURN(PACK_READ, result);
 }
 
+/**********************************************************************************************************************************/
 void
-protocolClientResponse(ProtocolClient *const this)
+protocolClientResultGet(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -338,10 +334,10 @@ protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command
     PackRead *result = NULL;
 
     if (resultRequired)
-        result = protocolClientResult(this);
+        result = protocolClientDataGet(this);
 
     // Read response
-    protocolClientResponse(this);
+    protocolClientResultGet(this);
 
     FUNCTION_LOG_RETURN(PACK_READ, result);
 }

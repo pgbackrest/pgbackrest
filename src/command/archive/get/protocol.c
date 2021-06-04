@@ -53,8 +53,8 @@ archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
         varLstAdd(result, varNewUInt(fileResult.actualIdx));
         varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.warnList)));
 
-        protocolServerResult(server, pckWriteStrP(protocolPack(), jsonFromVar(varNewVarLst(result))));
-        protocolServerResponse(server);
+        protocolServerDataPut(server, pckWriteStrP(protocolPack(), jsonFromVar(varNewVarLst(result))));
+        protocolServerResultPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -27,14 +27,6 @@ Constants
 #define PROTOCOL_COMMAND_EXIT                                       STRID5("exit", 0xa27050)
 #define PROTOCOL_COMMAND_NOOP                                       STRID5("noop", 0x83dee0)
 
-#define PROTOCOL_ERROR                                              "err" //  !!! REMOVE
-    STRING_DECLARE(PROTOCOL_ERROR_STR);
-#define PROTOCOL_ERROR_STACK                                        "errStack" //  !!! REMOVE
-    STRING_DECLARE(PROTOCOL_ERROR_STACK_STR);
-
-#define PROTOCOL_OUTPUT                                             "out" //  !!! REMOVE
-    STRING_DECLARE(PROTOCOL_OUTPUT_STR);
-
 /***********************************************************************************************************************************
 This size should be safe for most pack data without wasting a lot of space. If binary data is being transferred then this size can
 be added to the expected binary size to account for overhead.
@@ -87,8 +79,8 @@ protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 void protocolClientNoOp(ProtocolClient *this);
 
 // !!! Read the command output
-PackRead *protocolClientResult(ProtocolClient *const this);
-void protocolClientResponse(ProtocolClient *const this);
+PackRead *protocolClientDataGet(ProtocolClient *const this);
+void protocolClientResultGet(ProtocolClient *const this);
 
 // Write the protocol command
 void protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command);

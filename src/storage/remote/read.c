@@ -82,7 +82,7 @@ storageReadRemoteOpen(THIS_VOID)
         protocolClientWriteCommand(this->client, command);
 
         // If the file exists
-        result = pckReadBoolP(protocolClientResult(this->client));
+        result = pckReadBoolP(protocolClientDataGet(this->client));
 
         if (result)
         {
@@ -95,7 +95,7 @@ storageReadRemoteOpen(THIS_VOID)
         }
         // Else nothing to do
         else
-            protocolClientResponse(this->client);
+            protocolClientResultGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -131,7 +131,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    PackRead *const read = protocolClientResult(this->client);
+                    PackRead *const read = protocolClientDataGet(this->client);
                     pckReadNext(read);
 
                     if (pckReadType(read) == pckTypeBin)
@@ -150,7 +150,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                         ioFilterGroupResultAllSet(ioReadFilterGroup(storageReadIo(this->read)), jsonToVar(pckReadStrP(read)));
                         this->eof = true;
 
-                        protocolClientResponse(this->client);
+                        protocolClientResultGet(this->client);
                     }
 
 #ifdef DEBUG

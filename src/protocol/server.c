@@ -255,7 +255,7 @@ protocolServerProcess(
                             break;
 
                         case PROTOCOL_COMMAND_NOOP:
-                            protocolServerResponse(this);
+                            protocolServerResultPut(this);
                             break;
 
                         default:
@@ -315,7 +315,7 @@ protocolServerDataGet(ProtocolServer *const this)
 
 /**********************************************************************************************************************************/
 void
-protocolServerResult(ProtocolServer *this, PackWrite *result)
+protocolServerDataPut(ProtocolServer *this, PackWrite *result)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
@@ -341,7 +341,7 @@ protocolServerResult(ProtocolServer *this, PackWrite *result)
 
 /**********************************************************************************************************************************/
 void
-protocolServerResponse(ProtocolServer *this)
+protocolServerResultPut(ProtocolServer *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
