@@ -123,6 +123,7 @@ typedef enum
     pckFormatStr = 7,
     pckFormatU32 = 8,
     pckFormatU64 = 9,
+    pckFormatStrId = 10,
 
     pckFormatTime = 15,
     pckFormatBin = 16,
@@ -178,9 +179,12 @@ static const PackFormatData packFormatData[] =
         .type = pckTypeU64,
         .valueMultiBit = true,
     },
+    {
+        .type = pckTypeStrId,
+        .valueMultiBit = true,
+    },
 
     // Placeholders for unused formats that can be encoded entirely in the tag
-    {0},
     {0},
     {0},
     {0},
@@ -934,6 +938,24 @@ pckReadStr(PackRead *this, PckReadStrParam param)
 }
 
 /**********************************************************************************************************************************/
+StringId
+pckReadStrId(PackRead *this, PckReadStrIdParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(UINT64, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(param.defaultValue);
+
+    FUNCTION_TEST_RETURN(pckReadTag(this, &param.id, pckFormatStrId, false));
+}
+
+/**********************************************************************************************************************************/
 StringList *
 pckReadStrLst(PackRead *const this, PckReadStrLstParam param)
 {
@@ -1602,6 +1624,26 @@ pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
             pckWriteBuffer(this, BUF(strZ(value), strSize(value)));
         }
     }
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteStrId(PackWrite *this, uint64_t value, PckWriteStrIdParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT64, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
+        FUNCTION_TEST_PARAM(UINT64, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!pckWriteDefaultNull(this, param.defaultWrite, value == param.defaultValue))
+        pckWriteTag(this, pckFormatStrId, param.id, value);
 
     FUNCTION_TEST_RETURN(this);
 }

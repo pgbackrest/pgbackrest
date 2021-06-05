@@ -67,9 +67,7 @@ protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
 
     // Write the command and flush to be sure the command gets sent immediately
     PackWrite *commandPack = pckWriteNew(write);
-
-    // !!! CONVERT TO STRID
-    pckWriteStrP(commandPack, strIdToStr(this->command));
+    pckWriteStrIdP(commandPack, this->command);
 
     // Only write params if there were any
     if (!pckWriteEmpty(this->pack))

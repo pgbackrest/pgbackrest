@@ -116,6 +116,7 @@ typedef enum
     pckTypePack = STRID5("pack", 0x58c300),
     pckTypePtr = STRID5("ptr", 0x4a900),
     pckTypeStr = STRID5("str", 0x4a930),
+    pckTypeStrId = STRID5("strid", 0x44ca930),
     pckTypeTime = STRID5("time", 0x2b5340),
     pckTypeU32 = STRID6("u32", 0x1e7d51),
     pckTypeU64 = STRID6("u64", 0x208951),
@@ -268,6 +269,19 @@ typedef struct PckReadStrParam
     pckReadStr(this, (PckReadStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 String *pckReadStr(PackRead *this, PckReadStrParam param);
+
+// Read string id
+typedef struct PckReadStrIdParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+    StringId defaultValue;
+} PckReadStrIdParam;
+
+#define pckReadStrIdP(this, ...)                                                                                                   \
+    pckReadStrId(this, (PckReadStrIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+uint64_t pckReadStrId(PackRead *this, PckReadStrIdParam param);
 
 // Read string list
 typedef struct PckReadStrLstParam
@@ -468,6 +482,20 @@ typedef struct PckWriteStrParam
     pckWriteStr(this, value, (PckWriteStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param);
+
+// Write string id
+typedef struct PckWriteStrIdParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultWrite;
+    unsigned int id;
+    StringId defaultValue;
+} PckWriteStrIdParam;
+
+#define pckWriteStrIdP(this, value, ...)                                                                                           \
+    pckWriteStrId(this, value, (PckWriteStrIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteStrId(PackWrite *this, uint64_t value, PckWriteStrIdParam param);
 
 // Write string list
 typedef struct PckWriteStrLstParam

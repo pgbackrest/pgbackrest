@@ -85,6 +85,10 @@ String *hrnPackToStr(PackRead *read)
                 strCatFmt(result, "%s", strZ(pckReadStrP(read, .id = id)));
                 break;
 
+            case pckTypeStrId:
+                strCatFmt(result, "%s", strZ(strIdToStr(pckReadStrIdP(read, .id = id))));
+                break;
+
             case pckTypeTime:
                 strCatFmt(result, "%" PRId64, (int64_t)pckReadTimeP(read, .id = id));
                 break;

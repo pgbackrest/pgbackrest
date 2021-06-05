@@ -50,6 +50,8 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteObjBeginP(packWrite, .id = 28), "write obj begin");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, true), "write true");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .defaultWrite = true), "write false");
+        TEST_RESULT_VOID(pckWriteStrIdP(packWrite, pckTypeTime, .id = 5), "write strid");
+        TEST_RESULT_VOID(pckWriteStrIdP(packWrite, pckTypeTime, .defaultValue = pckTypeTime), "write strid");
         TEST_RESULT_VOID(pckWriteObjEndP(packWrite), "write obj end");
         TEST_RESULT_VOID(pckWriteArrayBeginP(packWrite, .id = 37), "write array begin");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0, .defaultWrite = true), "write 0");
@@ -131,6 +133,7 @@ testRun(void)
             "{"
                   "1:bool:true"
                 ", 2:bool:false"
+                ", 5:strid:time"
             "}"
             ", 37:array:"
             "["
@@ -180,6 +183,7 @@ testRun(void)
             "57"                                                    // 28, obj begin
                 "28"                                                //      1, bool
                 "20"                                                //      2, bool
+                "aac0a6ad01"                                        //      5, strid time
                 "00"                                                //     obj end
             "1801"                                                  // 37, array begin
                 "90"                                                //      1,  u64, 0
@@ -240,8 +244,10 @@ testRun(void)
         TEST_ERROR(pckReadArrayEndP(packRead), FormatError, "not in array");
         TEST_RESULT_BOOL(pckReadBoolP(packRead), true, "read true");
         TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read false");
-        TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "field 3 default is false");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "field 4 default is false");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 4), true, "field 4 is null");
+        TEST_RESULT_UINT(pckReadStrIdP(packRead), pckTypeTime, "read strid");
+        TEST_RESULT_UINT(pckReadStrIdP(packRead, .defaultValue = pckTypeTime), pckTypeTime, "read default strid");
         TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read default false");
         TEST_RESULT_VOID(pckReadObjEndP(packRead), "read object end");
 

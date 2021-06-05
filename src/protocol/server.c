@@ -137,7 +137,7 @@ protocolServerCommandGet(ProtocolServer *const this)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result.id = strIdFromStr(stringIdBit5, pckReadStrP(command));
+            result.id = pckReadStrIdP(command);
             result.param = pckReadPackBufP(command);
         }
         MEM_CONTEXT_PRIOR_END();
