@@ -17,6 +17,12 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PackWrite and PackRead"))
     {
+        TEST_TITLE("type size");
+
+        TEST_RESULT_UINT(sizeof(PackType), 4, "PackType");
+        TEST_RESULT_UINT(sizeof(PackFormatData), 8, "PackFormatData");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write pack");
 
         Buffer *pack = bufNew(0);
@@ -161,48 +167,48 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(pack),
-            "b8e803"                                                //  1,  u64, 750
-            "b8fd9fad8f07"                                          //  2,  u64, 1911246845
-            "bc01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
-            "b601"                                                  // 10,  u64, 1
-            "b84d"                                                  // 11,  u64, 77
-            "a87f"                                                  // 12,  u32, 127
-            "54"                                                    // 13,  i64, -1
-            "44"                                                    // 14,  i32, -1
-            "38"                                                    // 15, bool, true
-            "3401"                                                  // 20, bool, false
-            "67"                                                    // 28, obj begin
-                "38"                                                //      1, bool
-                "30"                                                //      2, bool
+            "98e803"                                                //  1,  u64, 750
+            "98fd9fad8f07"                                          //  2,  u64, 1911246845
+            "9c01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
+            "9601"                                                  // 10,  u64, 1
+            "984d"                                                  // 11,  u64, 77
+            "887f"                                                  // 12,  u32, 127
+            "44"                                                    // 13,  i64, -1
+            "34"                                                    // 14,  i32, -1
+            "28"                                                    // 15, bool, true
+            "2401"                                                  // 20, bool, false
+            "57"                                                    // 28, obj begin
+                "28"                                                //      1, bool
+                "20"                                                //      2, bool
                 "00"                                                //     obj end
             "1801"                                                  // 37, array begin
-                "b0"                                                //      1,  u64, 0
-                "b4"                                                //      2,  u64, 1
-                "b802"                                              //      3,  u64, 2
-                "b803"                                              //      4,  u64, 3
+                "90"                                                //      1,  u64, 0
+                "94"                                                //      2,  u64, 1
+                "9802"                                              //      3,  u64, 2
+                "9803"                                              //      4,  u64, 3
                 "00"                                                //     array end
-            "880673616d706c65"                                      // 38,  str, sample
-            "8816656e6f756768746f696e637265617365627566666572"      // 39,  str, enoughtoincreasebuffer
-            "80"                                                    // 40,  str, zero length
-            "8805736d616c6c"                                        // 41,  str, small
-            "80"                                                    // 42,  str, zero length
-            "82"                                                    // 45,  str, zero length
-            "a1"                                                    // 47,  u32, 0
+            "780673616d706c65"                                      // 38,  str, sample
+            "7816656e6f756768746f696e637265617365627566666572"      // 39,  str, enoughtoincreasebuffer
+            "70"                                                    // 40,  str, zero length
+            "7805736d616c6c"                                        // 41,  str, small
+            "70"                                                    // 42,  str, zero length
+            "72"                                                    // 45,  str, zero length
+            "81"                                                    // 47,  u32, 0
             "10"                                                    // 48, array begin
-                "60"                                                //      1, obj begin
-                    "48d608"                                        //           1, i32, 555
-                    "49920c"                                        //           3, i32, 777
-                    "5902"                                          //           5, i64, 1
-                    "b5"                                            //           7, u64, 1
+                "50"                                                //      1, obj begin
+                    "38d608"                                        //           1, i32, 555
+                    "39920c"                                        //           3, i32, 777
+                    "4902"                                          //           5, i64, 1
+                    "95"                                            //           7, u64, 1
                     "00"                                            //         obj end
-                "890141"                                            //      3,  str, A
-                "9942"                                              //      5, time, 33
-                "988401"                                            //      6, time, 66
+                "790141"                                            //      3,  str, A
+                "f90042"                                            //      5, time, 33
+                "f8008401"                                          //      6, time, 66
                 "00"                                                //     array end
-            "2806050403020100"                                      // 49,  bin, 0x050403020100
-            "21"                                                    // 51,  bin, zero length
-            "c009b8d902890373756200"                                // 52,  pack, 1:u64:345, 3:str:sub
-            "11880161880362636400"                                  // 54,  strlst, 1:str:a, 2:str:bcd
+            "f80106050403020100"                                    // 49,  bin, 0x050403020100
+            "f101"                                                  // 51,  bin, zero length
+            "f0020998d902790373756200"                              // 52,  pack, 1:u64:345, 3:str:sub
+            "11780161780362636400"                                  // 54,  strlst, 1:str:a, 2:str:bcd
             "00",                                                   // end
             "check pack hex");
 

@@ -39,13 +39,10 @@ String *hrnPackToStr(PackRead *read)
         PackType type = pckReadType(read);
         unsigned int id = pckReadId(read);
 
-        strCatFmt(result, "%u:%s:", id, strZ(pckTypeToStr(type)));
+        strCatFmt(result, "%u:%s:", id, strZ(strIdToStr(type)));
 
         switch (type)
         {
-            case pckTypeUnknown:
-                THROW_FMT(AssertError, "invalid type %s", strZ(pckTypeToStr(type)));
-
             case pckTypeArray:
                 pckReadArrayBeginP(read, .id = id);
                 strCatFmt(result, "[%s]", strZ(hrnPackToStr(read)));
