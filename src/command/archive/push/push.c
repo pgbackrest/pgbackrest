@@ -460,7 +460,6 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
         jobData->walFileIdx++;
 
-        // Command parameters
         ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
         PackWrite *const param = protocolCommandParam(command);
 
@@ -473,7 +472,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         pckWriteI32P(param, jobData->compressLevel);
         pckWriteStrLstP(param, jobData->archiveInfo.errorList);
 
-        // Write data for each repo to push to
+        // Add data for each repo to push to
         pckWriteArrayBeginP(param);
 
         for (unsigned int repoListIdx = 0; repoListIdx < lstSize(jobData->archiveInfo.repoList); repoListIdx++)

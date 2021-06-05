@@ -856,6 +856,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
 
         pckWriteStrP(param, archiveFileMap->request);
 
+        // Add actual files to get
         for (unsigned int actualIdx = 0; actualIdx < lstSize(archiveFileMap->actualList); actualIdx++)
         {
             const ArchiveGetFile *const actual = lstGet(archiveFileMap->actualList, actualIdx);
