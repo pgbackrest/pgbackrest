@@ -57,10 +57,10 @@ my $rhBuild =
 ####################################################################################################################################
 # Format pack tag
 ####################################################################################################################################
-use constant PCK_TYPE_ARRAY                                         => 'pckTypeArray';
-use constant PCK_TYPE_BOOL                                          => 'pckTypeBool';
-use constant PCK_TYPE_OBJ                                           => 'pckTypeObj';
-use constant PCK_TYPE_STR                                           => 'pckTypeStr';
+use constant PCK_TYPE_ARRAY                                         => 1;
+use constant PCK_TYPE_BOOL                                          => 2;
+use constant PCK_TYPE_OBJ                                           => 5;
+use constant PCK_TYPE_STR                                           => 7;
 
 # Pack an unsigned 64-bit integer to base-128 varint encoding and output to hex. This is a simplified version of
 # pckWriteUInt64Internal() so see that function for more information.
@@ -86,7 +86,7 @@ sub packIntFormat
 sub packTagFormat
 {
     my $strName = shift;
-    my $strType = shift;
+    my $iType = shift;
     my $iDelta = shift;
     my $xData = shift;
     my $iIndent = shift;
@@ -97,7 +97,7 @@ sub packTagFormat
     my $iValue = undef;
     my $iBits = undef;
 
-    if ($strType eq PCK_TYPE_STR || $strType eq PCK_TYPE_BOOL)
+    if ($iType == PCK_TYPE_STR || $iType == PCK_TYPE_BOOL)
     {
         $iBits = $iDelta & 0x3;
         $iDelta >>= 2;
@@ -107,7 +107,7 @@ sub packTagFormat
             $iBits |= 0x4;
         }
 
-        if ($strType eq PCK_TYPE_STR)
+        if ($iType == PCK_TYPE_STR)
         {
             $iBits |= 0x8;
             $iValue = length($xData);
@@ -118,7 +118,7 @@ sub packTagFormat
             undef($xData);
         }
     }
-    elsif ($strType eq PCK_TYPE_ARRAY || $strType eq PCK_TYPE_OBJ)
+    elsif ($iType == PCK_TYPE_ARRAY || $iType == PCK_TYPE_OBJ)
     {
         $iBits |= $iDelta & 0x7;
         $iDelta >>= 3;
@@ -130,14 +130,7 @@ sub packTagFormat
     }
 
     # Output pack type and bits
-    my $strResult = "${strIndent}${strType} << 4";
-
-    if ($iBits != 0)
-    {
-        $strResult .= sprintf(" | 0x%02X", $iBits);
-    }
-
-    $strResult .= ',';
+    my $strResult = sprintf("${strIndent}0x%02X,", ($iType << 4) | $iBits);
 
     # Output additional id delta when present
     if ($iDelta > 0)

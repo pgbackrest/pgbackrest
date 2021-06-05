@@ -98,25 +98,24 @@ typedef struct PackWrite PackWrite;
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/type/object.h"
-#include "common/type/string.h"
+#include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
 Pack data type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    pckTypeUnknown = 0,
-    pckTypeArray,
-    pckTypeBin,
-    pckTypeBool,
-    pckTypeI32,
-    pckTypeI64,
-    pckTypeObj,
-    pckTypePtr,
-    pckTypeStr,
-    pckTypeTime,
-    pckTypeU32,
-    pckTypeU64,
+    pckTypeArray = STRID5("array", 0x190ca410),
+    pckTypeBin = STRID5("bin", 0x39220),
+    pckTypeBool = STRID5("bool", 0x63de20),
+    pckTypeI32 = STRID6("i32", 0x1e7c91),
+    pckTypeI64 = STRID6("i64", 0x208891),
+    pckTypeObj = STRID5("obj", 0x284f0),
+    pckTypePtr = STRID5("ptr", 0x4a900),
+    pckTypeStr = STRID5("str", 0x4a930),
+    pckTypeTime = STRID5("time", 0x2b5340),
+    pckTypeU32 = STRID6("u32", 0x1e7d51),
+    pckTypeU64 = STRID6("u64", 0x208951),
 } PackType;
 
 /***********************************************************************************************************************************
@@ -477,11 +476,6 @@ pckWriteFree(PackWrite *const this)
 {
     objFree(this);
 }
-
-/***********************************************************************************************************************************
-Helper Functions
-***********************************************************************************************************************************/
-const String *pckTypeToStr(PackType type);
 
 /***********************************************************************************************************************************
 Macros for function logging
