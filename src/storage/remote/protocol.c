@@ -584,34 +584,3 @@ storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server)
 
     FUNCTION_LOG_RETURN_VOID();
 }
-
-/**********************************************************************************************************************************/
-// !!! REMOVE
-ssize_t
-storageRemoteProtocolBlockSize(const String *message)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, message);
-    FUNCTION_LOG_END();
-
-    ASSERT(message != NULL);
-
-    // Regular expression to check block messages
-    static RegExp *blockRegExp = NULL;
-
-    // Create block regular expression if it has not been created yet
-    if (blockRegExp == NULL)
-    {
-        MEM_CONTEXT_BEGIN(memContextTop())
-        {
-            blockRegExp = regExpNew(BLOCK_REG_EXP_STR);
-        }
-        MEM_CONTEXT_END();
-    }
-
-    // Validate the header block size message
-    if (!regExpMatch(blockRegExp, message))
-        THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strZ(message));
-
-    FUNCTION_LOG_RETURN(SSIZE, (ssize_t)cvtZToInt(strZ(message) + sizeof(PROTOCOL_BLOCK_HEADER) - 1));
-}

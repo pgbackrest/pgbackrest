@@ -16,9 +16,6 @@ Constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Get size of the next transfer block !!! REMOVE
-ssize_t storageRemoteProtocolBlockSize(const String *message);
-
 // Process storage protocol requests
 void storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server);
 void storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server);
