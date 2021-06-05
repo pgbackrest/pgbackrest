@@ -32,11 +32,25 @@ testRun(void)
     // Test storage
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    // Load configuration and get repo remote storage
+    // Load configuration and get pg remote storage
     StringList *argList = strLstNew();
+    hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+    strLstAddZ(argList, "--buffer-size=16384");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH_PG "1");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "localhost");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 2, TEST_USER);
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH_PG "2");
+    hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+    HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+    const Storage *const storagePgWrite = storagePgGet(1, true);
+
+    // Load configuration and get repo remote storage
+    argList = strLstNew();
     strLstAddZ(argList, "--stanza=db");
     strLstAddZ(argList, "--protocol-timeout=10");
-    strLstAddZ(argList, "--buffer-size=16384");
+    hrnCfgArgRawFmt(argList, cfgOptBufferSize, "%zu", ioBufferSize());
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
     strLstAddZ(argList, "--repo1-host=localhost");
     strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
@@ -46,20 +60,6 @@ testRun(void)
 
     const Storage *const storageRepoWrite = storageRepoGet(0, true);
     const Storage *const storageRepo = storageRepoGet(0, false);
-
-    // Load configuration and get pg remote storage
-    argList = strLstNew();
-    hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-    hrnCfgArgRawFmt(argList, cfgOptBufferSize, "%zu", ioBufferSize());
-    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
-    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH_PG "1");
-    hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "localhost");
-    hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 2, TEST_USER);
-    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH_PG "2");
-    hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-    HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-    const Storage *const storagePgWrite = storagePgGet(1, true);
 
     // Create a file larger than the remote buffer size
     Buffer *contentBuf = bufNew(ioBufferSize() * 2);
