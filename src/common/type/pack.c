@@ -109,23 +109,26 @@ Constants
 #define PACK_UINT64_SIZE_MAX                                        10
 
 /***********************************************************************************************************************************
-Type Format data
+Map PackType types to the actual types that will be written into the pack. This hides the details of the type IDs from the user and
+allows the IDs used in the pack to differ from the IDs the user sees.
 ***********************************************************************************************************************************/
 typedef enum
 {
     pckTypeMapUnknown = 0,
-    pckTypeMapArray = 1,
-    pckTypeMapBool = 2,
-    pckTypeMapI32 = 3,
-    pckTypeMapI64 = 4,
-    pckTypeMapObj = 5,
-    pckTypeMapPtr = 6,
-    pckTypeMapStr = 7,
-    pckTypeMapU32 = 8,
-    pckTypeMapU64 = 9,
+    pckTypeMapArray = 1,                                            // Maps to pckTypeArray
+    pckTypeMapBool = 2,                                             // Maps to pckTypeBool
+    pckTypeMapI32 = 3,                                              // Maps to pckTypeI32
+    pckTypeMapI64 = 4,                                              // Maps to pckTypeI64
+    pckTypeMapObj = 5,                                              // Maps to pckTypeObj
+    pckTypeMapPtr = 6,                                              // Maps to pckTypePtr
+    pckTypeMapStr = 7,                                              // Maps to pckTypeStr
+    pckTypeMapU32 = 8,                                              // Maps to pckTypeU32
+    pckTypeMapU64 = 9,                                              // Maps to pckTypeU64
 
-    pckTypeMapTime = 15,
-    pckTypeMapBin = 16,
+    // The empty positions before 15 can be used for new types that will be encoded entirely in the tag
+
+    pckTypeMapTime = 15,                                            // Maps to pckTypeTime
+    pckTypeMapBin = 16,                                             // Maps to pckTypePack
 } PackTypeMap;
 
 typedef struct PackTypeMapData
@@ -138,7 +141,7 @@ typedef struct PackTypeMapData
 
 static const PackTypeMapData packTypeMapData[] =
 {
-    // Placeholder for unknown format to avoid arithmetic on the index
+    // Placeholder for unknown type map to avoid arithmetic on the index
     {0},
 
     // Formats that can be encoded entirely in the tag
@@ -178,7 +181,7 @@ static const PackTypeMapData packTypeMapData[] =
         .valueMultiBit = true,
     },
 
-    // Placeholders for unused formats that can be encoded entirely in the tag
+    // Placeholders for unused types that can be encoded entirely in the tag
     {0},
     {0},
     {0},
@@ -202,9 +205,9 @@ Object types
 ***********************************************************************************************************************************/
 typedef struct PackTagStack
 {
-    PackTypeMap type;
-    unsigned int idLast;
-    unsigned int nullTotal;
+    PackTypeMap typeMap;                                            // Tag type map
+    unsigned int idLast;                                            // Last id in the container
+    unsigned int nullTotal;                                         // Number of nulls since last data
 } PackTagStack;
 
 struct PackRead
@@ -217,7 +220,7 @@ struct PackRead
     size_t bufferUsed;                                              // Amount of data in the buffer
 
     unsigned int tagNextId;                                         // Next tag id
-    PackTypeMap tagNextType;                                        // Next tag type
+    PackTypeMap tagNextTypeMap;                                     // Next tag type map
     uint64_t tagNextValue;                                          // Next tag value
 
     List *tagStack;                                                 // Stack of object/array tags
@@ -253,7 +256,7 @@ pckReadNewInternal(void)
             .tagStack = lstNewP(sizeof(PackTagStack)),
         };
 
-        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeMapObj});
+        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
     }
     MEM_CONTEXT_NEW_END();
 
@@ -408,13 +411,13 @@ pckReadTagNext(PackRead *this)
     else
     {
         // Read field type (e.g. int64, string)
-        this->tagNextType = tag >> 4;
+        this->tagNextTypeMap = tag >> 4;
 
-        if (this->tagNextType == 0xF)
-            this->tagNextType = (unsigned int)pckReadUInt64Internal(this) + 0xF;
+        if (this->tagNextTypeMap == 0xF)
+            this->tagNextTypeMap = (unsigned int)pckReadUInt64Internal(this) + 0xF;
 
         // If the value can contain multiple bits (e.g. integer)
-        if (packTypeMapData[this->tagNextType].valueMultiBit)
+        if (packTypeMapData[this->tagNextTypeMap].valueMultiBit)
         {
             // If the value is stored following the tag (value > 1 bit)
             if (tag & 0x8)
@@ -444,7 +447,7 @@ pckReadTagNext(PackRead *this)
             }
         }
         // Else the value is a single bit (e.g. boolean)
-        else if (packTypeMapData[this->tagNextType].valueSingleBit)
+        else if (packTypeMapData[this->tagNextTypeMap].valueSingleBit)
         {
             // Read low order bits of the field ID delta
             this->tagNextId = tag & 0x3;
@@ -526,11 +529,11 @@ pckReadTag(PackRead *this, unsigned int *id, PackTypeMap type, bool peek)
             // When not peeking the next tag (just to see what it is) then error if the type is not as specified
             if (!peek)
             {
-                if (this->tagNextType != type)
+                if (this->tagNextTypeMap != type)
                 {
                     THROW_FMT(
                         FormatError, "field %u is type '%s' but expected '%s'", this->tagNextId,
-                        strZ(strIdToStr(packTypeMapData[this->tagNextType].type)), strZ(strIdToStr(packTypeMapData[type].type)));
+                        strZ(strIdToStr(packTypeMapData[this->tagNextTypeMap].type)), strZ(strIdToStr(packTypeMapData[type].type)));
                 }
 
                 this->tagStackTop->idLast = this->tagNextId;
@@ -541,7 +544,7 @@ pckReadTag(PackRead *this, unsigned int *id, PackTypeMap type, bool peek)
         }
 
         // Read data for the field being skipped if this is not the field requested
-        if (packTypeMapData[this->tagNextType].size && this->tagNextValue != 0)
+        if (packTypeMapData[this->tagNextTypeMap].size && this->tagNextValue != 0)
         {
             size_t sizeExpected = (size_t)pckReadUInt64Internal(this);
 
@@ -641,7 +644,7 @@ pckReadType(PackRead *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(packTypeMapData[this->tagNextType].type);
+    FUNCTION_TEST_RETURN(packTypeMapData[this->tagNextTypeMap].type);
 }
 
 /**********************************************************************************************************************************/
@@ -659,7 +662,7 @@ pckReadArrayBegin(PackRead *this, PackIdParam param)
     pckReadTag(this, &param.id, pckTypeMapArray, false);
 
     // Add array to the tag stack so IDs can be tracked separately from the parent container
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeMapArray});
+    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapArray});
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -673,7 +676,7 @@ pckReadArrayEnd(PackRead *this)
 
     ASSERT(this != NULL);
 
-    if (lstSize(this->tagStack) == 1 || this->tagStackTop->type != pckTypeMapArray)
+    if (lstSize(this->tagStack) == 1 || this->tagStackTop->typeMap != pckTypeMapArray)
         THROW(FormatError, "not in array");
 
     // Make sure we are at the end of the array
@@ -796,7 +799,7 @@ pckReadObjBegin(PackRead *this, PackIdParam param)
     pckReadTag(this, &param.id, pckTypeMapObj, false);
 
     // Add object to the tag stack so IDs can be tracked separately from the parent container
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeMapObj});
+    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -810,7 +813,7 @@ pckReadObjEnd(PackRead *this)
 
     ASSERT(this != NULL);
 
-    if (lstSize(this->tagStack) == 1 || ((PackTagStack *)lstGetLast(this->tagStack))->type != pckTypeMapObj)
+    if (lstSize(this->tagStack) == 1 || ((PackTagStack *)lstGetLast(this->tagStack))->typeMap != pckTypeMapObj)
         THROW(FormatError, "not in object");
 
     // Make sure we are at the end of the object
@@ -970,7 +973,7 @@ pckReadToLog(const PackRead *this)
 {
     return strNewFmt(
         "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", lstSize(this->tagStack),
-        this->tagStackTop->idLast, this->tagNextId, this->tagNextType, this->tagNextValue);
+        this->tagStackTop->idLast, this->tagNextId, this->tagNextTypeMap, this->tagNextValue);
 }
 
 /**********************************************************************************************************************************/
@@ -992,7 +995,7 @@ pckWriteNewInternal(void)
             .tagStack = lstNewP(sizeof(PackTagStack)),
         };
 
-        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeMapObj});
+        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
     }
     MEM_CONTEXT_NEW_END();
 
@@ -1295,7 +1298,7 @@ pckWriteArrayBegin(PackWrite *this, PackIdParam param)
     pckWriteTag(this, pckTypeMapArray, param.id, 0);
 
     // Add array to the tag stack so IDs can be tracked separately from the parent container
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeMapArray});
+    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapArray});
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1309,7 +1312,7 @@ pckWriteArrayEnd(PackWrite *this)
 
     ASSERT(this != NULL);
     ASSERT(lstSize(this->tagStack) != 1);
-    ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->type == pckTypeMapArray);
+    ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->typeMap == pckTypeMapArray);
 
     // Write end of array tag
     pckWriteUInt64Internal(this, 0);
@@ -1426,7 +1429,7 @@ pckWriteObjBegin(PackWrite *this, PackIdParam param)
     pckWriteTag(this, pckTypeMapObj, param.id, 0);
 
     // Add object to the tag stack so IDs can be tracked separately from the parent container
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeMapObj});
+    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1440,7 +1443,7 @@ pckWriteObjEnd(PackWrite *this)
 
     ASSERT(this != NULL);
     ASSERT(lstSize(this->tagStack) != 1);
-    ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->type == pckTypeMapObj);
+    ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->typeMap == pckTypeMapObj);
 
     // Write end of object tag
     pckWriteUInt64Internal(this, 0);
