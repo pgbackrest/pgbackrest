@@ -20,7 +20,7 @@ testRun(void)
         TEST_TITLE("type size");
 
         TEST_RESULT_UINT(sizeof(PackType), 4, "PackType");
-        TEST_RESULT_UINT(sizeof(PackFormatData), 8, "PackFormatData");
+        TEST_RESULT_UINT(sizeof(PackTypeMapData), 8, "PackTypeMapData");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write pack");
