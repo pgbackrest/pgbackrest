@@ -27,8 +27,6 @@ use pgBackRestBuild::Config::Data;
 ####################################################################################################################################
 use constant BLDLCL_FILE_DEFINE                                     => 'parse';
 
-use constant BLDLCL_ENUM_OPTION_TYPE                                => '01-enumOptionType';
-
 use constant BLDLCL_DATA_COMMAND                                    => '01-dataCommand';
 use constant BLDLCL_DATA_OPTION_GROUP                               => '01-dataOptionGroup';
 use constant BLDLCL_DATA_OPTION                                     => '02-dataOption';
@@ -47,15 +45,6 @@ my $rhBuild =
         &BLDLCL_FILE_DEFINE =>
         {
             &BLD_SUMMARY => $strSummary,
-
-            &BLD_ENUM =>
-            {
-                &BLDLCL_ENUM_OPTION_TYPE =>
-                {
-                    &BLD_SUMMARY => 'Option type',
-                    &BLD_NAME => 'ConfigOptionType',
-                },
-            },
 
             &BLD_DATA =>
             {
@@ -228,17 +217,6 @@ sub renderOptional
 ####################################################################################################################################
 sub buildConfigParse
 {
-    # Build option type enum
-    # ------------------------------------------------------------------------------------------------------------------------------
-    my $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_ENUM}{&BLDLCL_ENUM_OPTION_TYPE};
-
-    foreach my $strOptionType (cfgDefineOptionTypeList())
-    {
-        # Build C enum
-        my $strOptionTypeEnum = buildConfigDefineOptionTypeEnum($strOptionType);
-        push(@{$rhEnum->{&BLD_LIST}}, $strOptionTypeEnum);
-    };
-
     # Build command parse data
     # ------------------------------------------------------------------------------------------------------------------------------
     my $rhCommandDefine = cfgDefineCommand();

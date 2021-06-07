@@ -10,7 +10,7 @@ The general-purpose functions for querying the current configuration are found i
 #define CONFIG_CONFIG_INTERN_H
 
 #include "config/config.h"
-#include "config/parse.auto.h"
+#include "config/parse.h"
 
 /***********************************************************************************************************************************
 The maximum number of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
