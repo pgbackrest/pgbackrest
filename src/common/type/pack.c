@@ -211,7 +211,7 @@ struct PackRead
 {
     MemContext *memContext;                                         // Mem context
     IoRead *read;                                                   // Read pack from
-    Buffer *buffer;                                                 // Buffer to contain read data
+    Buffer *buffer;                                                 // Buffer containing read data
     const uint8_t *bufferPtr;                                       // Pointer to buffer
     size_t bufferPos;                                               // Position in the buffer
     size_t bufferUsed;                                              // Amount of data in the buffer
