@@ -231,14 +231,14 @@ pgbackrest/test/test.pl --vm=none --dry-run
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: builds required: bin
---> P00   INFO: 68 tests selected
+--> P00   INFO: 70 tests selected
                 
-    P00   INFO: P1-T01/68 - vm=none, module=common, test=error
-           [filtered 65 lines of output]
-    P00   INFO: P1-T67/68 - vm=none, module=performance, test=type
-    P00   INFO: P1-T68/68 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/70 - vm=none, module=common, test=error
+           [filtered 67 lines of output]
+    P00   INFO: P1-T69/70 - vm=none, module=performance, test=type
+    P00   INFO: P1-T70/70 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -248,7 +248,7 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -257,32 +257,32 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
         run 1 - waitNew(), waitMore, and waitFree()
-            l0018     expect AssertError: assertion 'waitTime <= 999999000' failed
+            L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
         
-        run 1/1 ------------- l0021 0ms wait
-            l0025     new wait
-            l0026         check remaining time
-            l0027         check wait time
-            l0028         check sleep time
-            l0029         check sleep prev time
-            l0030         no wait more
-            l0033     new wait = 0.2 sec
-            l0034         check remaining time
-            l0035         check wait time
-            l0036         check sleep time
-            l0037         check sleep prev time
-            l0038         check begin time
-            l0044         lower range check
-            l0045         upper range check
-            l0047         free wait
-            l0052     new wait = 1.1 sec
-            l0053         check wait time
-            l0054         check sleep time
-            l0055         check sleep prev time
-            l0056         check begin time
-            l0062         lower range check
-            l0063         upper range check
-            l0065         free wait
+        run 1/1 ------------- L0021 0ms wait
+            L0025     new wait
+            L0026         check remaining time
+            L0027         check wait time
+            L0028         check sleep time
+            L0029         check sleep prev time
+            L0030         no wait more
+            L0033     new wait = 0.2 sec
+            L0034         check remaining time
+            L0035         check wait time
+            L0036         check sleep time
+            L0037         check sleep prev time
+            L0038         check begin time
+            L0044         lower range check
+            L0045         upper range check
+            L0047         free wait
+            L0052     new wait = 1.1 sec
+            L0053         check wait time
+            L0054         check sleep time
+            L0055         check sleep prev time
+            L0056         check begin time
+            L0062         lower range check
+            L0063         upper range check
+            L0065         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     
@@ -300,7 +300,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -323,8 +323,8 @@ pgbackrest/test/test.pl --vm-build --vm=u18
 
 --- output ---
 
-    P00   INFO: test begin - log level info
-    P00   INFO: Using cached pgbackrest/test:u18-base-20200924A image (d95d53e642fc1cea4a2b8e935ea7d9739f7d1c46) ...
+    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: Using cached pgbackrest/test:u18-base-20210521A image (a92925d1200fd12d5f3d59f3a3db555c6efa00be) ...
     P00   INFO: Building pgbackrest/test:u18-test image ...
     P00   INFO: Build Complete
 ```
@@ -336,7 +336,7 @@ pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data and containers
     P00   INFO: builds required: bin, bin host
