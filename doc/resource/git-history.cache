@@ -1,5 +1,10 @@
 [
     {
+        "commit": "d10a99d73b772f221807024abbf61fdc5ca3a800",
+        "date": "2021-06-07 06:51:08 -0400",
+        "subject": "v2.34: PostgreSQL 14 Support"
+    },
+    {
         "commit": "c9a8ff27f2468dd769bfe8829b16e68d64357efb",
         "date": "2021-06-02 11:46:54 -0400",
         "subject": "Add HRN_STORAGE_PATH_REMOVE() macro.",
