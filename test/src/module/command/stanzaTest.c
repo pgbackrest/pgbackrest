@@ -36,7 +36,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaCreate(), checkStanzaInfo(), cmdStanzaDelete()"))
     {
-        TEST_TITLE("stanza-reate: repo option not valid");
+        TEST_TITLE("stanza-create: repo option not valid");
 
         // Load Parameters
         StringList *argList =  strLstDup(argListBase);
@@ -47,7 +47,7 @@ testRun(void)
             hrnCfgLoadP(cfgCmdStanzaCreate, argList), OptionInvalidError, "option 'repo' not valid for command 'stanza-create'");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("stanza-reate: stop file error");
+        TEST_TITLE("stanza-create: stop file error");
 
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argListBase);
 
@@ -82,18 +82,17 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to test file");
-
 // CSHANG Why does the storageRepoWrite() of HRN_INFO_PUT cause an assertion 'configLocal->optionGroup[groupId].indexDefaultExists' failed
 // printf("REPO GROUP VALID %s, TOTAL %u\n", cfgOptionGroupValid(cfgOptGrpRepo) ? "TRUE" : "FALSE", cfgOptionGroupIdxTotal(cfgOptGrpRepo));fflush(stdout);
-        // HRN_INFO_PUT(
-        //     storageRepoWrite(), STORAGE_REPO_ARCHIVE "/test.info",
-        //     "[db]\n"
-        //     "db-id=1\n"
-        //     "db-system-id=6569239123849665679\n"
-        //     "db-version=\"9.6\"\n"
-        //     "\n"
-        //     "[db:history]\n"
-        //     "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n");
+//         HRN_INFO_PUT(
+//             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/test.info",
+//             "[db]\n"
+//             "db-id=1\n"
+//             "db-system-id=6569239123849665679\n"
+//             "db-version=\"9.6\"\n"
+//             "\n"
+//             "[db:history]\n"
+//             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n");
         //     , .comment = "put archive info to test file");  maybe the comment is causing the issue? No.
 
         TEST_RESULT_BOOL(
@@ -103,7 +102,7 @@ testRun(void)
             bufEq(
                 storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
                 storageGetP(storageNewReadP(storageTest, fileName)))),
-            true, "    test and stanza archive info files are equal");
+            true, "test and stanza archive info files are equal");
         //
         // const String *contentBackup = STRDEF
         // (
