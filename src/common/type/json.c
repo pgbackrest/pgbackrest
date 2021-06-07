@@ -957,8 +957,13 @@ jsonFromVar(const Variant *var)
         {
             const VariantList *vl = varVarLst(var);
 
-            // If not an empty array
-            if (!varLstEmpty(vl))
+            // If null
+            if (vl == NULL)
+            {
+                strCat(jsonStr, NULL_STR);
+            }
+            // Else if not an empty array
+            else if (!varLstEmpty(vl))
             {
                 strCatZ(jsonStr, "[");
 
