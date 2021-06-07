@@ -38,7 +38,7 @@ archiveGenerate(
     }
 }
 
-String *
+const char *
 archiveExpectList(const unsigned int start, unsigned int end, const char *majorWal)
 {
     String *result = strNew();
@@ -59,7 +59,7 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
         strCatFmt(result, "%s\n", strZ(wal));
     }
 
-    return result;
+    return strZ(result);
 }
 
 /***********************************************************************************************************************************
@@ -635,13 +635,13 @@ testRun(void)
             removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=3");
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 10, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(2, 10, "0000000100000000"),
             .comment = "only 9.4-1/0000000100000000/000000010000000000000001 removed");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(archiveExpectList(1, 10, "0000000200000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", archiveExpectList(1, 10, "0000000200000000"),
             .comment = "none removed from 9.4-1/0000000200000000 - crossing timelines to play through PITR");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(3, 10, "0000000100000000"),
             .comment = "000000010000000000000001 and 000000010000000000000002 removed from 10-2/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
@@ -658,13 +658,13 @@ testRun(void)
             removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=2");
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(2, 2, "0000000100000000"),
             .comment = "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(archiveExpectList(2, 10, "0000000200000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", archiveExpectList(2, 10, "0000000200000000"),
             .comment = "only 9.4-1/0000000200000000/000000010000000000000001 removed from major wal 2");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(3, 10, "0000000100000000"),
             .comment = "none removed from 10-2/0000000100000000");
         // Only last 2 full backups and dependents are PITRable, first full backup is not
         TEST_RESULT_LOG(
@@ -682,14 +682,14 @@ testRun(void)
             removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=1");
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(2, 2, "0000000100000000"),
             .comment = "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(archiveExpectList(2, 10, "0000000200000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", archiveExpectList(2, 10, "0000000200000000"),
             .comment = "nothing removed from 9.4-1/0000000200000000 major wal 2 - each archiveId must have one backup to play"
             " through PITR");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(3, 10, "0000000100000000"),
             .comment = "none removed from 10-2/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 9.4-1 no archive to remove\n"
@@ -709,17 +709,17 @@ testRun(void)
             "full counts as differential and incremental associated with differential expires");
 
         String *result = strNewFmt(
-            "%s%s%s%s", strZ(archiveExpectList(2, 2, "0000000200000000")), strZ(archiveExpectList(4, 5, "0000000200000000")),
-            strZ(archiveExpectList(7, 7, "0000000200000000")), strZ(archiveExpectList(9, 10, "0000000200000000")));
+            "%s%s%s%s", archiveExpectList(2, 2, "0000000200000000"), archiveExpectList(4, 5, "0000000200000000"),
+            archiveExpectList(7, 7, "0000000200000000"), archiveExpectList(9, 10, "0000000200000000"));
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(2, 2, "0000000100000000"),
             .comment = "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(result),
             .comment = "all in-between removed from 9.4-1/0000000200000000 major wal 2 - last backup able to play through PITR");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(3, 10, "0000000100000000"),
             .comment = "none removed from 10-2/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000003, stop = 000000020000000000000003\n"
@@ -741,17 +741,17 @@ testRun(void)
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "differential and full count as an incremental");
 
         result = strNewFmt(
-            "%s%s%s", strZ(archiveExpectList(2, 2, "0000000200000000")), strZ(archiveExpectList(4, 5, "0000000200000000")),
-            strZ(archiveExpectList(7, 10, "0000000200000000")));
+            "%s%s%s", archiveExpectList(2, 2, "0000000200000000"), archiveExpectList(4, 5, "0000000200000000"),
+            archiveExpectList(7, 10, "0000000200000000"));
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(2, 2, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(2, 2, "0000000100000000"),
             .comment = "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", strZ(result),
             .comment = "incremental and after remain in 9.4-1/0000000200000000 major wal 2");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(3, 10, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(3, 10, "0000000100000000"),
             .comment = "none removed from 10-2/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000001, stop = 000000020000000000000001\n"
@@ -1207,7 +1207,7 @@ testRun(void)
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "backup selected for retention does not have archive-start so do nothing");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(1, 5, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(1, 5, "0000000100000000"),
             .comment = "nothing removed from 9.4-1/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1562,10 +1562,10 @@ testRun(void)
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000000", strZ(archiveExpectList(1, 7, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000000", archiveExpectList(1, 7, "0000000100000000"),
             .comment = "none removed from 10-1/0000000100000000");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(1, 7, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(1, 7, "0000000100000000"),
             .comment = "none removed from 10-2/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1684,10 +1684,10 @@ testRun(void)
             "P00   INFO: repo1: 10-2 remove archive, start = 000000010000000000000001, stop = 000000010000000000000005");
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000000", strZ(archiveExpectList(1, 7, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000000", archiveExpectList(1, 7, "0000000100000000"),
             .comment = "none removed from 10-1/0000000100000000");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", strZ(archiveExpectList(6, 7, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(6, 7, "0000000100000000"),
             .comment = "all prior to 000000010000000000000006 removed from 10-2/0000000100000000");
     }
 
@@ -1977,7 +1977,7 @@ testRun(void)
             STRDEF("20181119-152850F"), "latest link updated");
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_ARCHIVE "/12-2/0000000100000000", strZ(strNewFmt(
-                "%s%s", strZ(archiveExpectList(2, 4, "0000000100000000")), strZ(archiveExpectList(6, 10, "0000000100000000")))),
+                "%s%s", archiveExpectList(2, 4, "0000000100000000"), archiveExpectList(6, 10, "0000000100000000"))),
             .comment = "no archives removed from latest except what was already removed");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -2365,7 +2365,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdExpire(), "oldest backup older but other backups too young");
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", strZ(archiveExpectList(1, 11, "0000000100000000")),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(1, 11, "0000000100000000"),
             .comment = "no archives expired");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
