@@ -784,9 +784,9 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), true,
             "archive sub path not removed because of dry-run, else would be removed");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE)), true,
-            "backup not removed because of dry-run, else would be removed");
+        TEST_STORAGE_EXISTS(
+            storageRepo(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE,
+            .comment = "backup not removed because of dry-run, else would be removed");
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
@@ -1304,8 +1304,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) do not remove 00000002.history file");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000002.history")), true, "history file not removed");
+        TEST_STORAGE_EXISTS(storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/00000002.history", .comment = "history file not removed");
         TEST_RESULT_LOG(
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 no archive to remove\n"
@@ -1325,8 +1324,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000002.history")), false, "history file removed");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000003.history")), true, "history file not removed");
+        TEST_STORAGE_EXISTS(storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/00000003.history", .comment = "history file not removed");
         TEST_RESULT_LOG(
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
             "P00   INFO: repo1: 9.4-1 no archive to remove\n"
@@ -1350,8 +1348,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000002.history")), false, "history file removed");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000003.history")), true, "history file not removed");
+        TEST_STORAGE_EXISTS(storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/00000003.history", .comment = "history file not removed");
         TEST_RESULT_LOG(
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002\n"
             "P00   INFO: repo1: 9.4-1 no archive to remove\n"
