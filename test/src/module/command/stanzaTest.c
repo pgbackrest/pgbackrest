@@ -30,12 +30,14 @@ testRun(void)
     StringList *argListBase = strLstNew();
     hrnCfgArgRawBool(argListBase, cfgOptOnline, false);
     hrnCfgArgRawZ(argListBase, cfgOptStanza, "db");
-    hrnCfgArgRawZ(argListBase, cfgOptPgPath, TEST_PATH "/db"); // CSHANG See if can replace with TEST_PATH_PG
+    hrnCfgArgRawZ(argListBase, cfgOptPgPath, TEST_PATH_PG); // CSHANG See if can replace with TEST_PATH_PG
     hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH_REPO);
 
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaCreate(), checkStanzaInfo(), cmdStanzaDelete()"))
     {
+        TEST_TITLE("stanza-reate: repo option not valid");
+
         // Load Parameters
         StringList *argList =  strLstDup(argListBase);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
@@ -45,24 +47,22 @@ testRun(void)
             hrnCfgLoadP(cfgCmdStanzaCreate, argList), OptionInvalidError, "option 'repo' not valid for command 'stanza-create'");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-reate: stop file error");
+
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argListBase);
 
         // Create the stop file
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
-                "create stop file");
+        HRN_STORAGE_PUT_EMPTY(storageLocalWrite(), strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
         TEST_ERROR_FMT(cmdStanzaCreate(), StopError, "stop file exists for stanza %s", strZ(stanza));
-        TEST_RESULT_VOID(
-            storageRemoveP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "    remove the stop file");
+        TEST_STORAGE_REMOVE(storageLocalWrite(), strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - one repo, no files exist");
@@ -83,6 +83,19 @@ testRun(void)
                 storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to test file");
 
+// CSHANG Why does the storageRepoWrite() of HRN_INFO_PUT cause an assertion 'configLocal->optionGroup[groupId].indexDefaultExists' failed
+// printf("REPO GROUP VALID %s, TOTAL %u\n", cfgOptionGroupValid(cfgOptGrpRepo) ? "TRUE" : "FALSE", cfgOptionGroupIdxTotal(cfgOptGrpRepo));fflush(stdout);
+        // HRN_INFO_PUT(
+        //     storageRepoWrite(), STORAGE_REPO_ARCHIVE "/test.info",
+        //     "[db]\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n");
+        //     , .comment = "put archive info to test file");  maybe the comment is causing the issue? No.
+
         TEST_RESULT_BOOL(
             (bufEq(
                 storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
@@ -91,466 +104,466 @@ testRun(void)
                 storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
                 storageGetP(storageNewReadP(storageTest, fileName)))),
             true, "    test and stanza archive info files are equal");
-
-        const String *contentBackup = STRDEF
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
-                "put backup info to test file");
-
-        TEST_RESULT_BOOL(
-            (bufEq(
-                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))) &&
-            bufEq(
-                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
-                storageGetP(storageNewReadP(storageTest, fileName)))),
-            true, "    test and stanza backup info files are equal");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cmdStanzaCreate success - multi-repo and encryption");
-
-        argList = strLstDup(argListBase);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
-        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
-        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
-        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
-
-        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist on repo1 and both are valid");
-        TEST_RESULT_LOG(
-            "P00   INFO: stanza-create for stanza 'db' on repo1\n"
-            "P00   INFO: stanza 'db' already exists on repo1 and is valid\n"
-            "P00   INFO: stanza-create for stanza 'db' on repo2\n"
-            "P00   INFO: stanza-create for stanza 'db' on repo3\n"
-            "P00   INFO: stanza-create for stanza 'db' on repo4");
-
-        String *archiveInfoFileNameRepo2 = strNewFmt("repo2/archive/%s/archive.info", strZ(stanza));
-        String *backupInfoFileNameRepo2 = strNewFmt("repo2/backup/%s/backup.info", strZ(stanza));
-        String *archiveInfoFileNameRepo3 = strNewFmt("repo3/archive/%s/archive.info", strZ(stanza));
-        String *backupInfoFileNameRepo3 = strNewFmt("repo3/backup/%s/backup.info", strZ(stanza));
-        String *archiveInfoFileNameRepo4 = strNewFmt("repo4/archive/%s/archive.info", strZ(stanza));
-        String *backupInfoFileNameRepo4 = strNewFmt("repo4/backup/%s/backup.info", strZ(stanza));
-
-        InfoArchive *infoArchive = NULL;
-        TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo2, cipherTypeAes256Cbc, STRDEF("12345678")),
-            "  load archive info");
-        TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
-
-        InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo2, cipherTypeAes256Cbc, STRDEF("12345678")),
-            "  load backup info");
-        TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
-
-        TEST_RESULT_BOOL(
-            strEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
-            "  cipher sub different for archive and backup");
-
-        // Confirm non-encrypted repo created successfully
-        TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo3, cipherTypeNone, NULL), "  load archive info");
-        TEST_RESULT_PTR(infoArchiveCipherPass(infoArchive), NULL, "  archive cipher sub not set on non-encrypted repo");
-
-        TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo3, cipherTypeNone, NULL),"  load backup info");
-        TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "  backup cipher sub not set on non-encrypted repo");
-
-        // Confirm other repo encrypted with different password
-        TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo4, cipherTypeAes256Cbc, STRDEF("87654321")),
-            "  load archive info");
-        TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
-
-        TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo4, cipherTypeAes256Cbc, STRDEF("87654321")),
-            "  load backup info");
-        TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cmdStanzaCreate missing files - multi-repo and encryption");
-
-        // Remove backup.info on repo1
-        TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
-
-        // Remove archive.info on repo2
-        TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileNameRepo2, .errorOnMissing = true), "archive.info removed");
-
-        // Remove info files on repo3
-        TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileNameRepo3, .errorOnMissing = true), "archive.info removed");
-        TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileNameRepo3, .errorOnMissing = true), "backup.info removed");
-
-        // Remove copy files repo4
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo4)), .errorOnMissing = true),
-            "archive.info.copy removed");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileNameRepo4)), .errorOnMissing = true),
-            "backup.info.copy removed");
-
-        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - success with missing files");
-        TEST_RESULT_LOG(
-            "P00   INFO: stanza-create for stanza 'db' on repo1\n"
-            "P00   INFO: stanza-create for stanza 'db' on repo2\n"
-            "P00   INFO: stanza-create for stanza 'db' on repo3\n"
-            "P00   INFO: stanza-create for stanza 'db' on repo4");
-
-        TEST_RESULT_BOOL(
-            bufEq(
-                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))),
-            true, "backup.info recreated repo1 from backup.info.copy");
-        TEST_RESULT_BOOL(
-            bufEq(
-                storageGetP(storageNewReadP(storageTest, archiveInfoFileNameRepo2)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))))),
-            true, "archive.info repo2 recreated from archive.info.copy");
-        TEST_RESULT_BOOL(
-            (bufEq(
-                storageGetP(storageNewReadP(storageTest, backupInfoFileNameRepo3)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileNameRepo3))))) &&
-            bufEq(
-                storageGetP(storageNewReadP(storageTest, archiveInfoFileNameRepo3)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo3)))))),
-            true, "info files recreated repo3  from copy files");
-        TEST_RESULT_BOOL(
-            (bufEq(
-                storageGetP(storageNewReadP(storageTest, backupInfoFileNameRepo4)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileNameRepo4))))) &&
-            bufEq(
-                storageGetP(storageNewReadP(storageTest, archiveInfoFileNameRepo4)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo4)))))),
-            true, "info files recreated repo4 from info files");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cmdStanzaDelete - multi-repo and encryption, delete");
-
-        StringList *argListCmd = strLstNew();
-        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 1, TEST_PATH "/repo");
-        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 3, TEST_PATH "/repo3");
-        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 4, TEST_PATH "/repo4");
-        hrnCfgArgRawFmt(argListCmd, cfgOptStanza, "%s", strZ(stanza));
-        hrnCfgArgKeyRawFmt(argListCmd, cfgOptPgPath, 1, TEST_PATH "/%s", strZ(stanza));
-
-        TEST_ERROR(
-            hrnCfgLoadP(cfgCmdStanzaDelete, argListCmd), OptionRequiredError,
-            "stanza-delete command requires option: repo\n"
-            "HINT: this command requires a specific repository to operate on");
-
-        // Add the repo option
-        StringList *argListDelete = strLstDup(argListCmd);
-        hrnCfgArgRawZ(argListDelete, cfgOptRepo, "4");
-        HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
-
-        TEST_ERROR(
-            cmdStanzaDelete(), FileMissingError,
-            "stop file does not exist for stanza 'db'\n"
-            "HINT: has the pgbackrest stop command been run on this server for this stanza?");
-
-        // Create the stop file
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
-                "create stop file");
-
-        TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - repo4");
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("repo4/archive/%s", strZ(stanza))), false, "    stanza deleted");
-        TEST_RESULT_BOOL(
-            storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))), false, "    stop file removed");
-
-        // Remove the cipher pass environment variable otherwise stanza-create will recreate the stanza
-        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 4);
-
-        // Stanza with directories only
-        argListDelete = strLstDup(argListCmd);
-        hrnCfgArgRawZ(argListDelete, cfgOptRepo, "3");
-        HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
-
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("repo3/archive/%s/9.6-1/1234567812345678", strZ(stanza))),
-            "create archive sub directory");
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("repo3/backup/%s/20190708-154306F", strZ(stanza))),
-            "create backup sub directory");
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
-                "create stop file");
-        TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - repo3 - sub directories only");
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("repo3/archive/%s", strZ(stanza))), false, "    stanza archive deleted");
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("repo3/backup/%s", strZ(stanza))), false, "    stanza backup deleted");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cmdStanzaCreate errors");
-
-        argList = strLstDup(argListBase);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
-        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
-        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
-
-        // Backup files removed - archive.info and archive.info.copy exist repo2
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileNameRepo2)), .errorOnMissing = true),
-            "backup.info.copy removed repo2");
-        TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileNameRepo2, .errorOnMissing = true),
-            "backup.info removed repo2");
-        TEST_ERROR(
-            cmdStanzaCreate(), FileMissingError,
-            "archive.info exists but backup.info is missing on repo2\n"
-            "HINT: this may be a symptom of repository corruption!");
-        TEST_RESULT_LOG(
-            "P00   INFO: stanza-create for stanza 'db' on repo1\n"
-            "P00   INFO: stanza 'db' already exists on repo1 and is valid\n"
-            "P00   INFO: stanza-create for stanza 'db' on repo2");
-
-        // Archive files removed - backup.info and backup.info.copy exist repo1
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName)), .errorOnMissing = true),
-            "archive.info.copy removed repo1");
-        TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true),
-            "archive.info removed repo1");
-        TEST_ERROR(
-            cmdStanzaCreate(), FileMissingError,
-            "backup.info exists but archive.info is missing on repo1\n"
-            "HINT: this may be a symptom of repository corruption!");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // Delete the last repo so only 1 remains
-        argListDelete = strLstDup(argListCmd);
-        hrnCfgArgRawZ(argListDelete, cfgOptRepo, "2");
-        HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
-
-        // Create the stop file
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
-                "create stop file");
-
-        TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - only 1 remains");
-
-        // Remove the cipher pass environment variable otherwise stanza-create will recreate the stanza
-        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
-
-        argList = strLstDup(argListBase);
-        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
-
-        // Archive files removed - backup.info exists
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)), .errorOnMissing = true),
-            "backup.info.copy removed");
-        TEST_ERROR(
-            cmdStanzaCreate(), FileMissingError,
-            "backup.info exists but archive.info is missing on repo1\n"
-            "HINT: this may be a symptom of repository corruption!");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // Archive files removed - backup.info.copy exists
-        TEST_RESULT_VOID(
-            storageMoveP(storageTest,
-                storageNewReadP(storageTest, backupInfoFileName),
-                storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)))),
-            "backup.info moved to backup.info.copy");
-        TEST_ERROR(
-            cmdStanzaCreate(), FileMissingError,
-            "backup.info exists but archive.info is missing on repo1\n"
-            "HINT: this may be a symptom of repository corruption!");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // Backup files removed - archive.info file exists
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
-                "put archive info to file");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)), .errorOnMissing = true),
-            "backup.info.copy removed");
-        TEST_ERROR(
-            cmdStanzaCreate(), FileMissingError,
-            "archive.info exists but backup.info is missing on repo1\n"
-            "HINT: this may be a symptom of repository corruption!");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // Backup files removed - archive.info.copy file exists
-        TEST_RESULT_VOID(
-            storageMoveP(storageTest,
-                storageNewReadP(storageTest, archiveInfoFileName),
-                storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName)))),
-                "archive.info moved to archive.info.copy");
-        TEST_ERROR(
-            cmdStanzaCreate(), FileMissingError,
-            "archive.info exists but backup.info is missing on repo1\n"
-            "HINT: this may be a symptom of repository corruption!");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // checkStanzaInfo() - already checked in checkTest so just a sanity check here
-        //--------------------------------------------------------------------------------------------------------------------------
-        // Create a corrupted backup file - db id
-        contentBackup = STRDEF
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=2\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put backup info to file - bad db-id");
-
-        TEST_ERROR(
-            cmdStanzaCreate(), FileInvalidError,
-            "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
-            "HINT: this may be a symptom of repository corruption!");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        // Copy files may or may not exist - remove
-        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName)));
-        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)));
-
-        // Create an archive.info file and backup.info files that match but do not match the current database version
-        contentBackup = STRDEF
-        (
-            "[db]\n"
-            "db-catalog-version=201510051\n"
-            "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.5\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.5\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put backup info to file");
-
-        contentArchive = STRDEF
-        (
-            "[db]\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.5\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
-                "put archive info file");
-
-        TEST_ERROR(
-            cmdStanzaCreate(), FileInvalidError,
-            "backup and archive info files exist but do not match the database\n"
-            "HINT: is this the correct stanza?\n"
-            "HINT: did an error occur during stanza-upgrade?");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // Create archive.info and backup.info files that match but do not match the current database system-id
-        contentArchive = STRDEF
-        (
-            "[db]\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
-                "put archive info to file");
-
-        contentBackup = STRDEF
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put backup info to file");
-
-        TEST_ERROR(
-            cmdStanzaCreate(), FileInvalidError,
-            "backup and archive info files exist but do not match the database\n"
-            "HINT: is this the correct stanza?\n"
-            "HINT: did an error occur during stanza-upgrade?");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // Remove the info files and add sub directory to backup
-        TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
-        TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
-
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("%s/backup.history", strZ(backupStanzaPath))),
-            "create directory in backup");
-        TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "backup directory not empty");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // File in archive, directory in backup
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, strNewFmt("%s/somefile", strZ(archiveStanzaPath))), BUFSTRDEF("some content")),
-            "create file in archive");
-        TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "backup directory and/or archive directory not empty");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // File in archive, backup empty
-        TEST_RESULT_VOID(
-            storagePathRemoveP(storageTest, strNewFmt("%s/backup.history", strZ(backupStanzaPath))), "remove backup subdir");
-        TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
-
-        // Repeat last test using --force (deprecated)
-        //--------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--force");
-        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
-        TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
-        TEST_RESULT_LOG(
-            "P00   WARN: option --force is no longer supported\n"
-            "P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // const String *contentBackup = STRDEF
+        // (
+        //     "[db]\n"
+        //     "db-catalog-version=201608131\n"
+        //     "db-control-version=960\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+        //         "\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
+        //         "put backup info to test file");
+        //
+        // TEST_RESULT_BOOL(
+        //     (bufEq(
+        //         storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))) &&
+        //     bufEq(
+        //         storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+        //         storageGetP(storageNewReadP(storageTest, fileName)))),
+        //     true, "    test and stanza backup info files are equal");
+        //
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("cmdStanzaCreate success - multi-repo and encryption");
+        //
+        // argList = strLstDup(argListBase);
+        // hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        // hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        // hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
+        // hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
+        // hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
+        // hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
+        // hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
+        // HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+        //
+        // TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist on repo1 and both are valid");
+        // TEST_RESULT_LOG(
+        //     "P00   INFO: stanza-create for stanza 'db' on repo1\n"
+        //     "P00   INFO: stanza 'db' already exists on repo1 and is valid\n"
+        //     "P00   INFO: stanza-create for stanza 'db' on repo2\n"
+        //     "P00   INFO: stanza-create for stanza 'db' on repo3\n"
+        //     "P00   INFO: stanza-create for stanza 'db' on repo4");
+        //
+        // String *archiveInfoFileNameRepo2 = strNewFmt("repo2/archive/%s/archive.info", strZ(stanza));
+        // String *backupInfoFileNameRepo2 = strNewFmt("repo2/backup/%s/backup.info", strZ(stanza));
+        // String *archiveInfoFileNameRepo3 = strNewFmt("repo3/archive/%s/archive.info", strZ(stanza));
+        // String *backupInfoFileNameRepo3 = strNewFmt("repo3/backup/%s/backup.info", strZ(stanza));
+        // String *archiveInfoFileNameRepo4 = strNewFmt("repo4/archive/%s/archive.info", strZ(stanza));
+        // String *backupInfoFileNameRepo4 = strNewFmt("repo4/backup/%s/backup.info", strZ(stanza));
+        //
+        // InfoArchive *infoArchive = NULL;
+        // TEST_ASSIGN(
+        //     infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo2, cipherTypeAes256Cbc, STRDEF("12345678")),
+        //     "  load archive info");
+        // TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
+        //
+        // InfoBackup *infoBackup = NULL;
+        // TEST_ASSIGN(
+        //     infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo2, cipherTypeAes256Cbc, STRDEF("12345678")),
+        //     "  load backup info");
+        // TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
+        //
+        // TEST_RESULT_BOOL(
+        //     strEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
+        //     "  cipher sub different for archive and backup");
+        //
+        // // Confirm non-encrypted repo created successfully
+        // TEST_ASSIGN(
+        //     infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo3, cipherTypeNone, NULL), "  load archive info");
+        // TEST_RESULT_PTR(infoArchiveCipherPass(infoArchive), NULL, "  archive cipher sub not set on non-encrypted repo");
+        //
+        // TEST_ASSIGN(
+        //     infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo3, cipherTypeNone, NULL),"  load backup info");
+        // TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "  backup cipher sub not set on non-encrypted repo");
+        //
+        // // Confirm other repo encrypted with different password
+        // TEST_ASSIGN(
+        //     infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo4, cipherTypeAes256Cbc, STRDEF("87654321")),
+        //     "  load archive info");
+        // TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
+        //
+        // TEST_ASSIGN(
+        //     infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo4, cipherTypeAes256Cbc, STRDEF("87654321")),
+        //     "  load backup info");
+        // TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
+        //
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("cmdStanzaCreate missing files - multi-repo and encryption");
+        //
+        // // Remove backup.info on repo1
+        // TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
+        //
+        // // Remove archive.info on repo2
+        // TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileNameRepo2, .errorOnMissing = true), "archive.info removed");
+        //
+        // // Remove info files on repo3
+        // TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileNameRepo3, .errorOnMissing = true), "archive.info removed");
+        // TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileNameRepo3, .errorOnMissing = true), "backup.info removed");
+        //
+        // // Remove copy files repo4
+        // TEST_RESULT_VOID(
+        //     storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo4)), .errorOnMissing = true),
+        //     "archive.info.copy removed");
+        // TEST_RESULT_VOID(
+        //     storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileNameRepo4)), .errorOnMissing = true),
+        //     "backup.info.copy removed");
+        //
+        // TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - success with missing files");
+        // TEST_RESULT_LOG(
+        //     "P00   INFO: stanza-create for stanza 'db' on repo1\n"
+        //     "P00   INFO: stanza-create for stanza 'db' on repo2\n"
+        //     "P00   INFO: stanza-create for stanza 'db' on repo3\n"
+        //     "P00   INFO: stanza-create for stanza 'db' on repo4");
+        //
+        // TEST_RESULT_BOOL(
+        //     bufEq(
+        //         storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))),
+        //     true, "backup.info recreated repo1 from backup.info.copy");
+        // TEST_RESULT_BOOL(
+        //     bufEq(
+        //         storageGetP(storageNewReadP(storageTest, archiveInfoFileNameRepo2)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))))),
+        //     true, "archive.info repo2 recreated from archive.info.copy");
+        // TEST_RESULT_BOOL(
+        //     (bufEq(
+        //         storageGetP(storageNewReadP(storageTest, backupInfoFileNameRepo3)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileNameRepo3))))) &&
+        //     bufEq(
+        //         storageGetP(storageNewReadP(storageTest, archiveInfoFileNameRepo3)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo3)))))),
+        //     true, "info files recreated repo3  from copy files");
+        // TEST_RESULT_BOOL(
+        //     (bufEq(
+        //         storageGetP(storageNewReadP(storageTest, backupInfoFileNameRepo4)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileNameRepo4))))) &&
+        //     bufEq(
+        //         storageGetP(storageNewReadP(storageTest, archiveInfoFileNameRepo4)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo4)))))),
+        //     true, "info files recreated repo4 from info files");
+        //
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("cmdStanzaDelete - multi-repo and encryption, delete");
+        //
+        // StringList *argListCmd = strLstNew();
+        // hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 1, TEST_PATH "/repo");
+        // hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        // hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 3, TEST_PATH "/repo3");
+        // hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 4, TEST_PATH "/repo4");
+        // hrnCfgArgRawFmt(argListCmd, cfgOptStanza, "%s", strZ(stanza));
+        // hrnCfgArgKeyRawFmt(argListCmd, cfgOptPgPath, 1, TEST_PATH "/%s", strZ(stanza));
+        //
+        // TEST_ERROR(
+        //     hrnCfgLoadP(cfgCmdStanzaDelete, argListCmd), OptionRequiredError,
+        //     "stanza-delete command requires option: repo\n"
+        //     "HINT: this command requires a specific repository to operate on");
+        //
+        // // Add the repo option
+        // StringList *argListDelete = strLstDup(argListCmd);
+        // hrnCfgArgRawZ(argListDelete, cfgOptRepo, "4");
+        // HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
+        //
+        // TEST_ERROR(
+        //     cmdStanzaDelete(), FileMissingError,
+        //     "stop file does not exist for stanza 'db'\n"
+        //     "HINT: has the pgbackrest stop command been run on this server for this stanza?");
+        //
+        // // Create the stop file
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+        //         "create stop file");
+        //
+        // TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - repo4");
+        // TEST_RESULT_BOOL(
+        //     storagePathExistsP(storageTest, strNewFmt("repo4/archive/%s", strZ(stanza))), false, "    stanza deleted");
+        // TEST_RESULT_BOOL(
+        //     storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))), false, "    stop file removed");
+        //
+        // // Remove the cipher pass environment variable otherwise stanza-create will recreate the stanza
+        // hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 4);
+        //
+        // // Stanza with directories only
+        // argListDelete = strLstDup(argListCmd);
+        // hrnCfgArgRawZ(argListDelete, cfgOptRepo, "3");
+        // HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
+        //
+        // TEST_RESULT_VOID(
+        //     storagePathCreateP(storageTest, strNewFmt("repo3/archive/%s/9.6-1/1234567812345678", strZ(stanza))),
+        //     "create archive sub directory");
+        // TEST_RESULT_VOID(
+        //     storagePathCreateP(storageTest, strNewFmt("repo3/backup/%s/20190708-154306F", strZ(stanza))),
+        //     "create backup sub directory");
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+        //         "create stop file");
+        // TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - repo3 - sub directories only");
+        // TEST_RESULT_BOOL(
+        //     storagePathExistsP(storageTest, strNewFmt("repo3/archive/%s", strZ(stanza))), false, "    stanza archive deleted");
+        // TEST_RESULT_BOOL(
+        //     storagePathExistsP(storageTest, strNewFmt("repo3/backup/%s", strZ(stanza))), false, "    stanza backup deleted");
+        //
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("cmdStanzaCreate errors");
+        //
+        // argList = strLstDup(argListBase);
+        // hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        // hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        // hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
+        // HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+        //
+        // // Backup files removed - archive.info and archive.info.copy exist repo2
+        // TEST_RESULT_VOID(
+        //     storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileNameRepo2)), .errorOnMissing = true),
+        //     "backup.info.copy removed repo2");
+        // TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileNameRepo2, .errorOnMissing = true),
+        //     "backup.info removed repo2");
+        // TEST_ERROR(
+        //     cmdStanzaCreate(), FileMissingError,
+        //     "archive.info exists but backup.info is missing on repo2\n"
+        //     "HINT: this may be a symptom of repository corruption!");
+        // TEST_RESULT_LOG(
+        //     "P00   INFO: stanza-create for stanza 'db' on repo1\n"
+        //     "P00   INFO: stanza 'db' already exists on repo1 and is valid\n"
+        //     "P00   INFO: stanza-create for stanza 'db' on repo2");
+        //
+        // // Archive files removed - backup.info and backup.info.copy exist repo1
+        // TEST_RESULT_VOID(
+        //     storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName)), .errorOnMissing = true),
+        //     "archive.info.copy removed repo1");
+        // TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true),
+        //     "archive.info removed repo1");
+        // TEST_ERROR(
+        //     cmdStanzaCreate(), FileMissingError,
+        //     "backup.info exists but archive.info is missing on repo1\n"
+        //     "HINT: this may be a symptom of repository corruption!");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // Delete the last repo so only 1 remains
+        // argListDelete = strLstDup(argListCmd);
+        // hrnCfgArgRawZ(argListDelete, cfgOptRepo, "2");
+        // HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
+        //
+        // // Create the stop file
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+        //         "create stop file");
+        //
+        // TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - only 1 remains");
+        //
+        // // Remove the cipher pass environment variable otherwise stanza-create will recreate the stanza
+        // hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+        //
+        // argList = strLstDup(argListBase);
+        // HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+        //
+        // // Archive files removed - backup.info exists
+        // TEST_RESULT_VOID(
+        //     storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)), .errorOnMissing = true),
+        //     "backup.info.copy removed");
+        // TEST_ERROR(
+        //     cmdStanzaCreate(), FileMissingError,
+        //     "backup.info exists but archive.info is missing on repo1\n"
+        //     "HINT: this may be a symptom of repository corruption!");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // Archive files removed - backup.info.copy exists
+        // TEST_RESULT_VOID(
+        //     storageMoveP(storageTest,
+        //         storageNewReadP(storageTest, backupInfoFileName),
+        //         storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)))),
+        //     "backup.info moved to backup.info.copy");
+        // TEST_ERROR(
+        //     cmdStanzaCreate(), FileMissingError,
+        //     "backup.info exists but archive.info is missing on repo1\n"
+        //     "HINT: this may be a symptom of repository corruption!");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // Backup files removed - archive.info file exists
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+        //         "put archive info to file");
+        // TEST_RESULT_VOID(
+        //     storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)), .errorOnMissing = true),
+        //     "backup.info.copy removed");
+        // TEST_ERROR(
+        //     cmdStanzaCreate(), FileMissingError,
+        //     "archive.info exists but backup.info is missing on repo1\n"
+        //     "HINT: this may be a symptom of repository corruption!");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // Backup files removed - archive.info.copy file exists
+        // TEST_RESULT_VOID(
+        //     storageMoveP(storageTest,
+        //         storageNewReadP(storageTest, archiveInfoFileName),
+        //         storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName)))),
+        //         "archive.info moved to archive.info.copy");
+        // TEST_ERROR(
+        //     cmdStanzaCreate(), FileMissingError,
+        //     "archive.info exists but backup.info is missing on repo1\n"
+        //     "HINT: this may be a symptom of repository corruption!");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // checkStanzaInfo() - already checked in checkTest so just a sanity check here
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // // Create a corrupted backup file - db id
+        // contentBackup = STRDEF
+        // (
+        //     "[db]\n"
+        //     "db-catalog-version=201608131\n"
+        //     "db-control-version=960\n"
+        //     "db-id=2\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+        //         "\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+        //         "put backup info to file - bad db-id");
+        //
+        // TEST_ERROR(
+        //     cmdStanzaCreate(), FileInvalidError,
+        //     "backup info file and archive info file do not match\n"
+        //     "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+        //     "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
+        //     "HINT: this may be a symptom of repository corruption!");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // // Copy files may or may not exist - remove
+        // storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName)));
+        // storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)));
+        //
+        // // Create an archive.info file and backup.info files that match but do not match the current database version
+        // contentBackup = STRDEF
+        // (
+        //     "[db]\n"
+        //     "db-catalog-version=201510051\n"
+        //     "db-control-version=942\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.5\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+        //         "\"db-version\":\"9.5\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+        //         "put backup info to file");
+        //
+        // contentArchive = STRDEF
+        // (
+        //     "[db]\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.5\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+        //         "put archive info file");
+        //
+        // TEST_ERROR(
+        //     cmdStanzaCreate(), FileInvalidError,
+        //     "backup and archive info files exist but do not match the database\n"
+        //     "HINT: is this the correct stanza?\n"
+        //     "HINT: did an error occur during stanza-upgrade?");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // Create archive.info and backup.info files that match but do not match the current database system-id
+        // contentArchive = STRDEF
+        // (
+        //     "[db]\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665999\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+        //         "put archive info to file");
+        //
+        // contentBackup = STRDEF
+        // (
+        //     "[db]\n"
+        //     "db-catalog-version=201608131\n"
+        //     "db-control-version=960\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665999\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
+        //         "\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+        //         "put backup info to file");
+        //
+        // TEST_ERROR(
+        //     cmdStanzaCreate(), FileInvalidError,
+        //     "backup and archive info files exist but do not match the database\n"
+        //     "HINT: is this the correct stanza?\n"
+        //     "HINT: did an error occur during stanza-upgrade?");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // Remove the info files and add sub directory to backup
+        // TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
+        // TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName, .errorOnMissing = true), "backup.info removed");
+        //
+        // TEST_RESULT_VOID(
+        //     storagePathCreateP(storageTest, strNewFmt("%s/backup.history", strZ(backupStanzaPath))),
+        //     "create directory in backup");
+        // TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "backup directory not empty");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // File in archive, directory in backup
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, strNewFmt("%s/somefile", strZ(archiveStanzaPath))), BUFSTRDEF("some content")),
+        //     "create file in archive");
+        // TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "backup directory and/or archive directory not empty");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // File in archive, backup empty
+        // TEST_RESULT_VOID(
+        //     storagePathRemoveP(storageTest, strNewFmt("%s/backup.history", strZ(backupStanzaPath))), "remove backup subdir");
+        // TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
+        // TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        //
+        // // Repeat last test using --force (deprecated)
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // strLstAddZ(argList, "--force");
+        // HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+        // TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
+        // TEST_RESULT_LOG(
+        //     "P00   WARN: option --force is no longer supported\n"
+        //     "P00   INFO: stanza-create for stanza 'db' on repo1");
     }
 
     // *****************************************************************************************************************************
