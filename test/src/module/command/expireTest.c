@@ -473,7 +473,7 @@ testRun(void)
         TEST_ERROR(cmdExpire(), StopError, "stop file exists for stanza db");
 
         // Remove the stop file
-        TEST_STORAGE_REMOVE(storagePosixNewP(HRN_PATH_STR, .write = true), strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
+        HRN_STORAGE_REMOVE(storagePosixNewP(HRN_PATH_STR, .write = true), strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive not set");
