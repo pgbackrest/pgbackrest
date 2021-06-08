@@ -2,13 +2,13 @@
 Pack Type
 
 Each pack field begins with a one byte tag. The four high order bits of the tag contain the field type (PackTypeMap). To allow more
-types than four bits will allow, the type bits can be set to 0xF and the rest of the type (-0xF) will be stored by a base-128
+types than four bits will allow, the type bits can be set to 0xF and the rest of the type (- 0xF) will be stored by a base-128
 encoded integer immediately following the tag. The four lower order bits vary by type.
 
-When the "more ID delta" indicator is set then the tag will be followed by a base-128 encoded integer with the higher order ID delta
-bits. The ID delta represents the delta from the ID of the previous field. When the "more value indicator" then the tag (and the ID
-delta, if any) will be followed by a base-128 encoded integer with the high order value bits, i.e. the bits that were not stored
-directly in the tag.
+When the "more ID delta" indicator is set then the tag (and type, if any) will be followed by a base-128 encoded integer with the
+higher order ID delta bits. The ID delta represents the delta from the ID of the previous field. When the "more value indicator"
+then the tag (and the type and ID delta, if any) will be followed by a base-128 encoded integer with the high order value bits, i.e.
+the bits that were not stored directly in the tag.
 
 For integer types the value is the integer being stored but for string and binary types the value is 1 if the size is greater than 0
 and 0 if the size is 0. When the size is greater than 0 the tag is immediately followed by (or after the delta ID if "more ID delta"
@@ -110,12 +110,12 @@ Constants
 #define PACK_UINT64_SIZE_MAX                                        10
 
 /***********************************************************************************************************************************
-Map PackType types to the actual types that will be written into the pack. This hides the details of the type IDs from the user and
-allows the IDs used in the pack to differ from the IDs the user sees.
+Map PackType types to the ypes that will be written into the pack. This hides the details of the type IDs from the user and allows
+the IDs used in the pack to differ from the IDs the user sees.
 ***********************************************************************************************************************************/
 typedef enum
 {
-    pckTypeMapUnknown = 0,
+    pckTypeMapUnknown = 0,                                          // Used internally when the type is not known
     pckTypeMapArray = 1,                                            // Maps to pckTypeArray
     pckTypeMapBool = 2,                                             // Maps to pckTypeBool
     pckTypeMapI32 = 3,                                              // Maps to pckTypeI32
@@ -142,7 +142,7 @@ typedef struct PackTypeMapData
 
 static const PackTypeMapData packTypeMapData[] =
 {
-    // Placeholder for unknown type map to avoid arithmetic on the index
+    // Unknown type map data should not be used
     {0},
 
     // Formats that can be encoded entirely in the tag
@@ -201,6 +201,8 @@ static const PackTypeMapData packTypeMapData[] =
     },
 };
 
+#define PACK_TYPE_MAP_SIZE                                          (sizeof(packTypeMapData) / sizeof(PackTypeMapData))
+
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
@@ -208,7 +210,7 @@ typedef struct PackTagStack
 {
     PackTypeMap typeMap;                                            // Tag type map
     unsigned int idLast;                                            // Last id in the container
-    unsigned int nullTotal;                                         // Number of nulls since last data
+    unsigned int nullTotal;                                         // Total nulls since last tag written
 } PackTagStack;
 
 struct PackRead
@@ -417,6 +419,8 @@ pckReadTagNext(PackRead *this)
         if (this->tagNextTypeMap == 0xF)
             this->tagNextTypeMap = (unsigned int)pckReadUInt64Internal(this) + 0xF;
 
+        CHECK(this->tagNextTypeMap < PACK_TYPE_MAP_SIZE && packTypeMapData[this->tagNextTypeMap].type != 0);
+
         // If the value can contain multiple bits (e.g. integer)
         if (packTypeMapData[this->tagNextTypeMap].valueMultiBit)
         {
@@ -490,18 +494,18 @@ Read field tag
 Some tags and data may be skipped based on the value of the id parameter.
 ***********************************************************************************************************************************/
 static uint64_t
-pckReadTag(PackRead *this, unsigned int *id, PackTypeMap type, bool peek)
+pckReadTag(PackRead *this, unsigned int *id, PackTypeMap typeMap, bool peek)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
         FUNCTION_TEST_PARAM_P(UINT, id);
-        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(ENUM, typeMap);
         FUNCTION_TEST_PARAM(BOOL, peek);                            // Look at the next tag without advancing the field id
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
     ASSERT(id != NULL);
-    ASSERT((peek && type == pckTypeMapUnknown) || (!peek && type != pckTypeMapUnknown));
+    ASSERT((peek && typeMap == pckTypeMapUnknown) || (!peek && typeMap != pckTypeMapUnknown));
 
     // Increment the id by one if no id was specified
     if (*id == 0)
@@ -527,14 +531,15 @@ pckReadTag(PackRead *this, unsigned int *id, PackTypeMap type, bool peek)
         // Else the id exists
         else if (*id == this->tagNextId)
         {
-            // When not peeking the next tag (just to see what it is) then error if the type is not as specified
+            // When not peeking the next tag (just to see what it is) then error if the type map is not as specified
             if (!peek)
             {
-                if (this->tagNextTypeMap != type)
+                if (this->tagNextTypeMap != typeMap)
                 {
                     THROW_FMT(
                         FormatError, "field %u is type '%s' but expected '%s'", this->tagNextId,
-                        strZ(strIdToStr(packTypeMapData[this->tagNextTypeMap].type)), strZ(strIdToStr(packTypeMapData[type].type)));
+                        strZ(strIdToStr(packTypeMapData[this->tagNextTypeMap].type)),
+                        strZ(strIdToStr(packTypeMapData[typeMap].type)));
                 }
 
                 this->tagStackTop->idLast = this->tagNextId;
@@ -1133,11 +1138,11 @@ pckWriteUInt64Internal(PackWrite *this, uint64_t value)
 Write field tag
 ***********************************************************************************************************************************/
 static void
-pckWriteTag(PackWrite *this, PackTypeMap type, unsigned int id, uint64_t value)
+pckWriteTag(PackWrite *this, PackTypeMap typeMap, unsigned int id, uint64_t value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(ENUM, typeMap);
         FUNCTION_TEST_PARAM(UINT, id);
         FUNCTION_TEST_PARAM(UINT64, value);
     FUNCTION_TEST_END();
@@ -1159,11 +1164,11 @@ pckWriteTag(PackWrite *this, PackTypeMap type, unsigned int id, uint64_t value)
     // Calculate field ID delta
     unsigned int tagId = id - this->tagStackTop->idLast - 1;
 
-    // Write field type (e.g. int64, string)
-    uint64_t tag = type >= 0xF ? 0xF0 : type << 4;
+    // Write field type map (e.g. int64, string)
+    uint64_t tag = typeMap >= 0xF ? 0xF0 : typeMap << 4;
 
     // If the value can contain multiple bits (e.g. integer)
-    if (packTypeMapData[type].valueMultiBit)
+    if (packTypeMapData[typeMap].valueMultiBit)
     {
         // If the value is stored in the tag (value == 1 bit)
         if (value < 2)
@@ -1196,7 +1201,7 @@ pckWriteTag(PackWrite *this, PackTypeMap type, unsigned int id, uint64_t value)
         }
     }
     // Else the value is a single bit (e.g. boolean)
-    else if (packTypeMapData[type].valueSingleBit)
+    else if (packTypeMapData[typeMap].valueSingleBit)
     {
         // Write value
         tag |= (value & 0x1) << 3;
@@ -1228,9 +1233,9 @@ pckWriteTag(PackWrite *this, PackTypeMap type, unsigned int id, uint64_t value)
     uint8_t tagByte = (uint8_t)tag;
     pckWriteBuffer(this, BUF(&tagByte, 1));
 
-    // Write remaining type
-    if (type >= 0xF)
-        pckWriteUInt64Internal(this, type - 0xF);
+    // Write remaining type map
+    if (typeMap >= 0xF)
+        pckWriteUInt64Internal(this, typeMap - 0xF);
 
     // Write low order bits of the field ID delta
     if (tagId > 0)
