@@ -1,8 +1,9 @@
 /***********************************************************************************************************************************
 Pack Type
 
-Each pack field begins with a one byte tag. The four high order bits of the tag contain the field type (PackType). The four lower
-order bits vary by type.
+Each pack field begins with a one byte tag. The four high order bits of the tag contain the field type (PackTypeMap). To allow more
+types than four bits will allow, the type bits can be set to 0xF and the rest of the type (-0xF) will be stored by a base-128
+encoded integer immediately following the tag. The four lower order bits vary by type.
 
 When the "more ID delta" indicator is set then the tag will be followed by a base-128 encoded integer with the higher order ID delta
 bits. The ID delta represents the delta from the ID of the previous field. When the "more value indicator" then the tag (and the ID
