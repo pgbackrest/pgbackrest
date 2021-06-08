@@ -95,21 +95,17 @@ protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processI
 
 /**********************************************************************************************************************************/
 void
-protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result)
+protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const result)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
-        FUNCTION_LOG_PARAM(VARIANT, result);
+        FUNCTION_LOG_PARAM(PACK_READ, result);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(protocolParallelJobErrorCode(this) == 0);
 
-    MEM_CONTEXT_BEGIN(this->pub.memContext)
-    {
-        this->pub.result = varDup(result);
-    }
-    MEM_CONTEXT_END();
+    this->pub.result = pckReadMove(this->pub.memContext, result);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -146,5 +142,5 @@ protocolParallelJobToLog(const ProtocolParallelJob *this)
         "{state: %s, key: %s, command: %s, code: %d, message: %s, result: %s}",
         strZ(strIdToStr(protocolParallelJobState(this))), strZ(varToLog(protocolParallelJobKey(this))),
         strZ(protocolCommandToLog(protocolParallelJobCommand(this))), protocolParallelJobErrorCode(this),
-        strZ(strToLog(protocolParallelJobErrorMessage(this))), strZ(varToLog(protocolParallelJobResult(this))));
+        strZ(strToLog(protocolParallelJobErrorMessage(this))), strZ(pckReadToLog(protocolParallelJobResult(this))));
 }

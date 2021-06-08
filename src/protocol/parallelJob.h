@@ -23,6 +23,7 @@ typedef enum
 
 #include "common/time.h"
 #include "common/type/object.h"
+#include "common/type/pack.h"
 #include "protocol/client.h"
 
 /***********************************************************************************************************************************
@@ -42,7 +43,7 @@ typedef struct ProtocolParallelJobPub
     ProtocolParallelJobState state;                                 // Current state of the job
     int code;                                                       // Non-zero result indicates an error
     String *message;                                                // Message if there was a error
-    const Variant *result;                                          // Result if job was successful
+    const PackRead *result;                                         // Result if job was successful
 } ProtocolParallelJobPub;
 
 // Job command
@@ -84,13 +85,13 @@ protocolParallelJobProcessId(const ProtocolParallelJob *const this)
 void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
 
 // Job result
-__attribute__((always_inline)) static inline const Variant *
+__attribute__((always_inline)) static inline PackRead *
 protocolParallelJobResult(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->result;
 }
 
-void protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result);
+void protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const result);
 
 // Job state
 __attribute__((always_inline)) static inline ProtocolParallelJobState

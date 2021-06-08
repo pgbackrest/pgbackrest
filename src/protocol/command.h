@@ -12,7 +12,6 @@ typedef struct ProtocolCommand ProtocolCommand;
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "common/type/stringId.h"
-#include "common/type/variant.h"
 
 /***********************************************************************************************************************************
 Constants
