@@ -272,13 +272,13 @@ testRun(void)
         TEST_TITLE("EOF on short buffer");
 
         TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255")), "new read");
-        TEST_ERROR(pckReadUInt64Internal(packRead), FormatError, "unexpected EOF");
+        TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unexpected EOF");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid uint64");
 
         TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255\255")), "new read");
-        TEST_ERROR(pckReadUInt64Internal(packRead), FormatError, "unterminated base-128 integer");
+        TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unterminated base-128 integer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pack/unpack pointer");
