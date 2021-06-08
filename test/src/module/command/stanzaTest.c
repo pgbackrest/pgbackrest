@@ -258,12 +258,19 @@ testRun(void)
 
         // Create the stop file
         HRN_STORAGE_PUT_EMPTY(storageLocalWrite(), strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
+// cshang add a test for existence of the repo first with storageTest
+TEST_STORAGE_EXISTS(
+    storageRepo(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE,
+    .comment = "backup not removed because of dry-run, else would be removed");
 
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - repo4");
-
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageLocal(), strNewFmt(TEST_PATH "/repo4/archive/%s", strZ(cfgOptionStr(cfgOptStanza)))), false,
-            "stanza deleted");
+// cshang - do not use storageLocal if can help it
+        // TEST_RESULT_BOOL(
+        //     storagePathExistsP(storageLocal(), strNewFmt(TEST_PATH "/repo4/archive/%s", strZ(cfgOptionStr(cfgOptStanza)))), false,
+        //     "stanza deleted");
+        TEST_STORAGE_LIST(storageLocal(), TEST_PATH "/repo4", BOGUS_STR "\n",
+            .comment = "stanza deleted");
+exit(0); // cshang remove
         TEST_RESULT_BOOL(
             storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))), false, "stop file removed");
         //
