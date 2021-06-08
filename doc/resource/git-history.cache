@@ -1,5 +1,714 @@
 [
     {
+        "commit": "d10a99d73b772f221807024abbf61fdc5ca3a800",
+        "date": "2021-06-07 06:51:08 -0400",
+        "subject": "v2.34: PostgreSQL 14 Support"
+    },
+    {
+        "commit": "c9a8ff27f2468dd769bfe8829b16e68d64357efb",
+        "date": "2021-06-02 11:46:54 -0400",
+        "subject": "Add HRN_STORAGE_PATH_REMOVE() macro.",
+        "body": "Update command/archive-push test to show how it is used."
+    },
+    {
+        "commit": "a97fc6e708b67fcf32aec85d312fd3ff5e7d93aa",
+        "date": "2021-06-01 17:10:15 -0400",
+        "subject": "Add storage/remote test for unknown user/group name."
+    },
+    {
+        "commit": "d35315aaf99be7492b7712cda7922f54ccdd924f",
+        "date": "2021-06-01 15:33:07 -0400",
+        "subject": "Add missing parameter log debug."
+    },
+    {
+        "commit": "8250990afb06e0bfb74d2f9ece19338127060b94",
+        "date": "2021-06-01 09:03:44 -0400",
+        "subject": "Replace harnessCfgLoad*() functions with HRN_CFG_LOAD() macro.",
+        "body": "HRN_CFG_LOAD() handles the majority of test configuration loads and has various options for special cases.\n\nIt was not clear when to use harnessCfgLoadRaw() vs harnessCfgLoad(). Now \"raw\" functionality is granular and enabled by parameters, e.g. noStd."
+    },
+    {
+        "commit": "c1277677a3e595a169f3bec7e1da31e8431f2f71",
+        "date": "2021-05-28 15:23:18 -0400",
+        "subject": "Add HRN_STORAGE_PATH_CREATE() macro.",
+        "body": "Update command/archive-get test to show how it is used.\n\nAlso move one path create that was much earlier than it needed to be."
+    },
+    {
+        "commit": "c8427682eafd8d38403818464711d63086dafc35",
+        "date": "2021-05-28 14:39:43 -0400",
+        "subject": "Improve storage harness/test macros.",
+        "body": "Make the macros more consistent in format and make sure that each macro outputs a line number before doing any work so when errors happen it is clear where they happened.\n\nAdd noRecurse option to TEST_STORAGE_LIST().\n\nAdd comment option to all storage macros."
+    },
+    {
+        "commit": "0a43be018347292a2d5e7ec68bbde595604bd104",
+        "date": "2021-05-28 13:08:41 -0400",
+        "subject": "Use L to denote line numbers in test output.",
+        "body": "The lower-case l was too easy to confuse with a 1."
+    },
+    {
+        "commit": "cfe8e5191039b63915f459f9f2cead7aab6b594d",
+        "date": "2021-05-28 08:50:28 -0400",
+        "subject": "Remove line parameter from hrnTestResultBegin().",
+        "body": "Instead store the line number in hrnTestLogPrefix() so it doesn't need to be passed to hrnTestResultBegin().\n\nAlso add missing linefeed in hrnStorageList()."
+    },
+    {
+        "commit": "b3ac9e8010e225542fe4cb584e42a53adcba9d22",
+        "date": "2021-05-28 08:03:22 -0400",
+        "subject": "Remove unused padding parameter from hrnTestLogPrefix().",
+        "body": "Also add fflush() so log prefix is displayed immediately."
+    },
+    {
+        "commit": "52217f12445dd05cb828ed2f8cd19be2ad8759fd",
+        "date": "2021-05-27 16:50:18 -0400",
+        "subject": "Replace storageTest with storagePg*() in command/archive-get test.",
+        "body": "All instances of storageTest are better represented with storagePg*(), which allows TEST_PATH and TEST_PATH_PG to be omitted.\n\nAlso remove some headers which are no longer needed."
+    },
+    {
+        "commit": "aceb956815a87f0c19ea171de25d2c3842a6d806",
+        "date": "2021-05-27 08:03:44 -0400",
+        "subject": "Change archive expiration logging from detail to info level.",
+        "body": "To assist with issue debugging, removal of files during archive expiration has been changed from detail level logging to info level."
+    },
+    {
+        "commit": "5b332b22b508d896abb64fa6abe26c78c83a29bc",
+        "date": "2021-05-26 13:07:18 -0400",
+        "subject": "Add repo-retention-history option to expire backup history.",
+        "body": "The default is to keep all backup history to match the current behavior. In minimal configuration (0 days), unexpired backups are always kept in history.\r\n\r\nWhen a full backup manifest expires, all dependent differential/incremental manifests expire as well."
+    },
+    {
+        "commit": "a69a6c2f5579a55624763592ce9d8d7e92dc55f0",
+        "date": "2021-05-26 12:41:15 -0400",
+        "subject": "Show diff when test.pl --gen-check detects unexpected autogeneration.",
+        "body": "This will help track down autogeneration issues if they can't be reproduced locally."
+    },
+    {
+        "commit": "ba351e9c5ce475831de2aa22cc2b9afa8714a21d",
+        "date": "2021-05-26 12:38:23 -0400",
+        "subject": "Refactor storage/remote unit test using the protocol remote shim.",
+        "body": "Using the local process shim improves coverage and simplifies the tests."
+    },
+    {
+        "commit": "58369c02df39ac9916d5de42d2df9ad509c33b6f",
+        "date": "2021-05-25 18:16:59 -0400",
+        "subject": "Add remote process shim.",
+        "body": "Run the remote process inside a forked child process instead of exec'ing it. This allows coverage to accumulate in the remote process rather than needing to test the remote protocol functions directly, resulting in better end-to-end testing and less test duplication. Another advantage is that the pgbackrest binary does not need to be built for the test and the test does not need to run in a container."
+    },
+    {
+        "commit": "441c000b5c3d8a4dfe67616d2a281c58184ef3ea",
+        "date": "2021-05-25 18:09:29 -0400",
+        "subject": "Factor remote process exec out of protocolRemoteGet().",
+        "body": "This allows protocolRemoteExec() to be shimmed, which means the remote can be run as a child of the test process, simplifying coverage testing.\n\nThe shim does not need SSH parameters, so also split those out into a separate function and update the tests to match."
+    },
+    {
+        "commit": "e1bc1b3e5321c585ed4e2162c28a5f881b1b9342",
+        "date": "2021-05-25 17:48:42 -0400",
+        "subject": "Set buffer-size in the configuration test harness.",
+        "body": "Most tests can set buffer-size as needed, but local/remote process shims are forked, so the best way to set buffer-size is via the configuration."
+    },
+    {
+        "commit": "cd88f8232950f1d6939c0642fa784c2d8a2110d6",
+        "date": "2021-05-25 11:08:51 -0400",
+        "subject": "Move protocol test module before config module.",
+        "body": "The protocol module should be tested before modules that have a dependency on it."
+    },
+    {
+        "commit": "6732806d89ded2969fbf31d85c51e35c2d6f8345",
+        "date": "2021-05-25 11:06:05 -0400",
+        "subject": "Add local process shim to archive-get/archive-push unit tests.",
+        "body": "Use the local process shim introduced in ef63750e in the archive-get/archive-push unit tests."
+    },
+    {
+        "commit": "d55b9471a89163ed362c64960316c292e51cdd8e",
+        "date": "2021-05-25 11:00:24 -0400",
+        "subject": "Protocol shim improvements.",
+        "body": "Add executable to parameter list to avoid first option being lost. The backup, restore, and verify tests worked OK with their first option being defaulted because it ended up being job-retry which worked fine as the default.\n\nAdd hrnProtocolLocalShimUninstall() allow the shim to be uninstalled.\n\nLog shim at debug level to make it obvious in the logs when a shim is in use."
+    },
+    {
+        "commit": "55f52955a5da07e4ebee312c493759fa9dd3f566",
+        "date": "2021-05-24 17:45:31 -0400",
+        "subject": "Fix shims with more than one function.",
+        "body": "Each subsequent function would double every line in the C module.\n\nMove the loop to detect shimmed functions down to prevent this issues."
+    },
+    {
+        "commit": "2452c4d5a4c230b8e3c33d3bddf69e56dfbec284",
+        "date": "2021-05-24 17:17:03 -0400",
+        "subject": "Add PostgreSQL 14 support.",
+        "body": "There are no code changes from PostgreSQL 13 so simply add the new version.\r\n\r\nAdd CATALOG_VERSION_NO_MAX to allow the catalog version to \"float\" during the PostgreSQL beta/rc period so new pgBackRest versions are not required when the catalog version changes.\r\n\r\nUpdate the integration tests to handle new PostgreSQL startup messages."
+    },
+    {
+        "commit": "eba013b49b850e53d59795ac6358fcb3381048a3",
+        "date": "2021-05-24 16:29:36 -0400",
+        "subject": "Fix issue when checking links for large numbers of tablespaces.",
+        "body": "manifestLinkCheck() was pretty inefficient so large numbers of links caused it to use a lot of memory and eventually crash. This is a more efficient implementation which runs O(nlogn) and uses far less memory.\r\n\r\nChecking for duplicate file links has been added, which represents a change in behavior, but hopefully a good one."
+    },
+    {
+        "commit": "ccac75e7de8754b39bb691ff8830a2839ea7a285",
+        "date": "2021-05-24 16:03:15 -0400",
+        "subject": "Consolidate RHEL/CentOS user guide into a single document.",
+        "body": "The user guide was split primarily to provide documentation for the stop-auto option in PostgreSQL <= 9.5. Now that 9.5 is EOL there does not seem to be a good reason to generate an extra user guide. The stop-auto function is still documented in the reference.\r\n\r\nLeave the stop-auto documentation in the user guide in case we want to manually generate documentation for older versions.\r\n\r\nAlso rename centos to rhel for most identifiers since that is the core platform we are building for, similar to how we label 'debian' builds even though we generally use Ubuntu. With CentOS set to become an upstream for RHEL later this year, we'll likely need to pick a new test distribution, perhaps Rocky Linux if that gets off the ground."
+    },
+    {
+        "commit": "f6303152f5f4b9ee538f4378797c9bf8f81bb3c8",
+        "date": "2021-05-24 12:40:27 -0400",
+        "subject": "Minor fixes for command/archive-get unit test.",
+        "body": "Test and remove WAL segment 000000010000000100000002 in the test where it is created rather than as a byproduct of a much later test.\n\nRemove incorrect local role from test. It worked, but was not the correct command role to be using when calling cmdArchiveGet().\n\nMove some harness headers down to the correct section."
+    },
+    {
+        "commit": "e5e0b2119634847f624c824929f5e4af24da9c02",
+        "date": "2021-05-22 15:07:18 -0400",
+        "subject": "Replace system() in tests with HRN_SYSTEM*()."
+    },
+    {
+        "commit": "bd40156c223837e3130ef9041ab7baf44570b362",
+        "date": "2021-05-22 14:22:51 -0400",
+        "subject": "Rename TEST_SYSTEM*() to HRN_SYSTEM*().",
+        "body": "These calls are not tests, rather they setup data for tests."
+    },
+    {
+        "commit": "73885f8c2e3a1ac234cce85684e81db961ad6d47",
+        "date": "2021-05-22 14:09:45 -0400",
+        "subject": "Replace hrnLogResult() with TEST_RESULT_LOG/_FMT().",
+        "body": "The macros provide more information when there is an error and may be updated in the future without changing the test code."
+    },
+    {
+        "commit": "6baad5cdd1f73771e6f87d788769ba658c52ff80",
+        "date": "2021-05-22 11:59:43 -0400",
+        "subject": "Replace TEST_ERROR_FMT() with TEST_ERROR() where possible.",
+        "body": "Some calls did not need TEST_ERROR_FMT() at all and others could be converted by replacing parameters with available defines, e.g. TEST_PATH."
+    },
+    {
+        "commit": "a4f057bb70ca79c8b57ab5418f1b0cc65d3ae521",
+        "date": "2021-05-22 11:28:56 -0400",
+        "subject": "Remove comment formatting from TEST_*() macros.",
+        "body": "Comment formatting was not used much but it incurred a heavy cost in each macro to process possible formatting.\n\nRemove formatted comments where they did not contain valuable information and replace with strZ(strNewFmt()) otherwise."
+    },
+    {
+        "commit": "b270253a69cd44682e94e9cbfcf68f2dce4058a4",
+        "date": "2021-05-22 09:30:54 -0400",
+        "subject": "Add defines for many test*() getter functions.",
+        "body": "A define was already added for TEST_PATH but it was not widely used. Replace all occurrences of testPath() with TEST_PATH in the tests.\n\nReplace testUser() with TEST_USER, testGroup() with TEST_GROUP, testRepoPath() with HRN_PATH_REPO, testDataPath() with HRN_PATH, testProjectExe() with TEST_PROJECT_EXE, and testScale() with TEST_SCALE.\n\nReplace {[path]}, {[user]}, {[group]}, etc. with defines and remove hrnReplaceKey(). This is better than having two ways to deal with replacements.\n\nIn some cases the original test*() getters were kept because they are used by the harness, which does not have access to the new defines. Move them to harnessTest.intern.h to indicate that the tests should no longer use them."
+    },
+    {
+        "commit": "aed3d468a1557474eba4a24854732fc09581b265",
+        "date": "2021-05-21 17:36:43 -0400",
+        "subject": "Rename strNew() to strNewZ() and add parameter-less strNew().",
+        "body": "Replace all instances of strNew(\"\") with strNew() and use strNewZ() for non-empty zero-terminated strings. Besides saving a useless parameter, this will allow smarter memory allocation in a future commit by signaling intent, in general, to append or not.\n\nIn the tests use STRDEF() or VARSTRDEF() where more appropriate rather than blindly replacing with strNewZ(). Also replace strLstAdd() with strLstAddZ() where appropriate for the same reason."
+    },
+    {
+        "commit": "68faf1482a42ea14f5b00a91e19bd5aedec275b8",
+        "date": "2021-05-21 13:21:25 -0400",
+        "subject": "Update contributing documentation.",
+        "body": "Add more examples of how to write code, add configuration options, test, etc."
+    },
+    {
+        "commit": "15b8b9207da40df3df92ee7464a546c335a5a4d9",
+        "date": "2021-05-21 12:51:32 -0400",
+        "subject": "Add log shim.",
+        "body": "This allows DEBUG_UNIT and DEBUG_UNIT_EXTERN to be removed since static log variables can now be exposed by functions in the harness."
+    },
+    {
+        "commit": "ef63750e0bc8292caefe8e421a31e985026f72ee",
+        "date": "2021-05-21 12:45:00 -0400",
+        "subject": "Add local process shim.",
+        "body": "Run the local process inside a forked child process instead of exec'ing it. This allows coverage to accumulate in the local process rather than needing to test the local protocol functions directly, resulting in better end-to-end testing and less test duplication. Another advantage is that the pgbackrest binary does not need to be built for the test.\n\nThe backup, restore, and verify command tests have been updated to use the new shim for coverage."
+    },
+    {
+        "commit": "cab7a97ab6308d72b509ef2e02c559ac691f436b",
+        "date": "2021-05-20 18:47:31 -0400",
+        "subject": "Add shim feature for unit tests.",
+        "body": "A shim allows a test harness to access static functions and variables in a C module, and also allows functions to be shimmed (i.e. overridden) for the purposes of testing.\n\nFor instance, coverage testing works when a process that is normally exec'd is run as a forked child process instead."
+    },
+    {
+        "commit": "e31df55c8dc3ce8c5cd071b0a66d83b3c7c3c4ed",
+        "date": "2021-05-20 18:35:30 -0400",
+        "subject": "Factor local process exec out of protocolLocalGet().",
+        "body": "This allows protocolLocalExec() to be shimmed, which means the local can be run as a child of the test process, simplifying coverage testing."
+    },
+    {
+        "commit": "45a4e801ed52f60f27c73eacaf63ff4b483ab352",
+        "date": "2021-05-20 16:02:31 -0400",
+        "subject": "Replace getopt_long() with custom implementation.",
+        "body": "getopt_long() requires an exhaustive list of all possible options that may be found on the command line. Because of the way options are indexed (e.g. repo1-4, pg1-8) optionList[] has 827 entries and we have kept it small by curtailing the maximum indexes very severely. Another issue is that getopt_long() scans the array sequentially so parsing gets slower as the index maximums increase.\r\n\r\nReplace getopt_long() with a custom implementation that behaves the same but allows options to be parsed with a function instead of using optionList[]. This commit leaves the list in place in order to focus on the getopt_long() replacement, but cfgParseOption() could be replaced with a more efficient implementation that removes the need for optionList[].\r\n\r\nThis implementation also fixes an issue where invalid options were misreported in the error message if they only had one dash, e.g. -config. This seems to have been some kind of problem in getopt_long(), but no investigation was done since the new implementation fixes it.\r\n\r\nTests were added at 0825428, 2b8d2da, 34dd663, and 384f247 to check that previously untested getopt_long() behavior doesn't change."
+    },
+    {
+        "commit": "831ee81466c28ca563d5f5f5468681aca6fe3bea",
+        "date": "2021-05-20 14:39:47 -0400",
+        "subject": "Rename default command role to main.",
+        "body": "Main makes more sense because we refer to the main process in the code, not the default process. The word default is pretty overloaded anyway."
+    },
+    {
+        "commit": "8453d89a92f6b7846bc8eeead285a1abd8fdfb1b",
+        "date": "2021-05-19 14:18:43 -0400",
+        "subject": "Add recursion to TEST_STORAGE_LIST() macro.",
+        "body": "This makes the macro useful when subpaths are present.\n\nIdentify types other than files (path, link, etc.) with a single appended character for easier debugging."
+    },
+    {
+        "commit": "93eb2f8362489eba2e6a6deee6b0d0c6dd3e6a2c",
+        "date": "2021-05-19 14:03:42 -0400",
+        "subject": "Fix invalid type in test function.",
+        "body": "This should have been char * from the start, but of course void * worked fine."
+    },
+    {
+        "commit": "4d48850aad23042b3d7bf22221e2f5d34c00de07",
+        "date": "2021-05-19 12:58:48 -0400",
+        "subject": "Update negate to indicate that it should not be used for new options."
+    },
+    {
+        "commit": "870bcf30af1a516802a67ac173e8bd7a369c6530",
+        "date": "2021-05-18 16:48:30 -0400",
+        "subject": "Add missing header.",
+        "body": "This worked because all places where this header was included, common/type/stringId.h was included first."
+    },
+    {
+        "commit": "4fa95af447d1b9caecbaacb5e7a5ef4b334f7331",
+        "date": "2021-05-18 16:38:57 -0400",
+        "subject": "Fix typo in struct typedef.",
+        "body": "This worked because the type is never declared as struct ExecPub."
+    },
+    {
+        "commit": "c92bc43c1eca6d3deac288f68332b323139e6405",
+        "date": "2021-05-18 16:33:45 -0400",
+        "subject": "Simplify defaults for --force option.",
+        "body": "All commands have the same default so it is more efficient to set the default for the entire option."
+    },
+    {
+        "commit": "320c6e1aad2cc9a8dabecb2bc91a9b34464de6ec",
+        "date": "2021-05-18 15:49:22 -0400",
+        "subject": "Remove stanza archive spool path on restore.",
+        "body": "Remove stanza archive spool path so existing files do not interfere with the new cluster. For instance, old archive-push acknowledgements could cause a new cluster to skip archiving. This should not happen if a new timeline is selected but better to be safe. Missing stanza spool paths are ignored.\r\n\r\nAlso add new path expression STORAGE_SPOOL_ARCHIVE to easily access this path."
+    },
+    {
+        "commit": "dc0e6645cd5c4baa3f301feda4acfce55ba363f7",
+        "date": "2021-05-18 09:08:06 -0400",
+        "subject": "Move includes after typedef in info/manifest.h.",
+        "body": "This allows the Manifest type to be used in headers that need it, e.g. command/backup/common.h."
+    },
+    {
+        "commit": "9af033194abc4b1cd3f06c3a97fff71c966c3827",
+        "date": "2021-05-17 14:55:50 -0400",
+        "subject": "Add automatic GCS authentication for GCE instances.",
+        "body": "When running on a GCE instance the authentication token can be pulled directly from the instance metadata. This is configured with repo-gcs-key-type=auto.\r\n\r\nIn a separate commit (26fefa6), move the code that parses the token response into a separate function, storageGcsAuthToken(), since it is now needed by two key types. This drastically improves the readability of the main commit."
+    },
+    {
+        "commit": "0152075e6bc5fca2b78cbe6051a6b3d998c9030f",
+        "date": "2021-05-17 11:35:22 -0400",
+        "subject": "Remove default VM for test.pl --coverage-only option.",
+        "body": "When running outside of our standard Vagrantfile the default will not be set correctly, so require the user to set it.\n\nIn any case, this option is primarily useful for reporting so note that in the command line help."
+    },
+    {
+        "commit": "384f2470775bd2d867529e7267c12a798a259ab3",
+        "date": "2021-05-17 09:33:36 -0400",
+        "subject": "Add config/parse tests for config/env partial options.",
+        "body": "Partial option matching is valid on the command line but should never be used in config files or environment options."
+    },
+    {
+        "commit": "ae7f0af2023ec7b9261a5a4887351eec669c4442",
+        "date": "2021-05-17 07:20:28 -0400",
+        "subject": "Move PostgreSQL version interface test functions to a test harness.",
+        "body": "Some version interface test functions were integrated into the core code because they relied on the PostgreSQL versioned interface. Even though they were compiled out for production builds they cluttered the core code and made it harder to determine what was required by core.\n\nCreate a PostgreSQL version interface in a test harness to contain these functions. This does require some duplication but the cleaner core code seems a good tradeoff. It is possible for some of this code to be auto-generated but since it is only updated once per year the matter is not pressing."
+    },
+    {
+        "commit": "18cc02238bbd15bfa9827ef86078aa172bdae52b",
+        "date": "2021-05-17 07:15:13 -0400",
+        "subject": "Remove overzealous cast.",
+        "body": "There does not seem to be a good reason to have an explicit cast for such a small number, so remove it.\n\nLeave PG_CONTROL_SIZE alone since it will be removed in an upcoming commit."
+    },
+    {
+        "commit": "9235c62c6b597bc4ed812e0c0a3bc3a36ec30767",
+        "date": "2021-05-17 07:12:46 -0400",
+        "subject": "Revert ignoring catalog version when identifying a PostgreSQL version.",
+        "body": "927d9adb changed the way CATALOG_VERSION_NO is used to identify PostgreSQL versions since PG_CONTROL_VERSION is generally bumped with each release. The goal was to make the beta/rc period less painful because any CATALOG_VERSION_NO bump renders pgBackRest inoperative.\n\nThis worked, but in fact we'd rather be stricter about which CATALOG_VERSION_NO we accept when identifying a version of PostgreSQL. It is not just about identifying a major version, but making sure the build contains all the functions and catalogs we expect to make pgBackRest work correctly. It is better to reject early dev/beta/rc builds that may not work.\n\nSince 927d9adb was relatively recent the chance that this stricter checking will cause a problem seems minimal, so revert to checking CATALOG_VERSION_NO for every PostgreSQL version.\n\nLeave in place the code that pulls CATALOG_VERSION_NO from pg_control rather than the internal constant since the plan is still to allow catalog versions to \"float\" during the PostgreSQL beta/rc phase, which will be the subject of a future commit."
+    },
+    {
+        "commit": "f45e76fa2e8ce0f62317a74fdd51083d52659cd5",
+        "date": "2021-05-13 17:51:39 -0400",
+        "subject": "Fix issues with leftover spool files from a prior restore.",
+        "body": "If an ok file (which indicates the WAL segment was not found) is present on the first iteration of the loop then remove it and spawn the async process to retry. This action also resets the queue.\r\n\r\nAlso error if no response is received from the async process rather than returning not found. PostgreSQL will respond the same either way, but this allows us to determine when something is going wrong with the async process.\r\n\r\nUpdate archiveAsyncStatus() to allow warnings to be suppressed. It is better to retry if no WAL segment was found before warning because the warning might be stale."
+    },
+    {
+        "commit": "34dd6636b83ac41cab592d6a6d18c082e1ee272e",
+        "date": "2021-05-13 17:01:21 -0400",
+        "subject": "Add config/parse tests for options and option args with spaces.",
+        "body": "If an option name has a space at the beginning then it will be considered an invalid command, but a space at the end is an invalid option. Add tests for these conditions.\n\nSpaces in option arguments should be preserved, so add a test to be sure this is true."
+    },
+    {
+        "commit": "2b8d2daca15f2535672f195164c0e8daffdade90",
+        "date": "2021-05-13 16:54:25 -0400",
+        "subject": "Add config/parse tests for partial options.",
+        "body": "Add coverage for partial options, i.e. an option that is partially specified but only prefix matches with a single valid option."
+    },
+    {
+        "commit": "add0f9b77de4b9f1395338e4b092bf77b2da2cd5",
+        "date": "2021-05-13 12:37:59 -0400",
+        "subject": "Fix an ungrammatical error message in config parsing."
+    },
+    {
+        "commit": "0825428fef00e6b4b107526ffa462fa7558aace4",
+        "date": "2021-05-13 12:35:11 -0400",
+        "subject": "Add config/parse test where the option/value are not in the same arg.",
+        "body": "All the tests in this module use --option=value syntax so add one test with --option value syntax for coverage."
+    },
+    {
+        "commit": "26fefa6aeeae90bbb572ea57b605fb8fe526f1a0",
+        "date": "2021-05-13 06:59:57 -0400",
+        "subject": "Refactor GCS token response parsing into a separate function.",
+        "body": "This function is also useful for the upcoming auto authentication. Refactoring in a separate commit to make the feature commit more readable."
+    },
+    {
+        "commit": "7b71604defa02d5ed9b7aa3407961cb59a52cc45",
+        "date": "2021-05-12 13:21:59 -0400",
+        "subject": "Use existing variable for GCS test server port.",
+        "body": "Also fix incorrect separator comment."
+    },
+    {
+        "commit": "5464ac83d121c653e95f337fa14870bbe35dc9f7",
+        "date": "2021-05-11 17:24:30 -0400",
+        "subject": "Convert option values in commands to StringId.",
+        "body": "Convert most of the remaining options that benefit from being StringIds. Since all the command modules can include config.h directly it makes sense to auto-generate these values instead of manually creating an enum for each one.\r\n\r\nFor the time being StringIds are not being auto-generated because the StringId code does not exist in Perl. However, the *_Z zero-terminated constants for each allowed option value are now auto-generated."
+    },
+    {
+        "commit": "87ba2ca253ec9546cb23635ec15017bb5ce7d6e9",
+        "date": "2021-05-11 16:54:42 -0400",
+        "subject": "Change CentOS 7 documentation test to CentOS 8.",
+        "body": "The CentOS 7 documentation test relies on PostgreSQL 9.5 which has been removed from the yum.p.o repository package. Switch the test to CentOS 8 to fix the immediate issue, but a decision on the PostgreSQL 9.5 documentation will need to be made before the next release."
+    },
+    {
+        "commit": "2bfebff2ec73b0af6d937f303fbb9b8a0b8ee649",
+        "date": "2021-05-04 15:51:46 -0400",
+        "subject": "Add instructions to install lcov for MacOS."
+    },
+    {
+        "commit": "54074a569708e40831d767a8b93074f41feec308",
+        "date": "2021-05-04 07:52:35 -0400",
+        "subject": "Exclude Dockerfile from code count."
+    },
+    {
+        "commit": "baddec1e9ae37ad08840401e2602301f06bda021",
+        "date": "2021-05-03 16:31:27 -0400",
+        "subject": "Basic multi-architecture support for test containers.",
+        "body": "The tests worked fine on multiple architectures, but would only run \"bare metal\", i.e. tests that required containers could not be run.\n\nEnable basic multi-architecture support by allowing containers to be built using whatever architecture the host supports. Also allow cached containers to be defined for multiple architectures in container.yaml.\n\nAdd a Dockerfile which can be used as a container for other containers to provide a consistent development environment.\n\nThe primary goal is to allow development on Mac M1 but other architectures should find these improvements useful."
+    },
+    {
+        "commit": "87df6d7a58a6ab3c4748ad75e4128cdad761b15a",
+        "date": "2021-05-03 12:15:39 -0400",
+        "subject": "Convert BackupType enum to StringId.",
+        "body": "Allows removal of backupType()/backupTypeStr() and improves debug logging of the enum.\r\n\r\nMove BackupType enum and string constants to info/infoBackup.h so they are available to more modules. Also convert InfoBackup to use BackupType instead of a String."
+    },
+    {
+        "commit": "568dc0ba0c762376b8bd902d83e38f2649a156af",
+        "date": "2021-05-03 09:34:22 -0400",
+        "subject": "Add new instructions for PostgreSQL news and include a sample.",
+        "body": "It is no longer possible to pull news source from the PostgreSQL website so add a sample in the doc directory. Update the release instructions to reflect this change.\n\nAlso note that it is no longer necessary to post separately to pgsql-announce."
+    },
+    {
+        "commit": "fb7ddce8076107c33c25832c9acb8baffbd57563",
+        "date": "2021-04-28 13:21:24 -0400",
+        "subject": "Convert InfoPgType enum to StringId.",
+        "body": "Improves debug logging by outputting archive/backup instead of 0/1."
+    },
+    {
+        "commit": "bd0081fec87ee32fa57adf5c882a6cad5394eaa0",
+        "date": "2021-04-28 12:37:22 -0400",
+        "subject": "Update IoClient/IoSession to use StringIds.",
+        "body": "Using StringId for the client/session type removes String constants and some awkward referencing/dereferencing needed to use a String constant in the interface.\n\nConverting IoSessionRole to StringId removes a conditional in ioSessionToLog() and improves debug logging by outputting client/server instead of 0/1."
+    },
+    {
+        "commit": "0ec91f61c636731a8a46fc69307bbe5d78ac8871",
+        "date": "2021-04-28 12:23:37 -0400",
+        "subject": "Convert ArchivePushFileIoType enum to StringId.",
+        "body": "Improves debug logging by outputting open/write/close instead of 0/1/2."
+    },
+    {
+        "commit": "8394577c6ac1a13884b4b05052ce6328d38ab067",
+        "date": "2021-04-28 12:05:01 -0400",
+        "subject": "Convert ArchiveMode enum to StringId.",
+        "body": "Improves debug logging by outputting get/push instead of 0/1."
+    },
+    {
+        "commit": "7dd01897fd20a3629e7333dc47bed7d02035b501",
+        "date": "2021-04-28 11:59:04 -0400",
+        "subject": "Convert ProtocolStorageType enum to StringId.",
+        "body": "Allows removal of protocolStorageTypeEnum()/protocolStorageTypeStr() and improves debug logging of the enum."
+    },
+    {
+        "commit": "bd68ed63ba38c841e286e0ab5390450f57c23b37",
+        "date": "2021-04-28 11:43:08 -0400",
+        "subject": "Convert ProtocolParallelJobState enum to StringId.",
+        "body": "Allows removal of protocolParallelJobToConstZ(), which was used only for debugging."
+    },
+    {
+        "commit": "85fc3da4c37dc1cb9af3b8c5248121769ab56650",
+        "date": "2021-04-28 11:36:20 -0400",
+        "subject": "Update CipherType/CipherMode to StringId.",
+        "body": "As in 6cc521b, this allows option values and enums to be easily mapped together."
+    },
+    {
+        "commit": "c3b15fc3bdc332591c6b059c2b23b1cce990d387",
+        "date": "2021-04-28 10:58:45 -0400",
+        "subject": "Fix comments where 'output' was misspelled as 'ouput'."
+    },
+    {
+        "commit": "066fbcf26826ee8332eb76db0db9d684047513ac",
+        "date": "2021-04-27 15:25:10 -0400",
+        "subject": "Refactor String, Buffer, and Variant types with inline getters.",
+        "body": "Extend the pattern introduced in 79a2d02c to the String, Buffer, and Variant types."
+    },
+    {
+        "commit": "1edcfde93e47c79a8b18b05f7ddb1e9fde29b0ed",
+        "date": "2021-04-27 12:12:43 -0400",
+        "subject": "Add cfgOptionDisplay()/cfgOptionIdxDisplay().",
+        "body": "Centralize the formatting of the configuration value for display to the user or passing on a command line.\r\n\r\nFor the new functions, if the value was set by the user via the command line, config, etc., then that exact value will be displayed. This makes it easier for the user to recognize the value and saves having to format it into something reasonable, especially for time and size option types.\r\n\r\nNote that cfgOptTypeHash and cfgOptTypeList option types are not supported by these functions, but they are generally not displayed to the user as a whole.\r\n\r\nThis also fixes a bug in config/load.c where time values where not being formatted correctly in an error message."
+    },
+    {
+        "commit": "95fb002b85897e71820c44519231975d883f87db",
+        "date": "2021-04-27 12:04:50 -0400",
+        "subject": "Preserve unused YAML fix for older Debian/Ubuntu distributions.",
+        "body": "This fix was not used since backports worked for older Debians and the old affected Ubuntus are EOL.\n\nStill, seems worth preserving just in case it comes up elsewhere."
+    },
+    {
+        "commit": "6cc521b6b232cd10b5b1622b1841d988113d0c16",
+        "date": "2021-04-23 13:19:47 -0400",
+        "subject": "Update storage module to use StringIds.",
+        "body": "Use StringIds for the storage types (e.g. STORAGE_S3_TYPE) and configuration settings, e.g. cfgOptS3KeyType.\r\n\r\nAlso add new config functions and harness config functions to support StringIds."
+    },
+    {
+        "commit": "aa72c19a831fb0dd15a50a003fbaad427f335353",
+        "date": "2021-04-23 12:33:25 -0400",
+        "subject": "Do not write files atomically or sync paths during backup copy.",
+        "body": "There is no need to write the file atomically (e.g. via a temp file on Posix) because checksums are tested on resume after a failed backup. The path does not need be synced for each file because all paths are synced at the end of the backup.\r\n\r\nThis functionality was not lost during the migration -- it never existed in the Perl code, though these settings are used in restore. See 59f1353 where backupFile() was migrated to C."
+    },
+    {
+        "commit": "aaa15b9709cd58ad56e5008858867d91f4abe803",
+        "date": "2021-04-23 11:46:03 -0400",
+        "subject": "Add help for all internal options valid for default roles.",
+        "body": "Fix the segfault when getting help for an internal option is requested by adding help for all internal options that are valid for a default command role.\r\n\r\nAlso print warnings about internal options in code rather than putting in each command/option description."
+    },
+    {
+        "commit": "2ad497ea4cdc53f5966f2abab018696ff4694a2d",
+        "date": "2021-04-23 08:04:03 -0400",
+        "subject": "Remove documentation about enum truncation and add tests.",
+        "body": "The enum truncation observed was due to the value getting passed via a protocol function which silently narrowed the enum.\n\nEven so, add some tests to ensure tested platforms support 64-bit enums."
+    },
+    {
+        "commit": "bcc925b7406ae590cd24ff5a0bbb789a6d1ecd5a",
+        "date": "2021-04-22 20:04:27 -0400",
+        "subject": "Replace misused kvAdd() with kvPut().",
+        "body": "Although kvAdd() works like kvPut() on the first call, kvPut() is more efficient when a key has a single value.\n\nUpdate the comment to clarify that kvAdd() is seldom required."
+    },
+    {
+        "commit": "a2f02f95ec5f2835d3c114d1b96fec8109e11402",
+        "date": "2021-04-22 19:28:11 -0400",
+        "subject": "Remove redundant CompressType conversions.",
+        "body": "These seem to be the result of overzealous copy/paste.\n\nThe conversions do not even serve as a verification of locally available compression types since compressTypeEnum() and compressTypeStr() do not check that."
+    },
+    {
+        "commit": "468aa79ea8b1975b1d6fe0665611230432f16d75",
+        "date": "2021-04-22 19:10:13 -0400",
+        "subject": "Remove auto-generated option String constants.",
+        "body": "These are rarely used and end up using more space than they save since most of them are never referenced.\n\nReplace VARSTR() with VARSTRDEF() where these constants are being used."
+    },
+    {
+        "commit": "6a39c51f8f1d992c53bc3af80d9db0037c09fb41",
+        "date": "2021-04-22 18:18:34 -0400",
+        "subject": "Test pull requests in Cirrus CI.",
+        "body": "Both FreedBSD and MacOS use clang as their default compiler and clang catches some errors that gcc does not. Specifically, wide integers being assigned to short integers resulting in possible truncations."
+    },
+    {
+        "commit": "06fa18582a405417c8ab4ba667cb01a13a5c3103",
+        "date": "2021-04-22 12:23:08 -0400",
+        "subject": "Free no longer needed remotes so they do not timeout during restore.",
+        "body": "The remotes are no longer needed in the main process after the manifest is loaded. If the restore is long enough the connection will timeout and WARN at the end of the restore. This is harmless for the restore but distracting for the user.\r\n\r\nTo prevent this, free the remotes once they are no longer needed."
+    },
+    {
+        "commit": "45f83558ea862c6f496a27b886e1160e6303bbe8",
+        "date": "2021-04-22 11:48:04 -0400",
+        "subject": "Fix help when a valid option is invalid for the specified command.",
+        "body": "Getting help for a valid option that was invalid for the command would segfault.\r\n\r\nAdd a check to ensure the option is valid for the command's default role."
+    },
+    {
+        "commit": "72dac5b10b7cd31a00212be9268df95c2d12615c",
+        "date": "2021-04-22 08:15:36 -0400",
+        "subject": "Use option constants in warnings.",
+        "body": "In once case the constant replaces a formatted statement, which is more efficient, and in the other case plain text, which is more maintainable."
+    },
+    {
+        "commit": "20a018a8ae9ce8768044621e19ef716c5622f209",
+        "date": "2021-04-21 18:27:18 -0400",
+        "subject": "Fix incorrect test title."
+    },
+    {
+        "commit": "c5b446d406937d35b277cd0d9131e6c058183f3b",
+        "date": "2021-04-21 10:09:07 -0400",
+        "subject": "Fix indentation."
+    },
+    {
+        "commit": "fd69357302053a79fdef6decf1ff284a8a442e67",
+        "date": "2021-04-20 18:43:16 -0400",
+        "subject": "Add const to inline functions where appropriate.",
+        "body": "This lets the compiler know that these variables are not modified which should lead to better optimization.\n\nSmart compilers should be able to figure this out on their own, but marking parameters const is still good for documentation."
+    },
+    {
+        "commit": "ed0d48f52cb5332f6804737ac01c43bf76d11a50",
+        "date": "2021-04-20 15:22:42 -0400",
+        "subject": "Add StringId type.",
+        "body": "It is often useful to represent identifiers as strings when they cannot easily be represented as an enum/integer, e.g. because they are distributed among a number of unrelated modules or need to be passed to remote processes. Strings are also more helpful in debugging since they can be recognized without cross-referencing the source. However, strings are awkward to work with in C since they cannot be directly used in switch statements leading to less efficient if-else structures.\n\nA StringId encodes a short string into an integer so it can be used in switch statements but may also be readily converted back into a string for debugging purposes. StringIds may also be suitable for matching user input providing the strings are short enough.\n\nThis patch includes a sample of StringId usage by converting protocol commands to StringIds. There are many other possible use cases. To list a few:\n\n* All \"types\" in storage, filters. IO , etc. These types are primarily for identification and debugging so they fit well with this model.\n\n* MemContext names would work well as StringIds since these are entirely for debugging.\n\n* Option values could be represented as StringIds which would mean we could remove the functions that convert strings to enums, e.g. CipherType.\n\n* There are a number of places where enums need to be converted back to strings for logging/debugging purposes. An example is protocolParallelJobToConstZ. If ProtocolParallelJobState were defined as:\n\ntypedef enum\n{\n    protocolParallelJobStatePending = STRID5(\"pend\", ...),\n    protocolParallelJobStateRunning = STRID5(\"run\", ...),\n    protocolParallelJobStateDone = STRID5(\"done\", ...),\n} ProtocolParallelJobState;\n\nthen protocolParallelJobToConstZ() could be replaced with strIdToZ(). This also applies to many enums that we don't covert to strings for logging, such as CipherMode.\n\nAs an example of usage, convert all protocol commands from strings to StringIds."
+    },
+    {
+        "commit": "292f836f1243e51d102bb4be202e7b21a7a386b1",
+        "date": "2021-04-19 15:01:00 -0400",
+        "subject": "Add db-exclude option.",
+        "body": "Restore excluding the specified databases. Databases excluded will be restored as sparse, zeroed files to save space but still allow PostgreSQL to perform recovery. After recovery, those databases will not be accessible but can be removed with the drop database command. The --db-exclude option can be passed multiple times to specify more than one database to exclude.\r\n\r\nWhen used in combination with the --db-include option, --db-exclude will only apply to standard system databases (template0, template1, and postgres)."
+    },
+    {
+        "commit": "a75b413ac228452acfd33aa3d296d8edbeae9604",
+        "date": "2021-04-19 14:22:36 -0400",
+        "subject": "Add storageDriver() inlines missed in b715c70b."
+    },
+    {
+        "commit": "d859fe8c4d60e961cf688f17fb80d0cdc8fb810d",
+        "date": "2021-04-14 15:48:04 -0400",
+        "subject": "Update to remove files after archive-get test completes.",
+        "body": "This cleans up the spool path for the next test. Currently there isn't one but there will be."
+    },
+    {
+        "commit": "040ad71f8cd7b57ec6546e4733749c827ed0aaa3",
+        "date": "2021-04-14 15:41:55 -0400",
+        "subject": "Remove lockClear().",
+        "body": "This function has not been used since the switch to the fork/exec model.\n\nlockClear() was still used in one test (other than the lock test) so update the test and remove the function."
+    },
+    {
+        "commit": "c2d4a0286e5899f3382bd34f9d285f122753bca5",
+        "date": "2021-04-13 18:06:07 -0400",
+        "subject": "Define DEBUG in build.auto.c.",
+        "body": "Both NDEBUG and DEBUG were used in the code, which was a bit confusing.\n\nDefine DEBUG in build.auto.c so it is available in all C and header files and stop using NDEBUG. This is preferable to using NDEBUG everywhere since there are multiple DEBUG* defines, e.g. DEBUG_COVERAGE.\n\nNote that NDEBUG is still required since it is used by the C libraries."
+    },
+    {
+        "commit": "c1aae434ca18ce06a6ea56b779fbdb5702ee1034",
+        "date": "2021-04-13 17:03:28 -0400",
+        "subject": "Update Cirrus CI FreeBSD release to 12.2."
+    },
+    {
+        "commit": "a0e24d492f8df97788018fc91d6e408c1c787e15",
+        "date": "2021-04-13 16:58:02 -0400",
+        "subject": "Add THIS_PUB() macro to simplify inline object accessors.",
+        "body": "In combination with the thisPub() function, this macro simplifies accessing the public part of a private object struct.\n\nthisPub() asserts this != NULL so the caller does not need to do it."
+    },
+    {
+        "commit": "9fec4ce98c69044eae4e299e6e95bc45990d6d5c",
+        "date": "2021-04-13 14:37:02 -0400",
+        "subject": "Refactor remaining common/io modules with inline getters/setters.",
+        "body": "Extend the pattern introduced in 79a2d02c to the remaining common/io modules."
+    },
+    {
+        "commit": "5bf160643b53699a28a8f0920c36d6ded767d249",
+        "date": "2021-04-13 14:02:20 -0400",
+        "subject": "Clarify that repo-s3-role is not an ARN."
+    },
+    {
+        "commit": "2c9c59170f6c1a3aacfdf0fb5c6197feb87afcc9",
+        "date": "2021-04-13 12:38:17 -0400",
+        "subject": "Add bash to Cirrus CI FreeBSD package install.",
+        "body": "It appears bash was removed from the base image so install explicitly."
+    },
+    {
+        "commit": "8844ced384bf0d5feb5fe395560ec976cc292a73",
+        "date": "2021-04-12 16:05:40 -0400",
+        "subject": "Refactor common/io/filter module with inline getters/setters.",
+        "body": "Extend the pattern introduced in 79a2d02c to the common/io/filter module."
+    },
+    {
+        "commit": "3b9bed95186118a3fbf47e3e0900e74f4ad01217",
+        "date": "2021-04-09 17:29:14 -0400",
+        "subject": "Refactor common/type/keyValue module with inline getters/setters.",
+        "body": "Extend the pattern introduced in 79a2d02c to the common/type/keyValue module."
+    },
+    {
+        "commit": "c434b9ed885e083baed79c76426a7996d1a17d30",
+        "date": "2021-04-09 17:03:55 -0400",
+        "subject": "Refactor common/type/xml module with inline getters/setters.",
+        "body": "Extend the pattern introduced in 79a2d02c to the common/type/xml module."
+    },
+    {
+        "commit": "e18f3c1701b83037431354c41871e9daf16db9d4",
+        "date": "2021-04-09 15:56:42 -0400",
+        "subject": "Remove unused XML constructors.",
+        "body": "These alternate constructors may have been used in the Perl days but they are no longer used so remove them."
+    },
+    {
+        "commit": "ddd37ebf7dcef30322346c34f09aae44a0ca35a2",
+        "date": "2021-04-09 15:31:31 -0400",
+        "subject": "Refactor common/exec module with inline getters/setters.",
+        "body": "Extend the pattern introduced in 79a2d02c to the common/exec module."
+    },
+    {
+        "commit": "1d674c352f1d6fc1875946d32aa0f5db5c0082b7",
+        "date": "2021-04-09 14:32:21 -0400",
+        "subject": "Refactor db module with inline getters/setters.",
+        "body": "Extend the pattern introduced in 79a2d02c to the db module."
+    },
+    {
+        "commit": "442b2e41b1561a5d7f5e06097116279ee173e626",
+        "date": "2021-04-09 13:48:40 -0400",
+        "subject": "Refactor info modules with inline getters/setters.",
+        "body": "Extend the pattern introduced in 79a2d02c to the info modules."
+    },
+    {
+        "commit": "4937653a3df1948ec8c5d9f62075e0f287852ce8",
+        "date": "2021-04-08 16:46:42 -0400",
+        "subject": "Refactor protocol modules with inline getters/setters.",
+        "body": "Extend the pattern introduced in 79a2d02c to the protocol modules."
+    },
+    {
+        "commit": "235e32b57db36ca43bc47c5028ad9b619c223a68",
+        "date": "2021-04-08 14:47:53 -0400",
+        "subject": "Add const keyword to module scope constants.",
+        "body": "These pointers should never be modified, so mark them const."
+    },
+    {
+        "commit": "6c005afd5bcd7260976908dd2ddb2cdb9031996a",
+        "date": "2021-04-08 14:38:20 -0400",
+        "subject": "Add Ubuntu 20.04 test VM definition."
+    },
+    {
+        "commit": "d30ec9c9aeaaa454078b67a5998614f0b4c9c81d",
+        "date": "2021-04-08 10:04:57 -0400",
+        "subject": "Replace OBJECT_DEFINE_MOVE() and OBJECT_DEFINE_FREE() with inlines.",
+        "body": "Inline functions are more efficient and if they are not used are automatically omitted from the binary.\n\nThis also makes the implementation of these functions easier to find and removes the need for a declaration. That is, the complete implementation is located in the header rather than being spread between the header and C file."
+    },
+    {
+        "commit": "351e7db4c4df6329f87ceb63b7c0fb253bed1463",
+        "date": "2021-04-07 16:27:55 -0400",
+        "subject": "Replace OBJECT_DEFINE_FREE_RESOURCE_BEGIN() with normal functions.",
+        "body": "OBJECT_DEFINE_MOVE() and OBJECT_DEFINE_FREE() will be replaced with inlines so this would be the only macro left that is constructing functions.\n\nIt is not a great pattern anyway since it makes it hard to find the function implementation."
+    },
+    {
+        "commit": "cc85c4f03d78492cf8158cf02c51e8eb8bab24e6",
+        "date": "2021-04-07 14:27:57 -0400",
+        "subject": "Replace OBJECT_DEFINE_GET() with *Pub struct pattern.",
+        "body": "This macro was originally intended to simplify the creation of simple getters but it has been superseded by the pattern introduced in 79a2d02c.\n\nRemove instances of OBJECT_DEFINE_GET() to avoid confusion with the new pattern."
+    },
+    {
+        "commit": "b715c70b464d4bb2eaa347b6b83902040caa8cd8",
+        "date": "2021-04-07 14:04:38 -0400",
+        "subject": "Refactor storage modules with inline getters/setters.",
+        "body": "Extended the pattern introduced in 79a2d02c to the storage modules: Storage, StorageRead, StorageWrite."
+    },
+    {
+        "commit": "79a2d02c9c8c00a2db6c34ddf73223f159288c56",
+        "date": "2021-04-07 12:50:33 -0400",
+        "subject": "Refactor List, StringList, and VariantList for performance.",
+        "body": "Introduce a standard pattern for exposing public struct members (as documented in CODING.md) and use it to inline lstSize() which should improve the performance of iterating large lists.\n\nSince many functions in these modules are just thin wrappers of other functions, inline where appropriate.\n\nRemove strLstExistsZ() and strLstInsertZ() since they were only used in tests, where the String version of the function is sufficient.\n\nMove strLstNewSplitSizeZ() to command/help/help.c and remove strLstNewSplitSize(). This function has only ever been used by help and does not seem widely applicable."
+    },
+    {
+        "commit": "904738a5f180ee3040fd7626c894b134dbaf164a",
+        "date": "2021-04-05 10:25:01 -0400",
+        "subject": "Update config.sub to latest version."
+    },
+    {
+        "commit": "8461961e5c832ffd8e255b76ccd0125e0cd83e00",
+        "date": "2021-04-05 10:23:16 -0400",
+        "subject": "Begin v2.34 development."
+    },
+    {
         "commit": "a3d89143d6b34c6019cd29e059d28487037fd109",
         "date": "2021-04-05 09:18:20 -0400",
         "subject": "v2.33: Multi-Repository and GCS Support"

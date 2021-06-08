@@ -329,7 +329,7 @@ pckReadBuffer(PackRead *this, size_t size)
 Unpack an unsigned 64-bit integer from base-128 varint encoding
 ***********************************************************************************************************************************/
 static uint64_t
-pckReadUInt64Internal(PackRead *this)
+pckReadU64Internal(PackRead *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
@@ -407,10 +407,10 @@ pckReadTagNext(PackRead *this)
 
                 // Read high order bits of the field ID delta when specified
                 if (tag & 0x4)
-                    this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 2;
+                    this->tagNextId |= (unsigned int)pckReadU64Internal(this) << 2;
 
                 // Read value
-                this->tagNextValue = pckReadUInt64Internal(this);
+                this->tagNextValue = pckReadU64Internal(this);
             }
             // Else the value is stored in the tag (value == 1 bit)
             else
@@ -420,7 +420,7 @@ pckReadTagNext(PackRead *this)
 
                 // Read high order bits of the field ID delta when specified
                 if (tag & 0x2)
-                    this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 1;
+                    this->tagNextId |= (unsigned int)pckReadU64Internal(this) << 1;
 
                 // Read value
                 this->tagNextValue = (tag >> 2) & 0x3;
@@ -434,7 +434,7 @@ pckReadTagNext(PackRead *this)
 
             // Read high order bits of the field ID delta when specified
             if (tag & 0x4)
-                this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 2;
+                this->tagNextId |= (unsigned int)pckReadU64Internal(this) << 2;
 
             // Read value
             this->tagNextValue = (tag >> 3) & 0x1;
@@ -447,7 +447,7 @@ pckReadTagNext(PackRead *this)
 
             // Read high order bits of the field ID delta when specified
             if (tag & 0x8)
-                this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 3;
+                this->tagNextId |= (unsigned int)pckReadU64Internal(this) << 3;
 
             // Value length is variable so is stored after the tag
             this->tagNextValue = 0;
@@ -526,7 +526,7 @@ pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
         // Read data for the field being skipped if this is not the field requested
         if (packTypeData[this->tagNextType].size && this->tagNextValue != 0)
         {
-            size_t sizeExpected = (size_t)pckReadUInt64Internal(this);
+            size_t sizeExpected = (size_t)pckReadU64Internal(this);
 
             while (sizeExpected != 0)
             {
@@ -693,7 +693,7 @@ pckReadBin(PackRead *this, PckReadBinParam param)
     if (pckReadTag(this, &param.id, pckTypeBin, false))
     {
         // Get the buffer size
-        result = bufNew((size_t)pckReadUInt64Internal(this));
+        result = bufNew((size_t)pckReadU64Internal(this));
 
         // Read the buffer out in chunks
         while (bufUsed(result) < bufSize(result))
@@ -730,7 +730,7 @@ pckReadBool(PackRead *this, PckReadBoolParam param)
 
 /**********************************************************************************************************************************/
 int32_t
-pckReadI32(PackRead *this, PckReadInt32Param param)
+pckReadI32(PackRead *this, PckReadI32Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
@@ -748,7 +748,7 @@ pckReadI32(PackRead *this, PckReadInt32Param param)
 
 /**********************************************************************************************************************************/
 int64_t
-pckReadI64(PackRead *this, PckReadInt64Param param)
+pckReadI64(PackRead *this, PckReadI64Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
@@ -848,7 +848,7 @@ pckReadStr(PackRead *this, PckReadStrParam param)
     if (pckReadTag(this, &param.id, pckTypeStr, false))
     {
         // Read the string size
-        size_t sizeExpected = (size_t)pckReadUInt64Internal(this);
+        size_t sizeExpected = (size_t)pckReadU64Internal(this);
 
         // Read the string out in chunks
         result = strNew();
@@ -887,7 +887,7 @@ pckReadTime(PackRead *this, PckReadTimeParam param)
 
 /**********************************************************************************************************************************/
 uint32_t
-pckReadU32(PackRead *this, PckReadUInt32Param param)
+pckReadU32(PackRead *this, PckReadU32Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
@@ -905,7 +905,7 @@ pckReadU32(PackRead *this, PckReadUInt32Param param)
 
 /**********************************************************************************************************************************/
 uint64_t
-pckReadU64(PackRead *this, PckReadUInt64Param param)
+pckReadU64(PackRead *this, PckReadU64Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
@@ -1074,7 +1074,7 @@ pckWriteBuffer(PackWrite *this, const Buffer *buffer)
 Pack an unsigned 64-bit integer to base-128 varint encoding
 ***********************************************************************************************************************************/
 static void
-pckWriteUInt64Internal(PackWrite *this, uint64_t value)
+pckWriteU64Internal(PackWrite *this, uint64_t value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
@@ -1209,11 +1209,11 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
 
     // Write low order bits of the field ID delta
     if (tagId > 0)
-        pckWriteUInt64Internal(this, tagId);
+        pckWriteU64Internal(this, tagId);
 
     // Write low order bits of the value
     if (value > 0)
-        pckWriteUInt64Internal(this, value);
+        pckWriteU64Internal(this, value);
 
     // Set last field id
     this->tagStackTop->idLast = id;
@@ -1291,7 +1291,7 @@ pckWriteArrayEnd(PackWrite *this)
     ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->type == pckTypeArray);
 
     // Write end of array tag
-    pckWriteUInt64Internal(this, 0);
+    pckWriteU64Internal(this, 0);
 
     // Pop array off the stack to revert to ID tracking for the prior container
     lstRemoveLast(this->tagStack);
@@ -1322,7 +1322,7 @@ pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param)
         // Write buffer data if size > 0
         if (!bufEmpty(value))
         {
-            pckWriteUInt64Internal(this, bufUsed(value));
+            pckWriteU64Internal(this, bufUsed(value));
             pckWriteBuffer(this, value);
         }
     }
@@ -1352,7 +1352,7 @@ pckWriteBool(PackWrite *this, bool value, PckWriteBoolParam param)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteI32(PackWrite *this, int32_t value, PckWriteInt32Param param)
+pckWriteI32(PackWrite *this, int32_t value, PckWriteI32Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
@@ -1372,7 +1372,7 @@ pckWriteI32(PackWrite *this, int32_t value, PckWriteInt32Param param)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteI64(PackWrite *this, int64_t value, PckWriteInt64Param param)
+pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
@@ -1422,7 +1422,7 @@ pckWriteObjEnd(PackWrite *this)
     ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->type == pckTypeObj);
 
     // Write end of object tag
-    pckWriteUInt64Internal(this, 0);
+    pckWriteU64Internal(this, 0);
 
     // Pop object off the stack to revert to ID tracking for the prior container
     lstRemoveLast(this->tagStack);
@@ -1472,7 +1472,7 @@ pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
         // Write string data if size > 0
         if (strSize(value) > 0)
         {
-            pckWriteUInt64Internal(this, strSize(value));
+            pckWriteU64Internal(this, strSize(value));
             pckWriteBuffer(this, BUF(strZ(value), strSize(value)));
         }
     }
@@ -1502,7 +1502,7 @@ pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteU32(PackWrite *this, uint32_t value, PckWriteUInt32Param param)
+pckWriteU32(PackWrite *this, uint32_t value, PckWriteU32Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
@@ -1522,7 +1522,7 @@ pckWriteU32(PackWrite *this, uint32_t value, PckWriteUInt32Param param)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteU64(PackWrite *this, uint64_t value, PckWriteUInt64Param param)
+pckWriteU64(PackWrite *this, uint64_t value, PckWriteU64Param param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
@@ -1551,7 +1551,7 @@ pckWriteEnd(PackWrite *this)
     ASSERT(this != NULL);
     ASSERT(lstSize(this->tagStack) == 1);
 
-    pckWriteUInt64Internal(this, 0);
+    pckWriteU64Internal(this, 0);
     this->tagStackTop = NULL;
 
     // If writing to io flush the internal buffer
