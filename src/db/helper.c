@@ -11,6 +11,7 @@ Database Helper
 #include "version.h"
 
 /**********************************************************************************************************************************/
+// Helper to get a connection to the specified pg cluster
 static Db *
 dbGetIdx(unsigned int pgIdx)
 {
@@ -45,9 +46,6 @@ dbGetIdx(unsigned int pgIdx)
     FUNCTION_LOG_RETURN(DB, result);
 }
 
-/***********************************************************************************************************************************
-Get primary cluster or primary and standby cluster
-***********************************************************************************************************************************/
 DbGetResult
 dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
 {

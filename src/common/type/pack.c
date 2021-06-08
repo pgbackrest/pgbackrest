@@ -110,7 +110,7 @@ Constants
 #define PACK_UINT64_SIZE_MAX                                        10
 
 /***********************************************************************************************************************************
-Map PackType types to the ypes that will be written into the pack. This hides the details of the type IDs from the user and allows
+Map PackType types to the types that will be written into the pack. This hides the details of the type IDs from the user and allows
 the IDs used in the pack to differ from the IDs the user sees.
 ***********************************************************************************************************************************/
 typedef enum
@@ -863,7 +863,9 @@ pckReadPack(PackRead *this, PckReadPackParam param)
 
     Buffer *const buffer = pckReadPackBuf(this, param);
     PackRead *const result = pckReadNewBuf(buffer);
-    bufMove(buffer, result->memContext);
+
+    if (result != NULL)
+        bufMove(buffer, result->memContext);
 
     FUNCTION_TEST_RETURN(result);
 }
