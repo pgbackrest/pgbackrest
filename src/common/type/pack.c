@@ -129,7 +129,7 @@ typedef enum
     // The empty positions before 15 can be used for new types that will be encoded entirely in the tag
 
     pckTypeMapTime = 15,                                            // Maps to pckTypeTime
-    pckTypeMapBin = 16,                                             // Maps to pckTypePack
+    pckTypeMapBin = 16,                                             // Maps to pckTypeBin
 } PackTypeMap;
 
 typedef struct PackTypeMapData
