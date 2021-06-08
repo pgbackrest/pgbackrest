@@ -61,10 +61,7 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
             walSource, headerCheck, pgVersion, pgSystemId, archiveFile, compressType, compressLevel, repoList, priorErrorList);
 
         // Return result
-        VariantList *result = varLstNew();
-        varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.warnList)));
-
-        protocolServerDataPut(server, pckWriteStrP(protocolPack(), jsonFromVar(varNewVarLst(result))));
+        protocolServerDataPut(server, pckWriteStrLstP(protocolPack(), fileResult.warnList));
         protocolServerResultPut(server);
     }
     MEM_CONTEXT_TEMP_END();

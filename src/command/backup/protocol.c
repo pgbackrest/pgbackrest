@@ -49,14 +49,14 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             backupLabel, delta, cipherType, cipherPass);
 
         // Return backup result
-        VariantList *resultList = varLstNew();
-        varLstAdd(resultList, varNewUInt(result.backupCopyResult));
-        varLstAdd(resultList, varNewUInt64(result.copySize));
-        varLstAdd(resultList, varNewUInt64(result.repoSize));
-        varLstAdd(resultList, varNewStr(result.copyChecksum));
-        varLstAdd(resultList, result.pageChecksumResult != NULL ? varNewKv(result.pageChecksumResult) : NULL);
+        PackWrite *const resultPack = protocolPack();
+        pckWriteU32P(resultPack, result.backupCopyResult);
+        pckWriteU64P(resultPack, result.copySize);
+        pckWriteU64P(resultPack, result.repoSize);
+        pckWriteStrP(resultPack, result.copyChecksum);
+        pckWriteStrP(resultPack, result.pageChecksumResult != NULL ? jsonFromKv(result.pageChecksumResult) : NULL);
 
-        protocolServerDataPut(server, pckWriteStrP(protocolPack(), jsonFromVar(varNewVarLst(resultList))));
+        protocolServerDataPut(server, resultPack);
         protocolServerResultPut(server);
     }
     MEM_CONTEXT_TEMP_END();

@@ -1322,14 +1322,15 @@ testRun(void)
         // Create job that skips file
         job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(strIdFromZ(stringIdBit5, "x")));
 
-        VariantList *result = varLstNew();
-        varLstAdd(result, varNewUInt64(backupCopyResultNoOp));
-        varLstAdd(result, varNewUInt64(0));
-        varLstAdd(result, varNewUInt64(0));
-        varLstAdd(result, NULL);
-        varLstAdd(result, NULL);
+        PackWrite *const resultPack = protocolPack();
+        pckWriteU32P(resultPack, backupCopyResultNoOp);
+        pckWriteU64P(resultPack, 0);
+        pckWriteU64P(resultPack, 0);
+        pckWriteStrP(resultPack, NULL);
+        pckWriteStrP(resultPack, NULL);
+        pckWriteEndP(resultPack);
 
-        protocolParallelJobResultSet(job, varNewVarLst(result));
+        protocolParallelJobResultSet(job, pckReadNewBuf(pckWriteBuf(resultPack)));
 
         // Create manifest with file
         Manifest *manifest = manifestNewInternal();

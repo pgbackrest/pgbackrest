@@ -105,7 +105,7 @@ protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const re
     ASSERT(this != NULL);
     ASSERT(protocolParallelJobErrorCode(this) == 0);
 
-    this->pub.result = pckReadMove(this->pub.memContext, result);
+    this->pub.result = pckReadMove(result, this->pub.memContext);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -142,5 +142,6 @@ protocolParallelJobToLog(const ProtocolParallelJob *this)
         "{state: %s, key: %s, command: %s, code: %d, message: %s, result: %s}",
         strZ(strIdToStr(protocolParallelJobState(this))), strZ(varToLog(protocolParallelJobKey(this))),
         strZ(protocolCommandToLog(protocolParallelJobCommand(this))), protocolParallelJobErrorCode(this),
-        strZ(strToLog(protocolParallelJobErrorMessage(this))), strZ(pckReadToLog(protocolParallelJobResult(this))));
+        strZ(strToLog(protocolParallelJobErrorMessage(this))),
+        protocolParallelJobResult(this) == NULL ? NULL_Z : strZ(pckReadToLog(protocolParallelJobResult(this))));
 }

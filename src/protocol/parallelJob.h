@@ -43,7 +43,7 @@ typedef struct ProtocolParallelJobPub
     ProtocolParallelJobState state;                                 // Current state of the job
     int code;                                                       // Non-zero result indicates an error
     String *message;                                                // Message if there was a error
-    const PackRead *result;                                         // Result if job was successful
+    PackRead *result;                                               // Result if job was successful
 } ProtocolParallelJobPub;
 
 // Job command

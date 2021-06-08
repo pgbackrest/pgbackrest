@@ -216,6 +216,13 @@ typedef struct PckReadI64Param
 
 int64_t pckReadI64(PackRead *this, PckReadI64Param param);
 
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline PackRead *
+pckReadMove(PackRead *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
+
 // Read object begin/end
 #define pckReadObjBeginP(this, ...)                                                                                                \
     pckReadObjBegin(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})
@@ -339,9 +346,6 @@ uint64_t pckReadU64(PackRead *this, PckReadU64Param param);
     pckReadEnd(this)
 
 void pckReadEnd(PackRead *this);
-
-// Convert the pack to a string (only used for debugging)
-// String *pckReadToStr(PackRead *read);
 
 /***********************************************************************************************************************************
 Read Destructor

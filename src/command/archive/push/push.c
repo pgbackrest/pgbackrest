@@ -579,11 +579,8 @@ cmdArchivePushAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            // Get job result
-                            const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
-
                             // Output file warnings
-                            StringList *fileWarnList = strLstNewVarLst(varVarLst(varLstGet(fileResult, 0)));
+                            StringList *fileWarnList = pckReadStrLstP(protocolParallelJobResult(job));
 
                             for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
                                 LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));

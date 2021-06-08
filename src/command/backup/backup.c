@@ -1043,12 +1043,12 @@ backupJobResult(
             const ManifestFile *const file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
             const unsigned int processId = protocolParallelJobProcessId(job);
 
-            const VariantList *const jobResult = varVarLst(protocolParallelJobResult(job));
-            const BackupCopyResult copyResult = (BackupCopyResult)varUIntForce(varLstGet(jobResult, 0));
-            const uint64_t copySize = varUInt64(varLstGet(jobResult, 1));
-            const uint64_t repoSize = varUInt64(varLstGet(jobResult, 2));
-            const String *const copyChecksum = varStr(varLstGet(jobResult, 3));
-            const KeyValue *const checksumPageResult = varKv(varLstGet(jobResult, 4));
+            PackRead *const jobResult = protocolParallelJobResult(job);
+            const BackupCopyResult copyResult = (BackupCopyResult)pckReadU32P(jobResult);
+            const uint64_t copySize = pckReadU64P(jobResult);
+            const uint64_t repoSize = pckReadU64P(jobResult);
+            const String *const copyChecksum = pckReadStrP(jobResult);
+            const KeyValue *const checksumPageResult = varKv(jsonToVar(pckReadStrP(jobResult, .defaultValue = NULL_STR)));
 
             // Increment backup copy progress
             sizeCopied += copySize;

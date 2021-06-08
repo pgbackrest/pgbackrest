@@ -2015,7 +2015,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
         {
             const ManifestFile *file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
             bool zeroed = restoreFileZeroed(file->name, zeroExp);
-            bool copy = varBool(protocolParallelJobResult(job));
+            bool copy = pckReadBoolP(protocolParallelJobResult(job));
 
             String *log = strNewZ("restore");
 

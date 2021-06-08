@@ -286,9 +286,14 @@ pckReadNew(IoRead *read)
     ASSERT(read != NULL);
 
     PackRead *this = pckReadNewInternal();
-    this->read = read;
-    this->buffer = bufNew(ioBufferSize());
-    this->bufferPtr = bufPtr(this->buffer);
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->read = read;
+        this->buffer = bufNew(ioBufferSize());
+        this->bufferPtr = bufPtr(this->buffer);
+    }
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -856,7 +861,11 @@ pckReadPack(PackRead *this, PckReadPackParam param)
         FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pckReadNewBuf(pckReadPackBuf(this, param)));
+    Buffer *const buffer = pckReadPackBuf(this, param);
+    PackRead *const result = pckReadNewBuf(buffer);
+    bufMove(buffer, result->memContext);
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 Buffer *

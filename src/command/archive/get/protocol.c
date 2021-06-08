@@ -44,16 +44,17 @@ archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
             lstAdd(actualList, &actual);
         }
 
-        // Return result
+        // Get file
         ArchiveGetFileResult fileResult = archiveGetFile(
             storageSpoolWrite(), request, actualList,
             strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s." STORAGE_FILE_TEMP_EXT, strZ(request)));
 
-        VariantList *result = varLstNew();
-        varLstAdd(result, varNewUInt(fileResult.actualIdx));
-        varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.warnList)));
+        // Return result
+        PackWrite *const resultPack = protocolPack();
+        pckWriteU32P(resultPack, fileResult.actualIdx);
+        pckWriteStrLstP(resultPack, fileResult.warnList);
 
-        protocolServerDataPut(server, pckWriteStrP(protocolPack(), jsonFromVar(varNewVarLst(result))));
+        protocolServerDataPut(server, resultPack);
         protocolServerResultPut(server);
     }
     MEM_CONTEXT_TEMP_END();

@@ -1538,7 +1538,7 @@ verifyProcess(unsigned int *errorTotal)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            const VerifyResult verifyResult = (VerifyResult)varUIntForce(protocolParallelJobResult(job));
+                            const VerifyResult verifyResult = (VerifyResult)pckReadU32P(protocolParallelJobResult(job));
 
                             // Update the result set for the type of file being processed
                             if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))

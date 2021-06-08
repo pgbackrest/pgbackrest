@@ -943,12 +943,12 @@ cmdArchiveGetAsync(void)
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
                             // Get the actual file retrieved
-                            const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
-                            ArchiveGetFile *file = lstGet(fileMap->actualList, varUIntForce(varLstGet(fileResult, 0)));
+                            PackRead *const fileResult = protocolParallelJobResult(job);
+                            ArchiveGetFile *file = lstGet(fileMap->actualList, pckReadU32P(fileResult));
                             ASSERT(file != NULL);
 
                             // Output file warnings
-                            StringList *fileWarnList = strLstNewVarLst(varVarLst(varLstGet(fileResult, 1)));
+                            StringList *fileWarnList = pckReadStrLstP(fileResult);
 
                             for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
                                 LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
