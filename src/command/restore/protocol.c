@@ -26,6 +26,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Restore file
         const String *const repoFile = pckReadStrP(param);
         const unsigned int repoIdx = pckReadU32P(param);
         const String *const repoFileReference = pckReadStrP(param);
@@ -47,6 +48,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
             repoFile, repoIdx, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum, pgFileZero, pgFileSize,
             pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass);
 
+        // Result result
         protocolServerDataPut(server, pckWriteBoolP(protocolPack(), result));
         protocolServerResultPut(server);
     }

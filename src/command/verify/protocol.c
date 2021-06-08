@@ -26,6 +26,7 @@ verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Verify file
         const String *const filePathName = pckReadStrP(param);
         const String *const fileChecksum = pckReadStrP(param);
         const uint64_t fileSize = pckReadU64P(param);
@@ -33,6 +34,7 @@ verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         const VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
 
+        // Return result
         protocolServerDataPut(server, pckWriteU32P(protocolPack(), result));
         protocolServerResultPut(server);
     }

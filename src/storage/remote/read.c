@@ -166,7 +166,6 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                 // If the buffer can contain all remaining bytes
                 if (bufRemains(buffer) >= this->remaining)
                 {
-                    // LOG_DETAIL_FMT("!!!READ ALL %zu INTO %zu", this->remaining, bufRemains(buffer));
                     bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, this->remaining);
 
                     this->remaining = 0;
@@ -177,7 +176,6 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                 else
                 {
                     size_t remains = bufRemains(buffer);
-                    // LOG_DETAIL_FMT("!!!READ PARTIAL %zu INTO %zu", this->remaining, remains);
                     bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, remains);
                     this->remaining -= remains;
                 }

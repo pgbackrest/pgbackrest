@@ -26,7 +26,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Backup the file
+        // Backup file
         const String *const pgFile = pckReadStrP(param);
         const bool pgFileIgnoreMissing = pckReadBoolP(param);
         const uint64_t pgFileSize = pckReadU64P(param);
@@ -48,7 +48,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             pgFileChecksumPageLsnLimit, repoFile, repoFileHasReference, repoFileCompressType, repoFileCompressLevel,
             backupLabel, delta, cipherType, cipherPass);
 
-        // Return backup result
+        // Return result
         PackWrite *const resultPack = protocolPack();
         pckWriteU32P(resultPack, result.backupCopyResult);
         pckWriteU64P(resultPack, result.copySize);
