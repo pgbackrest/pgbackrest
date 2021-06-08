@@ -417,7 +417,7 @@ pckReadTagNext(PackRead *this)
         this->tagNextTypeMap = tag >> 4;
 
         if (this->tagNextTypeMap == 0xF)
-            this->tagNextTypeMap = (unsigned int)pckReadUInt64Internal(this) + 0xF;
+            this->tagNextTypeMap = (unsigned int)pckReadU64Internal(this) + 0xF;
 
         CHECK(this->tagNextTypeMap < PACK_TYPE_MAP_SIZE && packTypeMapData[this->tagNextTypeMap].type != 0);
 
@@ -1235,7 +1235,7 @@ pckWriteTag(PackWrite *this, PackTypeMap typeMap, unsigned int id, uint64_t valu
 
     // Write remaining type map
     if (typeMap >= 0xF)
-        pckWriteUInt64Internal(this, typeMap - 0xF);
+        pckWriteU64Internal(this, typeMap - 0xF);
 
     // Write low order bits of the field ID delta
     if (tagId > 0)
