@@ -34,8 +34,7 @@ use constant BLDLCL_CONSTANT_OPTION                                 => '03-const
 use constant BLDLCL_CONSTANT_OPTION_TOTAL                           => 'CFG_OPTION_TOTAL';
 use constant BLDLCL_CONSTANT_OPTION_VALUE                           => '04-constantOptionValue';
 
-use constant BLDLCL_DATA_COMMAND_CONSTANT                           => '01-commandConstant';
-use constant BLDLCL_DATA_COMMAND                                    => '02-command';
+use constant BLDLCL_DATA_COMMAND                                    => '01-command';
 
 use constant BLDLCL_ENUM_COMMAND                                    => '01-enumCommand';
 use constant BLDLCL_ENUM_OPTION_GROUP                               => '02-enumOptionGroup';
@@ -99,11 +98,6 @@ my $rhBuild =
 
             &BLD_DATA =>
             {
-                &BLDLCL_DATA_COMMAND_CONSTANT =>
-                {
-                    &BLD_SUMMARY => 'Command constants',
-                },
-
                 &BLDLCL_DATA_COMMAND =>
                 {
                     &BLD_SUMMARY => 'Command data',
@@ -152,7 +146,6 @@ sub buildConfig
     my $strBuildSource =
         'static const ConfigCommandData configCommandData[' . BLDLCL_CONSTANT_COMMAND_TOTAL . "] = CONFIG_COMMAND_LIST\n" .
         "(";
-    my $strBuildSourceConstant = '';
 
     foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     {
@@ -182,10 +175,7 @@ sub buildConfig
             "    )\n";
 
         $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_COMMAND}{&BLD_CONSTANT}
-            {$strCommandConst}{&BLD_CONSTANT_VALUE} = "\"${strCommand}\"\n    STRING_DECLARE(${strCommandConst}_STR);";
-
-        $strBuildSourceConstant .=
-            "STRING_EXTERN(${strCommandConst}_STR," . (' ' x (49 - length($strCommandConst))) . "${strCommandConst});\n";
+            {$strCommandConst}{&BLD_CONSTANT_VALUE} = "\"${strCommand}\"";
 
         $iCommandTotal++;
     }
@@ -197,7 +187,6 @@ sub buildConfig
         ")\n";
 
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_DATA}{&BLDLCL_DATA_COMMAND}{&BLD_SOURCE} = $strBuildSource;
-    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_DATA}{&BLDLCL_DATA_COMMAND_CONSTANT}{&BLD_SOURCE} = $strBuildSourceConstant;
 
     # Add an LF to the last command constant so there's whitespace before the total
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_COMMAND}{&BLD_CONSTANT}

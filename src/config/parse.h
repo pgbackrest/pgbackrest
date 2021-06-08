@@ -5,8 +5,22 @@ Parse Configuration
 #define CONFIG_PARSE_H
 
 #include "config/config.h"
-#include "config/parse.auto.h"
 #include "storage/storage.h"
+
+/***********************************************************************************************************************************
+Option type enum
+***********************************************************************************************************************************/
+typedef enum
+{
+    cfgOptTypeBoolean,                                              // Boolean
+    cfgOptTypeHash,                                                 // Associative array, e.g. key1=val1,key2=val2
+    cfgOptTypeInteger,                                              // Signed 64-bit integer
+    cfgOptTypeList,                                                 // String list, e.g. val1,val2
+    cfgOptTypePath,                                                 // Path string with validation
+    cfgOptTypeSize,                                                 // Size, e.g. 1m, 2gb
+    cfgOptTypeString,                                               // String
+    cfgOptTypeTime,                                                 // Time in seconds, e.g. 23, 1.5
+} ConfigOptionType;
 
 /***********************************************************************************************************************************
 Functions

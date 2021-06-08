@@ -32,7 +32,9 @@ testRun(void)
     // Test storage
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    // Load configuration and get pg remote storage
+    // Load configuration and get pg remote storage. This must be done before starting the repo storage below to set the max remotes
+    // allowed to 2. The protocol helper expects all remotes to have the same type so we are cheating here a bit, but without this
+    // ordering the second remote will never be sent an explicit exit and may not save coverage data.
     StringList *argList = strLstNew();
     hrnCfgArgRawZ(argList, cfgOptStanza, "db");
     hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");

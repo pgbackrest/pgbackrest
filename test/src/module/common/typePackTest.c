@@ -20,7 +20,7 @@ testRun(void)
         TEST_TITLE("type size");
 
         TEST_RESULT_UINT(sizeof(PackType), 4, "PackType");
-        TEST_RESULT_UINT(sizeof(PackFormatData), 8, "PackFormatData");
+        TEST_RESULT_UINT(sizeof(PackTypeMapData), 8, "PackTypeMapData");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write pack");
@@ -313,13 +313,13 @@ testRun(void)
         TEST_TITLE("EOF on short buffer");
 
         TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255")), "new read");
-        TEST_ERROR(pckReadUInt64Internal(packRead), FormatError, "unexpected EOF");
+        TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unexpected EOF");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid uint64");
 
         TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255\255")), "new read");
-        TEST_ERROR(pckReadUInt64Internal(packRead), FormatError, "unterminated base-128 integer");
+        TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unterminated base-128 integer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pack/unpack pointer");
