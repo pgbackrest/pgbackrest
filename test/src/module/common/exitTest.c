@@ -7,6 +7,7 @@ Test Exit Routines
 #include "version.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessError.h"
 #include "common/harnessFork.h"
 
 /***********************************************************************************************************************************
@@ -87,7 +88,7 @@ testRun(void)
 
         TRY_BEGIN()
         {
-            THROW(RuntimeError, "test debug error message");
+            hrnErrorThrowP(.errorType = &RuntimeError, .message = "test debug error message");
         }
         CATCH_ANY()
         {
@@ -103,8 +104,7 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:90:(void)\n"
-                "            test.c:main:(argListSize: 1, argList: (char *[]))\n"
+                "            ERR_STACK_TRACE\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [122]\n"
                 "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: (failOnNoLock: false)\n"
@@ -118,7 +118,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()
         {
-            THROW(AssertError, "test assert message");
+            hrnErrorThrowP(.message = "test assert message");
         }
         CATCH_ANY()
         {
@@ -133,8 +133,7 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:121:(void)\n"
-                "            test.c:main:(argListSize: 1, argList: (char *[]))\n"
+                "            ERR_STACK_TRACE\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [025]");
         }
