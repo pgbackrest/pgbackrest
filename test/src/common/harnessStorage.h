@@ -100,6 +100,26 @@ typedef struct HrnStorageModeParam
 void hrnStorageMode(const Storage *const storage, const char *const path, HrnStorageModeParam param);
 
 /***********************************************************************************************************************************
+Move a file
+***********************************************************************************************************************************/
+typedef struct HrnStorageMoveParam
+{
+    VAR_PARAM_HEADER;
+    const char *comment;                                            // Comment
+} HrnStorageMoveParam;
+
+#define HRN_STORAGE_MOVE(storage, fileSource, fileDest, ...)                                                                       \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnStorageMove(storage, fileSource, fileDest, (HrnStorageMoveParam){VAR_PARAM_INIT, __VA_ARGS__});                         \
+    }                                                                                                                              \
+    while (0)
+
+void hrnStorageMove(
+    const Storage *const storage, const char *const fileSource, const char *const fileDest, HrnStorageMoveParam param);
+
+/***********************************************************************************************************************************
 Create a path
 ***********************************************************************************************************************************/
 typedef struct HrnStoragePathCreateParam

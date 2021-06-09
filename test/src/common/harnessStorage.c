@@ -337,6 +337,30 @@ hrnStorageMode(const Storage *const storage, const char *const path, HrnStorageM
 
 /**********************************************************************************************************************************/
 void
+hrnStorageMove(
+    const Storage *const storage, const char *const fileSource, const char *const fileDest, HrnStorageMoveParam param)
+{
+    hrnTestResultBegin(__func__, false);
+
+    ASSERT(storage != NULL);
+    ASSERT(fileSource != NULL);
+    ASSERT(fileDest != NULL);
+
+    const String *const fileSourceStr = storagePathP(storage, STR(fileSource));
+    const String *const fileDestStr = storagePathP(storage, STR(fileDest));
+
+    printf("move '%s' to '%s'", strZ(fileSourceStr), strZ(fileDestStr));
+
+    hrnTestResultComment(param.comment);
+
+    // Move (rename) the file
+    storageMoveP(storage, storageNewReadP(storage, fileSourceStr), storageNewWriteP(storage,fileDestStr));
+
+    hrnTestResultEnd();
+}
+
+/**********************************************************************************************************************************/
+void
 hrnStoragePut(
     const Storage *const storage, const char *const file, const Buffer *const buffer, const char *const logPrefix,
     HrnStoragePutParam param)

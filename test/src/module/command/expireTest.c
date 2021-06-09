@@ -876,17 +876,22 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchiveType, 2, "diff");
 
+        // Create default storage object for dry-run testing
+        Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+
         harnessLogLevelSet(logLevelDetail);
 
         // Rename backup.info files on repo1 to cause error
-        HRN_SYSTEM("mv " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE " " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE ".save");
-        HRN_SYSTEM(
-            "mv " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT " " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-            INFO_COPY_EXT ".save");
+        HRN_STORAGE_MOVE(
+            storageTest, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE ".save");
+        HRN_STORAGE_MOVE(
+            storageTest, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT,
+            TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save");
 
         // Rename archive.info file on repo2 to cause error
-        HRN_SYSTEM(
-            "mv " TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE " " TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE ".save");
+        HRN_STORAGE_MOVE(
+            storageTest, TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE,
+            TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE ".save");
 
         // Configure dry-run
         argList2 = strLstDup(argList);
@@ -921,8 +926,7 @@ testRun(void)
                          " archiving scheme.");
 
         // Restore saved archive.info file
-        HRN_SYSTEM(
-            "mv " TEST_PATH_REPO "2/archive/db/" INFO_ARCHIVE_FILE ".save " TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE);
+        HRN_STORAGE_MOVE(storageTest, "repo2/archive/db/" INFO_ARCHIVE_FILE ".save", "repo2/archive/db/" INFO_ARCHIVE_FILE);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, continue to next repo after error");
@@ -952,10 +956,11 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo2: 10-2 no archive to remove");
 
         // Restore saved backup.info files
-        HRN_SYSTEM("mv " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE ".save " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE);
-        HRN_SYSTEM(
-            "mv " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save " TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-            INFO_COPY_EXT);
+        HRN_STORAGE_MOVE(
+            storageTest, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE ".save", TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE);
+        HRN_STORAGE_MOVE(
+            storageTest, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save",
+            TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, dry run: archive and backups not removed");
