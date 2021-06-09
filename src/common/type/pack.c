@@ -276,9 +276,14 @@ pckReadNew(IoRead *read)
     ASSERT(read != NULL);
 
     PackRead *this = pckReadNewInternal();
-    this->read = read;
-    this->buffer = bufNew(ioBufferSize());
-    this->bufferPtr = bufPtr(this->buffer);
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->read = read;
+        this->buffer = bufNew(ioBufferSize());
+        this->bufferPtr = bufPtr(this->buffer);
+    }
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1018,8 +1023,13 @@ pckWriteNew(IoWrite *write)
     ASSERT(write != NULL);
 
     PackWrite *this = pckWriteNewInternal();
-    this->write = write;
-    this->buffer = bufNew(ioBufferSize());
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->write = write;
+        this->buffer = bufNew(ioBufferSize());
+    }
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1034,12 +1044,7 @@ pckWriteNewBuf(Buffer *buffer)
     ASSERT(buffer != NULL);
 
     PackWrite *this = pckWriteNewInternal();
-
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->buffer = buffer;
-    }
-    MEM_CONTEXT_END();
+    this->buffer = buffer;
 
     FUNCTION_TEST_RETURN(this);
 }
