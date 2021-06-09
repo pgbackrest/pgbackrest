@@ -48,6 +48,10 @@ unit:
       - name: error
         total: 8
         feature: error
+        harness:
+          name: error
+          shim:
+            common/error: ~
 
         coverage:
           - common/error
