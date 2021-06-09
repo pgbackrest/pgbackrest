@@ -34,11 +34,11 @@ use pgBackRestTest::Env::Manifest;
 ####################################################################################################################################
 # Azure defaults
 ####################################################################################################################################
-use constant HOST_AZURE_ACCOUNT                                     => 'azAccount';
+use constant HOST_AZURE_ACCOUNT                                     => 'azaccount';
     push @EXPORT, qw(HOST_AZURE_ACCOUNT);
 use constant HOST_AZURE_KEY                                         => 'YXpLZXk=';
     push @EXPORT, qw(HOST_AZURE_KEY);
-use constant HOST_AZURE_CONTAINER                                   => 'azContainer';
+use constant HOST_AZURE_CONTAINER                                   => 'azcontainer';
     push @EXPORT, qw(HOST_AZURE_CONTAINER);
 
 ####################################################################################################################################

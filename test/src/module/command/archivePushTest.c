@@ -342,8 +342,9 @@ testRun(void)
                 storageRepoIdx(0),
                 strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)),
             true, "check repo for WAL file");
-        TEST_STORAGE_REMOVE(
-            storageRepoIdxWrite(0), strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)));
+        TEST_STORAGE_EXISTS(
+            storageRepoIdxWrite(0), strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)),
+            .remove = true);
 
         // Generate valid WAL and push them
         // -------------------------------------------------------------------------------------------------------------------------
@@ -582,10 +583,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("push succeeds on one repo when other repo fails to load archive.info");
 
-        TEST_STORAGE_REMOVE(
-            storageTest, strZ(strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
-        TEST_STORAGE_REMOVE(
-            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            .remove = true);
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            .remove = true);
         HRN_STORAGE_MODE(storageTest, "repo2", .mode = 0200);
 
         TEST_ERROR(
@@ -602,8 +605,9 @@ testRun(void)
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
 
         // Make sure WAL got pushed to repo3
-        TEST_STORAGE_REMOVE(
-            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            .remove = true);
 
         HRN_STORAGE_MODE(storageTest, "repo2");
 
@@ -619,8 +623,9 @@ testRun(void)
                 " [13] Permission denied");
 
         // Make sure WAL got pushed to repo3
-        TEST_STORAGE_REMOVE(
-            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            .remove = true);
 
         HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1");
     }

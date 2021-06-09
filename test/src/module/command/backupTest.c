@@ -2423,9 +2423,9 @@ testRun(void)
                 "compare file list");
 
             // Remove test files
-            TEST_STORAGE_REMOVE(storagePgWrite(), "base/1/2");
-            TEST_STORAGE_REMOVE(storagePgWrite(), "base/1/3");
-            TEST_STORAGE_REMOVE(storagePgWrite(), "base/1/4");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/2", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/3", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/4", .errorOnMissing = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------

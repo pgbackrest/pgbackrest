@@ -213,8 +213,9 @@ testRun(void)
             .remove = true);
         TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.pgbackrest.tmp\n");
 
-        TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+        TEST_STORAGE_EXISTS(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz",
+            .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("single segment");
@@ -268,8 +269,9 @@ testRun(void)
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
-        TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+        TEST_STORAGE_EXISTS(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz",
+            .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("single segment with one invalid file");
@@ -305,8 +307,9 @@ testRun(void)
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
-        TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+        TEST_STORAGE_EXISTS(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz",
+            .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple segments where some are missing or errored and mismatched repo");
@@ -442,10 +445,12 @@ testRun(void)
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
-        TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
-        TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        TEST_STORAGE_EXISTS(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            .remove = true);
+        TEST_STORAGE_EXISTS(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn on invalid file");
@@ -493,8 +498,9 @@ testRun(void)
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
-        TEST_STORAGE_REMOVE(
-            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        TEST_STORAGE_EXISTS(
+            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error with warnings");
@@ -837,8 +843,9 @@ testRun(void)
             "HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_LIST(storagePg(), "pg_wal", NULL);
-        TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+        TEST_STORAGE_EXISTS(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get from prior db-id");
@@ -871,10 +878,12 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-4 archive");
 
         TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
-        TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-        TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-4/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        TEST_STORAGE_EXISTS(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            .remove = true);
+        TEST_STORAGE_EXISTS(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-4/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get partial");
@@ -898,9 +907,9 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: found 000000010000000100000001.partial in the repo1: 10-4 archive");
 
         TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
-        TEST_STORAGE_REMOVE(
+        TEST_STORAGE_EXISTS(
             storageRepoWrite(),
-            STORAGE_REPO_ARCHIVE "/10-4/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            STORAGE_REPO_ARCHIVE "/10-4/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get missing history");
