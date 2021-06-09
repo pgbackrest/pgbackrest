@@ -11,6 +11,7 @@ Test Protocol
 #include "version.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessError.h"
 #include "common/harnessFork.h"
 #include "common/harnessPack.h"
 
@@ -32,14 +33,7 @@ testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Throw error with fixed stack trace
-        errorContext.error.errorType = &AssertError;
-        errorContext.error.fileName = "ERR_FILE";
-        errorContext.error.functionName = "ERR_FUNCTION";
-        errorContext.error.fileLine = 999;
-        errorContext.error.message = "ERR_MESSAGE";
-        errorContext.error.stackTrace = "ERR_STACK_TRACE";
-        errorInternalPropagate();
+        hrnErrorThrowP();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -61,14 +55,7 @@ testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Throw error with fixed stack trace
-        errorContext.error.errorType = &FormatError;
-        errorContext.error.fileName = "ERR_FILE";
-        errorContext.error.functionName = "ERR_FUNCTION";
-        errorContext.error.fileLine = 999;
-        errorContext.error.message = "ERR_MESSAGE";
-        errorContext.error.stackTrace = "ERR_STACK_TRACE";
-        errorInternalPropagate();
+        hrnErrorThrowP(.errorType = &FormatError);
     }
     MEM_CONTEXT_TEMP_END();
 
