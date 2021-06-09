@@ -1148,8 +1148,13 @@ pckWriteNew(IoWrite *write)
     ASSERT(write != NULL);
 
     PackWrite *this = pckWriteNewInternal();
-    this->write = write;
-    this->buffer = bufNew(ioBufferSize());
+
+    MEM_CONTEXT_BEGIN(this->memContext)
+    {
+        this->write = write;
+        this->buffer = bufNew(ioBufferSize());
+    }
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1164,12 +1169,7 @@ pckWriteNewBuf(Buffer *buffer)
     ASSERT(buffer != NULL);
 
     PackWrite *this = pckWriteNewInternal();
-
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->buffer = buffer;
-    }
-    MEM_CONTEXT_END();
+    this->buffer = buffer;
 
     FUNCTION_TEST_RETURN(this);
 }

@@ -128,6 +128,8 @@ typedef enum
 Read Constructors
 ***********************************************************************************************************************************/
 PackRead *pckReadNew(IoRead *read);
+
+// Note that the buffer is not moved into the PackRead mem context and must be moved explicitly if the PackRead object is moved.
 PackRead *pckReadNewBuf(const Buffer *buffer);
 
 /***********************************************************************************************************************************
@@ -375,6 +377,8 @@ pckReadFree(PackRead *const this)
 Write Constructors
 ***********************************************************************************************************************************/
 PackWrite *pckWriteNew(IoWrite *write);
+
+// Note that the buffer is not moved into the PackWrite mem context and must be moved explicitly if the PackWrite object is moved.
 PackWrite *pckWriteNewBuf(Buffer *buffer);
 
 /***********************************************************************************************************************************
@@ -458,6 +462,13 @@ typedef struct PckWriteModeParam
     pckWriteMode(this, value, (PckWriteModeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteMode(PackWrite *this, uint32_t value, PckWriteModeParam param);
+
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline PackWrite *
+pckWriteMove(PackWrite *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Write null
 #define pckWriteNullP(this)                                                                                                        \
