@@ -34,10 +34,13 @@ sleepMSec(TimeMSec sleepMSec)
         FUNCTION_TEST_PARAM(UINT64, sleepMSec);
     FUNCTION_TEST_END();
 
-    struct timeval delay;
-    delay.tv_sec = (time_t)(sleepMSec / MSEC_PER_SEC);
-    delay.tv_usec = (suseconds_t)(sleepMSec % MSEC_PER_SEC * 1000);
-    select(0, NULL, NULL, NULL, &delay);
+    if (sleepMSec > 0)
+    {
+        struct timeval delay;
+        delay.tv_sec = (time_t)(sleepMSec / MSEC_PER_SEC);
+        delay.tv_usec = (suseconds_t)(sleepMSec % MSEC_PER_SEC * 1000);
+        select(0, NULL, NULL, NULL, &delay);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
