@@ -22,10 +22,23 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("sleepMSec()"))
     {
+        TEST_TITLE("sleep 0ms");
+
         // Sleep and measure time slept
         TimeMSec begin = timeMSec();
-        sleepMSec(1400);
+        sleepMSec(0);
         TimeMSec end = timeMSec();
+
+        // Check bounds for time slept (within a range of .01 seconds)
+        TEST_RESULT_BOOL(end - begin < (TimeMSec)10, true, "upper range check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sleep 1400ms");
+
+        // Sleep and measure time slept
+        begin = timeMSec();
+        sleepMSec(1400);
+        end = timeMSec();
 
         // Check bounds for time slept (within a range of .1 seconds)
         TEST_RESULT_BOOL(end - begin >= (TimeMSec)1400, true, "lower range check");
