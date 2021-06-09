@@ -208,6 +208,9 @@ testStorageExists(const Storage *const storage, const char *const file, const Te
     hrnTestResultComment(param.comment);
 
     hrnTestResultBool(storageExistsP(storage, fileFull), true);
+
+    if (param.remove)
+        storageRemoveP(storage, fileFull, .errorOnMissing = true);
 }
 
 /**********************************************************************************************************************************/
@@ -429,7 +432,7 @@ hrnStoragePathRemove(const Storage *const storage, const char *const path, HrnSt
 
 /**********************************************************************************************************************************/
 void
-hrnStorageRemove(const Storage *const storage, const char *const file, const TestStorageRemoveParam param)
+hrnStorageRemove(const Storage *const storage, const char *const file, const HrnStorageRemoveParam param)
 {
     hrnTestResultBegin(__func__, false);
 
@@ -439,7 +442,7 @@ hrnStorageRemove(const Storage *const storage, const char *const file, const Tes
     printf("remove file '%s'", strZ(storagePathP(storage, STR(file))));
     hrnTestResultComment(param.comment);
 
-    storageRemoveP(storage, STR(file), .errorOnMissing = true);
+    storageRemoveP(storage, STR(file), .errorOnMissing = param.errorOnMissing);
 
     hrnTestResultEnd();
 }

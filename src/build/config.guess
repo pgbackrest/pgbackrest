@@ -2,7 +2,7 @@
 # Attempt to guess a canonical system name.
 #   Copyright 1992-2021 Free Software Foundation, Inc.
 
-timestamp='2021-01-25'
+timestamp='2021-05-24'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -136,7 +136,7 @@ UNAME_RELEASE=$( (uname -r) 2>/dev/null) || UNAME_RELEASE=unknown
 UNAME_SYSTEM=$( (uname -s) 2>/dev/null) || UNAME_SYSTEM=unknown
 UNAME_VERSION=$( (uname -v) 2>/dev/null) || UNAME_VERSION=unknown
 
-case "$UNAME_SYSTEM" in
+case $UNAME_SYSTEM in
 Linux|GNU|GNU/*)
 	LIBC=unknown
 
@@ -176,7 +176,7 @@ esac
 
 # Note: order is significant - the case branches are not exclusive.
 
-case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
+case $UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION in
     *:NetBSD:*:*)
 	# NetBSD (nbsd) targets should (where applicable) match one or
 	# more of the tuples: *-*-netbsdelf*, *-*-netbsdaout*,
@@ -192,7 +192,7 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
 	    /sbin/sysctl -n hw.machine_arch 2>/dev/null || \
 	    /usr/sbin/sysctl -n hw.machine_arch 2>/dev/null || \
 	    echo unknown))
-	case "$UNAME_MACHINE_ARCH" in
+	case $UNAME_MACHINE_ARCH in
 	    aarch64eb) machine=aarch64_be-unknown ;;
 	    armeb) machine=armeb-unknown ;;
 	    arm*) machine=arm-unknown ;;
@@ -208,7 +208,7 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
 	esac
 	# The Operating System including object format, if it has switched
 	# to ELF recently (or will in the future) and ABI.
-	case "$UNAME_MACHINE_ARCH" in
+	case $UNAME_MACHINE_ARCH in
 	    earm*)
 		os=netbsdelf
 		;;
@@ -229,7 +229,7 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
 		;;
 	esac
 	# Determine ABI tags.
-	case "$UNAME_MACHINE_ARCH" in
+	case $UNAME_MACHINE_ARCH in
 	    earm*)
 		expr='s/^earmv[0-9]/-eabi/;s/eb$//'
 		abi=$(echo "$UNAME_MACHINE_ARCH" | sed -e "$expr")
@@ -240,7 +240,7 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
 	# thus, need a distinct triplet. However, they do not need
 	# kernel version information, so it can be replaced with a
 	# suitable tag, in the style of linux-gnu.
-	case "$UNAME_VERSION" in
+	case $UNAME_VERSION in
 	    Debian*)
 		release='-gnu'
 		;;
@@ -260,6 +260,10 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
     *:OpenBSD:*:*)
 	UNAME_MACHINE_ARCH=$(arch | sed 's/OpenBSD.//')
 	echo "$UNAME_MACHINE_ARCH"-unknown-openbsd"$UNAME_RELEASE"
+	exit ;;
+    *:SecBSD:*:*)
+	UNAME_MACHINE_ARCH=$(arch | sed 's/SecBSD.//')
+	echo "$UNAME_MACHINE_ARCH"-unknown-secbsd"$UNAME_RELEASE"
 	exit ;;
     *:LibertyBSD:*:*)
 	UNAME_MACHINE_ARCH=$(arch | sed 's/^.*BSD\.//')
@@ -296,6 +300,8 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
 	echo mips-dec-osf1
 	exit ;;
     alpha:OSF1:*:*)
+	# Reset EXIT trap before exiting to avoid spurious non-zero exit code.
+	trap '' 0
 	case $UNAME_RELEASE in
 	*4.0)
 		UNAME_RELEASE=$(/usr/sbin/sizer -v | awk '{print $3}')
@@ -309,7 +315,7 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
 	# covers most systems running today.  This code pipes the CPU
 	# types through head -n 1, so we only detect the type of CPU 0.
 	ALPHA_CPU_TYPE=$(/usr/sbin/psrinfo -v | sed -n -e 's/^  The alpha \(.*\) processor.*$/\1/p' | head -n 1)
-	case "$ALPHA_CPU_TYPE" in
+	case $ALPHA_CPU_TYPE in
 	    "EV4 (21064)")
 		UNAME_MACHINE=alpha ;;
 	    "EV4.5 (21064)")
@@ -347,10 +353,7 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
 	# A Xn.n version is an unreleased experimental baselevel.
 	# 1.2 uses "1.2" for uname -r.
 	echo "$UNAME_MACHINE"-dec-osf"$(echo "$UNAME_RELEASE" | sed -e 's/^[PVTX]//' | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz)"
-	# Reset EXIT trap before exiting to avoid spurious non-zero exit code.
-	exitcode=$?
-	trap '' 0
-	exit $exitcode ;;
+	exit ;;
     Amiga*:UNIX_System_V:4.0:*)
 	echo m68k-unknown-sysv4
 	exit ;;
@@ -431,7 +434,7 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
 	echo sparc-sun-solaris3"$(echo "$UNAME_RELEASE"|sed -e 's/[^.]*//')"
 	exit ;;
     sun4*:SunOS:*:*)
-	case "$(/usr/bin/arch -k)" in
+	case $(/usr/bin/arch -k) in
 	    Series*|S4*)
 		UNAME_RELEASE=$(uname -v)
 		;;
@@ -445,7 +448,7 @@ case "$UNAME_MACHINE:$UNAME_SYSTEM:$UNAME_RELEASE:$UNAME_VERSION" in
     sun*:*:4.2BSD:*)
 	UNAME_RELEASE=$( (sed 1q /etc/motd | awk '{print substr($5,1,3)}') 2>/dev/null)
 	test "x$UNAME_RELEASE" = x && UNAME_RELEASE=3
-	case "$(/bin/arch)" in
+	case $(/bin/arch) in
 	    sun3)
 		echo m68k-sun-sunos"$UNAME_RELEASE"
 		;;
@@ -661,18 +664,18 @@ EOF
 	exit ;;
     9000/[34678]??:HP-UX:*:*)
 	HPUX_REV=$(echo "$UNAME_RELEASE"|sed -e 's/[^.]*.[0B]*//')
-	case "$UNAME_MACHINE" in
+	case $UNAME_MACHINE in
 	    9000/31?)            HP_ARCH=m68000 ;;
 	    9000/[34]??)         HP_ARCH=m68k ;;
 	    9000/[678][0-9][0-9])
 		if test -x /usr/bin/getconf; then
 		    sc_cpu_version=$(/usr/bin/getconf SC_CPU_VERSION 2>/dev/null)
 		    sc_kernel_bits=$(/usr/bin/getconf SC_KERNEL_BITS 2>/dev/null)
-		    case "$sc_cpu_version" in
+		    case $sc_cpu_version in
 		      523) HP_ARCH=hppa1.0 ;; # CPU_PA_RISC1_0
 		      528) HP_ARCH=hppa1.1 ;; # CPU_PA_RISC1_1
 		      532)                      # CPU_PA_RISC2_0
-			case "$sc_kernel_bits" in
+			case $sc_kernel_bits in
 			  32) HP_ARCH=hppa2.0n ;;
 			  64) HP_ARCH=hppa2.0w ;;
 			  '') HP_ARCH=hppa2.0 ;;   # HP-UX 10.20
@@ -873,7 +876,7 @@ EOF
 	exit ;;
     *:FreeBSD:*:*)
 	UNAME_PROCESSOR=$(/usr/bin/uname -p)
-	case "$UNAME_PROCESSOR" in
+	case $UNAME_PROCESSOR in
 	    amd64)
 		UNAME_PROCESSOR=x86_64 ;;
 	    i386)
@@ -897,7 +900,7 @@ EOF
 	echo "$UNAME_MACHINE"-pc-pw32
 	exit ;;
     *:Interix*:*)
-	case "$UNAME_MACHINE" in
+	case $UNAME_MACHINE in
 	    x86)
 		echo i586-pc-interix"$UNAME_RELEASE"
 		exit ;;
@@ -949,7 +952,7 @@ EOF
 	if test "$?" = 0 ; then LIBC=gnulibc1 ; fi
 	echo "$UNAME_MACHINE"-unknown-linux-"$LIBC"
 	exit ;;
-    arc:Linux:*:* | arceb:Linux:*:*)
+    arc:Linux:*:* | arceb:Linux:*:* | arc64:Linux:*:*)
 	echo "$UNAME_MACHINE"-unknown-linux-"$LIBC"
 	exit ;;
     arm*:Linux:*:*)
@@ -1434,10 +1437,9 @@ EOF
 	# "uname -m" is not consistent, so use $cputype instead. 386
 	# is converted to i386 for consistency with other x86
 	# operating systems.
-	# shellcheck disable=SC2154
-	if test "$cputype" = 386; then
+	if test "${cputype-}" = 386; then
 	    UNAME_MACHINE=i386
-	else
+	elif test "x${cputype-}" != x; then
 	    UNAME_MACHINE="$cputype"
 	fi
 	echo "$UNAME_MACHINE"-unknown-plan9
@@ -1468,7 +1470,7 @@ EOF
 	exit ;;
     *:*VMS:*:*)
 	UNAME_MACHINE=$( (uname -p) 2>/dev/null)
-	case "$UNAME_MACHINE" in
+	case $UNAME_MACHINE in
 	    A*) echo alpha-dec-vms ; exit ;;
 	    I*) echo ia64-dec-vms ; exit ;;
 	    V*) echo vax-dec-vms ; exit ;;
@@ -1635,7 +1637,7 @@ test -d /usr/apollo && { echo "$ISP-apollo-$SYSTYPE"; exit; }
 
 echo "$0: unable to guess system type" >&2
 
-case "$UNAME_MACHINE:$UNAME_SYSTEM" in
+case $UNAME_MACHINE:$UNAME_SYSTEM in
     mips:Linux | mips64:Linux)
 	# If we got here on MIPS GNU/Linux, output extra information.
 	cat >&2 <<EOF

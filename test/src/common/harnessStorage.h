@@ -40,6 +40,7 @@ Check file exists
 typedef struct TestStorageExistsParam
 {
     VAR_PARAM_HEADER;
+    bool remove;                                                    // Remove file after testing?
     const char *comment;                                            // Comment
 } TestStorageExistsParam;
 
@@ -171,23 +172,24 @@ void hrnStoragePut(
     HrnStoragePutParam param);
 
 /***********************************************************************************************************************************
-Remove a file and error if it does not exist
+Remove a file
 ***********************************************************************************************************************************/
-typedef struct TestStorageRemoveParam
+typedef struct HrnStorageRemoveParam
 {
     VAR_PARAM_HEADER;
+    bool errorOnMissing;                                            // Error when the file is missing
     const char *comment;                                            // Comment
-} TestStorageRemoveParam;
+} HrnStorageRemoveParam;
 
-#define TEST_STORAGE_REMOVE(storage, file, ...)                                                                                    \
+#define HRN_STORAGE_REMOVE(storage, file, ...)                                                                                     \
     do                                                                                                                             \
     {                                                                                                                              \
         hrnTestLogPrefix(__LINE__);                                                                                                \
-        hrnStorageRemove(storage, file, (TestStorageRemoveParam){VAR_PARAM_INIT, __VA_ARGS__});                                    \
+        hrnStorageRemove(storage, file, (HrnStorageRemoveParam){VAR_PARAM_INIT, __VA_ARGS__});                                     \
     }                                                                                                                              \
     while (0)
 
-void hrnStorageRemove(const Storage *const storage, const char *const file, const TestStorageRemoveParam param);
+void hrnStorageRemove(const Storage *const storage, const char *const file, const HrnStorageRemoveParam param);
 
 /***********************************************************************************************************************************
 Change the time of a path/file
