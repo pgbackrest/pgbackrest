@@ -224,9 +224,8 @@ protocolServerProcess(
                                         "retry %s after %" PRIu64 "ms: %s", errorTypeName(errorType()), retrySleepMs,
                                         errorMessage());
 
-                                    // Sleep if there is an interval
-                                    if (retrySleepMs > 0)
-                                        sleepMSec(retrySleepMs);
+                                    // Sleep for interval
+                                    sleepMSec(retrySleepMs);
 
                                     // Decrement retries remaining and retry
                                     retryRemaining--;

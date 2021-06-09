@@ -8,9 +8,11 @@ Harness for Loading Test Configurations
 #include "common/type/param.h"
 
 /***********************************************************************************************************************************
-Generate a test error
+Generate an error with specific field values
 
-!!!
+Useful for throwing errors with predictable output for fields that are set internally and subject to change, e.g. stackTrace. Note
+that all const char * fields should be set from constant strings, e.g. "ERROR", to ensure they don't get freed while the error is
+being propagated.
 ***********************************************************************************************************************************/
 typedef struct HrnErrorThrowParam
 {
