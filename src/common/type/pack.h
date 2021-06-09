@@ -82,6 +82,7 @@ cumulative field ID. At the end of a container the numbering will continue from 
 #ifndef COMMON_TYPE_PACK_H
 #define COMMON_TYPE_PACK_H
 
+#include <sys/stat.h>
 #include <time.h>
 
 /***********************************************************************************************************************************
@@ -113,6 +114,7 @@ typedef enum
     pckTypeI32 = STRID6("i32", 0x1e7c91),
     pckTypeI64 = STRID6("i64", 0x208891),
     pckTypeObj = STRID5("obj", 0x284f0),
+    pckTypeMode = STRID5("mode", 0x291ed0),
     pckTypePack = STRID5("pack", 0x58c300),
     pckTypePtr = STRID5("ptr", 0x4a900),
     pckTypeStr = STRID5("str", 0x4a930),
@@ -215,6 +217,19 @@ typedef struct PckReadI64Param
     pckReadI64(this, (PckReadI64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
 int64_t pckReadI64(PackRead *this, PckReadI64Param param);
+
+// Read mode
+typedef struct PckReadModeParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+    mode_t defaultValue;
+} PckReadModeParam;
+
+#define pckReadModeP(this, ...)                                                                                                     \
+    pckReadMode(this, (PckReadModeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+uint32_t pckReadMode(PackRead *this, PckReadModeParam param);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline PackRead *
@@ -429,6 +444,20 @@ typedef struct PckWriteI64Param
     pckWriteI64(this, value, (PckWriteI64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param);
+
+// Write mode
+typedef struct PckWriteModeParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultWrite;
+    unsigned int id;
+    mode_t defaultValue;
+} PckWriteModeParam;
+
+#define pckWriteModeP(this, value, ...)                                                                                             \
+    pckWriteMode(this, value, (PckWriteModeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteMode(PackWrite *this, uint32_t value, PckWriteModeParam param);
 
 // Write null
 #define pckWriteNullP(this)                                                                                                        \

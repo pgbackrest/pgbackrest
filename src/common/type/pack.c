@@ -132,6 +132,7 @@ typedef enum
     pckTypeMapTime = 15,                                            // Maps to pckTypeTime
     pckTypeMapBin = 16,                                             // Maps to pckTypeBin
     pckTypeMapPack = 17,                                            // Maps to pckTypePack
+    pckTypeMapMode = 18,                                            // Maps to pckTypeMode
 } PackTypeMap;
 
 typedef struct PackTypeMapData
@@ -207,6 +208,10 @@ static const PackTypeMapData packTypeMapData[] =
     {
         .type = pckTypePack,
         .size = true,
+    },
+    {
+        .type = pckTypeMode,
+        .valueMultiBit = true,
     },
 };
 
@@ -804,6 +809,24 @@ pckReadI64(PackRead *this, PckReadI64Param param)
         FUNCTION_TEST_RETURN(param.defaultValue);
 
     FUNCTION_TEST_RETURN(cvtInt64FromZigZag(pckReadTag(this, &param.id, pckTypeMapI64, false)));
+}
+
+/**********************************************************************************************************************************/
+uint32_t
+pckReadMode(PackRead *this, PckReadModeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(MODE, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(param.defaultValue);
+
+    FUNCTION_TEST_RETURN((uint32_t)pckReadTag(this, &param.id, pckTypeMapMode, false));
 }
 
 /**********************************************************************************************************************************/
@@ -1524,6 +1547,26 @@ pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param)
 
     if (!pckWriteDefaultNull(this, param.defaultWrite, value == param.defaultValue))
         pckWriteTag(this, pckTypeMapI64, param.id, cvtInt64ToZigZag(value));
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteMode(PackWrite *this, uint32_t value, PckWriteModeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT32, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
+        FUNCTION_TEST_PARAM(MODE, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!pckWriteDefaultNull(this, param.defaultWrite, value == param.defaultValue))
+        pckWriteTag(this, pckTypeMapMode, param.id, value);
 
     FUNCTION_TEST_RETURN(this);
 }

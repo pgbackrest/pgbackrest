@@ -51,7 +51,9 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, true), "write true");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .defaultWrite = true), "write false");
         TEST_RESULT_VOID(pckWriteStrIdP(packWrite, pckTypeTime, .id = 5), "write strid");
-        TEST_RESULT_VOID(pckWriteStrIdP(packWrite, pckTypeTime, .defaultValue = pckTypeTime), "write strid");
+        TEST_RESULT_VOID(pckWriteStrIdP(packWrite, pckTypeTime, .defaultValue = pckTypeTime), "write default strid");
+        TEST_RESULT_VOID(pckWriteModeP(packWrite, 0707, .id = 7), "write mode");
+        TEST_RESULT_VOID(pckWriteModeP(packWrite, 0644, .defaultValue = 0644), "write default mode");
         TEST_RESULT_VOID(pckWriteObjEndP(packWrite), "write obj end");
         TEST_RESULT_VOID(pckWriteArrayBeginP(packWrite, .id = 37), "write array begin");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0, .defaultWrite = true), "write 0");
@@ -134,6 +136,7 @@ testRun(void)
                   "1:bool:true"
                 ", 2:bool:false"
                 ", 5:strid:time"
+                ", 7:mode:0707"
             "}"
             ", 37:array:"
             "["
@@ -184,6 +187,7 @@ testRun(void)
                 "28"                                                //      1, bool
                 "20"                                                //      2, bool
                 "aac0a6ad01"                                        //      5, strid time
+                "f903c703"                                          //      7, mode 0707
                 "00"                                                //     obj end
             "1801"                                                  // 37, array begin
                 "90"                                                //      1,  u64, 0
@@ -248,6 +252,8 @@ testRun(void)
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 4), true, "field 4 is null");
         TEST_RESULT_UINT(pckReadStrIdP(packRead), pckTypeTime, "read strid");
         TEST_RESULT_UINT(pckReadStrIdP(packRead, .defaultValue = pckTypeTime), pckTypeTime, "read default strid");
+        TEST_RESULT_UINT(pckReadModeP(packRead), 0707, "read mode");
+        TEST_RESULT_UINT(pckReadModeP(packRead, .defaultValue = 0644), 0644, "read default mode");
         TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read default false");
         TEST_RESULT_VOID(pckReadObjEndP(packRead), "read object end");
 

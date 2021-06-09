@@ -158,7 +158,7 @@ storageRemoteInfoProtocolWrite(
     if (info->level >= storageInfoLevelDetail)
     {
         // Write mode
-        pckWriteU32P(write, info->mode, .defaultValue = data->modeLast);
+        pckWriteModeP(write, info->mode, .defaultValue = data->modeLast);
 
         // Write user id/name
         pckWriteU32P(write, info->userId, .defaultValue = data->userIdLast);
@@ -403,8 +403,8 @@ storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const serv
     {
         // Create the write object
         const String *file = pckReadStrP(param);
-        mode_t modeFile = pckReadU32P(param);
-        mode_t modePath = pckReadU32P(param);
+        mode_t modeFile = pckReadModeP(param);
+        mode_t modePath = pckReadModeP(param);
         const String *user = pckReadStrP(param);
         const String *group = pckReadStrP(param);
         time_t timeModified = pckReadTimeP(param);
@@ -491,7 +491,7 @@ storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const ser
         const String *path = pckReadStrP(param);
         bool errorOnExists = pckReadBoolP(param);
         bool noParentCreate = pckReadBoolP(param);
-        mode_t mode = pckReadU32P(param);
+        mode_t mode = pckReadModeP(param);
 
         storageInterfacePathCreateP(storageRemoteProtocolLocal.driver, path, errorOnExists, noParentCreate, mode);
         protocolServerResultPut(server);

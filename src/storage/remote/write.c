@@ -83,8 +83,8 @@ storageWriteRemoteOpen(THIS_VOID)
         PackWrite *param = protocolCommandParam(command);
 
         pckWriteStrP(param, this->interface.name);
-        pckWriteU32P(param, this->interface.modeFile);
-        pckWriteU32P(param, this->interface.modePath);
+        pckWriteModeP(param, this->interface.modeFile);
+        pckWriteModeP(param, this->interface.modePath);
         pckWriteStrP(param, this->interface.user);
         pckWriteStrP(param, this->interface.group);
         pckWriteTimeP(param, this->interface.timeModified);

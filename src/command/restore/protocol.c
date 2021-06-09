@@ -36,7 +36,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
         const bool pgFileZero = pckReadBoolP(param);
         const uint64_t pgFileSize = pckReadU64P(param);
         const time_t pgFileModified = pckReadTimeP(param);
-        const mode_t pgFileMode = pckReadU32P(param);
+        const mode_t pgFileMode = pckReadModeP(param);
         const String *const pgFileUser = pckReadStrP(param);
         const String *const pgFileGroup = pckReadStrP(param);
         const time_t copyTimeBegin = pckReadTimeP(param);

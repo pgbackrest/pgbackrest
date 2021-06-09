@@ -2152,7 +2152,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 pckWriteBoolP(param, restoreFileZeroed(file->name, jobData->zeroExp));
                 pckWriteU64P(param, file->size);
                 pckWriteTimeP(param, file->timestamp);
-                pckWriteU32P(param, file->mode);
+                pckWriteModeP(param, file->mode);
                 pckWriteStrP(param, file->user);
                 pckWriteStrP(param, file->group);
                 pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);

@@ -57,7 +57,7 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *const data, PackRead *const r
     if (info->level >= storageInfoLevelDetail)
     {
         // Read mode
-        info->mode = pckReadU32P(read, .defaultValue = data->modeLast);
+        info->mode = pckReadModeP(read, .defaultValue = data->modeLast);
 
         // Read user id/name
         info->userId = pckReadU32P(read, .defaultValue = data->userIdLast);
@@ -304,7 +304,7 @@ storageRemotePathCreate(
         pckWriteStrP(commandParam, path);
         pckWriteBoolP(commandParam, errorOnExists);
         pckWriteBoolP(commandParam, noParentCreate);
-        pckWriteU32P(commandParam, mode);
+        pckWriteModeP(commandParam, mode);
 
         protocolClientExecute(this->client, command, false);
     }

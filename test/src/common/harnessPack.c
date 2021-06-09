@@ -65,6 +65,10 @@ String *hrnPackToStr(PackRead *read)
                 strCatFmt(result, "%" PRId64, pckReadI64P(read, .id = id));
                 break;
 
+            case pckTypeMode:
+                strCatFmt(result, "%04o", pckReadModeP(read, .id = id));
+                break;
+
             case pckTypeObj:
                 pckReadObjBeginP(read, .id = id);
                 strCatFmt(result, "{%s}", strZ(hrnPackToStr(read)));
