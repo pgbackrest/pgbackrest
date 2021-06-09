@@ -596,6 +596,13 @@ testRun(void)
                 TEST_RESULT_INT(protocolClientIoReadFd(client), ioReadFd(client->pub.read), "get read fd");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid command");
+
+                TEST_ERROR(
+                    protocolClientExecute(client, protocolCommandNew(strIdFromZ(stringIdBit6, "BOGUS")), false), ProtocolError,
+                    "raised from test client: invalid command 'BOGUS' (0x38eacd271)");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command throws assert");
 
                 TEST_ERROR(
@@ -608,6 +615,17 @@ testRun(void)
                 TEST_ERROR(
                     protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
                     "raised from test client: ERR_MESSAGE");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("command throws error in debug log level");
+
+                harnessLogLevelSet(logLevelDebug);
+
+                TEST_ERROR(
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
+                    "raised from test client: ERR_MESSAGE\nERR_STACK_TRACE");
+
+                harnessLogLevelReset();
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("simple command");

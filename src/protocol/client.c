@@ -275,27 +275,7 @@ protocolClientResultGet(ProtocolClient *const this)
 
 /**********************************************************************************************************************************/
 void
-protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(command != NULL);
-
-    // End the pack
-    pckWriteEndP(protocolCommandParam(command));
-
-    // Write command
-    protocolClientWriteCommandConst(this, command);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-void
-protocolClientWriteCommandConst(ProtocolClient *const this, const ProtocolCommand *const command)
+protocolClientWriteCommand(ProtocolClient *const this, ProtocolCommand *const command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);

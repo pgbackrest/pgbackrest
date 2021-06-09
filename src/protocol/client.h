@@ -84,7 +84,6 @@ void protocolClientResultGet(ProtocolClient *const this);
 
 // Write the protocol command
 void protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command);
-void protocolClientWriteCommandConst(ProtocolClient *const this, const ProtocolCommand *const command);
 
 // Put command data
 void protocolClientDataPut(ProtocolClient *const this, PackWrite *const result);

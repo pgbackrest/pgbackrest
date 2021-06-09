@@ -11,15 +11,6 @@ typedef struct ProtocolCommand ProtocolCommand;
 
 #include "common/type/object.h"
 #include "common/type/pack.h"
-#include "common/type/stringId.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_KEY_COMMAND                                        "cmd"
-    STRING_DECLARE(PROTOCOL_KEY_COMMAND_STR);
-#define PROTOCOL_KEY_PARAMETER                                      "param"
-    STRING_DECLARE(PROTOCOL_KEY_PARAMETER_STR);
 
 /***********************************************************************************************************************************
 Constructors

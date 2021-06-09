@@ -38,7 +38,7 @@ typedef struct ProtocolParallelJobPub
 {
     MemContext *memContext;                                         // Mem context
     const Variant *key;                                             // Unique key used to identify the job
-    const ProtocolCommand *command;                                 // Command to be executed
+    ProtocolCommand *command;                                       // Command to be executed
     unsigned int processId;                                         // Process that executed this job
     ProtocolParallelJobState state;                                 // Current state of the job
     int code;                                                       // Non-zero result indicates an error
@@ -47,7 +47,7 @@ typedef struct ProtocolParallelJobPub
 } ProtocolParallelJobPub;
 
 // Job command
-__attribute__((always_inline)) static inline const ProtocolCommand *
+__attribute__((always_inline)) static inline ProtocolCommand *
 protocolParallelJobCommand(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->command;

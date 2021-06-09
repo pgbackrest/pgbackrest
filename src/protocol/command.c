@@ -9,12 +9,7 @@ Protocol Command
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "protocol/command.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_KEY_COMMAND_STR,                             PROTOCOL_KEY_COMMAND);
-STRING_EXTERN(PROTOCOL_KEY_PARAMETER_STR,                           PROTOCOL_KEY_PARAMETER);
+#include "protocol/client.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -46,7 +41,6 @@ protocolCommandNew(const StringId command)
         {
             .memContext = memContextCurrent(),
             .command = command,
-            .pack = pckWriteNewBuf(bufNew(1024)),
         };
     }
     MEM_CONTEXT_NEW_END();
@@ -70,8 +64,11 @@ protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
     pckWriteStrIdP(commandPack, this->command);
 
     // Only write params if there were any
-    if (!pckWriteEmpty(this->pack))
+    if (this->pack != NULL)
+    {
+        pckWriteEndP(this->pack);
         pckWritePackP(commandPack, this->pack);
+    }
 
     pckWriteEndP(commandPack);
 
@@ -90,6 +87,15 @@ protocolCommandParam(ProtocolCommand *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+
+    if (this->pack == NULL)
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->pack = protocolPack();
+        }
+        MEM_CONTEXT_END();
+    }
 
     FUNCTION_TEST_RETURN(this->pack);
 }

@@ -249,7 +249,6 @@ struct PackWrite
     MemContext *memContext;                                         // Mem context
     IoWrite *write;                                                 // Write pack to
     Buffer *buffer;                                                 // Buffer to contain write data
-    bool empty;                                                     // Is the pack empty? Only valid after pckWriteEnd().
 
     List *tagStack;                                                 // Stack of object/array tags
     PackTagStack *tagStackTop;                                      // Top tag on the stack
@@ -1809,9 +1808,6 @@ pckWriteEnd(PackWrite *this)
     ASSERT(this != NULL);
     ASSERT(lstSize(this->tagStack) == 1);
 
-    // Determine if the pack was empty
-    this->empty = this->tagStackTop->idLast == 0 && this->tagStackTop->nullTotal == 0;
-
     pckWriteU64Internal(this, 0);
     this->tagStackTop = NULL;
 
@@ -1826,20 +1822,6 @@ pckWriteEnd(PackWrite *this)
         bufResize(this->buffer, bufUsed(this->buffer));
 
     FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-bool
-pckWriteEmpty(const PackWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->tagStackTop == NULL);
-
-    FUNCTION_TEST_RETURN(this->empty);
 }
 
 /**********************************************************************************************************************************/

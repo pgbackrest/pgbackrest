@@ -114,7 +114,6 @@ testRun(void)
 
         // End pack
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "end");
-        TEST_RESULT_VOID(pckWriteEmpty(packWrite), "not empty");
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
 
         ioWriteClose(write);
@@ -355,23 +354,6 @@ testRun(void)
 
         TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
         TEST_RESULT_STR_Z(pckReadStrP(packRead), "test", "read string");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("empty pack");
-
-        packWrite = pckWriteNewBuf(bufNew(1));
-        pckWriteEndP(packWrite);
-
-        TEST_RESULT_BOOL(pckWriteEmpty(packWrite), true, "empty");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pack with nulls is not empty");
-
-        packWrite = pckWriteNewBuf(bufNew(1));
-        pckWriteU32P(packWrite, 0);
-        pckWriteEndP(packWrite);
-
-        TEST_RESULT_BOOL(pckWriteEmpty(packWrite), false, "no empty");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
