@@ -220,25 +220,25 @@
         <variable key="pg-cluster-create-upgrade" if="{[os-type-is-debian]}">pg_createcluster {[pg-version-upgrade]} {[postgres-cluster-demo]}</variable>
 
         <variable key="pg-cluster-start" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} start</variable>
-        <variable key="pg-cluster-start" if="{[os-type-is-rhel]}">systemctl start postgresql-{[pg-version]}.service</variable>
+	<variable key="pg-cluster-start" if="{[os-type-is-rhel]}">/usr/pgsql-10/bin/pg_ctl start -D /var/lib/pgsql/10/data</variable>
 
         <variable key="pg-cluster-start-upgrade" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version-upgrade]} {[postgres-cluster-demo]} start</variable>
-        <variable key="pg-cluster-start-upgrade" if="{[os-type-is-rhel]}">systemctl start postgresql-{[pg-version-upgrade]}.service</variable>
+        <variable key="pg-cluster-start-upgrade" if="{[os-type-is-rhel]}">/usr/pgsql-10/bin/pg_ctl start -D /var/lib/pgsql/10/data</variable>
 
         <variable key="pg-cluster-stop" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} stop</variable>
-        <variable key="pg-cluster-stop" if="{[os-type-is-rhel]}">systemctl stop postgresql-{[pg-version]}.service</variable>
+        <variable key="pg-cluster-stop" if="{[os-type-is-rhel]}">/usr/pgsql-10/bin/pg_ctl stop -D /var/lib/pgsql/10/data</variable>
 
         <variable key="pg-cluster-restart" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} restart</variable>
-        <variable key="pg-cluster-restart" if="{[os-type-is-rhel]}">systemctl restart postgresql-{[pg-version]}.service</variable>
+        <variable key="pg-cluster-restart" if="{[os-type-is-rhel]}">/usr/pgsql-10/bin/pg_ctl restart -D /var/lib/pgsql/10/data</variable>
 
         <variable key="pg-cluster-reload" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} reload</variable>
-        <variable key="pg-cluster-reload" if="{[os-type-is-rhel]}">systemctl reload postgresql-{[pg-version]}.service</variable>
+        <variable key="pg-cluster-reload" if="{[os-type-is-rhel]}">/usr/pgsql-10/bin/pg_ctl reload -D /var/lib/pgsql/10/data</variable>
 
         <variable key="pg-cluster-check" if="{[os-type-is-debian]}">pg_lsclusters</variable>
-        <variable key="pg-cluster-check" if="{[os-type-is-rhel]}">systemctl status postgresql-{[pg-version]}.service</variable>
+        <variable key="pg-cluster-check" if="{[os-type-is-rhel]}">/usr/pgsql-10/bin/pg_ctl status -D /var/lib/pgsql/10/data</variable>
 
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-debian]}">pg_lsclusters</variable>
-        <variable key="pg-cluster-check-upgrade" if="{[os-type-is-rhel]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
+        <variable key="pg-cluster-check-upgrade" if="{[os-type-is-rhel]}">/usr/pgsql-10/bin/pg_ctl status -D /var/lib/pgsql/10/data</variable>
 
         <!-- Add more tables to make the backup more interesting. This is a rough and ready solution that can be pasted into the
              document where needed to grow the number of files as needed for performance testing. -->
@@ -1089,8 +1089,8 @@
             <execute-list host="{[host-pg1]}">
                 <title>Restart the {[postgres-cluster-demo]} cluster</title>
 
-                <execute user="root">
-                    <exe-cmd>{[pg-cluster-restart]}</exe-cmd>
+                <execute user="postgres">
+                    <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
                 <execute user="postgres" show="n">
@@ -1269,7 +1269,7 @@
             <execute-list host="{[host-pg1]}">
                 <title>Stop the {[postgres-cluster-demo]} cluster and delete the <file>pg_control</file> file</title>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
                 </execute>
 
@@ -1288,11 +1288,11 @@
                     <exe-highlight>could not find the database system</exe-highlight>
                 </execute>
 
-                <execute if="{[os-type-is-rhel]}" user="root" err-expect="1">
+                <execute if="{[os-type-is-rhel]}" user="postgres" err-expect="1">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
-                <execute if="{[os-type-is-rhel]}" user="root" output="y" err-expect="3">
+                <execute if="{[os-type-is-rhel]}" user="postgres" output="y" err-expect="3">
                     <exe-cmd>{[pg-cluster-check]}</exe-cmd>
                     <exe-highlight>Failed to start PostgreSQL</exe-highlight>
                 </execute>
@@ -1315,7 +1315,7 @@
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} restore</exe-cmd>
                 </execute>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
@@ -1715,7 +1715,7 @@
             <execute-list host="{[host-pg1]}">
                 <title>Stop the {[postgres-cluster-demo]} cluster, perform delta restore</title>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
                 </execute>
 
@@ -1729,7 +1729,7 @@
             <execute-list host="{[host-pg1]}">
                 <title>Restart <postgres/></title>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
@@ -1834,7 +1834,7 @@
             <execute-list host="{[host-pg1]}">
                 <title>Restore from last backup including only the test2 database</title>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
                 </execute>
 
@@ -1843,7 +1843,7 @@
                         {[dash]}-db-include=test2 {[dash]}-type=immediate {[dash]}-target-action=promote restore</exe-cmd>
                 </execute>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
@@ -1984,7 +1984,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Stop <postgres/>, restore the {[postgres-cluster-demo]} cluster to <id>{[time-recovery-timestamp]}</id>, and display <file>{[pg-recovery-file-demo]}</file></title>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
             </execute>
 
@@ -2009,7 +2009,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Start <postgres/> and check that the important table exists</title>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-start]}</exe-cmd>
             </execute>
 
@@ -2070,7 +2070,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Attempt recovery from the specified backup</title>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
             </execute>
 
@@ -2084,7 +2084,7 @@
                 <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
             </execute>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-start]}</exe-cmd>
             </execute>
 
@@ -2114,7 +2114,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Stop <postgres/>, restore from auto-selected backup, and start <postgres/></title>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
             </execute>
 
@@ -2130,7 +2130,7 @@
                 <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
             </execute>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-start]}</exe-cmd>
             </execute>
 
@@ -2327,7 +2327,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Stop <postgres/> cluster to be removed</title>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
             </execute>
         </execute-list>
@@ -2352,7 +2352,7 @@
                 <exe-highlight>completed successfully</exe-highlight>
             </execute>
 
-            <execute user="root" show="n">
+            <execute user="postgres" show="n">
                 <exe-cmd>{[pg-cluster-start]}</exe-cmd>
             </execute>
         </execute-list>
@@ -2583,7 +2583,7 @@
             <execute-list host="{[host-pg1]}">
                 <title>Stop the {[postgres-cluster-demo]} cluster, restore, and restart <postgres/></title>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
                 </execute>
 
@@ -2591,7 +2591,7 @@
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta restore</exe-cmd>
                 </execute>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
@@ -2803,7 +2803,7 @@
             <execute-list if="{[os-type-is-debian]}" host="{[host-pg2]}">
                 <title>Create demo cluster</title>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-create]}</exe-cmd>
                 </execute>
             </execute-list>
@@ -2861,7 +2861,7 @@
                     <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
                 </execute>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
@@ -2980,7 +2980,7 @@
                     </exe-cmd>
                 </execute>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-reload]}</exe-cmd>
                 </execute>
             </execute-list>
@@ -3016,7 +3016,7 @@
             <execute-list host="{[host-pg2]}">
                 <title>Stop <postgres/> and restore the {[postgres-cluster-demo]} standby cluster</title>
 
-                <execute user="root" err-suppress="y">
+                <execute user="postgres" err-suppress="y">
                     <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
                 </execute>
 
@@ -3046,7 +3046,7 @@
                     <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
                 </execute>
 
-                <execute user="root">
+                <execute user="postgres">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
                 </execute>
 
@@ -3163,7 +3163,7 @@
         <execute-list host="{[host-pg2]}">
             <title>Restart standby to break connection</title>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-restart]}</exe-cmd>
             </execute>
         </execute-list>
@@ -3291,7 +3291,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Stop old cluster</title>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
             </execute>
         </execute-list>
@@ -3301,7 +3301,7 @@
         <execute-list host="{[host-pg2]}">
             <title>Stop old cluster</title>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
             </execute>
         </execute-list>
@@ -3412,7 +3412,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Start new cluster</title>
 
-            <execute user="root" output="y">
+            <execute user="postgres" output="y">
                 <exe-cmd>{[pg-cluster-start-upgrade]}</exe-cmd>
             </execute>
         </execute-list>
@@ -3510,7 +3510,7 @@
         <execute-list host="{[host-pg2]}">
             <title>Start <postgres/> and check the <backrest/> configuration</title>
 
-            <execute user="root">
+            <execute user="postgres">
                 <exe-cmd>{[pg-cluster-start-upgrade]}</exe-cmd>
             </execute>
 
