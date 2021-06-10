@@ -82,6 +82,9 @@ cumulative field ID. At the end of a container the numbering will continue from 
 #ifndef COMMON_TYPE_PACK_H
 #define COMMON_TYPE_PACK_H
 
+#include <sys/stat.h>
+#include <time.h>
+
 /***********************************************************************************************************************************
 Minimum number of extra bytes to allocate for packs that are growing or are likely to grow
 ***********************************************************************************************************************************/
@@ -111,8 +114,11 @@ typedef enum
     pckTypeI32 = STRID6("i32", 0x1e7c91),
     pckTypeI64 = STRID6("i64", 0x208891),
     pckTypeObj = STRID5("obj", 0x284f0),
+    pckTypeMode = STRID5("mode", 0x291ed0),
+    pckTypePack = STRID5("pack", 0x58c300),
     pckTypePtr = STRID5("ptr", 0x4a900),
     pckTypeStr = STRID5("str", 0x4a930),
+    pckTypeStrId = STRID5("strid", 0x44ca930),
     pckTypeTime = STRID5("time", 0x2b5340),
     pckTypeU32 = STRID6("u32", 0x1e7d51),
     pckTypeU64 = STRID6("u64", 0x208951),
@@ -214,6 +220,19 @@ typedef struct PckReadI64Param
 
 int64_t pckReadI64(PackRead *this, PckReadI64Param param);
 
+// Read mode
+typedef struct PckReadModeParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+    mode_t defaultValue;
+} PckReadModeParam;
+
+#define pckReadModeP(this, ...)                                                                                                     \
+    pckReadMode(this, (PckReadModeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+mode_t pckReadMode(PackRead *this, PckReadModeParam param);
+
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline PackRead *
 pckReadMove(PackRead *const this, MemContext *const parentNew)
@@ -231,6 +250,24 @@ void pckReadObjBegin(PackRead *this, PackIdParam param);
     pckReadObjEnd(this)
 
 void pckReadObjEnd(PackRead *this);
+
+// Read pack
+typedef struct PckReadPackParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+} PckReadPackParam;
+
+#define pckReadPackP(this, ...)                                                                                                    \
+    pckReadPack(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackRead *pckReadPack(PackRead *this, PckReadPackParam param);
+
+// Read pack buffer
+#define pckReadPackBufP(this, ...)                                                                                                 \
+    pckReadPackBuf(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+Buffer *pckReadPackBuf(PackRead *this, PckReadPackParam param);
 
 // Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 typedef struct PckReadPtrParam
@@ -256,6 +293,31 @@ typedef struct PckReadStrParam
     pckReadStr(this, (PckReadStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 String *pckReadStr(PackRead *this, PckReadStrParam param);
+
+// Read string id
+typedef struct PckReadStrIdParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+    StringId defaultValue;
+} PckReadStrIdParam;
+
+#define pckReadStrIdP(this, ...)                                                                                                   \
+    pckReadStrId(this, (PckReadStrIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+uint64_t pckReadStrId(PackRead *this, PckReadStrIdParam param);
+
+// Read string list
+typedef struct PckReadStrLstParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+} PckReadStrLstParam;
+
+#define pckReadStrLstP(this, ...)                                                                                                  \
+    pckReadStrLst(this, (PckReadStrLstParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+StringList *pckReadStrLst(PackRead *const this, PckReadStrLstParam param);
 
 // Read time
 typedef struct PckReadTimeParam
@@ -387,6 +449,20 @@ typedef struct PckWriteI64Param
 
 PackWrite *pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param);
 
+// Write mode
+typedef struct PckWriteModeParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultWrite;
+    unsigned int id;
+    mode_t defaultValue;
+} PckWriteModeParam;
+
+#define pckWriteModeP(this, value, ...)                                                                                             \
+    pckWriteMode(this, value, (PckWriteModeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param);
+
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline PackWrite *
 pckWriteMove(PackWrite *const this, MemContext *const parentNew)
@@ -410,6 +486,19 @@ PackWrite *pckWriteObjBegin(PackWrite *this, PackIdParam param);
     pckWriteObjEnd(this)
 
 PackWrite *pckWriteObjEnd(PackWrite *this);
+
+// Write pack
+typedef struct PckWritePackParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultWrite;
+    unsigned int id;
+} PckWritePackParam;
+
+#define pckWritePackP(this, value, ...)                                                                                            \
+    pckWritePack(this, value, (PckWritePackParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param);
 
 // Write pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 typedef struct PckWritePtrParam
@@ -437,6 +526,32 @@ typedef struct PckWriteStrParam
     pckWriteStr(this, value, (PckWriteStrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param);
+
+// Write string id
+typedef struct PckWriteStrIdParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultWrite;
+    unsigned int id;
+    StringId defaultValue;
+} PckWriteStrIdParam;
+
+#define pckWriteStrIdP(this, value, ...)                                                                                           \
+    pckWriteStrId(this, value, (PckWriteStrIdParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteStrId(PackWrite *this, uint64_t value, PckWriteStrIdParam param);
+
+// Write string list
+typedef struct PckWriteStrLstParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+} PckWriteStrLstParam;
+
+#define pckWriteStrLstP(this, value, ...)                                                                                          \
+    pckWriteStrLst(this, value, (PckWriteStrLstParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteStrLst(PackWrite *const this, const StringList *const value, const PckWriteStrLstParam param);
 
 // Write time
 typedef struct PckWriteTimeParam
@@ -485,6 +600,13 @@ PackWrite *pckWriteU64(PackWrite *this, uint64_t value, PckWriteU64Param param);
     pckWriteEnd(this)
 
 PackWrite *pckWriteEnd(PackWrite *this);
+
+/***********************************************************************************************************************************
+Write Getters/Setters
+***********************************************************************************************************************************/
+// Get buffer the pack is writing to (returns NULL if pckWriteNewBuf() was not used to construct the object). This function is only
+// valid after pckWriteEndP() has been called.
+const Buffer *pckWriteBuf(const PackWrite *this);
 
 /***********************************************************************************************************************************
 Write Destructor

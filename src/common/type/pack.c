@@ -125,11 +125,14 @@ typedef enum
     pckTypeMapStr = 7,                                              // Maps to pckTypeStr
     pckTypeMapU32 = 8,                                              // Maps to pckTypeU32
     pckTypeMapU64 = 9,                                              // Maps to pckTypeU64
+    pckTypeMapStrId = 10,                                           // Maps to pckTypeStrId
 
     // The empty positions before 15 can be used for new types that will be encoded entirely in the tag
 
     pckTypeMapTime = 15,                                            // Maps to pckTypeTime
     pckTypeMapBin = 16,                                             // Maps to pckTypeBin
+    pckTypeMapPack = 17,                                            // Maps to pckTypePack
+    pckTypeMapMode = 18,                                            // Maps to pckTypeMode
 } PackTypeMap;
 
 typedef struct PackTypeMapData
@@ -181,9 +184,12 @@ static const PackTypeMapData packTypeMapData[] =
         .type = pckTypeU64,
         .valueMultiBit = true,
     },
+    {
+        .type = pckTypeStrId,
+        .valueMultiBit = true,
+    },
 
     // Placeholders for unused types that can be encoded entirely in the tag
-    {0},
     {0},
     {0},
     {0},
@@ -198,6 +204,14 @@ static const PackTypeMapData packTypeMapData[] =
         .type = pckTypeBin,
         .valueSingleBit = true,
         .size = true,
+    },
+    {
+        .type = pckTypePack,
+        .size = true,
+    },
+    {
+        .type = pckTypeMode,
+        .valueMultiBit = true,
     },
 };
 
@@ -295,7 +309,8 @@ pckReadNewBuf(const Buffer *buffer)
         FUNCTION_TEST_PARAM(BUFFER, buffer);
     FUNCTION_TEST_END();
 
-    ASSERT(buffer != NULL);
+    if (buffer == NULL)
+        FUNCTION_TEST_RETURN(NULL);
 
     PackRead *this = pckReadNewInternal();
     this->bufferPtr = bufPtrConst(buffer);
@@ -796,6 +811,24 @@ pckReadI64(PackRead *this, PckReadI64Param param)
 }
 
 /**********************************************************************************************************************************/
+mode_t
+pckReadMode(PackRead *this, PckReadModeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(MODE, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(param.defaultValue);
+
+    FUNCTION_TEST_RETURN((mode_t)pckReadTag(this, &param.id, pckTypeMapMode, false));
+}
+
+/**********************************************************************************************************************************/
 void
 pckReadObjBegin(PackRead *this, PackIdParam param)
 {
@@ -839,6 +872,54 @@ pckReadObjEnd(PackRead *this)
     this->tagNextId = 0;
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+PackRead *
+pckReadPack(PackRead *this, PckReadPackParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    Buffer *const buffer = pckReadPackBuf(this, param);
+    PackRead *const result = pckReadNewBuf(buffer);
+
+    if (result != NULL)
+        bufMove(buffer, result->memContext);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+Buffer *
+pckReadPackBuf(PackRead *this, PckReadPackParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(NULL);
+
+    // Read the tag
+    pckReadTag(this, &param.id, pckTypeMapPack, false);
+
+    // Get the pack size
+    Buffer *result = bufNew((size_t)pckReadU64Internal(this));
+
+    // Read the pack out in chunks
+    while (bufUsed(result) < bufSize(result))
+    {
+        size_t size = pckReadBuffer(this, bufRemains(result));
+        bufCatC(result, this->bufferPtr, this->bufferPos, size);
+        this->bufferPos += size;
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
@@ -894,6 +975,50 @@ pckReadStr(PackRead *this, PckReadStrParam param)
     // Else return an empty string
     else
         result = strNew();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+StringId
+pckReadStrId(PackRead *this, PckReadStrIdParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(UINT64, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(param.defaultValue);
+
+    FUNCTION_TEST_RETURN(pckReadTag(this, &param.id, pckTypeMapStrId, false));
+}
+
+/**********************************************************************************************************************************/
+StringList *
+pckReadStrLst(PackRead *const this, PckReadStrLstParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(NULL);
+
+    pckReadArrayBeginP(this, .id = param.id);
+
+    StringList *const result = strLstNew();
+
+    while (!pckReadNullP(this))
+        strLstAdd(result, pckReadStrP(this));
+
+    pckReadArrayEndP(this);
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -1427,6 +1552,26 @@ pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param)
 
 /**********************************************************************************************************************************/
 PackWrite *
+pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT32, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
+        FUNCTION_TEST_PARAM(MODE, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!pckWriteDefaultNull(this, param.defaultWrite, value == param.defaultValue))
+        pckWriteTag(this, pckTypeMapMode, param.id, value);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
 pckWriteObjBegin(PackWrite *this, PackIdParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1462,6 +1607,36 @@ pckWriteObjEnd(PackWrite *this)
     // Pop object off the stack to revert to ID tracking for the prior container
     lstRemoveLast(this->tagStack);
     this->tagStackTop = lstGetLast(this->tagStack);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(PACK_WRITE, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!pckWriteDefaultNull(this, false, value == NULL))
+    {
+        ASSERT(value != NULL);
+
+        // Write pack size
+        pckWriteTag(this, pckTypeMapPack, param.id, 0);
+
+        // Write pack data
+        const Buffer *packBuffer = pckWriteBuf(value);
+
+        pckWriteU64Internal(this, bufUsed(packBuffer));
+        pckWriteBuffer(this, packBuffer);
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1510,6 +1685,53 @@ pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
             pckWriteU64Internal(this, strSize(value));
             pckWriteBuffer(this, BUF(strZ(value), strSize(value)));
         }
+    }
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteStrId(PackWrite *this, uint64_t value, PckWriteStrIdParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(UINT64, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
+        FUNCTION_TEST_PARAM(UINT64, param.defaultValue);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!pckWriteDefaultNull(this, param.defaultWrite, value == param.defaultValue))
+        pckWriteTag(this, pckTypeMapStrId, param.id, value);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWriteStrLst(PackWrite *const this, const StringList *const value, const PckWriteStrLstParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(STRING_LIST, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!pckWriteDefaultNull(this, false, value == NULL))
+    {
+        ASSERT(value != NULL);
+
+        pckWriteArrayBeginP(this, .id = param.id);
+
+        for (unsigned int valueIdx = 0; valueIdx < strLstSize(value); valueIdx++)
+            pckWriteStrP(this, strLstGet(value, valueIdx));
+
+        pckWriteArrayEndP(this);
     }
 
     FUNCTION_TEST_RETURN(this);
@@ -1603,8 +1825,22 @@ pckWriteEnd(PackWrite *this)
 }
 
 /**********************************************************************************************************************************/
+const Buffer *
+pckWriteBuf(const PackWrite *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->tagStackTop == NULL);
+
+    FUNCTION_TEST_RETURN(this->buffer);
+}
+
+/**********************************************************************************************************************************/
 String *
 pckWriteToLog(const PackWrite *this)
 {
-    return strNewFmt("{depth: %u, idLast: %u}", lstSize(this->tagStack), this->tagStackTop->idLast);
+    return strNewFmt("{depth: %u, idLast: %u}", lstSize(this->tagStack), this->tagStackTop == NULL ? 0 : this->tagStackTop->idLast);
 }
