@@ -52,7 +52,7 @@ storageWriteRemoteFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    protocolClientDataPut(this->client, pckWriteBoolP(protocolPack(), false));
+    protocolClientDataPut(this->client, pckWriteBoolP(protocolPackNew(), false));
     protocolClientDataPut(this->client, NULL);
     protocolClientDataEndGet(this->client);
 
@@ -132,7 +132,7 @@ storageWriteRemote(THIS_VOID, const Buffer *buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    protocolClientDataPut(this->client, pckWriteBinP(protocolPack(), buffer));
+    protocolClientDataPut(this->client, pckWriteBinP(protocolPackNew(), buffer));
 
 #ifdef DEBUG
     this->protocolWriteBytes += bufUsed(buffer);

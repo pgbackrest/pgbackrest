@@ -134,6 +134,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     PackRead *const read = protocolClientDataGet(this->client);
                     pckReadNext(read);
 
+                    // If binary then read the next block
                     if (pckReadType(read) == pckTypeBin)
                     {
                         MEM_CONTEXT_BEGIN(this->memContext)
@@ -143,6 +144,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                         }
                         MEM_CONTEXT_END();
                     }
+                    // Else read is complete and get the filter list
                     else
                     {
                         bufFree(this->block);

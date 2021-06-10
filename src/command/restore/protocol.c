@@ -49,7 +49,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
             pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass);
 
         // Result result
-        protocolServerDataPut(server, pckWriteBoolP(protocolPack(), result));
+        protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), result));
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();

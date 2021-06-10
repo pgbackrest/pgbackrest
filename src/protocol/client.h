@@ -9,16 +9,16 @@ Messages types used by the protocol
 ***********************************************************************************************************************************/
 typedef enum
 {
-    // One of possibly many data passed between client and server
+    // Data passed between client and server in either direction. This can be used as many times as needed
     protocolMessageTypeData = 0,
 
-    // Indicates no more data
+    // Indicates no more data for the server to return to the client and ends the command
     protocolMessageTypeDataEnd = 1,
 
-    // An error occurred and the command process was terminated
+    // Command sent from the client to the server
     protocolMessageTypeCommand = 2,
 
-    // An error occurred and the command process was terminated
+    // An error occurred on the server and the command ended abnormally. protocolMessageTypeDataEnd will not be sent to the client.
     protocolMessageTypeError = 3,
 } ProtocolMessageType;
 
@@ -53,7 +53,7 @@ be added to the expected binary size to account for overhead.
 
 // Pack large enough for standard data. Note that the buffer will automatically resize when required.
 __attribute__((always_inline)) static inline PackWrite *
-protocolPack(void)
+protocolPackNew(void)
 {
     return pckWriteNewBuf(bufNew(PROTOCOL_PACK_DEFAULT_SIZE));
 }

@@ -92,7 +92,7 @@ protocolCommandParam(ProtocolCommand *this)
     {
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->pack = protocolPack();
+            this->pack = protocolPackNew();
         }
         MEM_CONTEXT_END();
     }

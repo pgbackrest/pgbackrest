@@ -50,7 +50,7 @@ archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
             strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s." STORAGE_FILE_TEMP_EXT, strZ(request)));
 
         // Return result
-        PackWrite *const resultPack = protocolPack();
+        PackWrite *const resultPack = protocolPackNew();
         pckWriteU32P(resultPack, fileResult.actualIdx);
         pckWriteStrLstP(resultPack, fileResult.warnList);
 

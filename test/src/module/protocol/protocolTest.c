@@ -69,7 +69,7 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerDataPut(server, pckWriteStrP(protocolPack(), STRDEF("output")));
+        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), STRDEF("output")));
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
@@ -101,8 +101,8 @@ testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const s
         TEST_RESULT_UINT(pckReadModeP(protocolServerDataGet(server)), 0644, "data get");
         TEST_RESULT_PTR(protocolServerDataGet(server), NULL, "data end get");
 
-        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteBoolP(protocolPack(), true)), "data put");
-        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteI32P(protocolPack(), -1)), "data put");
+        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true)), "data put");
+        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteI32P(protocolPackNew(), -1)), "data put");
         TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
     }
     MEM_CONTEXT_TEMP_END();
@@ -133,7 +133,7 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
             THROW(FormatError, "error-until-0");
         }
 
-        protocolServerDataPut(server, pckWriteBoolP(protocolPack(), true));
+        protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true));
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
@@ -592,8 +592,8 @@ testRun(void)
                 TEST_RESULT_VOID(protocolClientCommandPut(client, command), "command put");
 
                 TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "sync");
-                protocolClientDataPut(client, pckWriteBoolP(protocolPack(), true));
-                protocolClientDataPut(client, pckWriteModeP(protocolPack(), 0644));
+                protocolClientDataPut(client, pckWriteBoolP(protocolPackNew(), true));
+                protocolClientDataPut(client, pckWriteModeP(protocolPackNew(), 0644));
                 protocolClientDataPut(client, NULL);
 
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "data get");
@@ -677,7 +677,7 @@ testRun(void)
 
                 sleepMSec(4000);
 
-                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPack(), 1)), "data end put");
+                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 1)), "data end put");
                 TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
                 // Wait for exit
@@ -704,7 +704,7 @@ testRun(void)
 
                 sleepMSec(1000);
 
-                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPack(), 2)), "data end put");
+                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 2)), "data end put");
                 TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
                 // Command with error

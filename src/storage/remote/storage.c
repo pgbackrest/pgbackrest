@@ -36,9 +36,9 @@ typedef struct StorageRemoteInfoParseData
     String *group;                                                  // group from last call
 } StorageRemoteInfoParseData;
 
-// Helper to parse storage info from the protocol output
+// Helper to get storage info from the protocol output
 static void
-storageRemoteInfoParse(StorageRemoteInfoParseData *const data, PackRead *const read, StorageInfo *const info)
+storageRemoteInfoGet(StorageRemoteInfoParseData *const data, PackRead *const read, StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -141,7 +141,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             {
                 result.name = strDup(result.name);
 
-                storageRemoteInfoParse(&(StorageRemoteInfoParseData){0}, read, &result);
+                storageRemoteInfoGet(&(StorageRemoteInfoParseData){0}, read, &result);
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -199,7 +199,7 @@ storageRemoteInfoList(
             {
                 StorageInfo info = {.exists = true, .level = level, .name = pckReadStrP(read)};
 
-                storageRemoteInfoParse(&parseData, read, &info);
+                storageRemoteInfoGet(&parseData, read, &info);
                 callback(callbackData, &info);
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing

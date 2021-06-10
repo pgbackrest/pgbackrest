@@ -61,7 +61,7 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
             walSource, headerCheck, pgVersion, pgSystemId, archiveFile, compressType, compressLevel, repoList, priorErrorList);
 
         // Return result
-        protocolServerDataPut(server, pckWriteStrLstP(protocolPack(), fileResult.warnList));
+        protocolServerDataPut(server, pckWriteStrLstP(protocolPackNew(), fileResult.warnList));
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();

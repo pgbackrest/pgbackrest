@@ -50,7 +50,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             backupLabel, delta, cipherType, cipherPass);
 
         // Return result
-        PackWrite *const resultPack = protocolPack();
+        PackWrite *const resultPack = protocolPackNew();
         pckWriteU32P(resultPack, result.backupCopyResult);
         pckWriteU64P(resultPack, result.copySize);
         pckWriteU64P(resultPack, result.repoSize);

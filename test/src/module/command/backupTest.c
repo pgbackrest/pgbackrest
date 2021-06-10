@@ -1322,7 +1322,7 @@ testRun(void)
         // Create job that skips file
         job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(strIdFromZ(stringIdBit5, "x")));
 
-        PackWrite *const resultPack = protocolPack();
+        PackWrite *const resultPack = protocolPackNew();
         pckWriteU32P(resultPack, backupCopyResultNoOp);
         pckWriteU64P(resultPack, 0);
         pckWriteU64P(resultPack, 0);
