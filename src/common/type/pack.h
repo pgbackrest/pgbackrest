@@ -461,7 +461,7 @@ typedef struct PckWriteModeParam
 #define pckWriteModeP(this, value, ...)                                                                                             \
     pckWriteMode(this, value, (PckWriteModeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWriteMode(PackWrite *this, uint32_t value, PckWriteModeParam param);
+PackWrite *pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline PackWrite *
