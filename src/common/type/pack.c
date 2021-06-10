@@ -811,7 +811,7 @@ pckReadI64(PackRead *this, PckReadI64Param param)
 }
 
 /**********************************************************************************************************************************/
-uint32_t
+mode_t
 pckReadMode(PackRead *this, PckReadModeParam param)
 {
     FUNCTION_TEST_BEGIN();
