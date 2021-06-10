@@ -33,7 +33,12 @@ testRun(void)
         ioBufferSizeSet(3);
 
         PackWrite *packWrite = NULL;
-        TEST_ASSIGN(packWrite, pckWriteNew(write), "new write");
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(packWrite, pckWriteMove(pckWriteNew(write), memContextPrior()), "move new write");
+        }
+        MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 1, idLast: 0}", "log");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0750), "write mode");
@@ -196,7 +201,12 @@ testRun(void)
         ioReadOpen(read);
 
         PackRead *packRead = NULL;
-        TEST_ASSIGN(packRead, pckReadNew(read), "new read");
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(packRead, pckReadMove(pckReadNew(read), memContextPrior()), "move new read");
+        }
+        MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_UINT(pckReadU64P(packRead), 0750, "read mode");
         TEST_RESULT_UINT(pckReadU64P(packRead), 1911246845, "read timestamp");

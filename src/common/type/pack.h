@@ -122,6 +122,8 @@ typedef enum
 Read Constructors
 ***********************************************************************************************************************************/
 PackRead *pckReadNew(IoRead *read);
+
+// Note that the buffer is not moved into the PackRead mem context and must be moved explicitly if the PackRead object is moved.
 PackRead *pckReadNewBuf(const Buffer *buffer);
 
 /***********************************************************************************************************************************
@@ -211,6 +213,13 @@ typedef struct PckReadI64Param
     pckReadI64(this, (PckReadI64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
 int64_t pckReadI64(PackRead *this, PckReadI64Param param);
+
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline PackRead *
+pckReadMove(PackRead *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Read object begin/end
 #define pckReadObjBeginP(this, ...)                                                                                                \
@@ -306,6 +315,8 @@ pckReadFree(PackRead *const this)
 Write Constructors
 ***********************************************************************************************************************************/
 PackWrite *pckWriteNew(IoWrite *write);
+
+// Note that the buffer is not moved into the PackWrite mem context and must be moved explicitly if the PackWrite object is moved.
 PackWrite *pckWriteNewBuf(Buffer *buffer);
 
 /***********************************************************************************************************************************
@@ -375,6 +386,13 @@ typedef struct PckWriteI64Param
     pckWriteI64(this, value, (PckWriteI64Param){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param);
+
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline PackWrite *
+pckWriteMove(PackWrite *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Write null
 #define pckWriteNullP(this)                                                                                                        \
