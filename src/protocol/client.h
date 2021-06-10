@@ -52,7 +52,6 @@ typedef struct ProtocolClientPub
 {
     MemContext *memContext;                                         // Mem context
     IoRead *read;                                                   // Read interface
-    IoWrite *write;                                                 // Write interface
 } ProtocolClientPub;
 
 // Read file descriptor
@@ -66,7 +65,7 @@ protocolClientIoReadFd(ProtocolClient *const this)
 Functions
 ***********************************************************************************************************************************/
 // Execute a command and get the result
-PackRead *protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command, const bool resultRequired);
+PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool resultRequired);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolClient *
@@ -78,15 +77,15 @@ protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 // Send noop to test connection or keep it alive
 void protocolClientNoOp(ProtocolClient *this);
 
-// !!! Read the command output
-PackRead *protocolClientDataGet(ProtocolClient *const this);
-void protocolClientDataEndGet(ProtocolClient *const this);
+// Get data put by the server
+PackRead *protocolClientDataGet(ProtocolClient *this);
+void protocolClientDataEndGet(ProtocolClient *this);
 
-// Write the protocol command
-void protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command);
+// Put command to the server
+void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
 
-// Put command data
-void protocolClientDataPut(ProtocolClient *const this, PackWrite *const result);
+// Put data to the server
+void protocolClientDataPut(ProtocolClient *this, PackWrite *result);
 
 /***********************************************************************************************************************************
 Destructor

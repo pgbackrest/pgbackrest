@@ -13,9 +13,9 @@ Db Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process db protocol requests
-void dbOpenProtocol(PackRead *const param, ProtocolServer *const server);
-void dbQueryProtocol(PackRead *const param, ProtocolServer *const server);
-void dbCloseProtocol(PackRead *const param, ProtocolServer *const server);
+void dbOpenProtocol(PackRead *param, ProtocolServer *server);
+void dbQueryProtocol(PackRead *param, ProtocolServer *server);
+void dbCloseProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

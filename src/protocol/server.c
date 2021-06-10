@@ -21,26 +21,11 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolServer
 {
-    ProtocolServerPub pub;                                          // Publicly accessible variables
-    const String *name;
+    MemContext *memContext;                                         // Mem context
+    IoRead *read;                                                   // Read interface
+    IoWrite *write;                                                 // Write interface
+    const String *name;                                             // Name displayed in logging
 };
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Read interface !!! REMOVE
-__attribute__((always_inline)) static inline IoRead *
-protocolServerIoRead(ProtocolServer *const this)
-{
-    return THIS_PUB(ProtocolServer)->read;
-}
-
-// Write interface !!! REMOVE
-__attribute__((always_inline)) static inline IoWrite *
-protocolServerIoWrite(ProtocolServer *const this)
-{
-    return THIS_PUB(ProtocolServer)->write;
-}
 
 /**********************************************************************************************************************************/
 ProtocolServer *
@@ -65,12 +50,9 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
         *this = (ProtocolServer)
         {
-            .pub =
-            {
-                .memContext = memContextCurrent(),
-                .read = read,
-                .write = write,
-            },
+            .memContext = memContextCurrent(),
+            .read = read,
+            .write = write,
             .name = strDup(name),
         };
 
@@ -82,8 +64,8 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_SERVICE_STR), VARSTR(service));
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_VERSION_STR), VARSTRZ(PROJECT_VERSION));
 
-            ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(greetingKv));
-            ioWriteFlush(protocolServerIoWrite(this));
+            ioWriteStrLine(this->write, jsonFromKv(greetingKv));
+            ioWriteFlush(this->write);
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -109,14 +91,14 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     ASSERT(stack != NULL);
 
     // Write the error and flush to be sure it gets sent immediately
-    PackWrite *error = pckWriteNew(protocolServerIoWrite(this));
+    PackWrite *error = pckWriteNew(this->write);
     pckWriteU32P(error, protocolServerTypeError);
     pckWriteI32P(error, code);
     pckWriteStrP(error, message);
     pckWriteStrP(error, stack);
     pckWriteEndP(error);
 
-    ioWriteFlush(protocolServerIoWrite(this));
+    ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -133,7 +115,7 @@ protocolServerCommandGet(ProtocolServer *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *const command = pckReadNew(protocolServerIoRead(this));
+        PackRead *const command = pckReadNew(this->read);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -195,7 +177,7 @@ protocolServerProcess(
                 {
                     // Send the command to the handler.  Run the handler in the server's memory context in case any persistent data
                     // needs to be stored by the handler.
-                    MEM_CONTEXT_BEGIN(this->pub.memContext)
+                    MEM_CONTEXT_BEGIN(this->memContext)
                     {
                         // Initialize retries in case of command failure
                         bool retry = false;
@@ -294,7 +276,7 @@ protocolServerDataGet(ProtocolServer *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *data = pckReadNew(protocolServerIoRead(this));
+        PackRead *data = pckReadNew(this->read);
         ProtocolServerType type = (ProtocolServerType)pckReadU32P(data);
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -314,7 +296,7 @@ protocolServerDataGet(ProtocolServer *const this)
 
 /**********************************************************************************************************************************/
 void
-protocolServerDataPut(ProtocolServer *this, PackWrite *result)
+protocolServerDataPut(ProtocolServer *const this, PackWrite *const result)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
@@ -326,32 +308,32 @@ protocolServerDataPut(ProtocolServer *this, PackWrite *result)
         pckWriteEndP(result);
 
     // Write the result
-    PackWrite *resultMessage = pckWriteNew(protocolServerIoWrite(this));
+    PackWrite *resultMessage = pckWriteNew(this->write);
     pckWriteU32P(resultMessage, protocolServerTypeResult, .defaultWrite = true);
     pckWritePackP(resultMessage, result);
     pckWriteEndP(resultMessage);
 
     // Flush on NULL result since it might be used to synchronize
     if (result == NULL)
-        ioWriteFlush(protocolServerIoWrite(this));
+        ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 void
-protocolServerDataEndPut(ProtocolServer *this)
+protocolServerDataEndPut(ProtocolServer *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
     FUNCTION_LOG_END();
 
     // Write the response and flush to be sure it gets sent immediately
-    PackWrite *response = pckWriteNew(protocolServerIoWrite(this));
+    PackWrite *response = pckWriteNew(this->write);
     pckWriteU32P(response, protocolServerTypeResponse, .defaultWrite = true);
     pckWriteEndP(response);
 
-    ioWriteFlush(protocolServerIoWrite(this));
+    ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
 }

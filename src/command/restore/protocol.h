@@ -12,7 +12,7 @@ Restore Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void restoreFileProtocol(PackRead *const param, ProtocolServer *const server);
+void restoreFileProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

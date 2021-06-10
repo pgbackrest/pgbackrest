@@ -13,7 +13,7 @@ Configuration Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process config protocol requests
-void configOptionProtocol(PackRead *const param, ProtocolServer *const server);
+void configOptionProtocol(PackRead *param, ProtocolServer *server);
 
 // Get option values from a remote process
 VariantList *configOptionRemote(ProtocolClient *client, const VariantList *paramList);

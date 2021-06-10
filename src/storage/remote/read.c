@@ -79,7 +79,7 @@ storageReadRemoteOpen(THIS_VOID)
         pckWriteStrP(param, jsonFromVar(this->interface.limit));
         pckWriteStrP(param, jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read)))));
 
-        protocolClientWriteCommand(this->client, command);
+        protocolClientCommandPut(this->client, command);
 
         // If the file exists
         result = pckReadBoolP(protocolClientDataGet(this->client));

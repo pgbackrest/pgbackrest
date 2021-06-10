@@ -12,7 +12,7 @@ Archive Get Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server);
+void archiveGetFileProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

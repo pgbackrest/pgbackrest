@@ -209,9 +209,8 @@ protocolParallelProcess(ProtocolParallel *this)
                 // Add to the job list
                 lstAdd(this->jobList, &job);
 
-                // Send the job to the client
-                protocolClientWriteCommand(
-                    *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
+                // Put command
+                protocolClientCommandPut(*(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
 
                 // Set client id and running state
                 protocolParallelJobProcessIdSet(job, clientIdx + 1);

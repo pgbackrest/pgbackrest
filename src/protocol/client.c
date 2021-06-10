@@ -26,27 +26,11 @@ Object type
 struct ProtocolClient
 {
     ProtocolClientPub pub;                                          // Publicly accessible variables
-    const String *name;
-    const String *errorPrefix;
-    TimeMSec keepAliveTime;
+    IoWrite *write;                                                 // Write interface
+    const String *name;                                             // Name displayed in logging
+    const String *errorPrefix;                                      // Prefix use when throwing error
+    TimeMSec keepAliveTime;                                         // Last time data was put to the server
 };
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Read interface !!! REMOVE
-__attribute__((always_inline)) static inline IoRead *
-protocolClientIoRead(ProtocolClient *const this)
-{
-    return THIS_PUB(ProtocolClient)->read;
-}
-
-// Write interface !!! REMOVE
-__attribute__((always_inline)) static inline IoWrite *
-protocolClientIoWrite(ProtocolClient *const this)
-{
-    return THIS_PUB(ProtocolClient)->write;
-}
 
 /***********************************************************************************************************************************
 Close protocol connection
@@ -65,7 +49,7 @@ protocolClientFreeResource(THIS_VOID)
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT));
+        protocolClientCommandPut(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -99,8 +83,8 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
             {
                 .memContext = memContextCurrent(),
                 .read = read,
-                .write = write,
             },
+            .write = write,
             .name = strDup(name),
             .errorPrefix = strNewFmt("raised from %s", strZ(name)),
             .keepAliveTime = timeMSec(),
@@ -109,7 +93,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         // Read, parse, and check the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *greeting = ioReadLine(protocolClientIoRead(this));
+            String *greeting = ioReadLine(this->pub.read);
             KeyValue *greetingKv = jsonToKv(greeting);
 
             const String *expected[] =
@@ -171,14 +155,14 @@ protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
         pckWriteEndP(data);
 
     // Write the data
-    PackWrite *dataMessage = pckWriteNew(protocolClientIoWrite(this));
+    PackWrite *dataMessage = pckWriteNew(this->write);
     pckWriteU32P(dataMessage, protocolServerTypeData, .defaultWrite = true);
     pckWritePackP(dataMessage, data);
     pckWriteEndP(dataMessage);
 
     // Flush when there is no more data to put
     if (data == NULL)
-        ioWriteFlush(protocolClientIoWrite(this));
+        ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -230,7 +214,7 @@ protocolClientDataGet(ProtocolClient *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *response = pckReadNew(protocolClientIoRead(this));
+        PackRead *response = pckReadNew(this->pub.read);
         ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
 
         protocolClientError(this, type, response);
@@ -260,7 +244,7 @@ protocolClientDataEndGet(ProtocolClient *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *response = pckReadNew(protocolClientIoRead(this));
+        PackRead *response = pckReadNew(this->pub.read);
         ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
 
         protocolClientError(this, type, response);
@@ -276,7 +260,7 @@ protocolClientDataEndGet(ProtocolClient *const this)
 
 /**********************************************************************************************************************************/
 void
-protocolClientWriteCommand(ProtocolClient *const this, ProtocolCommand *const command)
+protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -287,7 +271,7 @@ protocolClientWriteCommand(ProtocolClient *const this, ProtocolCommand *const co
     ASSERT(command != NULL);
 
     // Write out the command
-    protocolCommandWrite(command, protocolClientIoWrite(this));
+    protocolCommandWrite(command, this->write);
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
@@ -308,8 +292,8 @@ protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    // Send the command
-    protocolClientWriteCommand(this, command);
+    // Put command
+    protocolClientCommandPut(this, command);
 
     // Read result if required
     PackRead *result = NULL;

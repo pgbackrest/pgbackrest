@@ -12,7 +12,7 @@ Archive Push Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void archivePushFileProtocol(PackRead *const param, ProtocolServer *const server);
+void archivePushFileProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

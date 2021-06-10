@@ -11,7 +11,7 @@ Backup Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void backupFileProtocol(PackRead *const param, ProtocolServer *const server);
+void backupFileProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

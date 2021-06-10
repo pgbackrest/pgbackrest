@@ -589,16 +589,16 @@ testRun(void)
                 TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
                 TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
 
-                TEST_RESULT_VOID(protocolClientWriteCommand(client, command), "write command");
+                TEST_RESULT_VOID(protocolClientCommandPut(client, command), "command put");
 
                 TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "sync");
                 protocolClientDataPut(client, pckWriteBoolP(protocolPack(), true));
                 protocolClientDataPut(client, pckWriteModeP(protocolPack(), 0644));
                 protocolClientDataPut(client, NULL);
 
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "data");
-                TEST_RESULT_INT(pckReadI32P(protocolClientDataGet(client)), -1, "data");
-                TEST_RESULT_VOID(protocolClientDataEndGet(client), "data end");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "data get");
+                TEST_RESULT_INT(pckReadI32P(protocolClientDataGet(client)), -1, "data get");
+                TEST_RESULT_VOID(protocolClientDataEndGet(client), "data end get");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");

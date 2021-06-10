@@ -12,7 +12,7 @@ Verify Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void verifyFileProtocol(PackRead *const param, ProtocolServer *const server);
+void verifyFileProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

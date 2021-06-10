@@ -12,15 +12,15 @@ Remote Storage Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process storage protocol requests
-void storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server);
-void storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server);
-void storageRemoteInfoListProtocol(PackRead *const param, ProtocolServer *const server);
-void storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const server);
-void storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const server);
-void storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const server);
-void storageRemotePathRemoveProtocol(PackRead *const param, ProtocolServer *const server);
-void storageRemotePathSyncProtocol(PackRead *const param, ProtocolServer *const server);
-void storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server);
+void storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteInfoListProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteOpenReadProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server);
+void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
+void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
+void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

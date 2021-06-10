@@ -41,7 +41,7 @@ Protocol command handler type and structure
 An array of this struct must be passed to protocolServerProcess() for the server to process commands. Each command handler should
 implement a single command, as defined by the command string.
 ***********************************************************************************************************************************/
-typedef void (*ProtocolServerCommandHandler)(PackRead *const param, ProtocolServer *const server);
+typedef void (*ProtocolServerCommandHandler)(PackRead *param, ProtocolServer *server);
 
 typedef struct ProtocolServerHandler
 {
@@ -57,44 +57,34 @@ Constructors
 ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-typedef struct ProtocolServerPub
-{
-    MemContext *memContext;                                         // Mem context
-    IoRead *read;                                                   // Read interface
-    IoWrite *write;                                                 // Write interface
-} ProtocolServerPub;
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Return an error
-void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
-
-// Get a command. This is used when the first noop command needs to be processed before running protocolServerProcess(), which
-// allows an error to be returned to the client if initialization fails.
+// Get command from the client. Outside ProtocolServer, this is used when the first noop command needs to be processed before
+// running protocolServerProcess(), which allows an error to be returned to the client if initialization fails.
 typedef struct ProtocolServerCommandGetResult
 {
     StringId id;                                                    // Command identifier
     Buffer *param;                                                  // Parameter pack
 } ProtocolServerCommandGetResult;
 
-ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *const this);
+ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);
+
+// Get data from the client
+PackRead *protocolServerDataGet(ProtocolServer *this);
+
+// Put data to the client
+void protocolServerDataPut(ProtocolServer *this, PackWrite *resultPack);
+
+// Put data end to the client. This ends command processing and no more data should be sent.
+void protocolServerDataEndPut(ProtocolServer *this);
+
+// Return an error
+void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
 
 // Process requests
 void protocolServerProcess(
-    ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *const handlerList,
+    ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *handlerList,
     const unsigned int handlerListSize);
-
-// Get data sent by the client
-PackRead *protocolServerDataGet(ProtocolServer *const this);
-
-// Send data to the client
-void protocolServerDataPut(ProtocolServer *this, PackWrite *resultPack);
-
-// Send a result to the client. This ends command processing and no more data should be sent.
-void protocolServerDataEndPut(ProtocolServer *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolServer *
