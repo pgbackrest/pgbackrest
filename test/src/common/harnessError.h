@@ -28,6 +28,6 @@ typedef struct HrnErrorThrowParam
 #define hrnErrorThrowP(...)                                                                                                        \
     hrnErrorThrow((HrnErrorThrowParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-void hrnErrorThrow(const HrnErrorThrowParam param);
+void hrnErrorThrow(const HrnErrorThrowParam param) __attribute__((__noreturn__));
 
 #endif

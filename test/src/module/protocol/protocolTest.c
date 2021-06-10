@@ -20,7 +20,7 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
-static void
+__attribute__((__noreturn__)) static void
 testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -31,18 +31,14 @@ testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
     ASSERT(param == NULL);
     ASSERT(server != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        hrnErrorThrowP();
-    }
-    MEM_CONTEXT_TEMP_END();
+    hrnErrorThrowP();
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
 }
 
 #define TEST_PROTOCOL_COMMAND_ERROR                                 STRID5("error", 0x127ca450)
 
-static void
+__attribute__((__noreturn__)) static void
 testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -53,13 +49,9 @@ testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server)
     ASSERT(param == NULL);
     ASSERT(server != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        hrnErrorThrowP(.errorType = &FormatError);
-    }
-    MEM_CONTEXT_TEMP_END();
+    hrnErrorThrowP(.errorType = &FormatError);
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
 }
 
 #define TEST_PROTOCOL_COMMAND_SIMPLE                                STRID5("c-simple", 0x2b20d4cf630)
@@ -159,36 +151,36 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
 /***********************************************************************************************************************************
 Test ParallelJobCallback
 ***********************************************************************************************************************************/
-// typedef struct TestParallelJobCallback
-// {
-//     List *jobList;                                                  // List of jobs to process
-//     unsigned int jobIdx;                                            // Current index in the list to be processed
-//     bool clientSeen[2];                                             // Make sure the client idx was seen
-// } TestParallelJobCallback;
-//
-// static ProtocolParallelJob *testParallelJobCallback(void *data, unsigned int clientIdx)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM_P(VOID, data);
-//         FUNCTION_TEST_PARAM(UINT, clientIdx);
-//     FUNCTION_TEST_END();
-//
-//     TestParallelJobCallback *listData = data;
-//
-//     // Mark the client idx as seen
-//     listData->clientSeen[clientIdx] = true;
-//
-//     // Get a new job if there are any left
-//     if (listData->jobIdx < lstSize(listData->jobList))
-//     {
-//         ProtocolParallelJob *job = *(ProtocolParallelJob **)lstGet(listData->jobList, listData->jobIdx);
-//         listData->jobIdx++;
-//
-//         FUNCTION_TEST_RETURN(protocolParallelJobMove(job, memContextCurrent()));
-//     }
-//
-//     FUNCTION_TEST_RETURN(NULL);
-// }
+typedef struct TestParallelJobCallback
+{
+    List *jobList;                                                  // List of jobs to process
+    unsigned int jobIdx;                                            // Current index in the list to be processed
+    bool clientSeen[2];                                             // Make sure the client idx was seen
+} TestParallelJobCallback;
+
+static ProtocolParallelJob *testParallelJobCallback(void *data, unsigned int clientIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(UINT, clientIdx);
+    FUNCTION_TEST_END();
+
+    TestParallelJobCallback *listData = data;
+
+    // Mark the client idx as seen
+    listData->clientSeen[clientIdx] = true;
+
+    // Get a new job if there are any left
+    if (listData->jobIdx < lstSize(listData->jobList))
+    {
+        ProtocolParallelJob *job = *(ProtocolParallelJob **)lstGet(listData->jobList, listData->jobIdx);
+        listData->jobIdx++;
+
+        FUNCTION_TEST_RETURN(protocolParallelJobMove(job, memContextCurrent()));
+    }
+
+    FUNCTION_TEST_RETURN(NULL);
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -638,248 +630,225 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolParallel and ProtocolParallelJob"))
     {
-        // ProtocolParallelJob *job = NULL;
-        //
-        // MEM_CONTEXT_TEMP_BEGIN()
-        // {
-        //     TEST_ASSIGN(
-        //         job,
-        //         protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNew(strIdFromZ(stringIdBit5, "c"))), "new job");
-        //     TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
-        //     TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
-        // }
-        // MEM_CONTEXT_TEMP_END();
-        //
-        // TEST_ERROR(
-        //     protocolParallelJobStateSet(job, protocolParallelJobStateDone), AssertError,
-        //     "invalid state transition from 'pending' to 'done'");
-        // TEST_RESULT_VOID(protocolParallelJobStateSet(job, protocolParallelJobStateRunning), "transition to running");
-        // TEST_ERROR(
-        //     protocolParallelJobStateSet(job, protocolParallelJobStatePending), AssertError,
-        //     "invalid state transition from 'running' to 'pending'");
-        //
-        // // Free job
-        // TEST_RESULT_VOID(protocolParallelJobFree(job), "free job");
-        //
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // HARNESS_FORK_BEGIN()
-        // {
-        //     // Local 1
-        //     HARNESS_FORK_CHILD_BEGIN(0, true)
-        //     {
-        //         IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 10000);
-        //         ioReadOpen(read);
-        //         IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-        //         ioWriteOpen(write);
-        //
-        //         ProtocolServer *server = NULL;
-        //
-        //         MEM_CONTEXT_TEMP_BEGIN()
-        //         {
-        //             TEST_ASSIGN(
-        //                 server,
-        //                 protocolServerMove(
-        //                     protocolServerNew(STRDEF("test server"), STRDEF("test"), read, write), memContextPrior()),
-        //                 "local server 1");
-        //             TEST_RESULT_VOID(protocolServerMove(NULL, memContextPrior()), "move null server");
-        //         }
-        //         MEM_CONTEXT_TEMP_END();
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("noop command");
-        //
-        //         ProtocolServerCommandGetResult command = {0};
-        //         TEST_ASSIGN(command, protocolServerCommandGet(server), "noop command");
-        //         TEST_RESULT_UINT(command.id, PROTOCOL_COMMAND_NOOP, "check command");
-        //         TEST_RESULT_PTR(command.param, NULL, "no params");
-        //
-        //         protocolServerDataEndPut(server);
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("command with output");
-        //
-        //         ProtocolServerCommandGetResult command = {0};
-        //         TEST_ASSIGN(command, protocolServerCommandGet(server), "noop command");
-        //         TEST_RESULT_UINT(command.id, strIdFromZ(stringIdBit5, "c-one"), "check command");
-        //
-        //         PackRead *paramPack = pckReadNewBuf(command.param);
-        //         TEST_RESULT_STR_Z(pckReadStrP(paramPack), "param1", "param1");
-        //         TEST_RESULT_STR_Z(pckReadStrP(paramPack), "param2", "param2");
-        //
-        //         protocolServerDataPut(server, pckWriteU32P(protocolPack(), 1));
-        //         TEST_RESULT_STR_Z(
-        //             hrnPackToStr(pckReadNew(read)), "1:str:c-one, 2:pack:<1:str:param1, 2:str:param2>", "command1");
-        //         sleepMSec(4000);
-        //         ioWriteStrLine(write, STRDEF("{\"out\":1}"));
-        //         ioWriteFlush(write);
-        //
-        //         // Wait for exit
-        //         TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:exit", "exit command");
-        //     }
-        //     HARNESS_FORK_CHILD_END();
-        //
-        //     // Local 2
-        //     HARNESS_FORK_CHILD_BEGIN(0, true)
-        //     {
-        //         IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 10000);
-        //         ioReadOpen(read);
-        //         IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-        //         ioWriteOpen(write);
-        //
-        //         ProtocolServer *server = NULL;
-        //         TEST_ASSIGN(server, protocolServerNew(STRDEF("test server"), STRDEF("test"), read, write), "local server 2");
-        //
-        //         TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:noop", "noop");
-        //         ioWriteStrLine(write, STRDEF("{}"));
-        //         ioWriteFlush(write);
-        //
-        //         TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:c2, 2:pack:<1:str:param1>", "command2");
-        //         sleepMSec(1000);
-        //         ioWriteStrLine(write, STRDEF("{\"out\":2}"));
-        //         ioWriteFlush(write);
-        //
-        //         TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:c-three, 2:pack:<1:str:param1>", "command3");
-        //
-        //         ioWriteStrLine(write, STRDEF("{\"err\":39,\"out\":\"very serious error\"}"));
-        //         ioWriteFlush(write);
-        //
-        //         // Wait for exit
-        //         TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:exit", "exit command");
-        //     }
-        //     HARNESS_FORK_CHILD_END();
-        //
-        //     HARNESS_FORK_PARENT_BEGIN()
-        //     {
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TestParallelJobCallback data = {.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
-        //         ProtocolParallel *parallel = NULL;
-        //         TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
-        //         TEST_RESULT_STR_Z(protocolParallelToLog(parallel), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
-        //
-        //         // Add client
-        //         unsigned int clientTotal = 2;
-        //         ProtocolClient *client[HARNESS_FORK_CHILD_MAX];
-        //
-        //         for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
-        //         {
-        //             IoRead *read = ioFdReadNew(
-        //                 strNewFmt("client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000);
-        //             ioReadOpen(read);
-        //             IoWrite *write = ioFdWriteNew(
-        //                 strNewFmt("client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000);
-        //             ioWriteOpen(write);
-        //
-        //             TEST_ASSIGN(
-        //                 client[clientIdx],
-        //                 protocolClientNew(strNewFmt("test client %u", clientIdx), STRDEF("test"), read, write),
-        //                 strZ(strNewFmt("create client %u", clientIdx)));
-        //             TEST_RESULT_VOID(
-        //                 protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("add client %u", clientIdx)));
-        //         }
-        //
-        //         // Attempt to add client without an fd
-        //         const String *protocolString = STRDEF(
-        //             "{\"name\":\"pgBackRest\",\"service\":\"error\",\"version\":\"" PROJECT_VERSION "\"}\n"
-        //             "{}\n");
-        //
-        //         IoRead *read = ioBufferReadNew(BUFSTR(protocolString));
-        //         ioReadOpen(read);
-        //         IoWrite *write = ioBufferWriteNew(bufNew(1024));
-        //         ioWriteOpen(write);
-        //
-        //         ProtocolClient *clientError = protocolClientNew(STRDEF("error"), STRDEF("error"), read, write);
-        //         TEST_ERROR(protocolParallelClientAdd(parallel, clientError), AssertError, "client with read fd is required");
-        //         protocolClientFree(clientError);
-        //
-        //         // Add jobs
-        //         ProtocolCommand *command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-one"));
-        //         pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
-        //         pckWriteStrP(protocolCommandParam(command), STRDEF("param2"));
-        //
-        //         ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command);
-        //         TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
-        //
-        //         command = protocolCommandNew(strIdFromZ(stringIdBit5, "c2"));
-        //         pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
-        //
-        //         job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command);
-        //         TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
-        //
-        //         command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-three"));
-        //         pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
-        //
-        //         job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command);
-        //         TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
-        //
-        //         // Process jobs
-        //         TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
-        //
-        //         TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no result");
-        //
-        //         // Process jobs
-        //         TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
-        //
-        //         TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
-        //         TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job2", "check key is job2");
-        //         TEST_RESULT_BOOL(
-        //             protocolParallelJobProcessId(job) >= 1 && protocolParallelJobProcessId(job) <= 2, true,
-        //             "check process id is valid");
-        //         TEST_RESULT_INT(varIntForce(protocolParallelJobResult(job)), 2, "check result is 2");
-        //
-        //         TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no more results");
-        //
-        //         // Process jobs
-        //         TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
-        //
-        //         TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
-        //         TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job3", "check key is job3");
-        //         TEST_RESULT_INT(protocolParallelJobErrorCode(job), 39, "check error code");
-        //         TEST_RESULT_STR_Z(
-        //             protocolParallelJobErrorMessage(job), "raised from test client 1: very serious error",
-        //             "check error message");
-        //         TEST_RESULT_PTR(protocolParallelJobResult(job), NULL, "check result is null");
-        //
-        //         TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no more results");
-        //
-        //         // Process jobs
-        //         TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
-        //
-        //         TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no result");
-        //         TEST_RESULT_BOOL(protocolParallelDone(parallel), false, "check not done");
-        //
-        //         // Process jobs
-        //         TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
-        //
-        //         TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
-        //         TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job1", "check key is job1");
-        //         TEST_RESULT_INT(varIntForce(protocolParallelJobResult(job)), 1, "check result is 1");
-        //
-        //         TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
-        //         TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check still done");
-        //
-        //         TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("process zero jobs");
-        //
-        //         data = (TestParallelJobCallback){.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
-        //         TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
-        //         TEST_RESULT_VOID(protocolParallelClientAdd(parallel, client[0]), "add client");
-        //
-        //         TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process zero jobs");
-        //         TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
-        //
-        //         TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("free clients");
-        //
-        //         for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
-        //             TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), strZ(strNewFmt("free client %u", clientIdx)));
-        //     }
-        //     HARNESS_FORK_PARENT_END();
-        // }
-        // HARNESS_FORK_END();
+        ProtocolParallelJob *job = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(
+                job,
+                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNew(strIdFromZ(stringIdBit5, "c"))), "new job");
+            TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
+            TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_ERROR(
+            protocolParallelJobStateSet(job, protocolParallelJobStateDone), AssertError,
+            "invalid state transition from 'pending' to 'done'");
+        TEST_RESULT_VOID(protocolParallelJobStateSet(job, protocolParallelJobStateRunning), "transition to running");
+        TEST_ERROR(
+            protocolParallelJobStateSet(job, protocolParallelJobStatePending), AssertError,
+            "invalid state transition from 'running' to 'pending'");
+
+        // Free job
+        TEST_RESULT_VOID(protocolParallelJobFree(job), "free job");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HARNESS_FORK_BEGIN()
+        {
+            // Local 1
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                IoRead *read = ioFdReadNew(STRDEF("local server 1 read"), HARNESS_FORK_CHILD_READ(), 10000);
+                ioReadOpen(read);
+                IoWrite *write = ioFdWriteNew(STRDEF("local server 1 write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                ioWriteOpen(write);
+
+                ProtocolServer *server = NULL;
+                TEST_ASSIGN(server, protocolServerNew(STRDEF("local server 1"), STRDEF("test"), read, write), "local server 1");
+
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
+                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
+
+                // Command with output
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-one"), "c-one command get");
+
+                sleepMSec(4000);
+
+                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPack(), 1)), "data end put");
+                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
+
+                // Wait for exit
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "noop command get");
+            }
+            HARNESS_FORK_CHILD_END();
+
+            // Local 2
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                IoRead *read = ioFdReadNew(STRDEF("local server 2 read"), HARNESS_FORK_CHILD_READ(), 10000);
+                ioReadOpen(read);
+                IoWrite *write = ioFdWriteNew(STRDEF("local server 2 write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                ioWriteOpen(write);
+
+                ProtocolServer *server = NULL;
+                TEST_ASSIGN(server, protocolServerNew(STRDEF("local server 2"), STRDEF("test"), read, write), "local server 2");
+
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
+                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
+
+                // Command with output
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c2"), "c2 command get");
+
+                sleepMSec(1000);
+
+                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPack(), 2)), "data end put");
+                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
+
+                // Command with error
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-three"), "c-three command get");
+                TEST_RESULT_VOID(protocolServerError(server, 39, STRDEF("very serious error"), STRDEF("stack")), "error put");
+
+                // Wait for exit
+                CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_EXIT);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                TestParallelJobCallback data = {.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
+                ProtocolParallel *parallel = NULL;
+                TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
+                TEST_RESULT_STR_Z(protocolParallelToLog(parallel), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
+
+                // Add client
+                unsigned int clientTotal = 2;
+                ProtocolClient *client[HARNESS_FORK_CHILD_MAX];
+
+                for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
+                {
+                    IoRead *read = ioFdReadNew(
+                        strNewFmt("local client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000);
+                    ioReadOpen(read);
+                    IoWrite *write = ioFdWriteNew(
+                        strNewFmt("local client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000);
+                    ioWriteOpen(write);
+
+                    TEST_ASSIGN(
+                        client[clientIdx],
+                        protocolClientNew(strNewFmt("local client %u", clientIdx), STRDEF("test"), read, write),
+                        strZ(strNewFmt("local client %u new", clientIdx)));
+                    TEST_RESULT_VOID(
+                        protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("local client %u add", clientIdx)));
+                }
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on add without an fd");
+
+                // Fake a client without a read fd
+                ProtocolClient clientError = {.pub = {.read = ioBufferReadNew(bufNew(0))}, .name = STRDEF("test")};
+
+                TEST_ERROR(protocolParallelClientAdd(parallel, &clientError), AssertError, "client with read fd is required");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("add jobs");
+
+                ProtocolCommand *command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-one"));
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param2"));
+
+                ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command);
+                TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
+
+                command = protocolCommandNew(strIdFromZ(stringIdBit5, "c2"));
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+
+                job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command);
+                TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
+
+                command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-three"));
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+
+                job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command);
+                TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process jobs with no result");
+
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
+                TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no result");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("result for job 2");
+
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
+
+                TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
+                TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job2", "check key is job2");
+                TEST_RESULT_BOOL(
+                    protocolParallelJobProcessId(job) >= 1 && protocolParallelJobProcessId(job) <= 2, true,
+                    "check process id is valid");
+                TEST_RESULT_UINT(pckReadU32P(protocolParallelJobResult(job)), 2, "check result is 2");
+
+                TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no more results");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error for job 3");
+
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
+
+                TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
+                TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job3", "check key is job3");
+                TEST_RESULT_INT(protocolParallelJobErrorCode(job), 39, "check error code");
+                TEST_RESULT_STR_Z(
+                    protocolParallelJobErrorMessage(job), "raised from local client 1: very serious error",
+                    "check error message");
+                TEST_RESULT_PTR(protocolParallelJobResult(job), NULL, "check result is null");
+
+                TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no more results");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process jobs with no result");
+
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
+                TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no result");
+                TEST_RESULT_BOOL(protocolParallelDone(parallel), false, "check not done");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("result for job 1");
+
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
+
+                TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
+                TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job1", "check key is job1");
+                TEST_RESULT_UINT(pckReadU32P(protocolParallelJobResult(job)), 1, "check result is 1");
+
+                TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
+                TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check still done");
+
+                TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process zero jobs");
+
+                data = (TestParallelJobCallback){.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
+                TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
+                TEST_RESULT_VOID(protocolParallelClientAdd(parallel, client[0]), "add client");
+
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process zero jobs");
+                TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
+
+                TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("free clients");
+
+                for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
+                    TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), strZ(strNewFmt("free client %u", clientIdx)));
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
     }
 
     // *****************************************************************************************************************************
