@@ -5,8 +5,6 @@ Db Protocol Handler
 #define DB_PROTOCOL_H
 
 #include "common/type/pack.h"
-#include "common/type/string.h"
-#include "protocol/client.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************

@@ -5,7 +5,6 @@ Verify Protocol Handler
 #define COMMAND_VERIFY_PROTOCOL_H
 
 #include "common/type/pack.h"
-#include "common/type/stringId.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************

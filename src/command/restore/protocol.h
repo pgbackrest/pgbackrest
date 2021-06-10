@@ -5,7 +5,6 @@ Restore Protocol Handler
 #define COMMAND_RESTORE_PROTOCOL_H
 
 #include "common/type/pack.h"
-#include "common/type/stringId.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************

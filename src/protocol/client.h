@@ -5,6 +5,24 @@ Protocol Client
 #define PROTOCOL_CLIENT_H
 
 /***********************************************************************************************************************************
+Messages types used by the protocol
+***********************************************************************************************************************************/
+typedef enum
+{
+    // One of possibly many data passed between client and server
+    protocolMessageTypeData = 0,
+
+    // Indicates no more data
+    protocolMessageTypeDataEnd = 1,
+
+    // An error occurred and the command process was terminated
+    protocolMessageTypeCommand = 2,
+
+    // An error occurred and the command process was terminated
+    protocolMessageTypeError = 3,
+} ProtocolMessageType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct ProtocolClient ProtocolClient;

@@ -38,7 +38,7 @@ protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
 PackWrite *protocolCommandParam(ProtocolCommand *this);
 
 // Write protocol command
-void protocolCommandWrite(const ProtocolCommand *this, IoWrite *write);
+void protocolCommandPut(ProtocolCommand *this, IoWrite *write);
 
 /***********************************************************************************************************************************
 Destructor

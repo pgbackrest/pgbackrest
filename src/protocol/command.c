@@ -50,7 +50,7 @@ protocolCommandNew(const StringId command)
 
 /**********************************************************************************************************************************/
 void
-protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
+protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
@@ -61,6 +61,7 @@ protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
 
     // Write the command and flush to be sure the command gets sent immediately
     PackWrite *commandPack = pckWriteNew(write);
+    pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
     pckWriteStrIdP(commandPack, this->command);
 
     // Only write params if there were any

@@ -156,7 +156,7 @@ protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
 
     // Write the data
     PackWrite *dataMessage = pckWriteNew(this->write);
-    pckWriteU32P(dataMessage, protocolServerTypeData, .defaultWrite = true);
+    pckWriteU32P(dataMessage, protocolMessageTypeData, .defaultWrite = true);
     pckWritePackP(dataMessage, data);
     pckWriteEndP(dataMessage);
 
@@ -170,7 +170,7 @@ protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
 /**********************************************************************************************************************************/
 // Helper to process errors
 static void
-protocolClientError(ProtocolClient *const this, const ProtocolServerType type, PackRead *const error)
+protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, PackRead *const error)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -178,7 +178,7 @@ protocolClientError(ProtocolClient *const this, const ProtocolServerType type, P
         FUNCTION_LOG_PARAM(PACK_READ, error);
     FUNCTION_LOG_END();
 
-    if (type == protocolServerTypeError)
+    if (type == protocolMessageTypeError)
     {
         const ErrorType *type = errorTypeFromCode(pckReadI32P(error));
         String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
@@ -215,7 +215,7 @@ protocolClientDataGet(ProtocolClient *const this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *response = pckReadNew(this->pub.read);
-        ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
 
         protocolClientError(this, type, response);
 
@@ -227,7 +227,7 @@ protocolClientDataGet(ProtocolClient *const this)
 
         pckReadEndP(response);
 
-        CHECK(type == protocolServerTypeResult);
+        CHECK(type == protocolMessageTypeData);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -245,13 +245,13 @@ protocolClientDataEndGet(ProtocolClient *const this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *response = pckReadNew(this->pub.read);
-        ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
 
         protocolClientError(this, type, response);
 
         pckReadEndP(response);
 
-        CHECK(type == protocolServerTypeResponse);
+        CHECK(type == protocolMessageTypeDataEnd);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -270,8 +270,8 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    // Write out the command
-    protocolCommandWrite(command, this->write);
+    // Put command
+    protocolCommandPut(command, this->write);
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();

@@ -92,7 +92,7 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
 
     // Write the error and flush to be sure it gets sent immediately
     PackWrite *error = pckWriteNew(this->write);
-    pckWriteU32P(error, protocolServerTypeError);
+    pckWriteU32P(error, protocolMessageTypeError);
     pckWriteI32P(error, code);
     pckWriteStrP(error, message);
     pckWriteStrP(error, stack);
@@ -116,6 +116,7 @@ protocolServerCommandGet(ProtocolServer *const this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *const command = pckReadNew(this->read);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(command);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -125,6 +126,8 @@ protocolServerCommandGet(ProtocolServer *const this)
         MEM_CONTEXT_PRIOR_END();
 
         pckReadEndP(command);
+
+        CHECK(type == protocolMessageTypeCommand);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -277,7 +280,7 @@ protocolServerDataGet(ProtocolServer *const this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *data = pckReadNew(this->read);
-        ProtocolServerType type = (ProtocolServerType)pckReadU32P(data);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(data);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -287,7 +290,7 @@ protocolServerDataGet(ProtocolServer *const this)
 
         pckReadEndP(data);
 
-        CHECK(type == protocolServerTypeData);
+        CHECK(type == protocolMessageTypeData);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -309,7 +312,7 @@ protocolServerDataPut(ProtocolServer *const this, PackWrite *const result)
 
     // Write the result
     PackWrite *resultMessage = pckWriteNew(this->write);
-    pckWriteU32P(resultMessage, protocolServerTypeResult, .defaultWrite = true);
+    pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
     pckWritePackP(resultMessage, result);
     pckWriteEndP(resultMessage);
 
@@ -330,7 +333,7 @@ protocolServerDataEndPut(ProtocolServer *const this)
 
     // Write the response and flush to be sure it gets sent immediately
     PackWrite *response = pckWriteNew(this->write);
-    pckWriteU32P(response, protocolServerTypeResponse, .defaultWrite = true);
+    pckWriteU32P(response, protocolMessageTypeDataEnd, .defaultWrite = true);
     pckWriteEndP(response);
 
     ioWriteFlush(this->write);

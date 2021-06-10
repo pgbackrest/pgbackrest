@@ -5,31 +5,12 @@ Protocol Server
 #define PROTOCOL_SERVER_H
 
 /***********************************************************************************************************************************
-!!!
-***********************************************************************************************************************************/
-typedef enum
-{
-    // One of possibly many results to be returned to the client
-    protocolServerTypeResult = 0,
-
-    // Data sent to the server in addition to command params
-    protocolServerTypeData = 1,
-
-    // Final response that indicates the end of command processing
-    protocolServerTypeResponse = 2,
-
-    // An error occurred and the command process was terminated
-    protocolServerTypeError = 3,
-} ProtocolServerType;
-
-/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct ProtocolServer ProtocolServer;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
-#include "common/type/json.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "common/type/stringId.h"

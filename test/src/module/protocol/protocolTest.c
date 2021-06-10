@@ -431,7 +431,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("ProtocolClient and ProtocolServer"))
+    if (testBegin("ProtocolClient, ProtocolCommand, and ProtocolServer"))
     {
         HARNESS_FORK_BEGIN()
         {
@@ -630,6 +630,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolParallel and ProtocolParallelJob"))
     {
+        TEST_TITLE("job state transitions");
+
         ProtocolParallelJob *job = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()

@@ -7,6 +7,7 @@ Db Protocol Handler
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
 #include "common/type/list.h"
 #include "config/config.h"
 #include "db/protocol.h"

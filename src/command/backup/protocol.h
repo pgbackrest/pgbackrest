@@ -4,7 +4,7 @@ Backup Protocol Handler
 #ifndef COMMAND_BACKUP_PROTOCOL_H
 #define COMMAND_BACKUP_PROTOCOL_H
 
-#include "common/type/stringId.h"
+#include "common/type/pack.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************

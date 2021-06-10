@@ -512,12 +512,16 @@ protocolRemoteExec(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-__attribute__((always_inline)) static inline void
-protocolRemoteCacheInit(ProtocolStorageType protocolStorageType)
+ProtocolClient *
+protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, protocolStorageType);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
+        FUNCTION_LOG_PARAM(UINT, hostIdx);
+    FUNCTION_LOG_END();
+
+    // Is this a repo remote?
+    bool isRepo = protocolStorageType == protocolStorageTypeRepo;
 
     protocolHelperInit();
 
@@ -526,8 +530,7 @@ protocolRemoteCacheInit(ProtocolStorageType protocolStorageType)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            protocolHelper.clientRemoteSize = cfgOptionGroupIdxTotal(
-                protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg) + 1;
+            protocolHelper.clientRemoteSize = cfgOptionGroupIdxTotal(isRepo ? cfgOptGrpRepo : cfgOptGrpPg) + 1;
             protocolHelper.clientRemote = memNew(protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
 
             for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
@@ -535,23 +538,6 @@ protocolRemoteCacheInit(ProtocolStorageType protocolStorageType)
         }
         MEM_CONTEXT_END();
     }
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-ProtocolClient *
-protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
-        FUNCTION_LOG_PARAM(UINT, hostIdx);
-    FUNCTION_LOG_END();
-
-    // Is this a repo remote?
-    bool isRepo = protocolStorageType == protocolStorageTypeRepo;
-
-    // Init remote protocol cache
-    protocolRemoteCacheInit(protocolStorageType);
 
     // Determine protocol id for the remote.  If the process option is set then use that since we want the remote protocol id to
     // match the local protocol id. Otherwise set to 0 since the remote is being started from a main process and there should only

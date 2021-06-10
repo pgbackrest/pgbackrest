@@ -5,7 +5,6 @@ Archive Push Protocol Handler
 #define COMMAND_ARCHIVE_PUSH_PROTOCOL_H
 
 #include "common/type/pack.h"
-#include "common/type/string.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
