@@ -231,7 +231,7 @@ typedef struct PckReadModeParam
 #define pckReadModeP(this, ...)                                                                                                     \
     pckReadMode(this, (PckReadModeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-uint32_t pckReadMode(PackRead *this, PckReadModeParam param);
+mode_t pckReadMode(PackRead *this, PckReadModeParam param);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline PackRead *

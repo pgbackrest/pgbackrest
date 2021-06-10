@@ -825,7 +825,7 @@ pckReadMode(PackRead *this, PckReadModeParam param)
     if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(param.defaultValue);
 
-    FUNCTION_TEST_RETURN((uint32_t)pckReadTag(this, &param.id, pckTypeMapMode, false));
+    FUNCTION_TEST_RETURN((mode_t)pckReadTag(this, &param.id, pckTypeMapMode, false));
 }
 
 /**********************************************************************************************************************************/
@@ -1552,7 +1552,7 @@ pckWriteI64(PackWrite *this, int64_t value, PckWriteI64Param param)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWriteMode(PackWrite *this, uint32_t value, PckWriteModeParam param)
+pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
