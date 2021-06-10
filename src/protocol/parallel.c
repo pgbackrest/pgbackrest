@@ -10,7 +10,6 @@ Protocol Parallel Executor
 #include "common/log.h"
 #include "common/macro.h"
 #include "common/memContext.h"
-#include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
 #include "protocol/command.h"

@@ -23,6 +23,7 @@ Backup Command
 #include "common/log.h"
 #include "common/time.h"
 #include "common/type/convert.h"
+#include "common/type/json.h"
 #include "config/config.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
