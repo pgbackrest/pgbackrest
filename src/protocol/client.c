@@ -218,6 +218,7 @@ protocolClientError(ProtocolClient *const this, const ProtocolServerType type, P
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 PackRead *
 protocolClientDataGet(ProtocolClient *const this)
 {
@@ -251,7 +252,7 @@ protocolClientDataGet(ProtocolClient *const this)
 
 /**********************************************************************************************************************************/
 void
-protocolClientResultGet(ProtocolClient *const this)
+protocolClientDataEndGet(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -317,7 +318,7 @@ protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command
         result = protocolClientDataGet(this);
 
     // Read response
-    protocolClientResultGet(this);
+    protocolClientDataEndGet(this);
 
     FUNCTION_LOG_RETURN(PACK_READ, result);
 }

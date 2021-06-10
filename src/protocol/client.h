@@ -80,7 +80,7 @@ void protocolClientNoOp(ProtocolClient *this);
 
 // !!! Read the command output
 PackRead *protocolClientDataGet(ProtocolClient *const this);
-void protocolClientResultGet(ProtocolClient *const this);
+void protocolClientDataEndGet(ProtocolClient *const this);
 
 // Write the protocol command
 void protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command);

@@ -146,7 +146,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             MEM_CONTEXT_PRIOR_END();
         }
 
-        protocolClientResultGet(this->client);
+        protocolClientDataEndGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -213,7 +213,7 @@ storageRemoteInfoList(
         }
         MEM_CONTEXT_TEMP_END();
 
-        protocolClientResultGet(this->client);
+        protocolClientDataEndGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 

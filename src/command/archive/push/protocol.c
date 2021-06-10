@@ -62,7 +62,7 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Return result
         protocolServerDataPut(server, pckWriteStrLstP(protocolPack(), fileResult.warnList));
-        protocolServerResultPut(server);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

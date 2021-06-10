@@ -78,7 +78,7 @@ testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const se
     MEM_CONTEXT_TEMP_BEGIN()
     {
         protocolServerDataPut(server, pckWriteStrP(protocolPack(), STRDEF("output")));
-        protocolServerResultPut(server);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -111,7 +111,7 @@ testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const s
 
         TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteBoolP(protocolPack(), true)), "data put");
         TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteI32P(protocolPack(), -1)), "data put");
-        TEST_RESULT_VOID(protocolServerResultPut(server), "data end put");
+        TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -142,7 +142,7 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         protocolServerDataPut(server, pckWriteBoolP(protocolPack(), true));
-        protocolServerResultPut(server);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -606,7 +606,7 @@ testRun(void)
 
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "data");
                 TEST_RESULT_INT(pckReadI32P(protocolClientDataGet(client)), -1, "data");
-                TEST_RESULT_VOID(protocolClientResultGet(client), "data end");
+                TEST_RESULT_VOID(protocolClientDataEndGet(client), "data end");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");
@@ -693,7 +693,7 @@ testRun(void)
         //         TEST_RESULT_UINT(command.id, PROTOCOL_COMMAND_NOOP, "check command");
         //         TEST_RESULT_PTR(command.param, NULL, "no params");
         //
-        //         protocolServerResultPut(server);
+        //         protocolServerDataEndPut(server);
         //
         //         // -----------------------------------------------------------------------------------------------------------------
         //         TEST_TITLE("command with output");

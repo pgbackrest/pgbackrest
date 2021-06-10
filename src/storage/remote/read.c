@@ -95,7 +95,7 @@ storageReadRemoteOpen(THIS_VOID)
         }
         // Else nothing to do
         else
-            protocolClientResultGet(this->client);
+            protocolClientDataEndGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -150,7 +150,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                         ioFilterGroupResultAllSet(ioReadFilterGroup(storageReadIo(this->read)), jsonToVar(pckReadStrP(read)));
                         this->eof = true;
 
-                        protocolClientResultGet(this->client);
+                        protocolClientDataEndGet(this->client);
                     }
 
 #ifdef DEBUG

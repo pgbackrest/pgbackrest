@@ -36,7 +36,7 @@ verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Return result
         protocolServerDataPut(server, pckWriteU32P(protocolPack(), result));
-        protocolServerResultPut(server);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

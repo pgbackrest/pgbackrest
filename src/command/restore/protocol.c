@@ -50,7 +50,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Result result
         protocolServerDataPut(server, pckWriteBoolP(protocolPack(), result));
-        protocolServerResultPut(server);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

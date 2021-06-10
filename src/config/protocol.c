@@ -36,7 +36,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         protocolServerDataPut(server, pckWriteStrP(protocolPack(), jsonFromVar(varNewVarLst(optionList))));
-        protocolServerResultPut(server);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

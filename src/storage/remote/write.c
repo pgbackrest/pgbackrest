@@ -54,7 +54,7 @@ storageWriteRemoteFreeResource(THIS_VOID)
 
     protocolClientDataPut(this->client, pckWriteBoolP(protocolPack(), false));
     protocolClientDataPut(this->client, NULL);
-    protocolClientResultGet(this->client);
+    protocolClientDataEndGet(this->client);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -161,7 +161,7 @@ storageWriteRemoteClose(THIS_VOID)
         protocolClientDataPut(this->client, NULL);
         ioFilterGroupResultAllSet(
             ioWriteFilterGroup(storageWriteIo(this->write)), jsonToVar(pckReadStrP(protocolClientDataGet(this->client))));
-        protocolClientResultGet(this->client);
+        protocolClientDataEndGet(this->client);
 
         this->client = NULL;
         memContextCallbackClear(this->memContext);

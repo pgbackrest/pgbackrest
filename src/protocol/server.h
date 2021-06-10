@@ -94,7 +94,7 @@ PackRead *protocolServerDataGet(ProtocolServer *const this);
 void protocolServerDataPut(ProtocolServer *this, PackWrite *resultPack);
 
 // Send a result to the client. This ends command processing and no more data should be sent.
-void protocolServerResultPut(ProtocolServer *this);
+void protocolServerDataEndPut(ProtocolServer *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolServer *

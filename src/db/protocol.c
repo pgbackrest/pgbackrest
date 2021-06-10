@@ -60,7 +60,7 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Return db index which should be included in subsequent calls
         protocolServerDataPut(server, pckWriteU32P(protocolPack(), lstSize(dbProtocolLocal.pgClientList) - 1));
-        protocolServerResultPut(server);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -85,7 +85,7 @@ dbQueryProtocol(PackRead *const param, ProtocolServer *const server)
         const String *const query = pckReadStrP(param);
 
         protocolServerDataPut(server, pckWriteStrP(protocolPack(), jsonFromVar(varNewVarLst(pgClientQuery(pgClient, query)))));
-        protocolServerResultPut(server);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -107,7 +107,7 @@ dbCloseProtocol(PackRead *const param, ProtocolServer *const server)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         pgClientClose(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param)));
-        protocolServerResultPut(server);
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
