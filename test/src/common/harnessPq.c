@@ -106,6 +106,12 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
         TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
         harnessPqScriptFail = true;
 
+        // Return without error if closing the connection and an error is currently being thrown. Errors outside of the pq shim can
+        // cause the connection to be cleaned up and we don't want to mask those errors. However, the failure is still logged and
+        // any subsequent call to the pq shim will result in an error.
+        if (strcmp(function, HRNPQ_FINISH) == 0 && errorType() != NULL)
+            return NULL;
+
         THROW(AssertError, harnessPqScriptError);
     }
 
