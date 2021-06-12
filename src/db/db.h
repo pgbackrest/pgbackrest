@@ -31,6 +31,8 @@ typedef struct DbPub
     const String *archiveCommand;                                   // The archive_command reported by the database
     const String *pgDataPath;                                       // Data directory reported by the database
     unsigned int pgVersion;                                         // Version as reported by the database
+    bool superuser;                                                 // Is the user a superuser?
+    bool writeRole;                                                 // Does the user have the pg_write_server_files role?
 } DbPub;
 
 // Archive mode loaded from the archive_mode GUC
@@ -59,6 +61,20 @@ __attribute__((always_inline)) static inline unsigned int
 dbPgVersion(const Db *const this)
 {
     return THIS_PUB(Db)->pgVersion;
+}
+
+// Version loaded from the server_version_num GUC
+__attribute__((always_inline)) static inline bool
+dbWriteRole(const Db *const this)
+{
+    return THIS_PUB(Db)->writeRole;
+}
+
+// Version loaded from the server_version_num GUC
+__attribute__((always_inline)) static inline bool
+dbSuperuser(const Db *const this)
+{
+    return THIS_PUB(Db)->superuser;
 }
 
 /***********************************************************************************************************************************
@@ -95,6 +111,9 @@ VariantList *dbList(Db *this);
 
 // Waits for replay on the standby to equal the target LSN
 void dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout);
+
+// !!!
+void dbSync(Db *this, const String *path);
 
 // Epoch time on the PostgreSQL host in ms
 TimeMSec dbTimeMSec(Db *this);

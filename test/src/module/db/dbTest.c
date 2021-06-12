@@ -83,14 +83,15 @@ testRun(void)
                     HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
                     HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, TEST_PATH_PG, NULL, NULL),
+                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, TEST_PATH_PG, NULL, NULL, false, false),
                     HRNPQ_MACRO_CLOSE(1),
 
                     HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
                     HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, TEST_PATH_PG, NULL, NULL),
+                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, TEST_PATH_PG, NULL, NULL, false, false),
                     HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
+                    // HRNPQ_MACRO_SYNC_FILE_ALL(1, TEST_PATH_PG),
                     HRNPQ_MACRO_CLOSE(1),
 
                     HRNPQ_MACRO_DONE()
@@ -123,18 +124,44 @@ testRun(void)
 
                 TEST_ASSIGN(client, protocolClientNew(STRDEF("db test client"), STRDEF("test"), read, write), "create client");
 
-                // Open and free database
-                TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
-                TEST_RESULT_VOID(dbOpen(db), "open db");
-                TEST_RESULT_VOID(dbFree(db), "free db");
+                TRY_BEGIN()
+                {
+                    // Open and free database
+                    TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
 
-                // Open the database, but don't free it so the server is forced to do it on shutdown
-                TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
-                TEST_RESULT_VOID(dbOpen(db), "open db");
-                TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "    wal switch");
-                TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
+                    TRY_BEGIN()
+                    {
+                        TEST_RESULT_VOID(dbOpen(db), "open db");
+                        TEST_RESULT_VOID(dbFree(db), "free db");
+                        db = NULL;
+                    }
+                    FINALLY()
+                    {
+                        dbFree(db);
+                    }
+                    TRY_END();
 
-                TEST_RESULT_VOID(protocolClientFree(client), "free client");
+                    // Open the database, but don't free it so the server is forced to do it on shutdown
+                    TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
+
+                    TRY_BEGIN()
+                    {
+                        TEST_RESULT_VOID(dbOpen(db), "open db");
+                        TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "    wal switch");
+                        // TEST_RESULT_VOID(dbSync(db, STRDEF(TEST_PATH_PG)), "    sync");
+                        TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
+                    }
+                    FINALLY()
+                    {
+                        dbFree(db);
+                    }
+                    TRY_END();
+                }
+                FINALLY()
+                {
+                    protocolClientFree(client);
+                }
+                TRY_END();
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -530,7 +557,7 @@ testRun(void)
             HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
             HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH_PG, NULL, NULL),
+            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH_PG, NULL, NULL, false, false),
             HRNPQ_MACRO_SET_APPLICATION_NAME(1),
             HRNPQ_MACRO_IS_STANDBY_QUERY(1, true),
             HRNPQ_MACRO_CLOSE(1),
@@ -547,7 +574,7 @@ testRun(void)
             HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
             HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH_PG, NULL, NULL),
+            HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH_PG, NULL, NULL, false, false),
             HRNPQ_MACRO_SET_APPLICATION_NAME(1),
             HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
             HRNPQ_MACRO_CLOSE(1),
@@ -573,6 +600,8 @@ testRun(void)
         TEST_RESULT_BOOL(result.standby == NULL, true, "    check standby");
         TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_84, "    version set");
         TEST_RESULT_STR_Z(dbPgDataPath(result.primary), TEST_PATH_PG "1", "    path set");
+        TEST_RESULT_BOOL(dbSuperuser(result.primary), false, "    not superuser");
+        TEST_RESULT_BOOL(dbWriteRole(result.primary), false, "    no write role");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
 

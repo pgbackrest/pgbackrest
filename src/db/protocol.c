@@ -9,6 +9,7 @@ Db Protocol Handler
 #include "common/memContext.h"
 #include "common/type/list.h"
 #include "config/config.h"
+#include "db/db.h"
 #include "db/protocol.h"
 #include "postgres/client.h"
 #include "postgres/interface.h"
@@ -96,6 +97,32 @@ dbQueryProtocol(const VariantList *paramList, ProtocolServer *server)
 
 /**********************************************************************************************************************************/
 void
+dbSyncProtocol(const VariantList *const paramList, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(paramList != NULL);
+    ASSERT(server != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        Db *const db = dbNew(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0))), NULL, NULL);
+        const String *const path = varStr(varLstGet(paramList, 1));
+
+        dbSync(db, path);
+
+        protocolServerResponse(server, NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
 dbCloseProtocol(const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -108,8 +135,15 @@ dbCloseProtocol(const VariantList *paramList, ProtocolServer *server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        pgClientClose(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0))));
-        protocolServerResponse(server, NULL);
+        PgClient **pgClient = lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0)));
+
+        if (*pgClient != NULL)
+        {
+            pgClientClose(*pgClient);
+            *pgClient = NULL;
+
+            protocolServerResponse(server, NULL);
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
