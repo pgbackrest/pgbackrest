@@ -826,12 +826,13 @@ memContextFree(MemContext *this)
         // freeing so the parent needs to remain active until they are all gone.
         this->state = memContextStateFreeing;
 
-        // !!! Execute callback if defined
+        // Execute callback if defined
         TRY_BEGIN()
         {
             if (this->callbackFunction)
                 this->callbackFunction(this->callbackArgument);
         }
+        // Finish cleanup even if the callback fails
         FINALLY()
         {
             // Free child context allocations

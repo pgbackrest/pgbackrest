@@ -187,7 +187,7 @@ testRun(void)
         TRY_END();
 
         assert(errorTryDepth() == 0);
-        assert(errorType() == NULL);
+        assert(memcmp(&errorContext.error, &(Error){0}, sizeof(Error)) == 0);
 
         assert(tryDone);
         assert(catchDone);
@@ -232,7 +232,7 @@ testRun(void)
         }
         TRY_END();
 
-        assert(errorType() == NULL);
+        assert(memcmp(&errorContext.error, &(Error){0}, sizeof(Error)) == 0);
 
         assert(tryDone);
         assert(catchDone);
