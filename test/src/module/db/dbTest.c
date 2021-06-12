@@ -123,18 +123,51 @@ testRun(void)
 
                 TEST_ASSIGN(client, protocolClientNew(STRDEF("db test client"), STRDEF("test"), read, write), "create client");
 
-                // Open and free database
-                TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
-                TEST_RESULT_VOID(dbOpen(db), "open db");
-                TEST_RESULT_VOID(dbFree(db), "free db");
+                TRY_BEGIN()
+                {
+                    TEST_TITLE("open and free database");
 
-                // Open the database, but don't free it so the server is forced to do it on shutdown
-                TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
-                TEST_RESULT_VOID(dbOpen(db), "open db");
-                TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "    wal switch");
-                TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
+                    TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
 
-                TEST_RESULT_VOID(protocolClientFree(client), "free client");
+                    TRY_BEGIN()
+                    {
+                        TEST_RESULT_VOID(dbOpen(db), "open db");
+                        TEST_RESULT_UINT(db->remoteIdx, 0, "check remote idx");
+                        TEST_RESULT_VOID(dbFree(db), "free db");
+                        db = NULL;
+                    }
+                    CATCH_ANY()
+                    {
+                        // Free on error
+                        dbFree(db);
+                    }
+                    TRY_END();
+
+                    // -------------------------------------------------------------------------------------------------------------
+                    TEST_TITLE("remote commands");
+
+                    TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
+
+                    TRY_BEGIN()
+                    {
+                        TEST_RESULT_VOID(dbOpen(db), "open db");
+                        TEST_RESULT_UINT(db->remoteIdx, 1, "check idx");
+                        TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "wal switch");
+                        TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
+                    }
+                    FINALLY()
+                    {
+                        // Clear the context callback so the server frees the db on exit
+                        memContextCallbackClear(db->pub.memContext);
+                    }
+                    TRY_END();
+                }
+                FINALLY()
+                {
+                    // Free on error
+                    protocolClientFree(client);
+                }
+                TRY_END();
             }
             HARNESS_FORK_PARENT_END();
         }
