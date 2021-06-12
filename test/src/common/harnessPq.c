@@ -104,12 +104,11 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
             harnessPqScriptIdx, result->function, result->param == NULL ? "" : result->param, function, strZ(paramStr));
 
         TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
+        harnessPqScriptFail = true;
 
         // !!!
         if (strcmp(function, HRNPQ_FINISH) == 0 && errorType() != NULL)
             return NULL;
-
-        harnessPqScriptFail = true;
 
         THROW(AssertError, harnessPqScriptError);
     }
