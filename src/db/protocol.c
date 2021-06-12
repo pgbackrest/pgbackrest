@@ -96,8 +96,10 @@ dbQueryProtocol(const VariantList *paramList, ProtocolServer *server)
 }
 
 /**********************************************************************************************************************************/
+void dbSyncCheckHelper(PgClient *pgClient, const String *path);
+
 void
-dbSyncProtocol(const VariantList *const paramList, ProtocolServer *const server)
+dbSyncCheckProtocol(const VariantList *const paramList, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
@@ -109,10 +111,10 @@ dbSyncProtocol(const VariantList *const paramList, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Db *const db = dbNew(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0))), NULL, NULL);
+        PgClient *const pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0)));
         const String *const path = varStr(varLstGet(paramList, 1));
 
-        dbSync(db, path);
+        dbSyncCheckHelper(pgClient, path);
 
         protocolServerResponse(server, NULL);
     }
@@ -136,14 +138,12 @@ dbCloseProtocol(const VariantList *paramList, ProtocolServer *server)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PgClient **pgClient = lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0)));
+        CHECK(*pgClient != NULL);
 
-        if (*pgClient != NULL)
-        {
-            pgClientClose(*pgClient);
-            *pgClient = NULL;
+        pgClientClose(*pgClient);
+        *pgClient = NULL;
 
-            protocolServerResponse(server, NULL);
-        }
+        protocolServerResponse(server, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 

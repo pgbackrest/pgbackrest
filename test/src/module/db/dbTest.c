@@ -148,7 +148,7 @@ testRun(void)
                     {
                         TEST_RESULT_VOID(dbOpen(db), "open db");
                         TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "    wal switch");
-                        // TEST_RESULT_VOID(dbSync(db, STRDEF(TEST_PATH_PG)), "    sync");
+                        // TEST_RESULT_VOID(dbSyncCheck(db, STRDEF(TEST_PATH_PG)), "    sync");
                         TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
                     }
                     FINALLY()

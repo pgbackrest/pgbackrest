@@ -343,6 +343,10 @@ Shim for PQfinish()
 ***********************************************************************************************************************************/
 void PQfinish(PGconn *conn)
 {
+    // If currently processing an error then assume this is the client destructor running which won't be in the script
+    if (errorType() != NULL)
+        return;
+
     if (harnessPqStrict && !harnessPqScriptFail)
         harnessPqScriptRun(HRNPQ_FINISH, NULL, (HarnessPq *)conn);
 }

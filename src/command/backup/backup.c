@@ -839,7 +839,7 @@ backupStart(BackupData *backupData)
             checkDbConfig(backupData->version, backupData->pgIdxPrimary, backupData->dbPrimary, false);
 
             // Check primary sync
-            dbSync(backupData->dbPrimary, storagePathP(backupData->storagePrimary, NULL));
+            dbSyncCheck(backupData->dbPrimary, storagePathP(backupData->storagePrimary, NULL));
 
             // Start backup
             LOG_INFO_FMT(

@@ -68,6 +68,7 @@ static struct
     // Last error
     struct
     {
+        int tryLevel;                                                   // Try level where the error happened
         const ErrorType *errorType;                                     // Error type
         const char *fileName;                                           // Source file where the error occurred
         const char *functionName;                                       // Function where the error occurred
@@ -350,6 +351,10 @@ errorInternalProcess(bool catch)
     if (errorContext.tryList[errorContext.tryTotal + 1].uncaught)
         errorInternalPropagate();
 
+    // !!!
+    if (errorContext.tryTotal < errorContext.error.tryLevel)
+        errorContext.error.errorType = NULL;
+
     // Nothing left to process
     return false;
 }
@@ -359,6 +364,7 @@ void
 errorInternalThrow(const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
 {
     // Setup error data
+    errorContext.error.tryLevel = errorContext.tryTotal;
     errorContext.error.errorType = errorType;
     errorContext.error.fileName = fileName;
     errorContext.error.functionName = functionName;

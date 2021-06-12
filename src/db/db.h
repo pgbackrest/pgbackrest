@@ -113,7 +113,7 @@ VariantList *dbList(Db *this);
 void dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout);
 
 // !!!
-void dbSync(Db *this, const String *path);
+void dbSyncCheck(Db *this, const String *path);
 
 // Epoch time on the PostgreSQL host in ms
 TimeMSec dbTimeMSec(Db *this);
