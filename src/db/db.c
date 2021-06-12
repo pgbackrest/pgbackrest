@@ -221,7 +221,10 @@ dbOpen(Db *this)
                 "select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                 " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
                 " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
-                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text"));
+                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
+                " (select rolsuper from pg_roles where rolname = current_role)::bool,"
+                " ((select count(*) > 0 from pg_roles where rolname = 'pg_write_server_files')::bool"
+                    " and (select pg_has_role('pg_write_server_files', 'USAGE')))::bool"));
 
         // Check that none of the return values are null, which indicates the user cannot select some rows in pg_settings
         for (unsigned int columnIdx = 0; columnIdx < varLstSize(row); columnIdx++)

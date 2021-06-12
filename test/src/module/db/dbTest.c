@@ -166,7 +166,10 @@ testRun(void)
                 "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                     " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
                     " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
-                    " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text\"]",
+                    " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
+                    " (select rolsuper from pg_roles where rolname = current_role)::bool,"
+                    " ((select count(*) > 0 from pg_roles where rolname = 'pg_write_server_files')::bool"
+                        " and (select pg_has_role('pg_write_server_files', 'USAGE')))::bool\"]",
                 .resultInt = 1},
             {.session = 1, .function = HRNPQ_CONSUMEINPUT},
             {.session = 1, .function = HRNPQ_ISBUSY},
