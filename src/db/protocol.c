@@ -96,6 +96,7 @@ dbQueryProtocol(const VariantList *paramList, ProtocolServer *server)
 }
 
 /**********************************************************************************************************************************/
+// !!!
 void dbSyncCheckHelper(PgClient *pgClient, const String *path);
 
 void

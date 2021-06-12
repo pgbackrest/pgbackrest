@@ -104,6 +104,11 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
             harnessPqScriptIdx, result->function, result->param == NULL ? "" : result->param, function, strZ(paramStr));
 
         TEST_LOG_FMT(PQ_ERROR_PREFIX ": %s", harnessPqScriptError);
+
+        // !!!
+        if (strcmp(function, HRNPQ_FINISH) == 0 && errorType() != NULL)
+            return NULL;
+
         harnessPqScriptFail = true;
 
         THROW(AssertError, harnessPqScriptError);
@@ -343,10 +348,6 @@ Shim for PQfinish()
 ***********************************************************************************************************************************/
 void PQfinish(PGconn *conn)
 {
-    // If currently processing an error then assume this is the client destructor running which won't be in the script
-    if (errorType() != NULL)
-        return;
-
     if (harnessPqStrict && !harnessPqScriptFail)
         harnessPqScriptRun(HRNPQ_FINISH, NULL, (HarnessPq *)conn);
 }
