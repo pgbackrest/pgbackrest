@@ -126,39 +126,47 @@ testRun(void)
 
                 TRY_BEGIN()
                 {
-                    // Open and free database
+                    TEST_TITLE("open and free database");
+
                     TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
 
                     TRY_BEGIN()
                     {
                         TEST_RESULT_VOID(dbOpen(db), "open db");
+                        TEST_RESULT_UINT(db->remoteIdx, 0, "check remote idx");
                         TEST_RESULT_VOID(dbFree(db), "free db");
                         db = NULL;
                     }
-                    FINALLY()
+                    CATCH_ANY()
                     {
+                        // Free on error
                         dbFree(db);
                     }
                     TRY_END();
 
-                    // Open the database, but don't free it so the server is forced to do it on shutdown
+                    // -------------------------------------------------------------------------------------------------------------
+                    TEST_TITLE("remote commands");
+
                     TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
 
                     TRY_BEGIN()
                     {
                         TEST_RESULT_VOID(dbOpen(db), "open db");
-                        TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "    wal switch");
+                        TEST_RESULT_UINT(db->remoteIdx, 1, "check idx");
+                        TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "wal switch");
                         // TEST_RESULT_VOID(dbSyncCheck(db, STRDEF(TEST_PATH_PG)), "    sync");
                         TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
                     }
                     FINALLY()
                     {
-                        dbFree(db);
+                        // Clear the context callback so the server frees the db on exit
+                        memContextCallbackClear(db->pub.memContext);
                     }
                     TRY_END();
                 }
                 FINALLY()
                 {
+                    // Free on error
                     protocolClientFree(client);
                 }
                 TRY_END();
