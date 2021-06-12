@@ -297,6 +297,8 @@ errorInternalTry(const char *fileName, const char *functionName, int fileLine)
 void
 errorInternalPropagate(void)
 {
+    assert(errorContext.error.errorType != NULL);
+
     // Mark the error as uncaught
     errorContext.tryList[errorContext.tryTotal].uncaught = true;
 
@@ -327,6 +329,13 @@ errorInternalProcess(bool catch)
     {
         for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
             errorContext.handlerList[handlerIdx](errorTryDepth());
+    }
+
+    // !!!
+    if (errorContext.tryList[errorContext.tryTotal].state == errorStateCatch &&
+        !errorContext.tryList[errorContext.tryTotal].uncaught)
+    {
+        errorContext.error.errorType = NULL;
     }
 
     // Increment the state

@@ -187,6 +187,7 @@ testRun(void)
         TRY_END();
 
         assert(errorTryDepth() == 0);
+        assert(errorType() == NULL);
 
         assert(tryDone);
         assert(catchDone);
@@ -230,6 +231,8 @@ testRun(void)
             finallyDone = true;
         }
         TRY_END();
+
+        assert(errorType() == NULL);
 
         assert(tryDone);
         assert(catchDone);
