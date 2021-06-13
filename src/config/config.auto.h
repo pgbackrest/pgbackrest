@@ -22,6 +22,7 @@ Command constants
 #define CFGCMD_REPO_PUT                                             "repo-put"
 #define CFGCMD_REPO_RM                                              "repo-rm"
 #define CFGCMD_RESTORE                                              "restore"
+#define CFGCMD_SERVER                                               "server"
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
 #define CFGCMD_STANZA_DELETE                                        "stanza-delete"
 #define CFGCMD_STANZA_UPGRADE                                       "stanza-upgrade"
@@ -30,7 +31,7 @@ Command constants
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           20
+#define CFG_COMMAND_TOTAL                                           21
 
 /***********************************************************************************************************************************
 Option group constants
@@ -228,6 +229,7 @@ typedef enum
     cfgCmdRepoPut,
     cfgCmdRepoRm,
     cfgCmdRestore,
+    cfgCmdServer,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,
     cfgCmdStanzaUpgrade,

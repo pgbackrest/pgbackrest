@@ -119,6 +119,8 @@ command:
       local: {}
       remote: {}
 
+  server: {}
+
   stanza-create:
     command-role:
       remote: {}

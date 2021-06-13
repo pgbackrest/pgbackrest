@@ -1679,6 +1679,13 @@
                 <text>Three levels of help are provided.  If no command is specified then general help will be displayed.  If a command is specified (e.g. <cmd>pgbackrest help backup</cmd>) then a full description of the command will be displayed along with a list of valid options.  If an option is specified in addition to a command (e.g. <cmd>pgbackrest help backup type</cmd>) then a full description of the option as it applies to the command will be displayed.</text>
             </command>
 
+            <!-- =============================================================================================================== -->
+            <command id="server" name="Server">
+                <summary>Start <backrest/> server.</summary>
+
+                <text>!!!.</text>
+            </command>
+
             <!-- OPERATION - START COMMAND -->
             <command id="start" name="Start">
                 <summary>Allow <backrest/> processes to run.</summary>

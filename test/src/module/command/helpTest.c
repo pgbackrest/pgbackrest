@@ -57,6 +57,7 @@ testRun(void)
         "    repo-get        Get a file from a repository.\n"
         "    repo-ls         List files in a repository.\n"
         "    restore         Restore a database cluster.\n"
+        "    server          Start pgBackRest server.\n"
         "    stanza-create   Create the required stanza data.\n"
         "    stanza-delete   Delete a stanza.\n"
         "    stanza-upgrade  Upgrade a stanza.\n"

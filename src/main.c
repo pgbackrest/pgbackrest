@@ -25,6 +25,7 @@ Main
 #include "command/repo/put.h"
 #include "command/repo/rm.h"
 #include "command/restore/restore.h"
+#include "command/server/server.h"
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
 #include "command/stanza/upgrade.h"
@@ -194,6 +195,12 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoRm:
                     cmdStorageRemove();
+                    break;
+
+                // Server command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdServer:
+                    cmdServer();
                     break;
 
                 // Restore command
