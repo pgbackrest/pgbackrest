@@ -301,11 +301,14 @@ unit:
 
         coverage:
           - common/io/client
+          - common/io/server
           - common/io/session
           - common/io/tls/client
+          - common/io/tls/server
           - common/io/tls/session
           - common/io/socket/client
           - common/io/socket/common
+          - common/io/socket/server
           - common/io/socket/session
 
         include:
