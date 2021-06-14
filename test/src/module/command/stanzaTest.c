@@ -386,8 +386,9 @@ testRun(void)
             "HINT: this may be a symptom of repository corruption!");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza '" TEST_STANZA "' on repo1");
 
-        // checkStanzaInfo() - already checked in checkTest so just a sanity check here
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkStanzaInfo() - already checked in checkTest so just a sanity check here");
+
         // Create a corrupted backup file - db id
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
@@ -412,13 +413,14 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza '" TEST_STANZA "' on repo1");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive.info file and backup.info files that match but do not match the current database version");
+
         // Copy files may or may not exist - remove
         HRN_STORAGE_REMOVE(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, .comment = "repo1: remove archive.info.copy");
         HRN_STORAGE_REMOVE(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, .comment = "repo1: remove backup.info.copy");
 
-        // Create an archive.info file and backup.info files that match but do not match the current database version
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
@@ -449,7 +451,9 @@ testRun(void)
             "HINT: did an error occur during stanza-upgrade?");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza '" TEST_STANZA "' on repo1");
 
-        // Create archive.info and backup.info files that match but do not match the current database system-id
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive.info and backup.info files that match but do not match the current database system-id");
+
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
@@ -499,8 +503,9 @@ testRun(void)
         TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza '" TEST_STANZA "' on repo1");
 
-        // Repeat last test using --force (deprecated)
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repeat last test using --force (deprecated)");
+
         hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
         TEST_ERROR(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
