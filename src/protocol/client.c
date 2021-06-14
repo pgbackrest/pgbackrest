@@ -28,7 +28,7 @@ struct ProtocolClient
     ProtocolClientPub pub;                                          // Publicly accessible variables
     IoWrite *write;                                                 // Write interface
     const String *name;                                             // Name displayed in logging
-    const String *errorPrefix;                                      // Prefix use when throwing error
+    const String *errorPrefix;                                      // Prefix used when throwing error
     TimeMSec keepAliveTime;                                         // Last time data was put to the server
 };
 
