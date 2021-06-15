@@ -54,7 +54,7 @@ ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);
 PackRead *protocolServerDataGet(ProtocolServer *this);
 
 // Put data to the client
-void protocolServerDataPut(ProtocolServer *this, PackWrite *resultPack);
+void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
 
 // Put data end to the client. This ends command processing and no more data should be sent.
 void protocolServerDataEndPut(ProtocolServer *this);

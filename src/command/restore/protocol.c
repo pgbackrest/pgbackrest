@@ -48,7 +48,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
             repoFile, repoIdx, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum, pgFileZero, pgFileSize,
             pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass);
 
-        // Result result
+        // Return result
         protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), result));
         protocolServerDataEndPut(server);
     }

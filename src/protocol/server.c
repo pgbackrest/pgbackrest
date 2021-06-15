@@ -299,25 +299,25 @@ protocolServerDataGet(ProtocolServer *const this)
 
 /**********************************************************************************************************************************/
 void
-protocolServerDataPut(ProtocolServer *const this, PackWrite *const result)
+protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_LOG_PARAM(PACK_WRITE, result);
+        FUNCTION_LOG_PARAM(PACK_WRITE, data);
     FUNCTION_LOG_END();
 
     // End the pack
-    if (result != NULL)
-        pckWriteEndP(result);
+    if (data != NULL)
+        pckWriteEndP(data);
 
     // Write the result
     PackWrite *resultMessage = pckWriteNew(this->write);
     pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
-    pckWritePackP(resultMessage, result);
+    pckWritePackP(resultMessage, data);
     pckWriteEndP(resultMessage);
 
     // Flush on NULL result since it might be used to synchronize
-    if (result == NULL)
+    if (data == NULL)
         ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();

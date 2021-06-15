@@ -103,7 +103,7 @@ void protocolClientDataEndGet(ProtocolClient *this);
 void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
 
 // Put data to the server
-void protocolClientDataPut(ProtocolClient *this, PackWrite *result);
+void protocolClientDataPut(ProtocolClient *this, PackWrite *data);
 
 /***********************************************************************************************************************************
 Destructor
