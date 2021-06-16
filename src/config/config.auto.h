@@ -116,9 +116,11 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_COUNT                                 "tcp-keep-alive-count"
 #define CFGOPT_TCP_KEEP_ALIVE_IDLE                                  "tcp-keep-alive-idle"
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
+#define CFGOPT_TLS_SERVER_CERT                                      "tls-server-cert"
+#define CFGOPT_TLS_SERVER_KEY                                       "tls-server-key"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            131
+#define CFG_OPTION_TOTAL                                            134
 
 /***********************************************************************************************************************************
 Option value constants
@@ -171,6 +173,9 @@ Option value constants
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_Z                          "auto"
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_SERVICE_Z                       "service"
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_TOKEN_Z                         "token"
+
+#define CFGOPTVAL_REPO_HOST_TYPE_SSH_Z                              "ssh"
+#define CFGOPTVAL_REPO_HOST_TYPE_TLS_Z                              "tls"
 
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF_Z                "diff"
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL_Z                "full"
@@ -342,6 +347,7 @@ typedef enum
     cfgOptRepoHostConfigIncludePath,
     cfgOptRepoHostConfigPath,
     cfgOptRepoHostPort,
+    cfgOptRepoHostType,
     cfgOptRepoHostUser,
     cfgOptRepoLocal,
     cfgOptRepoPath,
@@ -384,6 +390,8 @@ typedef enum
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
+    cfgOptTlsServerCert,
+    cfgOptTlsServerKey,
     cfgOptType,
 } ConfigOption;
 

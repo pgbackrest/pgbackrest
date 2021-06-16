@@ -895,6 +895,18 @@ option:
     command: buffer-size
     depend: tcp-keep-alive-count
 
+  tls-server-cert:
+    section: global
+    type: path
+    command:
+      server: {}
+
+  tls-server-key:
+    section: global
+    type: path
+    command:
+      server: {}
+
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
   log-level-console:
@@ -1570,6 +1582,26 @@ option:
     deprecate:
       hardlink: {index: 1, reset: false}
 
+  repo-host-type:
+    section: global
+    group: repo
+    type: string
+    default: ssh
+    allow-list:
+      - ssh
+      - tls
+    command: repo-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: repo-local
+      list:
+        - false
+    deprecate:
+      backup-host: {index: 1, reset: false}
+
   repo-host:
     section: global
     group: repo
@@ -1580,10 +1612,7 @@ option:
       async: {}
       main: {}
       local: {}
-    depend:
-      option: repo-local
-      list:
-        - false
+    depend: repo-host-type
     deprecate:
       backup-host: {index: 1, reset: false}
 
@@ -1612,7 +1641,9 @@ option:
       main: {}
       local: {}
     depend:
-      option: repo-host
+      option: repo-host-type
+      list:
+        - ssh
     deprecate:
       backup-cmd: {index: 1, reset: false}
 
@@ -1671,8 +1702,7 @@ option:
       main: {}
       local: {}
     default: pgbackrest
-    depend:
-      option: repo-host
+    depend: repo-host-cmd
     deprecate:
       backup-user: {index: 1, reset: false}
 

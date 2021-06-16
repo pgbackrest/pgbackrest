@@ -3998,7 +3998,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost),
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgOptRepoHostType,
+                "ssh"
+            ),
         ),
     ),
 
@@ -4201,6 +4205,69 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("repo-host-type"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST
+            (
+                "ssh",
+                "tls"
+            ),
+
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgOptRepoLocal,
+                "0"
+            ),
+
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("ssh"),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("repo-host-user"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_REQUIRED(false),
@@ -4242,7 +4309,12 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost),
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgOptRepoHostType,
+                "ssh"
+            ),
+
             PARSE_RULE_OPTION_OPTIONAL_DEFAULT("pgbackrest"),
         ),
     ),
@@ -6472,6 +6544,34 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 cfgOptSckKeepAlive,
                 "1"
             ),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("tls-server-cert"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("tls-server-key"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
         ),
     ),
 
@@ -9312,6 +9412,50 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
     },
 
+    // repo-host-type option and deprecations
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
+    },
+    {
+        .name = "reset-repo1-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
+    },
+    {
+        .name = "backup-host",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
+    },
+    {
+        .name = "repo2-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
+    },
+    {
+        .name = "reset-repo2-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
+    },
+    {
+        .name = "repo3-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
+    },
+    {
+        .name = "reset-repo3-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
+    },
+    {
+        .name = "repo4-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
+    },
+    {
+        .name = "reset-repo4-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
+    },
+
     // repo-host-user option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -10661,6 +10805,30 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveInterval,
     },
 
+    // tls-server-cert option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "tls-server-cert",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptTlsServerCert,
+    },
+    {
+        .name = "reset-tls-server-cert",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTlsServerCert,
+    },
+
+    // tls-server-key option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "tls-server-key",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptTlsServerKey,
+    },
+    {
+        .name = "reset-tls-server-key",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTlsServerKey,
+    },
+
     // type option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -10761,6 +10929,8 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
+    cfgOptTlsServerCert,
+    cfgOptTlsServerKey,
     cfgOptType,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
@@ -10783,11 +10953,11 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoCipherPass,
     cfgOptRepoGcsKeyType,
     cfgOptRepoHost,
-    cfgOptRepoHostCmd,
     cfgOptRepoHostConfig,
     cfgOptRepoHostConfigIncludePath,
     cfgOptRepoHostConfigPath,
     cfgOptRepoHostPort,
+    cfgOptRepoHostType,
     cfgOptRepoHostUser,
     cfgOptRepoS3Bucket,
     cfgOptRepoS3Endpoint,
@@ -10808,6 +10978,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoGcsBucket,
     cfgOptRepoGcsEndpoint,
     cfgOptRepoGcsKey,
+    cfgOptRepoHostCmd,
     cfgOptRepoS3Key,
     cfgOptRepoS3KeySecret,
 };

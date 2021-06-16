@@ -333,6 +333,24 @@
 
                         <example>30</example>
                     </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-cert" name="TLS Server Certificate">
+                        <summary>TLS server certificate file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>/!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-key" name="TLS Server Key">
+                        <summary>TLS server key file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>/!!!</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 
@@ -439,6 +457,15 @@
                         </ul></text>
 
                         <example>none</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-type" name="Repository Host Protocol Type">
+                        <summary>Repository host protocol type.</summary>
+
+                        <text>!!!</text>
+
+                        <example>tls</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->

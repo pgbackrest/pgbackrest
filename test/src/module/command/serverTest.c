@@ -17,6 +17,8 @@ testRun(void)
         TEST_TITLE("!!!");
 
         StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptTlsServerCert, "/BOGUS");
+        hrnCfgArgRawZ(argList, cfgOptTlsServerKey, "/BOGUS");
         HRN_CFG_LOAD(cfgCmdServer, argList);
 
         TEST_RESULT_VOID(cmdServer(), "server");
