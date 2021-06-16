@@ -29,8 +29,6 @@ testRun(void)
 
     const String *pg1 = STRDEF("pg");
     String *pg1Path = strNewFmt(TEST_PATH "/%s", strZ(pg1));
-    const String *pg8 = STRDEF("pg8");
-    String *pg8Path = strNewFmt(TEST_PATH "/%s", strZ(pg8));
     const String *stanza = STRDEF("test1");
     StringList *argList = strLstNew();
 
@@ -373,8 +371,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 5, "localhost");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 5, "pgbackrest-bogus");
-        strLstAddZ(argList, "--pg5-path=/path/to/pg5");
-        strLstAddZ(argList, "--pg5-host-user=" TEST_USER);
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 5, "/path/to/pg5");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 5, TEST_USER);
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Placeholder test for manifest
@@ -387,25 +385,29 @@ testRun(void)
     if (testBegin("checkDbConfig(), checkArchiveCommand()"))
     {
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkArchiveCommand() errors");
+
         TEST_ERROR(checkArchiveCommand(NULL), ArchiveCommandInvalidError, "archive_command '[null]' must contain " PROJECT_BIN);
 
-        //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(checkArchiveCommand(strNew()), ArchiveCommandInvalidError, "archive_command '' must contain " PROJECT_BIN);
 
-        //--------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
             checkArchiveCommand(STRDEF("backrest")), ArchiveCommandInvalidError,
             "archive_command 'backrest' must contain " PROJECT_BIN);
 
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkArchiveCommand() valid");
+
         TEST_RESULT_BOOL(checkArchiveCommand(STRDEF("pgbackrest --stanza=demo archive-push %p")), true, "archive_command valid");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkDbConfig() valid");
+
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
-        strLstAddZ(argList, "--pg8-port=5433");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
@@ -413,7 +415,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, false, NULL, NULL),
             HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/badpath", true, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(1),
@@ -425,33 +427,36 @@ testRun(void)
 
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config");
 
-        // Version mismatch
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false), DbMismatchError,
-            "version '" PG_VERSION_92_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_94_STR "' and"
-                " '%s' read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
-            "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
-            strZ(pg1Path), strZ(pg1Path), strZ(pg1Path));
+        TEST_TITLE("checkDbConfig() version mismatch");
 
-        // Path mismatch
+        TEST_ERROR(
+            checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false), DbMismatchError,
+            "version '" PG_VERSION_92_STR "' and path '" TEST_PATH_PG "' queried from cluster do not match version '"
+            PG_VERSION_94_STR "' and '" TEST_PATH_PG "' read from '" TEST_PATH_PG "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
+
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkDbConfig() path mismatch");
+
         TEST_ERROR_FMT(
             checkDbConfig(PG_VERSION_92, db.standbyIdx, db.standby, true), DbMismatchError,
             "version '" PG_VERSION_92_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_92_STR "' and"
-                " '%s' read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+                " '" TEST_PATH "/pg8' read from '" TEST_PATH "/pg8/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg8-path and pg8-port settings likely reference different clusters.",
-            strZ(dbPgDataPath(db.standby)), strZ(pg8Path), strZ(pg8Path));
+            strZ(dbPgDataPath(db.standby)));
 
-        // archive-check=false
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkDbConfig() archive-check=false");
+
         strLstAddZ(argList, "--no-archive-check");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config --no-archive-check");
 
-        // archive-check not valid for command
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkDbConfig() archive-check not valid for command");
+
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
@@ -466,8 +471,9 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
 
-        // archive_mode=always not supported
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkDbConfig() archive_mode=always not supported");
+
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
@@ -489,7 +495,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("disable archive_mode=always check");
 
-        strLstAddZ(argList, "--no-archive-mode-check");
+        hrnCfgArgRawBool(argList, cfgOptArchiveModeCheck, false);
         HRN_CFG_LOAD(cfgCmdCheck, argList);
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "check");
 
