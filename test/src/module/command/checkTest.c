@@ -182,46 +182,43 @@ testRun(void)
             "version '" PG_VERSION_92_STR "' and path '" TEST_PATH "' queried from cluster do not match version '" PG_VERSION_92_STR
                 "' and '" TEST_PATH_PG "' read from '" TEST_PATH_PG "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
-// CSHANG STOPPED HERE
-        // Standby
+
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("standby and primary database - error on primary but standby check ok");
+
         // Create pg_control for primary
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg8))),
+        HRN_STORAGE_PUT(
+            storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
 
         // Create info files
-        const Buffer *archiveInfoContent = harnessInfoChecksum(
-            STRDEF(
-                "[db]\n"
-                "db-id=1\n"
-                "db-system-id=6569239123849665679\n"
-                "db-version=\"9.2\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n"));
-
-        storagePutP(storageNewWriteP(storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
-
-        const Buffer *backupInfoContent = harnessInfoChecksum(
-            STRDEF(
-                "[db]\n"
-                "db-catalog-version=201608131\n"
-                "db-control-version=920\n"
-                "db-id=1\n"
-                "db-system-id=6569239123849665679\n"
-                "db-version=\"9.2\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
-                    "\"db-version\":\"9.2\"}\n"));
-        storagePutP(storageNewWriteP(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE_STR), backupInfoContent);
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.2\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n");
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
+            "[db]\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=920\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.2\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.2\"}\n");
 
         // Single repo config - error when checking archive mode setting on database
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, strZ(pg8Path), false, "off", NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, TEST_PATH "/pg8", false, "off", NULL),
 
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_CLOSE(8),
@@ -235,15 +232,18 @@ testRun(void)
             "P00   INFO: check repo1 (standby)\n"
             "P00   INFO: switch wal not performed because this is a standby");
 
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("mulit-repo - standby and primary database");
+
         // Multi-repo - add a second repo (repo2)
         StringList *argListRepo2 = strLstDup(argList);
-        strLstAddZ(argListRepo2, "--repo2-path=" TEST_PATH "/repo2");
+        hrnCfgArgKeyRawZ(argListRepo2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         HRN_CFG_LOAD(cfgCmdCheck, argListRepo2);
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, strZ(pg8Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -267,25 +267,44 @@ testRun(void)
             "P00   INFO: check repo1 (standby)\n"
             "P00   INFO: check repo2 (standby)");
 
-        // Single primary
         //--------------------------------------------------------------------------------------------------------------------------
-        // Multi repo
+        TEST_TITLE("multi-repo - primary database only, WAL not found");
+
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-        strLstAddZ(argList, "--repo2-path=" TEST_PATH "/repo2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Create stanza files on repo2
-        storagePutP(storageNewWriteP(storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
-        storagePutP(storageNewWriteP(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR), backupInfoContent);
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.2\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n");
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
+            "[db]\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=920\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.2\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.2\"}\n");
 
         // Error when WAL segment not found
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, false, NULL, NULL),
             HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
             HRNPQ_MACRO_CLOSE(1),
@@ -303,6 +322,9 @@ testRun(void)
             "P00   INFO: check repo2 configuration (primary)\n"
             "P00   INFO: check repo1 archive for WAL (primary)");
 
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo - WAL segment switch performed once for all repos");
+
         // Create WAL segment
         Buffer *buffer = bufNew(16 * 1024 * 1024);
         memset(bufPtr(buffer), 0, bufSize(buffer));
@@ -311,23 +333,18 @@ testRun(void)
         // WAL segment switch is performed once for all repos
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, false, NULL, NULL),
             HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoIdxWrite(0),
-                STRDEF(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             buffer);
-
-        storagePutP(
-            storageNewWriteP(
-                storageRepoIdxWrite(1),
-                STRDEF(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             buffer);
 
         TEST_RESULT_VOID(cmdCheck(), "check primary, WAL archived");
@@ -335,14 +352,15 @@ testRun(void)
             "P00   INFO: check repo1 configuration (primary)\n"
             "P00   INFO: check repo2 configuration (primary)\n"
             "P00   INFO: check repo1 archive for WAL (primary)\n"
-            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/9.2-1/"
+            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH_REPO "/archive/test1/9.2-1/"
                 "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
             "P00   INFO: check repo2 archive for WAL (primary)\n"
             "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo2/archive/test1/9.2-1/"
                 "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2");
 
-        // Primary == NULL (for test coverage)
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Primary == NULL (for test coverage)");
+
         DbGetResult dbGroup = {0};
         TEST_RESULT_VOID(checkPrimary(dbGroup), "primary == NULL");
     }
