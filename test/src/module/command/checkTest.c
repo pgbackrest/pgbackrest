@@ -25,11 +25,6 @@ testRun(void)
     // PQfinish() is strictly checked
     harnessPqScriptStrictSet(true);
 
-    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-
-    const String *pg1 = STRDEF("pg");
-    String *pg1Path = strNewFmt(TEST_PATH "/%s", strZ(pg1));
-    const String *stanza = STRDEF("test1");
     StringList *argList = strLstNew();
 
     // *****************************************************************************************************************************
@@ -449,7 +444,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkDbConfig() archive-check=false");
 
-        strLstAddZ(argList, "--no-archive-check");
+        hrnCfgArgRawBool(argList, cfgOptArchiveCheck, false);
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config --no-archive-check");
@@ -461,7 +456,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
-        strLstAddZ(argList, "--pg8-port=5433");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
@@ -482,7 +477,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), false, "always", NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, false, "always", NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -505,6 +500,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("checkStanzaInfo(), checkStanzaInfoPg()"))
     {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkStanzaInfo() - files match");
+
         InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_96, 6569239123849665679, NULL);
         InfoPgData archivePg = infoPgData(infoArchivePg(archiveInfo), infoPgDataCurrentId(infoArchivePg(archiveInfo)));
 
@@ -513,8 +511,9 @@ testRun(void)
 
         TEST_RESULT_VOID(checkStanzaInfo(&archivePg, &backupPg), "stanza info files match");
 
-        // Create a corrupted backup file - system id
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkStanzaInfo() - corrupted backup file: system id");
+
         backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_96), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
@@ -525,8 +524,9 @@ testRun(void)
             "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // Create a corrupted backup file - system id and version
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkStanzaInfo() - corrupted backup file: system id and version");
+
         backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_95), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
@@ -537,8 +537,9 @@ testRun(void)
             "backup : id = 1, version = 9.5, system-id = 6569239123849665999\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // Create a corrupted backup file - version
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkStanzaInfo() - corrupted backup file: version");
+
         backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_95), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
@@ -549,8 +550,9 @@ testRun(void)
             "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // Create a corrupted backup file - db id
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkStanzaInfo() - corrupted backup file: db id");
+
         infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96));
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
@@ -561,20 +563,21 @@ testRun(void)
             "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
-        // checkStanzaInfoPg
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkStanzaInfoPg() - version mismatch");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--no-online");
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        strLstAdd(argList, strNewFmt("--pg1-path=" TEST_PATH "/%s", strZ(stanza)));
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-        strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
-        setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
+        HRN_STORAGE_PUT(
+            storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         // Create info files
@@ -590,6 +593,9 @@ testRun(void)
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("checkStanzaInfoPg() - systemId mismatch");
 
         // SystemId mismatch
         TEST_ERROR(
