@@ -1616,6 +1616,7 @@ option:
     deprecate:
       backup-host: {index: 1, reset: false}
 
+  # !!! Needs to depend on repo-host being set and repo-host-type=ssh
   repo-host-cmd:
     section: global
     group: repo
@@ -1641,9 +1642,7 @@ option:
       main: {}
       local: {}
     depend:
-      option: repo-host-type
-      list:
-        - ssh
+      option: repo-host
     deprecate:
       backup-cmd: {index: 1, reset: false}
 
@@ -1691,6 +1690,7 @@ option:
     deprecate:
       backup-ssh-port: {index: 1, reset: false}
 
+  # !!! Needs to depend on repo-host being set and repo-host-type=ssh
   repo-host-user:
     section: global
     group: repo
@@ -1702,7 +1702,8 @@ option:
       main: {}
       local: {}
     default: pgbackrest
-    depend: repo-host-cmd
+    depend:
+      option: repo-host
     deprecate:
       backup-user: {index: 1, reset: false}
 

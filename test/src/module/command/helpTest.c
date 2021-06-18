@@ -272,6 +272,7 @@ testRun(void)
             "  --repo-host-config-path          pgBackRest repository host configuration\n"
             "                                   path [default=/etc/pgbackrest]\n"
             "  --repo-host-port                 repository host port when repo-host is set\n"
+            "  --repo-host-type                 repository host protocol type [default=ssh]\n"
             "  --repo-host-user                 repository host user when repo-host is set\n"
             "                                   [default=pgbackrest]\n"
             "  --repo-path                      path where backups and archive are stored\n"

@@ -3998,11 +3998,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-            (
-                cfgOptRepoHostType,
-                "ssh"
-            ),
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost),
         ),
     ),
 
@@ -4309,12 +4305,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-            (
-                cfgOptRepoHostType,
-                "ssh"
-            ),
-
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost),
             PARSE_RULE_OPTION_OPTIONAL_DEFAULT("pgbackrest"),
         ),
     ),
@@ -10953,6 +10944,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoCipherPass,
     cfgOptRepoGcsKeyType,
     cfgOptRepoHost,
+    cfgOptRepoHostCmd,
     cfgOptRepoHostConfig,
     cfgOptRepoHostConfigIncludePath,
     cfgOptRepoHostConfigPath,
@@ -10978,7 +10970,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoGcsBucket,
     cfgOptRepoGcsEndpoint,
     cfgOptRepoGcsKey,
-    cfgOptRepoHostCmd,
     cfgOptRepoS3Key,
     cfgOptRepoS3KeySecret,
 };
