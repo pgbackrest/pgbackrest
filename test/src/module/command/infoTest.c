@@ -28,8 +28,6 @@ testRun(void)
     const String *repoPath = STRDEF(TEST_PATH_REPO);
     String *archivePath = strNewFmt("%s/%s", strZ(repoPath), "archive");
     String *backupPath = strNewFmt("%s/%s", strZ(repoPath), "backup");
-    String *archiveStanza1Path = strNewFmt("%s/stanza1", strZ(archivePath));
-    String *backupStanza1Path = strNewFmt("%s/stanza1", strZ(backupPath));
 
     // *****************************************************************************************************************************
     if (testBegin("infoRender()"))
@@ -2374,22 +2372,21 @@ testRun(void)
         // Unset environment key
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
     }
-// CSHANG STOPPED HERE
+
     //******************************************************************************************************************************
     if (testBegin("database mismatch - special cases"))
     {
         // These tests cover branches not covered in other tests
         TEST_TITLE("multi-repo, database mismatch, pg system-id only");
 
-        storagePathCreateP(storageLocalWrite(), archivePath);
-        storagePathCreateP(storageLocalWrite(), backupPath);
-        String *archivePath2 = strNewFmt(TEST_PATH "/repo2/%s", "archive");
-        String *backupPath2 = strNewFmt(TEST_PATH "/repo2/%s", "backup");
-        storagePathCreateP(storageLocalWrite(), archivePath2);
-        storagePathCreateP(storageLocalWrite(), backupPath2);
+        StringList *argList2 = strLstNew();
+        hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
-        const String *content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -2409,43 +2406,30 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+                "\"db-version\":\"9.4\"}\n",
+            .comment = "put backup info to file, repo1");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put backup info to file, repo1");
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-        );
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n",
+            .comment = "put archive info to file, repo1");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put archive info to file, repo1");
+        // Create stanza1, repo1, archives
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
+            "/9.4-1/0000000100000000/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
+            "/9.4-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
 
-        String *walPath = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo1, archive directory");
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -2465,46 +2449,26 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.5\"}\n"
-        );
+                "\"db-version\":\"9.5\"}\n",
+            .comment = "put backup info to file, repo2, same system-id, different version");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/backup.info", strZ(backupPath2))),
-                harnessInfoChecksum(content)),
-            "put backup info to file, repo2, same system-id, different version");
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
             "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
-        );
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n",
+            .comment = "put archive info to file,  repo2, same system-id, different version");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/archive.info", strZ(archivePath2))),
-                harnessInfoChecksum(content)),
-            "put archive info to file,  repo2, same system-id, different version");
-
-        walPath = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(archivePath2));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo2, archive directory");
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
-
-        StringList *argList2 = strLstNew();
-        hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
-        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE
+            "/9.5-1/0000000100000000/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE
+            "/9.5-1/0000000100000000/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz");
 
         // Note that although the time on the backup in repo2 > repo1, repo1 current db is not the same because of the version so
         // the repo1, since read first, will be considered the current PG
@@ -2538,8 +2502,8 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, database mismatch, pg version only");
 
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -2559,31 +2523,19 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665888,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+                "\"db-version\":\"9.4\"}\n",
+            .comment = "put backup info to file, repo2, different system-id, same version");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/backup.info", strZ(backupPath2))),
-                harnessInfoChecksum(content)),
-            "put backup info to file, repo2, different system-id, same version");
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665888\n"
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665888,\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/archive.info", strZ(archivePath2))),
-                harnessInfoChecksum(content)),
-            "put archive info to file,  repo2, different system-id, same version");
+            "1={\"db-id\":6569239123849665888,\"db-version\":\"9.4\"}\n",
+            .comment = "put archive info to file,  repo2, different system-id, same version");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2612,7 +2564,7 @@ testRun(void)
             "            repo1: backup set size: 3MB, backup size: 3KB\n",
             "text - db mismatch, diff version across repos, repo1 considered current db since read first");
     }
-
+// CSHANG STOPPED HERE
     //******************************************************************************************************************************
     if (testBegin("cmdInfo()"))
     {
