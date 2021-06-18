@@ -24,11 +24,6 @@ testRun(void)
     // The tests expect the timezone to be UTC
     setenv("TZ", "UTC", true);
 
-    // Create the repo directories
-    const String *repoPath = STRDEF(TEST_PATH_REPO);
-    String *archivePath = strNewFmt("%s/%s", strZ(repoPath), "archive");
-    String *backupPath = strNewFmt("%s/%s", strZ(repoPath), "backup");
-
     // *****************************************************************************************************************************
     if (testBegin("infoRender()"))
     {
@@ -2564,16 +2559,19 @@ testRun(void)
             "            repo1: backup set size: 3MB, backup size: 3KB\n",
             "text - db mismatch, diff version across repos, repo1 considered current db since read first");
     }
-// CSHANG STOPPED HERE
+
     //******************************************************************************************************************************
     if (testBegin("cmdInfo()"))
     {
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--repo-path=%s", strZ(repoPath)));
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
-        storagePathCreateP(storageLocalWrite(), archivePath);
-        storagePathCreateP(storageLocalWrite(), backupPath);
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_ARCHIVE, .comment = "create repo archive path");
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP, .comment = "create repo backup path");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no stanza exist");
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
@@ -2587,22 +2585,20 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNewP(TEST_PATH_STR);
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), "No stanzas exist in the repository.\n",
-            "    check text");
+        // Check output of info command stored in file
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "No stanzas exist in the repository.\n", .remove = true);
 
         //--------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--set=bogus");
+        TEST_TITLE("set option invalid without stanza option");
+
+        hrnCfgArgRawZ(argList, cfgOptSet, "bogus");
 
         TEST_ERROR(hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo-level error");
 
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageLocalWrite(), STRDEF(TEST_PATH "/repo2"), .mode = 0200),
-            "repo directory with bad permissions");
+        HRN_STORAGE_PATH_CREATE(storageTest, TEST_PATH "/repo2", .mode = 0200, .comment = "repo directory with bad permissions");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
