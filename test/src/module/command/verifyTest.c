@@ -32,8 +32,6 @@ testRun(void)
     String *backupInfoFileName = strNewFmt("%s/" INFO_BACKUP_FILE, strZ(backupStanzaPath));
     String *backupInfoFileNameCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName));
     String *archiveStanzaPath = strNewFmt("repo/archive/%s", strZ(stanza));
-    String *archiveInfoFileName = strNewFmt("%s/" INFO_ARCHIVE_FILE, strZ(archiveStanzaPath));
-    String *archiveInfoFileNameCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName));
 
     StringList *argListBase = strLstNew();
     hrnCfgArgRawZ(argListBase, cfgOptStanza, "db");
@@ -94,35 +92,19 @@ testRun(void)
         "2={\"db-catalog-version\":201707211,\"db-control-version\":1100,\"db-system-id\":6626363367545678089,"                    \
             "\"db-version\":\"11\"}"
 
-    String *backupInfoContent = strNewFmt(
-        "[backup:current]\n"
-        TEST_BACKUP_DB1_CURRENT_FULL1
-        "\n"
-        "[db]\n"
-        TEST_BACKUP_DB1_94
-        "\n"
-        "[db:history]\n"
-        TEST_BACKUP_DB1_HISTORY
-        );
-
-    const Buffer *backupInfoBase = harnessInfoChecksumZ(strZ(backupInfoContent));
-
-    String *backupInfoMultiHistoryContent = strNewFmt(
-        "[backup:current]\n"
-        TEST_BACKUP_DB1_CURRENT_FULL1
-        TEST_BACKUP_DB1_CURRENT_FULL2
-        TEST_BACKUP_DB1_CURRENT_FULL3
-        "\n"
-        "[db]\n"
-        TEST_BACKUP_DB2_11
-        "\n"
-        "[db:history]\n"
-        TEST_BACKUP_DB1_HISTORY
-        "\n"
+    #define TEST_BACKUP_INFO_MULTI_HISTORY_BASE                                                                                    \
+        "[backup:current]\n"                                                                                                       \
+        TEST_BACKUP_DB1_CURRENT_FULL1                                                                                              \
+        TEST_BACKUP_DB1_CURRENT_FULL2                                                                                              \
+        TEST_BACKUP_DB1_CURRENT_FULL3                                                                                              \
+        "\n"                                                                                                                       \
+        "[db]\n"                                                                                                                   \
+        TEST_BACKUP_DB2_11                                                                                                         \
+        "\n"                                                                                                                       \
+        "[db:history]\n"                                                                                                           \
+        TEST_BACKUP_DB1_HISTORY                                                                                                    \
+        "\n"                                                                                                                       \
         TEST_BACKUP_DB2_HISTORY
-        );
-
-    const Buffer *backupInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(backupInfoMultiHistoryContent));
 
     #define TEST_ARCHIVE_INFO_BASE                                                                                                 \
         "[db]\n"                                                                                                                   \
@@ -133,17 +115,15 @@ testRun(void)
         "[db:history]\n"                                                                                                           \
         "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}"
 
-    String *archiveInfoMultiHistoryContent = strNewFmt(
-        "[db]\n"
-        "db-id=2\n"
-        "db-system-id=6626363367545678089\n"
-        "db-version=\"11\"\n"
-        "\n"
-        "[db:history]\n"
-        "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-        "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}");
-
-    const Buffer *archiveInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(archiveInfoMultiHistoryContent));
+    #define TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE                                                                                   \
+        "[db]\n"                                                                                                                   \
+        "db-id=2\n"                                                                                                                \
+        "db-system-id=6626363367545678089\n"                                                                                       \
+        "db-version=\"11\"\n"                                                                                                      \
+        "\n"                                                                                                                       \
+        "[db:history]\n"                                                                                                           \
+        "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"                                                               \
+        "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}"
 
     #define TEST_MANIFEST_HEADER                                                                                                   \
         "[backup]\n"                                                                                                               \
@@ -585,7 +565,9 @@ testRun(void)
     {
         // Create backup.info
         InfoBackup *backupInfo = NULL;
-        TEST_ASSIGN(backupInfo, infoBackupNewLoad(ioBufferReadNew(backupInfoMultiHistoryBase)), "backup.info multi-history");
+        TEST_ASSIGN(
+            backupInfo, infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE))),
+            "backup.info multi-history");
 
         // Create archive.info - history mismatch
         InfoArchive *archiveInfo = NULL;
@@ -658,8 +640,11 @@ testRun(void)
 
         InfoBackup *backupInfo = NULL;
         InfoArchive *archiveInfo = NULL;
-        TEST_ASSIGN(backupInfo, infoBackupNewLoad(ioBufferReadNew(backupInfoMultiHistoryBase)), "backup.info");
-        TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(archiveInfoMultiHistoryBase)), "archive.info");
+        TEST_ASSIGN(
+            backupInfo, infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE))),
+            "backup.info multi-history");
+        TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE))),
+            "archive.info multi-history");
         InfoPg *pgHistory = infoArchivePg(archiveInfo);
 
         StringList *backupList= strLstNew();
@@ -770,15 +755,17 @@ testRun(void)
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "write invalid backup.info");
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
-        TEST_RESULT_LOG_FMT(
+        TEST_RESULT_LOG(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
                 "<REPO:BACKUP>/backup.info\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/backup.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" INFO_BACKUP_FILE INFO_COPY_EXT
+                "' for read\n"
             "P00  ERROR: [029]: No usable backup.info file\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/archive.info' for read\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/archive.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable archive.info file",
-            strZ(backupStanzaPath), strZ(archiveStanzaPath), strZ(archiveStanzaPath));
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/db/" INFO_ARCHIVE_FILE
+                "' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/db/" INFO_ARCHIVE_FILE
+                INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [029]: No usable archive.info file");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, backup.info.copy valid, archive.info not exist, archive copy checksum invalid");
@@ -786,23 +773,32 @@ testRun(void)
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_INVALID_BACKREST_INFO,
             .comment = "write invalid archive.info.copy");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, backupInfoFileNameCopy), backupInfoBase), "write valid backup.info.copy");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT,
+            "[backup:current]\n"
+            TEST_BACKUP_DB1_CURRENT_FULL1
+            "\n"
+            "[db]\n"
+            TEST_BACKUP_DB1_94
+            "\n"
+            "[db:history]\n"
+            TEST_BACKUP_DB1_HISTORY,
+            .comment = "write valid backup.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
-        TEST_RESULT_LOG_FMT(
+        TEST_RESULT_LOG(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:BACKUP>/backup.info\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/archive.info' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/db/" INFO_ARCHIVE_FILE
+                "' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:ARCHIVE>/archive.info.copy\n"
-            "P00  ERROR: [029]: No usable archive.info file",
-            strZ(archiveStanzaPath));
+            "P00  ERROR: [029]: No usable archive.info file");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info and copy valid but checksum mismatch, archive.info checksum invalid, archive.info copy valid");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoMultiHistoryBase), "write valid backup.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO_MULTI_HISTORY_BASE, .comment = "write valid backup.info");
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "write invalid archive.info");
         HRN_INFO_PUT(
@@ -821,12 +817,12 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info and copy valid and checksums match, archive.info and copy valid, but checksum mismatch");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, backupInfoFileNameCopy), backupInfoMultiHistoryBase),
-            "write valid backup.info.copy");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, archiveInfoFileName), archiveInfoMultiHistoryBase),
-            "write valid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO_MULTI_HISTORY_BASE,
+            .comment = "write valid backup.info.copy");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "write valid archive.info");
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
         TEST_RESULT_LOG(
             "P00   WARN: archive.info.copy does not match archive.info\n"
@@ -835,28 +831,30 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info valid, copy invalid, archive.info valid, copy invalid");
 
-        TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileNameCopy), "remove backup.info.copy");
-        TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileNameCopy), "remove archive.info.copy");
+        HRN_STORAGE_REMOVE(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, .comment = "remove backup.info.copy");
+        HRN_STORAGE_REMOVE(storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, .comment = "remove archive.info.copy");
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
-        TEST_RESULT_LOG_FMT(
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/backup.info.copy' for read\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/archive.info.copy' for read\n"
-            "P00   WARN: no archives or backups exist in the repo",
-            strZ(backupStanzaPath), strZ(archiveStanzaPath));
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" INFO_BACKUP_FILE
+                INFO_COPY_EXT "' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/db/" INFO_ARCHIVE_FILE
+                INFO_COPY_EXT "' for read\n"
+            "P00   WARN: no archives or backups exist in the repo");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info and copy missing, archive.info and copy valid");
 
-        TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileName), "remove backup.info");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, archiveInfoFileNameCopy), archiveInfoMultiHistoryBase),
-            "write valid and matching archive.info.copy");
+        HRN_STORAGE_REMOVE(storageRepoWrite(), INFO_BACKUP_PATH_FILE);
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "write valid and matching archive.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
-        TEST_RESULT_LOG_FMT(
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/backup.info' for read\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/backup.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable backup.info file",
-            strZ(backupStanzaPath), strZ(backupStanzaPath));
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" INFO_BACKUP_FILE
+                "' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" INFO_BACKUP_FILE
+                INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [029]: No usable backup.info file");
     }
 
     // *****************************************************************************************************************************
@@ -867,27 +865,34 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verifyFile()");
+        TEST_TITLE("zero-sized file in archive");
 
-        const String *filePathName = STRDEF(STORAGE_REPO_ARCHIVE "/testfile");
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRDEF("")), "put zero-sized file");
+        String *filePathName = strNewZ(STORAGE_REPO_ARCHIVE "/testfile");
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), strZ(filePathName));
         TEST_RESULT_UINT(verifyFile(filePathName, STRDEF(HASH_TYPE_SHA1_ZERO), 0, NULL), verifyOk, "file ok");
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRZ(fileContents)), "put file");
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file size invalid in archive");
 
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), strZ(filePathName), fileContents);
         TEST_RESULT_UINT(verifyFile(filePathName, fileChecksum, 0, NULL), verifySizeInvalid, "file size invalid");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file missing in archive");
         TEST_RESULT_UINT(
             verifyFile(
                 strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), fileChecksum, 0, NULL), verifyFileMissing, "file missing");
 
-        // Create a compressed encrypted repo file
-        filePathName = STRDEF(STORAGE_REPO_BACKUP "/testfile.gz");
-        StorageWrite *write = storageNewWriteP(storageRepoWrite(), filePathName);
-        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
-        TEST_RESULT_VOID(storagePutP(write, BUFSTRZ(fileContents)), "write encrypted, compressed file");
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("encrypted/compressed file in backup");
 
+        // Create a compressed encrypted repo file in backup
+        filePathName = strNewZ(STORAGE_REPO_BACKUP "/testfile");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), strZ(filePathName), fileContents, .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc,
+            .cipherPass = "pass");
+
+        strCatZ(filePathName, ".gz");
         TEST_RESULT_UINT(
             verifyFile(filePathName, fileChecksum, fileSize, STRDEF("pass")), verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
@@ -906,24 +911,26 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         // Store valid archive/backup info files
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, archiveInfoFileName), archiveInfoMultiHistoryBase),
-            "write valid archive.info");
-        storageCopy(storageNewReadP(storageTest, archiveInfoFileName), storageNewWriteP(storageTest, archiveInfoFileNameCopy));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "write valid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "write valid archive.info.copy");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
-                harnessInfoChecksumZ(
-                    "[db]\n"
-                    TEST_BACKUP_DB2_11
-                    "\n"
-                    "[db:history]\n"
-                    TEST_BACKUP_DB1_HISTORY
-                    "\n"
-                    TEST_BACKUP_DB2_HISTORY
-                    )),
-            "put backup.info files - no current backups");
-        storageCopy(storageNewReadP(storageTest, backupInfoFileName), storageNewWriteP(storageTest, backupInfoFileNameCopy));
+        #define TEST_NO_CURRENT_BACKUP                                                                                             \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "no current backups");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP, .comment = "no current backups copy");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, WAL files present, no backups");
@@ -936,21 +943,14 @@ testRun(void)
             (PgWal){.version = PG_VERSION_11, .systemId = 6626363367545678089, .size = 1024 * 1024}, walBuffer);
         const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageTest,
-                    strNewFmt("%s/11-2/0000000200000007/000000020000000700000FFE-%s", strZ(archiveStanzaPath), walBufferSha1)),
-                walBuffer),
-            "write valid WAL");
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageTest,
-                    strNewFmt("%s/11-2/0000000200000007/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
-                    strZ(archiveStanzaPath))),
-                walBuffer),
-            "write duplicate WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1)), walBuffer,
+            .comment = "write valid WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
+            walBuffer, .comment = "write duplicate WAL");
 
         // Set log detail level to capture ranges (there should be none)
         harnessLogLevelSet(logLevelDetail);
@@ -967,27 +967,21 @@ testRun(void)
 
         harnessLogLevelReset();
 
-        TEST_RESULT_VOID(
-            storageRemoveP(
-                storageTest, strNewFmt("%s/11-2/0000000200000007/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
-                strZ(archiveStanzaPath))),
-            "remove duplicate WAL");
+        HRN_STORAGE_REMOVE(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-bad817043007aa2100c44c712bcb456db705dab9",
+            .comment = "remove duplicate WAL");
 
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("%s/9.4-1", strZ(archiveStanzaPath))),
-            "create empty path for old archiveId");
+        HRN_STORAGE_PATH_CREATE(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/9.4-1", .comment = "create empty path for old archiveId");
+        HRN_STORAGE_PATH_CREATE(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/11-2/0000000100000000", .comment = "create empty timeline path");
 
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("%s/11-2/0000000100000000", strZ(archiveStanzaPath))),
-            "create empty timeline path");
-
-        StorageWrite *write = storageNewWriteP(
-            storageTest,
-            strNewFmt("%s/11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz",
-            strZ(archiveStanzaPath)));
-        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressTypeGz, 3));
-        TEST_RESULT_VOID(storagePutP(write, walBuffer), "write first WAL compressed - but checksum failure");
-
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4",
+            walBuffer, .compressType = compressTypeGz, .comment = "write first WAL compressed - but checksum failure");
+// CSHANG STOPPED HERE
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
@@ -1299,10 +1293,12 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("prior backup verification incomplete - referenced file checked");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, archiveInfoFileName), archiveInfoMultiHistoryBase),
-            "write archive.info");
-        storageCopy(storageNewReadP(storageTest, archiveInfoFileName), storageNewWriteP(storageTest, archiveInfoFileNameCopy));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "write valid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "write valid archive.info.copy");
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
