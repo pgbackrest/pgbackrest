@@ -36,8 +36,8 @@ testRun(void)
     String *archiveInfoFileNameCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName));
 
     StringList *argListBase = strLstNew();
-    strLstAdd(argListBase, strNewFmt("--stanza=%s", strZ(stanza)));
-    strLstAddZ(argListBase, "--repo1-path=" TEST_PATH "/repo");
+    hrnCfgArgRawZ(argListBase, cfgOptStanza, "db");
+    hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH_REPO);
 
     const char *fileContents = "acefile";
     uint64_t fileSize = 7;
@@ -124,16 +124,14 @@ testRun(void)
 
     const Buffer *backupInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(backupInfoMultiHistoryContent));
 
-    String *archiveInfoContent = strNewFmt(
-        "[db]\n"
-        "db-id=1\n"
-        "db-system-id=6625592122879095702\n"
-        "db-version=\"9.4\"\n"
-        "\n"
-        "[db:history]\n"
-        "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}");
-
-    const Buffer *archiveInfoBase = harnessInfoChecksumZ(strZ(archiveInfoContent));
+    #define TEST_ARCHIVE_INFO_BASE                                                                                                 \
+        "[db]\n"                                                                                                                   \
+        "db-id=1\n"                                                                                                                \
+        "db-system-id=6625592122879095702\n"                                                                                       \
+        "db-version=\"9.4\"\n"                                                                                                     \
+        "\n"                                                                                                                       \
+        "[db:history]\n"                                                                                                           \
+        "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}"
 
     String *archiveInfoMultiHistoryContent = strNewFmt(
         "[db]\n"
@@ -237,6 +235,12 @@ testRun(void)
         "mode=\"0700\"\n"                                                                                                          \
         "user=\"user1\"\n"
 
+    #define TEST_INVALID_BACKREST_INFO                                                                                             \
+        "[backrest]\n"                                                                                                             \
+        "backrest-checksum=\"BOGUS\"\n"                                                                                            \
+        "backrest-format=5\n"                                                                                                      \
+        "backrest-version=\"2.28\"\n"
+
     // *****************************************************************************************************************************
     if (testBegin("verifyManifestFile()"))
     {
@@ -244,8 +248,22 @@ testRun(void)
         StringList *argList = strLstDup(argListBase);
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
-        const Buffer *contentLoad = harnessInfoChecksumZ
-        (
+        #define TEST_BACKUP_LABEL_FULL                              "20181119-152138F"
+
+        Manifest *manifest = NULL;
+        unsigned int jobErrorTotal = 0;
+        VerifyBackupResult backupResult = {.backupLabel = strNewZ(TEST_BACKUP_LABEL_FULL)};
+
+        InfoPg *infoPg = NULL;
+        TEST_ASSIGN(
+            infoPg, infoArchivePg(infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_BASE)))),
+            "infoPg from archive.info");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest.copy exists, no manifest main, manifest db version not in history, not current db");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_DB_92
             TEST_MANIFEST_OPTION_ALL
@@ -256,41 +274,25 @@ testRun(void)
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
-
-        Manifest *manifest = NULL;
-        const String *backupLabel = STRDEF("20181119-152138F");
-        String *manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel));
-        String *manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
-        unsigned int jobErrorTotal = 0;
-        VerifyBackupResult backupResult = {.backupLabel = strDup(backupLabel)};
-
-        InfoArchive *archiveInfo = NULL;
-        TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(archiveInfoBase)), "archive.info");
-        InfoPg *infoPg = infoArchivePg(archiveInfo);
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest.copy exists, no manifest main, manifest db version not in history, not current db");
-
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write manifest db section mismatch");
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest db section mismatch");
 
         backupResult.status = backupValid;
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        TEST_RESULT_LOG_FMT(
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
-            "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not "
-                "in the backup.info history, skipping",
-            strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel));
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/"
+                BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [028]: '" TEST_BACKUP_LABEL_FULL "' may not be recoverable - PG data (id 1, version 9.2, system-id "
+                "6625592122879095702) is not in the backup.info history, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun test with db-system-id invalid and no main");
 
-        contentLoad = harnessInfoChecksumZ
-        (
+        HRN_STORAGE_REMOVE(storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE);
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
             TEST_MANIFEST_HEADER
             "\n"
             "[backup:db]\n"
@@ -307,29 +309,25 @@ testRun(void)
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
-
-        TEST_RESULT_VOID(storageRemoveP(storageTest, manifestFile), "remove main manifest");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy invalid system-id");
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest copy invalid system-id");
 
         backupResult.status = backupValid;
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg system-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        TEST_RESULT_LOG_FMT(
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
-            "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
-            "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not "
-                "in the backup.info history, skipping",
-            strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel));
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/"
+                BACKUP_MANIFEST_FILE "' for read\n"
+            "P00   WARN: " TEST_BACKUP_LABEL_FULL "/backup.manifest is missing or unusable, using copy\n"
+            "P00  ERROR: [028]: '" TEST_BACKUP_LABEL_FULL "' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is "
+                "not in the backup.info history, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun copy test with db-id invalid");
 
-        contentLoad = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
             TEST_MANIFEST_HEADER
             "\n"
             "[backup:db]\n"
@@ -346,62 +344,56 @@ testRun(void)
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy invalid db-id");
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest copy invalid db-id");
 
         backupResult.status = backupValid;
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg db-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        TEST_RESULT_LOG_FMT(
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
-            "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
-            "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 0, version 9.4, system-id 6625592122879095702) is not "
-                "in the backup.info history, skipping",
-            strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel));
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/"
+                BACKUP_MANIFEST_FILE "' for read\n"
+            "P00   WARN: " TEST_BACKUP_LABEL_FULL "/backup.manifest is missing or unusable, using copy\n"
+            "P00  ERROR: [028]: '" TEST_BACKUP_LABEL_FULL "' may not be recoverable - PG data (id 0, version 9.4, system-id "
+                "6625592122879095702) is not in the backup.info history, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing main manifest, errored copy");
 
         backupResult.status = backupValid;
-        contentLoad = BUFSTRDEF(
-            "[backrest]\n"
-            "backrest-checksum=\"BOGUS\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.28\"\n");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write invalid manifest copy");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE
+            INFO_COPY_EXT, TEST_INVALID_BACKREST_INFO, .comment = "write invalid manifest copy");
+
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        TEST_RESULT_LOG_FMT(
-            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/"
+                BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel));
+                STORAGE_REPO_BACKUP "/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("current backup true");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write invalid manifest");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE,
+            TEST_INVALID_BACKREST_INFO, .comment = "write invalid manifest");
 
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        TEST_RESULT_LOG_FMT(
+        TEST_RESULT_LOG(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE "\n"
+                STORAGE_REPO_BACKUP "/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE "\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            strZ(backupLabel), strZ(backupLabel));
+                STORAGE_REPO_BACKUP "/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
 
         // Write a valid manifest with a manifest copy that is invalid
-        contentLoad = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_DB_94
             TEST_MANIFEST_OPTION_ALL
@@ -412,17 +404,14 @@ testRun(void)
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest");
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write valid manifest");
 
         backupResult.status = backupValid;
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
-        TEST_RESULT_LOG_FMT("P00   WARN: backup '%s' manifest.copy does not match manifest", strZ(backupLabel));
+        TEST_RESULT_LOG("P00   WARN: backup '" TEST_BACKUP_LABEL_FULL "' manifest.copy does not match manifest");
     }
 
     // *****************************************************************************************************************************
@@ -778,13 +767,8 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, neither backup copy nor archive infos exist");
 
-        const Buffer *contentLoad = BUFSTRDEF(
-            "[backrest]\n"
-            "backrest-checksum=\"BOGUS\"\n"
-            "backrest-format=5\n"
-            "backrest-version=\"2.28\"\n");
-
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), contentLoad), "write invalid backup.info");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "write invalid backup.info");
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
         TEST_RESULT_LOG_FMT(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
@@ -799,8 +783,9 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, backup.info.copy valid, archive.info not exist, archive copy checksum invalid");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, archiveInfoFileNameCopy), contentLoad), "write invalid archive.info.copy");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_INVALID_BACKREST_INFO,
+            .comment = "write invalid archive.info.copy");
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, backupInfoFileNameCopy), backupInfoBase), "write valid backup.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
@@ -818,10 +803,11 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoMultiHistoryBase), "write valid backup.info");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, archiveInfoFileName), contentLoad), "write invalid archive.info");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, archiveInfoFileNameCopy), archiveInfoBase), "write valid archive.info.copy");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "write invalid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_BASE,
+            .comment = "write valid archive.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
         TEST_RESULT_LOG(
             "P00   WARN: backup.info.copy does not match backup.info\n"
