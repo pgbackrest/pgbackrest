@@ -22,6 +22,8 @@ testRun(void)
     if (testBegin("InfoArchive"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("move infoArchive to new memory context");
+
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             "[db]\n"
@@ -39,36 +41,43 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "load new archive info");
-            TEST_RESULT_VOID(infoArchiveMove(info, memContextPrior()), "    move info");
+            TEST_RESULT_VOID(infoArchiveMove(info, memContextPrior()), "move info");
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "    archiveId set");
-        TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "    infoPg set");
-        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "archiveId set");
+        TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
+        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "no cipher sub");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("infoArchive save");
 
         // Save info and verify
         Buffer *contentSave = bufNew(0);
 
         TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentSave)), "info archive save");
-        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "check save");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create content via new object");
 
         // Create the same content by creating a new object
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             info, infoArchiveNew(PG_VERSION_94, 6569239123849665679, NULL), "infoArchiveNew() - no sub cipher");
-        TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "    archiveId set");
-        TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "    infoPg set");
-        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "    no cipher sub");
-        TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "    history set");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "archiveId set");
+        TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
+        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "no cipher sub");
+        TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
 
         Buffer *contentCompare = bufNew(0);
 
         TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentCompare)), "info archive save");
-        TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "check save");
 
-        // Remove both files and recreate from scratch with cipher
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create with cipher");
+
+        // Recreate from scratch with cipher
         TEST_ASSIGN(
             info,
             infoArchiveNew(
@@ -77,29 +86,33 @@ testRun(void)
 
         contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentSave)), "    save new with cipher");
+        TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentSave)), "save new with cipher");
 
-        TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentSave)), "    load encrypted archive info");
-        TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "    archiveId set");
-        TEST_RESULT_PTR(infoArchivePg(info), infoArchivePg(info), "    infoPg set");
+        TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentSave)), "load encrypted archive info");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
+        TEST_RESULT_PTR(infoArchivePg(info), infoArchivePg(info), "infoPg set");
         TEST_RESULT_STR_Z(infoArchiveCipherPass(info),
-            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "    cipher sub set");
-        TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "    history set");
+            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
+        TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("increment history");
+
         InfoPgData infoPgData = {0};
         TEST_RESULT_VOID(infoArchivePgSet(info, PG_VERSION_94, 6569239123849665679), "add another infoPg");
-        TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 2, "    history incremented");
-        TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoArchivePg(info)), "    get current infoPgData");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "    version set");
-        TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "    systemId set");
+        TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 2, "history incremented");
+        TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoArchivePg(info)), "get current infoPgData");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "version set");
+        TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "systemId set");
 
-        // Free
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("object free");
+
         TEST_RESULT_VOID(infoArchiveFree(info), "infoArchiveFree() - free archive info");
 
-        // infoArchiveIdHistoryMatch()
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("infoArchiveIdHistoryMatch()");
+
         contentLoad = harnessInfoChecksumZ
         (
             "[db]\n"
@@ -142,10 +155,10 @@ testRun(void)
             infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), "save archive info");
 
         TEST_ASSIGN(infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), "load main");
-        TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "    check file loaded");
+        TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
 
         storageRemoveP(storageTest, STRDEF(INFO_ARCHIVE_FILE), .errorOnMissing = true);
         TEST_ASSIGN(infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), "load copy");
-        TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "    check file loaded");
+        TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
     }
 }
