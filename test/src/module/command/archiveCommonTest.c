@@ -178,9 +178,15 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("walPath()"))
     {
-        const String *pgPath = storagePathP(storageTest, STRDEF("pg"));
-        storagePathCreateP(storageTest, pgPath);
 
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        const String *pgPath = storagePathP(storageTest, STRDEF("pg"));
+        HRN_STORAGE_PATH_CREATE(storageTest, strZ(pgPath));
+// CSHANG STOPPED HERE AND HAD TO ADD CONFIG ABOVE OTHERWISE TEST --run=5 fails
         TEST_RESULT_STR_Z(walPath(STRDEF("/absolute/path"), pgPath, STRDEF("test")), "/absolute/path", "absolute path");
 
         THROW_ON_SYS_ERROR(chdir(strZ(pgPath)) != 0, PathMissingError, "unable to chdir()");
