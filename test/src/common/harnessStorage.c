@@ -375,18 +375,23 @@ hrnStoragePut(
     compressExtCat(fileStr, param.compressType);
 
     // Create file
-    StorageWrite *destination = storageNewWriteP(storage, fileStr);
+    StorageWrite *destination = storageNewWriteP(storage, fileStr, .modeFile = param.modeFile);
     IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
 
-    // Add compression filter
+
     String *const filter = strNew();
 
+    // Add mode to output information filter
+    if (param.modeFile != 0)
+        strCatFmt(filter, "mode[%04o]", param.modeFile);
+
+    // Add compression filter
     if (param.compressType != compressTypeNone)
     {
         ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
         ioFilterGroupAdd(filterGroup, compressFilter(param.compressType, 1));
 
-        strCatFmt(filter, "cmp[%s]", strZ(compressTypeStr(param.compressType)));
+        strCatFmt(filter, "%scmp[%s]",  strEmpty(filter) ? "" : "/", strZ(compressTypeStr(param.compressType)));
     }
 
     // Add encrypted filter
