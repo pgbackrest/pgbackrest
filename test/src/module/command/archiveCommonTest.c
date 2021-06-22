@@ -25,67 +25,61 @@ testRun(void)
     if (testBegin("archiveAsyncErrorClear() and archiveAsyncStatus()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--spool-path=" TEST_PATH);
-        strLstAddZ(argList, "--archive-async");
-        strLstAddZ(argList, "--archive-timeout=1");
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "1");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archiveAsyncStatus() - directory and status file not present");
+
         const String *segment = STRDEF("000000010000000100000001");
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "directory and status file not present");
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModeGet, segment, false, true), false, "directory and status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        mkdir(TEST_PATH "/archive", 0750);
-        mkdir(TEST_PATH "/archive/db", 0750);
-        mkdir(TEST_PATH "/archive/db/out", 0750);
+        TEST_TITLE("archiveAsyncStatus() - directories present and status file not present");
+
+        HRN_STORAGE_PATH_CREATE(storageTest, "archive/db/out", .mode = 0750);
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("clear archive file errors");
 
-        const String *errorSegment = strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment));
-        const String *errorGlobal = STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/global.error");
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error");
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/global.error");
 
-        storagePutP(storageNewWriteP(storageSpoolWrite(), errorSegment), NULL);
-        storagePutP(storageNewWriteP(storageSpoolWrite(), errorGlobal), NULL);
+        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT, "000000010000000100000001.error\nglobal.error\n");
 
         TEST_RESULT_VOID(archiveAsyncErrorClear(archiveModePush, segment), "clear error");
 
-        TEST_RESULT_BOOL(storageExistsP(storageSpool(), errorSegment), false, "    check segment error");
-        TEST_RESULT_BOOL(storageExistsP(storageSpool(), errorGlobal), false, "    check global error");
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT, .comment = "segment and global error cleared");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF(BOGUS_STR));
+        TEST_TITLE("check ok file");
+
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", BOGUS_STR);
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false, true), FormatError,
             "000000010000000100000001.ok content must have at least two lines");
 
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF(BOGUS_STR "\n"));
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", BOGUS_STR "\n");
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false, true), FormatError,
             "000000010000000100000001.ok message must be > 0");
 
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF(BOGUS_STR "\nmessage"));
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", BOGUS_STR "\nmessage");
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false, true),
             FormatError, "unable to convert base 10 string 'BOGUS' to int");
 
-        storagePutP(storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))), NULL);
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok");
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "ok file");
 
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF("0\nwarning"));
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", "0\nwarning");
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "ok file with warning");
         TEST_RESULT_LOG("P00   WARN: warning");
 
@@ -97,36 +91,32 @@ testRun(void)
         TEST_RESULT_LOG("");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF("25\nerror"));
+        TEST_TITLE("error status renamed to ok");
+
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", "25\nerror");
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "error status renamed to ok");
         TEST_RESULT_LOG(
             "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
-        TEST_RESULT_VOID(
-            storageRemoveP(
-                storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment)), .errorOnMissing = true),
-            "remove ok");
+        TEST_STORAGE_EXISTS(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", .remove = true, .comment = "remove ok");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment))), bufNew(0));
+        TEST_TITLE("segment error file - AssertError");
+
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error");
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, true, true), AssertError,
             "status file '000000010000000100000001.error' has no content");
 
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment))),
-            BUFSTRDEF("25\nmessage"));
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error", "25\nmessage");
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true, true), AssertError, "message");
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "suppress error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")),
-            BUFSTRDEF("102\nexecute error"));
+        TEST_TITLE("global error file - ExecuteError");
 
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/global.error", "102\nexecute error");
         TEST_ERROR(archiveAsyncStatus(archiveModePush, STRDEF("anyfile"), true, true), ExecuteError, "execute error");
     }
 
