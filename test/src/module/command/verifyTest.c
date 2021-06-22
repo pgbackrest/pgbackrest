@@ -755,8 +755,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, neither backup copy nor archive infos exist");
 
-        HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "invalid backup.info");
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "invalid backup.info");
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
         TEST_RESULT_LOG(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
@@ -805,8 +804,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "invalid archive.info");
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_BASE,
-            .comment = "valid archive.info.copy");
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_BASE, .comment = "valid archive.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
         TEST_RESULT_LOG(
             "P00   WARN: backup.info.copy does not match backup.info\n"
@@ -824,8 +822,7 @@ testRun(void)
             storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO_MULTI_HISTORY_BASE,
             .comment = "valid backup.info.copy");
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
-            .comment = "valid archive.info");
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
         TEST_RESULT_LOG(
             "P00   WARN: archive.info.copy does not match archive.info\n"
@@ -915,8 +912,7 @@ testRun(void)
 
         // Store valid archive/backup info files
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
-            .comment = "valid archive.info");
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
             .comment = "valid archive.info.copy");
@@ -933,8 +929,7 @@ testRun(void)
             "\n"                                                                                                                   \
             TEST_BACKUP_DB2_HISTORY
 
-        HRN_INFO_PUT(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "no current backups");
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "no current backups");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP, .comment = "no current backups copy");
 
@@ -1113,8 +1108,8 @@ testRun(void)
             strZ(fileChecksum));
 
         HRN_INFO_PUT(
-            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE,
-            strZ(manifestContent), .comment = "valid manifest");
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
+            .comment = "valid manifest");
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
             strZ(manifestContent), .comment = "valid manifest copy");
@@ -1256,8 +1251,7 @@ testRun(void)
         TEST_TITLE("prior backup verification incomplete - referenced file checked");
 
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
-            .comment = "valid archive.info");
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
             .comment = "valid archive.info.copy");
@@ -1349,7 +1343,7 @@ testRun(void)
         TEST_TITLE("valid backup, prior backup verification complete - referenced file not checked");
 
         // Set process max to 1 and add more files to check so first backup completes before second is checked
-        strLstAddZ(argList, "--process-max=1");
+        hrnCfgArgRawZ(argList, cfgOptProcessMax, "1");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         String *manifestContent = strNewFmt(
@@ -1369,11 +1363,11 @@ testRun(void)
             strZ(fileChecksum));
 
         HRN_INFO_PUT(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE,
-            strZ(manifestContent), .comment = "valid manifest - full");
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
+            .comment = "valid manifest - full");
         HRN_INFO_PUT(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            strZ(manifestContent), .comment = "valid manifest copy - full");
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestContent),
+            .comment = "valid manifest copy - full");
 
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(),
@@ -1423,15 +1417,14 @@ testRun(void)
                 strZ(fileChecksum), (unsigned int)fileSize);
 
         HRN_INFO_PUT(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20201119-163000F/" BACKUP_MANIFEST_FILE,
-            strZ(manifestContent), .comment = "valid manifest - full");
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20201119-163000F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
+            .comment = "valid manifest - full");
         HRN_INFO_PUT(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20201119-163000F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            strZ(manifestContent), .comment = "valid manifest copy - full");
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20201119-163000F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestContent),
+            .comment = "valid manifest copy - full");
 
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(),
-            STORAGE_REPO_BACKUP  "/20201119-163000F/pg_data/validfile", fileContents, .comment = "valid file");
+            storageRepoWrite(), STORAGE_REPO_BACKUP  "/20201119-163000F/pg_data/validfile", fileContents, .comment = "valid file");
 
         // Create WAL file with just header info and small WAL size
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
@@ -1443,8 +1436,8 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storageRepoWrite(),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000000/000000020000000000000001-%s", walBufferSha1)),
-            walBuffer, .comment = "valid WAL");
+            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000000/000000020000000000000001-%s", walBufferSha1)), walBuffer,
+            .comment = "valid WAL");
 
         TEST_ERROR(cmdVerify(), RuntimeError, "3 fatal errors encountered, see log for details");
 
