@@ -124,49 +124,40 @@ testRun(void)
     if (testBegin("archiveAsyncStatusErrorWrite() and archiveAsyncStatusOkWrite()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--spool-path=" TEST_PATH);
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         const String *walSegment = STRDEF("000000010000000100000001");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archiveAsyncStatusErrorWrite()");
+
         TEST_RESULT_VOID(
-            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 25, STRDEF("error message")), "write error");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageTest, STRDEF("archive/db/in/000000010000000100000001.error")))),
-            "25\nerror message", "check error");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, STRDEF("archive/db/in/000000010000000100000001.error"), .errorOnMissing = true),
-            "remove error");
+            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 25, STRDEF("error message")), "write segment error");
+        TEST_STORAGE_GET(
+            storageTest, "archive/db/in/000000010000000100000001.error", "25\nerror message", .remove = true,
+            .comment = "check segment error and remove");
 
         TEST_RESULT_VOID(
             archiveAsyncStatusErrorWrite(archiveModeGet, NULL, 25, STRDEF("global error message")), "write global error");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageTest, STRDEF("archive/db/in/global.error")))),
-            "25\nglobal error message", "check global error");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, STRDEF("archive/db/in/global.error"), .errorOnMissing = true),
-            "remove global error");
+        TEST_STORAGE_GET(
+            storageTest, "archive/db/in/global.error", "25\nglobal error message", .remove = true,
+            .comment = "check global error and remove");
 
-        TEST_RESULT_VOID(
-            archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL), "write ok file");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageTest, STRDEF("archive/db/in/000000010000000100000001.ok")))),
-            "", "check ok");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, STRDEF("archive/db/in/000000010000000100000001.ok"), .errorOnMissing = true),
-            "remove ok");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archiveAsyncStatusOkWrite()");
 
-        TEST_RESULT_VOID(
-            archiveAsyncStatusOkWrite(archiveModeGet, walSegment, STRDEF("WARNING")), "write ok file with warning");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageTest, STRDEF("archive/db/in/000000010000000100000001.ok")))),
-            "0\nWARNING", "check ok warning");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, STRDEF("archive/db/in/000000010000000100000001.ok"), .errorOnMissing = true),
-            "remove ok");
+        TEST_RESULT_VOID(archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL), "write ok file");
+        TEST_STORAGE_GET(
+            storageTest, "archive/db/in/000000010000000100000001.ok", "", .remove = true, .comment = "check ok and remove");
+
+        TEST_RESULT_VOID(archiveAsyncStatusOkWrite(archiveModeGet, walSegment, STRDEF("WARNING")), "write ok file with warning");
+        TEST_STORAGE_GET(
+            storageTest, "archive/db/in/000000010000000100000001.ok", "0\nWARNING", .remove = true,
+            .comment = "check ok warning and remove");
     }
 
     // *****************************************************************************************************************************
