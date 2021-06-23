@@ -595,8 +595,8 @@ testRun(void)
                 TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "command started and ready for data");
 
                 // Write data to the server
-                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteBoolP(protocolPackNew(), true), "data put");
-                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteModeP(protocolPackNew(), 0644), "data put");
+                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteBoolP(protocolPackNew(), true)), "data put");
+                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteModeP(protocolPackNew(), 0644)), "data put");
                 TEST_RESULT_VOID(protocolClientDataPut(client, NULL), "data end put");
 
                 // Get data from the server
