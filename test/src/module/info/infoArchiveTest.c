@@ -157,7 +157,7 @@ testRun(void)
         TEST_ASSIGN(infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), "load main");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
 
-        storageRemoveP(storageTest, STRDEF(INFO_ARCHIVE_FILE), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storageTest, INFO_ARCHIVE_FILE, .errorOnMissing = true, .comment = "remove main so only copy left");
         TEST_ASSIGN(infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
     }
