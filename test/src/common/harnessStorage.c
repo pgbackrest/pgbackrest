@@ -378,10 +378,9 @@ hrnStoragePut(
     StorageWrite *destination = storageNewWriteP(storage, fileStr, .modeFile = param.modeFile);
     IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
 
-
+    // Add mode to output information filter
     String *const filter = strNew();
 
-    // Add mode to output information filter
     if (param.modeFile != 0)
         strCatFmt(filter, "mode[%04o]", param.modeFile);
 

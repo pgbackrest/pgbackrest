@@ -47,6 +47,16 @@ typedef enum {errorStateBegin, errorStateTry, errorStateCatch, errorStateFinal, 
 /***********************************************************************************************************************************
 Track error handling
 ***********************************************************************************************************************************/
+typedef struct Error
+{
+    const ErrorType *errorType;                                     // Error type
+    const char *fileName;                                           // Source file where the error occurred
+    const char *functionName;                                       // Function where the error occurred
+    int fileLine;                                                   // Source file line where the error occurred
+    const char *message;                                            // Description of the error
+    const char *stackTrace;                                         // Stack trace
+} Error;
+
 static struct
 {
     // Array of jump buffers
@@ -66,15 +76,7 @@ static struct
     } tryList[ERROR_TRY_MAX + 1];
 
     // Last error
-    struct
-    {
-        const ErrorType *errorType;                                     // Error type
-        const char *fileName;                                           // Source file where the error occurred
-        const char *functionName;                                       // Function where the error occurred
-        int fileLine;                                                   // Source file line where the error occurred
-        const char *message;                                            // Description of the error
-        const char *stackTrace;                                         // Stack trace
-    } error;
+    Error error;
 } errorContext;
 
 /***********************************************************************************************************************************
@@ -175,6 +177,8 @@ errorTypeExtends(const ErrorType *child, const ErrorType *parent)
 const ErrorType *
 errorType(void)
 {
+    assert(errorContext.error.errorType != NULL);
+
     return errorContext.error.errorType;
 }
 
@@ -189,6 +193,8 @@ errorCode(void)
 const char *
 errorFileName(void)
 {
+    assert(errorContext.error.fileName != NULL);
+
     return errorContext.error.fileName;
 }
 
@@ -196,6 +202,8 @@ errorFileName(void)
 const char *
 errorFunctionName(void)
 {
+    assert(errorContext.error.functionName != NULL);
+
     return errorContext.error.functionName;
 }
 
@@ -203,6 +211,8 @@ errorFunctionName(void)
 int
 errorFileLine(void)
 {
+    assert(errorContext.error.fileLine != 0);
+
     return errorContext.error.fileLine;
 }
 
@@ -210,6 +220,8 @@ errorFileLine(void)
 const char *
 errorMessage(void)
 {
+    assert(errorContext.error.message != NULL);
+
     return errorContext.error.message;
 }
 
@@ -224,6 +236,8 @@ errorName(void)
 const char *
 errorStackTrace(void)
 {
+    assert(errorContext.error.stackTrace != NULL);
+
     return errorContext.error.stackTrace;
 }
 
@@ -297,6 +311,8 @@ errorInternalTry(const char *fileName, const char *functionName, int fileLine)
 void
 errorInternalPropagate(void)
 {
+    assert(errorContext.error.errorType != NULL);
+
     // Mark the error as uncaught
     errorContext.tryList[errorContext.tryTotal].uncaught = true;
 
@@ -327,6 +343,13 @@ errorInternalProcess(bool catch)
     {
         for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
             errorContext.handlerList[handlerIdx](errorTryDepth());
+    }
+
+    // Any catch blocks have been processed and none of them called RETHROW() so clear the error
+    if (errorContext.tryList[errorContext.tryTotal].state == errorStateCatch &&
+        !errorContext.tryList[errorContext.tryTotal].uncaught)
+    {
+        errorContext.error = (Error){0};
     }
 
     // Increment the state
