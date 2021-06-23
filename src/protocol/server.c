@@ -118,6 +118,8 @@ protocolServerCommandGet(ProtocolServer *const this)
         PackRead *const command = pckReadNew(this->read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(command);
 
+        CHECK(type == protocolMessageTypeCommand);
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result.id = pckReadStrIdP(command);
@@ -126,8 +128,6 @@ protocolServerCommandGet(ProtocolServer *const this)
         MEM_CONTEXT_PRIOR_END();
 
         pckReadEndP(command);
-
-        CHECK(type == protocolMessageTypeCommand);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -282,6 +282,8 @@ protocolServerDataGet(ProtocolServer *const this)
         PackRead *data = pckReadNew(this->read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(data);
 
+        CHECK(type == protocolMessageTypeData);
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = pckReadPackP(data);
@@ -289,8 +291,6 @@ protocolServerDataGet(ProtocolServer *const this)
         MEM_CONTEXT_PRIOR_END();
 
         pckReadEndP(data);
-
-        CHECK(type == protocolMessageTypeData);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -219,6 +219,8 @@ protocolClientDataGet(ProtocolClient *const this)
 
         protocolClientError(this, type, response);
 
+        CHECK(type == protocolMessageTypeData);
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = pckReadPackP(response);
@@ -226,8 +228,6 @@ protocolClientDataGet(ProtocolClient *const this)
         MEM_CONTEXT_PRIOR_END();
 
         pckReadEndP(response);
-
-        CHECK(type == protocolMessageTypeData);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -249,9 +249,9 @@ protocolClientDataEndGet(ProtocolClient *const this)
 
         protocolClientError(this, type, response);
 
-        pckReadEndP(response);
-
         CHECK(type == protocolMessageTypeDataEnd);
+
+        pckReadEndP(response);
     }
     MEM_CONTEXT_TEMP_END();
 
