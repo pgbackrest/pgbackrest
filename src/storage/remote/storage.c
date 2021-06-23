@@ -125,7 +125,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO);
-        PackWrite *commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, file);
         pckWriteU32P(commandParam, level);
@@ -182,7 +182,7 @@ storageRemoteInfoList(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST);
-        PackWrite *commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, path);
         pckWriteU32P(commandParam, level);
@@ -302,7 +302,7 @@ storageRemotePathCreate(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
-        PackWrite *commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, path);
         pckWriteBoolP(commandParam, errorOnExists);
@@ -337,7 +337,7 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInte
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE);
-        PackWrite *commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, path);
         pckWriteBoolP(commandParam, recurse);
@@ -394,7 +394,7 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE);
-        PackWrite *commandParam = protocolCommandParam(command);
+        PackWrite *const commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, file);
         pckWriteBoolP(commandParam, param.errorOnMissing);

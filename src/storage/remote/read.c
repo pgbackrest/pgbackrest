@@ -72,7 +72,7 @@ storageReadRemoteOpen(THIS_VOID)
         }
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
-        PackWrite *param = protocolCommandParam(command);
+        PackWrite *const param = protocolCommandParam(command);
 
         pckWriteStrP(param, this->interface.name);
         pckWriteBoolP(param, this->interface.ignoreMissing);

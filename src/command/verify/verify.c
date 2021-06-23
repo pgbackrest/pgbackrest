@@ -755,7 +755,7 @@ verifyArchive(void *data)
 
                         // Set up the job
                         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                        PackWrite *param = protocolCommandParam(command);
+                        PackWrite *const param = protocolCommandParam(command);
 
                         pckWriteStrP(param, filePathName);
                         pckWriteStrP(param, checksum);
@@ -980,7 +980,7 @@ verifyBackup(void *data)
                 {
                     // Set up the job
                     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                    PackWrite *param = protocolCommandParam(command);
+                    PackWrite *const param = protocolCommandParam(command);
 
                     pckWriteStrP(param, filePathName);
                     // If the checksum is not present in the manifest, it will be calculated by manifest load

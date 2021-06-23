@@ -110,7 +110,7 @@ dbQuery(Db *this, const String *query)
     if (this->remoteClient != NULL)
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY);
-        PackWrite *param = protocolCommandParam(command);
+        PackWrite *const param = protocolCommandParam(command);
 
         pckWriteU32P(param, this->remoteIdx);
         pckWriteStrP(param, query);

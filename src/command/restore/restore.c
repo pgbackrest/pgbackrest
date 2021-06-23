@@ -2141,7 +2141,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
                 // Create restore job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
-                PackWrite *param = protocolCommandParam(command);
+                PackWrite *const param = protocolCommandParam(command);
 
                 pckWriteStrP(param, file->name);
                 pckWriteU32P(param, jobData->repoIdx);

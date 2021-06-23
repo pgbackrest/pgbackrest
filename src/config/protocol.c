@@ -58,7 +58,7 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION);
-        PackWrite *param = protocolCommandParam(command);
+        PackWrite *const param = protocolCommandParam(command);
 
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
             pckWriteStrP(param, varStr(varLstGet(paramList, paramIdx)));

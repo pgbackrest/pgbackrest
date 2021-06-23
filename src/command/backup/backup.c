@@ -1440,7 +1440,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
                 // Create backup job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
-                PackWrite *param = protocolCommandParam(command);
+                PackWrite *const param = protocolCommandParam(command);
 
                 pckWriteStrP(param, manifestPathPg(file->name));
                 pckWriteBoolP(param, !strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
