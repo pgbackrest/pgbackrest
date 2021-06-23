@@ -92,8 +92,8 @@ testRun(void)
         infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave)), "load backup info with cipher sub");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackupPg(infoBackup), "infoPg set");
-        TEST_RESULT_STR_Z(infoBackupCipherPass(infoBackup),
-            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
+        TEST_RESULT_STR_Z(
+            infoBackupCipherPass(infoBackup), "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 1, "history set");
 
         // -------------------------------------------------------------------------------------------------------------------------
