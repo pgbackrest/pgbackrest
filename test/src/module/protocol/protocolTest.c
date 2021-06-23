@@ -584,18 +584,22 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("complex command");
 
+                // Put the command to the server
                 ProtocolCommand *command = NULL;
                 TEST_ASSIGN(command, protocolCommandNew(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
                 TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
                 TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
-
                 TEST_RESULT_VOID(protocolClientCommandPut(client, command), "command put");
 
-                TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "sync");
-                protocolClientDataPut(client, pckWriteBoolP(protocolPackNew(), true));
-                protocolClientDataPut(client, pckWriteModeP(protocolPackNew(), 0644));
-                protocolClientDataPut(client, NULL);
+                // Read null data to indicate that the server has started the command and is read to receive data
+                TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "command started and ready for data");
 
+                // Write data to the server
+                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteBoolP(protocolPackNew(), true), "data put");
+                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteModeP(protocolPackNew(), 0644), "data put");
+                TEST_RESULT_VOID(protocolClientDataPut(client, NULL), "data end put");
+
+                // Get data from the server
                 TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "data get");
                 TEST_RESULT_INT(pckReadI32P(protocolClientDataGet(client)), -1, "data get");
                 TEST_RESULT_VOID(protocolClientDataEndGet(client), "data end get");
