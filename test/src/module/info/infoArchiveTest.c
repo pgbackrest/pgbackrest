@@ -50,7 +50,7 @@ testRun(void)
         TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "no cipher sub");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("infoArchive save");
+        TEST_TITLE("infoArchive save (in memory)");
 
         // Save info and verify
         Buffer *contentSave = bufNew(0);
@@ -140,6 +140,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoArchiveLoadFile() and infoArchiveSaveFile()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("load archive info file - error");
+
         TEST_ERROR(
             infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), FileMissingError,
             "unable to load info file '" TEST_PATH "/archive.info' or '" TEST_PATH "/archive.info.copy':\n"
@@ -149,6 +152,9 @@ testRun(void)
             "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("save and load archive info file");
 
         InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_10, 6569239123849665999, NULL);
         TEST_RESULT_VOID(
