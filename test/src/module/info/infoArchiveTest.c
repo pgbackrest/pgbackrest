@@ -91,8 +91,8 @@ testRun(void)
         TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentSave)), "load encrypted archive info");
         TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), infoArchivePg(info), "infoPg set");
-        TEST_RESULT_STR_Z(infoArchiveCipherPass(info),
-            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
+        TEST_RESULT_STR_Z(
+            infoArchiveCipherPass(info), "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -126,9 +126,9 @@ testRun(void)
         );
 
         TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "new archive info");
-        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089), "9.5-2", "  full match found");
+        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089), "9.5-2", "full match found");
 
-        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702), "9.4-1", "  partial match found");
+        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702), "9.4-1", "partial match found");
 
         TEST_ERROR(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095799), ArchiveMismatchError,
             "unable to retrieve the archive id for database version '9.4' and system-id '6625592122879095799'");
