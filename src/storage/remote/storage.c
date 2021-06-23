@@ -26,7 +26,7 @@ struct StorageRemote
 };
 
 /**********************************************************************************************************************************/
-typedef struct StorageRemoteInfoParseData
+typedef struct StorageRemoteInfoData
 {
     time_t timeModifiedLast;                                        // timeModified from last call
     mode_t modeLast;                                                // mode from last call
@@ -34,11 +34,11 @@ typedef struct StorageRemoteInfoParseData
     gid_t groupIdLast;                                              // groupId from last call
     String *user;                                                   // user from last call
     String *group;                                                  // group from last call
-} StorageRemoteInfoParseData;
+} StorageRemoteInfoData;
 
 // Helper to get storage info from the protocol output
 static void
-storageRemoteInfoGet(StorageRemoteInfoParseData *const data, PackRead *const read, StorageInfo *const info)
+storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -141,7 +141,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             {
                 result.name = strDup(result.name);
 
-                storageRemoteInfoGet(&(StorageRemoteInfoParseData){0}, read, &result);
+                storageRemoteInfoGet(&(StorageRemoteInfoData){0}, read, &result);
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -188,7 +188,7 @@ storageRemoteInfoList(
         protocolClientCommandPut(this->client, command);
 
         // Read list
-        StorageRemoteInfoParseData parseData = {0};
+        StorageRemoteInfoData parseData = {0};
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
