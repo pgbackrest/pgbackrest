@@ -48,13 +48,16 @@
                         <commit subject="Update command/stanza test to use standard patterns.">
                             <github-pull-request id="1426"/>
                         </commit>
+                        <commit subject="Update info/infoArchive test to use standard patterns.">
+                            <github-pull-request id="1436"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
-                        <p>Update command tests to use standard patterns.</p>
+                        <p>Update tests to use standard patterns.</p>
                     </release-item>
                 </release-improvement-list>
             </release-test-list>
