@@ -140,10 +140,12 @@ storageRemoteInfoProtocolPut(
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(PACK_WRITE, write);
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
+    ASSERT(write != NULL);
     ASSERT(info != NULL);
 
     // Write type and time
