@@ -144,8 +144,6 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             // Read info from protocol into prior context
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result.name = strDup(result.name);
-
                 storageRemoteInfoGet(&(StorageRemoteInfoData){0}, read, &result);
             }
             MEM_CONTEXT_PRIOR_END();
