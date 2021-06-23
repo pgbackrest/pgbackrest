@@ -42,8 +42,13 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
+        FUNCTION_TEST_PARAM(PACK_READ, read);
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(read != NULL);
+    ASSERT(info != NULL);
 
     // Read type and time modified
     info->type = pckReadU32P(read);
