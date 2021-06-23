@@ -459,14 +459,14 @@ testRun(void)
 
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--repo-path=" TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // Create manifest for upgrade db (id=2), save to disk
-        manifestContent = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190923-164324F/" BACKUP_MANIFEST_FILE,
             "[backup]\n"
             "backup-archive-start=\"000000030000028500000066\"\n"
             "backup-archive-stop=\"000000030000028500000070\"\n"
@@ -515,16 +515,11 @@ testRun(void)
             "pg_data={}\n"
             "pg_data/base={}\n"
             "pg_data/base/13050={}\n"
-            TEST_MANIFEST_PATH_DEFAULT
-        );
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write main manifest for pgId=2 - valid backup to add");
 
-        TEST_RESULT_VOID(
-           storagePutP(storageNewWriteP(storageRepoWrite(),
-           STRDEF(STORAGE_REPO_BACKUP "/20190923-164324F/" BACKUP_MANIFEST_FILE)), manifestContent),
-           "write main manifest for pgId=2 - valid backup to add");
-
-        manifestContent = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
             "[backup]\n"
             "backup-label=\"20190818-084444F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
@@ -554,16 +549,11 @@ testRun(void)
             "\n"
             "[target:path]\n"
             "pg_data={}\n"
-            TEST_MANIFEST_PATH_DEFAULT
-        );
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest copy for pgId=1");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(),
-            STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
-            manifestContent), "write manifest copy for pgId=1");
-
-        manifestContent = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084555F/" BACKUP_MANIFEST_FILE,
             "[backup]\n"
             "backup-label=\"20190818-084555F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
@@ -597,16 +587,11 @@ testRun(void)
             "\n"
             "[target:path]\n"
             "pg_data={}\n"
-            TEST_MANIFEST_PATH_DEFAULT
-        );
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest - invalid backup pgId mismatch");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(),
-            STRDEF(STORAGE_REPO_BACKUP "/20190818-084555F/" BACKUP_MANIFEST_FILE)),
-            manifestContent), "write manifest - invalid backup pgId mismatch");
-
-        manifestContent = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084666F/" BACKUP_MANIFEST_FILE,
             "[backup]\n"
             "backup-label=\"20190818-084666F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
@@ -640,16 +625,11 @@ testRun(void)
             "\n"
             "[target:path]\n"
             "pg_data={}\n"
-            TEST_MANIFEST_PATH_DEFAULT
-        );
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest - invalid backup system-id mismatch");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(),
-            STRDEF(STORAGE_REPO_BACKUP "/20190818-084666F/" BACKUP_MANIFEST_FILE)),
-            manifestContent), "write manifest - invalid backup system-id mismatch");
-
-        manifestContent = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084777F/" BACKUP_MANIFEST_FILE,
             "[backup]\n"
             "backup-label=\"20190818-084777F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
@@ -683,14 +663,9 @@ testRun(void)
             "\n"
             "[target:path]\n"
             "pg_data={}\n"
-            TEST_MANIFEST_PATH_DEFAULT
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(),
-            STRDEF(STORAGE_REPO_BACKUP "/20190818-084777F/" BACKUP_MANIFEST_FILE)),
-            manifestContent), "write manifest - invalid backup version mismatch");
-
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest - invalid backup version mismatch");
+// CSHANG STOPPED HERE - note this uses manifestContentIncr from line 360....
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
             STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE)),
