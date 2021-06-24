@@ -121,6 +121,27 @@ void hrnStorageMove(
     const Storage *const storage, const char *const fileSource, const char *const fileDest, HrnStorageMoveParam param);
 
 /***********************************************************************************************************************************
+Copy a file
+***********************************************************************************************************************************/
+typedef struct HrnStorageCopyParam
+{
+    VAR_PARAM_HEADER;
+    const char *comment;                                            // Comment
+} HrnStorageCopyParam;
+
+#define HRN_STORAGE_COPY(storageSource, fileSource, storageDest, fileDest, ...)                                                    \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        hrnTestLogPrefix(__LINE__);                                                                                                \
+        hrnStorageCopy(storageSource, fileSource, storageDest, fileDest, (HrnStorageCopyParam){VAR_PARAM_INIT, __VA_ARGS__});      \
+    }                                                                                                                              \
+    while (0)
+
+void hrnStorageCopy(
+    const Storage *const storageSource, const char *const fileSource, const Storage *const storageDest, const char *const fileDest,
+    HrnStorageCopyParam param);
+
+/***********************************************************************************************************************************
 Create a path
 ***********************************************************************************************************************************/
 typedef struct HrnStoragePathCreateParam
