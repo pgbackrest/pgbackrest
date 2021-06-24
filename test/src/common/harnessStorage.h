@@ -62,6 +62,7 @@ typedef struct HrnStorageListParam
     VAR_PARAM_HEADER;
     bool remove;                                                    // Remove files after testing?
     bool noRecurse;                                                 // Do not recurse into subdirectories
+    const char *expression;                                         // Filter the list based on expression
     const char *comment;                                            // Comment
 } HrnStorageListParam;
 
