@@ -901,24 +901,21 @@ testRun(void)
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 2 error(s), check the log file for details");
         TEST_RESULT_LOG(
-            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE "' or '"
-                         TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT"':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-                         "' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-                         INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH_REPO "/backup/db/backup.info' or '"
+                         TEST_PATH_REPO "/backup/db/backup.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/backup.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/backup.info.copy' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
             "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
                 " 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
-            "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE
-                         "' or '" TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE INFO_COPY_EXT "':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE
-                         "' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE
-                         INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH "/repo2/archive/db/archive.info' or '"
+                         TEST_PATH "/repo2/archive/db/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/archive.info.copy'"
+                " for read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
@@ -934,12 +931,10 @@ testRun(void)
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         TEST_RESULT_LOG(
-            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE "' or '"
-                         TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT"':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-                         "' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-                         INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH_REPO "/backup/db/backup.info' or '"
+                         TEST_PATH_REPO "/backup/db/backup.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/backup.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/backup.info.copy' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
             "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
@@ -1879,17 +1874,17 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
             "20181119-152138F/\n"
-            "20181119-152138F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152138F/backup.manifest\n"
             "20181119-152800F/\n"
-            "20181119-152800F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F/backup.manifest\n"
             "20181119-152800F_20181119-152252D/\n"
-            "20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F_20181119-152252D/backup.manifest\n"
             "20181119-152850F/\n"
-            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/backup.manifest\n"
             "20181119-152900F/\n"
-            "20181119-152900F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152900F/backup.manifest\n"
             "20181119-152900F_20181119-153000I/\n"
-            "20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "\n"
+            "20181119-152900F_20181119-153000I/backup.manifest.copy\n"
             "backup.info\n"
             "backup.info.copy\n"
             "latest>\n",
@@ -1922,15 +1917,15 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
             "20181119-152800F/\n"
-            "20181119-152800F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F/backup.manifest\n"
             "20181119-152800F_20181119-152252D/\n"
-            "20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F_20181119-152252D/backup.manifest\n"
             "20181119-152850F/\n"
-            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/backup.manifest\n"
             "20181119-152900F/\n"
-            "20181119-152900F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152900F/backup.manifest\n"
             "20181119-152900F_20181119-153000I/\n"
-            "20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "\n"
+            "20181119-152900F_20181119-153000I/backup.manifest.copy\n"
             "backup.info\n"
             "backup.info.copy\n"
             "latest>\n",
@@ -1957,11 +1952,11 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
             "20181119-152800F/\n"
-            "20181119-152800F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F/backup.manifest\n"
             "20181119-152800F_20181119-152252D/\n"
-            "20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F_20181119-152252D/backup.manifest\n"
             "20181119-152850F/\n"
-            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/backup.manifest\n"
             "backup.info\n"
             "backup.info.copy\n"
             "latest>\n",
@@ -2011,7 +2006,7 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
             "20181119-152850F/\n"
-            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/backup.manifest\n"
             "backup.info\n"
             "backup.info.copy\n"
             "latest>\n",
@@ -2149,10 +2144,7 @@ testRun(void)
             storageRepoWrite(), INFO_BACKUP_PATH_FILE,
             TEST_BACKUP_CURRENT
             TEST_BACKUP_DB);
-        HRN_INFO_PUT(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT,
-            TEST_BACKUP_CURRENT
-            TEST_BACKUP_DB);
+        HRN_STORAGE_COPY(storageRepo(), INFO_BACKUP_PATH_FILE, storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT);
 
         // Adhoc backup and resumable backup manifests
         const String *manifestContent = STRDEF(
@@ -2240,9 +2232,6 @@ testRun(void)
 
         HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, strZ(backupInfoContent), .cipherType = cipherTypeAes256Cbc);
         HRN_INFO_PUT(
-            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, strZ(backupInfoContent),
-            .cipherType = cipherTypeAes256Cbc);
-        HRN_INFO_PUT(
             storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152850F/" BACKUP_MANIFEST_FILE,
             "[backup]\nbackup-type=\"full\"\n", .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
         HRN_INFO_PUT(
@@ -2250,7 +2239,7 @@ testRun(void)
             "[backup]\nbackup-type=\"diff\"\n", .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152850F_20181200-152252D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            strZ(manifestContent), .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
+            strZ(manifestContent), .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass", .comment = "resumable backup");
 
         // archives to repo2
         archiveGenerate(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE, 2, 10, "12-2", "0000000100000000");
