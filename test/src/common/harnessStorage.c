@@ -363,6 +363,32 @@ hrnStorageMove(
 
 /**********************************************************************************************************************************/
 void
+hrnStorageCopy(
+    const Storage *const storageSource, const char *const fileSource, const Storage *const storageDest, const char *const fileDest,
+    HrnStorageCopyParam param)
+{
+    hrnTestResultBegin(__func__, false);
+
+    ASSERT(storageSource != NULL);
+    ASSERT(fileSource != NULL);
+    ASSERT(storageDest != NULL);
+    ASSERT(fileDest != NULL);
+
+    const String *const fileSourceStr = storagePathP(storageSource, STR(fileSource));
+    const String *const fileDestStr = storagePathP(storageDest, STR(fileDest));
+
+    printf("copy '%s' to '%s'", strZ(fileSourceStr), strZ(fileDestStr));
+
+    hrnTestResultComment(param.comment);
+
+    // Copy the file
+    storageCopyP(storageNewReadP(storageSource, fileSourceStr), storageNewWriteP(storageDest, fileDestStr));
+
+    hrnTestResultEnd();
+}
+
+/**********************************************************************************************************************************/
+void
 hrnStoragePut(
     const Storage *const storage, const char *const file, const Buffer *const buffer, const char *const logPrefix,
     HrnStoragePutParam param)
