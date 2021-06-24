@@ -24,6 +24,7 @@ XML tags
 STRING_STATIC(S3_XML_TAG_ETAG_STR,                                  "ETag");
 STRING_STATIC(S3_XML_TAG_UPLOAD_ID_STR,                             "UploadId");
 STRING_STATIC(S3_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR,             "CompleteMultipartUpload");
+STRING_STATIC(S3_XML_TAG_COMPLETE_MULTIPART_UPLOAD_RESULT_STR,      "CompleteMultipartUploadResult");
 STRING_STATIC(S3_XML_TAG_PART_STR,                                  "Part");
 STRING_STATIC(S3_XML_TAG_PART_NUMBER_STR,                           "PartNumber");
 
