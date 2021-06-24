@@ -249,7 +249,9 @@ hrnStorageList(
     // Generate a list of files/paths/etc
     List *list = lstNewP(sizeof(StorageInfo));
 
-    storageInfoListP(storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse);
+    storageInfoListP(
+        storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse,
+        .expression = param.expression != NULL ? STR(param.expression) : NULL);
 
     // Remove files if requested
     if (param.remove)
@@ -355,6 +357,32 @@ hrnStorageMove(
 
     // Move (rename) the file
     storageMoveP(storage, storageNewReadP(storage, fileSourceStr), storageNewWriteP(storage,fileDestStr));
+
+    hrnTestResultEnd();
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageCopy(
+    const Storage *const storageSource, const char *const fileSource, const Storage *const storageDest, const char *const fileDest,
+    HrnStorageCopyParam param)
+{
+    hrnTestResultBegin(__func__, false);
+
+    ASSERT(storageSource != NULL);
+    ASSERT(fileSource != NULL);
+    ASSERT(storageDest != NULL);
+    ASSERT(fileDest != NULL);
+
+    const String *const fileSourceStr = storagePathP(storageSource, STR(fileSource));
+    const String *const fileDestStr = storagePathP(storageDest, STR(fileDest));
+
+    printf("copy '%s' to '%s'", strZ(fileSourceStr), strZ(fileDestStr));
+
+    hrnTestResultComment(param.comment);
+
+    // Copy the file
+    storageCopyP(storageNewReadP(storageSource, fileSourceStr), storageNewWriteP(storageDest, fileDestStr));
 
     hrnTestResultEnd();
 }
