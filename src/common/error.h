@@ -80,7 +80,7 @@ const ErrorType *errorTypeParent(const ErrorType *errorType);
 bool errorTypeExtends(const ErrorType *child, const ErrorType *parent);
 
 /***********************************************************************************************************************************
-Functions to get information about the current error
+Functions to get information about the current error within a CATCH() block. Invalid outside a CATCH() block.
 ***********************************************************************************************************************************/
 // Error type
 const ErrorType *errorType(void);
