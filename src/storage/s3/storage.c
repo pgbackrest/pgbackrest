@@ -51,7 +51,7 @@ STRING_STATIC(S3_XML_TAG_CODE_STR,                                  "Code");
 STRING_STATIC(S3_XML_TAG_COMMON_PREFIXES_STR,                       "CommonPrefixes");
 STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
 STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
-STRING_EXTERN(S3_XML_TAG_ERROR_STR,                                 S3_XML_TAG_ERROR);
+STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
 STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
 STRING_STATIC(S3_XML_TAG_MESSAGE_STR,                               "Message");
