@@ -279,9 +279,6 @@ testRun(void)
             ((StorageReadRemote *)fileRead->driver)->protocolReadBytes < bufSize(contentBuf), true,
             "    check compressed read size");
 
-        TEST_ERROR(
-            storageRemoteProtocolBlockSize(STRDEF("bogus")), ProtocolError, "'bogus' is not a valid block size message");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing");
 

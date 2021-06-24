@@ -17,13 +17,18 @@ Fields in a pack are identified by IDs. A field ID is stored as a delta from the
 that reading from the middle is generally not practical. The size of the gap between field IDs is important -- a gap of 1 never
 incurs extra cost, but depending on the field type larger gaps may require additional bytes to store the field ID delta.
 
+The standard default is the C default for that type (e.g. bool = false, int = 0) but can be changed with the .defaultValue
+parameter. For example, pckWriteBoolP(write, false, .defaultWrite = true) will write a 0 (i.e. false) with a field ID into the pack,
+but pckWriteBoolP(write, false) will not write to the pack, it will simply skip the ID.  Note that
+pckWriteStrP(packWrite, NULL, .defaultWrite = true) is not valid since there is no way to explicitly write a NULL.
+
 NULLs are not stored in a pack and are therefore not typed. A NULL is essentially just a gap in the field IDs. Fields that are
-frequently NULL are best stored at the end of an object. When using .defaultWrite = false in write functions a NULL will be written
-(by making a gap in the IDs) if the value matches the default. When using read functions the default will always be returned
-when the field is NULL (i.e. missing). The standard default is the C default for that type (e.g. bool = false, int = 0) but can be
-changed with the .defaultValue parameter. For example, pckWriteBoolP(write, false, .defaultWrite = true) will write a 0 with an ID
-into the pack, but pckWriteBoolP(write, false) will not write to the pack, it will simply skip the ID. Note that
-pckWriteStrP(packWrite, NULL, .defaultWrite = true) is not valid since there is no way to explcitly write a NULL.
+frequently NULL are best stored at the end of an object. When using read functions the default will always be returned
+when the field is NULL (i.e. missing). There are times when NULL must be explicitly passed, for example:
+pckWriteStrP(resultPack, result.pageChecksumResult != NULL ? jsonFromKv(result.pageChecksumResult) : NULL);
+In this case, NULL is declared since jsonFromKv() does not accept a NULL parameter and, following the rules for NULLs the field ID
+is skipped when result.pageChecksumResult == NULL. Upon reading, we can declare a NULL_STR when a NULL (field ID gap) is
+encountered, e.g. jsonToVar(pckReadStrP(jobResult, .defaultValue = NULL_STR)).
 
 A pack is an object by default. Objects can store fields, objects, or arrays. Objects and arrays will be referred to collectively as
 containers. Fields contain data to be stored, e.g. integers, strings, etc.
@@ -38,8 +43,8 @@ pckWriteStringP(write, STRDEF("sample"));
 pckWriteEndP();
 
 A string representation of this pack is `1:uint64:77,2:bool:false,4:str:sample`. The boolean was stored even though it was the
-default because a write was explcitly requested. The int32 field was not stored because the value matched the expicitly set default.
-Note that there is a gap in the ID stream, which represents the NULL/default value.
+default because a write was explicitly requested. The int32 field was not stored because the value matched the explicitly set
+default. Note that there is a gap in the ID stream, which represents the NULL/default value.
 
 This pack can be read with:
 
@@ -50,8 +55,8 @@ pckReadI32P(read, .defaultValue = -1);
 pckReadStringP(read);
 pckReadEndP();
 
-Note that defaults are not stored in the pack so any defaults that were applied when writing (by setting .defaulWrite and
-optionally .defaultValue) must be applied again when reading (by optionally setting .defaultValue).
+Note that defaults are not stored in the pack so any defaults that were applied when writing (by setting .defaultValue) must be
+applied again when reading by setting .defaultValue if the default value is not a standard C default.
 
 If we don't care about the NULL/default, another way to read is:
 

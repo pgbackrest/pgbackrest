@@ -23,6 +23,7 @@ typedef enum
 
 #include "common/time.h"
 #include "common/type/object.h"
+#include "common/type/pack.h"
 #include "protocol/client.h"
 
 /***********************************************************************************************************************************
@@ -37,16 +38,16 @@ typedef struct ProtocolParallelJobPub
 {
     MemContext *memContext;                                         // Mem context
     const Variant *key;                                             // Unique key used to identify the job
-    const ProtocolCommand *command;                                 // Command to be executed
+    ProtocolCommand *command;                                       // Command to be executed
     unsigned int processId;                                         // Process that executed this job
     ProtocolParallelJobState state;                                 // Current state of the job
     int code;                                                       // Non-zero result indicates an error
     String *message;                                                // Message if there was a error
-    const Variant *result;                                          // Result if job was successful
+    PackRead *result;                                               // Result if job was successful
 } ProtocolParallelJobPub;
 
 // Job command
-__attribute__((always_inline)) static inline const ProtocolCommand *
+__attribute__((always_inline)) static inline ProtocolCommand *
 protocolParallelJobCommand(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->command;
@@ -84,13 +85,13 @@ protocolParallelJobProcessId(const ProtocolParallelJob *const this)
 void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
 
 // Job result
-__attribute__((always_inline)) static inline const Variant *
+__attribute__((always_inline)) static inline PackRead *
 protocolParallelJobResult(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->result;
 }
 
-void protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result);
+void protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const result);
 
 // Job state
 __attribute__((always_inline)) static inline ProtocolParallelJobState

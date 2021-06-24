@@ -4,18 +4,16 @@ Db Protocol Handler
 #ifndef DB_PROTOCOL_H
 #define DB_PROTOCOL_H
 
-#include "common/type/string.h"
-#include "common/type/variantList.h"
-#include "protocol/client.h"
+#include "common/type/pack.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process db protocol requests
-void dbOpenProtocol(const VariantList *paramList, ProtocolServer *server);
-void dbQueryProtocol(const VariantList *paramList, ProtocolServer *server);
-void dbCloseProtocol(const VariantList *paramList, ProtocolServer *server);
+void dbOpenProtocol(PackRead *param, ProtocolServer *server);
+void dbQueryProtocol(PackRead *param, ProtocolServer *server);
+void dbCloseProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

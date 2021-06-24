@@ -4,15 +4,14 @@ Verify Protocol Handler
 #ifndef COMMAND_VERIFY_PROTOCOL_H
 #define COMMAND_VERIFY_PROTOCOL_H
 
-#include "common/type/string.h"
-#include "common/type/variantList.h"
+#include "common/type/pack.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void verifyFileProtocol(const VariantList *paramList, ProtocolServer *server);
+void verifyFileProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

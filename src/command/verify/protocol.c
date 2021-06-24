@@ -14,25 +14,29 @@ Verify Protocol Handler
 
 /**********************************************************************************************************************************/
 void
-verifyFileProtocol(const VariantList *paramList, ProtocolServer *server)
+verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(paramList != NULL);
+    ASSERT(param != NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        VerifyResult result = verifyFile(
-            varStr(varLstGet(paramList, 0)),                        // Full filename
-            varStr(varLstGet(paramList, 1)),                        // Checksum
-            varUInt64(varLstGet(paramList, 2)),                     // File size
-            varStr(varLstGet(paramList, 3)));                       // Cipher pass
+        // Verify file
+        const String *const filePathName = pckReadStrP(param);
+        const String *const fileChecksum = pckReadStrP(param);
+        const uint64_t fileSize = pckReadU64P(param);
+        const String *const cipherPass = pckReadStrP(param);
 
-        protocolServerResponse(server, VARUINT(result));
+        const VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
+
+        // Return result
+        protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), result));
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

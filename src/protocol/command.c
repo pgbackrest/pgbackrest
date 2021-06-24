@@ -6,15 +6,9 @@ Protocol Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "protocol/command.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_KEY_COMMAND_STR,                             PROTOCOL_KEY_COMMAND);
-STRING_EXTERN(PROTOCOL_KEY_PARAMETER_STR,                           PROTOCOL_KEY_PARAMETER);
+#include "protocol/client.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -23,7 +17,7 @@ struct ProtocolCommand
 {
     MemContext *memContext;
     StringId command;
-    Variant *parameterList;
+    PackWrite *pack;
 };
 
 /**********************************************************************************************************************************/
@@ -54,33 +48,39 @@ protocolCommandNew(const StringId command)
 }
 
 /**********************************************************************************************************************************/
-ProtocolCommand *
-protocolCommandParamAdd(ProtocolCommand *this, const Variant *param)
+void
+protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
-        FUNCTION_TEST_PARAM(VARIANT, param);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(write != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    // Write the command and flush to be sure the command gets sent immediately
+    PackWrite *commandPack = pckWriteNew(write);
+    pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
+    pckWriteStrIdP(commandPack, this->command);
+
+    // Only write params if there were any
+    if (this->pack != NULL)
     {
-        // Create parameter list if not already created
-        if (this->parameterList == NULL)
-            this->parameterList = varNewVarLst(varLstNew());
-
-        // Add parameter to the list
-        varLstAdd(varVarLst(this->parameterList), varDup(param));
+        pckWriteEndP(this->pack);
+        pckWritePackP(commandPack, this->pack);
     }
-    MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(this);
+    pckWriteEndP(commandPack);
+
+    // Flush to send command immediately
+    ioWriteFlush(write);
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-String *
-protocolCommandJson(const ProtocolCommand *this)
+PackWrite *
+protocolCommandParam(ProtocolCommand *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
@@ -88,27 +88,16 @@ protocolCommandJson(const ProtocolCommand *this)
 
     ASSERT(this != NULL);
 
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
+    if (this->pack == NULL)
     {
-        char commandStrId[STRID_MAX + 1];
-        strIdToZ(this->command, commandStrId);
-
-        KeyValue *command = kvPut(kvNew(), VARSTR(PROTOCOL_KEY_COMMAND_STR), VARSTRZ(commandStrId));
-
-        if (this->parameterList != NULL)
-            kvPut(command, VARSTR(PROTOCOL_KEY_PARAMETER_STR), this->parameterList);
-
-        MEM_CONTEXT_PRIOR_BEGIN()
+        MEM_CONTEXT_BEGIN(this->memContext)
         {
-            result = jsonFromKv(command);
+            this->pack = protocolPackNew();
         }
-        MEM_CONTEXT_PRIOR_END();
+        MEM_CONTEXT_END();
     }
-    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(this->pack);
 }
 
 /**********************************************************************************************************************************/

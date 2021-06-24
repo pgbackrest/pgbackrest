@@ -755,10 +755,12 @@ verifyArchive(void *data)
 
                         // Set up the job
                         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                        protocolCommandParamAdd(command, VARSTR(filePathName));
-                        protocolCommandParamAdd(command, VARSTR(checksum));
-                        protocolCommandParamAdd(command, VARUINT64(archiveResult->pgWalInfo.size));
-                        protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
+                        PackWrite *const param = protocolCommandParam(command);
+
+                        pckWriteStrP(param, filePathName);
+                        pckWriteStrP(param, checksum);
+                        pckWriteU64P(param, archiveResult->pgWalInfo.size);
+                        pckWriteStrP(param, jobData->walCipherPass);
 
                         // Assign job to result, prepending the archiveId to the key for consistency with backup processing
                         result = protocolParallelJobNew(
@@ -978,12 +980,13 @@ verifyBackup(void *data)
                 {
                     // Set up the job
                     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                    protocolCommandParamAdd(command, VARSTR(filePathName));
+                    PackWrite *const param = protocolCommandParam(command);
 
+                    pckWriteStrP(param, filePathName);
                     // If the checksum is not present in the manifest, it will be calculated by manifest load
-                    protocolCommandParamAdd(command, VARSTRZ(fileData->checksumSha1));
-                    protocolCommandParamAdd(command, VARUINT64(fileData->size));
-                    protocolCommandParamAdd(command, VARSTR(jobData->backupCipherPass));
+                    pckWriteStrP(param, STR(fileData->checksumSha1));
+                    pckWriteU64P(param, fileData->size);
+                    pckWriteStrP(param, jobData->backupCipherPass);
 
                     // Assign job to result (prepend backup label being processed to the key since some files are in a prior backup)
                     result = protocolParallelJobNew(
@@ -1535,7 +1538,7 @@ verifyProcess(unsigned int *errorTotal)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            const VerifyResult verifyResult = (VerifyResult)varUIntForce(protocolParallelJobResult(job));
+                            const VerifyResult verifyResult = (VerifyResult)pckReadU32P(protocolParallelJobResult(job));
 
                             // Update the result set for the type of file being processed
                             if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
