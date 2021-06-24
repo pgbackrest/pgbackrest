@@ -169,7 +169,7 @@ storageRemoteInfoProtocolPut(
             pckWriteBoolP(write, true);                                                                             // {vm_covered}
         else
         {
-            pckWriteNullP(write);
+            pckWriteBoolP(write, false);
             pckWriteStrP(write, info->user, .defaultValue = data->user);
         }
 
@@ -180,7 +180,7 @@ storageRemoteInfoProtocolPut(
             pckWriteBoolP(write, true);                                                                             // {vm_covered}
         else
         {
-            pckWriteNullP(write);
+            pckWriteBoolP(write, false);
             pckWriteStrP(write, info->group, .defaultValue = data->group);
         }
 
