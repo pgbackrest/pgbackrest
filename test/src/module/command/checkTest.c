@@ -6,8 +6,6 @@ Test Check Command
 #include "info/infoBackup.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
-#include "storage/posix/storage.h"
-#include "storage/storage.intern.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
