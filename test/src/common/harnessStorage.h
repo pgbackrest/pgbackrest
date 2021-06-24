@@ -189,6 +189,7 @@ Put a file with optional compression and/or encryption
 typedef struct HrnStoragePutParam
 {
     VAR_PARAM_HEADER;
+    mode_t modeFile;                                                // File mode if not the default
     CompressType compressType;
     CipherType cipherType;
     const char *cipherPass;

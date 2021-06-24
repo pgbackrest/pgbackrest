@@ -12,7 +12,6 @@ Protocol Server
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
-#include "protocol/client.h"
 #include "protocol/helper.h"
 #include "protocol/server.h"
 #include "version.h"
@@ -22,8 +21,10 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolServer
 {
-    ProtocolServerPub pub;                                          // Publicly accessible variables
-    const String *name;
+    MemContext *memContext;                                         // Mem context
+    IoRead *read;                                                   // Read interface
+    IoWrite *write;                                                 // Write interface
+    const String *name;                                             // Name displayed in logging
 };
 
 /**********************************************************************************************************************************/
@@ -49,12 +50,9 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
         *this = (ProtocolServer)
         {
-            .pub =
-            {
-                .memContext = memContextCurrent(),
-                .read = read,
-                .write = write,
-            },
+            .memContext = memContextCurrent(),
+            .read = read,
+            .write = write,
             .name = strDup(name),
         };
 
@@ -66,8 +64,8 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_SERVICE_STR), VARSTR(service));
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_VERSION_STR), VARSTRZ(PROJECT_VERSION));
 
-            ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(greetingKv));
-            ioWriteFlush(protocolServerIoWrite(this));
+            ioWriteStrLine(this->write, jsonFromKv(greetingKv));
+            ioWriteFlush(this->write);
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -92,15 +90,48 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     ASSERT(message != NULL);
     ASSERT(stack != NULL);
 
-    KeyValue *error = kvNew();
-    kvPut(error, VARSTR(PROTOCOL_ERROR_STR), VARINT(code));
-    kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTR(message));
-    kvPut(error, VARSTR(PROTOCOL_ERROR_STACK_STR), VARSTR(stack));
+    // Write the error and flush to be sure it gets sent immediately
+    PackWrite *error = pckWriteNew(this->write);
+    pckWriteU32P(error, protocolMessageTypeError);
+    pckWriteI32P(error, code);
+    pckWriteStrP(error, message);
+    pckWriteStrP(error, stack);
+    pckWriteEndP(error);
 
-    ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(error));
-    ioWriteFlush(protocolServerIoWrite(this));
+    ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+ProtocolServerCommandGetResult
+protocolServerCommandGet(ProtocolServer *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+    FUNCTION_LOG_END();
+
+    ProtocolServerCommandGetResult result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *const command = pckReadNew(this->read);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(command);
+
+        CHECK(type == protocolMessageTypeCommand);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.id = pckReadStrIdP(command);
+            result.param = pckReadPackBufP(command);
+        }
+        MEM_CONTEXT_PRIOR_END();
+
+        pckReadEndP(command);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /**********************************************************************************************************************************/
@@ -129,17 +160,15 @@ protocolServerProcess(
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Read command
-                KeyValue *commandKv = jsonToKv(ioReadLine(protocolServerIoRead(this)));
-                const StringId command = strIdFromStr(stringIdBit5, varStr(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR))));
-                VariantList *paramList = varVarLst(kvGet(commandKv, VARSTR(PROTOCOL_KEY_PARAMETER_STR)));
+                // Get command
+                ProtocolServerCommandGetResult command = protocolServerCommandGet(this);
 
                 // Find the handler
                 ProtocolServerCommandHandler handler = NULL;
 
                 for (unsigned int handlerIdx = 0; handlerIdx < handlerListSize; handlerIdx++)
                 {
-                    if (command == handlerList[handlerIdx].command)
+                    if (command.id == handlerList[handlerIdx].command)
                     {
                         handler = handlerList[handlerIdx].handler;
                         break;
@@ -151,7 +180,7 @@ protocolServerProcess(
                 {
                     // Send the command to the handler.  Run the handler in the server's memory context in case any persistent data
                     // needs to be stored by the handler.
-                    MEM_CONTEXT_BEGIN(this->pub.memContext)
+                    MEM_CONTEXT_BEGIN(this->memContext)
                     {
                         // Initialize retries in case of command failure
                         bool retry = false;
@@ -164,7 +193,7 @@ protocolServerProcess(
 
                             TRY_BEGIN()
                             {
-                                handler(paramList, this);
+                                handler(pckReadNewBuf(command.param), this);
                             }
                             CATCH_ANY()
                             {
@@ -180,9 +209,8 @@ protocolServerProcess(
                                         "retry %s after %" PRIu64 "ms: %s", errorTypeName(errorType()), retrySleepMs,
                                         errorMessage());
 
-                                    // Sleep if there is an interval
-                                    if (retrySleepMs > 0)
-                                        sleepMSec(retrySleepMs);
+                                    // Sleep for interval
+                                    sleepMSec(retrySleepMs);
 
                                     // Decrement retries remaining and retry
                                     retryRemaining--;
@@ -204,18 +232,19 @@ protocolServerProcess(
                 // Else check built-in commands
                 else
                 {
-                    switch (command)
+                    switch (command.id)
                     {
                         case PROTOCOL_COMMAND_EXIT:
                             exit = true;
                             break;
 
                         case PROTOCOL_COMMAND_NOOP:
-                            protocolServerResponse(this, NULL);
+                            protocolServerDataEndPut(this);
                             break;
 
                         default:
-                            THROW_FMT(ProtocolError, "invalid command '%s' (0x%" PRIx64 ")", strZ(strIdToStr(command)), command);
+                            THROW_FMT(
+                                ProtocolError, "invalid command '%s' (0x%" PRIx64 ")", strZ(strIdToStr(command.id)), command.id);
                     }
                 }
 
@@ -239,45 +268,75 @@ protocolServerProcess(
 }
 
 /**********************************************************************************************************************************/
-void
-protocolServerResponse(ProtocolServer *this, const Variant *output)
+PackRead *
+protocolServerDataGet(ProtocolServer *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_LOG_PARAM(VARIANT, output);
     FUNCTION_LOG_END();
 
-    KeyValue *result = kvNew();
+    PackRead *result = NULL;
 
-    if (output != NULL)
-        kvPut(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *data = pckReadNew(this->read);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(data);
 
-    ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(result));
-    ioWriteFlush(protocolServerIoWrite(this));
+        CHECK(type == protocolMessageTypeData);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = pckReadPackP(data);
+        }
+        MEM_CONTEXT_PRIOR_END();
+
+        pckReadEndP(data);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PACK_READ, result);
+}
+
+/**********************************************************************************************************************************/
+void
+protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_LOG_PARAM(PACK_WRITE, data);
+    FUNCTION_LOG_END();
+
+    // End the pack
+    if (data != NULL)
+        pckWriteEndP(data);
+
+    // Write the result
+    PackWrite *resultMessage = pckWriteNew(this->write);
+    pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
+    pckWritePackP(resultMessage, data);
+    pckWriteEndP(resultMessage);
+
+    // Flush on NULL result since it might be used to synchronize
+    if (data == NULL)
+        ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 void
-protocolServerWriteLine(ProtocolServer *this, const String *line)
+protocolServerDataEndPut(ProtocolServer *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_LOG_PARAM(STRING, line);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
+    // Write the response and flush to be sure it gets sent immediately
+    PackWrite *response = pckWriteNew(this->write);
+    pckWriteU32P(response, protocolMessageTypeDataEnd, .defaultWrite = true);
+    pckWriteEndP(response);
 
-    // Dot indicates the start of an lf-terminated line
-    ioWrite(protocolServerIoWrite(this), DOT_BUF);
-
-    // Write the line if it exists
-    if (line != NULL)
-        ioWriteStr(protocolServerIoWrite(this), line);
-
-    // Terminate with a linefeed
-    ioWrite(protocolServerIoWrite(this), LF_BUF);
+    ioWriteFlush(this->write);
 
     FUNCTION_LOG_RETURN_VOID();
 }

@@ -61,11 +61,12 @@ main(int argListSize, const char *argList[])
     // Initialize statistics collector
     statInit();
 
-    volatile bool result = 0;
-    volatile bool error = false;
-
     // Initialize exit handler
     exitInit();
+
+    // Process commands
+    volatile int result = 0;
+    volatile bool error = false;
 
     TRY_BEGIN()
     {
@@ -250,8 +251,9 @@ main(int argListSize, const char *argList[])
     CATCH_ANY()
     {
         error = true;
+        result = exitSafe(result, true, 0);
     }
     TRY_END();
 
-    FUNCTION_LOG_RETURN(INT, exitSafe(result, error, 0));
+    FUNCTION_LOG_RETURN(INT, error ? result : exitSafe(result, false, 0));
 }
