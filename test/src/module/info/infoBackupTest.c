@@ -357,77 +357,75 @@ testRun(void)
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
             "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
 
-        const Buffer *manifestContentIncr = harnessInfoChecksumZ
-        (
-            "[backup]\n"
-            "backup-archive-start=\"000000030000028500000089\"\n"
-            "backup-archive-stop=\"000000030000028500000090\"\n"
-            "backup-label=\"20190818-084502F_20190820-084502I\"\n"
-            "backup-lsn-start=\"285/89000028\"\n"
-            "backup-lsn-stop=\"285/89001F88\"\n"
-            "backup-prior=\"20190818-084502F\"\n"
-            "backup-timestamp-copy-start=1565282141\n"
-            "backup-timestamp-start=1565282140\n"
-            "backup-timestamp-stop=1565282142\n"
-            "backup-type=\"diff\"\n"
-            TEST_MANIFEST_BACKUPDB
-            "\n"
-            "[backup:option]\n"
-            "option-archive-check=true\n"
-            "option-archive-copy=true\n"
-            "option-backup-standby=true\n"
-            "option-buffer-size=16384\n"
-            "option-checksum-page=true\n"
-            "option-compress=true\n"
-            "option-compress-level=3\n"
-            "option-compress-level-network=3\n"
-            "option-delta=false\n"
-            "option-hardlink=true\n"
-            "option-online=true\n"
-            "option-process-max=32\n"
-            "\n"
-            "[backup:target]\n"
-            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
-            "pg_data/base/1={\"path\":\"../../base-1\",\"type\":\"link\"}\n"
-            "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"
-            "pg_data/pg_stat={\"path\":\"../pg_stat\",\"type\":\"link\"}\n"
-            "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"
-            "pg_tblspc/1={\"path\":\"/tblspc/ts1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
-            TEST_MANIFEST_DB
-            "\n"
-            "[target:file]\n"
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"
-                ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"
-            "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"
-                ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"
-            "pg_data/base/16384/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"group\":false,\"size\":4"
-                ",\"timestamp\":1565282115}\n"
-            "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"
-                ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"
-            "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"
-                ",\"reference\":\"20190818-084502F_20190819-084506I\",\"size\":32768,\"timestamp\":1565282114}\n"
-            "pg_data/postgresql.conf={\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\",\"master\":true,\"size\":4457"
-                ",\"timestamp\":1565282114}\n"
-            "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
-            "pg_data/dupref={\"master\":true,\"mode\":\"0640\",\"reference\":\"20190818-084502F\",\"size\":0"
-                ",\"timestamp\":1565282120,\"user\":false}\n"
-            TEST_MANIFEST_FILE_DEFAULT
-            "\n"
-            "[target:link]\n"
-            "pg_data/pg_stat={\"destination\":\"../pg_stat\"}\n"
-            "pg_data/postgresql.conf={\"destination\":\"../pg_config/postgresql.conf\",\"group\":false,\"user\":\"user1\"}\n"
-            TEST_MANIFEST_LINK_DEFAULT
-            "\n"
-            "[target:path]\n"
-            "pg_data={\"user\":\"user2\"}\n"
-            "pg_data/base={\"group\":\"group2\"}\n"
-            "pg_data/base/16384={\"mode\":\"0750\"}\n"
-            "pg_data/base/32768={}\n"
-            "pg_data/base/65536={\"user\":false}\n"
+        #define TEST_MANIFEST_INCR                                                                                                 \
+            "[backup]\n"                                                                                                           \
+            "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
+            "backup-archive-stop=\"000000030000028500000090\"\n"                                                                   \
+            "backup-label=\"20190818-084502F_20190820-084502I\"\n"                                                                 \
+            "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
+            "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
+            "backup-prior=\"20190818-084502F\"\n"                                                                                  \
+            "backup-timestamp-copy-start=1565282141\n"                                                                             \
+            "backup-timestamp-start=1565282140\n"                                                                                  \
+            "backup-timestamp-stop=1565282142\n"                                                                                   \
+            "backup-type=\"diff\"\n"                                                                                               \
+            TEST_MANIFEST_BACKUPDB                                                                                                 \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "option-archive-check=true\n"                                                                                          \
+            "option-archive-copy=true\n"                                                                                           \
+            "option-backup-standby=true\n"                                                                                         \
+            "option-buffer-size=16384\n"                                                                                           \
+            "option-checksum-page=true\n"                                                                                          \
+            "option-compress=true\n"                                                                                               \
+            "option-compress-level=3\n"                                                                                            \
+            "option-compress-level-network=3\n"                                                                                    \
+            "option-delta=false\n"                                                                                                 \
+            "option-hardlink=true\n"                                                                                               \
+            "option-online=true\n"                                                                                                 \
+            "option-process-max=32\n"                                                                                              \
+            "\n"                                                                                                                   \
+            "[backup:target]\n"                                                                                                    \
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"                                                                  \
+            "pg_data/base/1={\"path\":\"../../base-1\",\"type\":\"link\"}\n"                                                       \
+            "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"                         \
+            "pg_data/pg_stat={\"path\":\"../pg_stat\",\"type\":\"link\"}\n"                                                        \
+            "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../pg_config\",\"type\":\"link\"}\n"                 \
+            "pg_tblspc/1={\"path\":\"/tblspc/ts1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"       \
+            TEST_MANIFEST_DB                                                                                                       \
+            "\n"                                                                                                                   \
+            "[target:file]\n"                                                                                                      \
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                        \
+                ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                      \
+            "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"          \
+                ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                        \
+            "pg_data/base/16384/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"group\":false,\"size\":4"  \
+                ",\"timestamp\":1565282115}\n"                                                                                     \
+            "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
+                ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
+            "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
+                ",\"reference\":\"20190818-084502F_20190819-084506I\",\"size\":32768,\"timestamp\":1565282114}\n"                  \
+            "pg_data/postgresql.conf={\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\",\"master\":true,\"size\":4457"     \
+                ",\"timestamp\":1565282114}\n"                                                                                     \
+            "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"             \
+            "pg_data/dupref={\"master\":true,\"mode\":\"0640\",\"reference\":\"20190818-084502F\",\"size\":0"                      \
+                ",\"timestamp\":1565282120,\"user\":false}\n"                                                                      \
+            TEST_MANIFEST_FILE_DEFAULT                                                                                             \
+            "\n"                                                                                                                   \
+            "[target:link]\n"                                                                                                      \
+            "pg_data/pg_stat={\"destination\":\"../pg_stat\"}\n"                                                                   \
+            "pg_data/postgresql.conf={\"destination\":\"../pg_config/postgresql.conf\",\"group\":false,\"user\":\"user1\"}\n"      \
+            TEST_MANIFEST_LINK_DEFAULT                                                                                             \
+            "\n"                                                                                                                   \
+            "[target:path]\n"                                                                                                      \
+            "pg_data={\"user\":\"user2\"}\n"                                                                                       \
+            "pg_data/base={\"group\":\"group2\"}\n"                                                                                \
+            "pg_data/base/16384={\"mode\":\"0750\"}\n"                                                                             \
+            "pg_data/base/32768={}\n"                                                                                              \
+            "pg_data/base/65536={\"user\":false}\n"                                                                                \
             TEST_MANIFEST_PATH_DEFAULT
-        );
 
-        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(manifestContentIncr)), "load manifest");
+        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_MANIFEST_INCR))), "load manifest");
         TEST_RESULT_VOID(infoBackupDataAdd(infoBackup, manifest), "add a backup");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup added to current");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 1), "get added backup");
@@ -461,7 +459,7 @@ testRun(void)
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // Create manifest for upgrade db (id=2), save to disk
@@ -665,24 +663,26 @@ testRun(void)
             "pg_data={}\n"
             TEST_MANIFEST_PATH_DEFAULT,
             .comment = "write manifest - invalid backup version mismatch");
-// CSHANG STOPPED HERE - note this uses manifestContentIncr from line 360....
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(),
-            STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE)),
-            manifestContentIncr), "write manifest for dependent backup that will be removed from backup.info");
 
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F")),
-            "create backup on disk that is in current but no manifest");
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE, TEST_MANIFEST_INCR,
+            .comment = "write manifest for dependent backup that will be removed from backup.info");
 
-        TEST_RESULT_STRLST_Z(
-            strLstSort(
-                storageListP(
-                    storageRepo(), STORAGE_REPO_BACKUP_STR,
-                    .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
-                sortOrderAsc),
-            "20190818-084444F\n20190818-084502F\n20190818-084502F_20190820-084502I\n20190818-084555F\n20190818-084666F\n"
-            "20190818-084777F\n20190923-164324F\n", "confirm backups on disk");
+        HRN_STORAGE_PATH_CREATE(
+            storageRepoWrite(),STORAGE_REPO_BACKUP "/20190818-084502F",
+            .comment = "create backup on disk that is in current but no manifest");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20190818-084444F/\n"
+            "20190818-084502F/\n"
+            "20190818-084502F_20190820-084502I/\n"
+            "20190818-084555F/\n"
+            "20190818-084666F/\n"
+            "20190818-084777F/\n"
+            "20190923-164324F/\n",
+            .expression = strZ(backupRegExpP(.full = true, .differential = true, .incremental = true)),
+            .comment = "confirm backups on disk");
 
         // With the infoBackup from above, upgrade the DB so there a 2 histories then save to disk
         TEST_ASSIGN(
@@ -718,9 +718,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoBackupLoadFileReconstruct() - missing dependent not added");
 
-        TEST_RESULT_VOID(
-            storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I"),
-            .recurse = true), "remove dependent backup from disk");
+        HRN_STORAGE_PATH_REMOVE(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I", .recurse = true,
+            .comment = "remove dependent backup from disk");
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "reconstruct does not attempt to add back dependent backup");
@@ -735,14 +735,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoBackupLoadFileReconstruct() - valid dependent added");
 
-        TEST_RESULT_VOID(
-            storageCopyP(
-                storageNewReadP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
-                storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
-                "write manifest from copy-only for pgId=1");
+        HRN_STORAGE_COPY(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE,
+            .comment = "write manifest from copy-only for pgId=1");
 
-        manifestContentIncr = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084444F_20190924-084502D/" BACKUP_MANIFEST_FILE,
             "[backup]\n"
             "backup-archive-start=\"000000030000028500000089\"\n"
             "backup-archive-stop=\"000000030000028500000090\"\n"
@@ -779,13 +778,8 @@ testRun(void)
             "\n"
             "[target:path]\n"
             "pg_data={}\n"
-            TEST_MANIFEST_PATH_DEFAULT
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(),
-            STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F_20190924-084502D/" BACKUP_MANIFEST_FILE)),
-            manifestContentIncr), "write manifest for dependent backup to be added to full already in backup.info");
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment =  "write manifest for dependent backup to be added to full already in backup.info");
 
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
@@ -831,7 +825,7 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "load main");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
 
-        storageRemoveP(storageTest, STRDEF(INFO_BACKUP_FILE), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storageTest, INFO_BACKUP_FILE, .errorOnMissing = true, .comment = "remove main so only copy exists");
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
     }
@@ -919,27 +913,23 @@ testRun(void)
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad)), "new backup info");
 
-        TEST_ASSIGN(
-            dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F")), "full");
+        TEST_ASSIGN(dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F")), "full");
         TEST_RESULT_STRLST_Z(
             dependencyList,
             "20200317-181625F\n20200317-181625F_20200317-182239D\n20200317-181625F_20200317-182300D\n"
                 "20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n20200317-181625F_20200317-182340D\n",
             "all dependents");
 
-        TEST_ASSIGN(
-            dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181416F")), "full");
+        TEST_ASSIGN(dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181416F")), "full");
         TEST_RESULT_STRLST_Z(dependencyList, "20200317-181416F\n", "no dependents");
 
-        TEST_ASSIGN(
-            dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F_20200317-182300D")), "diff");
+        TEST_ASSIGN(dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F_20200317-182300D")), "diff");
         TEST_RESULT_STRLST_Z(
             dependencyList,
             "20200317-181625F_20200317-182300D\n20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n",
             "all dependents");
 
-        TEST_ASSIGN(
-            dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F_20200317-182324I")), "incr");
+        TEST_ASSIGN(dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F_20200317-182324I")), "incr");
         TEST_RESULT_STRLST_Z(
             dependencyList, "20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n", "all dependents");
     }
