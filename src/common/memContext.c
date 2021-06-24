@@ -827,57 +827,48 @@ memContextFree(MemContext *this)
         this->state = memContextStateFreeing;
 
         // Execute callback if defined
-        bool rethrow = false;
-
-        if (this->callbackFunction)
+        TRY_BEGIN()
         {
-            TRY_BEGIN()
-            {
+            if (this->callbackFunction)
                 this->callbackFunction(this->callbackArgument);
-            }
-            CATCH_ANY()
+        }
+        // Finish cleanup even if the callback fails
+        FINALLY()
+        {
+            // Free child context allocations
+            if (this->contextChildListSize > 0)
             {
-                rethrow = true;
+                for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
+                    if (this->contextChildList[contextIdx])
+                        memFreeInternal(this->contextChildList[contextIdx]);
+
+                memFreeInternal(this->contextChildList);
+                this->contextChildListSize = 0;
             }
-            TRY_END();
+
+            // Free memory allocations
+            if (this->allocListSize > 0)
+            {
+                for (unsigned int allocIdx = 0; allocIdx < this->allocListSize; allocIdx++)
+                    if (this->allocList[allocIdx] != NULL)
+                        memFreeInternal(this->allocList[allocIdx]);
+
+                memFreeInternal(this->allocList);
+                this->allocListSize = 0;
+            }
+
+            // If the context index is lower than the current free index in the parent then replace it
+            if (this->contextParent != NULL && this->contextParentIdx < this->contextParent->contextChildFreeIdx)
+                this->contextParent->contextChildFreeIdx = this->contextParentIdx;
+
+            // Make top context active again
+            if (this == &contextTop)
+                this->state = memContextStateActive;
+            // Else reset the memory context so it can be reused
+            else
+                *this = (MemContext){.state = memContextStateFree};
         }
-
-        // Free child context allocations
-        if (this->contextChildListSize > 0)
-        {
-            for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
-                if (this->contextChildList[contextIdx])
-                    memFreeInternal(this->contextChildList[contextIdx]);
-
-            memFreeInternal(this->contextChildList);
-            this->contextChildListSize = 0;
-        }
-
-        // Free memory allocations
-        if (this->allocListSize > 0)
-        {
-            for (unsigned int allocIdx = 0; allocIdx < this->allocListSize; allocIdx++)
-                if (this->allocList[allocIdx] != NULL)
-                    memFreeInternal(this->allocList[allocIdx]);
-
-            memFreeInternal(this->allocList);
-            this->allocListSize = 0;
-        }
-
-        // If the context index is lower than the current free index in the parent then replace it
-        if (this->contextParent != NULL && this->contextParentIdx < this->contextParent->contextChildFreeIdx)
-            this->contextParent->contextChildFreeIdx = this->contextParentIdx;
-
-        // Make top context active again
-        if (this == &contextTop)
-            this->state = memContextStateActive;
-        // Else reset the memory context so it can be reused
-        else
-            *this = (MemContext){.state = memContextStateFree};
-
-        // Rethrow the error that was caught in the callback
-        if (rethrow)
-            RETHROW();
+        TRY_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();
