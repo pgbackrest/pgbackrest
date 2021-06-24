@@ -249,7 +249,9 @@ hrnStorageList(
     // Generate a list of files/paths/etc
     List *list = lstNewP(sizeof(StorageInfo));
 
-    storageInfoListP(storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse);
+    storageInfoListP(
+        storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse,
+        .expression = param.expression != NULL ? STR(param.expression) : NULL);
 
     // Remove files if requested
     if (param.remove)
