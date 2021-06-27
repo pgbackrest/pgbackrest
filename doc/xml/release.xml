@@ -71,6 +71,9 @@
                         <commit subject="Update command/check test to use standard patterns.">
                             <github-pull-request id="1431"/>
                         </commit>
+                        <commit subject="Update info/infoBackup test to use standard patterns.">
+                            <github-pull-request id="1437"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
