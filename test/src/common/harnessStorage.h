@@ -190,6 +190,7 @@ typedef struct HrnStoragePutParam
 {
     VAR_PARAM_HEADER;
     mode_t modeFile;                                                // File mode if not the default
+    time_t timeModified;                                            // Time file was last modified
     CompressType compressType;
     CipherType cipherType;
     const char *cipherPass;

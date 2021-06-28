@@ -77,6 +77,7 @@
                         <commit subject="Replace defines with string constants in unit tests.">
                             <github-pull-request id="1440"/>
                         </commit>
+                        <commit subject="Add timeModified parameter to HRN_STORAGE_PUT() macro."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
