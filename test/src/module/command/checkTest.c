@@ -112,8 +112,7 @@ testRun(void)
 
         // Only confirming we get passed the check for repoIsLocal || more than one pg-path configured
         TEST_ERROR(
-            cmdCheck(), FileMissingError, "unable to open missing file '" TEST_PATH_PG "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
-            "' for read");
+            cmdCheck(), FileMissingError, "unable to open missing file '" TEST_PATH_PG "/global/pg_control' for read");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup-standby set without standby");
@@ -135,9 +134,8 @@ testRun(void)
         });
 
         TEST_ERROR(
-            cmdCheck(), FileMissingError, "unable to open missing file '" TEST_PATH_PG "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
-            "' for read");
-        TEST_RESULT_LOG("P00   WARN: option '" CFGOPT_BACKUP_STANDBY "' is enabled but standby is not properly configured");
+            cmdCheck(), FileMissingError, "unable to open missing file '" TEST_PATH_PG "/global/pg_control' for read");
+        TEST_RESULT_LOG("P00   WARN: option 'backup-standby' is enabled but standby is not properly configured");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby and primary database - standby path doesn't match pg_control");
@@ -171,7 +169,7 @@ testRun(void)
         TEST_ERROR(
             cmdCheck(), DbMismatchError,
             "version '" PG_VERSION_92_STR "' and path '" TEST_PATH "' queried from cluster do not match version '" PG_VERSION_92_STR
-                "' and '" TEST_PATH_PG "' read from '" TEST_PATH_PG "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+                "' and '" TEST_PATH_PG "' read from '" TEST_PATH_PG "/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -426,7 +424,7 @@ testRun(void)
         TEST_ERROR(
             checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false), DbMismatchError,
             "version '" PG_VERSION_92_STR "' and path '" TEST_PATH_PG "' queried from cluster do not match version '"
-            PG_VERSION_94_STR "' and '" TEST_PATH_PG "' read from '" TEST_PATH_PG "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            PG_VERSION_94_STR "' and '" TEST_PATH_PG "' read from '" TEST_PATH_PG "/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -435,7 +433,7 @@ testRun(void)
         TEST_ERROR_FMT(
             checkDbConfig(PG_VERSION_92, db.standbyIdx, db.standby, true), DbMismatchError,
             "version '" PG_VERSION_92_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_92_STR "' and"
-                " '" TEST_PATH "/pg8' read from '" TEST_PATH "/pg8/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+                " '" TEST_PATH "/pg8' read from '" TEST_PATH "/pg8/global/pg_control'\n"
             "HINT: the pg8-path and pg8-port settings likely reference different clusters.",
             strZ(dbPgDataPath(db.standby)));
 
