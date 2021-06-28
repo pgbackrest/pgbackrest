@@ -39,11 +39,11 @@ testRun(void)
     hrnCfgArgRawZ(argList, cfgOptStanza, "db");
     hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
     strLstAddZ(argList, "--buffer-size=16384");
-    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH_PG "1");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
     hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "localhost");
     hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 2, TEST_USER);
-    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH_PG "2");
-    hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
+    hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
     HRN_CFG_LOAD(cfgCmdBackup, argList);
 
     const Storage *const storagePgWrite = storagePgGet(1, true);
@@ -245,7 +245,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file without compression");
 
-        HRN_STORAGE_PUT(storageTest, TEST_PATH_REPO "/test.txt", contentBuf);
+        HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo/test.txt", contentBuf);
 
         // Disable protocol compression in the storage object
         ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 0;
@@ -287,9 +287,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read with filters");
 
-        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH_REPO "/test.txt", "TESTDATA!");
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo/test.txt", "TESTDATA!");
 
-        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH_REPO "/test.txt"), .limit = VARUINT64(8)), "new read");
+        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo/test.txt"), .limit = VARUINT64(8)), "new read");
 
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -313,9 +313,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read into sink (no data returned)");
 
-        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH_REPO "/test.txt", "TESTDATA");
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo/test.txt", "TESTDATA");
 
-        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH_REPO "/test.txt"), .limit = VARUINT64(8)), "new read");
+        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo/test.txt"), .limit = VARUINT64(8)), "new read");
 
         filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -419,14 +419,14 @@ testRun(void)
 
         TEST_ERROR(
             storagePathCreateP(storageRepoWrite, STRDEF("testpath"), .errorOnExists = true), PathCreateError,
-            "raised from remote-0 shim protocol: unable to create path '" TEST_PATH_REPO "/testpath': [17] File exists");
+            "raised from remote-0 shim protocol: unable to create path '" TEST_PATH "/repo/testpath': [17] File exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing parent path");
 
         TEST_ERROR(
             storagePathCreateP(storageRepoWrite, STRDEF("parent/testpath"), .noParentCreate = true), PathCreateError,
-            "raised from remote-0 shim protocol: unable to create path '" TEST_PATH_REPO "/parent/testpath': [2] No such"
+            "raised from remote-0 shim protocol: unable to create path '" TEST_PATH "/repo/parent/testpath': [2] No such"
                 " file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -438,7 +438,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageInfoListP(
-                storageRepo, STRDEF(TEST_PATH_REPO "/parent"), hrnStorageInfoListCallback, &callbackData,
+                storageRepo, STRDEF(TEST_PATH "/repo/parent"), hrnStorageInfoListCallback, &callbackData,
                 .sortOrder = sortOrderAsc),
             true, "info list");
         TEST_RESULT_STR_Z(

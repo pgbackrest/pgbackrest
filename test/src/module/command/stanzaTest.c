@@ -28,8 +28,8 @@ testRun(void)
     StringList *argListBase = strLstNew();
     hrnCfgArgRawBool(argListBase, cfgOptOnline, false);
     hrnCfgArgRawZ(argListBase, cfgOptStanza, TEST_STANZA);
-    hrnCfgArgRawZ(argListBase, cfgOptPgPath, TEST_PATH_PG);
-    hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH_REPO);
+    hrnCfgArgRawZ(argListBase, cfgOptPgPath, TEST_PATH "/pg");
+    hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH "/repo");
 
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaCreate(), checkStanzaInfo(), cmdStanzaDelete()"))
@@ -225,12 +225,12 @@ testRun(void)
         TEST_TITLE("cmdStanzaDelete - multi-repo and encryption, delete");
 
         StringList *argListCmd = strLstNew();
-        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 1, TEST_PATH_REPO);
+        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 1, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 3, TEST_PATH "/repo3");
         hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 4, TEST_PATH "/repo4");
         hrnCfgArgRawZ(argListCmd, cfgOptStanza, TEST_STANZA);
-        hrnCfgArgRawZ(argListCmd, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgRawZ(argListCmd, cfgOptPgPath, TEST_PATH "/pg");
 
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdStanzaDelete, argListCmd), OptionRequiredError,
@@ -520,8 +520,8 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, TEST_STANZA);
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -534,14 +534,14 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - db online");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
         TEST_STORAGE_LIST(
-            storageTest, TEST_PATH_REPO,
+            storageTest, TEST_PATH "/repo",
             "archive/\n"
             "archive/db/\n"
             "archive/db/archive.info\n"
@@ -555,7 +555,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
@@ -574,14 +574,14 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
-            "version '" PG_VERSION_92_STR "' and path '" TEST_PATH_PG "' queried from cluster do not match version '"
-            PG_VERSION_91_STR "' and '" TEST_PATH_PG "' read from '" TEST_PATH_PG "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "version '" PG_VERSION_92_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
+            PG_VERSION_91_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -601,7 +601,7 @@ testRun(void)
         TEST_ERROR(
             pgValidate(), DbMismatchError,
             "version '" PG_VERSION_92_STR "' and path '" TEST_PATH "/pg2' queried from cluster do not match version '"
-                PG_VERSION_92_STR "' and '" TEST_PATH_PG "' read from '" TEST_PATH_PG "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
+                PG_VERSION_92_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
             "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -609,9 +609,9 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, TEST_STANZA);
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH_PG "1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5434");
 
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
@@ -628,7 +628,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH_PG, true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", true, NULL, NULL),
             HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5434", PG_VERSION_92, TEST_PATH "/pg1", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
@@ -903,7 +903,7 @@ testRun(void)
     {
         // Load Parameters
         StringList *argListCmd = strLstNew();
-        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 1, TEST_PATH_REPO);
+        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 1, TEST_PATH "/repo");
 
         // Load Parameters
         StringList *argList = strLstDup(argListCmd);
@@ -922,7 +922,7 @@ testRun(void)
 
         argList = strLstDup(argListCmd);
         hrnCfgArgRawZ(argList, cfgOptStanza, TEST_STANZA);
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH_PG);
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdStanzaDelete, argList);
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -986,7 +986,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageHrn, strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))), .comment = "create stop file");
         TEST_ERROR(
             cmdStanzaDelete(), FileRemoveError,
-            "unable to remove '" TEST_PATH_REPO "/backup/db/20190708-154306F/backup.manifest': [20] Not a directory");
+            "unable to remove '" TEST_PATH "/repo/backup/db/20190708-154306F/backup.manifest': [20] Not a directory");
         HRN_STORAGE_REMOVE(storageTest, "repo/backup/db/20190708-154306F", "cleanup - remove backup file");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1059,7 +1059,7 @@ testRun(void)
 
         argList = strLstDup(argListCmd);
         hrnCfgArgRawZ(argList, cfgOptStanza, TEST_STANZA);
-        hrnCfgArgKeyRawFmt(argList, cfgOptPgPath, 1, TEST_PATH_PG);
+        hrnCfgArgKeyRawFmt(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawBool(argList, cfgOptForce, true);

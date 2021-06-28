@@ -106,9 +106,9 @@ testRun(void)
 
         // Arguments that must be included
         StringList *argBaseList = strLstNew();
-        hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgRawZ(argBaseList, cfgOptSpoolPath, TEST_PATH_SPOOL);
+        hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argBaseList, cfgOptSpoolPath, TEST_PATH "/spool");
         hrnCfgArgRawBool(argBaseList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argBaseList, cfgOptStanza, "test2");
 
@@ -175,7 +175,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test2/10-1"
+            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo/archive/test2/10-1"
                 "/0000000100000001': [13] Permission denied\n"
             "P00   WARN: [RepoInvalidError] unable to find a valid repository");
 
@@ -183,7 +183,7 @@ testRun(void)
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error",
             "103\n"
             "unable to find a valid repository\n"
-            "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test2/10-1/0000000100000001':"
+            "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo/archive/test2/10-1/0000000100000001':"
                 " [13] Permission denied",
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
@@ -314,7 +314,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple segments where some are missing or errored and mismatched repo");
 
-        hrnCfgArgKeyRawZ(argBaseList, cfgOptRepoPath, 2, TEST_PATH_REPO "2");
+        hrnCfgArgKeyRawZ(argBaseList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "0000000100000001000000FE");
@@ -380,10 +380,10 @@ testRun(void)
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
 
         #define TEST_WARN1                                                                                                         \
-            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"                     \
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"                     \
                 "/0000000100000001': [13] Permission denied"
         #define TEST_WARN2                                                                                                         \
-            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"                     \
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"                     \
                 "/0000000100000002': [13] Permission denied"
 
         TEST_RESULT_LOG(
@@ -455,7 +455,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn on invalid file");
 
-        hrnCfgArgKeyRawZ(argBaseList, cfgOptRepoPath, 3, TEST_PATH_REPO "3");
+        hrnCfgArgKeyRawZ(argBaseList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "000000010000000200000000");
@@ -540,9 +540,9 @@ testRun(void)
         hrnProtocolLocalShimUninstall();
 
         argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test2");
         strLstAddZ(argList, "0000000100000001000000FE");
@@ -573,8 +573,8 @@ testRun(void)
 
         // Arguments that must be included. Use raw config here because we need to keep the
         StringList *argBaseList = strLstNew();
-        hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argBaseList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argBaseList, cfgOptArchiveTimeout, "1");
 
@@ -605,16 +605,16 @@ testRun(void)
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
-        strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
         TEST_RESULT_LOG(
-            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "/archive/test1/archive.info' or '"
-                TEST_PATH_REPO "/archive/test1/archive.info.copy':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/archive/test1/archive.info' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/archive/test1/archive.info.copy' for"
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or '"
+                TEST_PATH "/repo/archive/test1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info.copy' for"
                 " read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
@@ -625,17 +625,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "00000001.history");
-        strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYHISTORY");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYHISTORY");
         strLstAddZ(argList, "--archive-async");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
         TEST_RESULT_LOG(
-            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "/archive/test1/archive.info' or '"
-                TEST_PATH_REPO "/archive/test1/archive.info.copy':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/archive/test1/archive.info' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/archive/test1/archive.info.copy' for"
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or '"
+                TEST_PATH "/repo/archive/test1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info.copy' for"
                 " read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
@@ -646,7 +646,7 @@ testRun(void)
         // Make sure the process times out when there is nothing to get
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argBaseList);
-        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
@@ -770,13 +770,13 @@ testRun(void)
             "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
 
         argBaseList = strLstNew();
-        hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argBaseList, cfgOptStanza, "test1");
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "01ABCDEF01ABCDEF01ABCDEF");
-        strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
@@ -899,7 +899,7 @@ testRun(void)
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "000000010000000100000001.partial");
-        strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
@@ -916,7 +916,7 @@ testRun(void)
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "00000001.history");
-        strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYHISTORY");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYHISTORY");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_INT(cmdArchiveGet(), 1, "get");
@@ -958,25 +958,25 @@ testRun(void)
 
         // Add encryption options
         argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH_REPO "-bogus");
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo-bogus");
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         strLstAddZ(argList, "01ABCDEF01ABCDEF01ABCDEF");
-        strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
         TEST_RESULT_LOG(
-            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info'"
-                " or '" TEST_PATH_REPO "-bogus/archive/test1/archive.info.copy':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info'"
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo-bogus/archive/test1/archive.info'"
+                " or '" TEST_PATH "/repo-bogus/archive/test1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo-bogus/archive/test1/archive.info'"
                 " for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info.copy'"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo-bogus/archive/test1/archive.info.copy'"
                 " for read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
@@ -1004,7 +1004,7 @@ testRun(void)
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
         TEST_RESULT_LOG(
-            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-2"
+            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo-bogus/archive/test1/10-2"
                 "/01ABCDEF01ABCDEF': [13] Permission denied\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
@@ -1018,9 +1018,9 @@ testRun(void)
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
         TEST_RESULT_LOG(
-            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-2"
+            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo-bogus/archive/test1/10-2"
                 "/01ABCDEF01ABCDEF': [13] Permission denied\n"
-            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test1/10-1"
+            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo/archive/test1/10-1"
                 "/01ABCDEF01ABCDEF': [13] Permission denied");
 
         HRN_STORAGE_MODE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-2");
@@ -1053,7 +1053,7 @@ testRun(void)
             "repo1: 10-2/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz [FormatError]"
                 " unexpected eof in compressed data\n"
             "repo2: 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz [FileOpenError]"
-                " unable to open file '" TEST_PATH_REPO "/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF"
+                " unable to open file '" TEST_PATH "/repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF"
                     "-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz' for read: [13] Permission denied");
 
         HRN_STORAGE_MODE(
@@ -1077,11 +1077,11 @@ testRun(void)
         TEST_TITLE("no segments to find with existing ok file");
 
         argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "10");
-        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "pg_wal/RECOVERYXLOG");

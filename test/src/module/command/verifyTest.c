@@ -27,7 +27,7 @@ testRun(void)
 
     StringList *argListBase = strLstNew();
     hrnCfgArgRawZ(argListBase, cfgOptStanza, "db");
-    hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH_REPO);
+    hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH "/repo");
 
     const char *fileContents = "acefile";
     uint64_t fileSize = 7;
@@ -254,7 +254,7 @@ testRun(void)
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/20181119-152138F/backup.manifest.copy'"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy'"
                 " for read\n"
             "P00  ERROR: [028]: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.2, system-id "
                 "6625592122879095702) is not in the backup.info history, skipping");
@@ -289,7 +289,7 @@ testRun(void)
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg system-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/20181119-152138F/backup.manifest' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00   WARN: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
             "P00  ERROR: [028]: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is "
                 "not in the backup.info history, skipping");
@@ -323,7 +323,7 @@ testRun(void)
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg db-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/20181119-152138F/backup.manifest' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00   WARN: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
             "P00  ERROR: [028]: '20181119-152138F' may not be recoverable - PG data (id 0, version 9.4, system-id "
                 "6625592122879095702) is not in the backup.info history, skipping");
@@ -334,13 +334,13 @@ testRun(void)
         backupResult.status = backupValid;
 
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE
+            storageRepoWrite(), TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE
             INFO_COPY_EXT, TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest copy");
 
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/20181119-152138F/backup.manifest' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
                 "<REPO:BACKUP>/20181119-152138F/backup.manifest.copy");
 
@@ -348,7 +348,7 @@ testRun(void)
         TEST_TITLE("current backup true");
 
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE,
+            storageRepoWrite(), TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE,
             TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest");
 
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
@@ -757,10 +757,10 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
                 "<REPO:BACKUP>/backup.info\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/backup.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/archive/db/archive.info' for read\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/archive/db/archive.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info.copy' for read\n"
             "P00  ERROR: [029]: No usable archive.info file");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -784,7 +784,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:BACKUP>/backup.info\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/archive/db/archive.info' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:ARCHIVE>/archive.info.copy\n"
             "P00  ERROR: [029]: No usable archive.info file");
@@ -828,8 +828,8 @@ testRun(void)
         HRN_STORAGE_REMOVE(storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, .comment = "remove archive.info.copy");
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/backup.info.copy' for read\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/archive/db/archive.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info.copy' for read\n"
             "P00   WARN: no archives or backups exist in the repo");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -841,8 +841,8 @@ testRun(void)
             .comment = "valid and matching archive.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/backup.info' for read\n"
-            "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/backup.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file");
     }
 
@@ -1039,7 +1039,7 @@ testRun(void)
 
         // Load Parameters - single non-default repo
         argList = strLstNew();
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
@@ -1171,22 +1171,22 @@ testRun(void)
                     "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
                 "P01  ERROR: [039]: invalid result "
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
-                    "local-1 shim protocol: unable to open file '" TEST_PATH_REPO "/archive/db/"
+                    "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db/"
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
                     " [13] Permission denied\n"
-                "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/20181119-152800F/backup.manifest' for read\n"
-                "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/20181119-152800F/backup.manifest.copy'"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest' for read\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest.copy'"
                     " for read\n"
                 "P00   WARN: manifest missing for '20181119-152800F' - backup may have expired\n"
-                "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/20181119-152810F/backup.manifest.copy'"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152810F/backup.manifest.copy'"
                     " for read\n"
                 "P00  ERROR: [028]: backup '20181119-152810F' manifest does not contain any target files to verify\n"
                 "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
                 "P01  ERROR: [028]: file missing '20181119-152900F_20181119-152909D/pg_data/testmissing'\n"
-                "P00   WARN: unable to open missing file '" TEST_PATH_REPO "/backup/db/20181119-153000F/backup.manifest' for read\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-153000F/backup.manifest' for read\n"
                 "P00   INFO: backup '20181119-153000F' appears to be in progress, skipping\n"
                 "P01  ERROR: [039]: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
-                    " unable to open file '" TEST_PATH_REPO "/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13]"
+                    " unable to open file '" TEST_PATH "/repo/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13]"
                     " Permission denied\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
