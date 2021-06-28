@@ -182,7 +182,7 @@ testRun(void)
             "user=\"" TEST_USER "\"\n"
 
         storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0700, .noParentCreate = true);
-
+// CSHANG should be storageTest - why have a readable/writeable?
         Storage *storagePg = storagePosixNewP(STRDEF(TEST_PATH "/pg"));
         Storage *storagePgWrite = storagePosixNewP(STRDEF(TEST_PATH "/pg"), .write = true);
 
@@ -190,64 +190,40 @@ testRun(void)
         TEST_TITLE("8.3 with custom exclusions and special file");
 
         // Version
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
-            BUFSTRDEF("8.3\n"));
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "8.3\n", .modeFile = 0400, .timeModified = 1565282100);
 
         // Create special file
-        const String *const specialFile = STRDEF(TEST_PATH "/pg/testpipe");
-        HRN_SYSTEM_FMT("mkfifo -m 666 %s", strZ(specialFile));
+        const String *const specialFile = STRDEF(TEST_PATH "/pg/testpipe"); // CSHANG should be able to remove this
+        HRN_SYSTEM_FMT("mkfifo -m 666 %s", TEST_PATH "/pg/testpipe");
 
         // Files that will always be ignored
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_BACKUPLABELOLD), .modeFile = 0400, .timeModified = 1565282101),
-            NULL);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_POSTMASTEROPTS), .modeFile = 0400, .timeModified = 1565282101),
-            NULL);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_POSTMASTERPID), .modeFile = 0400, .timeModified = 1565282101),
-            NULL);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_RECOVERYCONF), .modeFile = 0400, .timeModified = 1565282101),
-            NULL);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_RECOVERYDONE), .modeFile = 0400, .timeModified = 1565282101),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_BACKUPLABELOLD, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTEROPTS, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTERPID, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYCONF, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYDONE, .modeFile = 0400, .timeModified = 1565282101);
 
         // Directories that will always be ignored
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PREFIX_PGSQLTMP, .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PREFIX_PGSQLTMP "2", .mode = 0700);
+        // storagePathCreateP(storagePgWrite, STRDEF(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
+        // storagePathCreateP(storagePgWrite, STRDEF(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
 
         // Directories under which files will be ignored (some depending on the version)
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGDYNSHMEM "/" BOGUS_STR), .modeFile = 0400,
-           .timeModified = 1565282101), NULL);
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGNOTIFY "/" BOGUS_STR), .modeFile = 0400,
-           .timeModified = 1565282102), NULL);
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGREPLSLOT "/" BOGUS_STR), .modeFile = 0400,
-           .timeModified = 1565282103), NULL);
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSERIAL "/" BOGUS_STR), .modeFile = 0400,
-           .timeModified = 1565282104), NULL);
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSNAPSHOTS "/" BOGUS_STR), .modeFile = 0400,
-           .timeModified = 1565282105), BUFSTRDEF("test"));
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSTATTMP "/" BOGUS_STR), .modeFile = 0640,
-           .timeModified = 1565282106), NULL);
-        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSUBTRANS "/" BOGUS_STR), .modeFile = 0400,
-           .timeModified = 1565282107), NULL);
-
+        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGDYNSHMEM, .mode = 0700);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGDYNSHMEM "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGNOTIFY, .mode = 0700);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGNOTIFY "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282102);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGREPLSLOT, .mode = 0700);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGREPLSLOT "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282103);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGSERIAL, .mode = 0700);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSERIAL "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282104);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGSNAPSHOTS, .mode = 0700);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_PATH_PGSNAPSHOTS "/" BOGUS_STR, "test", .modeFile = 0400, .timeModified = 1565282105);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSTATTMP "/" BOGUS_STR, .modeFile = 0640, .timeModified = 1565282106);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGSUBTRANS, .mode = 0700);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSUBTRANS "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282107);
+// CSHANG STOPPED HERE
         // WAL directory not ignored when offline
         storagePathCreateP(storagePgWrite, STRDEF("pg_xlog"), .mode = 0700, .noParentCreate = true);
         storagePutP(
@@ -330,7 +306,7 @@ testRun(void)
             "P00   INFO: exclude contents of '" TEST_PATH "/pg/base' from backup using 'base/' exclusion\n"
             "P00   INFO: exclude '" TEST_PATH "/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion\n"
             "P00   WARN: exclude special file '" TEST_PATH "/pg/testpipe' from backup");
-
+// CSHANG - look at replacing this: TEST_PATH "/pg/testpipe"
         storageRemoveP(storageTest, specialFile, .errorOnMissing = true);
 
         // Set up for manifestNewBuild tests
