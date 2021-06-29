@@ -2592,7 +2592,7 @@ testRun(void)
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
         strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "--type=preserve");
         strLstAddZ(argList, "--link-map=pg_wal=../wal");
