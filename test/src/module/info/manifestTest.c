@@ -2060,7 +2060,7 @@ testRun(void)
 
         HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE, TEST_MANIFEST_CONTENT, .comment = "write main manifest");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
-        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check files loaded");
+        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
 
         TEST_RESULT_VOID(manifestFree(manifest), "free manifest");
         TEST_RESULT_VOID(manifestFree(NULL), "free null manifest");
