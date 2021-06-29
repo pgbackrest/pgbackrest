@@ -298,7 +298,8 @@ testRun(void)
             "P00   INFO: exclude '" TEST_PATH "/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion\n"
             "P00   WARN: exclude special file '" TEST_PATH "/pg/testpipe' from backup");
 
-        storageRemoveP(storageTest, STRDEF(TEST_PATH "/pg/testpipe"), .errorOnMissing = true);
+        TEST_RESULT_VOID(
+            storageRemoveP(storageTest, STRDEF(TEST_PATH "/pg/testpipe"), .errorOnMissing = true), "error if special file removed");
 
         // Set up for manifestNewBuild tests
         // -------------------------------------------------------------------------------------------------------------------------
@@ -449,10 +450,10 @@ testRun(void)
         // Tablespace 1
         HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.0_201008051/1", .mode = 0700);
         HRN_STORAGE_PUT_Z(
-                storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
+            storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
         HRN_STORAGE_PUT_Z(
-                storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0400,
-                .timeModified = 1565282115);
+            storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0400,
+            .timeModified = 1565282115);
 
         // Add tablespaceList with error (no name)
         VariantList *tablespaceList = varLstNew();
@@ -728,35 +729,23 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.4_201409291/1", .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/1", TEST_PATH "/pg/pg_tblspc/1") == -1, FileOpenError, "unable to create symlink");
         HRN_STORAGE_PUT_Z(
-                storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
-        storagePutP(
-            storageNewWriteP(
-                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm"), .modeFile = 0400,
-                .timeModified = 1565282115),
-            BUFSTRDEF("IGNORE_TEMP_RELATION"));
+            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
+        HRN_STORAGE_PUT_Z(
+            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0400,
+            .timeModified = 1565282115);
 
         // Add checksum-page files to exclude from checksum-page validation in database relation directories
-        storagePutP(
-            storageNewWriteP(
-                storagePgWrite, STRDEF(PG_PATH_BASE "/1/" PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282120),
-            NULL);
-        storagePutP(
-            storageNewWriteP(
-                storagePgWrite, STRDEF(PG_PATH_BASE "/1/" PG_FILE_PGFILENODEMAP), .modeFile = 0400, .timeModified = 1565282120),
-            NULL);
-        storagePutP(
-            storageNewWriteP(
-                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.4_201409291/1/" PG_FILE_PGVERSION), .modeFile = 0400,
-                .timeModified = 1565282120),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/" PG_FILE_PGVERSION, .modeFile = 0400, .timeModified = 1565282120);
+        HRN_STORAGE_PUT_EMPTY(
+            storagePgWrite, PG_PATH_BASE "/1/" PG_FILE_PGFILENODEMAP, .modeFile = 0400, .timeModified = 1565282120);
+        HRN_STORAGE_PUT_EMPTY(
+            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/" PG_FILE_PGVERSION, .modeFile = 0400, .timeModified = 1565282120);
 
         // Tablespace 2
         HRN_STORAGE_PATH_CREATE(storageTest, "ts/2/PG_9.4_201409291/1", .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/2", TEST_PATH "/pg/pg_tblspc/2") == -1, FileOpenError, "unable to create symlink");
-        storagePutP(
-            storageNewWriteP(
-                storagePgWrite, STRDEF("pg_tblspc/2/PG_9.4_201409291/1/16385"), .modeFile = 0400, .timeModified = 1565282115),
-            BUFSTRDEF("TESTDATA"));
+        HRN_STORAGE_PUT_Z(
+            storagePgWrite, "pg_tblspc/2/PG_9.4_201409291/1/16385", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
 
         // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
         TEST_ASSIGN(
@@ -841,17 +830,15 @@ testRun(void)
                 TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
-        storageRemoveP(storageTest, STRDEF("pg/pg_tblspc/2"), .errorOnMissing = true);
+        TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("pg/pg_tblspc/2"), .errorOnMissing = true), "error if link removed");
         HRN_STORAGE_PATH_REMOVE(storageTest, "ts/2", .recurse = true);
-        storageRemoveP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow"), .errorOnMissing = true);
+        TEST_STORAGE_EXISTS(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 12, online");
 
         // Version
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
-            BUFSTRDEF("12\n"));
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "12\n", .modeFile = 0400, .timeModified = 1565282100);
 
         // Tablespace link errors when correct verion not found
         TEST_ERROR(
@@ -864,17 +851,11 @@ testRun(void)
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
 
         // Write a file into the directory pointed to by pg_xlog - contents will not be ignored online or offline
-        storagePutP(
-            storageNewWriteP(storageTest, STRDEF("wal/000000020000000000000002"), .modeFile = 0400, .timeModified = 1565282100),
-            BUFSTRDEF("OLDWAL"));
+        HRN_STORAGE_PUT_Z(storageTest, "wal/000000020000000000000002", "OLDWAL", .modeFile = 0400, .timeModified = 1565282100);
 
         // Create backup_manifest and backup_manifest.tmp that will show up for PG12 but will be ignored in PG13
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_BACKUPMANIFEST), .modeFile = 0600, .timeModified = 1565282198),
-            BUFSTRDEF("MANIFEST"));
-        storagePutP(
-            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_BACKUPMANIFEST_TMP), .modeFile = 0600, .timeModified = 1565282199),
-            BUFSTRDEF("MANIFEST"));
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_BACKUPMANIFEST, "MANIFEST", .modeFile = 0600, .timeModified = 1565282198);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_BACKUPMANIFEST_TMP, "MANIFEST", .modeFile = 0600, .timeModified = 1565282199);
 
         // Test manifest - 'pg_data/pg_tblspc' will appear in manifest but 'pg_tblspc' will not (no links). Recovery signal files
         // and backup_label ignored. Old recovery files and pg_xlog are now just another file/directory and will not be ignored.
@@ -1041,13 +1022,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on file in pg_tblspc");
 
-        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somefile")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile");
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
-        storageRemoveP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somefile"));
+        TEST_STORAGE_EXISTS(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link that points to nothing");
