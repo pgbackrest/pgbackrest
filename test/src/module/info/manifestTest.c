@@ -1462,7 +1462,6 @@ testRun(void)
         Manifest *manifest = NULL;
 
         // Manifest with minimal features
-        // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             "[backup]\n"
@@ -1511,6 +1510,9 @@ testRun(void)
             "user=\"user1\"\n"
         );
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest move");
+
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
@@ -1518,28 +1520,29 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest - minimal features");
+
         TEST_ERROR(
             manifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
-        TEST_RESULT_STR_Z(manifestData(manifest)->backupLabel, "20190808-163540F", "    check manifest data");
+        TEST_RESULT_STR_Z(manifestData(manifest)->backupLabel, "20190808-163540F", "check manifest data");
 
-        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "somepass", "    check cipher subpass");
+        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "somepass", "check cipher subpass");
 
         TEST_RESULT_VOID(
-            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "    update target no change");
-        TEST_RESULT_VOID(
-            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2"), NULL), "    update target");
-        TEST_RESULT_STR_Z(
-            manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, "/path2", "    check target path");
-        TEST_RESULT_VOID(
-            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "    fix target path");
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "update target no change");
+        TEST_RESULT_VOID(manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2"), NULL), "update target");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, "/path2", "check target path");
+        TEST_RESULT_VOID(manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "fix target path");
 
         Buffer *contentSave = bufNew(0);
 
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "check save");
 
-        // Manifest with all features
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest - all features");
+
         #define TEST_MANIFEST_HEADER                                                                                               \
             "[backup]\n"                                                                                                           \
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
@@ -1732,6 +1735,8 @@ testRun(void)
         TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest complete");
+
         TEST_RESULT_VOID(
             manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
             "manifest complete without db");
@@ -1768,9 +1773,9 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
 
-        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), NULL, "    check cipher subpass");
+        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), NULL, "check cipher subpass");
         TEST_RESULT_VOID(manifestCipherSubPassSet(manifest, STRDEF("supersecret")), "cipher subpass set");
-        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "supersecret", "    check cipher subpass");
+        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "supersecret", "check cipher subpass");
 
         // Absolute target paths
         TEST_RESULT_STR_Z(manifestTargetPath(manifest, manifestTargetBase(manifest)), "/pg/base", "base target path");
@@ -1857,12 +1862,13 @@ testRun(void)
         manifestTargetRemove(manifest, STRDEF("pg_data/test2.sh"));
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest getters");
+
         // ManifestFile getters
         const ManifestFile *file = NULL;
-        TEST_ERROR(
-            manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
+        TEST_ERROR(manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
         TEST_ASSIGN(file, manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION")), "manifestFileFind()");
-        TEST_RESULT_STR_Z(file->name, "pg_data/PG_VERSION", "    find file");
+        TEST_RESULT_STR_Z(file->name, "pg_data/PG_VERSION", "find file");
         TEST_RESULT_STR_Z(
             manifestFileFindDefault(manifest, STRDEF("bogus"), file)->name, "pg_data/PG_VERSION",
             "manifestFileFindDefault() - return default");
@@ -1870,7 +1876,7 @@ testRun(void)
             manifestFileFind(manifest, STRDEF("pg_data/special-@#!$^&*()_+~`{}[]\\:;"))->name,
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;", "find special file");
         TEST_ASSIGN(file, manifestFileFindDefault(manifest, STRDEF("bogus"), NULL), "manifestFileFindDefault()");
-        TEST_RESULT_PTR(file, NULL, "    return default NULL");
+        TEST_RESULT_PTR(file, NULL, "return default NULL");
 
         TEST_RESULT_VOID(
             manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL),
@@ -1881,27 +1887,25 @@ testRun(void)
 
         // ManifestDb getters
         const ManifestDb *db = NULL;
-        TEST_ERROR(
-            manifestDbFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest db list");
+        TEST_ERROR(manifestDbFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest db list");
         TEST_ASSIGN(db, manifestDbFind(manifest, STRDEF("postgres")), "manifestDbFind()");
-        TEST_RESULT_STR_Z(db->name, "postgres", "    check name");
+        TEST_RESULT_STR_Z(db->name, "postgres", "check name");
         TEST_RESULT_STR_Z(
             manifestDbFindDefault(manifest, STRDEF("bogus"), db)->name, "postgres", "manifestDbFindDefault() - return default");
         TEST_RESULT_UINT(
             manifestDbFindDefault(manifest, STRDEF("template0"), db)->id, 12168, "manifestDbFindDefault() - return found");
         TEST_ASSIGN(db, manifestDbFindDefault(manifest, STRDEF("bogus"), NULL), "manifestDbFindDefault()");
-        TEST_RESULT_PTR(db, NULL, "    return default NULL");
+        TEST_RESULT_PTR(db, NULL, "return default NULL");
 
         // ManifestLink getters
         const ManifestLink *link = NULL;
-        TEST_ERROR(
-            manifestLinkFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest link list");
+        TEST_ERROR(manifestLinkFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest link list");
         TEST_ASSIGN(link, manifestLinkFind(manifest, STRDEF("pg_data/pg_stat")), "find link");
-        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "    no update");
-        TEST_RESULT_STR_Z(link->destination, "../pg_stat", "    check link");
-        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat2")), "    update");
-        TEST_RESULT_STR_Z(link->destination, "../pg_stat2", "    check link");
-        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "    fix link destination");
+        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "no update");
+        TEST_RESULT_STR_Z(link->destination, "../pg_stat", "check link");
+        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat2")), "update");
+        TEST_RESULT_STR_Z(link->destination, "../pg_stat2", "check link");
+        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "fix link destination");
         TEST_RESULT_STR_Z(
             manifestLinkFindDefault(manifest, STRDEF("bogus"), link)->name, "pg_data/pg_stat",
             "manifestLinkFindDefault() - return default");
@@ -1909,14 +1913,13 @@ testRun(void)
             manifestLinkFindDefault(manifest, STRDEF("pg_data/postgresql.conf"), link)->destination, "../pg_config/postgresql.conf",
             "manifestLinkFindDefault() - return found");
         TEST_ASSIGN(link, manifestLinkFindDefault(manifest, STRDEF("bogus"), NULL), "manifestLinkFindDefault()");
-        TEST_RESULT_PTR(link, NULL, "    return default NULL");
+        TEST_RESULT_PTR(link, NULL, "return default NULL");
 
         // ManifestPath getters
         const ManifestPath *path = NULL;
-        TEST_ERROR(
-            manifestPathFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest path list");
+        TEST_ERROR(manifestPathFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest path list");
         TEST_ASSIGN(path, manifestPathFind(manifest, STRDEF("pg_data")), "manifestPathFind()");
-        TEST_RESULT_STR_Z(path->name, "pg_data", "    check path");
+        TEST_RESULT_STR_Z(path->name, "pg_data", "check path");
         TEST_RESULT_STR_Z(
             manifestPathFindDefault(manifest, STRDEF("bogus"), path)->name, "pg_data",
             "manifestPathFindDefault() - return default");
@@ -1924,17 +1927,18 @@ testRun(void)
             manifestPathFindDefault(manifest, STRDEF("pg_data/base"), path)->group, "group2",
             "manifestPathFindDefault() - return found");
         TEST_ASSIGN(path, manifestPathFindDefault(manifest, STRDEF("bogus"), NULL), "manifestPathFindDefault()");
-        TEST_RESULT_PTR(path, NULL, "    return default NULL");
+        TEST_RESULT_PTR(path, NULL, "return default NULL");
 
         const ManifestTarget *target = NULL;
         TEST_ASSIGN(target, manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf")), "find target");
-        TEST_RESULT_VOID(
-            manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba2.conf")), "    update target file");
-        TEST_RESULT_STR_Z(target->file, "pg_hba2.conf", "    check target file");
-        TEST_RESULT_VOID(manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba.conf")), "    fix target file");
+        TEST_RESULT_VOID(manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba2.conf")), "update target file");
+        TEST_RESULT_STR_Z(target->file, "pg_hba2.conf", "check target file");
+        TEST_RESULT_VOID(manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba.conf")), "fix target file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("manifest remove");
 
         contentSave = bufNew(0);
-
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
 
         Buffer *contentCompare = harnessInfoChecksumZ
@@ -1953,7 +1957,7 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT
         );
 
-        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentCompare), "   check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentCompare), "check save");
 
         TEST_RESULT_VOID(manifestFileRemove(manifest, STRDEF("pg_data/PG_VERSION")), "remove file");
         TEST_ERROR(
@@ -1994,73 +1998,69 @@ testRun(void)
 
         // Also use this test to check that extra sections/keys are ignored using coverage.
         // -------------------------------------------------------------------------------------------------------------------------
-        const Buffer *content = harnessInfoChecksumZ
-        (
-            "[backup]\n"
-            "backup-label=\"20190808-163540F\"\n"
-            "backup-timestamp-copy-start=1565282141\n"
-            "backup-timestamp-start=1565282140\n"
-            "backup-timestamp-stop=1565282142\n"
-            "backup-type=\"full\"\n"
-            "ignore-key=\"ignore-value\"\n"
-            "\n"
-            "[backup:db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=1000000000000000094\n"
-            "db-version=\"9.4\"\n"
-            "ignore-key=\"ignore-value\"\n"
-            "\n"
-            "[backup:option]\n"
-            "ignore-key=\"ignore-value\"\n"
-            "option-archive-check=true\n"
-            "option-archive-copy=true\n"
-            "option-compress=false\n"
-            "option-hardlink=false\n"
-            "option-online=false\n"
-            "\n"
-            "[backup:target]\n"
-            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
-            "\n"
-            "[ignore-section]\n"
-            "ignore-key=\"ignore-value\"\n"
-            "\n"
-            "[target:file]\n"
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
-            "\n"
-            "[target:file:default]\n"
-            "group=\"group1\"\n"
-            "ignore-key=\"ignore-value\"\n"
-            "master=true\n"
-            "mode=\"0600\"\n"
+        #define TEST_MANIFEST_CONTENT                                                                                              \
+            "[backup]\n"                                                                                                           \
+            "backup-label=\"20190808-163540F\"\n"                                                                                  \
+            "backup-timestamp-copy-start=1565282141\n"                                                                             \
+            "backup-timestamp-start=1565282140\n"                                                                                  \
+            "backup-timestamp-stop=1565282142\n"                                                                                   \
+            "backup-type=\"full\"\n"                                                                                               \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201409291\n"                                                                                       \
+            "db-control-version=942\n"                                                                                             \
+            "db-id=1\n"                                                                                                            \
+            "db-system-id=1000000000000000094\n"                                                                                   \
+            "db-version=\"9.4\"\n"                                                                                                 \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "option-archive-check=true\n"                                                                                          \
+            "option-archive-copy=true\n"                                                                                           \
+            "option-compress=false\n"                                                                                              \
+            "option-hardlink=false\n"                                                                                              \
+            "option-online=false\n"                                                                                                \
+            "\n"                                                                                                                   \
+            "[backup:target]\n"                                                                                                    \
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"                                                                  \
+            "\n"                                                                                                                   \
+            "[ignore-section]\n"                                                                                                   \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "\n"                                                                                                                   \
+            "[target:file]\n"                                                                                                      \
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n" \
+            "\n"                                                                                                                   \
+            "[target:file:default]\n"                                                                                              \
+            "group=\"group1\"\n"                                                                                                   \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "master=true\n"                                                                                                        \
+            "mode=\"0600\"\n"                                                                                                      \
+            "user=\"user1\"\n"                                                                                                     \
+            "\n"                                                                                                                   \
+            "[target:link:default]\n"                                                                                              \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "\n"                                                                                                                   \
+            "[target:path]\n"                                                                                                      \
+            "pg_data={}\n"                                                                                                         \
+            "\n"                                                                                                                   \
+            "[target:path:default]\n"                                                                                              \
+            "group=\"group1\"\n"                                                                                                   \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "mode=\"0700\"\n"                                                                                                      \
             "user=\"user1\"\n"
-            "\n"
-            "[target:link:default]\n"
-            "ignore-key=\"ignore-value\"\n"
-            "\n"
-            "[target:path]\n"
-            "pg_data={}\n"
-            "\n"
-            "[target:path:default]\n"
-            "group=\"group1\"\n"
-            "ignore-key=\"ignore-value\"\n"
-            "mode=\"0700\"\n"
-            "user=\"user1\"\n"
-        );
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, STRDEF(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
+        HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_CONTENT, .comment = "write manifest copy");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
-        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
-        TEST_RESULT_STR_Z(manifestData(manifest)->backrestVersion, PROJECT_VERSION, "    check backrest version");
+        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
+        TEST_RESULT_STR_Z(manifestData(manifest)->backrestVersion, PROJECT_VERSION, "check backrest version");
 
-        storageRemoveP(storageTest, STRDEF(BACKUP_MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storageTest, BACKUP_MANIFEST_FILE INFO_COPY_EXT, .errorOnMissing = true);
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");
+        HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE, TEST_MANIFEST_CONTENT, .comment = "write main manifest");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
-        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
+        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check files loaded");
 
         TEST_RESULT_VOID(manifestFree(manifest), "free manifest");
         TEST_RESULT_VOID(manifestFree(NULL), "free null manifest");
