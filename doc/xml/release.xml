@@ -78,6 +78,9 @@
                             <github-pull-request id="1440"/>
                         </commit>
                         <commit subject="Add timeModified parameter to HRN_STORAGE_PUT() macro."/>
+                        <commit subject="Update info/manifest test to use standard patterns.">
+                            <github-pull-request id="1444"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
