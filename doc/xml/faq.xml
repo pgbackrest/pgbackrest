@@ -18,7 +18,7 @@
             <list-item>misconfigured <backrest/> configuration files</list-item>
             <list-item>network or permissions issue</list-item>
             <list-item>third party product (e.g. S3, Swift or Minio) configuration issue</list-item>
-            <list-item>large amount of WAL queueing to be archived</list-item>
+            <list-item>large amount of WAL queuing to be archived</list-item>
         </list>
 
         <p>It is advisable to:</p>

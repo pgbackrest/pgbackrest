@@ -181,7 +181,7 @@ testRun(void)
             "mode=\"0700\"\n"                                                                                                      \
             "user=\"" TEST_USER "\"\n"
 
-        HRN_STORAGE_PATH_CREATE(storageTest, "pg", .mode = 0700);
+        storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0700, .noParentCreate = true);
 
         Storage *storagePg = storagePosixNewP(STRDEF(TEST_PATH "/pg"));
         Storage *storagePgWrite = storagePosixNewP(STRDEF(TEST_PATH "/pg"), .write = true);
@@ -190,54 +190,87 @@ testRun(void)
         TEST_TITLE("8.3 with custom exclusions and special file");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "8.3\n", .modeFile = 0400, .timeModified = 1565282100);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("8.3\n"));
 
         // Create special file
-        HRN_SYSTEM_FMT("mkfifo -m 666 %s", TEST_PATH "/pg/testpipe");
+        const String *const specialFile = STRDEF(TEST_PATH "/pg/testpipe");
+        HRN_SYSTEM_FMT("mkfifo -m 666 %s", strZ(specialFile));
 
         // Files that will always be ignored
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_BACKUPLABELOLD, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTEROPTS, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTERPID, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYCONF, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYDONE, .modeFile = 0400, .timeModified = 1565282101);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_BACKUPLABELOLD), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_POSTMASTEROPTS), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_POSTMASTERPID), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_RECOVERYCONF), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_RECOVERYDONE), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
 
         // Directories that will always be ignored
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PREFIX_PGSQLTMP, .mode = 0700);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PREFIX_PGSQLTMP "2", .mode = 0700);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
 
         // Directories under which files will be ignored (some depending on the version)
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGDYNSHMEM, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGDYNSHMEM "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGNOTIFY, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGNOTIFY "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282102);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGREPLSLOT, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGREPLSLOT "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282103);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGSERIAL, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSERIAL "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282104);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGSNAPSHOTS, .mode = 0700);
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_PATH_PGSNAPSHOTS "/" BOGUS_STR, "test", .modeFile = 0400, .timeModified = 1565282105);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSTATTMP "/" BOGUS_STR, .modeFile = 0640, .timeModified = 1565282106);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGSUBTRANS, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSUBTRANS "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282107);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGDYNSHMEM "/" BOGUS_STR), .modeFile = 0400,
+           .timeModified = 1565282101), NULL);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGNOTIFY "/" BOGUS_STR), .modeFile = 0400,
+           .timeModified = 1565282102), NULL);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGREPLSLOT "/" BOGUS_STR), .modeFile = 0400,
+           .timeModified = 1565282103), NULL);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSERIAL "/" BOGUS_STR), .modeFile = 0400,
+           .timeModified = 1565282104), NULL);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSNAPSHOTS "/" BOGUS_STR), .modeFile = 0400,
+           .timeModified = 1565282105), BUFSTRDEF("test"));
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSTATTMP "/" BOGUS_STR), .modeFile = 0640,
+           .timeModified = 1565282106), NULL);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSUBTRANS "/" BOGUS_STR), .modeFile = 0400,
+           .timeModified = 1565282107), NULL);
 
         // WAL directory not ignored when offline
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_xlog", .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_xlog/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282108);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_xlog/archive_status", .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_xlog/archive_status/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282108);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_xlog"), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF("pg_xlog/" BOGUS_STR), .modeFile = 0400,
+           .timeModified = 1565282108), NULL);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_xlog/archive_status"), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF("pg_xlog/archive_status/" BOGUS_STR), .modeFile = 0400,
+           .timeModified = 1565282108), NULL);
 
         // global directory
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_GLOBAL, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".1");
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow", .modeFile = 0400, .timeModified = 1565282114);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/t1_1", .modeFile = 0400, .timeModified = 1565282114);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_GLOBAL), .mode = 0700, .noParentCreate = true);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT)), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".1")), NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow"), .modeFile = 0400,
+            .timeModified = 1565282114), NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/t1_1"), .modeFile = 0400, .timeModified = 1565282114), NULL);
 
         // base/1 directory
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_BASE, .mode = 0700);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_BASE "/1", .mode = 0700);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_BASE "/1"), .mode = 0700, .noParentCreate = true);
 
         StringList *exclusionList = strLstNew();
         strLstAddZ(exclusionList, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT);
@@ -298,61 +331,73 @@ testRun(void)
             "P00   INFO: exclude '" TEST_PATH "/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion\n"
             "P00   WARN: exclude special file '" TEST_PATH "/pg/testpipe' from backup");
 
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, STRDEF(TEST_PATH "/pg/testpipe"), .errorOnMissing = true), "error if special file removed");
+        storageRemoveP(storageTest, specialFile, .errorOnMissing = true);
 
         // Set up for manifestNewBuild tests
         // -------------------------------------------------------------------------------------------------------------------------
         // Temp relations to ignore
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/t1_1", .modeFile = 0400, .timeModified = 1565282113);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/t1_1.1", .modeFile = 0400, .timeModified = 1565282113);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/t8888888_8888888_vm", .modeFile = 0400, .timeModified = 1565282113);
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/t8888888_8888888_vm.999999", .modeFile = 0400, .timeModified = 1565282113);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1"), .modeFile = 0400,
+           .timeModified = 1565282113), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1.1"), .modeFile = 0400,
+           .timeModified = 1565282113),  NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm"), .modeFile = 0400,
+           .timeModified = 1565282113),  NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t8888888_8888888_vm.999999"), .modeFile = 0400,
+           .timeModified = 1565282113),  NULL);
 
         // Unlogged relations (pgVersion > 9.1)
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555", .modeFile = 0400, .timeModified = 1565282114,
-            .comment = "skip file because there is an _init");
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_fsm", .modeFile = 0400, .timeModified = 1565282114,
-            .comment = "skip file because there is an _init");
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_vm.1", .modeFile = 0400, .timeModified = 1565282114,
-            .comment = "skip file because there is an _init");
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_init", .modeFile = 0400, .timeModified = 1565282114,
-            .comment = "do not skip _init");
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_init.1", .modeFile = 0400, .timeModified = 1565282114,
-            .comment = "do not skip _init with segment");
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_vm.1_vm", .modeFile = 0400, .timeModified = 1565282114,
-            .comment = "do not skip files that do not have valid endings as we are not sure what they are");
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // skip file because there is an _init
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_fsm"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // skip file because there is an _init
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_vm.1"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // skip file because there is an _init
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_init"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // do not skip _init
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_init.1"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // do not skip _init with segment
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/555_vm.1_vm"), .modeFile = 0400, .timeModified = 1565282114),
+            NULL); // do not skip files that do not have valid endings as we are not sure what they are
 
         // Config directory and file links
-        HRN_STORAGE_PATH_CREATE(storageTest, "config", .mode = 0700);
+        storagePathCreateP(storageTest, STRDEF("config"), .mode = 0700);
         THROW_ON_SYS_ERROR(
             symlink("../config/postgresql.conf", TEST_PATH "/pg/postgresql.conf") == -1, FileOpenError, "unable to create symlink");
-        HRN_STORAGE_PUT_Z(storageTest, "config/postgresql.conf", "POSTGRESQLCONF", .modeFile = 0400, .timeModified = 1565282116);
+        storagePutP(
+            storageNewWriteP(storageTest, STRDEF("config/postgresql.conf"), .modeFile = 0400, .timeModified = 1565282116),
+            BUFSTRDEF("POSTGRESQLCONF"));
         THROW_ON_SYS_ERROR(
             symlink("../config/pg_hba.conf", TEST_PATH "/pg/pg_hba.conf") == -1, FileOpenError, "unable to create symlink");
-        HRN_STORAGE_PUT_Z(storageTest, "config/pg_hba.conf", "PGHBACONF", .modeFile = 0400, .timeModified = 1565282117);
+        storagePutP(
+            storageNewWriteP(storageTest, STRDEF("config/pg_hba.conf"), .modeFile = 0400, .timeModified = 1565282117),
+            BUFSTRDEF("PGHBACONF"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 8.4, online");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "8.4\n", .modeFile = 0400, .timeModified = 1565282100);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("8.4\n"));
 
         // Tablespace 1 (old tablespace dir format)
-        HRN_STORAGE_PATH_CREATE(storageTest, "ts/1", .mode = 0777);
-        HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/1", .mode = 0700);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC, .mode = 0700);
+        storagePathCreateP(storageTest, STRDEF("ts/1"), .mode = 0777);
+        storagePathCreateP(storageTest, STRDEF("ts/1/1"), .mode = 0700);
+        storagePathCreateP(storagePgWrite, MANIFEST_TARGET_PGTBLSPC_STR, .mode = 0700, .noParentCreate = true);
         THROW_ON_SYS_ERROR(symlink("../../ts/1", TEST_PATH "/pg/pg_tblspc/1") == -1, FileOpenError, "unable to create symlink");
-        HRN_STORAGE_PUT_Z(storagePgWrite, "pg_tblspc/1/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
-        HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/1/1/t123_123_fsm", "TEMP_RELATION", .modeFile = 0400, .timeModified = 1565282115);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_tblspc/1/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_tblspc/1/1/t123_123_fsm"), .modeFile = 0400, .timeModified = 1565282115),
+            BUFSTRDEF("TEMP_RELATION"));
 
         // Test manifest - mode stored for shared cluster tablespace dir, pg_xlog contents ignored because online
         TEST_ASSIGN(
@@ -429,31 +474,38 @@ testRun(void)
             "check manifest");
 
         // Remove directory
-        HRN_STORAGE_PATH_REMOVE(storageTest, "ts/1/1", .recurse = true);
+        storagePathRemoveP(storageTest, STRDEF("ts/1/1"), .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 9.0");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.0\n", .modeFile = 0400, .timeModified = 1565282100);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("9.0\n"));
 
         // Make 'pg_xlog/archive_status' a link (if other links in the pg_xlog dir (should not be), they will be followed and added
-        // when online but archive_status (and pg_xlog), whether a link of not, will will only be followed if offline)
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite, "pg_xlog/archive_status", .recurse = true);
-        HRN_STORAGE_PATH_CREATE(storageTest, "archivestatus", .mode = 0777);
+        // when online but archive_status (and pg_xlog), whether a link of not, will only be followed if offline)
+        storagePathRemoveP(storagePgWrite, STRDEF("pg_xlog/archive_status"), .recurse = true);
+        storagePathCreateP(storageTest, STRDEF("archivestatus"), .mode = 0777);
         THROW_ON_SYS_ERROR(
             symlink("../../archivestatus", TEST_PATH "/pg/pg_xlog/archive_status") == -1, FileOpenError,
             "unable to create symlink");
-        HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_xlog/archive_status/" BOGUS_STR, "TESTDATA", .modeFile = 0400, .timeModified = 1565282120);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_xlog/archive_status/" BOGUS_STR), .modeFile = 0400, .timeModified = 1565282120),
+            BUFSTRDEF("TESTDATA"));
 
         // Tablespace 1
-        HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.0_201008051/1", .mode = 0700);
-        HRN_STORAGE_PUT_Z(
-            storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
-        HRN_STORAGE_PUT_Z(
-            storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0400,
-            .timeModified = 1565282115);
+        storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.0_201008051/1"), .mode = 0700);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.0_201008051/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.0_201008051/1/t123_123_fsm"), .modeFile = 0400,
+               .timeModified = 1565282115), BUFSTRDEF("IGNORE_TEMP_RELATION"));
 
         // Add tablespaceList with error (no name)
         VariantList *tablespaceList = varLstNew();
@@ -548,21 +600,25 @@ testRun(void)
 
         // Remove symlinks and directories
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
-        HRN_STORAGE_PATH_REMOVE(storageTest,"ts/1/PG_9.0_201008051", .recurse = true);
+        storagePathRemoveP(storageTest, STRDEF("ts/1/PG_9.0_201008051"), .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 9.1, online");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.1\n", .modeFile = 0400, .timeModified = 1565282100);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("9.1\n"));
 
         // Create a path other than archive_status under pg_xlog for code coverage
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_xlog/somepath", .mode = 0700);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_xlog/somepath"), .mode = 0700, .noParentCreate = true);
 
         // Add data to pg_wal to ensure it is not ignored (online or offline) until >= pgVersion 10 (file in pg_xlog log is ignored)
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_wal", .mode = 0700);
-        HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_wal/000000010000000000000001", "WALDATA", .modeFile = 0400, .timeModified = 1565282120);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_wal"), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_wal/000000010000000000000001"), .modeFile = 0400, .timeModified = 1565282120),
+            BUFSTRDEF("WALDATA"));
 
         // Test manifest - temp tables, unlogged tables, pg_serial and pg_xlog files ignored
         TEST_ASSIGN(
@@ -627,21 +683,25 @@ testRun(void)
             "check manifest");
 
         // Remove pg_xlog and the directory that archive_status link pointed to
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite, "pg_xlog", .recurse = true);
-        HRN_STORAGE_PATH_REMOVE(storageTest, "archivestatus", .recurse = true);
+        storagePathRemoveP(storagePgWrite, STRDEF("pg_xlog"), .recurse = true);
+        storagePathRemoveP(storageTest, STRDEF("archivestatus"), .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 9.2");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.2\n", .modeFile = 0400, .timeModified = 1565282100);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("9.2\n"));
 
         // create pg_xlog/wal as a link
-        HRN_STORAGE_PATH_CREATE(storageTest, "wal", .mode = 0700);
+        storagePathCreateP(storageTest, STRDEF("wal"), .mode = 0700);
         THROW_ON_SYS_ERROR(symlink(TEST_PATH "/wal", TEST_PATH "/pg/pg_xlog") == -1, FileOpenError, "unable to create symlink");
 
         // Files to conditionally ignore before 9.4
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTGRESQLAUTOCONFTMP, .modeFile = 0400, .timeModified = 1565282101);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_POSTGRESQLAUTOCONFTMP), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
 
         // Test manifest - pg_snapshots files ignored
         TEST_ASSIGN(
@@ -705,47 +765,81 @@ testRun(void)
         TEST_TITLE("manifest with all features - 9.4, checksum-page");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.4\n", .modeFile = 0400, .timeModified = 1565282100);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("9.4\n"));
 
         // Put a pgcontrol (always master:true)
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .modeFile = 0400, .timeModified = 1565282101);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
 
         // pg_clog pgVersion < 10 master:false (pg_xact pgVersion < 10 master:true), pg_multixact always master:false
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGMULTIXACT, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGMULTIXACT "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_clog", .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_clog/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282121);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_xact", .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_xact/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282122);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGMULTIXACT), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF(PG_PATH_PGMULTIXACT "/" BOGUS_STR), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_clog"), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_clog/" BOGUS_STR), .modeFile = 0400, .timeModified = 1565282121),
+            NULL);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_xact"), .mode = 0700, .noParentCreate = true);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_xact/" BOGUS_STR), .modeFile = 0400, .timeModified = 1565282122),
+            NULL);
 
         // Files to capture in version < 12 but ignore >= 12 (code coverage)
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYSIGNAL, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_STANDBYSIGNAL, .modeFile = 0400, .timeModified = 1565282101);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_RECOVERYSIGNAL), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_STANDBYSIGNAL), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
 
         // Files to capture in version < 9.6 but ignore >= 9.6 (code coverage)
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_BACKUPLABEL, .modeFile = 0400, .timeModified = 1565282101);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_BACKUPLABEL), .modeFile = 0400, .timeModified = 1565282101),
+            NULL);
 
         // Tablespace 1
-        HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.4_201409291/1", .mode = 0700);
+        storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.4_201409291/1"), .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/1", TEST_PATH "/pg/pg_tblspc/1") == -1, FileOpenError, "unable to create symlink");
-        HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
-        HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0400,
-            .timeModified = 1565282115);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.4_201409291/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm"), .modeFile = 0400,
+                .timeModified = 1565282115),
+            BUFSTRDEF("IGNORE_TEMP_RELATION"));
 
         // Add checksum-page files to exclude from checksum-page validation in database relation directories
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/" PG_FILE_PGVERSION, .modeFile = 0400, .timeModified = 1565282120);
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/" PG_FILE_PGFILENODEMAP, .modeFile = 0400, .timeModified = 1565282120);
-        HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/" PG_FILE_PGVERSION, .modeFile = 0400, .timeModified = 1565282120);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF(PG_PATH_BASE "/1/" PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282120),
+            NULL);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF(PG_PATH_BASE "/1/" PG_FILE_PGFILENODEMAP), .modeFile = 0400, .timeModified = 1565282120),
+            NULL);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.4_201409291/1/" PG_FILE_PGVERSION), .modeFile = 0400,
+                .timeModified = 1565282120),
+            NULL);
 
         // Tablespace 2
-        HRN_STORAGE_PATH_CREATE(storageTest, "ts/2/PG_9.4_201409291/1", .mode = 0700);
+        storagePathCreateP(storageTest, STRDEF("ts/2/PG_9.4_201409291/1"), .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/2", TEST_PATH "/pg/pg_tblspc/2") == -1, FileOpenError, "unable to create symlink");
-        HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/2/PG_9.4_201409291/1/16385", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
+        storagePutP(
+            storageNewWriteP(
+                storagePgWrite, STRDEF("pg_tblspc/2/PG_9.4_201409291/1/16385"), .modeFile = 0400, .timeModified = 1565282115),
+            BUFSTRDEF("TESTDATA"));
 
         // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
         TEST_ASSIGN(
@@ -830,17 +924,19 @@ testRun(void)
                 TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
-        TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("pg/pg_tblspc/2"), .errorOnMissing = true), "error if link removed");
-        HRN_STORAGE_PATH_REMOVE(storageTest, "ts/2", .recurse = true);
-        TEST_STORAGE_EXISTS(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow", .remove = true);
+        storageRemoveP(storageTest, STRDEF("pg/pg_tblspc/2"), .errorOnMissing = true);
+        storagePathRemoveP(storageTest, STRDEF("ts/2"), .recurse = true);
+        storageRemoveP(storagePgWrite, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow"), .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 12, online");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "12\n", .modeFile = 0400, .timeModified = 1565282100);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("12\n"));
 
-        // Tablespace link errors when correct verion not found
+        // Tablespace link errors when correct version not found
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), false, false, NULL, NULL),
             FileOpenError,
@@ -851,11 +947,20 @@ testRun(void)
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
 
         // Write a file into the directory pointed to by pg_xlog - contents will not be ignored online or offline
-        HRN_STORAGE_PUT_Z(storageTest, "wal/000000020000000000000002", "OLDWAL", .modeFile = 0400, .timeModified = 1565282100);
+        storagePutP(
+            storageNewWriteP(storageTest, STRDEF("wal/000000020000000000000002"), .modeFile = 0400, .timeModified = 1565282100),
+            BUFSTRDEF("OLDWAL"));
+
+        // create pg_xlog/wal as a link
+        storagePathCreateP(storageTest, STRDEF("wal"), .mode = 0700);
 
         // Create backup_manifest and backup_manifest.tmp that will show up for PG12 but will be ignored in PG13
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_BACKUPMANIFEST, "MANIFEST", .modeFile = 0600, .timeModified = 1565282198);
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_BACKUPMANIFEST_TMP, "MANIFEST", .modeFile = 0600, .timeModified = 1565282199);
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_BACKUPMANIFEST), .modeFile = 0600, .timeModified = 1565282198),
+            BUFSTRDEF("MANIFEST"));
+        storagePutP(
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_BACKUPMANIFEST_TMP), .modeFile = 0600, .timeModified = 1565282199),
+            BUFSTRDEF("MANIFEST"));
 
         // Test manifest - 'pg_data/pg_tblspc' will appear in manifest but 'pg_tblspc' will not (no links). Recovery signal files
         // and backup_label ignored. Old recovery files and pg_xlog are now just another file/directory and will not be ignored.
@@ -1011,24 +1116,24 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on path in pg_tblspc");
 
-        HRN_STORAGE_PATH_CREATE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir", .mode = 0700);
+        storagePathCreateP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somedir"), .mode = 0700, .noParentCreate = true);
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
 
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir");
+        storagePathRemoveP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somedir"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on file in pg_tblspc");
 
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile");
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somefile")), NULL);
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
-        TEST_STORAGE_EXISTS(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile", .remove = true);
+        storageRemoveP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somefile"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link that points to nothing");
@@ -1044,7 +1149,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to a link");
 
-        HRN_STORAGE_PATH_CREATE(storageTest, "linktestdir", .mode = 0777);
+        storagePathCreateP(storageTest, STRDEF("linktestdir"), .mode = 0777);
         THROW_ON_SYS_ERROR(
             symlink(TEST_PATH "/linktestdir", TEST_PATH "/linktest") == -1, FileOpenError, "unable to create symlink");
         THROW_ON_SYS_ERROR(
@@ -1462,6 +1567,7 @@ testRun(void)
         Manifest *manifest = NULL;
 
         // Manifest with minimal features
+        // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             "[backup]\n"
@@ -1510,9 +1616,6 @@ testRun(void)
             "user=\"user1\"\n"
         );
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest move");
-
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
@@ -1520,29 +1623,28 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest - minimal features");
-
         TEST_ERROR(
             manifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
-        TEST_RESULT_STR_Z(manifestData(manifest)->backupLabel, "20190808-163540F", "check manifest data");
+        TEST_RESULT_STR_Z(manifestData(manifest)->backupLabel, "20190808-163540F", "    check manifest data");
 
-        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "somepass", "check cipher subpass");
+        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "somepass", "    check cipher subpass");
 
         TEST_RESULT_VOID(
-            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "update target no change");
-        TEST_RESULT_VOID(manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2"), NULL), "update target");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, "/path2", "check target path");
-        TEST_RESULT_VOID(manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "fix target path");
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "    update target no change");
+        TEST_RESULT_VOID(
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/path2"), NULL), "    update target");
+        TEST_RESULT_STR_Z(
+            manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, "/path2", "    check target path");
+        TEST_RESULT_VOID(
+            manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "    fix target path");
 
         Buffer *contentSave = bufNew(0);
 
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
-        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
 
+        // Manifest with all features
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest - all features");
-
         #define TEST_MANIFEST_HEADER                                                                                               \
             "[backup]\n"                                                                                                           \
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
@@ -1735,8 +1837,6 @@ testRun(void)
         TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest complete");
-
         TEST_RESULT_VOID(
             manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
             "manifest complete without db");
@@ -1773,9 +1873,9 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
 
-        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), NULL, "check cipher subpass");
+        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), NULL, "    check cipher subpass");
         TEST_RESULT_VOID(manifestCipherSubPassSet(manifest, STRDEF("supersecret")), "cipher subpass set");
-        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "supersecret", "check cipher subpass");
+        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "supersecret", "    check cipher subpass");
 
         // Absolute target paths
         TEST_RESULT_STR_Z(manifestTargetPath(manifest, manifestTargetBase(manifest)), "/pg/base", "base target path");
@@ -1862,13 +1962,12 @@ testRun(void)
         manifestTargetRemove(manifest, STRDEF("pg_data/test2.sh"));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest getters");
-
         // ManifestFile getters
         const ManifestFile *file = NULL;
-        TEST_ERROR(manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
+        TEST_ERROR(
+            manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
         TEST_ASSIGN(file, manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION")), "manifestFileFind()");
-        TEST_RESULT_STR_Z(file->name, "pg_data/PG_VERSION", "find file");
+        TEST_RESULT_STR_Z(file->name, "pg_data/PG_VERSION", "    find file");
         TEST_RESULT_STR_Z(
             manifestFileFindDefault(manifest, STRDEF("bogus"), file)->name, "pg_data/PG_VERSION",
             "manifestFileFindDefault() - return default");
@@ -1876,7 +1975,7 @@ testRun(void)
             manifestFileFind(manifest, STRDEF("pg_data/special-@#!$^&*()_+~`{}[]\\:;"))->name,
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;", "find special file");
         TEST_ASSIGN(file, manifestFileFindDefault(manifest, STRDEF("bogus"), NULL), "manifestFileFindDefault()");
-        TEST_RESULT_PTR(file, NULL, "return default NULL");
+        TEST_RESULT_PTR(file, NULL, "    return default NULL");
 
         TEST_RESULT_VOID(
             manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL),
@@ -1887,25 +1986,27 @@ testRun(void)
 
         // ManifestDb getters
         const ManifestDb *db = NULL;
-        TEST_ERROR(manifestDbFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest db list");
+        TEST_ERROR(
+            manifestDbFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest db list");
         TEST_ASSIGN(db, manifestDbFind(manifest, STRDEF("postgres")), "manifestDbFind()");
-        TEST_RESULT_STR_Z(db->name, "postgres", "check name");
+        TEST_RESULT_STR_Z(db->name, "postgres", "    check name");
         TEST_RESULT_STR_Z(
             manifestDbFindDefault(manifest, STRDEF("bogus"), db)->name, "postgres", "manifestDbFindDefault() - return default");
         TEST_RESULT_UINT(
             manifestDbFindDefault(manifest, STRDEF("template0"), db)->id, 12168, "manifestDbFindDefault() - return found");
         TEST_ASSIGN(db, manifestDbFindDefault(manifest, STRDEF("bogus"), NULL), "manifestDbFindDefault()");
-        TEST_RESULT_PTR(db, NULL, "return default NULL");
+        TEST_RESULT_PTR(db, NULL, "    return default NULL");
 
         // ManifestLink getters
         const ManifestLink *link = NULL;
-        TEST_ERROR(manifestLinkFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest link list");
+        TEST_ERROR(
+            manifestLinkFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest link list");
         TEST_ASSIGN(link, manifestLinkFind(manifest, STRDEF("pg_data/pg_stat")), "find link");
-        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "no update");
-        TEST_RESULT_STR_Z(link->destination, "../pg_stat", "check link");
-        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat2")), "update");
-        TEST_RESULT_STR_Z(link->destination, "../pg_stat2", "check link");
-        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "fix link destination");
+        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "    no update");
+        TEST_RESULT_STR_Z(link->destination, "../pg_stat", "    check link");
+        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat2")), "    update");
+        TEST_RESULT_STR_Z(link->destination, "../pg_stat2", "    check link");
+        TEST_RESULT_VOID(manifestLinkUpdate(manifest, STRDEF("pg_data/pg_stat"), STRDEF("../pg_stat")), "    fix link destination");
         TEST_RESULT_STR_Z(
             manifestLinkFindDefault(manifest, STRDEF("bogus"), link)->name, "pg_data/pg_stat",
             "manifestLinkFindDefault() - return default");
@@ -1913,13 +2014,14 @@ testRun(void)
             manifestLinkFindDefault(manifest, STRDEF("pg_data/postgresql.conf"), link)->destination, "../pg_config/postgresql.conf",
             "manifestLinkFindDefault() - return found");
         TEST_ASSIGN(link, manifestLinkFindDefault(manifest, STRDEF("bogus"), NULL), "manifestLinkFindDefault()");
-        TEST_RESULT_PTR(link, NULL, "return default NULL");
+        TEST_RESULT_PTR(link, NULL, "    return default NULL");
 
         // ManifestPath getters
         const ManifestPath *path = NULL;
-        TEST_ERROR(manifestPathFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest path list");
+        TEST_ERROR(
+            manifestPathFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest path list");
         TEST_ASSIGN(path, manifestPathFind(manifest, STRDEF("pg_data")), "manifestPathFind()");
-        TEST_RESULT_STR_Z(path->name, "pg_data", "check path");
+        TEST_RESULT_STR_Z(path->name, "pg_data", "    check path");
         TEST_RESULT_STR_Z(
             manifestPathFindDefault(manifest, STRDEF("bogus"), path)->name, "pg_data",
             "manifestPathFindDefault() - return default");
@@ -1927,18 +2029,17 @@ testRun(void)
             manifestPathFindDefault(manifest, STRDEF("pg_data/base"), path)->group, "group2",
             "manifestPathFindDefault() - return found");
         TEST_ASSIGN(path, manifestPathFindDefault(manifest, STRDEF("bogus"), NULL), "manifestPathFindDefault()");
-        TEST_RESULT_PTR(path, NULL, "return default NULL");
+        TEST_RESULT_PTR(path, NULL, "    return default NULL");
 
         const ManifestTarget *target = NULL;
         TEST_ASSIGN(target, manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf")), "find target");
-        TEST_RESULT_VOID(manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba2.conf")), "update target file");
-        TEST_RESULT_STR_Z(target->file, "pg_hba2.conf", "check target file");
-        TEST_RESULT_VOID(manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba.conf")), "fix target file");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest remove");
+        TEST_RESULT_VOID(
+            manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba2.conf")), "    update target file");
+        TEST_RESULT_STR_Z(target->file, "pg_hba2.conf", "    check target file");
+        TEST_RESULT_VOID(manifestTargetUpdate(manifest, target->name, target->path, STRDEF("pg_hba.conf")), "    fix target file");
 
         contentSave = bufNew(0);
+
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
 
         Buffer *contentCompare = harnessInfoChecksumZ
@@ -1957,7 +2058,7 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT
         );
 
-        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentCompare), "check save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentCompare), "   check save");
 
         TEST_RESULT_VOID(manifestFileRemove(manifest, STRDEF("pg_data/PG_VERSION")), "remove file");
         TEST_ERROR(
@@ -1998,69 +2099,73 @@ testRun(void)
 
         // Also use this test to check that extra sections/keys are ignored using coverage.
         // -------------------------------------------------------------------------------------------------------------------------
-        #define TEST_MANIFEST_CONTENT                                                                                              \
-            "[backup]\n"                                                                                                           \
-            "backup-label=\"20190808-163540F\"\n"                                                                                  \
-            "backup-timestamp-copy-start=1565282141\n"                                                                             \
-            "backup-timestamp-start=1565282140\n"                                                                                  \
-            "backup-timestamp-stop=1565282142\n"                                                                                   \
-            "backup-type=\"full\"\n"                                                                                               \
-            "ignore-key=\"ignore-value\"\n"                                                                                        \
-            "\n"                                                                                                                   \
-            "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201409291\n"                                                                                       \
-            "db-control-version=942\n"                                                                                             \
-            "db-id=1\n"                                                                                                            \
-            "db-system-id=1000000000000000094\n"                                                                                   \
-            "db-version=\"9.4\"\n"                                                                                                 \
-            "ignore-key=\"ignore-value\"\n"                                                                                        \
-            "\n"                                                                                                                   \
-            "[backup:option]\n"                                                                                                    \
-            "ignore-key=\"ignore-value\"\n"                                                                                        \
-            "option-archive-check=true\n"                                                                                          \
-            "option-archive-copy=true\n"                                                                                           \
-            "option-compress=false\n"                                                                                              \
-            "option-hardlink=false\n"                                                                                              \
-            "option-online=false\n"                                                                                                \
-            "\n"                                                                                                                   \
-            "[backup:target]\n"                                                                                                    \
-            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"                                                                  \
-            "\n"                                                                                                                   \
-            "[ignore-section]\n"                                                                                                   \
-            "ignore-key=\"ignore-value\"\n"                                                                                        \
-            "\n"                                                                                                                   \
-            "[target:file]\n"                                                                                                      \
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n" \
-            "\n"                                                                                                                   \
-            "[target:file:default]\n"                                                                                              \
-            "group=\"group1\"\n"                                                                                                   \
-            "ignore-key=\"ignore-value\"\n"                                                                                        \
-            "master=true\n"                                                                                                        \
-            "mode=\"0600\"\n"                                                                                                      \
-            "user=\"user1\"\n"                                                                                                     \
-            "\n"                                                                                                                   \
-            "[target:link:default]\n"                                                                                              \
-            "ignore-key=\"ignore-value\"\n"                                                                                        \
-            "\n"                                                                                                                   \
-            "[target:path]\n"                                                                                                      \
-            "pg_data={}\n"                                                                                                         \
-            "\n"                                                                                                                   \
-            "[target:path:default]\n"                                                                                              \
-            "group=\"group1\"\n"                                                                                                   \
-            "ignore-key=\"ignore-value\"\n"                                                                                        \
-            "mode=\"0700\"\n"                                                                                                      \
+        const Buffer *content = harnessInfoChecksumZ
+        (
+            "[backup]\n"
+            "backup-label=\"20190808-163540F\"\n"
+            "backup-timestamp-copy-start=1565282141\n"
+            "backup-timestamp-start=1565282140\n"
+            "backup-timestamp-stop=1565282142\n"
+            "backup-type=\"full\"\n"
+            "ignore-key=\"ignore-value\"\n"
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=1000000000000000094\n"
+            "db-version=\"9.4\"\n"
+            "ignore-key=\"ignore-value\"\n"
+            "\n"
+            "[backup:option]\n"
+            "ignore-key=\"ignore-value\"\n"
+            "option-archive-check=true\n"
+            "option-archive-copy=true\n"
+            "option-compress=false\n"
+            "option-hardlink=false\n"
+            "option-online=false\n"
+            "\n"
+            "[backup:target]\n"
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
+            "\n"
+            "[ignore-section]\n"
+            "ignore-key=\"ignore-value\"\n"
+            "\n"
+            "[target:file]\n"
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
+            "\n"
+            "[target:file:default]\n"
+            "group=\"group1\"\n"
+            "ignore-key=\"ignore-value\"\n"
+            "master=true\n"
+            "mode=\"0600\"\n"
             "user=\"user1\"\n"
+            "\n"
+            "[target:link:default]\n"
+            "ignore-key=\"ignore-value\"\n"
+            "\n"
+            "[target:path]\n"
+            "pg_data={}\n"
+            "\n"
+            "[target:path:default]\n"
+            "group=\"group1\"\n"
+            "ignore-key=\"ignore-value\"\n"
+            "mode=\"0700\"\n"
+            "user=\"user1\"\n"
+        );
 
-        HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_CONTENT, .comment = "write manifest copy");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, STRDEF(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
-        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
-        TEST_RESULT_STR_Z(manifestData(manifest)->backrestVersion, PROJECT_VERSION, "check backrest version");
+        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
+        TEST_RESULT_STR_Z(manifestData(manifest)->backrestVersion, PROJECT_VERSION, "    check backrest version");
 
-        HRN_STORAGE_REMOVE(storageTest, BACKUP_MANIFEST_FILE INFO_COPY_EXT, .errorOnMissing = true);
+        storageRemoveP(storageTest, STRDEF(BACKUP_MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
 
-        HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE, TEST_MANIFEST_CONTENT, .comment = "write main manifest");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
-        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
+        TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
 
         TEST_RESULT_VOID(manifestFree(manifest), "free manifest");
         TEST_RESULT_VOID(manifestFree(NULL), "free null manifest");

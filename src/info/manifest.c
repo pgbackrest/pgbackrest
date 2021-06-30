@@ -1228,7 +1228,7 @@ manifestNewBuild(
                             lastRelationFileIdUnlogged = manifestFileFindDefault(this, relationInit, NULL) != NULL;
                             strFree(relationInit);
 
-                            // Save the file id so we don't need to do the lookup next time if if doesn't change
+                            // Save the file id so we don't need to do the lookup next time if doesn't change
                             strcpy(lastRelationFileId, relationFileId);
                         }
 

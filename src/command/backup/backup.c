@@ -380,7 +380,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                         cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(manifestPriorData->backupOptionCompressType)));
 
                     // There's a small chance that the prior manifest is old enough that backupOptionCompressLevel was not recorded.
-                    // There's an even smaller chance that the user will also alter compression-type in this this scenario right
+                    // There's an even smaller chance that the user will also alter compression-type in this scenario right
                     // after upgrading to a newer version. Because we judge this combination of events to be nearly impossible just
                     // assert here so no test coverage is needed.
                     CHECK(manifestPriorData->backupOptionCompressLevel != NULL);
