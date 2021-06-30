@@ -23,20 +23,25 @@ testRun(void)
     if (testBegin("queueNeed()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--archive-async");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");
-        strLstAddZ(argList, "--spool-path=" TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         size_t queueSize = 16 * 1024 * 1024;
         size_t walSegmentSize = 16 * 1024 * 1024;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path missing");
 
         TEST_ERROR(
             queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
             PathMissingError, "unable to list file info for missing path '" TEST_PATH "/spool/archive/test1/in'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("queue size too small");
+
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_RESULT_STRLST_Z(
@@ -44,6 +49,8 @@ testRun(void)
             "000000010000000100000001\n000000010000000100000002\n", "queue size smaller than min");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("queue empty");
+
         queueSize = (16 * 1024 * 1024) * 3;
 
         TEST_RESULT_STRLST_Z(
@@ -51,6 +58,8 @@ testRun(void)
             "000000010000000100000001\n000000010000000100000002\n000000010000000100000003\n", "empty queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg version earlier than 9.3");
+
         Buffer *walSegmentBuffer = bufNew(walSegmentSize);
         memset(bufPtr(walSegmentBuffer), 0, walSegmentSize);
 
@@ -341,24 +350,27 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
 
-        #define TEST_WARN                                                                                                          \
-            "repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"              \
-                " '18072658121562454734'"
-
         TEST_RESULT_LOG(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P00   WARN: " TEST_WARN "\n"
+            "P00   WARN: repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+                " '18072658121562454734'\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
 
         TEST_STORAGE_GET(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok", "0\n" TEST_WARN, .remove = true);
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok",
+            "0\n"
+            "repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+            " '18072658121562454734'",
+            .remove = true);
         TEST_STORAGE_GET(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok", "0\n" TEST_WARN, .remove = true);
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok",
+            "0\n"
+            "repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+            " '18072658121562454734'",
+            .remove = true);
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
-
-        #undef TEST_WARN
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on duplicates now that no segments are missing, repo with bad perms");
@@ -379,17 +391,12 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
 
-        #define TEST_WARN1                                                                                                         \
-            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"                     \
-                "/0000000100000001': [13] Permission denied"
-        #define TEST_WARN2                                                                                                         \
-            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"                     \
-                "/0000000100000002': [13] Permission denied"
-
         TEST_RESULT_LOG(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P00   WARN: " TEST_WARN1 "\n"
-            "P00   WARN: " TEST_WARN2 "\n"
+            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"
+                "/0000000100000001': [13] Permission denied\n"
+            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"
+                "/0000000100000002': [13] Permission denied\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1: 10-1 archive\n"
             "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
@@ -399,10 +406,18 @@ testRun(void)
 
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", .remove = true);
         TEST_STORAGE_GET(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok", "0\n" TEST_WARN1, .remove = true);
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok",
+            "0\n"
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1/0000000100000001':"
+                " [13] Permission denied",
+            .remove = true);
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF", .remove = true);
         TEST_STORAGE_GET(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok", "0\n" TEST_WARN1, .remove = true);
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok",
+            "0\n"
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1/0000000100000001':"
+                " [13] Permission denied",
+            .remove = true);
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
             "45\n"
@@ -410,14 +425,12 @@ testRun(void)
             "repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 10-1/0000000100000002"
                 "/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "HINT: are multiple primaries archiving to this stanza?\n"
-            TEST_WARN2,
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"                     \
+                "/0000000100000002': [13] Permission denied",
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         HRN_STORAGE_MODE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1");
-
-        #undef TEST_WARN1
-        #undef TEST_WARN2
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on duplicates");
@@ -479,21 +492,21 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
 
-        #define TEST_WARN1                                                                                                         \
-            "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"              \
-                " '18072658121562454734'"
-        #define TEST_WARN2                                                                                                         \
-            "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"                    \
-                " [FormatError] unexpected eof in compressed data"
-
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
-            "P00   WARN: " TEST_WARN1 "\n"
-            "P01   WARN: " TEST_WARN2 "\n"
+            "P00   WARN: repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+                " '18072658121562454734'\n"
+            "P01   WARN: repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
+                " [FormatError] unexpected eof in compressed data\n"
             "P01 DETAIL: found 000000010000000200000000 in the repo2: 10-1 archive");
 
         TEST_STORAGE_GET(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok", "0\n" TEST_WARN1 "\n" TEST_WARN2,
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok",
+            "0\n"
+            "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+                " '18072658121562454734'\n"
+            "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
+                " [FormatError] unexpected eof in compressed data",
             .remove = true);
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
@@ -511,24 +524,26 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
 
-        #define TEST_WARN3                                                                                                         \
-            "repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"                    \
-                " [FormatError] unexpected eof in compressed data"
-
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
-            "P00   WARN: " TEST_WARN1 "\n"
+            "P00   WARN: repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+                " '18072658121562454734'\n"
             "P01   WARN: [FileReadError] raised from local-1 shim protocol: unable to get 000000010000000200000000:\n"
-            "            " TEST_WARN2 "\n"
-            "            " TEST_WARN3);
+            "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
+                " [FormatError] unexpected eof in compressed data\n"
+            "            repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
+                " [FormatError] unexpected eof in compressed data");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
             "42\n"
             "raised from local-1 shim protocol: unable to get 000000010000000200000000:\n"
-            TEST_WARN2 "\n"
-            TEST_WARN3 "\n"
-            TEST_WARN1,
+            "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
+                " [FormatError] unexpected eof in compressed data\n"
+            "repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
+                " [FormatError] unexpected eof in compressed data\n"
+            "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+                " '18072658121562454734'",
             .remove = true);
         TEST_STORAGE_LIST(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000200000000.pgbackrest.tmp\n", .remove = true);
@@ -571,7 +586,6 @@ testRun(void)
     {
         harnessLogLevelSet(logLevelDetail);
 
-        // Arguments that must be included. Use raw config here because we need to keep the
         StringList *argBaseList = strLstNew();
         hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH "/repo");
@@ -588,12 +602,16 @@ testRun(void)
         TEST_ERROR(cmdArchiveGet(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("segment parameter not specified");
+
         argList = strLstDup(argBaseList);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "WAL segment to get required");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path parameter not specified");
+
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
@@ -601,6 +619,8 @@ testRun(void)
         TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no valid repo");
+
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
@@ -623,10 +643,12 @@ testRun(void)
                 " scheme.");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no valid repo - async");
+
         argList = strLstDup(argBaseList);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         strLstAddZ(argList, "00000001.history");
         strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYHISTORY");
-        strLstAddZ(argList, "--archive-async");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
@@ -643,8 +665,10 @@ testRun(void)
             "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
                 " scheme.");
 
-        // Make sure the process times out when there is nothing to get
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("WAL not found - timeout");
+
+        // Make sure the process times out when there is nothing to get
         argList = strLstDup(argBaseList);
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
@@ -658,8 +682,9 @@ testRun(void)
             cmdArchiveGet(), ArchiveTimeoutError,
             "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
 
-        // Check for missing WAL
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check for missing WAL");
+
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok");
 
         TEST_ERROR(
@@ -670,8 +695,9 @@ testRun(void)
             storageExistsP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok")), false,
             "check OK file was removed");
 
-        // Write out a WAL segment for success
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write WAL segment for success");
+
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal");
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "SHOULD-BE-A-REAL-WAL-FILE");
 
@@ -682,11 +708,13 @@ testRun(void)
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
         TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
 
-        // Write more WAL segments (in this case queue should be full)
         // -------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--archive-get-queue-max=48");
+        TEST_TITLE("write WAL segments for success - queue full");
+
+        hrnCfgArgRawZ(argList, cfgOptArchiveGetQueueMax, "48");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
+        // Write more WAL segments (in this case queue should be full)
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "SHOULD-BE-A-REAL-WAL-FILE");
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "0\nwarning about x");
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002", "SHOULD-BE-A-REAL-WAL-FILE");
@@ -700,8 +728,10 @@ testRun(void)
         TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n", .remove = true);
 
-        // Make sure the process times out when it can't get a lock
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unable to get lock");
+
+        // Make sure the process times out when it can't get a lock
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
@@ -749,6 +779,8 @@ testRun(void)
         HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("too many parameters specified");
+
         strLstAddZ(argList, BOGUS_STR);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
 
@@ -1029,9 +1061,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("unable to get from one repo");
 
-        HRN_STORAGE_PUT(
+        HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/10-2/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz", NULL);
+            STORAGE_REPO_ARCHIVE "/10-2/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
@@ -1070,8 +1102,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        TEST_RESULT_LOG(
-            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
+        TEST_RESULT_LOG("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no segments to find with existing ok file");
