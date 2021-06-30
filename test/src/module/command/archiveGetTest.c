@@ -70,8 +70,7 @@ testRun(void)
             queueNeed(STRDEF("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92),
             "000000010000000200000000\n000000010000000200000001\n", "queue has wal < 9.3");
 
-        TEST_RESULT_STRLST_Z(
-            storageListP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN)), "0000000100000001000000FE\n", "check queue");
+        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "0000000100000001000000FE\n", .comment = "check queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg >= 9.3 and ok/junk status files");
