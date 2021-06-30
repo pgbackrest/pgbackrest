@@ -178,20 +178,25 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("walPath()"))
     {
-
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("absolute and relative paths");
+
         const String *pgPath = storagePathP(storageTest, STRDEF("pg"));
         HRN_STORAGE_PATH_CREATE(storageTest, strZ(pgPath));
-// CSHANG STOPPED HERE AND HAD TO ADD CONFIG ABOVE OTHERWISE TEST --run=5 fails
+
         TEST_RESULT_STR_Z(walPath(STRDEF("/absolute/path"), pgPath, STRDEF("test")), "/absolute/path", "absolute path");
 
         THROW_ON_SYS_ERROR(chdir(strZ(pgPath)) != 0, PathMissingError, "unable to chdir()");
         TEST_RESULT_STR(
             walPath(STRDEF("relative/path"), pgPath, STRDEF("test")), strNewFmt("%s/relative/path", strZ(pgPath)), "relative path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("symlink path");
 
         const String *pgPathLink = storagePathP(storageTest, STRDEF("pg-link"));
         THROW_ON_SYS_ERROR_FMT(
@@ -202,6 +207,9 @@ testRun(void)
         TEST_RESULT_STR(
             walPath(STRDEF("relative/path"), pgPathLink, STRDEF("test")), strNewFmt("%s/relative/path", strZ(pgPathLink)),
             "relative path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path errors");
 
         THROW_ON_SYS_ERROR(chdir("/") != 0, PathMissingError, "unable to chdir()");
         TEST_ERROR(
@@ -221,15 +229,17 @@ testRun(void)
     {
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--repo-path=" TEST_PATH);
-        strLstAddZ(argList, "archive-get");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no path or segment");
 
         TEST_RESULT_STR(walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no path");
 
-        storagePathCreateP(storageTest, STRDEF("archive/db/9.6-2/1234567812345678"));
+        HRN_STORAGE_PATH_CREATE(storageTest, "archive/db/9.6-2/1234567812345678");
         TEST_RESULT_STR(
             walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no segment");
         TEST_ERROR(
@@ -239,6 +249,9 @@ testRun(void)
             "HINT: check the PostgreSQL server log for errors.\n"
             "HINT: run the 'start' command if the stanza was previously stopped.");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timeout");
+
         // Check timeout by making the wal segment appear after 250ms
         HARNESS_FORK_BEGIN()
         {
@@ -246,12 +259,9 @@ testRun(void)
             {
                 sleepMSec(250);
 
-                storagePutP(
-                    storageNewWriteP(
-                        storageTest,
-                        STRDEF(
-                            "archive/db/9.6-2/1234567812345678/123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
-                    NULL);
+                HRN_STORAGE_PUT_EMPTY(
+                    storageTest,
+                    "archive/db/9.6-2/1234567812345678/123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -265,11 +275,11 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                STRDEF("archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz")),
-            NULL);
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("duplicate");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz");
 
         TEST_ERROR(
             walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0),
@@ -279,6 +289,9 @@ testRun(void)
                 ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz"
                 "\nHINT: are multiple primaries archiving to this stanza?");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("partial not found");
+
         TEST_RESULT_STR(
             walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678.partial"), 0), NULL,
             "did not find partial segment");
@@ -287,12 +300,19 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("walSegmentNext()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("beginning and end range");
+
         TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("000000010000000100000001"), 16 * 1024 * 1024, PG_VERSION_10), "000000010000000100000002",
             "get next");
         TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("0000000100000001000000FE"), 16 * 1024 * 1024, PG_VERSION_93), "0000000100000001000000FF",
             "get next");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check overflow by version");
+
         TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("0000009900000001000000FF"), 16 * 1024 * 1024, PG_VERSION_93), "000000990000000200000000",
             "get next overflow >= 9.3");
@@ -310,9 +330,16 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("walSegmentRange()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single segment");
+
         TEST_RESULT_STRLST_Z(
             walSegmentRange(STRDEF("000000010000000100000000"), 16 * 1024 * 1024, PG_VERSION_92, 1), "000000010000000100000000\n",
             "get single");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check range by version");
+
         TEST_RESULT_STRLST_Z(
             walSegmentRange(STRDEF("0000000100000001000000FD"), 16 * 1024 * 1024, PG_VERSION_92, 4),
             "0000000100000001000000FD\n0000000100000001000000FE\n000000010000000200000000\n000000010000000200000001\n",
