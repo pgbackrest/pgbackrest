@@ -7,6 +7,7 @@ Db Protocol Handler
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
 #include "common/type/list.h"
 #include "config/config.h"
 #include "db/protocol.h"
@@ -23,14 +24,14 @@ static struct
 
 /**********************************************************************************************************************************/
 void
-dbOpenProtocol(const VariantList *paramList, ProtocolServer *server)
+dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(paramList == NULL);
+    ASSERT(param == NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -46,8 +47,6 @@ dbOpenProtocol(const VariantList *paramList, ProtocolServer *server)
         }
 
         // Add db to the list
-        unsigned int dbIdx = lstSize(dbProtocolLocal.pgClientList);
-
         MEM_CONTEXT_BEGIN(lstMemContext(dbProtocolLocal.pgClientList))
         {
             // Only a single db is passed to the remote
@@ -61,7 +60,8 @@ dbOpenProtocol(const VariantList *paramList, ProtocolServer *server)
         MEM_CONTEXT_END();
 
         // Return db index which should be included in subsequent calls
-        protocolServerResponse(server, VARUINT(dbIdx));
+        protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), lstSize(dbProtocolLocal.pgClientList) - 1));
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -70,24 +70,23 @@ dbOpenProtocol(const VariantList *paramList, ProtocolServer *server)
 
 /**********************************************************************************************************************************/
 void
-dbQueryProtocol(const VariantList *paramList, ProtocolServer *server)
+dbQueryProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(paramList != NULL);
+    ASSERT(param != NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerResponse(
-            server,
-            varNewVarLst(
-                pgClientQuery(
-                    *(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0))),
-                    varStr(varLstGet(paramList, 1)))));
+        PgClient *const pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param));
+        const String *const query = pckReadStrP(param);
+
+        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), jsonFromVar(varNewVarLst(pgClientQuery(pgClient, query)))));
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -96,20 +95,20 @@ dbQueryProtocol(const VariantList *paramList, ProtocolServer *server)
 
 /**********************************************************************************************************************************/
 void
-dbCloseProtocol(const VariantList *paramList, ProtocolServer *server)
+dbCloseProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(paramList != NULL);
+    ASSERT(param != NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        pgClientClose(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0))));
-        protocolServerResponse(server, NULL);
+        pgClientClose(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param)));
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

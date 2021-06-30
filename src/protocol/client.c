@@ -10,6 +10,7 @@ Protocol Client
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "protocol/client.h"
+#include "protocol/server.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -19,20 +20,16 @@ STRING_EXTERN(PROTOCOL_GREETING_NAME_STR,                           PROTOCOL_GRE
 STRING_EXTERN(PROTOCOL_GREETING_SERVICE_STR,                        PROTOCOL_GREETING_SERVICE);
 STRING_EXTERN(PROTOCOL_GREETING_VERSION_STR,                        PROTOCOL_GREETING_VERSION);
 
-STRING_EXTERN(PROTOCOL_ERROR_STR,                                   PROTOCOL_ERROR);
-STRING_EXTERN(PROTOCOL_ERROR_STACK_STR,                             PROTOCOL_ERROR_STACK);
-
-STRING_EXTERN(PROTOCOL_OUTPUT_STR,                                  PROTOCOL_OUTPUT);
-
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct ProtocolClient
 {
     ProtocolClientPub pub;                                          // Publicly accessible variables
-    const String *name;
-    const String *errorPrefix;
-    TimeMSec keepAliveTime;
+    IoWrite *write;                                                 // Write interface
+    const String *name;                                             // Name displayed in logging
+    const String *errorPrefix;                                      // Prefix used when throwing error
+    TimeMSec keepAliveTime;                                         // Last time data was put to the server
 };
 
 /***********************************************************************************************************************************
@@ -52,7 +49,7 @@ protocolClientFreeResource(THIS_VOID)
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT));
+        protocolClientCommandPut(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -86,8 +83,8 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
             {
                 .memContext = memContextCurrent(),
                 .read = read,
-                .write = write,
             },
+            .write = write,
             .name = strDup(name),
             .errorPrefix = strNewFmt("raised from %s", strZ(name)),
             .keepAliveTime = timeMSec(),
@@ -96,7 +93,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         // Read, parse, and check the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *greeting = ioReadLine(protocolClientIoRead(this));
+            String *greeting = ioReadLine(this->pub.read);
             KeyValue *greetingKv = jsonToKv(greeting);
 
             const String *expected[] =
@@ -143,93 +140,127 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 }
 
 /**********************************************************************************************************************************/
-// Helper to process errors
-static void
-protocolClientProcessError(ProtocolClient *this, KeyValue *errorKv)
+void
+protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(KEY_VALUE, errorKv);
+        FUNCTION_LOG_PARAM(PACK_WRITE, data);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(errorKv != NULL);
+
+    // End the pack
+    if (data != NULL)
+        pckWriteEndP(data);
+
+    // Write the data
+    PackWrite *dataMessage = pckWriteNew(this->write);
+    pckWriteU32P(dataMessage, protocolMessageTypeData, .defaultWrite = true);
+    pckWritePackP(dataMessage, data);
+    pckWriteEndP(dataMessage);
+
+    // Flush when there is no more data to put
+    if (data == NULL)
+        ioWriteFlush(this->write);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+// Helper to process errors
+static void
+protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, PackRead *const error)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(PACK_READ, error);
+    FUNCTION_LOG_END();
+
+    if (type == protocolMessageTypeError)
+    {
+        const ErrorType *type = errorTypeFromCode(pckReadI32P(error));
+        String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
+        const String *const stack = pckReadStrP(error);
+        pckReadEndP(error);
+
+        CHECK(message != NULL);
+
+        // Add stack trace if the error is an assertion or debug-level logging is enabled
+        if (type == &AssertError || logAny(logLevelDebug))
+        {
+            CHECK(stack != NULL);
+
+            strCat(message, LF_STR);
+            strCat(message, stack);
+        }
+
+        THROWP(type, strZ(message));
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+PackRead *
+protocolClientDataGet(ProtocolClient *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    PackRead *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Process error if any
-        const Variant *error = kvGet(errorKv, VARSTR(PROTOCOL_ERROR_STR));
+        PackRead *response = pckReadNew(this->pub.read);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
 
-        if (error != NULL)
+        protocolClientError(this, type, response);
+
+        CHECK(type == protocolMessageTypeData);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
         {
-            const ErrorType *type = errorTypeFromCode(varIntForce(error));
-            const String *message = varStr(kvGet(errorKv, VARSTR(PROTOCOL_OUTPUT_STR)));
-
-            // Required part of the message
-            String *throwMessage = strNewFmt(
-                "%s: %s", strZ(this->errorPrefix), message == NULL ? "no details available" : strZ(message));
-
-            // Add stack trace if the error is an assertion or debug-level logging is enabled
-            if (type == &AssertError || logAny(logLevelDebug))
-            {
-                const String *stack = varStr(kvGet(errorKv, VARSTR(PROTOCOL_ERROR_STACK_STR)));
-
-                strCat(throwMessage, LF_STR);
-                strCat(throwMessage, stack == NULL ? STRDEF("no stack trace available") : stack);
-            }
-
-            THROWP(type, strZ(throwMessage));
+            result = pckReadPackP(response);
         }
+        MEM_CONTEXT_PRIOR_END();
+
+        pckReadEndP(response);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PACK_READ, result);
+}
+
+/**********************************************************************************************************************************/
+void
+protocolClientDataEndGet(ProtocolClient *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *response = pckReadNew(this->pub.read);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
+
+        protocolClientError(this, type, response);
+
+        CHECK(type == protocolMessageTypeDataEnd);
+
+        pckReadEndP(response);
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
-const Variant *
-protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-        FUNCTION_LOG_PARAM(BOOL, outputRequired);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    const Variant *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Read the response
-        String *response = ioReadLine(protocolClientIoRead(this));
-        KeyValue *responseKv = varKv(jsonToVar(response));
-
-        // Process error if any
-        protocolClientProcessError(this, responseKv);
-
-        // Get output
-        result = kvGet(responseKv, VARSTR(PROTOCOL_OUTPUT_STR));
-
-        if (outputRequired)
-        {
-            // Just move the entire response kv since the output is the largest part if it
-            kvMove(responseKv, memContextPrior());
-        }
-        // Else if no output is required then there should not be any
-        else if (result != NULL)
-            THROW(AssertError, "no output required by command");
-
-        // Reset the keep alive time
-        this->keepAliveTime = timeMSec();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_CONST(VARIANT, result);
-}
-
 /**********************************************************************************************************************************/
 void
-protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
+protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -239,9 +270,8 @@ protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    // Write out the command
-    ioWriteStrLine(protocolClientIoWrite(this), protocolCommandJson(command));
-    ioWriteFlush(protocolClientIoWrite(this));
+    // Put command
+    protocolCommandPut(command, this->write);
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
@@ -250,21 +280,31 @@ protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
 }
 
 /**********************************************************************************************************************************/
-const Variant *
-protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool outputRequired)
+PackRead *
+protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command, const bool resultRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
         FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
-        FUNCTION_LOG_PARAM(BOOL, outputRequired);
+        FUNCTION_LOG_PARAM(BOOL, resultRequired);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    protocolClientWriteCommand(this, command);
+    // Put command
+    protocolClientCommandPut(this, command);
 
-    FUNCTION_LOG_RETURN_CONST(VARIANT, protocolClientReadOutput(this, outputRequired));
+    // Read result if required
+    PackRead *result = NULL;
+
+    if (resultRequired)
+        result = protocolClientDataGet(this);
+
+    // Read response
+    protocolClientDataEndGet(this);
+
+    FUNCTION_LOG_RETURN(PACK_READ, result);
 }
 
 /**********************************************************************************************************************************/
@@ -284,50 +324,6 @@ protocolClientNoOp(ProtocolClient *this)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-String *
-protocolClientReadLine(ProtocolClient *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = ioReadLine(protocolClientIoRead(this));
-
-        if (strSize(result) == 0)
-        {
-            THROW(FormatError, "unexpected empty line");
-        }
-        else if (strZ(result)[0] == '{')
-        {
-            KeyValue *responseKv = varKv(jsonToVar(result));
-
-            // Process expected error
-            protocolClientProcessError(this, responseKv);
-
-            // If not an error then there is probably a protocol bug
-            THROW(FormatError, "expected error but got output");
-        }
-        else if (strZ(result)[0] != '.')
-            THROW_FMT(FormatError, "invalid prefix in '%s'", strZ(result));
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strSub(result, 1);
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

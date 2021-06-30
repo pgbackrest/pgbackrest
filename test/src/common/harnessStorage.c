@@ -249,7 +249,9 @@ hrnStorageList(
     // Generate a list of files/paths/etc
     List *list = lstNewP(sizeof(StorageInfo));
 
-    storageInfoListP(storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse);
+    storageInfoListP(
+        storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse,
+        .expression = param.expression != NULL ? STR(param.expression) : NULL);
 
     // Remove files if requested
     if (param.remove)
@@ -361,6 +363,32 @@ hrnStorageMove(
 
 /**********************************************************************************************************************************/
 void
+hrnStorageCopy(
+    const Storage *const storageSource, const char *const fileSource, const Storage *const storageDest, const char *const fileDest,
+    HrnStorageCopyParam param)
+{
+    hrnTestResultBegin(__func__, false);
+
+    ASSERT(storageSource != NULL);
+    ASSERT(fileSource != NULL);
+    ASSERT(storageDest != NULL);
+    ASSERT(fileDest != NULL);
+
+    const String *const fileSourceStr = storagePathP(storageSource, STR(fileSource));
+    const String *const fileDestStr = storagePathP(storageDest, STR(fileDest));
+
+    printf("copy '%s' to '%s'", strZ(fileSourceStr), strZ(fileDestStr));
+
+    hrnTestResultComment(param.comment);
+
+    // Copy the file
+    storageCopyP(storageNewReadP(storageSource, fileSourceStr), storageNewWriteP(storageDest, fileDestStr));
+
+    hrnTestResultEnd();
+}
+
+/**********************************************************************************************************************************/
+void
 hrnStoragePut(
     const Storage *const storage, const char *const file, const Buffer *const buffer, const char *const logPrefix,
     HrnStoragePutParam param)
@@ -375,18 +403,27 @@ hrnStoragePut(
     compressExtCat(fileStr, param.compressType);
 
     // Create file
-    StorageWrite *destination = storageNewWriteP(storage, fileStr);
+    StorageWrite *destination = storageNewWriteP(storage, fileStr, .modeFile = param.modeFile, .timeModified = param.timeModified);
     IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
 
-    // Add compression filter
+    // Declare an information filter for displaying paramaters to the output
     String *const filter = strNew();
 
+    // Add mode to output information filter
+    if (param.modeFile != 0)
+        strCatFmt(filter, "mode[%04o]", param.modeFile);
+
+    // Add modified time to output information filter
+    if (param.timeModified != 0)
+        strCatFmt(filter, "%stime[%" PRIu64 "]",  strEmpty(filter) ? "" : "/", (uint64_t)param.timeModified);
+
+    // Add compression filter
     if (param.compressType != compressTypeNone)
     {
         ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
         ioFilterGroupAdd(filterGroup, compressFilter(param.compressType, 1));
 
-        strCatFmt(filter, "cmp[%s]", strZ(compressTypeStr(param.compressType)));
+        strCatFmt(filter, "%scmp[%s]",  strEmpty(filter) ? "" : "/", strZ(compressTypeStr(param.compressType)));
     }
 
     // Add encrypted filter

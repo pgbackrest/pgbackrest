@@ -460,27 +460,34 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
         jobData->walFileIdx++;
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
-        protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile))));
-        protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptArchiveHeaderCheck)));
-        protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.pgVersion));
-        protocolCommandParamAdd(command, VARUINT64(jobData->archiveInfo.pgSystemId));
-        protocolCommandParamAdd(command, VARSTR(walFile));
-        protocolCommandParamAdd(command, VARUINT(jobData->compressType));
-        protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
-        protocolCommandParamAdd(command, varNewVarLst(varLstNewStrLst(jobData->archiveInfo.errorList)));
-        protocolCommandParamAdd(command, VARUINT(lstSize(jobData->archiveInfo.repoList)));
+        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
+        PackWrite *const param = protocolCommandParam(command);
+
+        pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
+        pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveHeaderCheck));
+        pckWriteU32P(param, jobData->archiveInfo.pgVersion);
+        pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
+        pckWriteStrP(param, walFile);
+        pckWriteU32P(param, jobData->compressType);
+        pckWriteI32P(param, jobData->compressLevel);
+        pckWriteStrLstP(param, jobData->archiveInfo.errorList);
 
         // Add data for each repo to push to
+        pckWriteArrayBeginP(param);
+
         for (unsigned int repoListIdx = 0; repoListIdx < lstSize(jobData->archiveInfo.repoList); repoListIdx++)
         {
             ArchivePushFileRepoData *data = lstGet(jobData->archiveInfo.repoList, repoListIdx);
 
-            protocolCommandParamAdd(command, VARUINT(data->repoIdx));
-            protocolCommandParamAdd(command, VARSTR(data->archiveId));
-            protocolCommandParamAdd(command, VARUINT64(data->cipherType));
-            protocolCommandParamAdd(command, VARSTR(data->cipherPass));
+            pckWriteObjBeginP(param);
+            pckWriteU32P(param, data->repoIdx);
+            pckWriteStrP(param, data->archiveId);
+            pckWriteU64P(param, data->cipherType);
+            pckWriteStrP(param, data->cipherPass);
+            pckWriteObjEndP(param);
         }
+
+        pckWriteArrayEndP(param);
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));
     }
@@ -572,11 +579,8 @@ cmdArchivePushAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            // Get job result
-                            const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
-
                             // Output file warnings
-                            StringList *fileWarnList = strLstNewVarLst(varVarLst(varLstGet(fileResult, 0)));
+                            StringList *fileWarnList = pckReadStrLstP(protocolParallelJobResult(job));
 
                             for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
                                 LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));

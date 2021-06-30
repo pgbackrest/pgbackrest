@@ -10,27 +10,12 @@ Object type
 typedef struct ProtocolCommand ProtocolCommand;
 
 #include "common/type/object.h"
-#include "common/type/stringId.h"
-#include "common/type/variant.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_KEY_COMMAND                                        "cmd"
-    STRING_DECLARE(PROTOCOL_KEY_COMMAND_STR);
-#define PROTOCOL_KEY_PARAMETER                                      "param"
-    STRING_DECLARE(PROTOCOL_KEY_PARAMETER_STR);
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 ProtocolCommand *protocolCommandNew(const StringId command);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Command JSON
-String *protocolCommandJson(const ProtocolCommand *this);
 
 /***********************************************************************************************************************************
 Functions
@@ -44,7 +29,10 @@ protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
 }
 
 // Read the command output
-ProtocolCommand *protocolCommandParamAdd(ProtocolCommand *this, const Variant *param);
+PackWrite *protocolCommandParam(ProtocolCommand *this);
+
+// Write protocol command
+void protocolCommandPut(ProtocolCommand *this, IoWrite *write);
 
 /***********************************************************************************************************************************
 Destructor
