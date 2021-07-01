@@ -704,7 +704,7 @@ testRun(void)
         // Acquire a lock so the async process will not be able to run -- this will result in a timeout
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
-        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "1");
+        hrnCfgArgRawZ(argListTemp, cfgOptArchiveTimeout, "1");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
