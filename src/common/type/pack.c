@@ -16,7 +16,7 @@ is set) the base-128 encoded size and then by the string/binary bytes. For strin
 is data, not the length of the data, which is why the length is stored immediately following the tag when the value bit is set. This
 prevents storing an additional byte when the string/binary length is zero.
 
-The following are definitions for the pack tag field and examples of how it is interpretted.
+The following are definitions for the pack tag field and examples of how it is interpreted.
 
 Integer types (packTypeMapData[type].valueMultiBit) when an unsigned value is <= 1 or a signed value is >= -1 and <= 0:
   3 - more value indicator bit set to 0
@@ -29,7 +29,7 @@ Integer types (packTypeMapData[type].valueMultiBit) when an unsigned value is <=
     7 = tag byte low bits: 0 1 1 1 meaning:
         "value low order bit" - the value of the u64 field is 1
         "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
-        "ID delta low order bit" - gaps are interpretted as the currently stored ID minus previously stored ID minus 1, therefore if
+        "ID delta low order bit" - gaps are interpreted as the currently stored ID minus previously stored ID minus 1, therefore if
             the previously store ID is 1 and the ID of this u64 field is 11 then a gap of 10 exists. 10 is represented internally as
             9 since there is always at least a gap of 1 which never needs to be recorded (it is a given). 9 in bit format is
             1 0 0 1 - the low-order bit is 1 so the "ID delta low order bit" is set.
@@ -59,7 +59,7 @@ String, binary types, and boolean (packTypeMapData[type].valueSingleBit):
   3 - value bit
   2 - more ID delta indicator bit
 0-1 - ID delta low order bits
-  Note: binary type is interpretted the same way as string type
+  Note: binary type is interpreted the same way as string type
 
   Example: 8c090673616d706c65
     8 = string type

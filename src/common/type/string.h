@@ -123,7 +123,7 @@ String *strCatFmt(String *this, const char *format, ...) __attribute__((format(p
 // N is <= the end of the string being concatenated.
 String *strCatZN(String *this, const char *cat, size_t size);
 
-// Return the index to the location of the the first occurrence of a character within a string, else -1
+// Return the index to the location of the first occurrence of a character within a string, else -1
 int strChr(const String *this, char chr);
 
 // C-style string compare

@@ -210,7 +210,7 @@ cfgLoadUpdateOption(void)
             {
                 // If repo-retention-archive-type is default (full), then if repo-retention-full is set, set the
                 // repo-retention-archive to this value when retention-full-type is 'count', else ignore archiving. If
-                // retention-full-type is 'time' then the the expire command will default the archive retention accordingly.
+                // retention-full-type is 'time' then the expire command will default the archive retention accordingly.
                 switch (archiveRetentionType)
                 {
                     case backupTypeFull:
