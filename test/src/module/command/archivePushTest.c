@@ -372,7 +372,7 @@ testRun(void)
             "P00   WARN: WAL file '000000010000000100000001' already exists in the repo1 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
-// CSHANG STOPPED HERE
+
         // Now create a new WAL buffer with a different checksum to test checksum errors
         Buffer *walBuffer2 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer2, bufSize(walBuffer2));
@@ -380,7 +380,7 @@ testRun(void)
         hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer2);
         const char *walBuffer2Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer2)));
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_wal/000000010000000100000001")), walBuffer2);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer2);
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveDuplicateError,
@@ -390,58 +390,58 @@ testRun(void)
         TEST_TITLE("WAL with absolute path and no pg1-path");
 
         argListTemp = strLstNew();
-        strLstAddZ(argListTemp, "--" CFGOPT_STANZA "=test");
+        hrnCfgArgRawZ(argListTemp, cfgOptStanza, "test");
         hrnCfgArgRawZ(argListTemp, cfgOptRepoPath, TEST_PATH "/repo");
         strLstAddZ(argListTemp, TEST_PATH "/pg/pg_wal/000000010000000100000002");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, STRDEF("pg/pg_wal/000000010000000100000002")), walBuffer2), "write WAL");
+        HRN_STORAGE_PUT(storageTest, "pg/pg_wal/000000010000000100000002", walBuffer2, .comment = "write WAL");
 
         // Create tmp file to make it look like a prior push failed partway through to ensure that retries work
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageTest,
-                    strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp",
-                    walBuffer2Sha1)),
-                BUFSTRDEF("PARTIAL")),
-            "write WAL tmp file");
+        HRN_STORAGE_PUT_Z(
+            storageTest,
+            strZ(
+                strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp", walBuffer2Sha1)),
+            "PARTIAL", .comment = "write WAL tmp file");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz", walBuffer2Sha1)),
-            true, "check repo for WAL file");
+        TEST_STORAGE_EXISTS(
+            storageRepoIdxWrite(0),
+            strZ(
+                strNewFmt(
+                    STORAGE_REPO_ARCHIVE "/11-1/0000000100000001/000000010000000100000002-%s.gz", walBuffer2Sha1)),
+            .comment = "check repo for WAL file");
         TEST_RESULT_BOOL(
             storageExistsP(
                 storageTest,
                 strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp", walBuffer2Sha1)),
             false, "check WAL tmp file is gone");
 
-        // Push a history file
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push a history file");
+
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/00000001.history");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_wal/00000001.history")), BUFSTRDEF("FAKEHISTORY"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "pg_wal/00000001.history", "FAKEHISTORY");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push a history file");
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '00000001.history' to the archive");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(storageTest, STRDEF("repo/archive/test/11-1/00000001.history")), true, "check repo for history file");
+        TEST_STORAGE_EXISTS(
+            storageRepoIdx(0), STORAGE_REPO_ARCHIVE "/11-1/00000001.history", .comment = "check repo for history file");
 
-        // Check drop functionality
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_wal/archive_status/000000010000000100000001.ready")), NULL);
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_wal/archive_status/000000010000000100000002.ready")), NULL);
+        TEST_TITLE("check drop functionality");
+
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/archive_status/000000010000000100000001.ready");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/archive_status/000000010000000100000002.ready");
 
         argListTemp = strLstDup(argList);
-        strLstAddZ(argListTemp, "--archive-push-queue-max=16m");
+        hrnCfgArgRawZ(argListTemp, cfgOptArchivePushQueueMax, "16m");
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
@@ -449,7 +449,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");
 
         argListTemp = strLstDup(argList);
-        strLstAddZ(argListTemp, "--archive-push-queue-max=1GB");
+        hrnCfgArgRawZ(argListTemp, cfgOptArchivePushQueueMax, "1GB");
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
@@ -465,36 +465,6 @@ testRun(void)
         // Remove old repo
         HRN_STORAGE_PATH_REMOVE(storageTest, "repo", .errorOnMissing = true, .recurse = true);
 
-        // repo2 is encrypted
-        StorageWrite *infoWrite = storageNewWriteP(storageTest, STRDEF("repo2/archive/test/archive.info"));
-
-        ioFilterGroupAdd(
-            ioWriteFilterGroup(storageWriteIo(infoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
-            BUFSTRDEF("badpassphrase"), NULL));
-
-        storagePutP(
-            infoWrite,
-            harnessInfoChecksumZ(
-                "[cipher]\n"
-                "cipher-pass=\"badsubpassphrase\"\n"
-                "\n"
-                "[db]\n"
-                "db-id=1\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}"));
-
-        // repo3 is not encrypted
-        storagePutP(
-            storageNewWriteP(storageTest, STRDEF("repo3/archive/test/archive.info")),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=1\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}"));
-
-        // Push encrypted WAL segment
         argListTemp = strLstNew();
         hrnCfgArgRawZ(argListTemp, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argListTemp, cfgOptPgPath, 1, TEST_PATH "/pg");
@@ -507,28 +477,42 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
+        // repo2 is encrypted
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
+            "[cipher]\n"
+            "cipher-pass=\"badsubpassphrase\"\n"
+            "\n"
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}",
+            .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpassphrase");
+
+        // repo3 is not encrypted
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}");
+
+        // Push encrypted WAL segment
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
-            true, "check repo2 for WAL file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            .remove = true, .comment = "check repo2 for WAL file then remove");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
-            true, "check repo3 for WAL file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            .remove = true, .comment = "check repo3 for WAL file then remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write error on one repo but other repo succeeds");
-
-        storageRemoveP(
-            storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
-            .errorOnMissing = true);
-        storageRemoveP(
-            storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
-            .errorOnMissing = true);
 
         HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001", .mode = 0500);
 
@@ -540,14 +524,10 @@ testRun(void)
                     "repo2: [FileOpenError] unable to open file '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001"
                         "/000000010000000100000002-%s' for write: [13] Permission denied", walBuffer2Sha1)));
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
-            false, "check repo2 for no WAL file");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
-            true, "check repo3 for WAL file");
+        TEST_STORAGE_LIST_EMPTY(storageTest, "repo2/archive/test/11-1/0000000100000001", .comment = "check repo2 for no WAL file");
+        TEST_STORAGE_LIST(
+            storageTest, "repo3/archive/test/11-1/0000000100000001",
+            strZ(strNewFmt("000000010000000100000002-%s\n", walBuffer2Sha1)), .comment = "check repo3 for WAL file");
 
         HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001");
 
@@ -560,10 +540,9 @@ testRun(void)
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
-            true, "check repo2 for WAL file");
+        TEST_STORAGE_LIST(
+            storageTest, "repo2/archive/test/11-1/0000000100000001",
+            strZ(strNewFmt("000000010000000100000002-%s\n", walBuffer2Sha1)), .comment = "check repo2 for WAL file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("WAL already exists in both repos");
@@ -635,6 +614,7 @@ testRun(void)
         static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST};
         hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
 
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command must be run on the pg host");
 
         StringList *argList = strLstNew();
@@ -651,78 +631,80 @@ testRun(void)
         TEST_TITLE("pg1-path must be set when async");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_SPOOL_PATH "=/spool");
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
-        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test2");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         strLstAddZ(argList, "/000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchivePush(), OptionRequiredError, "'archive-push' command in async mode requires option 'pg1-path'");
 
-        // Call with a bogus exe name so the async process will error out and we can make sure timeouts work
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check timeout on async error");
+
+        // Call with a bogus exe name so the async process will error out and we can make sure timeouts work
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test");
-        strLstAddZ(argList, "--archive-async");
-        strLstAddZ(argList, "--archive-timeout=1");
-        strLstAddZ(argList, "--spool-path=" TEST_PATH " /spool");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "1");
         strLstAddZ(argList, "pg_wal/bogus");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList, .exeBogus = true);
 
-        storagePathCreateP(storageTest, cfgOptionStr(cfgOptPgPath));
+        HRN_STORAGE_PATH_CREATE(storageTest, strZ(cfgOptionStr(cfgOptPgPath)));
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,
             "unable to push WAL file 'bogus' to the archive asynchronously after 1 second(s)");
 
-        // Create pg_control and archive.info
+        // Create pg_control and archive.info for next set of tests
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test");
-        strLstAddZ(argList, "--archive-async");
-        strLstAddZ(argList, "--no-compress");
-        strLstAddZ(argList, "--spool-path=" TEST_PATH "/spool");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--log-subprocess");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawBool(argList, cfgOptCompress, false);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
 
-        storagePutP(
-            storageNewWriteP(storageTest, STRDEF("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+        HRN_STORAGE_PUT(storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}));
 
-        storagePutP(
-            storageNewWriteP(storageTest, STRDEF("repo/archive/test/archive.info")),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=1\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":12297848147757817309,\"db-version\":\"9.4\"}\n"));
+        HRN_INFO_PUT(
+            storageTest, "repo/archive/test/archive.info",
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":12297848147757817309,\"db-version\":\"9.4\"}\n");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("async, ignore error file on first pass");
 
         // Write out an error file that will be ignored on the first pass, then the async process will write a new one
-        // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
-        storagePathCreateP(storagePgWrite(), STRDEF("pg_xlog/archive_status"));
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
 
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error")),
-            BUFSTRDEF("25\nbogus error"));
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error", "25\nbogus error");
 
         TEST_ERROR(cmdArchivePush(), AssertError, "no WAL files to process");
 
-        storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/global.error"), .errorOnMissing = true);
+        TEST_STORAGE_EXISTS(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/global.error", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("with lock, prevent async from running");
 
         // Acquire a lock so the async process will not be able to run -- this will result in a timeout
-        // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
-        strLstAddZ(argListTemp, "--archive-timeout=1");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "1");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
@@ -770,13 +752,15 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // Actually push a WAL file
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("async WAL push");
+
+        // Actually push a WAL file
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000001.ready");
 
         Buffer *walBuffer1 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer1, bufSize(walBuffer1));
@@ -784,52 +768,51 @@ testRun(void)
         hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer1);
         const char *walBuffer1Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer1)));
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/000000010000000100000001")), walBuffer1);
+        HRN_STORAGE_PUT(storagePgWrite(),"pg_xlog/000000010000000100000001", walBuffer1);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive asynchronously");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
-            true, "check repo for WAL file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
+            .comment = "check repo for WAL file");
 
-        // Direct tests of the async function
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("direct tests of the async function");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
         hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
-        strLstAddZ(argList, "--spool-path=" TEST_PATH "/spool");
-        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--log-subprocess");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchivePushAsync(), ParamRequiredError, "WAL path to push required");
 
-        // Check that global.error is created
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("async, check that global.error is created");
+
         // Remove data from prior tests
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
-        storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
 
         HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
-        storagePathCreateP(storagePgWrite(), STRDEF("pg_xlog/archive_status"));
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
 
         strLstAddZ(argList, TEST_PATH "/pg/pg_xlog");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchivePushAsync(), AssertError, "no WAL files to process");
 
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")))),
-            "25\nno WAL files to process", "check global.error");
+        TEST_STORAGE_GET(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT "/global.error", "25\nno WAL files to process",
+            .comment = "check global.error");
 
-        TEST_RESULT_STRLST_Z(
-            strLstSort(storageListP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
-            "global.error\n", "check status files");
-
+        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT, "global.error\n", .comment = "check status files");
+// CSHANG STOPPED HERE
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add repo, push already pushed WAL and new WAL");
 
