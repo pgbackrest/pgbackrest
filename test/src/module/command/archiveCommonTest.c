@@ -97,8 +97,7 @@ testRun(void)
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "error status renamed to ok");
         TEST_RESULT_LOG(
             "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
-        TEST_STORAGE_EXISTS(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", .remove = true, .comment = "remove ok");
+        HRN_STORAGE_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("segment error file - AssertError");
