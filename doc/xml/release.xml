@@ -50,6 +50,21 @@
                 </release-development-list>
             </release-core-list>
 
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1446"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="eric.radman"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix documentation and comment typos.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+
             <release-test-list>
                 <release-improvement-list>
                     <release-item>
@@ -78,6 +93,9 @@
                             <github-pull-request id="1440"/>
                         </commit>
                         <commit subject="Add timeModified parameter to HRN_STORAGE_PUT() macro."/>
+                        <commit subject="Update info/manifest test to use standard patterns.">
+                            <github-pull-request id="1444"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>

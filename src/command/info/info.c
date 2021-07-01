@@ -106,7 +106,7 @@ typedef struct InfoRepoData
     unsigned int key;                                               // User-defined repo key
     CipherType cipher;                                              // Encryption type
     const String *cipherPass;                                       // Passphrase if the repo is encrypted (else NULL)
-    int stanzaStatus;                                               // Status code of the the stanza on this repo
+    int stanzaStatus;                                               // Status code of the stanza on this repo
     unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
     InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
     InfoArchive *archiveInfo;                                       // Contents of the archive.info file of the stanza on this repo
