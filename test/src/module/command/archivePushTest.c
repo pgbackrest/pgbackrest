@@ -812,7 +812,7 @@ testRun(void)
             .comment = "check global.error");
 
         TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT, "global.error\n", .comment = "check status files");
-// CSHANG STOPPED HERE
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add repo, push already pushed WAL and new WAL");
 
@@ -820,25 +820,23 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
-        storagePutP(
-            storageNewWriteP(storageTest, STRDEF("repo3/archive/test/archive.info")),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=1\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":12297848147757817309,\"db-version\":\"9.4\"}\n"));
+        HRN_INFO_PUT(
+            storageTest, "repo3/archive/test/archive.info",
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":12297848147757817309,\"db-version\":\"9.4\"}\n");
 
         // Recreate ready file for WAL 1
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000001.ready");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
-            true, "check repo1 for WAL 1 file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
+            .comment = "check repo1 for WAL 1 file");
 
         // Create a ready file for WAL 2 but don't create the segment yet -- this will test the file error
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/archive_status/000000010000000100000002.ready")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000002.ready");
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         TEST_RESULT_LOG_FMT(
@@ -850,19 +848,19 @@ testRun(void)
                 "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING,
             TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
-            true, "check repo1 for WAL 1 file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
+            .comment = "check repo1 for WAL 1 file");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
-            true, "check repo3 for WAL 1 file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
+            .comment = "check repo3 for WAL 1 file");
 
-        TEST_RESULT_STRLST_Z(
-            strLstSort(storageListP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
-            "000000010000000100000001.ok\n000000010000000100000002.error\n", "check status files");
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000001.ok\n"
+            "000000010000000100000002.error\n",
+            .comment = "check status files");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create and push previously missing WAL");
@@ -874,10 +872,10 @@ testRun(void)
         hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer2);
         const char *walBuffer2Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer2)));
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/000000010000000100000002")), walBuffer2);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000002", walBuffer2);
 
         argListTemp = strLstDup(argList);
-        strLstAddZ(argListTemp, "--archive-push-queue-max=1gb");
+        hrnCfgArgRawZ(argListTemp, cfgOptArchivePushQueueMax, "1gb");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
@@ -885,24 +883,24 @@ testRun(void)
             "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000002\n"
             "P01 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
-            true, "check repo1 for WAL 2 file");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
-            true, "check repo3 for WAL 2 file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            .comment = "check repo1 for WAL 2 file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            .comment = "check repo3 for WAL 2 file");
 
-        TEST_RESULT_STRLST_Z(
-            strLstSort(storageListP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
-            "000000010000000100000001.ok\n000000010000000100000002.ok\n", "check status files");
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000001.ok\n"
+            "000000010000000100000002.ok\n",
+            .comment = "check status files");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("push wal 2 again to get warnings from both repos");
 
         // Remove the OK file so the WAL gets pushed again
-        storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok"));
+        HRN_STORAGE_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok");
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         TEST_RESULT_LOG(
@@ -923,36 +921,34 @@ testRun(void)
         hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer3);
         const char *walBuffer3Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer3)));
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/000000010000000100000003")), walBuffer3);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000003", walBuffer3);
 
         // Create ready file
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/archive_status/000000010000000100000003.ready")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000003.ready");
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segment");
         TEST_RESULT_LOG(
             "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000003\n"
             "P01 DETAIL: pushed WAL file '000000010000000100000003' to the archive");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1)),
-            true, "check repo1 for WAL 3 file");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest, strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1)),
-            true, "check repo3 for WAL 3 file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1)),
+            .comment = "check repo1 for WAL 3 file");
+        TEST_STORAGE_EXISTS(
+            storageTest, strZ(strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1)),
+            .comment = "check repo3 for WAL 3 file");
 
         // Remove the ready file to prevent WAL 3 from being considered for the next test
-        storageRemoveP(storagePgWrite(), STRDEF("pg_xlog/archive_status/000000010000000100000003.ready"), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000003.ready", .errorOnMissing = true);
 
         // Check that drop functionality works
         // -------------------------------------------------------------------------------------------------------------------------
         // Remove status files
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
-        storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
 
         argListTemp = strLstDup(argList);
-        strLstAddZ(argListTemp, "--archive-push-queue-max=16m");
+        hrnCfgArgRawZ(argListTemp, cfgOptArchivePushQueueMax, "16m");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
@@ -961,19 +957,19 @@ testRun(void)
             "P00   WARN: dropped WAL file '000000010000000100000001' because archive queue exceeded 16MB\n"
             "P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");
 
-        TEST_RESULT_STR_Z(
-            strNewBuf(
-                storageGetP(storageNewReadP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok")))),
-            "0\ndropped WAL file '000000010000000100000001' because archive queue exceeded 16MB", "check WAL 1 warning");
+        TEST_STORAGE_GET(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok",
+            "0\ndropped WAL file '000000010000000100000001' because archive queue exceeded 16MB", .comment = "check WAL 1 warning");
 
-        TEST_RESULT_STR_Z(
-            strNewBuf(
-                storageGetP(storageNewReadP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok")))),
-            "0\ndropped WAL file '000000010000000100000002' because archive queue exceeded 16MB", "check WAL 2 warning");
+        TEST_STORAGE_GET(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok",
+            "0\ndropped WAL file '000000010000000100000002' because archive queue exceeded 16MB", .comment = "check WAL 2 warning");
 
-        TEST_RESULT_STRLST_Z(
-            strLstSort(storageListP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
-            "000000010000000100000001.ok\n000000010000000100000002.ok\n", "check status files");
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000001.ok\n"
+            "000000010000000100000002.ok\n",
+            .comment = "check status files");
 
         // Uninstall local command handler shim
         hrnProtocolLocalShimUninstall();
