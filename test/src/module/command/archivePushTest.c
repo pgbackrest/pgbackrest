@@ -631,7 +631,7 @@ testRun(void)
         TEST_TITLE("pg1-path must be set when async");
 
         argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, "/spool");
         hrnCfgArgRawZ(argList, cfgOptStanza, "test2");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         strLstAddZ(argList, "/000000010000000100000001");
