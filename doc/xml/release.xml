@@ -96,6 +96,9 @@
                         <commit subject="Update info/manifest test to use standard patterns.">
                             <github-pull-request id="1444"/>
                         </commit>
+                        <commit subject="Update command/archive tests to use standard patterns.">
+                            <github-pull-request id="1449"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
