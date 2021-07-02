@@ -853,7 +853,7 @@ testRun(void)
             .comment = "check repo1 for WAL 1 file");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
+            storageTest, strZ(strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
             .comment = "check repo3 for WAL 1 file");
 
         TEST_STORAGE_LIST(
