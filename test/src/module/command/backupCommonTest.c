@@ -24,86 +24,107 @@ testRun(void)
         const String *diff = STRDEF("20181119-152138F_20181119-152152D");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - error");
+
         TEST_ERROR(
             backupRegExpP(0),
             AssertError, "assertion 'param.full || param.differential || param.incremental' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match full");
+
         String *filter = backupRegExpP(.full = true);
         TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F$", "full backup regex with anchors");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "    does not exactly match incr");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "    does not exactly match diff");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    exactly matches full");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "does not exactly match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "does not exactly match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "exactly matches full");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match full, incremental");
+
         filter = backupRegExpP(.full = true, .incremental = true);
 
         TEST_RESULT_STR_Z(
             filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}I){0,1}$", "full and optional incr backup regex with anchors");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "    match incr");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "    does not match diff");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "does not match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "match full");
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                filter, STRDEF("12341234-123123F_12341234-123123IG")), false, "    does not match with trailing character");
+                filter, STRDEF("12341234-123123F_12341234-123123IG")), false, "does not match with trailing character");
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "    does not match with leading character");
+                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "does not match with leading character");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match full, differential");
+
         filter = backupRegExpP(.full = true, .differential = true);
 
         TEST_RESULT_STR_Z(
             filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}D){0,1}$", "full and optional diff backup regex with anchors");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "    does not match incr");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "    match diff");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "does not match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "match full");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match full, incremental, differential");
+
         filter = backupRegExpP(.full = true,  .incremental = true, .differential = true);
 
         TEST_RESULT_STR_Z(
             filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}(D|I)){0,1}$",
             "full, optional diff and incr backup regex with anchors");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "    match incr");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "    match diff");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "match full");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match incremental, differential without end anchor");
+
         filter = backupRegExpP(.incremental = true, .differential = true, .noAnchorEnd = true);
 
         TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(D|I)", "diff and incr backup regex with anchors");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "   match incr");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "   match diff");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "does not match full");
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "   does not match with leading character");
+                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "does not match with leading character");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match incremental");
+
         filter = backupRegExpP(.incremental = true);
 
         TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}I$", "incr backup regex with anchors");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "   match incr");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "   does not match diff");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "does not match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "does not match full");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match differential");
+
         filter = backupRegExpP(.differential = true);
 
         TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}D$", "diff backup regex with anchors");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "   does not match incr");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "   match diff");
-        TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "does not match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "does not match full");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("PageChecksum"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("segment page default");
+
         TEST_RESULT_UINT(PG_SEGMENT_PAGE_DEFAULT, 131072, "check pages per segment");
 
-        // Test pages with all zeros (these are considered valid)
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pages with all zeroes");
+
+        // Test pages with all zeros (these are considered valid)
         Buffer *buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
         Buffer *bufferOut = bufNew(0);
         bufUsedSet(buffer, bufSize(buffer));
@@ -122,8 +143,9 @@ testRun(void)
             jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":true,\"valid\":true}", "all zero pages");
 
-        // Single valid page
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single valid page");
+
         buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 1);
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
@@ -156,8 +178,9 @@ testRun(void)
             jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":true,\"valid\":true}", "single valid page");
 
-        // Single checksum error
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single checksum error");
+
         buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 1);
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
@@ -187,8 +210,9 @@ testRun(void)
             jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":true,\"error\":[0],\"valid\":false}", "single checksum error");
 
-        // Various checksum errors some of which will be skipped because of the LSN
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("various checksum errors some of which will be skipped because of the LSN");
+
         buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 8 - (PG_PAGE_SIZE_DEFAULT - 512));
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
@@ -278,8 +302,9 @@ testRun(void)
             jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":false,\"error\":[0,[2,4],[6,7]],\"valid\":false}", "various checksum errors");
 
-        // Impossibly misaligned page
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("impossibly misaligned page");
+
         buffer = bufNew(256);
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
@@ -296,8 +321,9 @@ testRun(void)
             jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
             "{\"align\":false,\"valid\":false}", "misalignment");
 
-        // Two misaligned buffers in a row
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("two misaligned buffers in a row");
+
         buffer = bufNew(513);
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
