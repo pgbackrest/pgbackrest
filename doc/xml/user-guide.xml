@@ -2144,7 +2144,7 @@
             </execute>
         </execute-list>
 
-        <p>Now the the log output will contain the expected <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> messages showing that the recovery was successful.</p>
+        <p>Now the log output will contain the expected <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> messages showing that the recovery was successful.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Examine the <postgres/> log output for log messages indicating success</title>

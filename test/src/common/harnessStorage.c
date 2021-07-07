@@ -403,14 +403,19 @@ hrnStoragePut(
     compressExtCat(fileStr, param.compressType);
 
     // Create file
-    StorageWrite *destination = storageNewWriteP(storage, fileStr, .modeFile = param.modeFile);
+    StorageWrite *destination = storageNewWriteP(storage, fileStr, .modeFile = param.modeFile, .timeModified = param.timeModified);
     IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
 
-    // Add mode to output information filter
+    // Declare an information filter for displaying paramaters to the output
     String *const filter = strNew();
 
+    // Add mode to output information filter
     if (param.modeFile != 0)
         strCatFmt(filter, "mode[%04o]", param.modeFile);
+
+    // Add modified time to output information filter
+    if (param.timeModified != 0)
+        strCatFmt(filter, "%stime[%" PRIu64 "]",  strEmpty(filter) ? "" : "/", (uint64_t)param.timeModified);
 
     // Add compression filter
     if (param.compressType != compressTypeNone)

@@ -28,7 +28,7 @@ testRun(void)
     if (testBegin("infoRender()"))
     {
         StringList *argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         StringList *argListText = strLstDup(argList);
 
         hrnCfgArgRawZ(argList, cfgOptOutput, "json");
@@ -132,7 +132,7 @@ testRun(void)
 
         // Put backup info to file
         HRN_INFO_PUT(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -162,12 +162,12 @@ testRun(void)
                             "\"status\":{"
                                 "\"code\":99,"
                                 "\"message\":\"[FileMissingError] unable to load info file '"
-                                TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE "' or '"
-                                TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE INFO_COPY_EXT "':\\n"
-                                "FileMissingError: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE
-                                "/stanza1/" INFO_ARCHIVE_FILE "' for read\\n"
-                                "FileMissingError: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE
-                                "/stanza1/" INFO_ARCHIVE_FILE INFO_COPY_EXT "' for read\\n"
+                                TEST_PATH "/repo/archive/stanza1/archive.info' or '"
+                                TEST_PATH "/repo/archive/stanza1/archive.info.copy':\\n"
+                                "FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/stanza1/archive.info'"
+                                " for read\\n"
+                                "FileMissingError: unable to open missing file '" TEST_PATH
+                                "/repo/archive/stanza1/archive.info.copy' for read\\n"
                                 "HINT: archive.info cannot be opened but is required to push/get WAL segments.\\n"
                                 "HINT: is archive_command configured correctly in postgresql.conf?\\n"
                                 "HINT: has a stanza-create been performed?\\n"
@@ -190,13 +190,11 @@ testRun(void)
             infoRender(),
             "stanza: stanza1\n"
             "    status: error (other)\n"
-            "            [FileMissingError] unable to load info file '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza1/"
-                         INFO_ARCHIVE_FILE "' or '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE
-                         INFO_COPY_EXT "':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza1/"
-                         INFO_ARCHIVE_FILE "' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza1/"
-                         INFO_ARCHIVE_FILE INFO_COPY_EXT "' for read\n"
+            "            [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/stanza1/archive.info' or '"
+                         TEST_PATH "/repo/archive/stanza1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/stanza1/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/stanza1/archive.info.copy'"
+                         " for read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
@@ -596,8 +594,8 @@ testRun(void)
         HARNESS_FORK_END();
 
         // Cleanup
-        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza1/9.3-2", .recurse = true);
-        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza1/9.4-3", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.3-2", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.4-3", .recurse = true);
 
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
@@ -605,7 +603,7 @@ testRun(void)
         TEST_TITLE("mixed multi-repo");
 
         HRN_INFO_PUT(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE,
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE,
             "[db]\n"
             "db-id=2\n"
             "db-system-id=6626363367545678089\n"
@@ -617,7 +615,7 @@ testRun(void)
             .comment = "put archive info to file - stanza1, repo1");
 
         HRN_INFO_PUT(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
             "[backup:current]\n"
             "20181119-152138F={"
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
@@ -782,7 +780,7 @@ testRun(void)
             "user=\"user1\"\n"
 
         HRN_INFO_PUT(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza1/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE,
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
@@ -795,7 +793,7 @@ testRun(void)
             .comment = "write manifest - stanza1, repo1");
 
         HRN_INFO_PUT(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE "/stanza2/" INFO_ARCHIVE_FILE,
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza2/" INFO_ARCHIVE_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6625633699176220261\n"
@@ -805,7 +803,7 @@ testRun(void)
             "1={\"db-id\":6625633699176220261,\"db-version\":\"9.4\"}\n",
             .comment = "put archive info to file - stanza2, repo1");
         HRN_INFO_PUT(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza2/" INFO_BACKUP_FILE,
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza2/" INFO_BACKUP_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -862,16 +860,16 @@ testRun(void)
 
         // Add WAL on repo1 and encrypted repo2 for stanza1
         HRN_STORAGE_PUT_EMPTY(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
             "/stanza1/9.5-2/0000000100000000/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz");
         HRN_STORAGE_PUT_EMPTY(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
             "/stanza1/9.5-2/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
         HRN_STORAGE_PUT_EMPTY(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
             "/stanza1/9.5-2/0000000100000000/000000010000000000000004-ee61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz");
         HRN_STORAGE_PUT_EMPTY(
-            storageTest, TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
             "/stanza1/9.5-2/0000000100000000/000000010000000000000005-abc123f1ec7b1e6c3eaee9345214595eb7daa9a1.gz");
 
         HRN_STORAGE_PUT_EMPTY(
@@ -983,7 +981,7 @@ testRun(void)
 
         // Set up the configuration
         StringList *argListMultiRepo = strLstNew();
-        hrnCfgArgRawZ(argListMultiRepo, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argListMultiRepo, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argListMultiRepo, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argListMultiRepo, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
@@ -2248,13 +2246,12 @@ testRun(void)
             "stanza: stanza1\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza1/"
-                            INFO_BACKUP_FILE "' or '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE
-                            INFO_COPY_EXT "':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza1/backup.info' or '"
+                            TEST_PATH "/repo/backup/stanza1/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
-            "               FileMissingError: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza1/"
-                            INFO_BACKUP_FILE INFO_COPY_EXT "' for read\n"
+            "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza1/backup.info.copy'"
+                            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2268,13 +2265,12 @@ testRun(void)
             "stanza: stanza2\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza2/"
-                            INFO_BACKUP_FILE "' or '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza2/" INFO_BACKUP_FILE
-                            INFO_COPY_EXT "':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza2/backup.info' or '"
+                            TEST_PATH "/repo/backup/stanza2/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
-            "               FileMissingError: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza2/"
-                            INFO_BACKUP_FILE INFO_COPY_EXT "' for read\n"
+            "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza2/backup.info.copy'"
+                            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2285,13 +2281,12 @@ testRun(void)
             "stanza: stanza3\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza3/"
-                            INFO_BACKUP_FILE "' or '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza3/" INFO_BACKUP_FILE
-                            INFO_COPY_EXT "':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza3/backup.info' or '"
+                            TEST_PATH "/repo/backup/stanza3/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
-            "               FileMissingError: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza3/"
-                            INFO_BACKUP_FILE INFO_COPY_EXT "' for read\n"
+            "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza3/backup.info.copy'"
+                            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2322,13 +2317,12 @@ testRun(void)
             "stanza: stanza3\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza3/"
-                            INFO_BACKUP_FILE "' or '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza3/" INFO_BACKUP_FILE
-                            INFO_COPY_EXT "':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza3/backup.info' or '"
+                            TEST_PATH "/repo/backup/stanza3/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
-            "               FileMissingError: unable to open missing file '" TEST_PATH_REPO "/" STORAGE_PATH_BACKUP "/stanza3/"
-                            INFO_BACKUP_FILE INFO_COPY_EXT "' for read\n"
+            "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza3/backup.info.copy'"
+                            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2353,8 +2347,8 @@ testRun(void)
             "stanza: stanza1\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/" STORAGE_PATH_ARCHIVE
-            "/stanza1/9.4-1': [13] Permission denied\n"
+            "               [PathOpenError] unable to list file info for path '" TEST_PATH "/repo/archive/stanza1/9.4-1': [13]"
+            " Permission denied\n"
             "        repo2: error (no valid backups)\n"
             "    cipher: mixed\n"
             "        repo1: none\n"
@@ -2375,7 +2369,7 @@ testRun(void)
         TEST_TITLE("multi-repo, database mismatch, pg system-id only");
 
         StringList *argList2 = strLstNew();
-        hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
         hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2564,7 +2558,7 @@ testRun(void)
     if (testBegin("cmdInfo()"))
     {
         StringList *argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_ARCHIVE, .comment = "create repo archive path");
