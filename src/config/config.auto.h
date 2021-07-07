@@ -118,9 +118,10 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
 #define CFGOPT_TLS_SERVER_CERT                                      "tls-server-cert"
 #define CFGOPT_TLS_SERVER_KEY                                       "tls-server-key"
+#define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            134
+#define CFG_OPTION_TOTAL                                            135
 
 /***********************************************************************************************************************************
 Option value constants
@@ -392,6 +393,7 @@ typedef enum
     cfgOptTcpKeepAliveInterval,
     cfgOptTlsServerCert,
     cfgOptTlsServerKey,
+    cfgOptTlsServerPort,
     cfgOptType,
 } ConfigOption;
 

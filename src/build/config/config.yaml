@@ -828,6 +828,7 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      server: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -898,6 +899,14 @@ option:
   tls-server-cert:
     section: global
     type: path
+    command:
+      server: {}
+
+  tls-server-port:
+    section: global
+    type: integer
+    default: 8424
+    allow-range: [1, 65535]
     command:
       server: {}
 

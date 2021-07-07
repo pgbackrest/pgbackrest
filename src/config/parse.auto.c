@@ -2832,6 +2832,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -6563,6 +6564,26 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("tls-server-port"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(1, 65535),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("8424"),
         ),
     ),
 
@@ -10820,6 +10841,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTlsServerKey,
     },
 
+    // tls-server-port option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "tls-server-port",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptTlsServerPort,
+    },
+    {
+        .name = "reset-tls-server-port",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTlsServerPort,
+    },
+
     // type option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -10922,6 +10955,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTcpKeepAliveInterval,
     cfgOptTlsServerCert,
     cfgOptTlsServerKey,
+    cfgOptTlsServerPort,
     cfgOptType,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
