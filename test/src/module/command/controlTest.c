@@ -83,53 +83,62 @@ testRun(void)
         StringList *argList = strLstNew();
         HRN_CFG_LOAD(cfgCmdStop, argList);
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path/file info");
+
         TEST_RESULT_VOID(cmdStop(), "no stanza, create stop file");
         StorageInfo info = {0};
-        TEST_ASSIGN(info, storageInfoP(hrnStorage, lockPath), "    get path info");
-        TEST_RESULT_INT(info.mode, 0770, "    check path mode");
-        TEST_RESULT_BOOL(
-            storageExistsP(hrnStorage, strNewFmt("%s/all" STOP_FILE_EXT, strZ(lockPath))), true, "    all stop file created");
-        TEST_ASSIGN(info, storageInfoP(hrnStorage, strNewFmt("%s/all" STOP_FILE_EXT, strZ(lockPath))), "    get file info");
-        TEST_RESULT_INT(info.mode, 0640, "    check file mode");
+        TEST_ASSIGN(info, storageInfoP(hrnStorage, STRDEF("lock")), "get path info");
+        TEST_RESULT_INT(info.mode, 0770, "check path mode");
+        TEST_STORAGE_EXISTS(hrnStorage, "lock/all" STOP_FILE_EXT, .comment = "all stop file created");
+        TEST_ASSIGN(info, storageInfoP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), "get file info");
+        TEST_RESULT_INT(info.mode, 0640, "check file mode");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stop file already exists");
+
         TEST_RESULT_VOID(cmdStop(), "no stanza, stop file already exists");
         TEST_RESULT_LOG("P00   WARN: stop file already exists for all stanzas");
+        HRN_STORAGE_REMOVE(hrnStorage, "lock/all" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stop file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveP(hrnStorage, STRDEF("lockpath/all" STOP_FILE_EXT)), "remove stop file");
-        HRN_SYSTEM_FMT("chmod 444 %s", strZ(lockPath));
-        TEST_ERROR_FMT(
-            cmdStop(), FileOpenError, "unable to get info for path/file '%s/all.stop': [13] Permission denied", strZ(lockPath));
-        HRN_SYSTEM_FMT("chmod 700 %s", strZ(lockPath));
-        TEST_RESULT_VOID(
-            storagePathRemoveP(hrnStorage, lockPath, .recurse = true, .errorOnMissing = true), "    remove the lock path");
+        TEST_TITLE("stop file error");
+
+        HRN_STORAGE_MODE(hrnStorage, "lock", .mode = 0444);
+        TEST_ERROR(
+            cmdStop(), FileOpenError, "unable to get info for path/file '" HRN_PATH "/lock/all.stop': [13] Permission denied");
+        HRN_STORAGE_MODE(hrnStorage, "lock", .comment = "reset lock path mode to default");
+        HRN_STORAGE_PATH_REMOVE(hrnStorage, "lock", .recurse = true, .errorOnMissing = true, .comment = "remove the lock path");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza stop file create");
+
         String *stanzaStopFile = strNewFmt("%s/db" STOP_FILE_EXT, strZ(lockPath));
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         HRN_CFG_LOAD(cfgCmdStop, argList);
 
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file");
-        TEST_RESULT_BOOL(storageExistsP(hrnStorage, stanzaStopFile), true, "    stanza stop file created");
-
-        StringList *lockPathList = NULL;
-        TEST_ASSIGN(lockPathList, storageListP(hrnStorage, STRDEF("lock"), .errorOnMissing = true), "    get file list");
-        TEST_RESULT_INT(strLstSize(lockPathList), 1, "    only file in lock path");
-        TEST_RESULT_STR_Z(strLstGet(lockPathList, 0), "db" STOP_FILE_EXT, "    stanza stop exists");
+        TEST_STORAGE_EXISTS(hrnStorage, "lock/db" STOP_FILE_EXT, .comment = "stanza stop file created");
+        TEST_STORAGE_LIST(hrnStorage, "lock", "db" STOP_FILE_EXT "\n", .comment = "only stanza stop exists in lock path");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza stop file already exists");
+
         TEST_RESULT_VOID(cmdStop(), "stanza, stop file already exists");
         TEST_RESULT_LOG("P00   WARN: stop file already exists for stanza db");
-        TEST_RESULT_VOID(storageRemoveP(hrnStorage, stanzaStopFile), "    remove stop file");
+        HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--force");
+        TEST_TITLE("stanza stop file create with force");
+
+        hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdStop, argList);
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file, force");
-        TEST_RESULT_VOID(storageRemoveP(hrnStorage, stanzaStopFile), "    remove stop file");
+        HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unable to open stanza stop file");
+// CSHANG STOPPED HERE
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(hrnStorage, strNewFmt("%s/bad" LOCK_FILE_EXT, strZ(lockPath)), .modeFile = 0222), NULL),
             "create a lock file that cannot be opened");
