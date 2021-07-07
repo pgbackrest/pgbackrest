@@ -14,10 +14,6 @@ Prefix for environment variables
 /***********************************************************************************************************************************
 Config option constants
 ***********************************************************************************************************************************/
-#define TEST_PATH_REPO                                              TEST_PATH "/repo"
-#define TEST_PATH_PG                                                TEST_PATH "/pg"
-#define TEST_PATH_SPOOL                                             TEST_PATH "/spool"
-
 #define TEST_CIPHER_PASS                                            "xmainx"
 #define TEST_CIPHER_PASS_ARCHIVE                                    "xarchivex"
 

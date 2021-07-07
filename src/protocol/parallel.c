@@ -10,7 +10,6 @@ Protocol Parallel Executor
 #include "common/log.h"
 #include "common/macro.h"
 #include "common/memContext.h"
-#include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
 #include "protocol/command.h"
@@ -83,7 +82,7 @@ protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
     ASSERT(client != NULL);
     ASSERT(this->state == protocolParallelJobStatePending);
 
-    if (ioReadFd(protocolClientIoRead(client)) == -1)
+    if (protocolClientIoReadFd(client) == -1)
         THROW(AssertError, "client with read fd is required");
 
     lstAdd(this->clientList, &client);
@@ -128,7 +127,7 @@ protocolParallelProcess(ProtocolParallel *this)
     {
         if (this->clientJobList[clientIdx] != NULL)
         {
-            int fd = ioReadFd(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx)));
+            int fd = protocolClientIoReadFd(*(ProtocolClient **)lstGet(this->clientList, clientIdx));
             FD_SET((unsigned int)fd, &selectSet);
 
             // Find the max file descriptor needed for select()
@@ -159,15 +158,17 @@ protocolParallelProcess(ProtocolParallel *this)
 
                 if (job != NULL &&
                     FD_ISSET(
-                        (unsigned int)ioReadFd(protocolClientIoRead(*(ProtocolClient **)lstGet(this->clientList, clientIdx))),
+                        (unsigned int)protocolClientIoReadFd(*(ProtocolClient **)lstGet(this->clientList, clientIdx)),
                         &selectSet))
                 {
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
                         TRY_BEGIN()
                         {
-                            protocolParallelJobResultSet(
-                                job, protocolClientReadOutput(*(ProtocolClient **)lstGet(this->clientList, clientIdx), true));
+                            ProtocolClient *const client = *(ProtocolClient **)lstGet(this->clientList, clientIdx);
+
+                            protocolParallelJobResultSet(job, protocolClientDataGet(client));
+                            protocolClientDataEndGet(client);
                         }
                         CATCH_ANY()
                         {
@@ -207,9 +208,8 @@ protocolParallelProcess(ProtocolParallel *this)
                 // Add to the job list
                 lstAdd(this->jobList, &job);
 
-                // Send the job to the client
-                protocolClientWriteCommand(
-                    *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
+                // Put command
+                protocolClientCommandPut(*(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
 
                 // Set client id and running state
                 protocolParallelJobProcessIdSet(job, clientIdx + 1);

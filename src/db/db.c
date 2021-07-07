@@ -6,6 +6,7 @@ Database Client
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
 #include "common/wait.h"
 #include "db/db.h"
 #include "db/protocol.h"
@@ -46,7 +47,7 @@ dbFreeResource(THIS_VOID)
     ASSERT(this != NULL);
 
     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE);
-    protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
+    pckWriteU32P(protocolCommandParam(command), this->remoteIdx);
 
     protocolClientExecute(this->remoteClient, command, false);
 
@@ -109,10 +110,12 @@ dbQuery(Db *this, const String *query)
     if (this->remoteClient != NULL)
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY);
-        protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
-        protocolCommandParamAdd(command, VARSTR(query));
+        PackWrite *const param = protocolCommandParam(command);
 
-        result = varVarLst(protocolClientExecute(this->remoteClient, command, true));
+        pckWriteU32P(param, this->remoteIdx);
+        pckWriteStrP(param, query);
+
+        result = varVarLst(jsonToVar(pckReadStrP(protocolClientExecute(this->remoteClient, command, true))));
     }
     // Else locally
     else
@@ -199,7 +202,7 @@ dbOpen(Db *this)
         if (this->remoteClient != NULL)
         {
             ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_OPEN);
-            this->remoteIdx = varUIntForce(protocolClientExecute(this->remoteClient, command, true));
+            this->remoteIdx = pckReadU32P(protocolClientExecute(this->remoteClient, command, true));
 
             // Set a callback to notify the remote when a connection is closed
             memContextCallbackSet(this->pub.memContext, dbFreeResource, this);

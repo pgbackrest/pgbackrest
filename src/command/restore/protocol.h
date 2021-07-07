@@ -4,15 +4,14 @@ Restore Protocol Handler
 #ifndef COMMAND_RESTORE_PROTOCOL_H
 #define COMMAND_RESTORE_PROTOCOL_H
 
-#include "common/type/string.h"
-#include "common/type/variantList.h"
+#include "common/type/pack.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void restoreFileProtocol(const VariantList *paramList, ProtocolServer *server);
+void restoreFileProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

@@ -72,7 +72,7 @@ testRun(void)
 
     StringList *argListBase = strLstNew();
     hrnCfgArgRawZ(argListBase, cfgOptStanza, "db");
-    hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH_REPO);
+    hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH "/repo");
 
     // Initialize a configuration list that avoids the retention warning
     StringList *argListAvoidWarn = strLstDup(argListBase);
@@ -799,7 +799,7 @@ testRun(void)
 
         // Copy the repo to another repo
         HRN_SYSTEM("mkdir " TEST_PATH "/repo2");
-        HRN_SYSTEM("cp -r " TEST_PATH_REPO "/* " TEST_PATH "/repo2/");
+        HRN_SYSTEM("cp -r " TEST_PATH "/repo/* " TEST_PATH "/repo2/");
 
         // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);
@@ -815,7 +815,7 @@ testRun(void)
 
         StringList *argList2 = strLstDup(argList);
         hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
-        hrnCfgArgRawZ(argList2, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgRawZ(argList2, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdBackup, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
@@ -883,10 +883,10 @@ testRun(void)
 
         // Rename backup.info files on repo1 to cause error
         HRN_STORAGE_MOVE(
-            storageTest, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE ".save");
+            storageTest, TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE, TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE ".save");
         HRN_STORAGE_MOVE(
-            storageTest, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT,
-            TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save");
+            storageTest, TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT,
+            TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save");
 
         // Rename archive.info file on repo2 to cause error
         HRN_STORAGE_MOVE(
@@ -901,24 +901,21 @@ testRun(void)
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 2 error(s), check the log file for details");
         TEST_RESULT_LOG(
-            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE "' or '"
-                         TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT"':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-                         "' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-                         INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/repo/backup/db/backup.info' or '"
+                         TEST_PATH "/repo/backup/db/backup.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
             "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
                 " 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
-            "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE
-                         "' or '" TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE INFO_COPY_EXT "':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE
-                         "' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE
-                         INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH "/repo2/archive/db/archive.info' or '"
+                         TEST_PATH "/repo2/archive/db/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/archive.info.copy'"
+                " for read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
@@ -934,12 +931,10 @@ testRun(void)
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         TEST_RESULT_LOG(
-            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE "' or '"
-                         TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT"':\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-                         "' for read\n"
-            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE
-                         INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/repo/backup/db/backup.info' or '"
+                         TEST_PATH "/repo/backup/db/backup.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
             "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
@@ -957,10 +952,10 @@ testRun(void)
 
         // Restore saved backup.info files
         HRN_STORAGE_MOVE(
-            storageTest, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE ".save", TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE);
+            storageTest, TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE ".save", TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE);
         HRN_STORAGE_MOVE(
-            storageTest, TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save",
-            TEST_PATH_REPO "/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT);
+            storageTest, TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save",
+            TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, dry run: archive and backups not removed");
@@ -1012,7 +1007,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F\n"
-            "P00   INFO: [DRY-RUN] repo1: remove archive path " TEST_PATH_REPO "/archive/db/9.4-1\n"
+            "P00   INFO: [DRY-RUN] repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
             "P00 DETAIL: [DRY-RUN] repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove\n"
             "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
@@ -1057,7 +1052,7 @@ testRun(void)
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"
-            "P00   INFO: repo1: remove archive path " TEST_PATH_REPO "/archive/db/9.4-1\n"
+            "P00   INFO: repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
             "P00 DETAIL: repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: repo1: 10-2 no archive to remove\n"
             "P00   INFO: repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
@@ -1147,12 +1142,12 @@ testRun(void)
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 1, "9.4-1", "0000000100000000");
         argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "1");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: remove archive path " TEST_PATH_REPO "/archive/db/9.4-1\n"
+            "P00   INFO: repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1343,7 +1338,7 @@ testRun(void)
         // Load Parameters
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Restore the history file
@@ -1462,7 +1457,7 @@ testRun(void)
         // Add one year old full backup
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2017/20171119-152138F.manifest.gz");
 
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire");
@@ -1816,7 +1811,7 @@ testRun(void)
             "option-online=false\n"
             "\n"
             "[backup:target]\n"
-            "pg_data={\"path\":\"" TEST_PATH_PG "\",\"type\":\"path\"}\n"
+            "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
             "\n"
             "[db]\n"
             "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
@@ -1879,17 +1874,17 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
             "20181119-152138F/\n"
-            "20181119-152138F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152138F/backup.manifest\n"
             "20181119-152800F/\n"
-            "20181119-152800F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F/backup.manifest\n"
             "20181119-152800F_20181119-152252D/\n"
-            "20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F_20181119-152252D/backup.manifest\n"
             "20181119-152850F/\n"
-            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/backup.manifest\n"
             "20181119-152900F/\n"
-            "20181119-152900F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152900F/backup.manifest\n"
             "20181119-152900F_20181119-153000I/\n"
-            "20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "\n"
+            "20181119-152900F_20181119-153000I/backup.manifest.copy\n"
             "backup.info\n"
             "backup.info.copy\n"
             "latest>\n",
@@ -1922,15 +1917,15 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
             "20181119-152800F/\n"
-            "20181119-152800F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F/backup.manifest\n"
             "20181119-152800F_20181119-152252D/\n"
-            "20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F_20181119-152252D/backup.manifest\n"
             "20181119-152850F/\n"
-            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/backup.manifest\n"
             "20181119-152900F/\n"
-            "20181119-152900F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152900F/backup.manifest\n"
             "20181119-152900F_20181119-153000I/\n"
-            "20181119-152900F_20181119-153000I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "\n"
+            "20181119-152900F_20181119-153000I/backup.manifest.copy\n"
             "backup.info\n"
             "backup.info.copy\n"
             "latest>\n",
@@ -1957,11 +1952,11 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
             "20181119-152800F/\n"
-            "20181119-152800F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F/backup.manifest\n"
             "20181119-152800F_20181119-152252D/\n"
-            "20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152800F_20181119-152252D/backup.manifest\n"
             "20181119-152850F/\n"
-            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/backup.manifest\n"
             "backup.info\n"
             "backup.info.copy\n"
             "latest>\n",
@@ -2011,7 +2006,7 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
             "20181119-152850F/\n"
-            "20181119-152850F/" BACKUP_MANIFEST_FILE "\n"
+            "20181119-152850F/backup.manifest\n"
             "backup.info\n"
             "backup.info.copy\n"
             "latest>\n",
@@ -2020,7 +2015,7 @@ testRun(void)
             "P00   INFO: repo1: expire adhoc backup set 20181119-152800F, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"
-            "P00   INFO: repo1: remove archive path " TEST_PATH_REPO "/archive/db/9.4-1\n"
+            "P00   INFO: repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
             "P00   INFO: repo1: 12-2 no archive to remove");
 
@@ -2149,10 +2144,7 @@ testRun(void)
             storageRepoWrite(), INFO_BACKUP_PATH_FILE,
             TEST_BACKUP_CURRENT
             TEST_BACKUP_DB);
-        HRN_INFO_PUT(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT,
-            TEST_BACKUP_CURRENT
-            TEST_BACKUP_DB);
+        HRN_STORAGE_COPY(storageRepo(), INFO_BACKUP_PATH_FILE, storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT);
 
         // Adhoc backup and resumable backup manifests
         const String *manifestContent = STRDEF(
@@ -2182,7 +2174,7 @@ testRun(void)
                 "option-online=false\n"
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"" TEST_PATH_PG "\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[db]\n"
                 "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
@@ -2240,9 +2232,6 @@ testRun(void)
 
         HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, strZ(backupInfoContent), .cipherType = cipherTypeAes256Cbc);
         HRN_INFO_PUT(
-            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, strZ(backupInfoContent),
-            .cipherType = cipherTypeAes256Cbc);
-        HRN_INFO_PUT(
             storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152850F/" BACKUP_MANIFEST_FILE,
             "[backup]\nbackup-type=\"full\"\n", .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
         HRN_INFO_PUT(
@@ -2250,7 +2239,7 @@ testRun(void)
             "[backup]\nbackup-type=\"diff\"\n", .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152850F_20181200-152252D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            strZ(manifestContent), .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
+            strZ(manifestContent), .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass", .comment = "resumable backup");
 
         // archives to repo2
         archiveGenerate(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE, 2, 10, "12-2", "0000000100000000");

@@ -265,7 +265,7 @@ verifyArchiveInfoFile(void)
             VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(
                 INFO_ARCHIVE_PATH_FILE_COPY_STR, false, cfgOptionStrNull(cfgOptRepoCipherPass));
 
-            // If the copy loaded successfuly, then check the checksums
+            // If the copy loaded successfully, then check the checksums
             if (verifyArchiveInfoCopy.errorCode == 0)
             {
                 // If the info and info.copy checksums don't match each other than one (or both) of the files could be corrupt so
@@ -318,7 +318,7 @@ verifyBackupInfoFile(void)
             VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
                 INFO_BACKUP_PATH_FILE_COPY_STR, false, cfgOptionStrNull(cfgOptRepoCipherPass));
 
-            // If the copy loaded successfuly, then check the checksums
+            // If the copy loaded successfully, then check the checksums
             if (verifyBackupInfoCopy.errorCode == 0)
             {
                 // If the info and info.copy checksums don't match each other than one (or both) of the files could be corrupt so
@@ -385,7 +385,7 @@ verifyManifestFile(
             VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
                 strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherPass);
 
-            // If the copy loaded successfuly, then check the checksums
+            // If the copy loaded successfully, then check the checksums
             if (verifyManifestInfoCopy.errorCode == 0)
             {
                 // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
@@ -755,10 +755,12 @@ verifyArchive(void *data)
 
                         // Set up the job
                         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                        protocolCommandParamAdd(command, VARSTR(filePathName));
-                        protocolCommandParamAdd(command, VARSTR(checksum));
-                        protocolCommandParamAdd(command, VARUINT64(archiveResult->pgWalInfo.size));
-                        protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
+                        PackWrite *const param = protocolCommandParam(command);
+
+                        pckWriteStrP(param, filePathName);
+                        pckWriteStrP(param, checksum);
+                        pckWriteU64P(param, archiveResult->pgWalInfo.size);
+                        pckWriteStrP(param, jobData->walCipherPass);
 
                         // Assign job to result, prepending the archiveId to the key for consistency with backup processing
                         result = protocolParallelJobNew(
@@ -829,7 +831,7 @@ verifyBackup(void *data)
     {
         result = NULL;
 
-        // If result list is empty or the last processed is not equal to the backup being processed, then intialize the backup
+        // If result list is empty or the last processed is not equal to the backup being processed, then initialize the backup
         // data and results
         if (lstEmpty(jobData->backupResultList) ||
             !strEq(((VerifyBackupResult *)lstGetLast(jobData->backupResultList))->backupLabel, strLstGet(jobData->backupList, 0)))
@@ -978,12 +980,13 @@ verifyBackup(void *data)
                 {
                     // Set up the job
                     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                    protocolCommandParamAdd(command, VARSTR(filePathName));
+                    PackWrite *const param = protocolCommandParam(command);
 
+                    pckWriteStrP(param, filePathName);
                     // If the checksum is not present in the manifest, it will be calculated by manifest load
-                    protocolCommandParamAdd(command, VARSTRZ(fileData->checksumSha1));
-                    protocolCommandParamAdd(command, VARUINT64(fileData->size));
-                    protocolCommandParamAdd(command, VARSTR(jobData->backupCipherPass));
+                    pckWriteStrP(param, STR(fileData->checksumSha1));
+                    pckWriteU64P(param, fileData->size);
+                    pckWriteStrP(param, jobData->backupCipherPass);
 
                     // Assign job to result (prepend backup label being processed to the key since some files are in a prior backup)
                     result = protocolParallelJobNew(
@@ -1140,7 +1143,7 @@ verifySetBackupCheckArchive(
         FUNCTION_TEST_PARAM(STRING_LIST, backupList);               // List of backup labels in the backup directory
         FUNCTION_TEST_PARAM(INFO_BACKUP, backupInfo);               // Contents of the backup.info file
         FUNCTION_TEST_PARAM(STRING_LIST, archiveIdList);            // List of archiveIds in the archive directory
-        FUNCTION_TEST_PARAM(INFO_PG, pgHistory);                    // Pointer to InfoPg of archive.info for accesing PG history
+        FUNCTION_TEST_PARAM(INFO_PG, pgHistory);                    // Pointer to InfoPg of archive.info for accessing PG history
         FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                 // Pointer to overall job error total
     FUNCTION_TEST_END();
 
@@ -1535,7 +1538,7 @@ verifyProcess(unsigned int *errorTotal)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            const VerifyResult verifyResult = (VerifyResult)varUIntForce(protocolParallelJobResult(job));
+                            const VerifyResult verifyResult = (VerifyResult)pckReadU32P(protocolParallelJobResult(job));
 
                             // Update the result set for the type of file being processed
                             if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))

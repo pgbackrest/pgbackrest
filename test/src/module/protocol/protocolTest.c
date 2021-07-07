@@ -11,101 +11,142 @@ Test Protocol
 #include "version.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessError.h"
 #include "common/harnessFork.h"
+#include "common/harnessPack.h"
 
 /***********************************************************************************************************************************
-Test protocol request handler
+Test protocol server command handlers
 ***********************************************************************************************************************************/
-static unsigned int testServerProtocolErrorTotal = 0;
+#define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
-static void
-testServerAssertProtocol(const VariantList *paramList, ProtocolServer *server)
+__attribute__((__noreturn__)) static void
+testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
         FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
-    ASSERT(paramList == NULL);
+    ASSERT(param == NULL);
+    ASSERT(server != NULL);
+
+    hrnErrorThrowP();
+
+    // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
+}
+
+#define TEST_PROTOCOL_COMMAND_ERROR                                 STRID5("error", 0x127ca450)
+
+__attribute__((__noreturn__)) static void
+testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
+        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(param == NULL);
+    ASSERT(server != NULL);
+
+    hrnErrorThrowP(.errorType = &FormatError);
+
+    // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
+}
+
+#define TEST_PROTOCOL_COMMAND_SIMPLE                                STRID5("c-simple", 0x2b20d4cf630)
+
+static void
+testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
+        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(param == NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        THROW(AssertError, "test assert");
+        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), STRDEF("output")));
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
+#define TEST_PROTOCOL_COMMAND_COMPLEX                               STRID5("c-complex", 0x182b20d78f630)
+
 static void
-testServerRequestSimpleProtocol(const VariantList *paramList, ProtocolServer *server)
+testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
         FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
-    ASSERT(paramList == NULL);
+    ASSERT(param != NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerResponse(server, varNewBool(true));
+        TEST_RESULT_UINT(pckReadU32P(param), 87, "param check");
+        TEST_RESULT_STR_Z(pckReadStrP(param), "data", "param check");
+
+        TEST_RESULT_VOID(protocolServerDataPut(server, NULL), "sync");
+
+        TEST_RESULT_BOOL(pckReadBoolP(protocolServerDataGet(server)), true, "data get");
+        TEST_RESULT_UINT(pckReadModeP(protocolServerDataGet(server)), 0644, "data get");
+        TEST_RESULT_PTR(protocolServerDataGet(server), NULL, "data end get");
+
+        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true)), "data put");
+        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteI32P(protocolPackNew(), -1)), "data put");
+        TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
+#define TEST_PROTOCOL_COMMAND_RETRY                                 STRID5("retry", 0x19950b20)
+
+static unsigned int testCommandRetryTotal = 1;
+
 static void
-testServerRequestComplexProtocol(const VariantList *paramList, ProtocolServer *server)
+testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
         FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
-    ASSERT(paramList == NULL);
+    ASSERT(param == NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerResponse(server, varNewBool(false));
-        protocolServerWriteLine(server, STRDEF("LINEOFTEXT"));
-        protocolServerWriteLine(server, NULL);
-        ioWriteFlush(protocolServerIoWrite(server));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
-
-static void
-testServerErrorUntil0Protocol(const VariantList *paramList, ProtocolServer *server)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
-    FUNCTION_HARNESS_END();
-
-    ASSERT(paramList == NULL);
-    ASSERT(server != NULL);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        if (testServerProtocolErrorTotal > 0)
+        if (testCommandRetryTotal > 0)
         {
-            testServerProtocolErrorTotal--;
+            testCommandRetryTotal--;
             THROW(FormatError, "error-until-0");
         }
 
-        protocolServerResponse(server, varNewBool(true));
+        protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true));
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
+
+#define TEST_PROTOCOL_SERVER_HANDLER_LIST                                                                                          \
+    {.command = TEST_PROTOCOL_COMMAND_ASSERT, .handler = testCommandAssertProtocol},                                               \
+    {.command = TEST_PROTOCOL_COMMAND_ERROR, .handler = testCommandErrorProtocol},                                                 \
+    {.command = TEST_PROTOCOL_COMMAND_SIMPLE, .handler = testCommandRequestSimpleProtocol},                                        \
+    {.command = TEST_PROTOCOL_COMMAND_COMPLEX, .handler = testCommandRequestComplexProtocol},                                      \
+    {.command = TEST_PROTOCOL_COMMAND_RETRY, .handler = testCommandRetryProtocol},
 
 /***********************************************************************************************************************************
 Test ParallelJobCallback
@@ -390,35 +431,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("ProtocolCommand"))
-    {
-        ProtocolCommand *command = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            TEST_ASSIGN(command, protocolCommandNew(strIdFromZ(stringIdBit5, "cmd-one")), "create command");
-            TEST_RESULT_PTR(protocolCommandParamAdd(command, VARSTRDEF("param1")), command, "add param");
-            TEST_RESULT_PTR(protocolCommandParamAdd(command, VARSTRDEF("param2")), command, "add param");
-
-            TEST_RESULT_PTR(protocolCommandMove(command, memContextPrior()), command, "move protocol command");
-            TEST_RESULT_PTR(protocolCommandMove(NULL, memContextPrior()), NULL, "move null protocol command");
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: cmd-one}", "check log");
-        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"cmd-one\",\"param\":[\"param1\",\"param2\"]}", "check json");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(command, protocolCommandNew(strIdFromZ(stringIdBit5, "cmd2")), "create command");
-        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: cmd2}", "check log");
-        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"cmd2\"}", "check json");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(protocolCommandFree(command), "free command");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("ProtocolClient"))
+    if (testBegin("ProtocolClient, ProtocolCommand, and ProtocolServer"))
     {
         HARNESS_FORK_BEGIN()
         {
@@ -430,6 +443,7 @@ testRun(void)
                 ioWriteOpen(write);
 
                 // Various bogus greetings
+                // -----------------------------------------------------------------------------------------------------------------
                 ioWriteStrLine(write, STRDEF("bogus greeting"));
                 ioWriteFlush(write);
                 ioWriteStrLine(write, STRDEF("{\"name\":999}"));
@@ -443,56 +457,38 @@ testRun(void)
                 ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
                 ioWriteFlush(write);
 
-                // Correct greeting with noop
-                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
-                ioWriteFlush(write);
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("server");
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteStrLine(write, STRDEF("{}"));
-                ioWriteFlush(write);
+                ProtocolServer *server = NULL;
 
-                // Throw errors
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with error text");
-                ioWriteStrLine(write, STRDEF("{\"err\":25,\"out\":\"sample error message\",\"errStack\":\"stack data\"}"));
-                ioWriteFlush(write);
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    TEST_ASSIGN(
+                        server,
+                        protocolServerMove(
+                            protocolServerNew(STRDEF("test server"), STRDEF("test"), read, write), memContextPrior()),
+                        "new server");
+                    TEST_RESULT_VOID(protocolServerMove(NULL, memContextPrior()), "move null server");
+                }
+                MEM_CONTEXT_TEMP_END();
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with no error text");
-                ioWriteStrLine(write, STRDEF("{\"err\":255}"));
-                ioWriteFlush(write);
+                const ProtocolServerHandler commandHandler[] = {TEST_PROTOCOL_SERVER_HANDLER_LIST};
 
-                // No output expected
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with parameters returned");
-                ioWriteStrLine(write, STRDEF("{\"out\":[\"bogus\"]}"));
-                ioWriteFlush(write);
+                // This cannot run in a TEST* macro because tests are run by the command handlers
+                protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
 
-                // Send output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"test\"}", "test command");
-                ioWriteStrLine(write, STRDEF(".OUTPUT"));
-                ioWriteStrLine(write, STRDEF("{\"out\":[\"value1\",\"value2\"]}"));
-                ioWriteFlush(write);
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("server with retries");
 
-                // invalid line
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"invalid-line\"}", "invalid line command");
-                ioWrite(write, LF_BUF);
-                ioWriteFlush(write);
+                VariantList *retryList = varLstNew();
+                varLstAdd(retryList, varNewUInt64(0));
 
-                // error instead of output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"err-i-o\"}", "error instead of output command");
-                ioWriteStrLine(write, STRDEF("{\"err\":255}"));
-                ioWriteFlush(write);
+                TEST_ASSIGN(
+                    server, protocolServerNew(STRDEF("test server"), STRDEF("test"), read, write), "new server");
 
-                // unexpected output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"unexp-output\"}", "unexpected output");
-                ioWriteStrLine(write, STRDEF("{}"));
-                ioWriteFlush(write);
-
-                // invalid prefix
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"i-pr\"}", "invalid prefix");
-                ioWriteStrLine(write, STRDEF("~line"));
-                ioWriteFlush(write);
-
-                // Wait for exit
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"exit\"}", "exit command");
+                // This cannot run in a TEST* macro because tests are run by the command handlers
+                protocolServerProcess(server, retryList, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
             }
             HARNESS_FORK_CHILD_END();
 
@@ -503,7 +499,9 @@ testRun(void)
                 IoWrite *write = ioFdWriteNew(STRDEF("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
-                // Various bogus greetings
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("bogus greetings");
+
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), JsonFormatError,
                     "expected '{' at 'bogus greeting'");
@@ -526,7 +524,9 @@ testRun(void)
                     "expected value '" PROJECT_VERSION "' for greeting key 'version' but got 'bogus'\n"
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
 
-                // Correct greeting
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("new client with successful handshake");
+
                 ProtocolClient *client = NULL;
 
                 MEM_CONTEXT_TEMP_BEGIN()
@@ -535,193 +535,96 @@ testRun(void)
                         client,
                         protocolClientMove(
                             protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), memContextPrior()),
-                        "create client");
+                        "new client");
                     TEST_RESULT_VOID(protocolClientMove(NULL, memContextPrior()), "move null client");
                 }
                 MEM_CONTEXT_TEMP_END();
 
-                TEST_RESULT_PTR(protocolClientIoRead(client), client->pub.read, "get read io");
-                TEST_RESULT_PTR(protocolClientIoWrite(client), client->pub.write, "get write io");
+                TEST_RESULT_INT(protocolClientIoReadFd(client), ioReadFd(client->pub.read), "get read fd");
 
-                // Throw errors
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid command");
+
                 TEST_ERROR(
-                    protocolClientNoOp(client), AssertError,
-                    "raised from test client: sample error message\nstack data");
+                    protocolClientExecute(client, protocolCommandNew(strIdFromZ(stringIdBit6, "BOGUS")), false), ProtocolError,
+                    "raised from test client: invalid command 'BOGUS' (0x38eacd271)");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("command throws assert");
+
+                TEST_ERROR(
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false), AssertError,
+                    "raised from test client: ERR_MESSAGE\nERR_STACK_TRACE");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("command throws error");
+
+                TEST_ERROR(
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
+                    "raised from test client: ERR_MESSAGE");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("command throws error in debug log level");
 
                 harnessLogLevelSet(logLevelDebug);
+
                 TEST_ERROR(
-                    protocolClientNoOp(client), UnknownError,
-                    "raised from test client: no details available\nno stack trace available");
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
+                    "raised from test client: ERR_MESSAGE\nERR_STACK_TRACE");
+
                 harnessLogLevelReset();
 
-                // No output expected
-                TEST_ERROR(protocolClientNoOp(client), AssertError, "no output required by command");
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("simple command");
 
-                // Get command output
-                const VariantList *output = NULL;
-
-                TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "test"))),
-                    "execute command with output");
-                TEST_RESULT_STR_Z(protocolClientReadLine(client), "OUTPUT", "check output");
-                TEST_ASSIGN(output, varVarLst(protocolClientReadOutput(client, true)), "execute command with output");
-                TEST_RESULT_UINT(varLstSize(output), 2, "check output size");
-                TEST_RESULT_STR_Z(varStr(varLstGet(output, 0)), "value1", "check value1");
-                TEST_RESULT_STR_Z(varStr(varLstGet(output, 1)), "value2", "check value2");
-
-                // Invalid line
-                TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "invalid-line"))),
-                    "execute command that returns invalid line");
-                TEST_ERROR(protocolClientReadLine(client), FormatError, "unexpected empty line");
-
-                // Error instead of output
-                TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "err-i-o"))),
-                    "execute command that returns error instead of output");
-                TEST_ERROR(protocolClientReadLine(client), UnknownError, "raised from test client: no details available");
-
-                // Unexpected output
-                TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "unexp-output"))),
-                    "execute command that returns unexpected output");
-                TEST_ERROR(protocolClientReadLine(client), FormatError, "expected error but got output");
-
-                // Invalid prefix
-                TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "i-pr"))),
-                    "execute command that returns an invalid prefix");
-                TEST_ERROR(protocolClientReadLine(client), FormatError, "invalid prefix in '~line'");
-
-                // Free client
-                TEST_RESULT_VOID(protocolClientFree(client), "free client");
-            }
-            HARNESS_FORK_PARENT_END();
-        }
-        HARNESS_FORK_END();
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("ProtocolServer"))
-    {
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
-            {
-                IoRead *read = ioFdReadNew(STRDEF("client read"), HARNESS_FORK_CHILD_READ(), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("client write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
-
-                // Check greeting
                 TEST_RESULT_STR_Z(
-                    ioReadLine(read), "{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}",
-                    "check greeting");
-
-                // Noop
-                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"noop\"}")), "write noop");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush noop");
-                TEST_RESULT_STR_Z(ioReadLine(read), "{}", "noop result");
-
-                // Invalid command
-                KeyValue *result = NULL;
-
-                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"bogus\"}")), "write bogus");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush bogus");
-                TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
-                TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 39, "    check code");
-                TEST_RESULT_STR_Z(
-                    varStr(kvGet(result, VARSTRDEF("out"))), "invalid command 'bogus' (0x13a9de20)", "    check message");
-                TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
-
-                // Simple request
-                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"r-s\"}")), "write simple request");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "simple request result");
-
-                // Throw an assert error which will include a stack trace
-                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"assert\"}")), "write assert");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush assert error");
-                TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
-                TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 25, "    check code");
-                TEST_RESULT_STR_Z(varStr(kvGet(result, VARSTRDEF("out"))), "test assert", "    check message");
-                TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
-
-                // Complex request -- after process loop has been restarted
-                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"r-c\"}")), "write complex request");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush complex request");
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":false}", "complex request result");
-                TEST_RESULT_STR_Z(ioReadLine(read), ".LINEOFTEXT", "complex request result");
-                TEST_RESULT_STR_Z(ioReadLine(read), ".", "complex request result");
-
-                // Exit
-                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"exit\"}")), "write exit");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
-
-                // Retry errors until success
-                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"ezero\"}")), "write error-until-0");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush error-until-0");
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "error-until-0 result");
-
-                // Exit
-                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"exit\"}")), "write exit");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
-            }
-            HARNESS_FORK_CHILD_END();
-
-            HARNESS_FORK_PARENT_BEGIN()
-            {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
-                // Send greeting
-                ProtocolServer *server = NULL;
-
-                MEM_CONTEXT_TEMP_BEGIN()
-                {
-                    TEST_ASSIGN(
-                        server,
-                        protocolServerMove(
-                            protocolServerNew(STRDEF("test server"), STRDEF("test"), read, write), memContextPrior()),
-                        "create server");
-                    TEST_RESULT_VOID(protocolServerMove(NULL, memContextPrior()), "move null server");
-                }
-                MEM_CONTEXT_TEMP_END();
-
-                TEST_RESULT_PTR(protocolServerIoRead(server), server->pub.read, "get read io");
-                TEST_RESULT_PTR(protocolServerIoWrite(server), server->pub.write, "get write io");
-
-                ProtocolServerHandler commandHandler[] =
-                {
-                    {.command = strIdFromZ(stringIdBit5, "assert"), .handler = testServerAssertProtocol},
-                    {.command = strIdFromZ(stringIdBit5, "r-s"), .handler = testServerRequestSimpleProtocol},
-                    {.command = strIdFromZ(stringIdBit5, "r-c"), .handler = testServerRequestComplexProtocol},
-                    {.command = strIdFromZ(stringIdBit5, "ezero"), .handler = testServerErrorUntil0Protocol},
-                };
-
-                TEST_RESULT_VOID(
-                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
-                    "run process loop");
+                    pckReadStrP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_SIMPLE), true)), "output",
+                    "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("run process loop with retries");
+                TEST_TITLE("complex command");
 
-                VariantList *retryInterval = varLstNew();
-                varLstAdd(retryInterval, varNewUInt64(0));
-                varLstAdd(retryInterval, varNewUInt64(50));
+                // Put the command to the server
+                ProtocolCommand *command = NULL;
+                TEST_ASSIGN(command, protocolCommandNew(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
+                TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
+                TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
+                TEST_RESULT_VOID(protocolClientCommandPut(client, command), "command put");
 
-                testServerProtocolErrorTotal = 2;
+                // Read null data to indicate that the server has started the command and is read to receive data
+                TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "command started and ready for data");
 
-                TEST_RESULT_VOID(
-                    protocolServerProcess(server, retryInterval, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
-                    "run process loop");
+                // Write data to the server
+                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteBoolP(protocolPackNew(), true)), "data put");
+                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteModeP(protocolPackNew(), 0644)), "data put");
+                TEST_RESULT_VOID(protocolClientDataPut(client, NULL), "data end put");
+
+                // Get data from the server
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "data get");
+                TEST_RESULT_INT(pckReadI32P(protocolClientDataGet(client)), -1, "data get");
+                TEST_RESULT_VOID(protocolClientDataEndGet(client), "data end get");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("free server");
+                TEST_TITLE("free client");
 
-                TEST_RESULT_VOID(protocolServerFree(server), "free");
+                TEST_RESULT_VOID(protocolClientFree(client), "free");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("new client with server retries");
+
+                TEST_ASSIGN(client, protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), "new client");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("command with retry");
+
+                TEST_RESULT_BOOL(
+                    pckReadBoolP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_RETRY), true)), true,
+                    "execute");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("free client");
+
+                TEST_RESULT_VOID(protocolClientFree(client), "free");
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -731,6 +634,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolParallel and ProtocolParallelJob"))
     {
+        TEST_TITLE("job state transitions");
+
         ProtocolParallelJob *job = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()
@@ -760,63 +665,63 @@ testRun(void)
             // Local 1
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 10000);
+                IoRead *read = ioFdReadNew(STRDEF("local server 1 read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("local server 1 write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
-                // Greeting with noop
-                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
-                ioWriteFlush(write);
+                ProtocolServer *server = NULL;
+                TEST_ASSIGN(server, protocolServerNew(STRDEF("local server 1"), STRDEF("test"), read, write), "local server 1");
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteStrLine(write, STRDEF("{}"));
-                ioWriteFlush(write);
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
+                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"c-one\",\"param\":[\"param1\",\"param2\"]}", "command1");
+                // Command with output
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-one"), "c-one command get");
+
                 sleepMSec(4000);
-                ioWriteStrLine(write, STRDEF("{\"out\":1}"));
-                ioWriteFlush(write);
+
+                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 1)), "data end put");
+                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
                 // Wait for exit
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"exit\"}", "exit command");
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "noop command get");
             }
             HARNESS_FORK_CHILD_END();
 
             // Local 2
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 10000);
+                IoRead *read = ioFdReadNew(STRDEF("local server 2 read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("local server 2 write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
-                // Greeting with noop
-                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
-                ioWriteFlush(write);
+                ProtocolServer *server = NULL;
+                TEST_ASSIGN(server, protocolServerNew(STRDEF("local server 2"), STRDEF("test"), read, write), "local server 2");
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteStrLine(write, STRDEF("{}"));
-                ioWriteFlush(write);
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
+                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"c2\",\"param\":[\"param1\"]}", "command2");
+                // Command with output
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c2"), "c2 command get");
+
                 sleepMSec(1000);
-                ioWriteStrLine(write, STRDEF("{\"out\":2}"));
-                ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"c-three\",\"param\":[\"param1\"]}", "command3");
+                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 2)), "data end put");
+                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
-                ioWriteStrLine(write, STRDEF("{\"err\":39,\"out\":\"very serious error\"}"));
-                ioWriteFlush(write);
+                // Command with error
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-three"), "c-three command get");
+                TEST_RESULT_VOID(protocolServerError(server, 39, STRDEF("very serious error"), STRDEF("stack")), "error put");
 
                 // Wait for exit
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"exit\"}", "exit command");
+                CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_EXIT);
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                // -----------------------------------------------------------------------------------------------------------------
                 TestParallelJobCallback data = {.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
                 ProtocolParallel *parallel = NULL;
                 TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
@@ -829,57 +734,59 @@ testRun(void)
                 for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
                 {
                     IoRead *read = ioFdReadNew(
-                        strNewFmt("client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000);
+                        strNewFmt("local client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000);
                     ioReadOpen(read);
                     IoWrite *write = ioFdWriteNew(
-                        strNewFmt("client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000);
+                        strNewFmt("local client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000);
                     ioWriteOpen(write);
 
                     TEST_ASSIGN(
                         client[clientIdx],
-                        protocolClientNew(strNewFmt("test client %u", clientIdx), STRDEF("test"), read, write),
-                        strZ(strNewFmt("create client %u", clientIdx)));
+                        protocolClientNew(strNewFmt("local client %u", clientIdx), STRDEF("test"), read, write),
+                        strZ(strNewFmt("local client %u new", clientIdx)));
                     TEST_RESULT_VOID(
-                        protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("add client %u", clientIdx)));
+                        protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("local client %u add", clientIdx)));
                 }
 
-                // Attempt to add client without an fd
-                const String *protocolString = STRDEF(
-                    "{\"name\":\"pgBackRest\",\"service\":\"error\",\"version\":\"" PROJECT_VERSION "\"}\n"
-                    "{}\n");
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on add without an fd");
 
-                IoRead *read = ioBufferReadNew(BUFSTR(protocolString));
-                ioReadOpen(read);
-                IoWrite *write = ioBufferWriteNew(bufNew(1024));
-                ioWriteOpen(write);
+                // Fake a client without a read fd
+                ProtocolClient clientError = {.pub = {.read = ioBufferReadNew(bufNew(0))}, .name = STRDEF("test")};
 
-                ProtocolClient *clientError = protocolClientNew(STRDEF("error"), STRDEF("error"), read, write);
-                TEST_ERROR(protocolParallelClientAdd(parallel, clientError), AssertError, "client with read fd is required");
-                protocolClientFree(clientError);
+                TEST_ERROR(protocolParallelClientAdd(parallel, &clientError), AssertError, "client with read fd is required");
 
-                // Add jobs
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("add jobs");
+
                 ProtocolCommand *command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-one"));
-                protocolCommandParamAdd(command, VARSTRDEF("param1"));
-                protocolCommandParamAdd(command, VARSTRDEF("param2"));
-                ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("job1"), command);
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param2"));
+
+                ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNew(strIdFromZ(stringIdBit5, "c2"));
-                protocolCommandParamAdd(command, VARSTRDEF("param1"));
-                job = protocolParallelJobNew(VARSTRDEF("job2"), command);
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+
+                job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-three"));
-                protocolCommandParamAdd(command, VARSTRDEF("param1"));
-                job = protocolParallelJobNew(VARSTRDEF("job3"), command);
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+
+                job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                // Process jobs
-                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process jobs with no result");
 
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
                 TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no result");
 
-                // Process jobs
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("result for job 2");
+
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
 
                 TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
@@ -887,35 +794,40 @@ testRun(void)
                 TEST_RESULT_BOOL(
                     protocolParallelJobProcessId(job) >= 1 && protocolParallelJobProcessId(job) <= 2, true,
                     "check process id is valid");
-                TEST_RESULT_INT(varIntForce(protocolParallelJobResult(job)), 2, "check result is 2");
+                TEST_RESULT_UINT(pckReadU32P(protocolParallelJobResult(job)), 2, "check result is 2");
 
                 TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no more results");
 
-                // Process jobs
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error for job 3");
+
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
 
                 TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
                 TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job3", "check key is job3");
                 TEST_RESULT_INT(protocolParallelJobErrorCode(job), 39, "check error code");
                 TEST_RESULT_STR_Z(
-                    protocolParallelJobErrorMessage(job), "raised from test client 1: very serious error",
+                    protocolParallelJobErrorMessage(job), "raised from local client 1: very serious error",
                     "check error message");
                 TEST_RESULT_PTR(protocolParallelJobResult(job), NULL, "check result is null");
 
                 TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no more results");
 
-                // Process jobs
-                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process jobs with no result");
 
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
                 TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no result");
                 TEST_RESULT_BOOL(protocolParallelDone(parallel), false, "check not done");
 
-                // Process jobs
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("result for job 1");
+
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
 
                 TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
                 TEST_RESULT_STR_Z(varStr(protocolParallelJobKey(job)), "job1", "check key is job1");
-                TEST_RESULT_INT(varIntForce(protocolParallelJobResult(job)), 1, "check result is 1");
+                TEST_RESULT_UINT(pckReadU32P(protocolParallelJobResult(job)), 1, "check result is 1");
 
                 TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
                 TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check still done");

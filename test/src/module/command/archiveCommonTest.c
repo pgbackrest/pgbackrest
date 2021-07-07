@@ -25,67 +25,61 @@ testRun(void)
     if (testBegin("archiveAsyncErrorClear() and archiveAsyncStatus()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--spool-path=" TEST_PATH);
-        strLstAddZ(argList, "--archive-async");
-        strLstAddZ(argList, "--archive-timeout=1");
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "1");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archiveAsyncStatus() - directory and status file not present");
+
         const String *segment = STRDEF("000000010000000100000001");
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "directory and status file not present");
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModeGet, segment, false, true), false, "directory and status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        mkdir(TEST_PATH "/archive", 0750);
-        mkdir(TEST_PATH "/archive/db", 0750);
-        mkdir(TEST_PATH "/archive/db/out", 0750);
+        TEST_TITLE("archiveAsyncStatus() - directories present and status file not present");
+
+        HRN_STORAGE_PATH_CREATE(storageTest, "archive/db/out", .mode = 0750);
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("clear archive file errors");
 
-        const String *errorSegment = strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment));
-        const String *errorGlobal = STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/global.error");
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error");
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/global.error");
 
-        storagePutP(storageNewWriteP(storageSpoolWrite(), errorSegment), NULL);
-        storagePutP(storageNewWriteP(storageSpoolWrite(), errorGlobal), NULL);
+        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT, "000000010000000100000001.error\nglobal.error\n");
 
         TEST_RESULT_VOID(archiveAsyncErrorClear(archiveModePush, segment), "clear error");
 
-        TEST_RESULT_BOOL(storageExistsP(storageSpool(), errorSegment), false, "    check segment error");
-        TEST_RESULT_BOOL(storageExistsP(storageSpool(), errorGlobal), false, "    check global error");
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT, .comment = "segment and global error cleared");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF(BOGUS_STR));
+        TEST_TITLE("check ok file");
+
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", BOGUS_STR);
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false, true), FormatError,
             "000000010000000100000001.ok content must have at least two lines");
 
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF(BOGUS_STR "\n"));
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", BOGUS_STR "\n");
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false, true), FormatError,
             "000000010000000100000001.ok message must be > 0");
 
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF(BOGUS_STR "\nmessage"));
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", BOGUS_STR "\nmessage");
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, false, true),
             FormatError, "unable to convert base 10 string 'BOGUS' to int");
 
-        storagePutP(storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))), NULL);
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok");
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "ok file");
 
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF("0\nwarning"));
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", "0\nwarning");
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "ok file with warning");
         TEST_RESULT_LOG("P00   WARN: warning");
 
@@ -97,36 +91,31 @@ testRun(void)
         TEST_RESULT_LOG("");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
-            BUFSTRDEF("25\nerror"));
+        TEST_TITLE("error status renamed to ok");
+
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", "25\nerror");
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "error status renamed to ok");
         TEST_RESULT_LOG(
             "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
-        TEST_RESULT_VOID(
-            storageRemoveP(
-                storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment)), .errorOnMissing = true),
-            "remove ok");
+        HRN_STORAGE_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment))), bufNew(0));
+        TEST_TITLE("segment error file - AssertError");
+
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error");
         TEST_ERROR(
             archiveAsyncStatus(archiveModePush, segment, true, true), AssertError,
             "status file '000000010000000100000001.error' has no content");
 
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment))),
-            BUFSTRDEF("25\nmessage"));
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error", "25\nmessage");
         TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true, true), AssertError, "message");
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "suppress error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")),
-            BUFSTRDEF("102\nexecute error"));
+        TEST_TITLE("global error file - ExecuteError");
 
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/global.error", "102\nexecute error");
         TEST_ERROR(archiveAsyncStatus(archiveModePush, STRDEF("anyfile"), true, true), ExecuteError, "execute error");
     }
 
@@ -134,49 +123,40 @@ testRun(void)
     if (testBegin("archiveAsyncStatusErrorWrite() and archiveAsyncStatusOkWrite()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--spool-path=" TEST_PATH);
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         const String *walSegment = STRDEF("000000010000000100000001");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archiveAsyncStatusErrorWrite()");
+
         TEST_RESULT_VOID(
-            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 25, STRDEF("error message")), "write error");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageTest, STRDEF("archive/db/in/000000010000000100000001.error")))),
-            "25\nerror message", "check error");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, STRDEF("archive/db/in/000000010000000100000001.error"), .errorOnMissing = true),
-            "remove error");
+            archiveAsyncStatusErrorWrite(archiveModeGet, walSegment, 25, STRDEF("error message")), "write segment error");
+        TEST_STORAGE_GET(
+            storageTest, "archive/db/in/000000010000000100000001.error", "25\nerror message", .remove = true,
+            .comment = "check segment error and remove");
 
         TEST_RESULT_VOID(
             archiveAsyncStatusErrorWrite(archiveModeGet, NULL, 25, STRDEF("global error message")), "write global error");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageTest, STRDEF("archive/db/in/global.error")))),
-            "25\nglobal error message", "check global error");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, STRDEF("archive/db/in/global.error"), .errorOnMissing = true),
-            "remove global error");
+        TEST_STORAGE_GET(
+            storageTest, "archive/db/in/global.error", "25\nglobal error message", .remove = true,
+            .comment = "check global error and remove");
 
-        TEST_RESULT_VOID(
-            archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL), "write ok file");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageTest, STRDEF("archive/db/in/000000010000000100000001.ok")))),
-            "", "check ok");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, STRDEF("archive/db/in/000000010000000100000001.ok"), .errorOnMissing = true),
-            "remove ok");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archiveAsyncStatusOkWrite()");
 
-        TEST_RESULT_VOID(
-            archiveAsyncStatusOkWrite(archiveModeGet, walSegment, STRDEF("WARNING")), "write ok file with warning");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageTest, STRDEF("archive/db/in/000000010000000100000001.ok")))),
-            "0\nWARNING", "check ok warning");
-        TEST_RESULT_VOID(
-            storageRemoveP(storageTest, STRDEF("archive/db/in/000000010000000100000001.ok"), .errorOnMissing = true),
-            "remove ok");
+        TEST_RESULT_VOID(archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL), "write ok file");
+        TEST_STORAGE_GET(
+            storageTest, "archive/db/in/000000010000000100000001.ok", "", .remove = true, .comment = "check ok and remove");
+
+        TEST_RESULT_VOID(archiveAsyncStatusOkWrite(archiveModeGet, walSegment, STRDEF("WARNING")), "write ok file with warning");
+        TEST_STORAGE_GET(
+            storageTest, "archive/db/in/000000010000000100000001.ok", "0\nWARNING", .remove = true,
+            .comment = "check ok warning and remove");
     }
 
     // *****************************************************************************************************************************
@@ -197,14 +177,25 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("walPath()"))
     {
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("absolute and relative paths");
+
         const String *pgPath = storagePathP(storageTest, STRDEF("pg"));
-        storagePathCreateP(storageTest, pgPath);
+        HRN_STORAGE_PATH_CREATE(storageTest, strZ(pgPath));
 
         TEST_RESULT_STR_Z(walPath(STRDEF("/absolute/path"), pgPath, STRDEF("test")), "/absolute/path", "absolute path");
 
         THROW_ON_SYS_ERROR(chdir(strZ(pgPath)) != 0, PathMissingError, "unable to chdir()");
         TEST_RESULT_STR(
             walPath(STRDEF("relative/path"), pgPath, STRDEF("test")), strNewFmt("%s/relative/path", strZ(pgPath)), "relative path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("symlink path");
 
         const String *pgPathLink = storagePathP(storageTest, STRDEF("pg-link"));
         THROW_ON_SYS_ERROR_FMT(
@@ -215,6 +206,9 @@ testRun(void)
         TEST_RESULT_STR(
             walPath(STRDEF("relative/path"), pgPathLink, STRDEF("test")), strNewFmt("%s/relative/path", strZ(pgPathLink)),
             "relative path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path errors");
 
         THROW_ON_SYS_ERROR(chdir("/") != 0, PathMissingError, "unable to chdir()");
         TEST_ERROR(
@@ -234,15 +228,17 @@ testRun(void)
     {
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--repo-path=" TEST_PATH);
-        strLstAddZ(argList, "archive-get");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no path or segment");
 
         TEST_RESULT_STR(walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no path");
 
-        storagePathCreateP(storageTest, STRDEF("archive/db/9.6-2/1234567812345678"));
+        HRN_STORAGE_PATH_CREATE(storageTest, "archive/db/9.6-2/1234567812345678");
         TEST_RESULT_STR(
             walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0), NULL, "no segment");
         TEST_ERROR(
@@ -252,6 +248,9 @@ testRun(void)
             "HINT: check the PostgreSQL server log for errors.\n"
             "HINT: run the 'start' command if the stanza was previously stopped.");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timeout");
+
         // Check timeout by making the wal segment appear after 250ms
         HARNESS_FORK_BEGIN()
         {
@@ -259,12 +258,9 @@ testRun(void)
             {
                 sleepMSec(250);
 
-                storagePutP(
-                    storageNewWriteP(
-                        storageTest,
-                        STRDEF(
-                            "archive/db/9.6-2/1234567812345678/123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
-                    NULL);
+                HRN_STORAGE_PUT_EMPTY(
+                    storageTest,
+                    "archive/db/9.6-2/1234567812345678/123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -278,11 +274,11 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                STRDEF("archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz")),
-            NULL);
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("duplicate");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, "archive/db/9.6-2/1234567812345678/123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz");
 
         TEST_ERROR(
             walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0),
@@ -292,6 +288,9 @@ testRun(void)
                 ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz"
                 "\nHINT: are multiple primaries archiving to this stanza?");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("partial not found");
+
         TEST_RESULT_STR(
             walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678.partial"), 0), NULL,
             "did not find partial segment");
@@ -300,12 +299,19 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("walSegmentNext()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("beginning and end range");
+
         TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("000000010000000100000001"), 16 * 1024 * 1024, PG_VERSION_10), "000000010000000100000002",
             "get next");
         TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("0000000100000001000000FE"), 16 * 1024 * 1024, PG_VERSION_93), "0000000100000001000000FF",
             "get next");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check overflow by version");
+
         TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("0000009900000001000000FF"), 16 * 1024 * 1024, PG_VERSION_93), "000000990000000200000000",
             "get next overflow >= 9.3");
@@ -323,9 +329,16 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("walSegmentRange()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single segment");
+
         TEST_RESULT_STRLST_Z(
             walSegmentRange(STRDEF("000000010000000100000000"), 16 * 1024 * 1024, PG_VERSION_92, 1), "000000010000000100000000\n",
             "get single");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check range by version");
+
         TEST_RESULT_STRLST_Z(
             walSegmentRange(STRDEF("0000000100000001000000FD"), 16 * 1024 * 1024, PG_VERSION_92, 4),
             "0000000100000001000000FD\n0000000100000001000000FE\n000000010000000200000000\n000000010000000200000001\n",

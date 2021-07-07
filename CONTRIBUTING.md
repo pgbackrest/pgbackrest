@@ -395,7 +395,7 @@ if (testBegin("expireBackup()"))
 The [harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the `HRN_CFG_LOAD()` macro with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command on multiple repositories, one of which is encrypted:
 ```
 StringList *argList = strLstNew();                                  // Create an empty string list
-hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);             // Add the --repo-path option
+hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");          // Add the --repo-path option
 hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");   // Add the --repo2-path option
 hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);  // Add the --repo2-cipher-type option
 hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);        // Set environment variable for the --repo2-cipher-pass option

@@ -12,6 +12,7 @@ Remote Storage Read
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/convert.h"
+#include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
@@ -29,6 +30,7 @@ typedef struct StorageReadRemote
 
     ProtocolClient *client;                                         // Protocol client for requests
     size_t remaining;                                               // Bytes remaining to be read in block
+    Buffer *block;                                                  // Block currently being read
     bool eof;                                                       // Has the file reached eof?
 
 #ifdef DEBUG
@@ -70,19 +72,30 @@ storageReadRemoteOpen(THIS_VOID)
         }
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
-        protocolCommandParamAdd(command, VARSTR(this->interface.name));
-        protocolCommandParamAdd(command, VARBOOL(this->interface.ignoreMissing));
-        protocolCommandParamAdd(command, this->interface.limit);
-        protocolCommandParamAdd(command, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
+        PackWrite *const param = protocolCommandParam(command);
 
-        result = varBool(protocolClientExecute(this->client, command, true));
+        pckWriteStrP(param, this->interface.name);
+        pckWriteBoolP(param, this->interface.ignoreMissing);
+        pckWriteStrP(param, jsonFromVar(this->interface.limit));
+        pckWriteStrP(param, jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read)))));
 
-        // Clear filters since they will be run on the remote side
-        ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
+        protocolClientCommandPut(this->client, command);
 
-        // If the file is compressible add decompression filter locally
-        if (this->interface.compressible)
-            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGz));
+        // If the file exists
+        result = pckReadBoolP(protocolClientDataGet(this->client));
+
+        if (result)
+        {
+            // Clear filters since they will be run on the remote side
+            ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
+
+            // If the file is compressible add decompression filter locally
+            if (this->interface.compressible)
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGz));
+        }
+        // Else nothing to do
+        else
+            protocolClientDataEndGet(this->client);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -118,13 +131,28 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    this->remaining = (size_t)storageRemoteProtocolBlockSize(ioReadLine(protocolClientIoRead(this->client)));
+                    PackRead *const read = protocolClientDataGet(this->client);
+                    pckReadNext(read);
 
-                    if (this->remaining == 0)
+                    // If binary then read the next block
+                    if (pckReadType(read) == pckTypeBin)
                     {
-                        ioFilterGroupResultAllSet(
-                            ioReadFilterGroup(storageReadIo(this->read)), protocolClientReadOutput(this->client, true));
+                        MEM_CONTEXT_BEGIN(this->memContext)
+                        {
+                            this->block = pckReadBinP(read);
+                            this->remaining = bufUsed(this->block);
+                        }
+                        MEM_CONTEXT_END();
+                    }
+                    // Else read is complete and get the filter list
+                    else
+                    {
+                        bufFree(this->block);
+
+                        ioFilterGroupResultAllSet(ioReadFilterGroup(storageReadIo(this->read)), jsonToVar(pckReadStrP(read)));
                         this->eof = true;
+
+                        protocolClientDataEndGet(this->client);
                     }
 
 #ifdef DEBUG
@@ -140,14 +168,19 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                 // If the buffer can contain all remaining bytes
                 if (bufRemains(buffer) >= this->remaining)
                 {
-                    bufLimitSet(buffer, bufUsed(buffer) + this->remaining);
-                    ioRead(protocolClientIoRead(this->client), buffer);
-                    bufLimitClear(buffer);
+                    bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, this->remaining);
+
                     this->remaining = 0;
+                    bufFree(this->block);
+                    this->block = NULL;
                 }
                 // Else read what we can
                 else
-                    this->remaining -= ioRead(protocolClientIoRead(this->client), buffer);
+                {
+                    size_t remains = bufRemains(buffer);
+                    bufCatSub(buffer, this->block, bufUsed(this->block) - this->remaining, remains);
+                    this->remaining -= remains;
+                }
             }
         }
         while (!this->eof && !bufFull(buffer));
