@@ -3,6 +3,7 @@ Test Command Control
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
@@ -23,12 +24,12 @@ testRun(void)
     {
         // Load configuration so lock path is set
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_STR_Z(lockStopFileName(NULL), HRN_PATH "/lock/all" STOP_FILE_EXT, "stop file for all stanzas");
-        TEST_RESULT_STR_Z(lockStopFileName(STRDEF("db")), HRN_PATH "/lock/db" STOP_FILE_EXT, "stop file for on stanza");
+        TEST_RESULT_STR_Z(lockStopFileName(STRDEF("db")), HRN_PATH "/lock/db" STOP_FILE_EXT, "stop file for one stanza");
     }
 
     // *****************************************************************************************************************************
@@ -37,32 +38,42 @@ testRun(void)
         StringList *argList = strLstNew();
         HRN_CFG_LOAD(cfgCmdStart, argList);
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no stanza, no stop file");
+
         TEST_RESULT_VOID(lockStopTest(), "no stop files without stanza");
-        TEST_RESULT_VOID(cmdStart(), "    cmdStart - no stanza, no stop files");
+        TEST_RESULT_VOID(cmdStart(), "cmdStart - no stanza, no stop files");
         TEST_RESULT_LOG("P00   WARN: stop file does not exist");
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), NULL), "create stop file");
-        TEST_RESULT_VOID(cmdStart(), "    cmdStart - no stanza, stop file exists");
-        TEST_RESULT_BOOL(storageExistsP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), false, "    stop file removed");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no stanza, stop file exists");
+
+        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/all" STOP_FILE_EXT, .comment = "create stop file");
+        TEST_RESULT_VOID(cmdStart(), "cmdStart - no stanza, stop file exists");
+        TEST_STORAGE_LIST_EMPTY(hrnStorage, "lock", .comment = "stop file removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza, no stop file");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         HRN_CFG_LOAD(cfgCmdStart, argList);
 
         TEST_RESULT_VOID(lockStopTest(), "no stop files with stanza");
-        TEST_RESULT_VOID(cmdStart(), "    cmdStart - stanza, no stop files");
+        TEST_RESULT_VOID(cmdStart(), "cmdStart - stanza, no stop files");
         TEST_RESULT_LOG("P00   WARN: stop file does not exist for stanza db");
 
-        storagePutP(storageNewWriteP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), NULL);
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza, stop file exists");
+
+        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/all" STOP_FILE_EXT);
         TEST_ERROR(lockStopTest(), StopError, "stop file exists for all stanzas");
 
-        storagePutP(storageNewWriteP(hrnStorage, STRDEF("lock/db" STOP_FILE_EXT)), NULL);
+        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/db" STOP_FILE_EXT);
         TEST_ERROR(lockStopTest(), StopError, "stop file exists for stanza db");
 
         TEST_RESULT_VOID(cmdStart(), "cmdStart - stanza, stop file exists");
-        TEST_RESULT_BOOL(storageExistsP(hrnStorage, STRDEF("lock/db" STOP_FILE_EXT)), false, "    stanza stop file removed");
-        TEST_RESULT_BOOL(storageExistsP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), true, "    all stop file not removed");
+        TEST_STORAGE_LIST(hrnStorage, "lock", "all" STOP_FILE_EXT "\n", .comment = "only stanza stop file removed");
     }
 
     // *****************************************************************************************************************************
