@@ -1518,7 +1518,6 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo2");
 
         // Set log level to warn
-        harnessLogLevelReset();
         harnessLogLevelSet(logLevelWarn);
 
         // With repo2 the only repo configured, ensure it is chosen by confirming diff is changed to full due to no prior backups
@@ -1534,7 +1533,6 @@ testRun(void)
         TEST_TITLE("multi-repo");
 
         // Set log level to detail
-        harnessLogLevelReset();
         harnessLogLevelSet(logLevelDetail);
 
         // Add repo1 to the configuration
