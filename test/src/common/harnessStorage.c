@@ -314,7 +314,7 @@ hrnStorageMode(const Storage *const storage, const char *const path, HrnStorageM
 
     ASSERT(storage != NULL);
 
-    const char *const pathFull = strZ(storagePathP(storage, STR(path)));
+    const char *const pathFull = strZ(storagePathP(storage, path == NULL ? NULL : STR(path)));
 
     // If no mode specified then default the mode based on the file type
     if (param.mode == 0)
