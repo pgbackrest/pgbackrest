@@ -702,6 +702,18 @@ testRun(void)
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on circular link");
+
+        THROW_ON_SYS_ERROR(symlink(TEST_PATH "/wal", TEST_PATH "/wal/wal") == -1, FileOpenError, "unable to create symlink");
+
+        TEST_ERROR(
+            manifestNewBuild(storagePg, PG_VERSION_92, hrnPgCatalogVersion(PG_VERSION_92), false, false, NULL, NULL),
+            LinkDestinationError,
+            "link 'pg_xlog/wal' (" TEST_PATH "/wal) destination is the same directory as link 'pg_xlog' (" TEST_PATH "/wal)");
+
+        HRN_STORAGE_REMOVE(storageTest, TEST_PATH "/wal/wal");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 9.4, checksum-page");
 
         // Version
