@@ -331,21 +331,13 @@ testRun(void)
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on data directory missing");
+        TEST_TITLE("error when pg appears to be running");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         HRN_CFG_LOAD(cfgCmdRestore, argList);
-
-        TEST_ERROR(restorePathValidate(), PathMissingError, "$PGDATA directory '" TEST_PATH "/pg' does not exist");
-
-        // Create PGDATA
-        storagePathCreateP(storagePgWrite(), NULL);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when pg appears to be running");
 
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postmaster.pid")), NULL);
 
