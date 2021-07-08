@@ -79,7 +79,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdStop()"))
     {
-        const String *lockPath = STRDEF(HRN_PATH "/lock");
         StringList *argList = strLstNew();
         HRN_CFG_LOAD(cfgCmdStop, argList);
 
@@ -113,12 +112,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza stop file create");
 
-        String *stanzaStopFile = strNewFmt("%s/db" STOP_FILE_EXT, strZ(lockPath));
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         HRN_CFG_LOAD(cfgCmdStop, argList);
 
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file");
-        TEST_STORAGE_EXISTS(hrnStorage, "lock/db" STOP_FILE_EXT, .comment = "stanza stop file created");
         TEST_STORAGE_LIST(hrnStorage, "lock", "db" STOP_FILE_EXT "\n", .comment = "only stanza stop exists in lock path");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -126,7 +123,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStop(), "stanza, stop file already exists");
         TEST_RESULT_LOG("P00   WARN: stop file already exists for stanza db");
-        HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT);
+        HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stanza stop file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza stop file create with force");
@@ -134,35 +131,32 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdStop, argList);
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file, force");
-        HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT);
+        TEST_STORAGE_EXISTS(hrnStorage, "lock/db" STOP_FILE_EXT, .remove = true, .comment = "stanza stop file created, remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("unable to open stanza stop file");
-// CSHANG STOPPED HERE
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(hrnStorage, strNewFmt("%s/bad" LOCK_FILE_EXT, strZ(lockPath)), .modeFile = 0222), NULL),
-            "create a lock file that cannot be opened");
-        TEST_RESULT_VOID(cmdStop(), "    stanza, create stop file but unable to open lock file");
-        TEST_RESULT_LOG_FMT("P00   WARN: unable to open lock file %s/bad" LOCK_FILE_EXT, strZ(lockPath));
-        TEST_RESULT_VOID(
-            storagePathRemoveP(hrnStorage, lockPath, .recurse = true, .errorOnMissing = true), "    remove the lock path");
+        TEST_TITLE("unable to open lock file");
+
+        HRN_STORAGE_PUT_EMPTY(
+            hrnStorage, "lock/bad" LOCK_FILE_EXT, .modeFile = 0222, .comment = "create a lock file that cannot be opened");
+        TEST_RESULT_VOID(cmdStop(), "stanza, create stop file but unable to open lock file");
+        TEST_STORAGE_EXISTS(hrnStorage, "lock/db" STOP_FILE_EXT, .comment = "stanza stop file created");
+        TEST_RESULT_LOG("P00   WARN: unable to open lock file " HRN_PATH "/lock/bad" LOCK_FILE_EXT);
+        HRN_STORAGE_PATH_REMOVE(hrnStorage, "lock", .recurse = true, .errorOnMissing = true, .comment = "remove the lock path");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(hrnStorage, strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), NULL),
-            "create empty lock file");
-        TEST_RESULT_VOID(cmdStop(), "    stanza, create stop file, force - empty lock file");
-        TEST_RESULT_BOOL(storageExistsP(hrnStorage, stanzaStopFile), true, "    stanza stop file created");
-        TEST_RESULT_BOOL(
-            storageExistsP(hrnStorage, strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), false,
-            "    no other process lock, lock file was removed");
+        TEST_TITLE("lock file removal");
 
-        // empty lock file with another process lock, processId == NULL
+        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/empty" LOCK_FILE_EXT, .comment = "create empty lock file");
+        TEST_RESULT_VOID(cmdStop(), "stanza, create stop file, force - empty lock file");
+        TEST_STORAGE_LIST(
+            hrnStorage, "lock", "db" STOP_FILE_EXT "\n",
+            .comment = "stanza stop file created, no other process lock, lock file was removed");
+
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveP(hrnStorage, stanzaStopFile), "remove stop file");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(hrnStorage, strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), NULL),
-            "    create empty lock file");
+        TEST_TITLE("empty lock file with another process lock, processId == NULL");
+
+        HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stanza stop file");
+        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/empty" LOCK_FILE_EXT, .comment = "create empty lock file");
 
         HARNESS_FORK_BEGIN()
         {
@@ -173,9 +167,9 @@ testRun(void)
                 IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
-                int lockFd = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
-                TEST_RESULT_BOOL(lockFd != -1, true, "    file descriptor acquired");
-                TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "    lock the empty file");
+                int lockFd = open(HRN_PATH "/lock/empty" LOCK_FILE_EXT, O_RDONLY, 0);
+                TEST_RESULT_BOOL(lockFd != -1, true, "file descriptor acquired");
+                TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "lock the empty file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew());
@@ -200,11 +194,9 @@ testRun(void)
                 ioReadLine(read);
 
                 TEST_RESULT_VOID(
-                    cmdStop(),
-                    "    stanza, create stop file, force - empty lock file with another process lock, processId == NULL");
-                TEST_RESULT_BOOL(
-                    storageExistsP(hrnStorage, strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), false,
-                    "    lock file was removed");
+                    cmdStop(), "stanza, create stop file, force - empty lock file with another process lock, processId == NULL");
+                TEST_STORAGE_LIST(
+                    hrnStorage, "lock", "db" STOP_FILE_EXT "\n", .comment = "stop file created, lock file was removed");
 
                 // Notify the child to release the lock
                 ioWriteLine(write, bufNew(0));
@@ -214,12 +206,11 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // not empty lock file with another process lock, processId size trimmed to 0
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveP(hrnStorage, stanzaStopFile), "remove stop file");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(hrnStorage, strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), BUFSTRDEF(" ")),
-            "    create non-empty lock file");
+        TEST_TITLE("not empty lock file with another process lock, processId size trimmed to 0");
+
+        HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stanza stop file");
+        HRN_STORAGE_PUT_Z(hrnStorage, "lock/empty" LOCK_FILE_EXT, " ", .comment = "create non-empty lock file");
 
         HARNESS_FORK_BEGIN()
         {
@@ -230,9 +221,9 @@ testRun(void)
                 IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
-                int lockFd = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
-                TEST_RESULT_BOOL(lockFd != -1, true, "    file descriptor acquired");
-                TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "    lock the non-empty file");
+                int lockFd = open(HRN_PATH "/lock/empty" LOCK_FILE_EXT, O_RDONLY, 0);
+                TEST_RESULT_BOOL(lockFd != -1, true, "file descriptor acquired");
+                TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "lock the non-empty file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew());
@@ -257,10 +248,9 @@ testRun(void)
                 ioReadLine(read);
 
                 TEST_RESULT_VOID(
-                    cmdStop(), "    stanza, create stop file, force - empty lock file with another process lock, processId size 0");
-                TEST_RESULT_BOOL(
-                    storageExistsP(hrnStorage, strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), false,
-                    "    lock file was removed");
+                    cmdStop(), "stanza, create stop file, force - empty lock file with another process lock, processId size 0");
+                TEST_STORAGE_LIST(
+                    hrnStorage, "lock", "db" STOP_FILE_EXT "\n", .comment = "stop file created, lock file was removed");
 
                 // Notify the child to release the lock
                 ioWriteLine(write, bufNew(0));
@@ -270,9 +260,10 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // lock file with another process lock, processId is valid
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveP(hrnStorage, stanzaStopFile), "remove stop file");
+        TEST_TITLE("lock file with another process lock, processId is valid");
+
+        HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stanza stop file");
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
@@ -283,8 +274,8 @@ testRun(void)
                 ioWriteOpen(write);
 
                 TEST_RESULT_BOOL(
-                    lockAcquire(lockPath, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), 0, 30000, true),
-                    true,"    child process acquires lock");
+                    lockAcquire(STRDEF(HRN_PATH "/lock"), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), 0, 30000, true),
+                    true, "child process acquires lock");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew());
@@ -306,8 +297,7 @@ testRun(void)
                 ioReadLine(read);
 
                 TEST_RESULT_VOID(
-                    cmdStop(),
-                    "    stanza, create stop file, force - lock file with another process lock, processId is valid");
+                    cmdStop(), "stanza, create stop file, force - lock file with another process lock, processId is valid");
 
                 TEST_RESULT_LOG_FMT("P00   INFO: sent term signal to process %d", HARNESS_FORK_PROCESS_ID(0));
             }
@@ -315,12 +305,11 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // lock file with another process lock, processId is invalid
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveP(hrnStorage, stanzaStopFile), "remove stop file");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(hrnStorage, strNewFmt("%s/badpid" LOCK_FILE_EXT, strZ(lockPath))), BUFSTRDEF("-32768")),
-            "create lock file with invalid PID");
+        TEST_TITLE("lock file with another process lock, processId is invalid");
+
+        HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stanza stop file");
+        HRN_STORAGE_PUT_Z(hrnStorage, "lock/badpid" LOCK_FILE_EXT, "-32768", .comment = "create lock file with invalid PID");
 
         HARNESS_FORK_BEGIN()
         {
@@ -331,9 +320,9 @@ testRun(void)
                 IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
-                int lockFd = open(strZ(strNewFmt("%s/badpid" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
-                TEST_RESULT_BOOL(lockFd != -1, true, "    file descriptor acquired");
-                TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "    lock the badpid file");
+                int lockFd = open(HRN_PATH "/lock/badpid" LOCK_FILE_EXT, O_RDONLY, 0);
+                TEST_RESULT_BOOL(lockFd != -1, true, "file descriptor acquired");
+                TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "lock the badpid file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew());
@@ -343,7 +332,7 @@ testRun(void)
                 ioReadLine(read);
 
                 // Remove the file and close the file descriptor
-                storageRemoveP(hrnStorage, strNewFmt("%s/badpid" LOCK_FILE_EXT, strZ(lockPath)));
+                HRN_STORAGE_REMOVE(hrnStorage, "lock/badpid" LOCK_FILE_EXT);
                 close(lockFd);
             }
             HARNESS_FORK_CHILD_END();
@@ -359,9 +348,9 @@ testRun(void)
                 ioReadLine(read);
 
                 TEST_RESULT_VOID(
-                    cmdStop(), "    stanza, create stop file, force - lock file with another process lock, processId is invalid");
+                    cmdStop(), "stanza, create stop file, force - lock file with another process lock, processId is invalid");
                 TEST_RESULT_LOG("P00   WARN: unable to send term signal to process -32768");
-                TEST_RESULT_BOOL(storageExistsP(hrnStorage, stanzaStopFile), true, "    stanza stop file not removed");
+                TEST_STORAGE_EXISTS(hrnStorage, "lock/db" STOP_FILE_EXT, .comment = "stanza stop file not removed");
 
                 // Notify the child to release the lock
                 ioWriteLine(write, bufNew(0));
