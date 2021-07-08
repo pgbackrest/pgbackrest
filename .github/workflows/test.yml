@@ -8,7 +8,6 @@ on:
       - '**-cig'
   pull_request:
     branches:
-      - master
       - integration
       - '**-ci'
       - '**-cig'
