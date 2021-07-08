@@ -629,24 +629,26 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
         TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "copy checksum updated");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
-        TEST_STORAGE_GET(storageRepoWrite(), strZ(backupPathFile), "atestfile###", .remove=true);
+        TEST_STORAGE_GET(storageRepoWrite(), strZ(backupPathFile), "atestfile###", .comment = "confirm contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("resumed file is missing in repo but present in resumed manifest, recopy");
-/* CSHANG This test doesn't seem right because the testfile contains all 12 characters but BOGUS, which is what was indicated as the repo file name, is 9 so shouldn't this test be testing the "resumed file" that was missing in the repo and then copied? The ls -l shows that the times on the testfile AND the BOGUS file in the repo have been updated - is that correct? - maybe we should be testing the modified times? */
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", "testfile\n", .comment = "resumed file is missing in repo");
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, STRDEF(BOGUS_STR), false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
-            "backup file");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    check copy result");
-        // TEST_RESULT_BOOL(
-        //     (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-        //         storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-        //     true, "    recopy");  // CSHANG needs fixing
-exit(0); // CSHANG remove
+            "backup 9 bytes of pgfile to file to resume in repo");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "check recopy result");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum for file size 9");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F/" BOGUS_STR, "atestfile", .comment = "resumed file copied");
+// CSHANG STOPPED HERE
         // -------------------------------------------------------------------------------------------------------------------------
         // File exists in repo and db, checksum not same in repo, delta set, ignoreMissing false, no hasReference - RECOPY
         TEST_RESULT_VOID(
