@@ -1518,7 +1518,6 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo2");
 
         // Set log level to warn
-        harnessLogLevelReset();
         harnessLogLevelSet(logLevelWarn);
 
         // With repo2 the only repo configured, ensure it is chosen by confirming diff is changed to full due to no prior backups
@@ -1533,9 +1532,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo");
 
-        // Set log level to info
-        harnessLogLevelReset();
-        harnessLogLevelSet(logLevelInfo);
+        // Set log level to detail
+        harnessLogLevelSet(logLevelDetail);
 
         // Add repo1 to the configuration
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
@@ -1548,6 +1546,8 @@ testRun(void)
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
             "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
+            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
+            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: diff backup size = 3B\n"
             "P00   INFO: new backup label = [DIFF-3]");
 
@@ -1566,6 +1566,8 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
             "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
+            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-2]\n"
+            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-2]\n"
             "P00   INFO: diff backup size = 3B\n"
             "P00   INFO: new backup label = [DIFF-4]");
         TEST_RESULT_UINT(
