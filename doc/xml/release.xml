@@ -14,6 +14,21 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.35dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1447"/>
+                        <github-pull-request id="1452"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="rohit.raveendran"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix detection of circular symlinks.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-issue id="1445"/>
@@ -10280,6 +10295,11 @@
         <contributor id="rakshitha.br">
             <contributor-name-display>Rakshitha-BR</contributor-name-display>
             <contributor-id type="github">Rakshitha-BR</contributor-id>
+        </contributor>
+
+        <contributor id="rohit.raveendran">
+            <contributor-name-display>Rohit Raveendran</contributor-name-display>
+            <contributor-id type="github">rohitrav33ndran</contributor-id>
         </contributor>
 
         <contributor id="ronan.dunklau">
