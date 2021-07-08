@@ -59,11 +59,6 @@ restorePathValidate(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // The PGDATA directory must exist
-        // ??? We should remove this requirement in a separate commit.  What's the harm in creating the dir assuming we have perms?
-        if (!storagePathExistsP(storagePg(), NULL))
-            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strZ(cfgOptionDisplay(cfgOptPgPath)));
-
         // PostgreSQL must not be running
         if (storageExistsP(storagePg(), PG_FILE_POSTMASTERPID_STR))
         {
