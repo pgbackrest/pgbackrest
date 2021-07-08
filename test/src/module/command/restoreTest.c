@@ -331,21 +331,13 @@ testRun(void)
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on data directory missing");
+        TEST_TITLE("error when pg appears to be running");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         HRN_CFG_LOAD(cfgCmdRestore, argList);
-
-        TEST_ERROR(restorePathValidate(), PathMissingError, "$PGDATA directory '" TEST_PATH "/pg' does not exist");
-
-        // Create PGDATA
-        storagePathCreateP(storagePgWrite(), NULL);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when pg appears to be running");
 
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postmaster.pid")), NULL);
 
@@ -1906,7 +1898,6 @@ testRun(void)
             manifestPathAdd(
                 manifest,
                 &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
-            storagePathCreateP(storagePgWrite(), NULL);
 
             // Global directory
             manifestPathAdd(
@@ -2006,7 +1997,6 @@ testRun(void)
             "P00   INFO: repo2: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/ts/1' exists\n"
-            "P00 DETAIL: update mode for '" TEST_PATH "/pg' to 0700\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
@@ -2051,6 +2041,9 @@ testRun(void)
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        // Munge PGDATA mode so it gets fixed
+        HRN_STORAGE_MODE(storagePg(), NULL, 0777);
 
         // Store backup.info to repo1 - repo1 will be selected because of the priority order
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
@@ -2123,6 +2116,7 @@ testRun(void)
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: update mode for '" TEST_PATH "/pg' to 0700\n"
             "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/bogus-file'\n"
             "P00 DETAIL: remove link '" TEST_PATH "/pg/pg_tblspc/1' because destination changed\n"
             "P00 DETAIL: remove special file '" TEST_PATH "/pg/pipe'\n"
