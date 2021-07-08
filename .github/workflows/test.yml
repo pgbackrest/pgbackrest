@@ -75,7 +75,7 @@ jobs:
         languages: ${{matrix.language}}
 
     - name: Build
-    - run: ${GITHUB_WORKSPACE?}/configure && make
+      run: ${GITHUB_WORKSPACE?}/configure && make
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
