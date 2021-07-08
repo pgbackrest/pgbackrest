@@ -25,7 +25,7 @@
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
-                        <p>Automatically create data directories on restore.</p>
+                        <p>Automatically create data directories on <cmd>restore</cmd>.</p>
                     </release-item>
                 </release-improvement-list>
 
