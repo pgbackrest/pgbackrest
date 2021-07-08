@@ -7,6 +7,9 @@ on:
       - '**-ci'
       - '**-cig'
   pull_request:
+      - integration
+      - '**-ci'
+      - '**-cig'
 
 jobs:
   test:
@@ -66,16 +69,16 @@ jobs:
           - cpp
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v2
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
-      with:
-        languages: ${{matrix.language}}
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{matrix.language}}
 
-    - name: Build
-      run: ${GITHUB_WORKSPACE?}/src/configure && make
+      - name: Build
+        run: ${GITHUB_WORKSPACE?}/src/configure && make -j 2
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
