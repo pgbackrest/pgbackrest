@@ -98,16 +98,15 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStop(), "no stanza, stop file already exists");
         TEST_RESULT_LOG("P00   WARN: stop file already exists for all stanzas");
-        HRN_STORAGE_REMOVE(hrnStorage, "lock/all" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stop file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stop file error");
 
+        HRN_STORAGE_REMOVE(hrnStorage, "lock/all" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stop file");
         HRN_STORAGE_MODE(hrnStorage, "lock", .mode = 0444);
         TEST_ERROR(
             cmdStop(), FileOpenError, "unable to get info for path/file '" HRN_PATH "/lock/all.stop': [13] Permission denied");
-        HRN_STORAGE_MODE(hrnStorage, "lock", .comment = "reset lock path mode to default");
-        HRN_STORAGE_PATH_REMOVE(hrnStorage, "lock", .recurse = true, .errorOnMissing = true, .comment = "remove the lock path");
+        HRN_STORAGE_MODE(hrnStorage, "lock", .mode = 0700);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza stop file create");
@@ -115,8 +114,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         HRN_CFG_LOAD(cfgCmdStop, argList);
 
+        HRN_STORAGE_PATH_REMOVE(hrnStorage, "lock", .recurse = true, .errorOnMissing = true, .comment = "remove the lock path");
         TEST_RESULT_VOID(cmdStop(), "stanza, create stop file");
-        TEST_STORAGE_LIST(hrnStorage, "lock", "db" STOP_FILE_EXT "\n", .comment = "only stanza stop exists in lock path");
+        TEST_STORAGE_LIST(
+            hrnStorage, "lock", "db" STOP_FILE_EXT "\n",
+            .comment = "lock path and file created, only stanza stop exists in lock path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza stop file already exists");
