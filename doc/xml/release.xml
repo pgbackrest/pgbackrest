@@ -14,6 +14,8 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.35dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <p><b>IMPORTANT NOTE</b>: The log level for copied files in the <cmd>backup</cmd>/<cmd>restore</cmd> commands has been changed to <id>detail</id>. This makes the <id>info</id> log level less noisy but if these messages are required then set the log level for the <cmd>backup</cmd>/<cmd>restore</cmd> commands to <id>detail</id>.</p>
+
                 <release-bug-list>
                     <release-item>
                         <github-issue id="1116"/>
@@ -56,6 +58,19 @@
                         </release-item-contributor-list>
 
                         <p>Automatically create data directory on <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1277"/>
+                        <github-pull-request id="1455"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jens.wilke"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Change level of <cmd>backup</cmd>/<cmd>restore</cmd> copied file logging to detail.</p>
                     </release-item>
                 </release-improvement-list>
 

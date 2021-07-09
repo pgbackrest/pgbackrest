@@ -2057,7 +2057,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             if (file->size != 0 && !zeroed)
                 strCatFmt(log, " checksum %s", file->checksumSha1);
 
-            LOG_PID(copy ? logLevelInfo : logLevelDetail, protocolParallelJobProcessId(job), 0, strZ(log));
+            LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
         }
         MEM_CONTEXT_TEMP_END();
 
