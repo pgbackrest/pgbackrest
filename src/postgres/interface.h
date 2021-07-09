@@ -126,7 +126,6 @@ Functions
 ***********************************************************************************************************************************/
 // Get info from pg_control
 PgControl pgControlFromFile(const Storage *storage);
-PgControl pgControlFromBuffer(const Buffer *controlFile);
 
 // Get the control version for a PostgreSQL version
 uint32_t pgControlVersion(unsigned int pgVersion);

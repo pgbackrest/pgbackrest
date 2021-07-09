@@ -284,7 +284,7 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
 }
 
 /**********************************************************************************************************************************/
-PgControl
+static PgControl
 pgControlFromBuffer(const Buffer *controlFile)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
