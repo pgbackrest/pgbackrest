@@ -576,7 +576,6 @@ testRun(void)
                 pgFile, false, 8, false, NULL, true, 0xFFFFFFFFFFFFFFFF, pgFile, false, compressTypeNone, 1, backupLabel, false,
                 cipherTypeNone, NULL),
             "backup file");
-
         TEST_RESULT_UINT(result.copySize, 12, "copy size");
         TEST_RESULT_UINT(result.repoSize, 12, "repo size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
@@ -701,7 +700,6 @@ testRun(void)
             backupFile(
                 pgFile, false, 9, true, NULL, false, 0, pgFile, false, compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL),
             "pg file exists, no checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
-
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
@@ -720,7 +718,6 @@ testRun(void)
                 pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, compressTypeGz,
                 3, backupLabel, false, cipherTypeNone, NULL),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
-
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultChecksum, "checksum file");
@@ -759,70 +756,74 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
-        setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
-        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
+        // hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
-        // Create the pg path
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
-
-        // Create a pg file to backup
-        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile"));
+        // Create the pg path and pg file to backup
+        HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy file to encrypted repo");
+
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, NULL, false, 0, pgFile, false, compressTypeNone, 1, backupLabel, false, cipherTypeAes256Cbc,
-                STRDEF("12345678")),
+                STRDEF(TEST_CIPHER_PASS)),
             "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
-
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-            storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    copy file to encrypted repo success");
+        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
+        TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc,
+            .comment = "copy file to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Delta but pgMatch false (pg File size different), prior checksum, no compression, no pageChecksum, delta, no hasReference
+        TEST_TITLE("copy file (size missmatch) to encrypted repo");
+
+        // Delta but pgFile does not macth size passed, prior checksum, no compression, no pageChecksum, delta, no hasReference
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 8, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
-                compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, STRDEF("12345678")),
+                compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 8, "    copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    copy file (size missmatch) to encrypted repo success");
+        TEST_RESULT_UINT(result.copySize, 8, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb", "copy checksum for size passed");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
+        TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfil", .cipherType = cipherTypeAes256Cbc,
+            .comment = "copy file (size missmatch) to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Check repo with cipher filter.
-        // pg/repo file size same but checksum different, prior checksum, no compression, no pageChecksum, no delta, no hasReference
+        TEST_TITLE("recopy file (checksum mismatch) to encrypted repo");
+
+        // Pg file checksum different than specified but file size specified matches
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
-                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF("12345678")),
-            "pg and repo file exists, repo checksum no match, no ignoreMissing, no pageChecksum, no delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    recopy file to encrypted repo success");
+                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
+            "pg and repo file exists, checksum mismatch, no ignoreMissing, no pageChecksum, no delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
+        TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc,
+            .comment = "recopy file to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recopy, encrypt");
@@ -831,7 +832,7 @@ testRun(void)
             result,
             backupFile(
                 pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
-                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF("12345678")),
+                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
             "backup file");
 
         TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
