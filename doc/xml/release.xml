@@ -128,6 +128,17 @@
             <release-test-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-pull-request id="1457"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add CodeQL static code analysis.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Update command/expire test to use standard patterns.">
                             <github-pull-request id="1420"/>
                         </commit>
