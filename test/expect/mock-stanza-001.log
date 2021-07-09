@@ -314,12 +314,12 @@ full backup - create first full backup  (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo1-retention-full=2 --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=<redacted> --repo1-gcs-key-type=token --repo1-path=/ --repo1-retention-full=2 --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db --start-fast --type=full
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum f92539dea1f9482e2946c1138eeeecdea29d7f19
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 100%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum f92539dea1f9482e2946c1138eeeecdea29d7f19
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 100%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00 DETAIL: statistics: STATISTICS
@@ -472,12 +472,12 @@ diff backup - diff changed to full backup (db-primary host)
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=<redacted> --repo1-gcs-key-type=token --repo1-path=/ --repo1-retention-full=2 --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 762dae884fdccb805c5f3283662ea0f8da55f228
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 100%) checksum 4969435f3b36bfaa0f5a486bef97f1988a135520
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum 762dae884fdccb805c5f3283662ea0f8da55f228
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 100%) checksum 4969435f3b36bfaa0f5a486bef97f1988a135520
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00 DETAIL: statistics: STATISTICS
