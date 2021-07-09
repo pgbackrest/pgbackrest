@@ -763,7 +763,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
-        // hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
+        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
         // Create the pg path and pg file to backup
         HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
@@ -788,9 +788,9 @@ testRun(void)
             .comment = "copy file to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("copy file (size missmatch) to encrypted repo");
+        TEST_TITLE("delta, copy file (size missmatch) to encrypted repo");
 
-        // Delta but pgFile does not macth size passed, prior checksum, no compression, no pageChecksum, delta, no hasReference
+        // Delta but pgFile does not match size passed, prior checksum, no compression, no pageChecksum, delta, no hasReference
         TEST_ASSIGN(
             result,
             backupFile(
@@ -807,7 +807,7 @@ testRun(void)
             .comment = "copy file (size missmatch) to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("recopy file (checksum mismatch) to encrypted repo");
+        TEST_TITLE("no delta, recopy (checksum mismatch) file to encrypted repo");
 
         // Pg file checksum different than specified but file size specified matches
         TEST_ASSIGN(
@@ -826,22 +826,23 @@ testRun(void)
             .comment = "recopy file to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("recopy, encrypt");
+        TEST_TITLE("no delta, recopy (size mismatch), compress, file to encrypted repo");
 
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
-                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
+                pgFile, false, 8, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
+                compressTypeGz, 3, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
             "backup file");
 
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    recopy file to encrypted repo success");
+        TEST_RESULT_UINT(result.copySize, 8, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 48, "repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb", "copy checksum for size passed");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
+        TEST_STORAGE_EXISTS(
+            storageRepo(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))),
+            .comment = "recopy file to encrypted repo, compressed, success");
     }
 
     // *****************************************************************************************************************************
