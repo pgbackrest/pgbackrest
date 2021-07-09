@@ -1340,7 +1340,7 @@ sub configCreate
 
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'spool-path'} = $self->spoolPath();
 
-        # If the the backup host is remote
+        # If the backup host is remote
         if (!$self->isHostBackup())
         {
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host'} = $oHostBackup->nameGet();

@@ -5,6 +5,24 @@ Protocol Client
 #define PROTOCOL_CLIENT_H
 
 /***********************************************************************************************************************************
+Message types used by the protocol
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Data passed between client and server in either direction. This can be used as many times as needed.
+    protocolMessageTypeData = 0,
+
+    // Indicates no more data for the server to return to the client and ends the command
+    protocolMessageTypeDataEnd = 1,
+
+    // Command sent from the client to the server
+    protocolMessageTypeCommand = 2,
+
+    // An error occurred on the server and the command ended abnormally. protocolMessageTypeDataEnd will not be sent to the client.
+    protocolMessageTypeError = 3,
+} ProtocolMessageType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct ProtocolClient ProtocolClient;
@@ -27,13 +45,18 @@ Constants
 #define PROTOCOL_COMMAND_EXIT                                       STRID5("exit", 0xa27050)
 #define PROTOCOL_COMMAND_NOOP                                       STRID5("noop", 0x83dee0)
 
-#define PROTOCOL_ERROR                                              "err"
-    STRING_DECLARE(PROTOCOL_ERROR_STR);
-#define PROTOCOL_ERROR_STACK                                        "errStack"
-    STRING_DECLARE(PROTOCOL_ERROR_STACK_STR);
+/***********************************************************************************************************************************
+This size should be safe for most pack data without wasting a lot of space. If binary data is being transferred then this size can
+be added to the expected binary size to account for overhead.
+***********************************************************************************************************************************/
+#define PROTOCOL_PACK_DEFAULT_SIZE                                  1024
 
-#define PROTOCOL_OUTPUT                                             "out"
-    STRING_DECLARE(PROTOCOL_OUTPUT_STR);
+// Pack large enough for standard data. Note that the buffer will automatically resize when required.
+__attribute__((always_inline)) static inline PackWrite *
+protocolPackNew(void)
+{
+    return pckWriteNewBuf(bufNew(PROTOCOL_PACK_DEFAULT_SIZE));
+}
 
 /***********************************************************************************************************************************
 Constructors
@@ -47,28 +70,20 @@ typedef struct ProtocolClientPub
 {
     MemContext *memContext;                                         // Mem context
     IoRead *read;                                                   // Read interface
-    IoWrite *write;                                                 // Write interface
 } ProtocolClientPub;
 
-// Read interface
-__attribute__((always_inline)) static inline IoRead *
-protocolClientIoRead(ProtocolClient *const this)
+// Read file descriptor
+__attribute__((always_inline)) static inline int
+protocolClientIoReadFd(ProtocolClient *const this)
 {
-    return THIS_PUB(ProtocolClient)->read;
-}
-
-// Write interface
-__attribute__((always_inline)) static inline IoWrite *
-protocolClientIoWrite(ProtocolClient *const this)
-{
-    return THIS_PUB(ProtocolClient)->write;
+    return ioReadFd(THIS_PUB(ProtocolClient)->read);
 }
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Execute a protocol command and get the output
-const Variant *protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool outputRequired);
+// Execute a command and get the result
+PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool resultRequired);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolClient *
@@ -80,14 +95,15 @@ protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 // Send noop to test connection or keep it alive
 void protocolClientNoOp(ProtocolClient *this);
 
-// Read a line
-String *protocolClientReadLine(ProtocolClient *this);
+// Get data put by the server
+PackRead *protocolClientDataGet(ProtocolClient *this);
+void protocolClientDataEndGet(ProtocolClient *this);
 
-// Read the command output
-const Variant *protocolClientReadOutput(ProtocolClient *this, bool outputRequired);
+// Put command to the server
+void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
 
-// Write the protocol command
-void protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command);
+// Put data to the server
+void protocolClientDataPut(ProtocolClient *this, PackWrite *data);
 
 /***********************************************************************************************************************************
 Destructor

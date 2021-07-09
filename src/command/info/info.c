@@ -106,7 +106,7 @@ typedef struct InfoRepoData
     unsigned int key;                                               // User-defined repo key
     CipherType cipher;                                              // Encryption type
     const String *cipherPass;                                       // Passphrase if the repo is encrypted (else NULL)
-    int stanzaStatus;                                               // Status code of the the stanza on this repo
+    int stanzaStatus;                                               // Status code of the stanza on this repo
     unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
     InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
     InfoArchive *archiveInfo;                                       // Contents of the archive.info file of the stanza on this repo
@@ -785,13 +785,14 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         // Get and format the backup start/stop time
         KeyValue *timestampInfo = varKv(kvGet(backupInfo, BACKUP_KEY_TIMESTAMP_VAR));
 
+        struct tm timePart;
         char timeBufferStart[20];
         char timeBufferStop[20];
         time_t timeStart = (time_t)varUInt64(kvGet(timestampInfo, KEY_START_VAR));
         time_t timeStop = (time_t)varUInt64(kvGet(timestampInfo, KEY_STOP_VAR));
 
-        strftime(timeBufferStart, sizeof(timeBufferStart), "%Y-%m-%d %H:%M:%S", localtime(&timeStart));
-        strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime(&timeStop));
+        strftime(timeBufferStart, sizeof(timeBufferStart), "%Y-%m-%d %H:%M:%S", localtime_r(&timeStart, &timePart));
+        strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime_r(&timeStop, &timePart));
 
         strCatFmt(resultStr, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
         strCatZ(resultStr, "            wal start/stop: ");

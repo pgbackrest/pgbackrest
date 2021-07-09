@@ -987,7 +987,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 buildData.storagePg, linkPgPath, .followLink = true, .ignoreMissing = true);
             linkedInfo.name = linkName;
 
-            // If the link destination exists then proceed as usual
+            // If the link destination exists then build the target
             if (linkedInfo.exists)
             {
                 // If a path link then recurse
@@ -1005,9 +1005,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     target.path = strPath(info->linkDestination);
                     target.file = strBase(info->linkDestination);
                 }
-
-                // Use the callback to add and do all related checks
-                manifestBuildCallback(&buildData, &linkedInfo);
             }
             // Else dummy up the target with a destination so manifestLinkCheck() can be run.  This is so errors about links with
             // destinations in PGDATA will take precedence over missing a destination.  We will probably simplify this once the
@@ -1025,6 +1022,9 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             // If the link check was successful but the destination does not exist then check it again to generate an error
             if (!linkedInfo.exists)
                 storageInfoP(buildData.storagePg, linkPgPath, .followLink = true);
+
+            // Recurse into the link destination
+            manifestBuildCallback(&buildData, &linkedInfo);
 
             break;
         }
@@ -1228,7 +1228,7 @@ manifestNewBuild(
                             lastRelationFileIdUnlogged = manifestFileFindDefault(this, relationInit, NULL) != NULL;
                             strFree(relationInit);
 
-                            // Save the file id so we don't need to do the lookup next time if if doesn't change
+                            // Save the file id so we don't need to do the lookup next time if it doesn't change
                             strcpy(lastRelationFileId, relationFileId);
                         }
 

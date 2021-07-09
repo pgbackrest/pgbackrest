@@ -59,11 +59,6 @@ restorePathValidate(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // The PGDATA directory must exist
-        // ??? We should remove this requirement in a separate commit.  What's the harm in creating the dir assuming we have perms?
-        if (!storagePathExistsP(storagePg(), NULL))
-            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strZ(cfgOptionDisplay(cfgOptPgPath)));
-
         // PostgreSQL must not be running
         if (storageExistsP(storagePg(), PG_FILE_POSTMASTERPID_STR))
         {
@@ -1836,9 +1831,11 @@ restoreRecoveryWrite(const Manifest *manifest)
         else
         {
             // Generate a label used to identify this restore in the recovery file
+            struct tm timePart;
             char restoreTimestamp[20];
             time_t timestamp = time(NULL);
-            strftime(restoreTimestamp, sizeof(restoreTimestamp), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
+
+            strftime(restoreTimestamp, sizeof(restoreTimestamp), "%Y-%m-%d %H:%M:%S", localtime_r(&timestamp, &timePart));
             const String *restoreLabel = STR(restoreTimestamp);
 
             // Write recovery file based on PostgreSQL version
@@ -2015,7 +2012,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
         {
             const ManifestFile *file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
             bool zeroed = restoreFileZeroed(file->name, zeroExp);
-            bool copy = varBool(protocolParallelJobResult(job));
+            bool copy = pckReadBoolP(protocolParallelJobResult(job));
 
             String *log = strNewZ("restore");
 
@@ -2062,7 +2059,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             if (file->size != 0 && !zeroed)
                 strCatFmt(log, " checksum %s", file->checksumSha1);
 
-            LOG_PID(copy ? logLevelInfo : logLevelDetail, protocolParallelJobProcessId(job), 0, strZ(log));
+            LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -2141,24 +2138,24 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
                 // Create restore job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
-                protocolCommandParamAdd(command, VARSTR(file->name));
-                protocolCommandParamAdd(command, VARUINT(jobData->repoIdx));
-                protocolCommandParamAdd(
-                    command, file->reference != NULL ?
-                        VARSTR(file->reference) : VARSTR(manifestData(jobData->manifest)->backupLabel));
-                protocolCommandParamAdd(command, VARUINT(manifestData(jobData->manifest)->backupOptionCompressType));
-                protocolCommandParamAdd(command, VARSTR(restoreFilePgPath(jobData->manifest, file->name)));
-                protocolCommandParamAdd(command, VARSTRZ(file->checksumSha1));
-                protocolCommandParamAdd(command, VARBOOL(restoreFileZeroed(file->name, jobData->zeroExp)));
-                protocolCommandParamAdd(command, VARUINT64(file->size));
-                protocolCommandParamAdd(command, VARUINT64((uint64_t)file->timestamp));
-                protocolCommandParamAdd(command, VARSTR(strNewFmt("%04o", file->mode)));
-                protocolCommandParamAdd(command, VARSTR(file->user));
-                protocolCommandParamAdd(command, VARSTR(file->group));
-                protocolCommandParamAdd(command, VARUINT64((uint64_t)manifestData(jobData->manifest)->backupTimestampCopyStart));
-                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta)));
-                protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce)));
-                protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
+                PackWrite *const param = protocolCommandParam(command);
+
+                pckWriteStrP(param, file->name);
+                pckWriteU32P(param, jobData->repoIdx);
+                pckWriteStrP(param, file->reference != NULL ? file->reference : manifestData(jobData->manifest)->backupLabel);
+                pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
+                pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file->name));
+                pckWriteStrP(param, STR(file->checksumSha1));
+                pckWriteBoolP(param, restoreFileZeroed(file->name, jobData->zeroExp));
+                pckWriteU64P(param, file->size);
+                pckWriteTimeP(param, file->timestamp);
+                pckWriteModeP(param, file->mode);
+                pckWriteStrP(param, file->user);
+                pckWriteStrP(param, file->group);
+                pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
+                pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
+                pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
+                pckWriteStrP(param, jobData->cipherSubPass);
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);

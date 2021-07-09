@@ -45,7 +45,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
         return;
     }
 
-    // Add seperator character
+    // Add separator character
     if (!listData->first && listData->json)
         ioWrite(listData->write, COMMA_BUF);
     else

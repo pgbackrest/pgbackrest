@@ -14,30 +14,43 @@ Restore Protocol Handler
 
 /**********************************************************************************************************************************/
 void
-restoreFileProtocol(const VariantList *paramList, ProtocolServer *server)
+restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(paramList != NULL);
+    ASSERT(param != NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerResponse(
-            server,
-            VARBOOL(
-                restoreFile(
-                    varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varStr(varLstGet(paramList, 2)),
-                    (CompressType)varUIntForce(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
-                    varStr(varLstGet(paramList, 5)), varBoolForce(varLstGet(paramList, 6)), varUInt64(varLstGet(paramList, 7)),
-                    (time_t)varInt64Force(varLstGet(paramList, 8)),
-                    (mode_t)cvtZToUIntBase(strZ(varStr(varLstGet(paramList, 9))), 8),
-                    varStr(varLstGet(paramList, 10)), varStr(varLstGet(paramList, 11)),
-                    (time_t)varInt64Force(varLstGet(paramList, 12)), varBoolForce(varLstGet(paramList, 13)),
-                    varBoolForce(varLstGet(paramList, 14)), varStr(varLstGet(paramList, 15)))));
+        // Restore file
+        const String *const repoFile = pckReadStrP(param);
+        const unsigned int repoIdx = pckReadU32P(param);
+        const String *const repoFileReference = pckReadStrP(param);
+        const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
+        const String *const pgFile = pckReadStrP(param);
+        const String *const pgFileChecksum = pckReadStrP(param);
+        const bool pgFileZero = pckReadBoolP(param);
+        const uint64_t pgFileSize = pckReadU64P(param);
+        const time_t pgFileModified = pckReadTimeP(param);
+        const mode_t pgFileMode = pckReadModeP(param);
+        const String *const pgFileUser = pckReadStrP(param);
+        const String *const pgFileGroup = pckReadStrP(param);
+        const time_t copyTimeBegin = pckReadTimeP(param);
+        const bool delta = pckReadBoolP(param);
+        const bool deltaForce = pckReadBoolP(param);
+        const String *const cipherPass = pckReadStrP(param);
+
+        const bool result = restoreFile(
+            repoFile, repoIdx, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum, pgFileZero, pgFileSize,
+            pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass);
+
+        // Return result
+        protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), result));
+        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 

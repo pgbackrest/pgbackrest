@@ -478,7 +478,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                 }
 
                 // Loop through the archive.info history from oldest to newest and if there is a corresponding directory on disk
-                // then remove WAL that are not part of retention as long as the db:history id verion/system-id matches backup.info
+                // then remove WAL that are not part of retention as long as the db:history id version/system-id matches backup.info
                 for (unsigned int pgIdx = infoPgDataTotal(infoArchivePgData) - 1; (int)pgIdx >= 0; pgIdx--)
                 {
                     String *archiveId = infoPgArchiveId(infoArchivePgData, pgIdx);
@@ -808,7 +808,7 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
             .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
         sortOrderDesc);
 
-    // Initialize the index to the lastest backup on disk
+    // Initialize the index to the latest backup on disk
     unsigned int backupIdx = 0;
 
     // Only remove the resumable backup if there is a possibility it is a dependent of the adhoc label being expired

@@ -23,6 +23,7 @@ Backup Command
 #include "common/log.h"
 #include "common/time.h"
 #include "common/type/convert.h"
+#include "common/type/json.h"
 #include "config/config.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
@@ -379,9 +380,9 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                         cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(manifestPriorData->backupOptionCompressType)));
 
                     // There's a small chance that the prior manifest is old enough that backupOptionCompressLevel was not recorded.
-                    // There's an even smaller chance that the user will also alter compression-type in this this scenario right
-                    // after upgrading to a newer version. Because we judge this combination of events to be nearly impossible just
-                    // assert here so no test coverage is needed.
+                    // There's an even smaller chance that the user will also alter compression-type in this scenario right after
+                    // upgrading to a newer version. Because we judge this combination of events to be nearly impossible just assert
+                    // here so no test coverage is needed.
                     CHECK(manifestPriorData->backupOptionCompressLevel != NULL);
 
                     // Set the compression level back to whatever was in the prior backup
@@ -1046,12 +1047,12 @@ backupJobResult(
             const ManifestFile *const file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
             const unsigned int processId = protocolParallelJobProcessId(job);
 
-            const VariantList *const jobResult = varVarLst(protocolParallelJobResult(job));
-            const BackupCopyResult copyResult = (BackupCopyResult)varUIntForce(varLstGet(jobResult, 0));
-            const uint64_t copySize = varUInt64(varLstGet(jobResult, 1));
-            const uint64_t repoSize = varUInt64(varLstGet(jobResult, 2));
-            const String *const copyChecksum = varStr(varLstGet(jobResult, 3));
-            const KeyValue *const checksumPageResult = varKv(varLstGet(jobResult, 4));
+            PackRead *const jobResult = protocolParallelJobResult(job);
+            const BackupCopyResult copyResult = (BackupCopyResult)pckReadU32P(jobResult);
+            const uint64_t copySize = pckReadU64P(jobResult);
+            const uint64_t repoSize = pckReadU64P(jobResult);
+            const String *const copyChecksum = pckReadStrP(jobResult);
+            const KeyValue *const checksumPageResult = varKv(jsonToVar(pckReadStrP(jobResult, .defaultValue = NULL_STR)));
 
             // Increment backup copy progress
             sizeCopied += copySize;
@@ -1101,7 +1102,7 @@ backupJobResult(
                         strZ(file->name), file->checksumSha1);
                 }
 
-                LOG_INFO_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+                LOG_DETAIL_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
 
                 // If the file had page checksums calculated during the copy
                 ASSERT((!file->checksumPage && checksumPageResult == NULL) || (file->checksumPage && checksumPageResult != NULL));
@@ -1442,23 +1443,23 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
                 // Create backup job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
+                PackWrite *const param = protocolCommandParam(command);
 
-                protocolCommandParamAdd(command, VARSTR(manifestPathPg(file->name)));
-                protocolCommandParamAdd(
-                    command, VARBOOL(!strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))));
-                protocolCommandParamAdd(command, VARUINT64(file->size));
-                protocolCommandParamAdd(command, VARBOOL(!file->primary));
-                protocolCommandParamAdd(command, file->checksumSha1[0] != 0 ? VARSTRZ(file->checksumSha1) : NULL);
-                protocolCommandParamAdd(command, VARBOOL(file->checksumPage));
-                protocolCommandParamAdd(command, VARUINT64(jobData->lsnStart));
-                protocolCommandParamAdd(command, VARSTR(file->name));
-                protocolCommandParamAdd(command, VARBOOL(file->reference != NULL));
-                protocolCommandParamAdd(command, VARUINT(jobData->compressType));
-                protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
-                protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
-                protocolCommandParamAdd(command, VARBOOL(jobData->delta));
-                protocolCommandParamAdd(command, VARUINT64(jobData->cipherType));
-                protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
+                pckWriteStrP(param, manifestPathPg(file->name));
+                pckWriteBoolP(param, !strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
+                pckWriteU64P(param, file->size);
+                pckWriteBoolP(param, !file->primary);
+                pckWriteStrP(param, file->checksumSha1[0] != 0 ? STR(file->checksumSha1) : NULL);
+                pckWriteBoolP(param, file->checksumPage);
+                pckWriteU64P(param, jobData->lsnStart);
+                pckWriteStrP(param, file->name);
+                pckWriteBoolP(param, file->reference != NULL);
+                pckWriteU32P(param, jobData->compressType);
+                pckWriteI32P(param, jobData->compressLevel);
+                pckWriteStrP(param, jobData->backupLabel);
+                pckWriteBoolP(param, jobData->delta);
+                pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
+                pckWriteStrP(param, jobData->cipherSubPass);
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);

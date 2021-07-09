@@ -4,31 +4,22 @@ Remote Storage Protocol Handler
 #ifndef STORAGE_REMOTE_PROTOCOL_H
 #define STORAGE_REMOTE_PROTOCOL_H
 
-#include "common/type/string.h"
-#include "common/type/variantList.h"
+#include "common/type/pack.h"
 #include "protocol/server.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_BLOCK_HEADER                                       "BRBLOCK"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Get size of the next transfer block
-ssize_t storageRemoteProtocolBlockSize(const String *message);
-
 // Process storage protocol requests
-void storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *server);
-void storageRemoteInfoProtocol(const VariantList *paramList, ProtocolServer *server);
-void storageRemoteInfoListProtocol(const VariantList *paramList, ProtocolServer *server);
-void storageRemoteOpenReadProtocol(const VariantList *paramList, ProtocolServer *server);
-void storageRemoteOpenWriteProtocol(const VariantList *paramList, ProtocolServer *server);
-void storageRemotePathCreateProtocol(const VariantList *paramList, ProtocolServer *server);
-void storageRemotePathRemoveProtocol(const VariantList *paramList, ProtocolServer *server);
-void storageRemotePathSyncProtocol(const VariantList *paramList, ProtocolServer *server);
-void storageRemoteRemoveProtocol(const VariantList *paramList, ProtocolServer *server);
+void storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteInfoListProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteOpenReadProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server);
+void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
+void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
+void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

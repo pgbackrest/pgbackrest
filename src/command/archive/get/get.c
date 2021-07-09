@@ -851,19 +851,21 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
         const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
         jobData->archiveFileIdx++;
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
-        protocolCommandParamAdd(command, VARSTR(archiveFileMap->request));
+        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
+        PackWrite *const param = protocolCommandParam(command);
+
+        pckWriteStrP(param, archiveFileMap->request);
 
         // Add actual files to get
         for (unsigned int actualIdx = 0; actualIdx < lstSize(archiveFileMap->actualList); actualIdx++)
         {
-            const ArchiveGetFile *actual = lstGet(archiveFileMap->actualList, actualIdx);
+            const ArchiveGetFile *const actual = lstGet(archiveFileMap->actualList, actualIdx);
 
-            protocolCommandParamAdd(command, VARSTR(actual->file));
-            protocolCommandParamAdd(command, VARUINT(actual->repoIdx));
-            protocolCommandParamAdd(command, VARSTR(actual->archiveId));
-            protocolCommandParamAdd(command, VARUINT64(actual->cipherType));
-            protocolCommandParamAdd(command, VARSTR(actual->cipherPassArchive));
+            pckWriteStrP(param, actual->file);
+            pckWriteU32P(param, actual->repoIdx);
+            pckWriteStrP(param, actual->archiveId);
+            pckWriteU64P(param, actual->cipherType);
+            pckWriteStrP(param, actual->cipherPassArchive);
         }
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(archiveFileMap->request), command));
@@ -941,12 +943,12 @@ cmdArchiveGetAsync(void)
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
                             // Get the actual file retrieved
-                            const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
-                            ArchiveGetFile *file = lstGet(fileMap->actualList, varUIntForce(varLstGet(fileResult, 0)));
+                            PackRead *const fileResult = protocolParallelJobResult(job);
+                            ArchiveGetFile *file = lstGet(fileMap->actualList, pckReadU32P(fileResult));
                             ASSERT(file != NULL);
 
                             // Output file warnings
-                            StringList *fileWarnList = strLstNewVarLst(varVarLst(varLstGet(fileResult, 1)));
+                            StringList *fileWarnList = pckReadStrLstP(fileResult);
 
                             for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
                                 LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));

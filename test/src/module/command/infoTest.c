@@ -1,14 +1,14 @@
 /***********************************************************************************************************************************
 Test Info Command
 ***********************************************************************************************************************************/
+#include "common/crypto/cipherBlock.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
 
-#include "common/crypto/cipherBlock.h"
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessFork.h"
-#include "common/io/bufferRead.h"
-#include "common/io/bufferWrite.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -18,37 +18,35 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // Create storage object for writing to test locations when a stanza is not set
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+
     // The tests expect the timezone to be UTC
     setenv("TZ", "UTC", true);
-
-    // Create the repo directories
-    const String *repoPath = STRDEF(TEST_PATH "/repo");
-    String *archivePath = strNewFmt("%s/%s", strZ(repoPath), "archive");
-    String *backupPath = strNewFmt("%s/%s", strZ(repoPath), "backup");
-    String *archiveStanza1Path = strNewFmt("%s/stanza1", strZ(archivePath));
-    String *backupStanza1Path = strNewFmt("%s/stanza1", strZ(backupPath));
 
     // *****************************************************************************************************************************
     if (testBegin("infoRender()"))
     {
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         StringList *argListText = strLstDup(argList);
 
-        strLstAddZ(argList, "--output=json");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
-        // No stanzas have been created
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no stanzas have been created");
+
         TEST_RESULT_STR_Z(infoRender(), "[]", "json - repo but no stanzas");
 
         HRN_CFG_LOAD(cfgCmdInfo, argListText);
         TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text - no stanzas");
 
-        // Repo is still empty but stanza option is specified
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo is still empty but stanza option is specified");
+
         StringList *argListStanzaOpt = strLstDup(argList);
-        strLstAddZ(argListStanzaOpt, "--stanza=stanza1");
+        hrnCfgArgRawZ(argListStanzaOpt, cfgOptStanza, "stanza1");
         HRN_CFG_LOAD(cfgCmdInfo, argListStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -79,7 +77,7 @@ testRun(void)
             "json - empty repo, stanza option specified");
 
         StringList *argListTextStanzaOpt = strLstDup(argListText);
-        strLstAddZ(argListTextStanzaOpt, "--stanza=stanza1");
+        hrnCfgArgRawZ(argListTextStanzaOpt, cfgOptStanza, "stanza1");
         HRN_CFG_LOAD(cfgCmdInfo, argListTextStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -87,13 +85,12 @@ testRun(void)
             "    status: error (missing stanza path)\n",
             "text - empty repo, stanza option specified");
 
-        storagePathCreateP(storageLocalWrite(), archivePath);
-        storagePathCreateP(storageLocalWrite(), backupPath);
-
-        // Empty stanza
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup stanza1 directory");
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive stanza1 directory");
+        TEST_TITLE("stanza path exists but is empty");
+
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_ARCHIVE, .comment = "create repo stanza archive path");
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP, .comment = "create repo stanza backup path");
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -130,10 +127,12 @@ testRun(void)
             "]",
             "json - missing stanza data");
 
-        // backup.info file exists, but archive.info does not
         //--------------------------------------------------------------------------------------------------------------------------
-        const String *content = STRDEF
-        (
+        TEST_TITLE("backup.info file exists, but archive.info does not");
+
+        // Put backup info to file
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -145,17 +144,10 @@ testRun(void)
             "1={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666,"
                 "\"db-version\":\"9.3\"}\n"
             "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+                "\"db-version\":\"9.4\"}\n");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put backup info to file");
-
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "["
                 "{"
                     "\"archive\":[],"
@@ -169,10 +161,13 @@ testRun(void)
                             "\"key\":1,"
                             "\"status\":{"
                                 "\"code\":99,"
-                                "\"message\":\"[FileMissingError] unable to load info file '%s/archive.info' or"
-                                " '%s/archive.info.copy':\\n"
-                                "FileMissingError: unable to open missing file '%s/archive.info' for read\\n"
-                                "FileMissingError: unable to open missing file '%s/archive.info.copy' for read\\n"
+                                "\"message\":\"[FileMissingError] unable to load info file '"
+                                TEST_PATH "/repo/archive/stanza1/archive.info' or '"
+                                TEST_PATH "/repo/archive/stanza1/archive.info.copy':\\n"
+                                "FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/stanza1/archive.info'"
+                                " for read\\n"
+                                "FileMissingError: unable to open missing file '" TEST_PATH
+                                "/repo/archive/stanza1/archive.info.copy' for read\\n"
                                 "HINT: archive.info cannot be opened but is required to push/get WAL segments.\\n"
                                 "HINT: is archive_command configured correctly in postgresql.conf?\\n"
                                 "HINT: has a stanza-create been performed?\\n"
@@ -187,30 +182,33 @@ testRun(void)
                         "\"message\":\"other\""
                         "}"
                 "}"
-            "]", strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path)),
+            "]",
             "json - other error, single repo");
 
         HRN_CFG_LOAD(cfgCmdInfo, argListTextStanzaOpt);
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: error (other)\n"
-            "            [FileMissingError] unable to load info file '%s/stanza1/archive.info' or '%s/stanza1/archive.info.copy':\n"
-            "            FileMissingError: unable to open missing file '%s/stanza1/archive.info' for read\n"
-            "            FileMissingError: unable to open missing file '%s/stanza1/archive.info.copy' for read\n"
+            "            [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/stanza1/archive.info' or '"
+                         TEST_PATH "/repo/archive/stanza1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/stanza1/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/stanza1/archive.info.copy'"
+                         " for read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
             "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
             " scheme.\n"
-            "    cipher: none\n", strZ(archivePath), strZ(archivePath), strZ(archivePath), strZ(archivePath)),
+            "    cipher: none\n",
             "text - other error, single repo");
 
-        // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
-        // Only the current db information from the db:history will be processed.
         //--------------------------------------------------------------------------------------------------------------------------
-        content = STRDEF
-        (
+        TEST_TITLE("info files exist with mismatched db-ids and no current backups - lock detected");
+
+        // Only the current db information from the db:history will be processed.
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=3\n"
             "db-system-id=6569239123849665679\n"
@@ -219,18 +217,12 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
             "2={\"db-id\":6569239123849665666,\"db-version\":\"9.3\"}\n"
-            "3={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put archive info to file");
+            "3={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n");
 
         // Create a WAL directory in 9.3-2 but since there are no WAL files or backups it will not show
-        String *archiveDb2_1 = strNewFmt("%s/9.3-2/0000000100000000", strZ(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb2_1), "create empty db2 archive WAL1 directory");
+        HRN_STORAGE_PATH_CREATE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.3-2/0000000100000000",
+            .comment = "create empty db2 archive WAL1 directory");
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
         // backup.info. Execute while a backup lock is held.
@@ -319,20 +311,33 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // Add WAL segments
         //--------------------------------------------------------------------------------------------------------------------------
-        String *archiveDb3 = strNewFmt("%s/9.4-3/0000000300000000", strZ(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb3), "create db3 archive WAL1 directory");
+        TEST_TITLE("multi-repo - stanza missing on specified repo");
 
-        String *archiveDb3Wal = strNewFmt(
-            "%s/000000030000000000000001-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveDb3));
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "touch WAL3 file");
+        StringList *argList2 = strLstDup(argListTextStanzaOpt);
+        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
-        StringList *argList2 = strLstDup(argListText);
-        strLstAddZ(argList2, "--stanza=stanza1");
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (missing stanza path)\n",
+            "text - multi-repo, requested stanza missing on selected repo");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo - WAL segment on repo1");
+
+        argList2 = strLstDup(argListTextStanzaOpt);
         hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        // Add WAL segment
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/9.4-3/0000000300000000/000000030000000000000001-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            .comment = "write WAL db3 timeline 3 repo1");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -344,53 +349,34 @@ testRun(void)
             "        wal archive min/max (9.4): 000000030000000000000001/000000030000000000000001\n",
             "text - multi-repo, single stanza, one wal segment");
 
-        TEST_RESULT_VOID(storageRemoveP(storageLocalWrite(), archiveDb3Wal, .errorOnMissing = true), "remove WAL file");
-
         //--------------------------------------------------------------------------------------------------------------------------
-        argList2 = strLstDup(argListText);
-        strLstAddZ(argList2, "--stanza=stanza1");
-        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
-        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+        TEST_TITLE("coverage for stanzaStatus branches");
 
-        TEST_RESULT_STR_Z(
-            infoRender(),
-            "stanza: stanza1\n"
-            "    status: error (missing stanza path)\n",
-            "text - multi-repo, requested stanza missing on selected repo");
-
-        // Coverage for stanzaStatus branches
-        //--------------------------------------------------------------------------------------------------------------------------
-        String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archiveDb1_1))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveDb1_1))));
-
-        String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strZ(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveDb1_2))));
-
-        String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strZ(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
-
-        // Db1 and Db3 have same system-id and db-version so consider them the same for WAL reporting
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "create db3 archive WAL3 file");
+        // Db1 and Db3 (from above) have same system-id and db-version so consider them the same for WAL reporting
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            .comment = "write WAL db1 timeline 1 repo1");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            .comment = "write WAL db1 timeline 1 repo1");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            .comment = "write WAL db1 timeline 2 repo1");
+        HRN_STORAGE_PATH_CREATE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000300000000",
+            .comment = "create empty db1 timeline 3 directory");
 
         // Create a WAL file in 9.3-2 so that a prior will show
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archiveDb2_1))));
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/9.3-2/0000000100000000/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            .comment = "write WAL db2 timeline 1 repo1");
 
-        HRN_CFG_LOAD(cfgCmdInfo, argList);
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -420,14 +406,7 @@ testRun(void)
             "2={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666,"
                 "\"db-version\":\"9.3\"}\n"
             "3={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put backup info to file");
+                "\"db-version\":\"9.4\"}\n");
 
         // Execute while a backup lock is held
         HARNESS_FORK_BEGIN()
@@ -615,16 +594,16 @@ testRun(void)
         HARNESS_FORK_END();
 
         // Cleanup
-        storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.3-2", strZ(archiveStanza1Path)), .recurse = true);
-        storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.4-3", strZ(archiveStanza1Path)), .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.3-2", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.4-3", .recurse = true);
 
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mixed multi-repo");
 
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE,
             "[db]\n"
             "db-id=2\n"
             "db-system-id=6626363367545678089\n"
@@ -632,17 +611,11 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-            "2={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n"
-        );
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n",
+            .comment = "put archive info to file - stanza1, repo1");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put archive info to file - stanza1, repo1");
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
             "[backup:current]\n"
             "20181119-152138F={"
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
@@ -698,14 +671,8 @@ testRun(void)
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
                 "\"db-version\":\"9.4\"}\n"
             "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.5\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put backup info to file - stanza1, repo1");
+                "\"db-version\":\"9.5\"}\n",
+            .comment = "put backup info to file - stanza1, repo1");
 
         // Manifest with all features
         #define TEST_MANIFEST_HEADER                                                                                               \
@@ -812,8 +779,8 @@ testRun(void)
             "mode=\"0700\"\n"                                                                                                      \
             "user=\"user1\"\n"
 
-        const Buffer *contentLoad = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
@@ -822,38 +789,21 @@ testRun(void)
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest - stanza1, repo1");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageLocalWrite(),
-            strNewFmt("%s/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE, strZ(backupStanza1Path))), contentLoad),
-            "write manifest - stanza1, repo1");
-
-        String *archiveStanza2Path = strNewFmt("%s/stanza2", strZ(archivePath));
-        String *backupStanza2Path = strNewFmt("%s/stanza2", strZ(backupPath));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup path stanza2 directory, repo1");
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive path stanza2 directory, repo1");
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza2/" INFO_ARCHIVE_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6625633699176220261\n"
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6625633699176220261,\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza2Path))),
-                harnessInfoChecksum(content)),
-            "put archive info to file - stanza2, repo1");
-
-        content = STRDEF
-        (
+            "1={\"db-id\":6625633699176220261,\"db-version\":\"9.4\"}\n",
+            .comment = "put archive info to file - stanza2, repo1");
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza2/" INFO_BACKUP_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -863,24 +813,12 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625633699176220261,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+                "\"db-version\":\"9.4\"}\n",
+            .comment = "put backup info to file - stanza2, repo1");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza2Path))),
-                harnessInfoChecksum(content)),
-            "put backup info to file - stanza2, repo1");
-
-        // Create encrypted repo2
-        const String *repo2archivePath = STRDEF(TEST_PATH "/repo2/archive");
-        const String *repo2backupPath = STRDEF(TEST_PATH "/repo2/backup");
-        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2archivePath)));
-        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2backupPath)));
-
-        // Write encrypted info files
-        content = STRDEF
-        (
+        // Write encrypted info files to encrypted repo2
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6626363367545678089\n"
@@ -890,17 +828,11 @@ testRun(void)
             "cipher-pass=\"" TEST_CIPHER_PASS_ARCHIVE "\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n"
-        );
-
-        String *filePathName = strNewFmt("%s/stanza1/archive.info", strZ(repo2archivePath));
-        StorageWrite *write = storageNewWriteP(storageLocalWrite(), filePathName);
-        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
-        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2");
-
-        content = STRDEF
-        (
+            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n",
+            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .comment = "write encrypted archive.info, stanza1, repo2");
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
             "[db]\n"
             "db-catalog-version=201510051\n"
             "db-control-version=942\n"
@@ -922,39 +854,30 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.5\"}\n"
-        );
-
-        filePathName = strNewFmt("%s/stanza1/backup.info", strZ(repo2backupPath));
-        write = storageNewWriteP(storageLocalWrite(), filePathName);
-        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
-        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted backup.info, repo2");
+                "\"db-version\":\"9.5\"}\n",
+            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .comment = "write encrypted backup.info, stanza1, repo2");
 
         // Add WAL on repo1 and encrypted repo2 for stanza1
-        String *archive1Db1_1 = strNewFmt("%s/9.5-2/0000000100000000", strZ(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive1Db1_1), "create db1 archive WAL directory, repo1");
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive1Db1_1))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archive1Db1_1))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000004-ee61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive1Db1_1))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000005-abc123f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive1Db1_1))));
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.5-2/0000000100000000/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.5-2/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.5-2/0000000100000000/000000010000000000000004-ee61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.5-2/0000000100000000/000000010000000000000005-abc123f1ec7b1e6c3eaee9345214595eb7daa9a1.gz");
 
-        String *archive2Db1_1 = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(repo2archivePath));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive2Db1_1), "create db1 archive WAL directory, repo2");
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archive2Db1_1))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000004-ff61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive2Db1_1))));
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.5-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.5-1/0000000100000000/000000010000000000000004-ff61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz");
 
         // Add a manifest on the encrypted repo2
         #define TEST_MANIFEST_HEADER2                                                                                              \
@@ -988,8 +911,9 @@ testRun(void)
             "option-online=true\n"                                                                                                 \
             "option-process-max=32\n"                                                                                              \
 
-        contentLoad = harnessInfoChecksumZ
-        (
+        // Create encrypted manifest file
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_BACKUP "/stanza1/20201116-200000F/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER2
             TEST_MANIFEST_TARGET
             "\n"
@@ -1001,20 +925,13 @@ testRun(void)
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
-
-        // Create encrypted manifest file
-        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1/20201116-200000F", strZ(repo2backupPath)));
-        filePathName = strNewFmt("%s/stanza1/20201116-200000F/" BACKUP_MANIFEST_FILE, strZ(repo2backupPath));
-        write = storageNewWriteP(storageLocalWrite(), filePathName);
-        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("somepass"), NULL));
-        TEST_RESULT_VOID(storagePutP(write, contentLoad), "write encrypted manifest, repo2");
+            TEST_MANIFEST_PATH_DEFAULT,
+            .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass",
+            .comment = "write encrypted manifest, stanza1, repo2");
 
         // Create a stanza on repo2 that is not on repo1
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_ARCHIVE "/stanza3/" INFO_ARCHIVE_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6626363367545678089\n"
@@ -1024,17 +941,11 @@ testRun(void)
             "cipher-pass=\"" TEST_CIPHER_PASS_ARCHIVE "\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.4\"}\n"
-        );
-
-        filePathName = strNewFmt("%s/stanza3/archive.info", strZ(repo2archivePath));
-        write = storageNewWriteP(storageLocalWrite(), filePathName);
-        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
-        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2, stanza3");
-
-        content = STRDEF
-        (
+            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.4\"}\n",
+            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .comment = "write encrypted archive.info, repo2, stanza3");
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_BACKUP "/stanza3/" INFO_BACKUP_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -1056,27 +967,21 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+                "\"db-version\":\"9.4\"}\n",
+            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .comment = "write encrypted backup.info, repo2, stanza3");
 
-        filePathName = strNewFmt("%s/stanza3/backup.info", strZ(repo2backupPath));
-        write = storageNewWriteP(storageLocalWrite(), filePathName);
-        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
-        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted backup.info, repo2, stanza3");
-
-        archive2Db1_1 = strNewFmt("%s/stanza3/9.4-1/0000000100000000", strZ(repo2archivePath));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive2Db1_1), "create db1 archive WAL directory, repo2");
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archive2Db1_1))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000002-2261b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive2Db1_1))));
+        // Store some WAL in stanza on repo2 that is not on repo1
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_ARCHIVE
+            "/stanza3/9.4-1/0000000100000000/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_ARCHIVE
+            "/stanza3/9.4-1/0000000100000000/000000010000000000000002-2261b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz");
 
         // Set up the configuration
         StringList *argListMultiRepo = strLstNew();
-        hrnCfgArgRawZ(argListMultiRepo, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argListMultiRepo, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argListMultiRepo, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argListMultiRepo, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
@@ -1606,11 +1511,12 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        // Stanza exists but set requested backup does not
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo: stanza exists but requested backup does not");
+
         argList2 = strLstDup(argListMultiRepo);
-        strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=bogus");
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgRawZ(argList2, cfgOptSet, "bogus");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
@@ -1622,12 +1528,13 @@ testRun(void)
             "        repo2: aes-256-cbc\n",
             "text, multi-repo, backup not found");
 
-        // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo: backup set requested on single repo, with 1 checksum error");
+
         argList2 = strLstDup(argListMultiRepo);
-        strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
-        strLstAddZ(argList2, "--repo=1");
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20181119-152138F_20181119-152155I");
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
@@ -1655,11 +1562,12 @@ testRun(void)
             "            page checksum error: base/16384/17000\n",
             "text - backup set requested");
 
-        // Confirm ability to read encrypted repo manifest and that the requested database will be found without setting --repo
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo: read encrypted manifest and confirm requested database found without setting --repo");
+
         argList2 = strLstDup(argListMultiRepo);
-        strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20201116-200000F");
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20201116-200000F");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
@@ -1689,17 +1597,22 @@ testRun(void)
             "text - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList2, "--output=json");
+        TEST_TITLE("option 'set' not valid for json output");
+
+        hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_ERROR(strZ(infoRender()), ConfigError, "option 'set' is currently only valid for text output");
 
-        // Backup set requested but no links, multiple checksum errors
         //--------------------------------------------------------------------------------------------------------------------------
-        argList2 = strLstDup(argListText);
-        strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
-        strLstAddZ(argList2, "--repo=1");
+        TEST_TITLE("backup set requested but no links, multiple checksum errors");
+
+        // Remove the environment variable so config system will only count one repo
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+
+        argList2 = strLstDup(argListTextStanzaOpt);
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20181119-152138F_20181119-152155I");
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_TARGET_NO_LINK                                                                                       \
@@ -1724,8 +1637,8 @@ testRun(void)
             ",\"timestamp\":1565282114}\n"                                                                                         \
         "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 
-        contentLoad = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET_NO_LINK
             TEST_MANIFEST_DB
@@ -1734,15 +1647,8 @@ testRun(void)
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
-                    contentLoad),
-                "write manifest");
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest with checksum errors and no links");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -1763,12 +1669,10 @@ testRun(void)
             "            page checksum error: base/16384/17000, base/32768/33000\n",
             "text - backup set requested, no links");
 
-        // Backup set requested but no databases, no checksum error
         //--------------------------------------------------------------------------------------------------------------------------
-        argList2 = strLstDup(argListText);
-        strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
-        strLstAddZ(argList2, "--repo=1");
+        TEST_TITLE("backup set requested but no databases, no checksum error");
+
+        // Using the same configuration from previous test
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_NO_DB                                                                                                \
@@ -1794,8 +1698,8 @@ testRun(void)
             ",\"timestamp\":1565282114}\n"                                                                                         \
         "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 
-        contentLoad = harnessInfoChecksumZ
-        (
+        HRN_INFO_PUT(
+             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET_NO_LINK
             TEST_MANIFEST_NO_DB
@@ -1804,15 +1708,8 @@ testRun(void)
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
-                    contentLoad),
-            "write manifest");
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = " rewrite same manifest withut checksum errors");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -1832,10 +1729,14 @@ testRun(void)
             "            database list: none\n",
             "text - backup set requested, no db and no checksum error");
 
-        // Stanza found
         //--------------------------------------------------------------------------------------------------------------------------
-        argList2 = strLstDup(argList);
-        strLstAddZ(argList2, "--stanza=stanza2");
+        TEST_TITLE("multi-repo: stanza found");
+
+        // Reconfigure environment variable for repo2
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
+
+        argList2 = strLstDup(argListMultiRepoJson);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza2");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -1853,7 +1754,7 @@ testRun(void)
                         "}"
                     "],"
                      "\"backup\":[],"
-                     "\"cipher\":\"none\","
+                     "\"cipher\":\"mixed\","
                      "\"db\":["
                         "{"
                             "\"id\":1,"
@@ -1873,7 +1774,7 @@ testRun(void)
                             "}"
                         "},"
                         "{"
-                            "\"cipher\":\"none\","
+                            "\"cipher\":\"aes-256-cbc\","
                             "\"key\":2,"
                             "\"status\":{"
                                 "\"code\":1,"
@@ -1890,8 +1791,8 @@ testRun(void)
             "]",
             "json - multiple stanzas - selected found, repo1");
 
-        argList2 = strLstDup(argListText);
-        strLstAddZ(argList2, "--stanza=stanza2");
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza2");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -1899,7 +1800,9 @@ testRun(void)
             "    status: mixed\n"
             "        repo1: error (no valid backups)\n"
             "        repo2: error (missing stanza path)\n"
-            "    cipher: none\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n"
             "\n"
             "    db (current)\n"
             "        wal archive min/max (9.4): none present\n",
@@ -1909,8 +1812,12 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, backups only on one");
 
-        content = STRDEF
-        (
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201510051\n"
             "db-control-version=942\n"
@@ -1923,18 +1830,10 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.5\"}\n"
-        );
+                "\"db-version\":\"9.5\"}\n",
+            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .comment = "backup.info without current, repo2, stanza1");
 
-        filePathName = strNewFmt("%s/stanza1/backup.info", strZ(repo2backupPath));
-        write = storageNewWriteP(storageLocalWrite(), filePathName);
-        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
-        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "backup.info without current, repo2, stanza1");
-
-        argList2 = strLstDup(argListMultiRepo);
-        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
-        HRN_CFG_LOAD(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -1989,9 +1888,8 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, prior backup: no archives but backups (code coverage)");
 
-        TEST_RESULT_VOID(
-            storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.4-1", strZ(archiveStanza1Path)), .recurse = true),
-            "remove archives on db prior");
+        HRN_STORAGE_PATH_REMOVE(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/9.4-1", .recurse = true, .comment = "remove archives on db prior");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2060,8 +1958,12 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, current database different across repos");
 
-        content = STRDEF
-        (
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=2\n"
             "db-system-id=6626363367545678888\n"
@@ -2069,16 +1971,11 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6626363367545678089,\"db-version\":\"9.4\"}\n"
-            "2={\"db-id\":6626363367545678888,\"db-version\":\"9.5\"}\n"
-        );
+            "2={\"db-id\":6626363367545678888,\"db-version\":\"9.5\"}\n",
+            .comment = "put archive info to file - stanza3, repo1 stanza upgraded");
 
-        filePathName = strNewFmt("%s/stanza3/archive.info", strZ(archivePath));
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), harnessInfoChecksum(content)),
-            "put archive info to file - stanza3, repo1 stanza upgraded");
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -2106,32 +2003,19 @@ testRun(void)
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
                 "\"db-version\":\"9.4\"}\n"
             "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678888,"
-                "\"db-version\":\"9.5\"}\n"
-        );
+                "\"db-version\":\"9.5\"}\n",
+            .comment = "put backup info to file - stanza3, repo1 stanza upgraded");
 
-        filePathName = strNewFmt("%s/stanza3/backup.info", strZ(backupPath));
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), harnessInfoChecksum(content)),
-            "put backup info to file - stanza3, repo1 stanza upgraded");
-
-        String *archiveStanza3 = strNewFmt("%s/stanza3/9.4-1/0000000100000000", strZ(archivePath));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza3), "create stanza3 db1 WAL directory, repo1");
-        filePathName = strNewFmt(
-            "%s/000000010000000000000002-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveStanza3));
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), bufNew(0)), "touch WAL stanza3, db1");
-        filePathName = strNewFmt(
-            "%s/000000010000000000000003-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveStanza3));
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), bufNew(0)), "touch WAL stanza3, db1");
-
-        archiveStanza3 = strNewFmt("%s/stanza3/9.5-2/0000000100000000", strZ(archivePath));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza3), "create stanza3 db2 WAL directory, repo1");
-        filePathName = strNewFmt(
-            "%s/000000010000000000000006-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveStanza3));
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), bufNew(0)), "touch WAL stanza3, db2");
-
-        argList2 = strLstDup(argListMultiRepo);
-        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
-        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+        // Create stanza3 db1 WAL, repo1
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
+            "/9.4-1/0000000100000000/000000010000000000000002-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
+            "/9.4-1/0000000100000000/000000010000000000000003-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
+            "/9.5-2/0000000100000000/000000010000000000000006-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2350,30 +2234,24 @@ testRun(void)
         TEST_TITLE("encryption error");
 
         // Change repo1 to have the same cipher type as repo2 even though on disk it does not
-        content = STRDEF
-        (
-            "[global]\n"
-            "repo-cipher-pass=123abc\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageLocalWrite(), STRDEF(TEST_PATH "/pgbackrest.conf")), BUFSTR(content)),
-            "put pgbackrest.conf file");
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/pgbackrest.conf", "[global]\nrepo-cipher-pass=123abc\n");
 
         argList2 = strLstDup(argListMultiRepo);
-        strLstAddZ(argList2, "--repo-cipher-type=aes-256-cbc");
-        strLstAddZ(argList2, "--config=" TEST_PATH "/pgbackrest.conf");
+        hrnCfgArgKeyRawStrId(argList2, cfgOptRepoCipherType, 1, cipherTypeAes256Cbc);
+        hrnCfgArgRawZ(argList2, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '%s/stanza1/backup.info' or '%s/stanza1/backup.info.copy':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza1/backup.info' or '"
+                            TEST_PATH "/repo/backup/stanza1/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
-            "               FileMissingError: unable to open missing file '%s/stanza1/backup.info.copy' for read\n"
+            "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza1/backup.info.copy'"
+                            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2387,10 +2265,12 @@ testRun(void)
             "stanza: stanza2\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '%s/stanza2/backup.info' or '%s/stanza2/backup.info.copy':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza2/backup.info' or '"
+                            TEST_PATH "/repo/backup/stanza2/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
-            "               FileMissingError: unable to open missing file '%s/stanza2/backup.info.copy' for read\n"
+            "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza2/backup.info.copy'"
+                            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2401,10 +2281,12 @@ testRun(void)
             "stanza: stanza3\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '%s/stanza3/backup.info' or '%s/stanza3/backup.info.copy':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza3/backup.info' or '"
+                            TEST_PATH "/repo/backup/stanza3/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
-            "               FileMissingError: unable to open missing file '%s/stanza3/backup.info.copy' for read\n"
+            "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza3/backup.info.copy'"
+                            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2420,8 +2302,6 @@ testRun(void)
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n",
-            strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath),
-            strZ(backupPath), strZ(backupPath), strZ(backupPath)),
             "text - multi-repo, multi-stanza cipher error");
 
         // Backup label not found, one repo in error
@@ -2432,49 +2312,50 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptSet, "20201110-100000F");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza3\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '%s/stanza3/backup.info' or '%s/stanza3/backup.info.copy':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza3/backup.info' or '"
+                            TEST_PATH "/repo/backup/stanza3/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
-            "               FileMissingError: unable to open missing file '%s/stanza3/backup.info.copy' for read\n"
+            "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza3/backup.info.copy'"
+                            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
             " settings.\n"
             "        repo2: error (requested backup not found)\n"
-            "    cipher: aes-256-cbc\n", strZ(backupPath), strZ(backupPath), strZ(backupPath)),
+            "    cipher: aes-256-cbc\n",
             "backup label not found, one repo in error");
 
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("WAL read error");
 
-        TEST_RESULT_VOID(
-            storagePathCreateP(
-                storageLocalWrite(), strNewFmt("%s/9.4-1", strZ(archiveStanza1Path)), .mode = 0200),
-                "WAL directory with bad permissions");
-
         argList2 = strLstDup(argListMultiRepo);
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        HRN_STORAGE_PATH_CREATE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.4-1", .mode = 0200, .comment = "WAL directory with bad permissions");
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [PathOpenError] unable to list file info for path '%s/stanza1/9.4-1': [13] Permission denied\n"
+            "               [PathOpenError] unable to list file info for path '" TEST_PATH "/repo/archive/stanza1/9.4-1': [13]"
+            " Permission denied\n"
             "        repo2: error (no valid backups)\n"
             "    cipher: mixed\n"
             "        repo1: none\n"
             "        repo2: aes-256-cbc\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004\n", strZ(archivePath)),
+            "        wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004\n",
             "WAL directory read error");
 
         // Unset environment key
@@ -2487,15 +2368,14 @@ testRun(void)
         // These tests cover branches not covered in other tests
         TEST_TITLE("multi-repo, database mismatch, pg system-id only");
 
-        storagePathCreateP(storageLocalWrite(), archivePath);
-        storagePathCreateP(storageLocalWrite(), backupPath);
-        String *archivePath2 = strNewFmt(TEST_PATH "/repo2/%s", "archive");
-        String *backupPath2 = strNewFmt(TEST_PATH "/repo2/%s", "backup");
-        storagePathCreateP(storageLocalWrite(), archivePath2);
-        storagePathCreateP(storageLocalWrite(), backupPath2);
+        StringList *argList2 = strLstNew();
+        hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
-        const String *content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -2515,43 +2395,30 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+                "\"db-version\":\"9.4\"}\n",
+            .comment = "put backup info to file, repo1");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put backup info to file, repo1");
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-        );
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n",
+            .comment = "put archive info to file, repo1");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put archive info to file, repo1");
+        // Create stanza1, repo1, archives
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
+            "/9.4-1/0000000100000000/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
+            "/9.4-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
 
-        String *walPath = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo1, archive directory");
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -2571,46 +2438,26 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.5\"}\n"
-        );
+                "\"db-version\":\"9.5\"}\n",
+            .comment = "put backup info to file, repo2, same system-id, different version");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/backup.info", strZ(backupPath2))),
-                harnessInfoChecksum(content)),
-            "put backup info to file, repo2, same system-id, different version");
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
             "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
-        );
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n",
+            .comment = "put archive info to file,  repo2, same system-id, different version");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/archive.info", strZ(archivePath2))),
-                harnessInfoChecksum(content)),
-            "put archive info to file,  repo2, same system-id, different version");
-
-        walPath = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(archivePath2));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo2, archive directory");
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
-        HRN_SYSTEM_FMT(
-            "touch %s",
-            strZ(strNewFmt("%s/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
-
-        StringList *argList2 = strLstNew();
-        hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
-        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE
+            "/9.5-1/0000000100000000/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE
+            "/9.5-1/0000000100000000/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz");
 
         // Note that although the time on the backup in repo2 > repo1, repo1 current db is not the same because of the version so
         // the repo1, since read first, will be considered the current PG
@@ -2644,8 +2491,8 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, database mismatch, pg version only");
 
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -2665,31 +2512,19 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665888,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+                "\"db-version\":\"9.4\"}\n",
+            .comment = "put backup info to file, repo2, different system-id, same version");
 
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/backup.info", strZ(backupPath2))),
-                harnessInfoChecksum(content)),
-            "put backup info to file, repo2, different system-id, same version");
-
-        content = STRDEF
-        (
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665888\n"
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665888,\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/archive.info", strZ(archivePath2))),
-                harnessInfoChecksum(content)),
-            "put archive info to file,  repo2, different system-id, same version");
+            "1={\"db-id\":6569239123849665888,\"db-version\":\"9.4\"}\n",
+            .comment = "put archive info to file,  repo2, different system-id, same version");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2723,11 +2558,14 @@ testRun(void)
     if (testBegin("cmdInfo()"))
     {
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--repo-path=%s", strZ(repoPath)));
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
-        storagePathCreateP(storageLocalWrite(), archivePath);
-        storagePathCreateP(storageLocalWrite(), backupPath);
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_ARCHIVE, .comment = "create repo archive path");
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP, .comment = "create repo backup path");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no stanza exist");
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
@@ -2741,22 +2579,20 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNewP(TEST_PATH_STR);
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), "No stanzas exist in the repository.\n",
-            "    check text");
+        // Check output of info command stored in file
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "No stanzas exist in the repository.\n", .remove = true);
 
         //--------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--set=bogus");
+        TEST_TITLE("set option invalid without stanza option");
+
+        hrnCfgArgRawZ(argList, cfgOptSet, "bogus");
 
         TEST_ERROR(hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo-level error");
 
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageLocalWrite(), STRDEF(TEST_PATH "/repo2"), .mode = 0200),
-            "repo directory with bad permissions");
+        HRN_STORAGE_PATH_CREATE(storageTest, TEST_PATH "/repo2", .mode = 0200, .comment = "repo directory with bad permissions");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
