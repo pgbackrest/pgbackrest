@@ -526,6 +526,8 @@ dbSyncCheckHelper(PgClient *const pgClient, const String *const path)
             if (fileIdx != 0)
                 CHECK(fileStat[fileIdx].st_ino == fileStat[0].st_ino);
         }
+
+        // !!! DELETE FILE
     }
     MEM_CONTEXT_TEMP_END();
 
