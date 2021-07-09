@@ -788,7 +788,7 @@ testRun(void)
             .comment = "copy file to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("delta, copy file (size missmatch) to encrypted repo");
+        TEST_TITLE("delta, copy file (size mismatch) to encrypted repo");
 
         // Delta but pgFile does not match size passed, prior checksum, no compression, no pageChecksum, delta, no hasReference
         TEST_ASSIGN(
