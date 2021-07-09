@@ -22,11 +22,11 @@ typedef struct TestStorageGetParam
     const char *comment;                                            // Comment
 } TestStorageGetParam;
 
-#define TEST_STORAGE_GET(storage, file, expected, ...)                                                                              \
+#define TEST_STORAGE_GET(storage, file, expected, ...)                                                                             \
     do                                                                                                                             \
     {                                                                                                                              \
         hrnTestLogPrefix(__LINE__);                                                                                                \
-        testStorageGet(storage, file, expected, (TestStorageGetParam){VAR_PARAM_INIT, __VA_ARGS__});                                \
+        testStorageGet(storage, file, expected, (TestStorageGetParam){VAR_PARAM_INIT, __VA_ARGS__});                               \
     }                                                                                                                              \
     while (0)
 

@@ -175,7 +175,7 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 
 /**********************************************************************************************************************************/
 void
-testStorageGet(const Storage *const storage, const char *const file, const char *const expected, const TestStorageGetParam param)
+testStorageGet(const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param)
 {
     hrnTestResultBegin(__func__, false);
 
@@ -193,17 +193,13 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     // Add decrypt filter
     if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
     {
-        String *cipherPass = NULL;
-
         // Default to main cipher pass
         if (param.cipherPass == NULL)
-            cipherPass = strNewZ(TEST_CIPHER_PASS);
-        else
-            cipherPass = strNewZ(param.cipherPass);
+            param.cipherPass = TEST_CIPHER_PASS;
 
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, param.cipherType, BUFSTR(cipherPass), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, param.cipherType, BUFSTRZ(param.cipherPass), NULL));
 
-        strCatFmt(filter, "enc[%s,%s] ", strZ(strIdToStr(param.cipherType)), strZ(cipherPass));
+        strCatFmt(filter, "enc[%s,%s] ", strZ(strIdToStr(param.cipherType)), param.cipherPass);
     }
 
     printf("test content of %s'%s'", strEmpty(filter) ? "" : strZ(filter), strZ(fileFull));
@@ -336,7 +332,7 @@ hrnStorageMode(const Storage *const storage, const char *const path, HrnStorageM
 
     ASSERT(storage != NULL);
 
-    const char *const pathFull = strZ(storagePathP(storage, STR(path)));
+    const char *const pathFull = strZ(storagePathP(storage, path == NULL ? NULL : STR(path)));
 
     // If no mode specified then default the mode based on the file type
     if (param.mode == 0)
