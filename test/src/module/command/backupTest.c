@@ -519,7 +519,8 @@ testRun(void)
 
         ((Storage *)storageRepo())->pub.interface.feature = feature;
 
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
@@ -541,7 +542,8 @@ testRun(void)
                 pgFile, false, 9, true, NULL, true, 0xFFFFFFFFFFFFFFFF, pgFile, false, compressTypeNone, 1, backupLabel, false,
                 cipherTypeNone, NULL),
             "file checksummed with pageChecksum enabled");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
         TEST_RESULT_PTR_NE(result.pageChecksumResult, NULL, "pageChecksumResult is set");
@@ -609,30 +611,32 @@ testRun(void)
                 pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, true,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "file in db and repo, pg checksum not equal, no ignoreMissing, no pageChecksum, delta, hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum for file size 9");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
         TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile", .comment = "9 bytes copied");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("file exists in repo and db, pg size different - COPY");
+        TEST_TITLE("file exists in repo and pg, copy only exact file even if sized passed is greater - COPY");
 
-        // File exists in repo and db, pg checksum same, pg size different, delta set, ignoreMissing false, hasReference - COPY
+        // File exists in repo and pg, pg checksum same, pg size passed is different, delta set, ignoreMissing false, hasReference
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9999999, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 24, "copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.copySize, 12, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 12, "repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
         TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "copy checksum updated");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
-        TEST_STORAGE_GET(storageRepoWrite(), strZ(backupPathFile), "atestfile###", .comment = "confirm contents");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile###", .comment = "confirm contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("resumed file is missing in repo but present in resumed manifest, recopy");
+        TEST_TITLE("resumed file is missing in repo but present in resumed manifest, file same name in repo - RECOPY");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", "testfile\n", .comment = "resumed file is missing in repo");
@@ -642,67 +646,74 @@ testRun(void)
                 pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, STRDEF(BOGUS_STR), false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "backup 9 bytes of pgfile to file to resume in repo");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "copy=repo=pgFile size");
+        TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "check recopy result");
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum for file size 9");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
         TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfile###", .comment = "existing file with same name as pgFile not modified");
+        TEST_STORAGE_GET(
             storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F/" BOGUS_STR, "atestfile", .comment = "resumed file copied");
-// CSHANG STOPPED HERE
+
         // -------------------------------------------------------------------------------------------------------------------------
-        // File exists in repo and db, checksum not same in repo, delta set, ignoreMissing false, no hasReference - RECOPY
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), backupPathFile), BUFSTRDEF("adifferentfile")),
-            "create different file (size and checksum) with same name in repo");
+        TEST_TITLE("file exists in repo & db, checksum not same in repo - RECOPY");
+
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), strZ(backupPathFile), "adifferentfile",
+            .comment = "create different file (size and checksum) with same name in repo");
+
+        // Delta set, ignoreMissing false, no hasReference
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
-            "    db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    recopy");
+            "db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum for file size 9");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile", .comment = "existing file recopied");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // File exists in repo but missing from db, checksum same in repo, delta set, ignoreMissing true, no hasReference - SKIP
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), backupPathFile), BUFSTRDEF("adifferentfile")),
-            "create different file with same name in repo");
+        TEST_TITLE("file exists in repo but missing from db, checksum same in repo - SKIP");
+
         TEST_ASSIGN(
             result,
             backupFile(
                 missingFile, true, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
-            "    file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy=repo=0 size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "    skip file");
-        TEST_RESULT_BOOL(
-            (result.copyChecksum == NULL && !storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    skip and remove file from repo");
+            "file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=0 size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
+        TEST_RESULT_PTR(result.copyChecksum, NULL, "copy checksum NULL");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", BOGUS_STR "\n", .comment = "file removed from repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // No prior checksum, compression, no page checksum, no pageChecksum, no delta, no hasReference
+        TEST_TITLE("compression set, all other boolean parameters false - COPY");
+
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, NULL, false, 0, pgFile, false, compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL),
             "pg file exists, no checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
 
-        TEST_RESULT_UINT(result.copySize, 9, "    copy=pgFile size");
-        TEST_RESULT_UINT(result.repoSize, 29, "    repo compress size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))) &&
-                result.pageChecksumResult == NULL),
-            true, "    copy file to repo compress success");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_EXISTS(
+            storageRepo(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))),
+            .comment = "copy file to repo compress success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Pg and repo file exist & match, prior checksum, compression, no page checksum, no pageChecksum, no delta, no hasReference
+        TEST_TITLE("pg and repo file exist & match, prior checksum, compression - COPY CHECKSUM");
+
         TEST_ASSIGN(
             result,
             backupFile(
@@ -710,18 +721,19 @@ testRun(void)
                 3, backupLabel, false, cipherTypeNone, NULL),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
 
-        TEST_RESULT_UINT(result.copySize, 9, "    copy=pgFile size");
-        TEST_RESULT_UINT(result.repoSize, 29, "    repo compress size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultChecksum, "    checksum file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))) &&
-                result.pageChecksumResult == NULL),
-            true, "    compressed repo file matches");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultChecksum, "checksum file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "compressed repo file checksum matches");
+        TEST_STORAGE_EXISTS(
+            storageRepo(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))),
+            .comment = "compressed file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("zerofile")), BUFSTRDEF(""));
+        TEST_TITLE("create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied");
+
+        // Create zero sized file in pg
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zerofile");
 
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
@@ -730,13 +742,16 @@ testRun(void)
                 STRDEF("zerofile"), false, 0, true, NULL, false, 0, STRDEF("zerofile"), false, compressTypeNone, 1, backupLabel,
                 false, cipherTypeNone, NULL),
             "zero-sized pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy=repo=pgFile size 0");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_PTR_NE(result.copyChecksum, NULL, "    checksum set");
-        TEST_RESULT_BOOL(
-            (storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/zerofile", strZ(backupLabel))) &&
-                result.pageChecksumResult == NULL),
-            true, "    copy zero file to repo success");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=pgFile size 0");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_PTR_NE(result.copyChecksum, NULL, "checksum set");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F",
+            BOGUS_STR "\n"
+            "testfile.gz\n"
+            "zerofile\n",
+            .comment = "copy zero file to repo success");
     }
 
     // *****************************************************************************************************************************
