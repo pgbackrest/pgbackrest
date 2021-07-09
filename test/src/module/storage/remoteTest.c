@@ -509,6 +509,10 @@ testRun(void)
         TEST_RESULT_VOID(storagePathSyncP(storageRepoWrite, path), "sync path");
     }
 
+    // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be
+    // sure coverage data has been written by the remote. protocolFree() is still required to free the client objects.
+    protocolClientExecute(protocolRemoteGet(protocolStorageTypeRepo, 0), protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
+    protocolClientExecute(protocolRemoteGet(protocolStorageTypePg, 1), protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
     protocolFree();
 
     FUNCTION_HARNESS_RETURN_VOID();

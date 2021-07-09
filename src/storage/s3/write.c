@@ -235,10 +235,18 @@ storageWriteS3Close(THIS_VOID)
                 }
 
                 // Finalize the multi-part upload
-                storageS3RequestP(
+                HttpRequest *request = storageS3RequestAsyncP(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
                     .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOAD_ID_STR, this->uploadId),
                     .content = xmlDocumentBuf(partList));
+                HttpResponse *response = storageS3ResponseP(request);
+
+                // Error if there is no etag in the result. This indicates that the request did not succeed despite the success code.
+                if (xmlNodeChild(
+                        xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), S3_XML_TAG_ETAG_STR, false) == NULL)
+                {
+                    httpRequestError(request, response);
+                }
             }
             // Else upload all the data in a single put
             else
