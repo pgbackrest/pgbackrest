@@ -184,10 +184,32 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
 
     const String *const fileFull = storagePathP(storage, STR(file));
 
-    printf("test content of '%s'", strZ(fileFull));
+    // Declare an information filter for displaying paramaters to the output
+    String *const filter = strNew();
+
+    StorageRead *read = storageNewReadP(storage, fileFull);
+    IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
+
+    // Add decrypt filter
+    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
+    {
+        String *cipherPass = NULL;
+
+        // Default to main cipher pass
+        if (param.cipherPass == NULL)
+            cipherPass = strNewZ(TEST_CIPHER_PASS);
+        else
+            cipherPass = strNewZ(param.cipherPass);
+
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, param.cipherType, BUFSTR(cipherPass), NULL));
+
+        strCatFmt(filter, "enc[%s,%s] ", strZ(strIdToStr(param.cipherType)), strZ(cipherPass));
+    }
+
+    printf("test content of %s'%s'", strEmpty(filter) ? "" : strZ(filter), strZ(fileFull));
     hrnTestResultComment(param.comment);
 
-    hrnTestResultZ(strZ(strNewBuf(storageGetP(storageNewReadP(storage, fileFull)))), expected, harnessTestResultOperationEq);
+    hrnTestResultZ(strZ(strNewBuf(storageGetP(read))), expected, harnessTestResultOperationEq);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);
@@ -423,7 +445,7 @@ hrnStoragePut(
         ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
         ioFilterGroupAdd(filterGroup, compressFilter(param.compressType, 1));
 
-        strCatFmt(filter, "%scmp[%s]",  strEmpty(filter) ? "" : "/", strZ(compressTypeStr(param.compressType)));
+        strCatFmt(filter, "%scmp[%s]", strEmpty(filter) ? "" : "/", strZ(compressTypeStr(param.compressType)));
     }
 
     // Add encrypted filter

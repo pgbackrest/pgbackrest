@@ -17,14 +17,16 @@ typedef struct TestStorageGetParam
 {
     VAR_PARAM_HEADER;
     bool remove;                                                    // Remove file after testing?
+    CipherType cipherType;
+    const char *cipherPass;                                         // If pass=null but cipherType set, defaults to TEST_CIPHER_PASS
     const char *comment;                                            // Comment
 } TestStorageGetParam;
 
-#define TEST_STORAGE_GET(storage, file, content, ...)                                                                              \
+#define TEST_STORAGE_GET(storage, file, expected, ...)                                                                              \
     do                                                                                                                             \
     {                                                                                                                              \
         hrnTestLogPrefix(__LINE__);                                                                                                \
-        testStorageGet(storage, file, content, (TestStorageGetParam){VAR_PARAM_INIT, __VA_ARGS__});                                \
+        testStorageGet(storage, file, expected, (TestStorageGetParam){VAR_PARAM_INIT, __VA_ARGS__});                                \
     }                                                                                                                              \
     while (0)
 
