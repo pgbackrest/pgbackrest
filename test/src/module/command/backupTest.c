@@ -618,7 +618,7 @@ testRun(void)
         TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile", .comment = "9 bytes copied");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("file exists in repo and pg, copy only exact file even if sized passed is greater - COPY");
+        TEST_TITLE("file exists in repo and pg, copy only exact file even if size passed is greater - COPY");
 
         // File exists in repo and pg, pg checksum same, pg size passed is different, delta set, ignoreMissing false, hasReference
         TEST_ASSIGN(
@@ -822,11 +822,16 @@ testRun(void)
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
         TEST_STORAGE_GET(
-            storageRepo(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc,
+            storageRepoWrite(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc, .remove = true,
             .comment = "recopy file to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no delta, recopy (size mismatch), compress, file to encrypted repo");
+
+        // Create compressed, encrypted repo file with size difference
+        HRN_STORAGE_PUT(
+            storageRepoWrite(), strZ(backupPathFile), BUFSTRDEF("atestfile"), .compressType = compressTypeGz,
+            .cipherType = cipherTypeAes256Cbc);
 
         TEST_ASSIGN(
             result,
@@ -840,21 +845,18 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
         TEST_RESULT_STR_Z(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb", "copy checksum for size passed");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
-        TEST_STORAGE_EXISTS(
-            storageRepo(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))),
-            .comment = "recopy file to encrypted repo, compressed, success");
+        TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfil", .compressType = compressTypeGz,
+            .cipherType = cipherTypeAes256Cbc, .comment = "recopy file to encrypted repo, compressed, success");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("backupLabelCreate()"))
     {
-        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -864,20 +866,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when no history");
 
-        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/backup.history/2019"));
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2019");
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when history is older");
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
-                    strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 4)))),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), strZ(
+                strNewFmt(STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 4)))));
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
