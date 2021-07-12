@@ -804,16 +804,15 @@ testRun(void)
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
         TEST_STORAGE_GET(
             storageRepo(), strZ(backupPathFile), "atestfil", .cipherType = cipherTypeAes256Cbc,
-            .comment = "copy file (size missmatch) to encrypted repo success");
+            .comment = "delta, copy file (size missmatch) to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("no delta, recopy (checksum mismatch) file to encrypted repo");
+        TEST_TITLE("no delta, recopy (size mismatch) file to encrypted repo");
 
-        // Pg file checksum different than specified but file size specified matches
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
+                pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
                 compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
             "pg and repo file exists, checksum mismatch, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
@@ -822,32 +821,27 @@ testRun(void)
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
         TEST_STORAGE_GET(
-            storageRepoWrite(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc, .remove = true,
+            storageRepoWrite(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc,
             .comment = "recopy file to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("no delta, recopy (size mismatch), compress, file to encrypted repo");
-
-        // Create compressed, encrypted repo file with size difference
-        HRN_STORAGE_PUT(
-            storageRepoWrite(), strZ(backupPathFile), BUFSTRDEF("atestfile"), .compressType = compressTypeGz,
-            .cipherType = cipherTypeAes256Cbc);
+        TEST_TITLE("no delta, recopy (checksum mismatch), file to encrypted repo");
 
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 8, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
-                compressTypeGz, 3, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
+                pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
+                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
             "backup file");
 
-        TEST_RESULT_UINT(result.copySize, 8, "copy size set");
-        TEST_RESULT_UINT(result.repoSize, 48, "repo size set");
+        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
-        TEST_RESULT_STR_Z(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb", "copy checksum for size passed");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum for size passed");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
         TEST_STORAGE_GET(
-            storageRepo(), strZ(backupPathFile), "atestfil", .compressType = compressTypeGz,
-            .cipherType = cipherTypeAes256Cbc, .comment = "recopy file to encrypted repo, compressed, success");
+            storageRepo(), strZ(backupPathFile), "atestfile",
+            .cipherType = cipherTypeAes256Cbc, .comment = "recopy file to encrypted repo, success");
     }
 
     // *****************************************************************************************************************************
