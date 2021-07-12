@@ -182,7 +182,10 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     ASSERT(storage != NULL);
     ASSERT(file != NULL);
 
-    const String *const fileFull = storagePathP(storage, STR(file));
+    String *fileFull = storagePathP(storage, STR(file));
+
+    // Add compression extension if one exists
+    compressExtCat(fileFull, param.compressType);
 
     // Declare an information filter for displaying paramaters to the output
     String *const filter = strNew();
@@ -200,6 +203,13 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, param.cipherType, BUFSTRZ(param.cipherPass), NULL));
 
         strCatFmt(filter, "enc[%s,%s] ", strZ(strIdToStr(param.cipherType)), param.cipherPass);
+    }
+
+    // Add decompress filter
+    if (param.compressType != compressTypeNone)
+    {
+        ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
+        ioFilterGroupAdd(filterGroup, decompressFilter(param.compressType));
     }
 
     printf("test content of %s'%s'", strEmpty(filter) ? "" : strZ(filter), strZ(fileFull));
@@ -452,14 +462,12 @@ hrnStoragePut(
             param.cipherPass = TEST_CIPHER_PASS;
 
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, param.cipherType, BUFSTRZ(param.cipherPass), NULL));
-
-        strCatFmt(filter, "%senc[%s,%s]", strEmpty(filter) ? "" : "/", strZ(strIdToStr(param.cipherType)), param.cipherPass);
     }
 
     // Add file name
     printf(
-        "%s %s%s%s'%s%s'", logPrefix != NULL ? logPrefix : "put file", buffer == NULL || bufEmpty(buffer) ? "(empty) " : "",
-        strZ(filter), strEmpty(filter) ? "" : " ", strZ(storagePathP(storage, fileStr)), strZ(compressExtStr(param.compressType)));
+        "%s %s%s%s'%s'", logPrefix != NULL ? logPrefix : "put file", buffer == NULL || bufEmpty(buffer) ? "(empty) " : "",
+        strZ(filter), strEmpty(filter) ? "" : " ", strZ(storagePathP(storage, fileStr)));
     hrnTestResultComment(param.comment);
 
     // Put file
