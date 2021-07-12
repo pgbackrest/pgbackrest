@@ -201,7 +201,7 @@ main(int argListSize, const char *argList[])
                 // Server command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdServer:
-                    cmdServer();
+                    cmdServer(UINT64_MAX);
                     break;
 
                 // Restore command

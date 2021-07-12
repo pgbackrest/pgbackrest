@@ -11,6 +11,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    harnessLogLevelSet(logLevelDetail);
+
     // *****************************************************************************************************************************
     if (testBegin("cmdServer()"))
     {
@@ -21,7 +23,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_PATH_REPO "/test/certificate/pgbackrest-test.key");
         HRN_CFG_LOAD(cfgCmdServer, argList);
 
-        TEST_RESULT_VOID(cmdServer(), "server");
+        TEST_RESULT_VOID(cmdServer(3), "server");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

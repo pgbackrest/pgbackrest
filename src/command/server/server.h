@@ -4,9 +4,11 @@ Server Command
 #ifndef COMMAND_SERVER_SERVER_H
 #define COMMAND_SERVER_SERVER_H
 
+#include <inttypes.h>
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void cmdServer(void);
+void cmdServer(uint64_t connectionMax);
 
 #endif

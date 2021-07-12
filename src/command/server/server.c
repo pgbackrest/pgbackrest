@@ -11,9 +11,11 @@ Server Command
 
 /**********************************************************************************************************************************/
 void
-cmdServer(void)
+cmdServer(uint64_t connectionMax)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
+
+    ASSERT(connectionMax > 0);
 
     const String *const host = STRDEF("localhost");
 
@@ -32,6 +34,13 @@ cmdServer(void)
 
         (void)tlsServer; // !!!
         (void)socketServer; // !!!
+
+    // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE
+    // REPLACED WITH A STOP REQUEST FROM AN AUTHENTICATED CLIENT.
+    do
+    {
+    }
+    while (--connectionMax > 0);
 
 // port 8242
     }
