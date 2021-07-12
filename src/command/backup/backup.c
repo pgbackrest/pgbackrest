@@ -1099,7 +1099,7 @@ backupJobResult(
                         strZ(file->name), file->checksumSha1);
                 }
 
-                LOG_INFO_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+                LOG_DETAIL_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
 
                 // If the file had page checksums calculated during the copy
                 ASSERT((!file->checksumPage && checksumPageResult == NULL) || (file->checksumPage && checksumPageResult != NULL));

@@ -30,9 +30,12 @@ backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timest
     ASSERT(timestamp > 0);
 
     // Format the timestamp
+    struct tm timePart;
     char buffer[16];
+
     THROW_ON_SYS_ERROR(
-        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&timestamp)) == 0, AssertError, "unable to format time");
+        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime_r(&timestamp, &timePart)) == 0, AssertError,
+        "unable to format time");
 
     // If full label
     String *result = NULL;

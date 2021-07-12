@@ -331,21 +331,13 @@ testRun(void)
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on data directory missing");
+        TEST_TITLE("error when pg appears to be running");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         HRN_CFG_LOAD(cfgCmdRestore, argList);
-
-        TEST_ERROR(restorePathValidate(), PathMissingError, "$PGDATA directory '" TEST_PATH "/pg' does not exist");
-
-        // Create PGDATA
-        storagePathCreateP(storagePgWrite(), NULL);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when pg appears to be running");
 
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postmaster.pid")), NULL);
 
@@ -1906,7 +1898,6 @@ testRun(void)
             manifestPathAdd(
                 manifest,
                 &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
-            storagePathCreateP(storagePgWrite(), NULL);
 
             // Global directory
             manifestPathAdd(
@@ -2006,12 +1997,11 @@ testRun(void)
             "P00   INFO: repo2: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/ts/1' exists\n"
-            "P00 DETAIL: update mode for '" TEST_PATH "/pg' to 0700\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00   INFO: write " TEST_PATH "/pg/recovery.conf\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
@@ -2051,6 +2041,9 @@ testRun(void)
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        // Munge PGDATA mode so it gets fixed
+        HRN_STORAGE_MODE(storagePg(), NULL, 0777);
 
         // Store backup.info to repo1 - repo1 will be selected because of the priority order
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
@@ -2123,6 +2116,7 @@ testRun(void)
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: update mode for '" TEST_PATH "/pg' to 0700\n"
             "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/bogus-file'\n"
             "P00 DETAIL: remove link '" TEST_PATH "/pg/pg_tblspc/1' because destination changed\n"
             "P00 DETAIL: remove special file '" TEST_PATH "/pg/pipe'\n"
@@ -2130,8 +2124,8 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
                 " (4B, 50%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
@@ -2185,9 +2179,9 @@ testRun(void)
             "P00 DETAIL: check '" TEST_PATH "/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1'\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/PG_VERSION (4B, 50%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 50%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
@@ -2517,25 +2511,25 @@ testRun(void)
             "P00 DETAIL: create path '" TEST_PATH "/pg/base/32768'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%) checksum"
                 " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, 74%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, 74%) checksum"
                 " d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
                 " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/base/1/2 (8KB, 99%) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/postgresql.conf (15B, 99%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, 99%) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (15B, 99%) checksum"
                 " 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/pg_hba.conf (11B, 99%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf (11B, 99%) checksum"
                 " 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (4B, 99%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, 99%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/base/1/PG_VERSION (4B, 99%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (4B, 99%) checksum"
                 " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/global/999 (0B, 100%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, 100%)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2633,7 +2627,7 @@ testRun(void)
             "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, 74%)"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
-            "P01   INFO: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
                 " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 - exists and matches backup (8KB, 99%)"
                 " checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"

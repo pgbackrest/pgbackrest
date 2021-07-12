@@ -7,6 +7,10 @@ on:
       - '**-ci'
       - '**-cig'
   pull_request:
+    branches:
+      - integration
+      - '**-ci'
+      - '**-cig'
 
 jobs:
   test:
@@ -50,3 +54,32 @@ jobs:
 
       - name: Run Test
         run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
+
+  codeql:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - cpp
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{matrix.language}}
+
+      - name: Build
+        run: ${GITHUB_WORKSPACE?}/src/configure && make -j 2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1

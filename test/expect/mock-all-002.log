@@ -2448,7 +2448,6 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
-P01   INFO: backup file db-primary:[TEST_PATH]/db-primary/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-5]
 P00   INFO: backup command end: completed successfully
