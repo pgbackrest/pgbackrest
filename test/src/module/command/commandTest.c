@@ -74,17 +74,19 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBegin(), "command begin");
 
-        #define RESULT_OPTION                                                                                                      \
-             " --no-config --db-include=db1 --db-include=db2 --exec-id=1-test --pg1-path=/pg1 --pg2-path=/pg2"                     \
-             " --recovery-option=standby_mode=on --recovery-option=primary_conninfo=blah --repo1-cipher-pass=<redacted>"           \
-             " --repo1-cipher-type=aes-256-cbc --reset-repo1-host --repo1-path=\"/path/to the/repo\" --stanza=test"
-
-        TEST_RESULT_LOG("P00   INFO: restore command begin " PROJECT_VERSION ":" RESULT_OPTION);
+        TEST_RESULT_LOG(
+            "P00   INFO: restore command begin " PROJECT_VERSION ": --no-config --db-include=db1 --db-include=db2 --exec-id=1-test"
+            " --pg1-path=/pg1 --pg2-path=/pg2 --recovery-option=standby_mode=on --recovery-option=primary_conninfo=blah"
+            " --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --reset-repo1-host --repo1-path=\"/path/to the/repo\""
+            " --stanza=test");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check options in cache");
 
-        TEST_RESULT_STR_Z(cmdOption(), RESULT_OPTION, "option cache");
+        TEST_RESULT_STR_Z(
+            cmdOption(), " --no-config --db-include=db1 --db-include=db2 --exec-id=1-test --pg1-path=/pg1 --pg2-path=/pg2"
+            " --recovery-option=standby_mode=on --recovery-option=primary_conninfo=blah --repo1-cipher-pass=<redacted>"
+            " --repo1-cipher-type=aes-256-cbc --reset-repo1-host --repo1-path=\"/path/to the/repo\" --stanza=test", "option cache");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command begin does not log when level is too low");

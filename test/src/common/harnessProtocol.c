@@ -177,6 +177,9 @@ protocolRemoteExec(
             ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);
             protocolServerProcess(server, NULL, hrnProtocolStatic.remoteHandlerList, hrnProtocolStatic.remoteHandlerListSize);
 
+            // Put an end message here to sync with the client to ensure that coverage data is written before exiting
+            protocolServerDataEndPut(server);
+
             // Exit when done
             exit(0);
         }

@@ -62,23 +62,23 @@ full backup - create pg_stat link, pg_clog dir (db-primary host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --checksum-page --compress-level=3 --compress-type=none --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --manifest-save-threshold=3 --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --process-max=1 --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-type=cifs --stanza=db --start-fast --type=full
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P00   WARN: invalid page checksums found in file [TEST_PATH]/db-primary/db/base/base/32768/33001 at pages 0, 3-5, 7
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P00   WARN: invalid page checksum found in file [TEST_PATH]/db-primary/db/base/base/16384/17000 at page 1
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_hba.conf (9B, 99%) checksum dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? (0B, 100%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_hba.conf (9B, 99%) checksum dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? (0B, 100%)
 P00   INFO: full backup size = 192KB
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00   INFO: backup command end: completed successfully
@@ -314,15 +314,15 @@ P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/global/pg_contr
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/pg_hba.conf (9B, 99%) checksum dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/changecontent.txt (7B, 99%) checksum 238a131a3e8eb98d1fc5b27d882ca40b7618fd2a
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/changecontent.txt (7B, 99%) checksum 238a131a3e8eb98d1fc5b27d882ca40b7618fd2a
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/zero_from_start (0B, 100%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? (0B, 100%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/zero_from_start (0B, 100%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? (0B, 100%)
 P00   INFO: full backup size = 192KB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00   INFO: backup command end: completed successfully
@@ -529,8 +529,8 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33001 - exist
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/pg_hba.conf - exists and matches backup (9B, 99%) checksum dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b
@@ -591,7 +591,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/17000 - exists and matches backup (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/pg_hba.conf - exists and matches backup (9B, 99%) checksum dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b
@@ -652,7 +652,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/17000 - exists and matches backup (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/pg_hba.conf - exists and matches backup (9B, 99%) checksum dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b
@@ -717,12 +717,12 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/17000 - exists and matches size 16384 and modification time [MODIFICATION-TIME-1] (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/12000 - exists and matches size 8192 and modification time [MODIFICATION-TIME-1] (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base/pg_hba.conf (9B, 99%) checksum dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/pg_hba.conf (9B, 99%) checksum dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/changecontent.txt - exists and matches size 7 and modification time [MODIFICATION-TIME-1] (7B, 99%) checksum 238a131a3e8eb98d1fc5b27d882ca40b7618fd2a
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/changetime.txt - exists and matches size 4 and modification time [MODIFICATION-TIME-1] (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-1] (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-1] (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
@@ -764,10 +764,10 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/badchecksum.txt (11B, 50%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/changesize.txt (4B, 68%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/zerosize.txt (0B, 68%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum 14c44cef6287269b08d41de489fd492bb9fc795d
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/badchecksum.txt (11B, 50%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/changesize.txt (4B, 68%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/zerosize.txt (0B, 68%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 100%) checksum 14c44cef6287269b08d41de489fd492bb9fc795d
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
 P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
@@ -971,19 +971,19 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/1/1
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P00   WARN: resumed backup file pg_data/badchecksum.txt does not have expected checksum f927212cd08d11a42a666b2f04235398e9ceeb51. The file will be recopied and backup will continue but this may be an issue unless the resumed backup path in the repository is known to be corrupted.
             NOTE: this does not indicate a problem with the PostgreSQL page checksums.
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/changesize.txt (9B, 99%) checksum 3905d5be2ec8d67f41435dab5e0dcda3ae47455d
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/changesize.txt (9B, 99%) checksum 3905d5be2ec8d67f41435dab5e0dcda3ae47455d
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/zerosize.txt (0B, 99%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
@@ -1190,18 +1190,18 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/163
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/zerosize.txt (0B, 99%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt: file size 7 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
@@ -1420,27 +1420,27 @@ P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/1' to '[T
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384'
 P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespace/ts2-2'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B, 99%)
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start (0B, 99%)
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? (0B, 99%)
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B, 99%)
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start (0B, 99%)
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? (0B, 99%)
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: write [TEST_PATH]/db-primary/db/base-2/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/base'
@@ -1494,7 +1494,7 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 - exists and matches backup (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt - exists and matches backup (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -1550,8 +1550,8 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-DIFF-1], version = 0.00
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-DIFF-1]
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/base2.txt (5B, 38%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/base2.txt (5B, 38%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 100%) checksum e324463005236d83e6e54795dbddd20a74533bf3
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
 P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/badchecksum.txt to [BACKUP-DIFF-1]
@@ -1760,7 +1760,7 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/global
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 (8B, 99%) checksum 9a53d532e27785e681766c98516a5e93f096a501
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 (8B, 99%) checksum 9a53d532e27785e681766c98516a5e93f096a501
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
@@ -1979,21 +1979,21 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/3
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 (8B, 99%) checksum 9a53d532e27785e681766c98516a5e93f096a501
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 (8B, 99%) checksum 9a53d532e27785e681766c98516a5e93f096a501
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base-2/base/16384/17000: file size 8 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/base2.txt (5B, 99%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/base2.txt (5B, 99%) checksum 09b5e31766be1dba1ec27de82f975c1b6eea2a92
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 99%) checksum e324463005236d83e6e54795dbddd20a74533bf3
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B, 99%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt (8B, 99%) checksum e324463005236d83e6e54795dbddd20a74533bf3
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt: file size 8 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
@@ -2199,18 +2199,18 @@ P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/3
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B, 99%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt: file size 12 is not divisible by page size 8192
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   WARN: page misalignment in file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt: file size 7 is not divisible by page size 8192
 P00 DETAIL: reference pg_data/PG_VERSION to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/base/1/12000 to [BACKUP-FULL-2]
@@ -2405,27 +2405,27 @@ full backup - update file (db-primary host)
 P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base-2 --protocol-timeout=60 --repo1-hardlink --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db --start-fast --type=full
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 (9B, 99%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/zero_from_start (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? (0B, 99%)
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 (9B, 99%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B, 99%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/zero_from_start (0B, 99%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? (0B, 99%)
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: full backup size = 176KB
 P00   INFO: new backup label = [BACKUP-FULL-3]
 P00   INFO: backup command end: completed successfully
@@ -2620,7 +2620,7 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE]
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00 DETAIL: hardlink pg_data/PG_VERSION to [BACKUP-FULL-3]
 P00 DETAIL: hardlink pg_data/badchecksum.txt to [BACKUP-FULL-3]
 P00 DETAIL: hardlink pg_data/base/1/12000 to [BACKUP-FULL-3]
@@ -2829,7 +2829,7 @@ P01 DETAIL: restore zeroed file [TEST_PATH]/db-primary/db/base-2/base/32768/3300
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%)
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt - exists and matches backup (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -2890,11 +2890,11 @@ P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/base-2'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/tablespace/ts2-2/[TS_PATH-1]'
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/badchecksum.txt - exists and matches backup (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
@@ -2910,8 +2910,8 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/PG_VERSION - exists an
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt - exists and is zero size (0B, 99%)
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start - exists and is zero size (0B, 99%)
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 99%)
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: write [TEST_PATH]/db-primary/db/base-2/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/base'
@@ -2979,28 +2979,28 @@ P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/pg_subtrans'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc'
 P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768'
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/base2.txt (9B, 99%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/16384/17000 (9B, 99%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/zerosize.txt (0B, 99%)
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/zero_from_start (0B, 99%)
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/special-!_.*'()&!@;:+,? (0B, 99%)
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
-P01   INFO: restore file [TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/badchecksum.txt (11B, 99%) checksum f927212cd08d11a42a666b2f04235398e9ceeb51
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/base2.txt (9B, 99%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/16384/17000 (9B, 99%) checksum 7579ada0808d7f98087a0a586d0df9de009cdc33
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/changecontent.txt (7B, 99%) checksum a094d94583e209556d03c3c5da33131a065f1689
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/pg_stat/global.stat (5B, 99%) checksum e350d5ce0153f3e22d5db21cf2a4eff00f3ee877
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/changetime.txt (4B, 99%) checksum 88087292ed82e26f3eb824d0bffc05ccf7a30f8d
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/zerosize.txt (0B, 99%)
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/zero_from_start (0B, 99%)
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/special-!_.*'()&!@;:+,? (0B, 99%)
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: write [TEST_PATH]/db-primary/db/base-2/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/base/base'
@@ -3056,7 +3056,6 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
-P01   INFO: backup file [TEST_PATH]/db-primary/db/base-2/base/base/base2.txt (9B, 100%) checksum cafac3c59553f2cfde41ce2e62e7662295f108c0
 P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-5]
 P00   INFO: backup command end: completed successfully

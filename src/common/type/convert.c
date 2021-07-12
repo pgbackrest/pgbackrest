@@ -374,7 +374,8 @@ cvtTimeToZ(time_t value, char *buffer, size_t bufferSize)
 
     ASSERT(buffer != NULL);
 
-    size_t result = strftime(buffer, bufferSize, "%s", localtime(&value));
+    struct tm timePart;
+    size_t result = strftime(buffer, bufferSize, "%s", localtime_r(&value, &timePart));
 
     if (result == 0)
         THROW(AssertError, "buffer overflow");

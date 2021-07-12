@@ -371,11 +371,13 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
     // Add time
     if (logTimestamp)
     {
+        struct tm timePart;
         TimeMSec logTimeMSec = timeMSec();
         time_t logTimeSec = (time_t)(logTimeMSec / MSEC_PER_SEC);
 
         result.bufferPos += strftime(
-            logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "%Y-%m-%d %H:%M:%S", localtime(&logTimeSec));
+            logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "%Y-%m-%d %H:%M:%S",
+            localtime_r(&logTimeSec, &timePart));
         result.bufferPos += (size_t)snprintf(
             logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, ".%03d ", (int)(logTimeMSec % 1000));
     }

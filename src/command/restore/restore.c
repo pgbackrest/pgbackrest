@@ -1831,9 +1831,11 @@ restoreRecoveryWrite(const Manifest *manifest)
         else
         {
             // Generate a label used to identify this restore in the recovery file
+            struct tm timePart;
             char restoreTimestamp[20];
             time_t timestamp = time(NULL);
-            strftime(restoreTimestamp, sizeof(restoreTimestamp), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
+
+            strftime(restoreTimestamp, sizeof(restoreTimestamp), "%Y-%m-%d %H:%M:%S", localtime_r(&timestamp, &timePart));
             const String *restoreLabel = STR(restoreTimestamp);
 
             // Write recovery file based on PostgreSQL version
@@ -2057,7 +2059,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             if (file->size != 0 && !zeroed)
                 strCatFmt(log, " checksum %s", file->checksumSha1);
 
-            LOG_PID(copy ? logLevelInfo : logLevelDetail, protocolParallelJobProcessId(job), 0, strZ(log));
+            LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
         }
         MEM_CONTEXT_TEMP_END();
 
