@@ -877,33 +877,27 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when backup is older");
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 2)))),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), strZ(
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 2)))));
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("advance time when backup is same");
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp)))),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), strZ(
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp)))));
 
         TEST_RESULT_STR_Z(backupLabelCreate(backupTypeFull, NULL, timestamp), "20191203-193413F", "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when new label is in the past even with advanced time");
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 1)))),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), strZ(
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 1)))));
 
         TEST_ERROR(
             backupLabelCreate(backupTypeFull, NULL, timestamp), FormatError,
@@ -925,11 +919,11 @@ testRun(void)
         TEST_TITLE("error when backup from standby is not supported");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
+        hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
@@ -940,17 +934,17 @@ testRun(void)
         TEST_TITLE("warn and reset when backup from standby used in offline mode");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
@@ -965,8 +959,8 @@ testRun(void)
         TEST_TITLE("error when pg_control does not match stanza");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
 
         argList = strLstNew();
