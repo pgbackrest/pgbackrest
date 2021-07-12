@@ -75,6 +75,9 @@ with the auto-generated values. Note that the _Z variants of these constants are
 #define CFGOPTVAL_TYPE_STANDBY                                      STRID5("standby", 0x6444706930)
 #define CFGOPTVAL_TYPE_TIME                                         STRID5("time", 0x2b5340)
 
+#define CFGOPTVAL_REPO_HOST_TYPE_SSH                                STRID5("ssh", 0x22730)
+#define CFGOPTVAL_REPO_HOST_TYPE_TLS                                STRID5("tls", 0x4d940)
+
 /***********************************************************************************************************************************
 Command Functions
 

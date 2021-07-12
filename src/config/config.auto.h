@@ -121,7 +121,7 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            135
+#define CFG_OPTION_TOTAL                                            136
 
 /***********************************************************************************************************************************
 Option value constants
@@ -161,6 +161,9 @@ Option value constants
 
 #define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
 #define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
+
+#define CFGOPTVAL_PG_HOST_TYPE_SSH_Z                                "ssh"
+#define CFGOPTVAL_PG_HOST_TYPE_TLS_Z                                "tls"
 
 #define CFGOPTVAL_REMOTE_TYPE_PG_Z                                  "pg"
 #define CFGOPTVAL_REMOTE_TYPE_REPO_Z                                "repo"
@@ -316,6 +319,7 @@ typedef enum
     cfgOptPgHostConfigIncludePath,
     cfgOptPgHostConfigPath,
     cfgOptPgHostPort,
+    cfgOptPgHostType,
     cfgOptPgHostUser,
     cfgOptPgLocal,
     cfgOptPgPath,

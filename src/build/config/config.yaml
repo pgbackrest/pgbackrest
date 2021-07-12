@@ -1344,6 +1344,24 @@ option:
       main: {}
       local: {}
 
+  pg-host-type:
+    section: global
+    group: pg
+    type: string
+    default: ssh
+    allow-list:
+      - ssh
+      - tls
+    command: pg-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-local
+      list:
+        - false
+
   pg-path:
     section: stanza
     group: pg
@@ -1608,8 +1626,6 @@ option:
       option: repo-local
       list:
         - false
-    deprecate:
-      backup-host: {index: 1, reset: false}
 
   repo-host:
     section: global

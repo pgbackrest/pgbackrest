@@ -8,6 +8,9 @@ Protocol Helper
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/exec.h"
+#include "common/io/client.h"
+#include "common/io/socket/client.h"
+#include "common/io/tls/client.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
 #include "config/exec.h"
@@ -29,6 +32,8 @@ Local variables
 typedef struct ProtocolHelperClient
 {
     Exec *exec;                                                     // Executed client
+    IoClient *ioClient;                                             // Io client, e.g. TlsClient
+    IoSession *ioSession;                                           // Io session, e.g. TlsSession
     ProtocolClient *client;                                         // Protocol client
 } ProtocolHelperClient;
 
@@ -278,6 +283,30 @@ protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
         }
         TRY_END();
 
+        // Try free the io session but only warn on error
+        TRY_BEGIN()
+        {
+            ioSessionFree(protocolHelperClient->ioSession);
+        }
+        CATCH_ANY()
+        {
+            LOG_WARN(errorMessage());
+        }
+        TRY_END();
+
+        // Try free the io client but only warn on error
+        TRY_BEGIN()
+        {
+            ioClientFree(protocolHelperClient->ioClient);
+        }
+        CATCH_ANY()
+        {
+            LOG_WARN(errorMessage());
+        }
+        TRY_END();
+
+        protocolHelperClient->ioSession = NULL;
+        protocolHelperClient->ioClient = NULL;
         protocolHelperClient->client = NULL;
         protocolHelperClient->exec = NULL;
     }
@@ -493,19 +522,49 @@ protocolRemoteExec(
 
     ASSERT(helper != NULL);
 
-    // Execute the protocol command
-    const char *const host =
-        strZ(cfgOptionIdxStr(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx));
+    // Get remote info
+    const bool isRepo = protocolStorageType == protocolStorageTypeRepo;
+    const StringId remoteType = cfgOptionIdxStrId(isRepo ? cfgOptRepoHostType : cfgOptPgHostType, hostIdx);
+    const String *const host = cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx);
+    const TimeMSec timeout = cfgOptionUInt64(cfgOptProtocolTimeout);
 
-    helper->exec = execNew(
-        cfgOptionStr(cfgOptCmdSsh), protocolRemoteParamSsh(protocolStorageType, hostIdx),
-        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, host), cfgOptionUInt64(cfgOptProtocolTimeout));
-    execOpen(helper->exec);
+    // If SSH remote
+    IoRead *read;
+    IoWrite *write;
+
+    if (remoteType == CFGOPTVAL_REPO_HOST_TYPE_SSH)
+    {
+        helper->exec = execNew(
+            cfgOptionStr(cfgOptCmdSsh), protocolRemoteParamSsh(protocolStorageType, hostIdx),
+            strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(host)),
+            cfgOptionUInt64(cfgOptProtocolTimeout));
+        execOpen(helper->exec);
+
+        read = execIoRead(helper->exec);
+        write = execIoWrite(helper->exec);
+    }
+    // Else TLS remote
+    else
+    {
+        ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
+
+        // !!! THIS SHOULD BE HANDLED BY A DEFAULT
+        unsigned int port = 443;
+        ConfigOption portOption = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
+
+        if (cfgOptionIdxTest(portOption, hostIdx))
+            port = cfgOptionIdxUInt(portOption, hostIdx);
+
+        helper->ioClient = tlsClientNew(sckClientNew(host, port, timeout), host, timeout, false, NULL, NULL);
+        helper->ioSession = ioClientOpen(helper->ioClient);
+
+        read = ioSessionIoRead(helper->ioSession);
+        write = ioSessionIoWrite(helper->ioSession);
+    }
 
     // Create protocol object
     helper->client = protocolClientNew(
-        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, host), PROTOCOL_SERVICE_REMOTE_STR,
-        execIoRead(helper->exec), execIoWrite(helper->exec));
+        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR, read, write);
 
     protocolClientMove(helper->client, execMemContext(helper->exec));
 

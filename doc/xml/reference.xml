@@ -1162,6 +1162,15 @@
                         <example>db.domain.com</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-type" name="PostgreSQL Host Protocol Type">
+                        <summary><postgres/> host protocol type.</summary>
+
+                        <text>!!!</text>
+
+                        <example>tls</example>
+                    </config-key>
+
                     <!-- CONFIG - STANZA SECTION - PG-HOST-USER KEY -->
                     <config-key id="pg-host-user" name="PostgreSQL Host User">
                         <summary><postgres/> host logon user when <setting>pg-host</setting> is set.</summary>

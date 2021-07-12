@@ -2490,6 +2490,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("pg-host-type"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST
+            (
+                "ssh",
+                "tls"
+            ),
+
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgOptPgLocal,
+                "0"
+            ),
+
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("ssh"),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("pg-host-user"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_REQUIRED(false),
@@ -7944,6 +7998,81 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
     },
 
+    // pg-host-type option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "pg1-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "reset-pg1-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "pg2-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "reset-pg2-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "pg3-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "reset-pg3-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "pg4-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "reset-pg4-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "pg5-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "reset-pg5-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "pg6-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "reset-pg6-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "pg7-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "reset-pg7-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "pg8-host-type",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+    {
+        .name = "reset-pg8-host-type",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostType,
+    },
+
     // pg-host-user option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -9424,7 +9553,7 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
     },
 
-    // repo-host-type option and deprecations
+    // repo-host-type option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
         .name = "repo1-host-type",
@@ -9434,11 +9563,6 @@ static const struct option optionList[] =
     {
         .name = "reset-repo1-host-type",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
-    },
-    {
-        .name = "backup-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostType,
     },
     {
         .name = "repo2-host-type",
@@ -10968,6 +11092,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptPgHostConfigIncludePath,
     cfgOptPgHostConfigPath,
     cfgOptPgHostPort,
+    cfgOptPgHostType,
     cfgOptPgHostUser,
     cfgOptRecoveryOption,
     cfgOptRepoAzureAccount,
