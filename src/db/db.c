@@ -536,7 +536,7 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
             replayLsn = varStr(varLstGet(row, 0));
 
             // Error when replayLsn is null which indicates that this is not a standby.  This should have been sorted out before we
-            // connected but it's possible that the standy was promoted in the meantime.
+            // connected but it's possible that the standby was promoted in the meantime.
             if (replayLsn == NULL)
             {
                 THROW_FMT(
@@ -581,7 +581,7 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
                 String *query = strNewFmt(
                     "select checkpoint_%s::text,\n"
                     "       (checkpoint_%s > '%s')::bool as targetReached",
-                    lsnName, strZ(targetLsn), lsnName);
+                    lsnName, lsnName, strZ(targetLsn));
 
                 if (checkpointLsn != NULL)
                 {
