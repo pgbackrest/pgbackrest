@@ -183,9 +183,8 @@ execCheck(Exec *this)
         if (WIFEXITED(processStatus))
         {
             // Get data from stderr to help diagnose the problem
-            IoRead *ioReadError = ioFdReadNew(strNewFmt("%s error", strZ(this->name)), this->fdError, 0);
-            ioReadOpen(ioReadError);
-            String *errorStr = strTrim(strNewBuf(ioReadBuf(ioReadError)));
+            String *errorStr = strTrim(
+                strNewBuf(ioReadBuf(ioFdReadNewOpen(strNewFmt("%s error", strZ(this->name)), this->fdError, 0))));
 
             // Throw the error with as much information as is available
             THROWP_FMT(
@@ -361,8 +360,7 @@ execOpen(Exec *this)
 
     // Assign file descriptors to io interfaces
     this->ioReadFd = ioFdReadNew(strNewFmt("%s read", strZ(this->name)), this->fdRead, this->timeout);
-    this->ioWriteFd = ioFdWriteNew(strNewFmt("%s write", strZ(this->name)), this->fdWrite, this->timeout);
-    ioWriteOpen(this->ioWriteFd);
+    this->ioWriteFd = ioFdWriteNewOpen(strNewFmt("%s write", strZ(this->name)), this->fdWrite, this->timeout);
 
     // Create wrapper interfaces that check process state
     this->pub.ioReadExec = ioReadNewP(this, .block = true, .read = execRead, .eof = execEof, .fd = execFdRead);

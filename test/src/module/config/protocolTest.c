@@ -24,11 +24,6 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(STRDEF("client read"), HARNESS_FORK_CHILD_READ(), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("client write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
-
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
@@ -36,7 +31,9 @@ testRun(void)
                 strLstAddZ(argList, "--repo1-host-user=repo-host-user");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
-                ProtocolServer *server = protocolServerNew(STRDEF("test"), STRDEF("config"), read, write);
+                ProtocolServer *server = protocolServerNew(
+                    STRDEF("test"), STRDEF("config"), ioFdReadNewOpen(STRDEF("client read"), HARNESS_FORK_CHILD_READ(), 2000),
+                    ioFdWriteNewOpen(STRDEF("client write"), HARNESS_FORK_CHILD_WRITE(), 2000));
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_OPTION_LIST};
                 protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
@@ -45,12 +42,10 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
-                ProtocolClient *client = protocolClientNew(STRDEF("test"), STRDEF("config"), read, write);
+                ProtocolClient *client = protocolClientNew(
+                    STRDEF("test"), STRDEF("config"),
+                    ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000),
+                    ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 VariantList *list = varLstNew();
                 varLstAdd(list, varNewStr(STRDEF("repo1-host")));

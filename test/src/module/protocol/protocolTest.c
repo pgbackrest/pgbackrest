@@ -437,10 +437,8 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
+                IoRead *read = ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
 
                 // Various bogus greetings
                 // -----------------------------------------------------------------------------------------------------------------
@@ -494,10 +492,8 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
+                IoRead *read = ioFdReadNewOpen(STRDEF("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings");
@@ -665,13 +661,14 @@ testRun(void)
             // Local 1
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(STRDEF("local server 1 read"), HARNESS_FORK_CHILD_READ(), 10000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("local server 1 write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
-
                 ProtocolServer *server = NULL;
-                TEST_ASSIGN(server, protocolServerNew(STRDEF("local server 1"), STRDEF("test"), read, write), "local server 1");
+                TEST_ASSIGN(
+                    server,
+                    protocolServerNew(
+                        STRDEF("local server 1"), STRDEF("test"),
+                        ioFdReadNewOpen(STRDEF("local server 1 read"), HARNESS_FORK_CHILD_READ(), 10000),
+                        ioFdWriteNewOpen(STRDEF("local server 1 write"), HARNESS_FORK_CHILD_WRITE(), 2000)),
+                    "local server 1");
 
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
                 TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
@@ -692,13 +689,14 @@ testRun(void)
             // Local 2
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(STRDEF("local server 2 read"), HARNESS_FORK_CHILD_READ(), 10000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("local server 2 write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
-
                 ProtocolServer *server = NULL;
-                TEST_ASSIGN(server, protocolServerNew(STRDEF("local server 2"), STRDEF("test"), read, write), "local server 2");
+                TEST_ASSIGN(
+                    server,
+                    protocolServerNew(
+                        STRDEF("local server 2"), STRDEF("test"),
+                        ioFdReadNewOpen(STRDEF("local server 2 read"), HARNESS_FORK_CHILD_READ(), 10000),
+                        ioFdWriteNewOpen(STRDEF("local server 2 write"), HARNESS_FORK_CHILD_WRITE(), 2000)),
+                    "local server 2");
 
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
                 TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
@@ -733,16 +731,14 @@ testRun(void)
 
                 for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
                 {
-                    IoRead *read = ioFdReadNew(
-                        strNewFmt("local client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000);
-                    ioReadOpen(read);
-                    IoWrite *write = ioFdWriteNew(
-                        strNewFmt("local client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000);
-                    ioWriteOpen(write);
-
                     TEST_ASSIGN(
                         client[clientIdx],
-                        protocolClientNew(strNewFmt("local client %u", clientIdx), STRDEF("test"), read, write),
+                        protocolClientNew(
+                            strNewFmt("local client %u", clientIdx), STRDEF("test"),
+                            ioFdReadNewOpen(
+                                strNewFmt("local client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000),
+                            ioFdWriteNewOpen(
+                                strNewFmt("local client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000)),
                         strZ(strNewFmt("local client %u new", clientIdx)));
                     TEST_RESULT_VOID(
                         protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("local client %u add", clientIdx)));

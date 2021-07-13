@@ -43,12 +43,10 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
-                ProtocolClient *client = protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_LOCAL_STR, read, write);
+                ProtocolClient *client = protocolClientNew(
+                    STRDEF("test"), PROTOCOL_SERVICE_LOCAL_STR,
+                    ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000),
+                    ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }

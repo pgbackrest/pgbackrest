@@ -172,12 +172,10 @@ testRun(void)
                     strIdFromZ(stringIdBit6, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
 
                 // Setup handler for remote storage protocol
-                IoRead *read = ioFdReadNew(STRDEF("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("storage server write"), HARNESS_FORK_CHILD_WRITE(), 1000);
-                ioWriteOpen(write);
-
-                ProtocolServer *server = protocolServerNew(STRDEF("storage test server"), STRDEF("test"), read, write);
+                ProtocolServer *server = protocolServerNew(
+                    STRDEF("storage test server"), STRDEF("test"),
+                    ioFdReadNewOpen(STRDEF("storage server read"), HARNESS_FORK_CHILD_READ(), 60000),
+                    ioFdWriteNewOpen(STRDEF("storage server write"), HARNESS_FORK_CHILD_WRITE(), 1000));
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
                 protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
@@ -188,12 +186,10 @@ testRun(void)
             HARNESS_FORK_PARENT_BEGIN()
             {
                 // Create client
-                IoRead *read = ioFdReadNew(STRDEF("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000);
-                ioWriteOpen(write);
-
-                ProtocolClient *client = protocolClientNew(STRDEF("storage test client"), STRDEF("test"), read, write);
+                ProtocolClient *client = protocolClientNew(
+                    STRDEF("storage test client"), STRDEF("test"),
+                    ioFdReadNewOpen(STRDEF("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000),
+                    ioFdWriteNewOpen(STRDEF("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000));
 
                 // Create remote storage
                 Storage *storageRemote = storageRemoteNew(

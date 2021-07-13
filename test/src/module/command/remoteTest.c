@@ -43,12 +43,10 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
-                ProtocolClient *client = protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write);
+                ProtocolClient *client = protocolClientNew(
+                    STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                    ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000),
+                    ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }
@@ -77,13 +75,13 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 ProtocolClient *client = NULL;
-                TEST_ASSIGN(client, protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), "create client");
+                TEST_ASSIGN(
+                    client,
+                    protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                        ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                    "create client");
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }
@@ -111,14 +109,12 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), PathCreateError,
-                    "raised from test: unable to create path '/bogus': [13] Permission denied");
+                    protocolClientNew(
+                        STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                        ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                    PathCreateError, "raised from test: unable to create path '/bogus': [13] Permission denied");
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -144,13 +140,14 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 ProtocolClient *client = NULL;
-                TEST_ASSIGN(client, protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), "create client");
+                TEST_ASSIGN(
+                    client,
+                    protocolClientNew(
+                        STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                        ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                    "create client");
                 protocolClientNoOp(client);
 
                 TEST_RESULT_BOOL(
@@ -182,16 +179,14 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 storagePutP(storageNewWriteP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), NULL);
 
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), StopError,
-                    "raised from test: stop file exists for all stanzas");
+                    protocolClientNew(
+                        STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                        ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                    StopError, "raised from test: stop file exists for all stanzas");
 
                 storageRemoveP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT));
             }

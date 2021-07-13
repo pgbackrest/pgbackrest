@@ -713,10 +713,8 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(STRDEF("child read"), HARNESS_FORK_CHILD_READ(), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
+                IoRead *read = ioFdReadNewOpen(STRDEF("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
 
                 lockAcquire(
                     cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("555-fefefefe"), cfgLockType(), 30000, true);
@@ -732,10 +730,8 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
+                IoRead *read = ioFdReadNewOpen(STRDEF("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
 
                 // Wait for the child to acquire the lock
                 ioReadLine(read);

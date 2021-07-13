@@ -543,8 +543,7 @@ testRun(void)
             {
                 IoWrite *write = NULL;
 
-                TEST_ASSIGN(write, ioFdWriteNew(STRDEF("write test"), HARNESS_FORK_CHILD_WRITE(), 1000), "move write");
-                ioWriteOpen(write);
+                TEST_ASSIGN(write, ioFdWriteNewOpen(STRDEF("write test"), HARNESS_FORK_CHILD_WRITE(), 1000), "move write");
                 TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write is ready");
                 TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)write->driver)->fd, "check write fd");
 
@@ -568,9 +567,8 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000);
+                IoRead *read = ioFdReadNewOpen(STRDEF("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000);
 
-                ioReadOpen(read);
                 TEST_RESULT_INT(ioReadFd(read), ((IoFdRead *)ioReadDriver(read))->fd, "check fd");
                 TEST_RESULT_PTR(ioReadInterface(read), &read->pub.interface, "check interface");
                 TEST_RESULT_PTR(ioReadDriver(read), read->pub.driver, "check driver");
