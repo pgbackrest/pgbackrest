@@ -733,10 +733,10 @@ testRun(void)
         // Make sure the process times out when it can't get a lock
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("child read"), HRN_FORK_CHILD_READ(), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("child write"), HRN_FORK_CHILD_WRITE(), 2000);
+                IoRead *read = ioFdReadNewOpen(STRDEF("child read"), HRN_FORK_CHILD_READ_FD(), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("child write"), HRN_FORK_CHILD_WRITE_FD(), 2000);
 
                 TEST_RESULT_VOID(
                     lockAcquire(
@@ -755,8 +755,8 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("parent read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("parent write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNewOpen(STRDEF("parent read"), HRN_FORK_PARENT_READ_FD(0), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("parent write"), HRN_FORK_PARENT_WRITE_FD(0), 2000);
 
                 // Wait for the child to acquire the lock
                 ioReadLine(read);

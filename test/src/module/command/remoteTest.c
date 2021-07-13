@@ -29,7 +29,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
@@ -37,7 +37,7 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdInfo, argList, .role = cfgCmdRoleRemote);
 
-                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
             }
             HRN_FORK_CHILD_END();
 
@@ -45,8 +45,8 @@ testRun(void)
             {
                 ProtocolClient *client = protocolClientNew(
                     STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                    ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
-                    ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
+                    ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }
@@ -59,7 +59,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--process=0");
@@ -69,7 +69,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
-                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
             }
             HRN_FORK_CHILD_END();
 
@@ -79,8 +79,8 @@ testRun(void)
                 TEST_ASSIGN(
                     client,
                     protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
                     "create client");
                 protocolClientNoOp(client);
                 protocolClientFree(client);
@@ -94,7 +94,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
@@ -103,7 +103,7 @@ testRun(void)
                 strLstAddZ(argList, "--lock-path=/bogus");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
-                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
             }
             HRN_FORK_CHILD_END();
 
@@ -112,8 +112,8 @@ testRun(void)
                 TEST_ERROR(
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
                     PathCreateError, "raised from test: unable to create path '/bogus': [13] Permission denied");
             }
             HRN_FORK_PARENT_END();
@@ -125,7 +125,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
@@ -134,7 +134,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
-                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
             }
             HRN_FORK_CHILD_END();
 
@@ -145,8 +145,8 @@ testRun(void)
                     client,
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
                     "create client");
                 protocolClientNoOp(client);
 
@@ -165,7 +165,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
@@ -173,7 +173,7 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
-                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
             }
             HRN_FORK_CHILD_END();
 
@@ -184,8 +184,8 @@ testRun(void)
                 TEST_ERROR(
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
-                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
                     StopError, "raised from test: stop file exists for all stanzas");
 
                 storageRemoveP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT));

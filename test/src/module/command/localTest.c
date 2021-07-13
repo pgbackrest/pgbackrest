@@ -28,7 +28,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
@@ -37,7 +37,7 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
-                cmdLocal(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
+                cmdLocal(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
             }
             HRN_FORK_CHILD_END();
 
@@ -45,8 +45,8 @@ testRun(void)
             {
                 ProtocolClient *client = protocolClientNew(
                     STRDEF("test"), PROTOCOL_SERVICE_LOCAL_STR,
-                    ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
-                    ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
+                    ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }

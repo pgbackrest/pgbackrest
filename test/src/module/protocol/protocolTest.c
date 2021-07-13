@@ -435,10 +435,10 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_CHILD_READ(), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_CHILD_WRITE(), 2000);
+                IoRead *read = ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_CHILD_READ_FD(), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_CHILD_WRITE_FD(), 2000);
 
                 // Various bogus greetings
                 // -----------------------------------------------------------------------------------------------------------------
@@ -492,8 +492,8 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("client read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNewOpen(STRDEF("client read"), HRN_FORK_PARENT_READ_FD(0), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings");
@@ -659,15 +659,15 @@ testRun(void)
         HRN_FORK_BEGIN()
         {
             // Local 1
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 ProtocolServer *server = NULL;
                 TEST_ASSIGN(
                     server,
                     protocolServerNew(
                         STRDEF("local server 1"), STRDEF("test"),
-                        ioFdReadNewOpen(STRDEF("local server 1 read"), HRN_FORK_CHILD_READ(), 10000),
-                        ioFdWriteNewOpen(STRDEF("local server 1 write"), HRN_FORK_CHILD_WRITE(), 2000)),
+                        ioFdReadNewOpen(STRDEF("local server 1 read"), HRN_FORK_CHILD_READ_FD(), 10000),
+                        ioFdWriteNewOpen(STRDEF("local server 1 write"), HRN_FORK_CHILD_WRITE_FD(), 2000)),
                     "local server 1");
 
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
@@ -687,15 +687,15 @@ testRun(void)
             HRN_FORK_CHILD_END();
 
             // Local 2
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 ProtocolServer *server = NULL;
                 TEST_ASSIGN(
                     server,
                     protocolServerNew(
                         STRDEF("local server 2"), STRDEF("test"),
-                        ioFdReadNewOpen(STRDEF("local server 2 read"), HRN_FORK_CHILD_READ(), 10000),
-                        ioFdWriteNewOpen(STRDEF("local server 2 write"), HRN_FORK_CHILD_WRITE(), 2000)),
+                        ioFdReadNewOpen(STRDEF("local server 2 read"), HRN_FORK_CHILD_READ_FD(), 10000),
+                        ioFdWriteNewOpen(STRDEF("local server 2 write"), HRN_FORK_CHILD_WRITE_FD(), 2000)),
                     "local server 2");
 
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
@@ -736,9 +736,9 @@ testRun(void)
                         protocolClientNew(
                             strNewFmt("local client %u", clientIdx), STRDEF("test"),
                             ioFdReadNewOpen(
-                                strNewFmt("local client %u read", clientIdx), HRN_FORK_PARENT_READ_PROCESS(clientIdx), 2000),
+                                strNewFmt("local client %u read", clientIdx), HRN_FORK_PARENT_READ_FD(clientIdx), 2000),
                             ioFdWriteNewOpen(
-                                strNewFmt("local client %u write", clientIdx), HRN_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000)),
+                                strNewFmt("local client %u write", clientIdx), HRN_FORK_PARENT_WRITE_FD(clientIdx), 2000)),
                         strZ(strNewFmt("local client %u new", clientIdx)));
                     TEST_RESULT_VOID(
                         protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("local client %u add", clientIdx)));

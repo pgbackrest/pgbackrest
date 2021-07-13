@@ -149,7 +149,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 // Create a basic configuration so the remote storage driver can determine the storage type
                 StringList *argList = strLstNew();
@@ -174,8 +174,8 @@ testRun(void)
                 // Setup handler for remote storage protocol
                 ProtocolServer *server = protocolServerNew(
                     STRDEF("storage test server"), STRDEF("test"),
-                    ioFdReadNewOpen(STRDEF("storage server read"), HRN_FORK_CHILD_READ(), 60000),
-                    ioFdWriteNewOpen(STRDEF("storage server write"), HRN_FORK_CHILD_WRITE(), 1000));
+                    ioFdReadNewOpen(STRDEF("storage server read"), HRN_FORK_CHILD_READ_FD(), 60000),
+                    ioFdWriteNewOpen(STRDEF("storage server write"), HRN_FORK_CHILD_WRITE_FD(), 1000));
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
                 protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
@@ -188,8 +188,8 @@ testRun(void)
                 // Create client
                 ProtocolClient *client = protocolClientNew(
                     STRDEF("storage test client"), STRDEF("test"),
-                    ioFdReadNewOpen(STRDEF("storage client read"), HRN_FORK_PARENT_READ_PROCESS(0), 60000),
-                    ioFdWriteNewOpen(STRDEF("storage client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 1000));
+                    ioFdReadNewOpen(STRDEF("storage client read"), HRN_FORK_PARENT_READ_FD(0), 60000),
+                    ioFdWriteNewOpen(STRDEF("storage client write"), HRN_FORK_PARENT_WRITE_FD(0), 1000));
 
                 // Create remote storage
                 Storage *storageRemote = storageRemoteNew(

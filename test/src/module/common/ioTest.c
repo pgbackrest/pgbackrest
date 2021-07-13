@@ -539,11 +539,11 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 IoWrite *write = NULL;
 
-                TEST_ASSIGN(write, ioFdWriteNewOpen(STRDEF("write test"), HRN_FORK_CHILD_WRITE(), 1000), "move write");
+                TEST_ASSIGN(write, ioFdWriteNewOpen(STRDEF("write test"), HRN_FORK_CHILD_WRITE_FD(), 1000), "move write");
                 TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write is ready");
                 TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)write->driver)->fd, "check write fd");
 
@@ -567,7 +567,7 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("read test"), HRN_FORK_PARENT_READ_PROCESS(0), 1000);
+                IoRead *read = ioFdReadNewOpen(STRDEF("read test"), HRN_FORK_PARENT_READ_FD(0), 1000);
 
                 TEST_RESULT_INT(ioReadFd(read), ((IoFdRead *)ioReadDriver(read))->fd, "check fd");
                 TEST_RESULT_PTR(ioReadInterface(read), &read->pub.interface, "check interface");

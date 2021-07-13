@@ -18,7 +18,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 char buffer[1024];
 

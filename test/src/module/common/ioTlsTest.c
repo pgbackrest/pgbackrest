@@ -247,12 +247,12 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 // Start server to test various certificate errors
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("test server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        ioFdReadNew(STRDEF("test server read"), HRN_FORK_CHILD_READ_FD(), 5000), hrnServerProtocolTls,
                         .certificate = STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-alt-name.crt"),
                         .key = STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".key")),
                     "tls alt name server run");
@@ -262,7 +262,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 IoWrite *tls = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("test client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 1000));
+                    ioFdWriteNew(STRDEF("test client write"), HRN_FORK_PARENT_WRITE_FD(0), 1000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("certificate error on invalid ca path");
@@ -365,11 +365,11 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("test server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolTls),
+                        ioFdReadNew(STRDEF("test server read"), HRN_FORK_CHILD_READ_FD(), 5000), hrnServerProtocolTls),
                     "tls server run");
             }
             HRN_FORK_CHILD_END();
@@ -377,7 +377,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 IoWrite *tls =
-                    hrnServerScriptBegin(ioFdWriteNew(STRDEF("test client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 1000));
+                    hrnServerScriptBegin(ioFdWriteNew(STRDEF("test client write"), HRN_FORK_PARENT_WRITE_FD(0), 1000));
                 ioBufferSizeSet(12);
 
                 TEST_ASSIGN(

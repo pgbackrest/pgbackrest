@@ -15,7 +15,7 @@ HRN_FORK_BEGIN()
     //
     // The second parameter specifies whether pipes should be setup between the parent and child processes.  These can be accessed
     // with the HRN_FORK_*() macros;
-    HRN_FORK_CHILD_BEGIN(0, true)
+    HRN_FORK_CHILD_BEGIN()
     {
         // Child test code goes here
     }
@@ -70,30 +70,18 @@ Return the pipe for the child process
     HRN_FORK_pipe[processIdx]
 
 /***********************************************************************************************************************************
-Is the pipe required for this child process?
-***********************************************************************************************************************************/
-#define HRN_FORK_PIPE_REQUIRED(processIdx)                                                                                         \
-    HRN_FORK_pipeRequired[processIdx]
-
-/***********************************************************************************************************************************
 Get read/write pipe file descriptors
 ***********************************************************************************************************************************/
-#define HRN_FORK_CHILD_READ_PROCESS(processIdx)                                                                                    \
-    HRN_FORK_PIPE(processIdx)[1][0]
+#define HRN_FORK_CHILD_READ_FD()                                                                                                   \
+    HRN_FORK_PIPE(HRN_FORK_PROCESS_IDX())[1][0]
 
-#define HRN_FORK_CHILD_READ()                                                                                                      \
-    HRN_FORK_CHILD_READ_PROCESS(HRN_FORK_PROCESS_IDX())
+#define HRN_FORK_CHILD_WRITE_FD()                                                                                                  \
+    HRN_FORK_PIPE(HRN_FORK_PROCESS_IDX())[0][1]
 
-#define HRN_FORK_CHILD_WRITE_PROCESS(processIdx)                                                                                   \
-    HRN_FORK_PIPE(processIdx)[0][1]
-
-#define HRN_FORK_CHILD_WRITE()                                                                                                     \
-    HRN_FORK_CHILD_WRITE_PROCESS(HRN_FORK_PROCESS_IDX())
-
-#define HRN_FORK_PARENT_READ_PROCESS(processIdx)                                                                                   \
+#define HRN_FORK_PARENT_READ_FD(processIdx)                                                                                        \
     HRN_FORK_PIPE(processIdx)[0][0]
 
-#define HRN_FORK_PARENT_WRITE_PROCESS(processIdx)                                                                                  \
+#define HRN_FORK_PARENT_WRITE_FD(processIdx)                                                                                       \
     HRN_FORK_PIPE(processIdx)[1][1]
 
 /***********************************************************************************************************************************
@@ -112,29 +100,32 @@ Begin the fork block
         unsigned int HRN_FORK_PROCESS_TOTAL() = 0;                                                                                 \
         pid_t HRN_FORK_PROCESS_ID(HRN_FORK_CHILD_MAX) = {0};                                                                       \
         int HRN_FORK_CHILD_EXPECTED_EXIT_STATUS(HRN_FORK_CHILD_MAX) = {0};                                                         \
-        bool HRN_FORK_PIPE_REQUIRED(HRN_FORK_CHILD_MAX) = {0};                                                                     \
         int HRN_FORK_PIPE(HRN_FORK_CHILD_MAX)[2][2] = {{{0}}};
 
 /***********************************************************************************************************************************
 Create a child process
 ***********************************************************************************************************************************/
-#define HRN_FORK_CHILD_BEGIN(expectedExitStatus, pipeRequired)                                                                     \
+typedef struct HrnForkChildParam
+{
+    VAR_PARAM_HEADER;
+    int expectedExitStatus;
+} HrnForkChildParam;
+
+#define HRN_FORK_CHILD_BEGIN(...)                                                                                                  \
     do                                                                                                                             \
     {                                                                                                                              \
-        HRN_FORK_CHILD_EXPECTED_EXIT_STATUS(HRN_FORK_PROCESS_TOTAL()) = expectedExitStatus;                                        \
+        const HrnForkChildParam param = {VAR_PARAM_INIT, __VA_ARGS__};                                                             \
+        HRN_FORK_CHILD_EXPECTED_EXIT_STATUS(HRN_FORK_PROCESS_TOTAL()) = param.expectedExitStatus;                                  \
                                                                                                                                    \
-        if (pipeRequired)                                                                                                          \
-        {                                                                                                                          \
-            HRN_FORK_PIPE_REQUIRED(HRN_FORK_PROCESS_TOTAL()) = true;                                                               \
+        /* Create pipe for parent/child communication */                                                                           \
+        THROW_ON_SYS_ERROR_FMT(                                                                                                    \
+            pipe(HRN_FORK_PIPE(HRN_FORK_PROCESS_TOTAL())[0]) == -1, KernelError,                                                   \
+            "unable to create read pipe for child process %u", HRN_FORK_PROCESS_TOTAL());                                          \
+        THROW_ON_SYS_ERROR_FMT(                                                                                                    \
+            pipe(HRN_FORK_PIPE(HRN_FORK_PROCESS_TOTAL())[1]) == -1, KernelError,                                                   \
+            "unable to create write pipe for child process %u", HRN_FORK_PROCESS_TOTAL());                                         \
                                                                                                                                    \
-            THROW_ON_SYS_ERROR_FMT(                                                                                                \
-                pipe(HRN_FORK_PIPE(HRN_FORK_PROCESS_TOTAL())[0]) == -1, KernelError,                                               \
-                "unable to create read pipe for child process %u", HRN_FORK_PROCESS_TOTAL());                                      \
-            THROW_ON_SYS_ERROR_FMT(                                                                                                \
-                pipe(HRN_FORK_PIPE(HRN_FORK_PROCESS_TOTAL())[1]) == -1, KernelError,                                               \
-                "unable to create write pipe for child process %u", HRN_FORK_PROCESS_TOTAL());                                     \
-        }                                                                                                                          \
-                                                                                                                                   \
+        /* Fork child process */                                                                                                   \
         HRN_FORK_PROCESS_ID(HRN_FORK_PROCESS_TOTAL()) = fork();                                                                    \
                                                                                                                                    \
         if (HRN_FORK_PROCESS_ID(HRN_FORK_PROCESS_TOTAL()) == 0)                                                                    \
@@ -142,20 +133,16 @@ Create a child process
             unsigned int HRN_FORK_PROCESS_IDX() = HRN_FORK_PROCESS_TOTAL();                                                        \
                                                                                                                                    \
             /* Change log process id to aid in debugging */                                                                        \
-            hrnLogProcessIdSet(HRN_FORK_PROCESS_IDX() + 1);                                                                                                 \
+            hrnLogProcessIdSet(HRN_FORK_PROCESS_IDX() + 1);                                                                        \
                                                                                                                                    \
-            if (pipeRequired)                                                                                                      \
-            {                                                                                                                      \
-                close(HRN_FORK_PARENT_READ_PROCESS(HRN_FORK_PROCESS_IDX()));                                                       \
-                close(HRN_FORK_PARENT_WRITE_PROCESS(HRN_FORK_PROCESS_IDX()));                                                      \
-            }
+            /* Close parent side of pipe */                                                                                        \
+            close(HRN_FORK_PARENT_READ_FD(HRN_FORK_PROCESS_IDX()));                                                                \
+            close(HRN_FORK_PARENT_WRITE_FD(HRN_FORK_PROCESS_IDX()));                                                               \
 
 #define HRN_FORK_CHILD_END()                                                                                                       \
-            if (HRN_FORK_PIPE_REQUIRED(HRN_FORK_PROCESS_IDX()))                                                                    \
-            {                                                                                                                      \
-                close(HRN_FORK_CHILD_READ());                                                                                      \
-                close(HRN_FORK_CHILD_WRITE());                                                                                     \
-            }                                                                                                                      \
+            /* Close child side of pipe */                                                                                         \
+            close(HRN_FORK_CHILD_READ_FD());                                                                                       \
+            close(HRN_FORK_CHILD_WRITE_FD());                                                                                      \
                                                                                                                                    \
             exit(0);                                                                                                               \
         }                                                                                                                          \
@@ -172,21 +159,17 @@ Process in the parent
     {                                                                                                                              \
         for (unsigned int processIdx = 0; processIdx < HRN_FORK_PROCESS_TOTAL(); processIdx++)                                     \
         {                                                                                                                          \
-            if (HRN_FORK_PIPE_REQUIRED(processIdx))                                                                                \
-            {                                                                                                                      \
-                close(HRN_FORK_CHILD_READ_PROCESS(processIdx));                                                                    \
-                close(HRN_FORK_CHILD_WRITE_PROCESS(processIdx));                                                                   \
-            }                                                                                                                      \
+            /* Close child side of pipe */                                                                                         \
+            close(HRN_FORK_PIPE(processIdx)[1][0]);                                                                                \
+            close(HRN_FORK_PIPE(processIdx)[0][1]);                                                                                \
         }
 
 #define HRN_FORK_PARENT_END()                                                                                                      \
         for (unsigned int processIdx = 0; processIdx < HRN_FORK_PROCESS_TOTAL(); processIdx++)                                     \
         {                                                                                                                          \
-            if (HRN_FORK_PIPE_REQUIRED(processIdx))                                                                                \
-            {                                                                                                                      \
-                close(HRN_FORK_PARENT_READ_PROCESS(processIdx));                                                                   \
-                close(HRN_FORK_PARENT_WRITE_PROCESS(processIdx));                                                                  \
-            }                                                                                                                      \
+            /* Close parent side of pipe */                                                                                        \
+            close(HRN_FORK_PARENT_READ_FD(processIdx));                                                                            \
+            close(HRN_FORK_PARENT_WRITE_FD(processIdx));                                                                           \
         }                                                                                                                          \
     }                                                                                                                              \
     while (0)

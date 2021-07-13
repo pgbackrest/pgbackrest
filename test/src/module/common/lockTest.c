@@ -93,7 +93,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 TEST_RESULT_INT_NE(lockAcquireFile(backupLock, STRDEF("1-test"), 0, true), -1, "lock on fork");
                 sleepMSec(500);

@@ -254,7 +254,7 @@ testRun(void)
         // Check timeout by making the wal segment appear after 250ms
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 sleepMSec(250);
 

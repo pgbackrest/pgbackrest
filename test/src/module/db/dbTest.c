@@ -61,7 +61,7 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 // Set options
                 StringList *argList = strLstNew();
@@ -98,8 +98,8 @@ testRun(void)
                     server,
                     protocolServerNew(
                         STRDEF("db test server"), STRDEF("test"),
-                        ioFdReadNewOpen(STRDEF("client read"), HRN_FORK_CHILD_READ(), 2000),
-                        ioFdWriteNewOpen(STRDEF("client write"), HRN_FORK_CHILD_WRITE(), 2000)),
+                        ioFdReadNewOpen(STRDEF("client read"), HRN_FORK_CHILD_READ_FD(), 2000),
+                        ioFdWriteNewOpen(STRDEF("client write"), HRN_FORK_CHILD_WRITE_FD(), 2000)),
                     "create server");
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_DB_LIST};
@@ -121,8 +121,8 @@ testRun(void)
                     client,
                     protocolClientNew(
                         STRDEF("db test client"), STRDEF("test"),
-                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
                     "create client");
 
                 TRY_BEGIN()

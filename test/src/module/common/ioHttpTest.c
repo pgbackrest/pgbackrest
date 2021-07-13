@@ -281,12 +281,12 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 // Start HTTP test server
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("test server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket),
+                        ioFdReadNew(STRDEF("test server read"), HRN_FORK_CHILD_READ_FD(), 5000), hrnServerProtocolSocket),
                     "http server run");
             }
             HRN_FORK_CHILD_END();
@@ -294,7 +294,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 IoWrite *http = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("test client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdWriteNew(STRDEF("test client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("create client");

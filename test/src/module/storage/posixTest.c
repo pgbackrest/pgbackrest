@@ -145,7 +145,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 sleepMSec(250);
                 HRN_SYSTEM_FMT("touch %s", strZ(fileExists));

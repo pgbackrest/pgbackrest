@@ -353,20 +353,20 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("s3 server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolTls, .port = port),
+                        ioFdReadNew(STRDEF("s3 server read"), HRN_FORK_CHILD_READ_FD(), 5000), hrnServerProtocolTls, .port = port),
                     "s3 server run");
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("auth server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
+                        ioFdReadNew(STRDEF("auth server read"), HRN_FORK_CHILD_READ_FD(), 5000), hrnServerProtocolSocket,
                         .port = authPort),
                     "auth server run");
             }
@@ -375,9 +375,9 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("s3 client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdWriteNew(STRDEF("s3 client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
                 IoWrite *auth = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("auth client write"), HRN_FORK_PARENT_WRITE_PROCESS(1), 2000));
+                    ioFdWriteNew(STRDEF("auth client write"), HRN_FORK_PARENT_WRITE_FD(1), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("config with keys, token, and host with custom port");
