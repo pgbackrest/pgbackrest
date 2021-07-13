@@ -456,9 +456,9 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
         .param = strZ(strNewFmt(                                                                                                   \
-            "[\"select (checkpoint_" lsnNameParam " > '%s')::bool as targetReached,\\n"                                            \
-            "       checkpoint_" lsnNameParam "::text as checkpointLsn\\n"                                                         \
-            "  from pg_catalog.pg_control_checkpoint()\"]", targetLsnParam)),                                                      \
+            "[\"select checkpoint_" lsnNameParam "::text,\\n"                                                                      \
+            "        (checkpoint_" lsnNameParam " > '%s')::bool as targetReached\\n"                                               \
+            "  from pg_catalog.pg_control_checkpoint() as checkpointLsn\"]", targetLsnParam)),                                     \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
@@ -466,10 +466,10 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
     {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
     {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 2},                                                          \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_BOOL},                              \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},                              \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = cvtBoolToConstZ(targetReachedParam)},       \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = checkpointLsnParam},                        \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_TEXT},                              \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_BOOL},                              \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = checkpointLsnParam},                        \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = cvtBoolToConstZ(targetReachedParam)},       \
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
