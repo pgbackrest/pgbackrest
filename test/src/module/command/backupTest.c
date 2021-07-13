@@ -548,7 +548,7 @@ testRun(void)
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
         TEST_RESULT_PTR_NE(result.pageChecksumResult, NULL, "pageChecksumResult is set");
         TEST_RESULT_BOOL(varBool(kvGet(result.pageChecksumResult, VARSTRDEF("valid"))), false, "pageChecksumResult valid=false");
-        TEST_STORAGE_EXISTS(storageRepoWrite(), strZ(backupPathFile), .remove = true, .comment = "check exists in repo, then remove");
+        TEST_STORAGE_EXISTS(storageRepoWrite(), strZ(backupPathFile), .remove = true, .comment = "check exists in repo, remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit");
@@ -1110,28 +1110,25 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupTime()"))
     {
-        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sleep retries and stall error");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Advance the time slowly to force retries
             HRNPQ_MACRO_TIME_QUERY(1, 1575392588998),
@@ -1159,21 +1156,19 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupResumeFind()"))
     {
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        hrnCfgArgRawBool(argList, cfgOptCompress, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when manifest and copy are missing");
 
-        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F"));
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F");
 
         TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
 
@@ -1183,22 +1178,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when resume is disabled");
 
-        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F"));
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F");
 
         cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_FALSE_VAR);
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
 
         TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
 
-        TEST_RESULT_LOG(
-            "P00   WARN: backup '20191003-105320F' cannot be resumed: resume is disabled");
+        TEST_RESULT_LOG("P00   WARN: backup '20191003-105320F' cannot be resumed: resume is disabled");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_TRUE_VAR);
 
@@ -1231,8 +1221,7 @@ testRun(void)
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
                 " new pgBackRest version 'BOGUS' does not match resumable pgBackRest version '" PROJECT_VERSION "'");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifest->pub.data.backrestVersion = STRDEF(PROJECT_VERSION);
 
@@ -1254,8 +1243,7 @@ testRun(void)
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
                 " new prior backup label '<undef>' does not match resumable prior backup label '20191003-105320F'");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifest->pub.data.backupLabelPrior = NULL;
 
@@ -1277,8 +1265,7 @@ testRun(void)
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
                 " new prior backup label '20191003-105320F' does not match resumable prior backup label '<undef>'");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifestResume->pub.data.backupLabelPrior = NULL;
 
@@ -1299,8 +1286,7 @@ testRun(void)
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
                 " new compression 'none' does not match resumable compression 'gz'");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifestResume->pub.data.backupOptionCompressType = compressTypeNone;
     }
