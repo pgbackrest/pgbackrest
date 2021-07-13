@@ -91,16 +91,16 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         const String *backupLock = STRDEF(TEST_PATH "/main-backup" LOCK_FILE_EXT);
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(lockAcquireFile(backupLock, STRDEF("1-test"), 0, true), -1, "lock on fork");
                 sleepMSec(500);
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
                 sleepMSec(250);
                 TEST_ERROR(
@@ -111,9 +111,9 @@ testRun(void)
                             "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                             "HINT: is another pgBackRest process running?", strZ(backupLock))));
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************

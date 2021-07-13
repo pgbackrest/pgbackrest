@@ -68,9 +68,9 @@ testRun(void)
         // Run the same test as above but close all file descriptors first to ensure we don't accidentally close a required
         // descriptor while running dup2()/close() between the fork() and the exec().
         // -------------------------------------------------------------------------------------------------------------------------
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN(0, false)
             {
                 // This is not really fd max but for the purposes of testing is fine -- we won't have more than 64 fds open
                 for (int fd = 0; fd < 64; fd++)
@@ -87,9 +87,9 @@ testRun(void)
                 TEST_RESULT_STR_Z(ioReadLine(execIoRead(exec)), "     1\tACKBYACK", "read cat exec");
                 TEST_RESULT_VOID(execFree(exec), "free exec");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         option = strLstNew();

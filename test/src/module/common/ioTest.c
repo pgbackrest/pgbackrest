@@ -537,13 +537,13 @@ testRun(void)
     {
         ioBufferSizeSet(16);
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 IoWrite *write = NULL;
 
-                TEST_ASSIGN(write, ioFdWriteNewOpen(STRDEF("write test"), HARNESS_FORK_CHILD_WRITE(), 1000), "move write");
+                TEST_ASSIGN(write, ioFdWriteNewOpen(STRDEF("write test"), HRN_FORK_CHILD_WRITE(), 1000), "move write");
                 TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write is ready");
                 TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)write->driver)->fd, "check write fd");
 
@@ -563,11 +563,11 @@ testRun(void)
                 TEST_RESULT_VOID(ioWrite(write, buffer), "write buffer");
                 ioWriteFlush(write);
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("read test"), HARNESS_FORK_PARENT_READ_PROCESS(0), 1000);
+                IoRead *read = ioFdReadNewOpen(STRDEF("read test"), HRN_FORK_PARENT_READ_PROCESS(0), 1000);
 
                 TEST_RESULT_INT(ioReadFd(read), ((IoFdRead *)ioReadDriver(read))->fd, "check fd");
                 TEST_RESULT_PTR(ioReadInterface(read), &read->pub.interface, "check interface");
@@ -601,9 +601,9 @@ testRun(void)
                 TEST_RESULT_UINT(ioFdRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof");
                 TEST_RESULT_UINT(ioFdRead(ioReadDriver(read), buffer, true), 0, "read buffer at eof again");
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(ioFdWriteOneStr(999999, STRDEF("test")), FileWriteError, "unable to write to fd: [9] Bad file descriptor");

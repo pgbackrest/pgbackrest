@@ -433,12 +433,12 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolClient, ProtocolCommand, and ProtocolServer"))
     {
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoRead *read = ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_CHILD_READ(), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_CHILD_WRITE(), 2000);
 
                 // Various bogus greetings
                 // -----------------------------------------------------------------------------------------------------------------
@@ -488,12 +488,12 @@ testRun(void)
                 // This cannot run in a TEST* macro because tests are run by the command handlers
                 protocolServerProcess(server, retryList, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNewOpen(STRDEF("client read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings");
@@ -622,9 +622,9 @@ testRun(void)
 
                 TEST_RESULT_VOID(protocolClientFree(client), "free");
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************
@@ -656,18 +656,18 @@ testRun(void)
         TEST_RESULT_VOID(protocolParallelJobFree(job), "free job");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
             // Local 1
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 ProtocolServer *server = NULL;
                 TEST_ASSIGN(
                     server,
                     protocolServerNew(
                         STRDEF("local server 1"), STRDEF("test"),
-                        ioFdReadNewOpen(STRDEF("local server 1 read"), HARNESS_FORK_CHILD_READ(), 10000),
-                        ioFdWriteNewOpen(STRDEF("local server 1 write"), HARNESS_FORK_CHILD_WRITE(), 2000)),
+                        ioFdReadNewOpen(STRDEF("local server 1 read"), HRN_FORK_CHILD_READ(), 10000),
+                        ioFdWriteNewOpen(STRDEF("local server 1 write"), HRN_FORK_CHILD_WRITE(), 2000)),
                     "local server 1");
 
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
@@ -684,18 +684,18 @@ testRun(void)
                 // Wait for exit
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "noop command get");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
             // Local 2
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 ProtocolServer *server = NULL;
                 TEST_ASSIGN(
                     server,
                     protocolServerNew(
                         STRDEF("local server 2"), STRDEF("test"),
-                        ioFdReadNewOpen(STRDEF("local server 2 read"), HARNESS_FORK_CHILD_READ(), 10000),
-                        ioFdWriteNewOpen(STRDEF("local server 2 write"), HARNESS_FORK_CHILD_WRITE(), 2000)),
+                        ioFdReadNewOpen(STRDEF("local server 2 read"), HRN_FORK_CHILD_READ(), 10000),
+                        ioFdWriteNewOpen(STRDEF("local server 2 write"), HRN_FORK_CHILD_WRITE(), 2000)),
                     "local server 2");
 
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
@@ -716,9 +716,9 @@ testRun(void)
                 // Wait for exit
                 CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_EXIT);
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
                 TestParallelJobCallback data = {.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
                 ProtocolParallel *parallel = NULL;
@@ -727,7 +727,7 @@ testRun(void)
 
                 // Add client
                 unsigned int clientTotal = 2;
-                ProtocolClient *client[HARNESS_FORK_CHILD_MAX];
+                ProtocolClient *client[HRN_FORK_CHILD_MAX];
 
                 for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
                 {
@@ -736,9 +736,9 @@ testRun(void)
                         protocolClientNew(
                             strNewFmt("local client %u", clientIdx), STRDEF("test"),
                             ioFdReadNewOpen(
-                                strNewFmt("local client %u read", clientIdx), HARNESS_FORK_PARENT_READ_PROCESS(clientIdx), 2000),
+                                strNewFmt("local client %u read", clientIdx), HRN_FORK_PARENT_READ_PROCESS(clientIdx), 2000),
                             ioFdWriteNewOpen(
-                                strNewFmt("local client %u write", clientIdx), HARNESS_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000)),
+                                strNewFmt("local client %u write", clientIdx), HRN_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000)),
                         strZ(strNewFmt("local client %u new", clientIdx)));
                     TEST_RESULT_VOID(
                         protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("local client %u add", clientIdx)));
@@ -848,9 +848,9 @@ testRun(void)
                 for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
                     TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), strZ(strNewFmt("free client %u", clientIdx)));
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************

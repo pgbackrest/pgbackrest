@@ -20,9 +20,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("configOptionProtocol() and configOptionRemote()"))
     {
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
@@ -32,20 +32,20 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
                 ProtocolServer *server = protocolServerNew(
-                    STRDEF("test"), STRDEF("config"), ioFdReadNewOpen(STRDEF("client read"), HARNESS_FORK_CHILD_READ(), 2000),
-                    ioFdWriteNewOpen(STRDEF("client write"), HARNESS_FORK_CHILD_WRITE(), 2000));
+                    STRDEF("test"), STRDEF("config"), ioFdReadNewOpen(STRDEF("client read"), HRN_FORK_CHILD_READ(), 2000),
+                    ioFdWriteNewOpen(STRDEF("client write"), HRN_FORK_CHILD_WRITE(), 2000));
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_OPTION_LIST};
                 protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
                 ProtocolClient *client = protocolClientNew(
                     STRDEF("test"), STRDEF("config"),
-                    ioFdReadNewOpen(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000),
-                    ioFdWriteNewOpen(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
+                    ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000));
 
                 VariantList *list = varLstNew();
                 varLstAdd(list, varNewStr(STRDEF("repo1-host")));
@@ -56,9 +56,9 @@ testRun(void)
 
                 protocolClientFree(client);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
