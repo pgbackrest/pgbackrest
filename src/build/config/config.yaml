@@ -365,6 +365,7 @@ option:
         depend:
           option: type
           list:
+            - lsn
             - name
             - time
             - xid
@@ -384,6 +385,7 @@ option:
           option: type
           list:
             - immediate
+            - lsn
             - name
             - time
             - xid
@@ -398,6 +400,7 @@ option:
         depend:
           option: type
           list:
+            - lsn
             - time
             - xid
     command-role:
@@ -412,6 +415,7 @@ option:
           option: type
           list:
             - default
+            - lsn
             - name
             - standby
             - time
@@ -429,6 +433,7 @@ option:
         default: incr
       restore:
         allow-list:
+          - lsn
           - name
           - time
           - xid
@@ -1196,6 +1201,7 @@ option:
       list:
         - default
         - immediate
+        - lsn
         - name
         - time
         - standby
