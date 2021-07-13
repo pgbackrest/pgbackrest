@@ -909,9 +909,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupInit()"))
     {
-        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
 
@@ -920,8 +917,8 @@ testRun(void)
 
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
@@ -940,8 +937,8 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
@@ -950,7 +947,7 @@ testRun(void)
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, hrnPgCatalogVersion(PG_VERSION_92), NULL)),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    check backup-standby");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "check backup-standby");
 
         TEST_RESULT_LOG(
             "P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary");
@@ -964,11 +961,11 @@ testRun(void)
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
@@ -986,23 +983,23 @@ testRun(void)
         TEST_TITLE("reset start-fast when PostgreSQL < 8.4");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        strLstAddZ(argList, "--" CFGOPT_START_FAST);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawBool(argList, cfgOptStartFast, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, hrnPgCatalogVersion(PG_VERSION_83), NULL)),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "    check start-fast");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "check start-fast");
 
         TEST_RESULT_LOG("P00   WARN: start-fast option is only available in PostgreSQL >= 8.4");
 
@@ -1010,23 +1007,23 @@ testRun(void)
         TEST_TITLE("reset stop-auto when PostgreSQL < 9.3");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, hrnPgCatalogVersion(PG_VERSION_84), NULL)),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "    check stop-auto");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "check stop-auto");
 
         TEST_RESULT_LOG("P00   WARN: stop-auto option is only available in PostgreSQL >= 9.3");
 
@@ -1034,22 +1031,22 @@ testRun(void)
         TEST_TITLE("reset checksum-page when the cluster does not have checksums enabled");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
+        hrnCfgArgRawBool(argList, cfgOptChecksumPage, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
 
             HRNPQ_MACRO_DONE()
         });
@@ -1057,7 +1054,7 @@ testRun(void)
         TEST_RESULT_VOID(
             dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
         TEST_RESULT_LOG(
             "P00   WARN: checksum-page option set to true but checksums are not enabled on the cluster, resetting to false");
@@ -1066,22 +1063,22 @@ testRun(void)
         TEST_TITLE("ok if cluster checksums are enabled and checksum-page is any value");
 
         // Create pg_control with page checksums
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .pageChecksum = true}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_CHECKSUM_PAGE);
+        hrnCfgArgRawBool(argList, cfgOptChecksumPage, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
 
             HRNPQ_MACRO_DONE()
         });
@@ -1089,17 +1086,17 @@ testRun(void)
         TEST_RESULT_VOID(
             dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
         // Create pg_control without page checksums
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
 
             HRNPQ_MACRO_DONE()
         });
@@ -1107,7 +1104,7 @@ testRun(void)
         TEST_RESULT_VOID(
             dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
     }
 
     // *****************************************************************************************************************************
