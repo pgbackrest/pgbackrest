@@ -568,29 +568,54 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
         dbExec(this, STRDEF("checkpoint"));
 
         // On PostgreSQL >= 9.6 the checkpoint location can be verified
-        //
-        // ??? We have seen one instance where this check failed.  Is there any chance that the replayed position could be ahead of
-        // the checkpoint recorded in pg_control?  It seems possible since it would be safer if the checkpoint in pg_control was
-        // behind rather than ahead, so add a loop to keep checking until the checkpoint has been recorded or timeout.
+        // Loop until lsn has been reached or timeout
+        wait = waitNew(timeout);
+        targetReached = false;
+        const String *checkpointLsn = NULL;
+
         if (dbPgVersion(this) >= PG_VERSION_96)
         {
-            // Build the query
-            const String *query = strNewFmt(
-                "select (checkpoint_%s > '%s')::bool as targetReached,\n"
-                "       checkpoint_%s::text as checkpointLsn\n"
-                "  from pg_catalog.pg_control_checkpoint()",
-                lsnName, strZ(targetLsn), lsnName);
+            do
+            {
+                // Build the query
+                String *query = strNewFmt(
+                    "select checkpoint_%s::text,\n"
+                    "       (checkpoint_%s > '%s')::bool as targetReached",
+                    lsnName, strZ(targetLsn), lsnName);
 
-            // Execute query
-            VariantList *row = dbQueryRow(this, query);
+                if (checkpointLsn != NULL)
+                {
+                    strCatFmt(
+                        query,
+                        ",\n"
+                        "       (checkpoint_%s > '%s')::bool as checkpointProgress",
+                        lsnName, strZ(checkpointLsn));
+                }
 
-            // Verify target was reached
-            if (!varBool(varLstGet(row, 0)))
+                strCatFmt(
+                    query,
+                    "\n"
+                    "  from pg_catalog.pg_control_checkpoint() as checkpointLsn");
+
+                // Execute the query and get checkpointLsn
+                VariantList *row = dbQueryRow(this, query);
+                checkpointLsn = varStr(varLstGet(row, 0));
+                targetReached = varBool(varLstGet(row, 1));
+
+                // If the target has not been reached but progress is being made then reset the timer
+                if (!targetReached && varLstSize(row) > 2 && varBool(varLstGet(row, 2)))
+                    wait = waitNew(timeout);
+
+                protocolKeepAlive();
+            }
+            while (!targetReached && waitMore(wait));
+
+            // Error if a timeout occurred before the target lsn was reached
+            if (!targetReached)
             {
                 THROW_FMT(
-                    ArchiveTimeoutError,
-                    "the checkpoint lsn %s is less than the target lsn %s even though the replay lsn is %s",
-                    strZ(varStr(varLstGet(row, 1))), strZ(targetLsn), strZ(replayLsn));
+                    ArchiveTimeoutError, "timeout before standby checkpoint lsn reached %s - only reached %s", strZ(targetLsn),
+                    strZ(checkpointLsn));
             }
         }
     }
