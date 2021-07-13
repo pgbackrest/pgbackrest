@@ -175,19 +175,47 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 
 /**********************************************************************************************************************************/
 void
-testStorageGet(const Storage *const storage, const char *const file, const char *const expected, const TestStorageGetParam param)
+testStorageGet(const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param)
 {
     hrnTestResultBegin(__func__, false);
 
     ASSERT(storage != NULL);
     ASSERT(file != NULL);
 
-    const String *const fileFull = storagePathP(storage, STR(file));
+    String *fileFull = storagePathP(storage, STR(file));
 
-    printf("test content of '%s'", strZ(fileFull));
+    // Add compression extension if one exists
+    compressExtCat(fileFull, param.compressType);
+
+    // Declare an information filter for displaying paramaters to the output
+    String *const filter = strNew();
+
+    StorageRead *read = storageNewReadP(storage, fileFull);
+    IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
+
+    // Add decrypt filter
+    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
+    {
+        // Default to main cipher pass
+        if (param.cipherPass == NULL)
+            param.cipherPass = TEST_CIPHER_PASS;
+
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, param.cipherType, BUFSTRZ(param.cipherPass), NULL));
+
+        strCatFmt(filter, "enc[%s,%s] ", strZ(strIdToStr(param.cipherType)), param.cipherPass);
+    }
+
+    // Add decompress filter
+    if (param.compressType != compressTypeNone)
+    {
+        ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
+        ioFilterGroupAdd(filterGroup, decompressFilter(param.compressType));
+    }
+
+    printf("test content of %s'%s'", strEmpty(filter) ? "" : strZ(filter), strZ(fileFull));
     hrnTestResultComment(param.comment);
 
-    hrnTestResultZ(strZ(strNewBuf(storageGetP(storageNewReadP(storage, fileFull)))), expected, harnessTestResultOperationEq);
+    hrnTestResultZ(strZ(strNewBuf(storageGetP(read))), expected, harnessTestResultOperationEq);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);
@@ -314,7 +342,7 @@ hrnStorageMode(const Storage *const storage, const char *const path, HrnStorageM
 
     ASSERT(storage != NULL);
 
-    const char *const pathFull = strZ(storagePathP(storage, STR(path)));
+    const char *const pathFull = strZ(storagePathP(storage, path == NULL ? NULL : STR(path)));
 
     // If no mode specified then default the mode based on the file type
     if (param.mode == 0)
@@ -423,7 +451,7 @@ hrnStoragePut(
         ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
         ioFilterGroupAdd(filterGroup, compressFilter(param.compressType, 1));
 
-        strCatFmt(filter, "%scmp[%s]",  strEmpty(filter) ? "" : "/", strZ(compressTypeStr(param.compressType)));
+        strCatFmt(filter, "%scmp[%s]", strEmpty(filter) ? "" : "/", strZ(compressTypeStr(param.compressType)));
     }
 
     // Add encrypted filter
@@ -434,14 +462,12 @@ hrnStoragePut(
             param.cipherPass = TEST_CIPHER_PASS;
 
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, param.cipherType, BUFSTRZ(param.cipherPass), NULL));
-
-        strCatFmt(filter, "%senc[%s,%s]", strEmpty(filter) ? "" : "/", strZ(strIdToStr(param.cipherType)), param.cipherPass);
     }
 
     // Add file name
     printf(
-        "%s %s%s%s'%s%s'", logPrefix != NULL ? logPrefix : "put file", buffer == NULL || bufEmpty(buffer) ? "(empty) " : "",
-        strZ(filter), strEmpty(filter) ? "" : " ", strZ(storagePathP(storage, fileStr)), strZ(compressExtStr(param.compressType)));
+        "%s %s%s%s'%s'", logPrefix != NULL ? logPrefix : "put file", buffer == NULL || bufEmpty(buffer) ? "(empty) " : "",
+        strZ(filter), strEmpty(filter) ? "" : " ", strZ(storagePathP(storage, fileStr)));
     hrnTestResultComment(param.comment);
 
     // Put file

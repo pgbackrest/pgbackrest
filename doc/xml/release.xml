@@ -14,6 +14,66 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.35dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <p><b>IMPORTANT NOTE</b>: The log level for copied files in the <cmd>backup</cmd>/<cmd>restore</cmd> commands has been changed to <id>detail</id>. This makes the <id>info</id> log level less noisy but if these messages are required then set the log level for the <cmd>backup</cmd>/<cmd>restore</cmd> commands to <id>detail</id>.</p>
+
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1116"/>
+                        <github-issue id="1433"/>
+                        <github-pull-request id="1438"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="marco.montagna"/>
+                            <release-item-ideator id="lev.kokotov"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Detect errors in <proper>S3</proper> multi-part upload finalize.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1447"/>
+                        <github-pull-request id="1452"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="rohit.raveendran"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix detection of circular symlinks.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-issue id="1445"/>
+                        <github-pull-request id="1454"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="chris.bandy"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically create data directory on <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1277"/>
+                        <github-pull-request id="1455"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jens.wilke"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Change level of <cmd>backup</cmd>/<cmd>restore</cmd> copied file logging to detail.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <github-pull-request id="1424"/>
@@ -68,6 +128,17 @@
             <release-test-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-pull-request id="1457"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add CodeQL static code analysis.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Update command/expire test to use standard patterns.">
                             <github-pull-request id="1420"/>
                         </commit>
@@ -99,6 +170,10 @@
                         <commit subject="Update command/archive tests to use standard patterns.">
                             <github-pull-request id="1449"/>
                         </commit>
+                        <commit subject="Update command/control and command/command tests to use standard patterns.">
+                            <github-pull-request id="1456"/>
+                        </commit>
+                        <commit subject="Add cipher parameters to TEST_STORAGE_GET() macro."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
@@ -9766,6 +9841,11 @@
             <contributor-name-display>Chiranjeevi Ravilla</contributor-name-display>
         </contributor>
 
+        <contributor id="chris.bandy">
+            <contributor-name-display>Chris Bandy</contributor-name-display>
+            <contributor-id type="github">cbandy</contributor-id>
+        </contributor>
+
         <contributor id="chris.barber">
             <contributor-name-display>Chris Barber</contributor-name-display>
             <contributor-id type="github">gamerscomplete</contributor-id>
@@ -10137,6 +10217,11 @@
             <contributor-id type="github">marco44</contributor-id>
         </contributor>
 
+        <contributor id="marco.montagna">
+            <contributor-name-display>Marco Montagna</contributor-name-display>
+            <contributor-id type="github">mmontagna</contributor-id>
+        </contributor>
+
         <contributor id="markus.nullmeier">
             <contributor-name-display>Markus Nullmeier</contributor-name-display>
             <contributor-id type="github">mnullmei</contributor-id>
@@ -10260,6 +10345,11 @@
         <contributor id="rakshitha.br">
             <contributor-name-display>Rakshitha-BR</contributor-name-display>
             <contributor-id type="github">Rakshitha-BR</contributor-id>
+        </contributor>
+
+        <contributor id="rohit.raveendran">
+            <contributor-name-display>Rohit Raveendran</contributor-name-display>
+            <contributor-id type="github">rohitrav33ndran</contributor-id>
         </contributor>
 
         <contributor id="ronan.dunklau">

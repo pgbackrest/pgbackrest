@@ -351,33 +351,33 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3"))
     {
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("s3 server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls, .port = port),
+                        ioFdReadNew(STRDEF("s3 server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolTls, .port = port),
                     "s3 server run");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
+                        ioFdReadNew(STRDEF("auth server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
                         .port = authPort),
                     "auth server run");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
                 IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("s3 client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdWriteNew(STRDEF("s3 client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000));
                 IoWrite *auth = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
+                    ioFdWriteNew(STRDEF("auth client write"), HRN_FORK_PARENT_WRITE_PROCESS(1), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("config with keys, token, and host with custom port");
@@ -686,10 +686,68 @@ testRun(void)
                         "<Part><PartNumber>1</PartNumber><ETag>WxRt1</ETag></Part>"
                         "<Part><PartNumber>2</PartNumber><ETag>WxRt2</ETag></Part>"
                         "</CompleteMultipartUpload>\n");
-                testResponseP(service);
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error in success response of multipart upload");
+
+                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "<Bucket>bucket</Bucket>"
+                        "<Key>file.txt</Key>"
+                        "<UploadId>WxRt</UploadId>"
+                        "</InitiateMultipartUploadResult>");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", .content = "1234567890123456");
+                testResponseP(service, .header = "etag:WxRt1");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", .content = "7890123456789012");
+                testResponseP(service, .header = "eTag:WxRt2");
+
+                testRequestP(
+                    service, s3, HTTP_VERB_POST, "/file.txt?uploadId=WxRt",
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                        "<CompleteMultipartUpload>"
+                        "<Part><PartNumber>1</PartNumber><ETag>WxRt1</ETag></Part>"
+                        "<Part><PartNumber>2</PartNumber><ETag>WxRt2</ETag></Part>"
+                        "</CompleteMultipartUpload>\n");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>");
+
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
+                TEST_ERROR(
+                    storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), ProtocolError,
+                    "HTTP request failed with 200 (OK):\n"
+                    "*** Path/Query ***:\n"
+                    "/file.txt?uploadId=WxRt\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 205\n"
+                    "content-md5: 37smUM6Ah2/EjZbp420dPw==\n"
+                    "host: bucket.s3.amazonaws.com\n"
+                    "x-amz-content-sha256: 0838a79dfbddc2128d28fb4fa8d605e0a8e6d1355094000f39b6eb3feff4641f\n"
+                    "x-amz-date: <redacted>\n"
+                    "x-amz-security-token: <redacted>\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: 110\n"
+                        "*** Response Content ***:\n"
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
@@ -719,7 +777,11 @@ testRun(void)
                         "<Part><PartNumber>1</PartNumber><ETag>RR551</ETag></Part>"
                         "<Part><PartNumber>2</PartNumber><ETag>RR552</ETag></Part>"
                         "</CompleteMultipartUpload>\n");
-                testResponseP(service);
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
@@ -1178,9 +1240,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

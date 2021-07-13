@@ -1414,8 +1414,8 @@ testRun(void)
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it"
                 " looks like " PG_NAME " is running and the backup will probably not be consistent\n"
-            "P01   INFO: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
-            "P01   INFO: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100%%) checksum"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100%%) checksum"
                 " e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: full backup size = 8KB\n"
             "P00   INFO: new backup label = [FULL-1]",
@@ -1469,7 +1469,7 @@ testRun(void)
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: incr backup cannot alter 'checksum-page' option to 'true', reset to 'false' from [FULL-1]\n"
             "P00   WARN: backup '[DIFF-1]' cannot be resumed: new backup type 'incr' does not match resumable backup type 'diff'\n"
-            "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: incr backup size = 3B\n"
@@ -1495,7 +1495,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: diff backup size = 3B\n"
@@ -1518,7 +1518,6 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo2");
 
         // Set log level to warn
-        harnessLogLevelReset();
         harnessLogLevelSet(logLevelWarn);
 
         // With repo2 the only repo configured, ensure it is chosen by confirming diff is changed to full due to no prior backups
@@ -1533,9 +1532,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo");
 
-        // Set log level to info
-        harnessLogLevelReset();
-        harnessLogLevelSet(logLevelInfo);
+        // Set log level to detail
+        harnessLogLevelSet(logLevelDetail);
 
         // Add repo1 to the configuration
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
@@ -1547,7 +1545,9 @@ testRun(void)
             "P00   INFO: repo option not specified, defaulting to repo1\n"
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
-            "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
+            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
+            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: diff backup size = 3B\n"
             "P00   INFO: new backup label = [DIFF-3]");
 
@@ -1565,7 +1565,9 @@ testRun(void)
         TEST_RESULT_VOID(cmdBackup(), "backup");
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
-            "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
+            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-2]\n"
+            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-2]\n"
             "P00   INFO: diff backup size = 3B\n"
             "P00   INFO: new backup label = [DIFF-4]");
         TEST_RESULT_UINT(
@@ -1680,8 +1682,8 @@ testRun(void)
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
                 "P00   WARN: resumable backup 20191002-070640F of same type exists -- remove invalid files and resume\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
@@ -1848,13 +1850,13 @@ testRun(void)
                     " backup (mismatched timestamp)\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/zero-size.gz' from resumed"
                     " backup (zero size)\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/time-mismatch (4B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/size-mismatch (4B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/zero-size (0B, [PCT])\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/size-mismatch (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/zero-size (0B, [PCT])\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D95D3000000000, lsn = 5d95d30/800000\n"
@@ -2015,9 +2017,9 @@ testRun(void)
                     " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
                     " an issue unless the resumed backup path in the repository is known to be corrupted.\n"
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/resume-ref (0B, [PCT])\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/resume-ref (0B, [PCT])\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191003-105320F\n"
                 "P00 DETAIL: hardlink pg_data/global/pg_control to 20191003-105320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
@@ -2330,18 +2332,18 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB5DE000000000, lsn = 5db5de0/0\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/base/1/3 (32KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (32KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksums found in file " TEST_PATH "/pg1/base/1/3 at pages 0, 2-3\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/base/1/4 (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/4 (24KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/base/1/4 at page 1\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/base/1/2 (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (8KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/2: file size 8193 is not divisible by page size"
                     " 8192\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB5DE000000002, lsn = 5db5de0/280000\n"

@@ -143,22 +143,22 @@ testRun(void)
         HRN_SYSTEM_FMT("rm %s", strZ(fileExists));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN(0, false)
             {
                 sleepMSec(250);
                 HRN_SYSTEM_FMT("touch %s", strZ(fileExists));
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
                 TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1000), true, "file exists after wait");
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         HRN_SYSTEM_FMT("rm %s", strZ(fileExists));
     }

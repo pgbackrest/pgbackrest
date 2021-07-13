@@ -53,19 +53,20 @@ httpDateToTime(const String *lastModified)
 }
 
 String *
-httpDateFromTime(time_t time)
+httpDateFromTime(const time_t time)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(TIME, time);
     FUNCTION_TEST_END();
 
-    struct tm *timePart = gmtime(&time);
+    struct tm timePart;
+    gmtime_r(&time, &timePart);
 
     FUNCTION_TEST_RETURN(
         strNewFmt(
-            "%s, %02d %s %04d %02d:%02d:%02d GMT", httpCommonDayList[timePart->tm_wday], timePart->tm_mday,
-            httpCommonMonthList[timePart->tm_mon], timePart->tm_year + 1900, timePart->tm_hour, timePart->tm_min,
-            timePart->tm_sec));
+            "%s, %02d %s %04d %02d:%02d:%02d GMT", httpCommonDayList[timePart.tm_wday], timePart.tm_mday,
+            httpCommonMonthList[timePart.tm_mon], timePart.tm_year + 1900, timePart.tm_hour, timePart.tm_min,
+            timePart.tm_sec));
 }
 
 /**********************************************************************************************************************************/

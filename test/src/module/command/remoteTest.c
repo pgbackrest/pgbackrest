@@ -27,9 +27,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no lock is required because process is > 0 (not the main remote)");
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
@@ -37,31 +37,29 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdInfo, argList, .role = cfgCmdRoleRemote);
 
-                cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
-                ProtocolClient *client = protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write);
+                ProtocolClient *client = protocolClientNew(
+                    STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                    ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
+                    ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000));
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no remote lock is required for this command");
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--process=0");
@@ -71,32 +69,32 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
-                cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 ProtocolClient *client = NULL;
-                TEST_ASSIGN(client, protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), "create client");
+                TEST_ASSIGN(
+                    client,
+                    protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                    "create client");
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remote lock is required but lock path is invalid");
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
@@ -105,31 +103,29 @@ testRun(void)
                 strLstAddZ(argList, "--lock-path=/bogus");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
-                cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), PathCreateError,
-                    "raised from test: unable to create path '/bogus': [13] Permission denied");
+                    protocolClientNew(
+                        STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                    PathCreateError, "raised from test: unable to create path '/bogus': [13] Permission denied");
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remote lock is required and succeeds");
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
@@ -138,19 +134,20 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
-                cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 ProtocolClient *client = NULL;
-                TEST_ASSIGN(client, protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), "create client");
+                TEST_ASSIGN(
+                    client,
+                    protocolClientNew(
+                        STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                    "create client");
                 protocolClientNoOp(client);
 
                 TEST_RESULT_BOOL(
@@ -159,16 +156,16 @@ testRun(void)
 
                 protocolClientFree(client);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remote lock is required but stop file exists");
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
@@ -176,28 +173,26 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
-                cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
+                cmdRemote(HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 storagePutP(storageNewWriteP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), NULL);
 
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), StopError,
-                    "raised from test: stop file exists for all stanzas");
+                    protocolClientNew(
+                        STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000)),
+                    StopError, "raised from test: stop file exists for all stanzas");
 
                 storageRemoveP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT));
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

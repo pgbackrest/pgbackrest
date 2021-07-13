@@ -277,46 +277,46 @@ testRun(void)
     {
         HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("gcs server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        ioFdReadNew(STRDEF("gcs server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
                         .port = testPort),
                     "gcs server run");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        ioFdReadNew(STRDEF("auth server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
                         .port = testPortAuth),
                     "auth server run");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(0, true)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("meta server read"), HARNESS_FORK_CHILD_READ(), 10000), hrnServerProtocolSocket,
+                        ioFdReadNew(STRDEF("meta server read"), HRN_FORK_CHILD_READ(), 10000), hrnServerProtocolSocket,
                         .port = testPortMeta),
                     "meta server run");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
                 IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("gcs client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdWriteNew(STRDEF("gcs client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000));
                 IoWrite *auth = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
+                    ioFdWriteNew(STRDEF("auth client write"), HRN_FORK_PARENT_WRITE_PROCESS(1), 2000));
                 IoWrite *meta = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("meta client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(2), 2000));
+                    ioFdWriteNew(STRDEF("meta client write"), HRN_FORK_PARENT_WRITE_PROCESS(2), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test service auth");
@@ -976,9 +976,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
