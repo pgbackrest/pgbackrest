@@ -44,9 +44,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 ProtocolClient *client = protocolClientNew(
-                    STRDEF("test"), PROTOCOL_SERVICE_LOCAL_STR,
-                    ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                    ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+                    STRDEF("test"), PROTOCOL_SERVICE_LOCAL_STR, HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0));
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }

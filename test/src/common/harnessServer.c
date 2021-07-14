@@ -78,8 +78,6 @@ IoWrite *hrnServerScriptBegin(IoWrite *write)
 
     ASSERT(write != NULL);
 
-    ioWriteOpen(write);
-
     FUNCTION_HARNESS_RETURN(IO_WRITE, write);
 }
 
@@ -224,9 +222,6 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
     // Set port to index 0 if not specified
     if (param.port == 0)
         param.port = hrnServerPort(0);
-
-    // Open read connection to client
-    ioReadOpen(read);
 
     // Add test hosts
     if (testContainer())
