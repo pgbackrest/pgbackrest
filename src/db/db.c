@@ -567,14 +567,13 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
         // Perform a checkpoint
         dbExec(this, STRDEF("checkpoint"));
 
-        // On PostgreSQL >= 9.6 the checkpoint location can be verified
-        // Loop until lsn has been reached or timeout
-        wait = waitNew(timeout);
-        targetReached = false;
-        const String *checkpointLsn = NULL;
-
+        // On PostgreSQL >= 9.6 the checkpoint location can be verified so loop until lsn has been reached or timeout
         if (dbPgVersion(this) >= PG_VERSION_96)
         {
+            wait = waitNew(timeout);
+            targetReached = false;
+            const String *checkpointLsn = NULL;
+
             do
             {
                 // Build the query
