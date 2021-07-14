@@ -267,18 +267,15 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN()
+            HRN_FORK_CHILD_BEGIN(.prefix = "azure server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(ioFdReadNew(STRDEF("azure server read"), HRN_FORK_CHILD_READ_FD(), 5000), hrnServerProtocolTls),
-                    "azure server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls), "azure server run");
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN(.prefix = "azure client")
             {
-                IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("azure client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+                IoWrite *service = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test against local host");
