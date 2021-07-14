@@ -970,7 +970,7 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'target-exclusive' not valid without option 'type' in ('time', 'xid')");
+            "option 'target-exclusive' not valid without option 'type' in ('lsn', 'time', 'xid')");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
