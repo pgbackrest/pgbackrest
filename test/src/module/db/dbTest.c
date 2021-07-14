@@ -45,39 +45,6 @@ Macro to check that replay is making progress -- this does not seem useful enoug
         sessionParam, "wal", "lsn", targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam,   \
         sleepParam)
 
-#define HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_PROGRESS(                                                                            \
-    sessionParam, lsnNameParam, targetLsnParam, targetReachedParam, checkpointLsnParam, checkpointLastLsnParam,                    \
-    checkpointProgressParam, sleepParam)                                                                                           \
-    {.session = sessionParam,                                                                                                      \
-        .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param =                                                                                                                   \
-            "[\"select checkpoint_" lsnNameParam "::text,\\n"                                                                      \
-            "       (checkpoint_" lsnNameParam " > '" targetLsnParam "')::bool as targetReached,\\n"                               \
-            "       (checkpoint_" lsnNameParam " > '" checkpointLastLsnParam "')::bool as checkpointProgress\\n"                   \
-            "  from pg_catalog.pg_control_checkpoint() as checkpointLsn\"]",                                                       \
-        .resultInt = 1, .sleep = sleepParam},                                                                                      \
-    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
-    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
-    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
-    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
-    {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
-    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 3},                                                          \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_TEXT},                              \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_BOOL},                              \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_BOOL},                              \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = checkpointLsnParam},                        \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = cvtBoolToConstZ(targetReachedParam)},       \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = cvtBoolToConstZ(checkpointProgressParam)},  \
-    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
-    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
-
-#define HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_PROGRESS_GE_10(                                                                      \
-    sessionParam, targetLsnParam, targetReachedParam, checkpointLsnParam, checkpointLastLsnParam, checkpointProgressParam,         \
-    sleepParam)                                                                                                                    \
-    HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_PROGRESS(                                                                                \
-        sessionParam, "lsn", targetLsnParam, targetReachedParam, checkpointLsnParam, checkpointLastLsnParam,                       \
-        checkpointProgressParam, sleepParam)
-
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -512,9 +479,8 @@ testRun(void)
             // Checkpoint target timeout waiting for sync
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", true, "5/5"),
             HRNPQ_MACRO_CHECKPOINT(2),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 250),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 250),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 0),
 
             // Wait for standby to sync
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
@@ -522,10 +488,7 @@ testRun(void)
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
             HRNPQ_MACRO_CHECKPOINT(2),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0),
 
             // Close standby
             HRNPQ_MACRO_CLOSE(2),
@@ -554,7 +517,7 @@ testRun(void)
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), 200), ArchiveTimeoutError,
-            "timeout before standby checkpoint lsn reached 5/5 - only reached 5/3");
+            "timeout before standby checkpoint lsn reached 5/5 - only reached 5/4");
 
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), 1000), "sync standby");
 

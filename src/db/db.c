@@ -578,33 +578,16 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
             do
             {
                 // Build the query
-                String *query = strNewFmt(
+                const String *query = strNewFmt(
                     "select checkpoint_%s::text,\n"
-                    "       (checkpoint_%s > '%s')::bool as targetReached",
+                    "       (checkpoint_%s > '%s')::bool as targetReached\n"
+                    "  from pg_catalog.pg_control_checkpoint() as checkpointLsn",
                     lsnName, lsnName, strZ(targetLsn));
-
-                if (checkpointLsn != NULL)
-                {
-                    strCatFmt(
-                        query,
-                        ",\n"
-                        "       (checkpoint_%s > '%s')::bool as checkpointProgress",
-                        lsnName, strZ(checkpointLsn));
-                }
-
-                strCatFmt(
-                    query,
-                    "\n"
-                    "  from pg_catalog.pg_control_checkpoint() as checkpointLsn");
 
                 // Execute the query and get checkpointLsn
                 VariantList *row = dbQueryRow(this, query);
                 checkpointLsn = varStr(varLstGet(row, 0));
                 targetReached = varBool(varLstGet(row, 1));
-
-                // If the target has not been reached but progress is being made then reset the timer
-                if (!targetReached && varLstSize(row) > 2 && varBool(varLstGet(row, 2)))
-                    wait = waitNew(timeout);
 
                 protocolKeepAlive();
             }
