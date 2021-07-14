@@ -579,15 +579,15 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
             {
                 // Build the query
                 const String *query = strNewFmt(
-                    "select checkpoint_%s::text,\n"
-                    "       (checkpoint_%s > '%s')::bool as targetReached\n"
-                    "  from pg_catalog.pg_control_checkpoint() as checkpointLsn",
-                    lsnName, lsnName, strZ(targetLsn));
+                    "select (checkpoint_%s > '%s')::bool as targetReached,\n"
+                    "       checkpoint_%s::text as checkpointLsn\n"
+                    "  from pg_catalog.pg_control_checkpoint()",
+                    lsnName, strZ(targetLsn), lsnName);
 
                 // Execute the query and get checkpointLsn
                 VariantList *row = dbQueryRow(this, query);
-                checkpointLsn = varStr(varLstGet(row, 0));
-                targetReached = varBool(varLstGet(row, 1));
+                targetReached = varBool(varLstGet(row, 0));
+                checkpointLsn = varStr(varLstGet(row, 1));
 
                 protocolKeepAlive();
             }
