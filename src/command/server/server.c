@@ -36,19 +36,21 @@ cmdServer(uint64_t connectionMax)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        IoServer *socketServer = sckServerNew(host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
-        IoServer *tlsServer = tlsServerNew(
+        IoServer *const socketServer = sckServerNew(
+            host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
+        IoServer *const tlsServer = tlsServerNew(
            host, cfgOptionStr(cfgOptTlsServerKey), cfgOptionStr(cfgOptTlsServerCert), cfgOptionUInt64(cfgOptProtocolTimeout));
 
     // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE
     // REPLACED WITH A STOP REQUEST FROM AN AUTHENTICATED CLIENT.
     do
     {
-        IoSession *socketSession = ioServerAccept(socketServer, NULL);
-        IoSession *tlsSession = ioServerAccept(tlsServer, socketSession);
+        IoSession *const socketSession = ioServerAccept(socketServer, NULL);
+        IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
+        (void)tlsSession; // !!!
 
-        ProtocolServer *server = protocolServerNew(
-            strNewFmt(PROTOCOL_SERVICE_REMOTE "-%s", strZ(cfgOptionDisplay(cfgOptProcess))), PROTOCOL_SERVICE_REMOTE_STR,
+        ProtocolServer *const server = protocolServerNew(
+            strNewFmt(PROTOCOL_SERVICE_REMOTE "-%s", "0" /* !!! strZ(cfgOptionDisplay(cfgOptProcess))*/), PROTOCOL_SERVICE_REMOTE_STR,
             ioSessionIoRead(tlsSession), ioSessionIoWrite(tlsSession));
 
         // Get the command and put data end. No need to check parameters since we know this is the first noop.

@@ -905,7 +905,7 @@ option:
   tls-server-port:
     section: global
     type: integer
-    default: 8424
+    default: 8432
     allow-range: [1, 65535]
     command:
       server: {}
@@ -1650,6 +1650,7 @@ option:
     command:
       archive-get: {}
       archive-push: {}
+      backup: {}
       check: {}
       info: {}
       repo-create: {}

@@ -566,7 +566,8 @@ protocolRemoteExec(
     helper->client = protocolClientNew(
         strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR, read, write);
 
-    protocolClientMove(helper->client, execMemContext(helper->exec));
+    if (remoteType == CFGOPTVAL_REPO_HOST_TYPE_SSH)
+        protocolClientMove(helper->client, execMemContext(helper->exec));
 
     FUNCTION_TEST_RETURN_VOID();
 }

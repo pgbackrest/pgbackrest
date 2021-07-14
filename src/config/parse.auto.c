@@ -4023,6 +4023,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
@@ -4047,6 +4048,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
@@ -4071,6 +4073,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
@@ -4095,6 +4098,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
@@ -4120,6 +4124,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
@@ -4144,6 +4149,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
@@ -4169,6 +4175,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
@@ -4193,6 +4200,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
@@ -4218,6 +4226,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
@@ -4242,6 +4251,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
@@ -4330,6 +4340,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
@@ -4354,6 +4365,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
@@ -6637,7 +6649,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
             PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(1, 65535),
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("8424"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("8432"),
         ),
     ),
 
