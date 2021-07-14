@@ -380,7 +380,7 @@ testRun(void)
         // Test in a fork so the process does not actually exit
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(UnhandledError.code, false)
+            HRN_FORK_CHILD_BEGIN(.expectedExitStatus = UnhandledError.code)
             {
                 THROW(TestChildError, "does not get caught!");
             }

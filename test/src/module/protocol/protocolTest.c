@@ -435,25 +435,23 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_CHILD_READ(), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_CHILD_WRITE(), 2000);
-
                 // Various bogus greetings
                 // -----------------------------------------------------------------------------------------------------------------
-                ioWriteStrLine(write, STRDEF("bogus greeting"));
-                ioWriteFlush(write);
-                ioWriteStrLine(write, STRDEF("{\"name\":999}"));
-                ioWriteFlush(write);
-                ioWriteStrLine(write, STRDEF("{\"name\":null}"));
-                ioWriteFlush(write);
-                ioWriteStrLine(write, STRDEF("{\"name\":\"bogus\"}"));
-                ioWriteFlush(write);
-                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"bogus\"}"));
-                ioWriteFlush(write);
-                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
-                ioWriteFlush(write);
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("bogus greeting"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":999}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":null}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"bogus\"}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"pgBackRest\",\"service\":\"bogus\"}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+                ioWriteStrLine(
+                    HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server");
@@ -465,7 +463,8 @@ testRun(void)
                     TEST_ASSIGN(
                         server,
                         protocolServerMove(
-                            protocolServerNew(STRDEF("test server"), STRDEF("test"), read, write), memContextPrior()),
+                            protocolServerNew(STRDEF("test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
+                            memContextPrior()),
                         "new server");
                     TEST_RESULT_VOID(protocolServerMove(NULL, memContextPrior()), "move null server");
                 }
@@ -483,7 +482,8 @@ testRun(void)
                 varLstAdd(retryList, varNewUInt64(0));
 
                 TEST_ASSIGN(
-                    server, protocolServerNew(STRDEF("test server"), STRDEF("test"), read, write), "new server");
+                    server, protocolServerNew(STRDEF("test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
+                    "new server");
 
                 // This cannot run in a TEST* macro because tests are run by the command handlers
                 protocolServerProcess(server, retryList, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
@@ -492,31 +492,31 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("client read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000);
-
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings");
 
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), JsonFormatError,
-                    "expected '{' at 'bogus greeting'");
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    JsonFormatError, "expected '{' at 'bogus greeting'");
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
-                    "greeting key 'name' must be string type");
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError, "greeting key 'name' must be string type");
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
-                    "unable to find greeting key 'name'");
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError, "unable to find greeting key 'name'");
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError,
                     "expected value 'pgBackRest' for greeting key 'name' but got 'bogus'\n"
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError,
                     "expected value 'test' for greeting key 'service' but got 'bogus'\n"
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
                 TEST_ERROR(
-                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError,
                     "expected value '" PROJECT_VERSION "' for greeting key 'version' but got 'bogus'\n"
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
 
@@ -530,7 +530,9 @@ testRun(void)
                     TEST_ASSIGN(
                         client,
                         protocolClientMove(
-                            protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), memContextPrior()),
+                            protocolClientNew(
+                                STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                            memContextPrior()),
                         "new client");
                     TEST_RESULT_VOID(protocolClientMove(NULL, memContextPrior()), "move null client");
                 }
@@ -608,7 +610,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("new client with server retries");
 
-                TEST_ASSIGN(client, protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), "new client");
+                TEST_ASSIGN(
+                    client,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    "new client");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command with retry");
@@ -656,18 +661,15 @@ testRun(void)
         TEST_RESULT_VOID(protocolParallelJobFree(job), "free job");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HRN_FORK_BEGIN()
+        HRN_FORK_BEGIN(.timeout = 5000)
         {
             // Local 1
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(.prefix = "local server")
             {
                 ProtocolServer *server = NULL;
                 TEST_ASSIGN(
                     server,
-                    protocolServerNew(
-                        STRDEF("local server 1"), STRDEF("test"),
-                        ioFdReadNewOpen(STRDEF("local server 1 read"), HRN_FORK_CHILD_READ(), 10000),
-                        ioFdWriteNewOpen(STRDEF("local server 1 write"), HRN_FORK_CHILD_WRITE(), 2000)),
+                    protocolServerNew(STRDEF("local server 1"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
                     "local server 1");
 
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
@@ -676,7 +678,8 @@ testRun(void)
                 // Command with output
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-one"), "c-one command get");
 
-                sleepMSec(4000);
+                // Wait for notify from parent
+                HRN_FORK_CHILD_NOTIFY_GET();
 
                 TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 1)), "data end put");
                 TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
@@ -687,15 +690,12 @@ testRun(void)
             HRN_FORK_CHILD_END();
 
             // Local 2
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(.prefix = "local server")
             {
                 ProtocolServer *server = NULL;
                 TEST_ASSIGN(
                     server,
-                    protocolServerNew(
-                        STRDEF("local server 2"), STRDEF("test"),
-                        ioFdReadNewOpen(STRDEF("local server 2 read"), HRN_FORK_CHILD_READ(), 10000),
-                        ioFdWriteNewOpen(STRDEF("local server 2 write"), HRN_FORK_CHILD_WRITE(), 2000)),
+                    protocolServerNew(STRDEF("local server 2"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
                     "local server 2");
 
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
@@ -704,7 +704,8 @@ testRun(void)
                 // Command with output
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c2"), "c2 command get");
 
-                sleepMSec(1000);
+                // Wait for notify from parent
+                HRN_FORK_CHILD_NOTIFY_GET();
 
                 TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 2)), "data end put");
                 TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
@@ -718,7 +719,7 @@ testRun(void)
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN(.prefix = "local client")
             {
                 TestParallelJobCallback data = {.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
                 ProtocolParallel *parallel = NULL;
@@ -726,19 +727,15 @@ testRun(void)
                 TEST_RESULT_STR_Z(protocolParallelToLog(parallel), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
 
                 // Add client
-                unsigned int clientTotal = 2;
                 ProtocolClient *client[HRN_FORK_CHILD_MAX];
 
-                for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
+                for (unsigned int clientIdx = 0; clientIdx < HRN_FORK_PROCESS_TOTAL(); clientIdx++)
                 {
                     TEST_ASSIGN(
                         client[clientIdx],
                         protocolClientNew(
-                            strNewFmt("local client %u", clientIdx), STRDEF("test"),
-                            ioFdReadNewOpen(
-                                strNewFmt("local client %u read", clientIdx), HRN_FORK_PARENT_READ_PROCESS(clientIdx), 2000),
-                            ioFdWriteNewOpen(
-                                strNewFmt("local client %u write", clientIdx), HRN_FORK_PARENT_WRITE_PROCESS(clientIdx), 2000)),
+                            strNewFmt("local client %u", clientIdx), STRDEF("test"), HRN_FORK_PARENT_READ(clientIdx),
+                            HRN_FORK_PARENT_WRITE(clientIdx)),
                         strZ(strNewFmt("local client %u new", clientIdx)));
                     TEST_RESULT_VOID(
                         protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("local client %u add", clientIdx)));
@@ -783,6 +780,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("result for job 2");
 
+                // Notify child to complete command
+                HRN_FORK_PARENT_NOTIFY_PUT(1);
+
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
 
                 TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
@@ -819,6 +819,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("result for job 1");
 
+                // Notify child to complete command
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
+
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
 
                 TEST_ASSIGN(job, protocolParallelResult(parallel), "get result");
@@ -845,7 +848,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free clients");
 
-                for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
+                for (unsigned int clientIdx = 0; clientIdx < HRN_FORK_PROCESS_TOTAL(); clientIdx++)
                     TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), strZ(strNewFmt("free client %u", clientIdx)));
             }
             HRN_FORK_PARENT_END();

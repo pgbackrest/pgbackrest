@@ -93,16 +93,23 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 TEST_RESULT_INT_NE(lockAcquireFile(backupLock, STRDEF("1-test"), 0, true), -1, "lock on fork");
-                sleepMSec(500);
+
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_PARENT_BEGIN()
             {
-                sleepMSec(250);
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+
                 TEST_ERROR(
                     lockAcquireFile(backupLock, STRDEF("2-test"), 0, true),
                     LockAcquireError,
@@ -110,6 +117,9 @@ testRun(void)
                         strNewFmt(
                             "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                             "HINT: is another pgBackRest process running?", strZ(backupLock))));
+
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
             }
             HRN_FORK_PARENT_END();
         }

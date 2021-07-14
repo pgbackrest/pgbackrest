@@ -711,18 +711,16 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("child read"), HRN_FORK_CHILD_READ(), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("child write"), HRN_FORK_CHILD_WRITE(), 2000);
-
                 lockAcquire(
                     cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("555-fefefefe"), cfgLockType(), 30000, true);
 
-                // Let the parent know the lock has been acquired and wait for the parent to allow lock release
-                ioWriteStrLine(write, strNew());
-                ioWriteFlush(write);
-                ioReadLine(read);
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
 
                 lockRelease(true);
             }
@@ -730,19 +728,15 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNewOpen(STRDEF("parent read"), HRN_FORK_PARENT_READ_PROCESS(0), 2000);
-                IoWrite *write = ioFdWriteNewOpen(STRDEF("parent write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000);
-
-                // Wait for the child to acquire the lock
-                ioReadLine(read);
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
 
                 TEST_ERROR(
                     cmdArchivePush(), ArchiveTimeoutError,
                     "unable to push WAL file '000000010000000100000001' to the archive asynchronously after 1 second(s)");
 
-                // Notify the child to release the lock
-                ioWriteLine(write, bufNew(0));
-                ioWriteFlush(write);
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
             }
             HRN_FORK_PARENT_END();
         }

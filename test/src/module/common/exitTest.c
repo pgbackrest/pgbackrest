@@ -34,7 +34,7 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(errorTypeCode(&TermError), false)
+            HRN_FORK_CHILD_BEGIN(.expectedExitStatus = errorTypeCode(&TermError))
             {
                 exitInit();
                 raise(SIGTERM);

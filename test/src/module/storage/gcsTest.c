@@ -279,44 +279,35 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(.prefix = "gcs server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(
-                        ioFdReadNew(STRDEF("gcs server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
-                        .port = testPort),
-                    "gcs server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPort), "gcs server run");
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 5000)
             {
                 TEST_RESULT_VOID(
-                    hrnServerRunP(
-                        ioFdReadNew(STRDEF("auth server read"), HRN_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
-                        .port = testPortAuth),
-                    "auth server run");
+                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPortAuth), "auth server run");
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(.prefix = "meta server", .timeout = 10000)
             {
                 TEST_RESULT_VOID(
-                    hrnServerRunP(
-                        ioFdReadNew(STRDEF("meta server read"), HRN_FORK_CHILD_READ(), 10000), hrnServerProtocolSocket,
-                        .port = testPortMeta),
-                    "meta server run");
+                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = testPortMeta), "meta server run");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_PARENT_BEGIN()
             {
+                // Do not use HRN_FORK_PARENT_WRITE() here so individual names can be assigned to help with debugging
                 IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("gcs client write"), HRN_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                    ioFdWriteNewOpen(STRDEF("gcs client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
                 IoWrite *auth = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("auth client write"), HRN_FORK_PARENT_WRITE_PROCESS(1), 2000));
+                    ioFdWriteNewOpen(STRDEF("auth client write"), HRN_FORK_PARENT_WRITE_FD(1), 2000));
                 IoWrite *meta = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("meta client write"), HRN_FORK_PARENT_WRITE_PROCESS(2), 2000));
+                    ioFdWriteNewOpen(STRDEF("meta client write"), HRN_FORK_PARENT_WRITE_FD(2), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test service auth");

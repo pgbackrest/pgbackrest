@@ -440,7 +440,7 @@ Sometimes it is useful to use a child process for testing. Below is a simple exa
 ```
 HRN_FORK_BEGIN()
 {
-    HRN_FORK_CHILD_BEGIN(0, false)
+    HRN_FORK_CHILD_BEGIN()
     {
         TEST_RESULT_INT_NE(
             lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),

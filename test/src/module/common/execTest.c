@@ -70,7 +70,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 // This is not really fd max but for the purposes of testing is fine -- we won't have more than 64 fds open
                 for (int fd = 0; fd < 64; fd++)
