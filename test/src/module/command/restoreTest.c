@@ -1577,6 +1577,21 @@ testRun(void)
             "check recovery options");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery target lsn");
+
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--type=lsn");
+        strLstAddZ(argList, "--target=LSN");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_10, restoreLabel),
+            RECOVERY_SETTING_HEADER
+            "restore_command = 'my_restore_command'\n"
+            "recovery_target_lsn = 'LSN'\n",
+            "check recovery options");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recovery target action = shutdown");
 
         argList = strLstDup(argBaseList);
