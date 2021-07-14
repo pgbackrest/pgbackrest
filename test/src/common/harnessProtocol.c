@@ -73,12 +73,9 @@ protocolLocalExec(
 
             // Run server with provided handlers
             String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-shim-%u", processId);
-            IoRead *read = ioFdReadNew(name, pipeWrite[0], 5000);
-            ioReadOpen(read);
-            IoWrite *write = ioFdWriteNew(name, pipeRead[1], 5000);
-            ioWriteOpen(write);
-
-            ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);
+            ProtocolServer *server = protocolServerNew(
+                name, PROTOCOL_SERVICE_LOCAL_STR, ioFdReadNewOpen(name, pipeWrite[0], 5000),
+                ioFdWriteNewOpen(name, pipeRead[1], 5000));
             protocolServerProcess(server, NULL, hrnProtocolStatic.localHandlerList, hrnProtocolStatic.localHandlerListSize);
 
             // Exit when done
@@ -90,13 +87,10 @@ protocolLocalExec(
         close(pipeWrite[0]);
 
         // Create protocol object
-        IoRead *read = ioFdReadNew(strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u shim protocol read", processId), pipeRead[0], 5000);
-        ioReadOpen(read);
-        IoWrite *write = ioFdWriteNew(strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u shim protocol write", processId), pipeWrite[1], 5000);
-        ioWriteOpen(write);
-
         helper->client = protocolClientNew(
-            strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u shim protocol", processId), PROTOCOL_SERVICE_LOCAL_STR, read, write);
+            strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u shim protocol", processId), PROTOCOL_SERVICE_LOCAL_STR,
+            ioFdReadNewOpen(strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u shim protocol read", processId), pipeRead[0], 5000),
+            ioFdWriteNewOpen(strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u shim protocol write", processId), pipeWrite[1], 5000));
 
         FUNCTION_LOG_RETURN_VOID();
     }
@@ -169,12 +163,9 @@ protocolRemoteExec(
 
             // Run server with provided handlers
             String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-shim-%u", processId);
-            IoRead *read = ioFdReadNew(name, pipeWrite[0], 5000);
-            ioReadOpen(read);
-            IoWrite *write = ioFdWriteNew(name, pipeRead[1], 5000);
-            ioWriteOpen(write);
-
-            ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);
+            ProtocolServer *server = protocolServerNew(
+                name, PROTOCOL_SERVICE_REMOTE_STR, ioFdReadNewOpen(name, pipeWrite[0], 5000),
+                ioFdWriteNewOpen(name, pipeRead[1], 5000));
             protocolServerProcess(server, NULL, hrnProtocolStatic.remoteHandlerList, hrnProtocolStatic.remoteHandlerListSize);
 
             // Put an end message here to sync with the client to ensure that coverage data is written before exiting
@@ -189,13 +180,10 @@ protocolRemoteExec(
         close(pipeWrite[0]);
 
         // Create protocol object
-        IoRead *read = ioFdReadNew(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol read", processId), pipeRead[0], 5000);
-        ioReadOpen(read);
-        IoWrite *write = ioFdWriteNew(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol write", processId), pipeWrite[1], 5000);
-        ioWriteOpen(write);
-
         helper->client = protocolClientNew(
-            strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol", processId), PROTOCOL_SERVICE_REMOTE_STR, read, write);
+            strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol", processId), PROTOCOL_SERVICE_REMOTE_STR,
+            ioFdReadNewOpen(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol read", processId), pipeRead[0], 5000),
+            ioFdWriteNewOpen(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol write", processId), pipeWrite[1], 5000));
 
         FUNCTION_LOG_RETURN_VOID();
     }

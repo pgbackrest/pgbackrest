@@ -378,15 +378,15 @@ testRun(void)
     if (testBegin("Uncaught error"))
     {
         // Test in a fork so the process does not actually exit
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(UnhandledError.code, false)
+            HRN_FORK_CHILD_BEGIN(.expectedExitStatus = UnhandledError.code)
             {
                 THROW(TestChildError, "does not get caught!");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

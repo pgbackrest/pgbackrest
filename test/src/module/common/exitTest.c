@@ -32,16 +32,16 @@ testRun(void)
     {
         HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(errorTypeCode(&TermError), false)
+            HRN_FORK_CHILD_BEGIN(.expectedExitStatus = errorTypeCode(&TermError))
             {
                 exitInit();
                 raise(SIGTERM);
             }
-            HARNESS_FORK_CHILD_END();                               // {uncoverable - signal is raised in block}
+            HRN_FORK_CHILD_END();                               // {uncoverable - signal is raised in block}
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************

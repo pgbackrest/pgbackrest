@@ -731,14 +731,12 @@ testRun(void)
         TEST_TITLE("unable to get lock");
 
         // Make sure the process times out when it can't get a lock
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("child read"), HARNESS_FORK_CHILD_READ(), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
+                IoRead *read = ioFdReadNewOpen(STRDEF("child read"), HRN_FORK_CHILD_READ_FD(), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("child write"), HRN_FORK_CHILD_WRITE_FD(), 2000);
 
                 TEST_RESULT_VOID(
                     lockAcquire(
@@ -753,14 +751,12 @@ testRun(void)
 
                 lockRelease(true);
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
+                IoRead *read = ioFdReadNewOpen(STRDEF("parent read"), HRN_FORK_PARENT_READ_FD(0), 2000);
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("parent write"), HRN_FORK_PARENT_WRITE_FD(0), 2000);
 
                 // Wait for the child to acquire the lock
                 ioReadLine(read);
@@ -773,9 +769,9 @@ testRun(void)
                 ioWriteLine(write, bufNew(0));
                 ioWriteFlush(write);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("too many parameters specified");

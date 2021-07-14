@@ -252,9 +252,9 @@ testRun(void)
         TEST_TITLE("timeout");
 
         // Check timeout by making the wal segment appear after 250ms
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 sleepMSec(250);
 
@@ -262,17 +262,17 @@ testRun(void)
                     storageTest,
                     "archive/db/9.6-2/1234567812345678/123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
                 TEST_RESULT_STR_Z(
                     walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 1000),
                     "123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "found segment");
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("duplicate");

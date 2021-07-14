@@ -36,12 +36,9 @@ cmdRemote(int fdRead, int fdWrite)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-%s", strZ(cfgOptionDisplay(cfgOptProcess)));
-        IoRead *read = ioFdReadNew(name, fdRead, cfgOptionUInt64(cfgOptProtocolTimeout));
-        ioReadOpen(read);
-        IoWrite *write = ioFdWriteNew(name, fdWrite, cfgOptionUInt64(cfgOptProtocolTimeout));
-        ioWriteOpen(write);
-
-        ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);
+        ProtocolServer *server = protocolServerNew(
+            name, PROTOCOL_SERVICE_REMOTE_STR, ioFdReadNewOpen(name, fdRead, cfgOptionUInt64(cfgOptProtocolTimeout)),
+            ioFdWriteNewOpen(name, fdWrite, cfgOptionUInt64(cfgOptProtocolTimeout)));
 
         // Acquire a lock if this command needs one.  We'll use the noop that is always sent from the client right after the
         // handshake to return an error.  We can't take a lock earlier than this because we want the error to go back through the

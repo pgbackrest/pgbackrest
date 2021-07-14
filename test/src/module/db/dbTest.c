@@ -59,15 +59,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("Db and dbProtocol()"))
     {
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("client read"), HARNESS_FORK_CHILD_READ(), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("client write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
-
                 // Set options
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
@@ -99,7 +94,13 @@ testRun(void)
                 // Create server
                 ProtocolServer *server = NULL;
 
-                TEST_ASSIGN(server, protocolServerNew(STRDEF("db test server"), STRDEF("test"), read, write), "create server");
+                TEST_ASSIGN(
+                    server,
+                    protocolServerNew(
+                        STRDEF("db test server"), STRDEF("test"),
+                        ioFdReadNewOpen(STRDEF("client read"), HRN_FORK_CHILD_READ_FD(), 2000),
+                        ioFdWriteNewOpen(STRDEF("client write"), HRN_FORK_CHILD_WRITE_FD(), 2000)),
+                    "create server");
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_DB_LIST};
 
@@ -108,20 +109,21 @@ testRun(void)
                     "run process loop");
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 // Create client
                 ProtocolClient *client = NULL;
                 Db *db = NULL;
 
-                TEST_ASSIGN(client, protocolClientNew(STRDEF("db test client"), STRDEF("test"), read, write), "create client");
+                TEST_ASSIGN(
+                    client,
+                    protocolClientNew(
+                        STRDEF("db test client"), STRDEF("test"),
+                        ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
+                    "create client");
 
                 TRY_BEGIN()
                 {
@@ -169,9 +171,9 @@ testRun(void)
                 }
                 TRY_END();
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************

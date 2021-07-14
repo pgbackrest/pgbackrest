@@ -16,9 +16,9 @@ testRun(void)
     {
         int sessionId = getsid(0);
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 char buffer[1024];
 
@@ -30,9 +30,9 @@ testRun(void)
                 TEST_RESULT_INT(write(STDOUT_FILENO, buffer, strlen(buffer)), -1, "write to stdout fails");
                 TEST_RESULT_INT(write(STDERR_FILENO, buffer, strlen(buffer)), -1, "write to stderr fails");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

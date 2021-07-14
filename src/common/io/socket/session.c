@@ -193,15 +193,11 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
             .host = strDup(host),
             .port = port,
             .timeout = timeout,
-            .read = ioFdReadNew(name, fd, timeout),
-            .write = ioFdWriteNew(name, fd, timeout),
+            .read = ioFdReadNewOpen(name, fd, timeout),
+            .write = ioFdWriteNewOpen(name, fd, timeout),
         };
 
         strFree(name);
-
-        // Open read/write io
-        ioReadOpen(driver->read);
-        ioWriteOpen(driver->write);
 
         // Ensure file descriptor is closed
         memContextCallbackSet(driver->memContext, sckSessionFreeResource, driver);

@@ -269,6 +269,7 @@ hrnStorageList(
     hrnTestResultBegin(__func__, false);
 
     ASSERT(storage != NULL);
+    ASSERT(storagePathExistsP(storage, STR(path)));
 
     const String *const pathFull = storagePathP(storage, STR(path));
     printf("list%s contents of '%s'", param.remove ? "/remove": "", strZ(pathFull));
