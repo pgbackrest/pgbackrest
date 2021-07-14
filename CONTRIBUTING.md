@@ -438,9 +438,9 @@ TEST_RESULT_LOG(
 
 Sometimes it is useful to use a child process for testing. Below is a simple example. See [harnessFork.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessFork.h) for more details.
 ```
-HARNESS_FORK_BEGIN()
+HRN_FORK_BEGIN()
 {
-    HARNESS_FORK_CHILD_BEGIN(0, false)
+    HRN_FORK_CHILD_BEGIN()
     {
         TEST_RESULT_INT_NE(
             lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
@@ -449,9 +449,9 @@ HARNESS_FORK_BEGIN()
         sleepMSec(1000);
         lockRelease(true);
     }
-    HARNESS_FORK_CHILD_END();
+    HRN_FORK_CHILD_END();
 
-    HARNESS_FORK_PARENT_BEGIN()
+    HRN_FORK_PARENT_BEGIN()
     {
         sleepMSec(250);
 
@@ -467,9 +467,9 @@ HARNESS_FORK_BEGIN()
             "text - single stanza, no valid backups, backup/expire lock detected");
 
     }
-    HARNESS_FORK_PARENT_END();
+    HRN_FORK_PARENT_END();
 }
-HARNESS_FORK_END();
+HRN_FORK_END();
 ```
 
 #### Testing using a shim

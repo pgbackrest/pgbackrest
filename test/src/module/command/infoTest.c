@@ -226,22 +226,28 @@ testRun(void)
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
         // backup.info. Execute while a backup lock is held.
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
-                sleepMSec(1000);
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
+
                 lockRelease(true);
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                sleepMSec(250);
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
 
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
                 TEST_RESULT_STR_Z(
@@ -306,10 +312,12 @@ testRun(void)
                     "        wal archive min/max (9.4): none present\n",
                     "text - single stanza, no valid backups, backup/expire lock detected");
 
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo - stanza missing on specified repo");
@@ -409,22 +417,28 @@ testRun(void)
                 "\"db-version\":\"9.4\"}\n");
 
         // Execute while a backup lock is held
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
-                sleepMSec(1000);
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
+
                 lockRelease(true);
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                sleepMSec(250);
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
 
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
                 TEST_RESULT_STR_Z(
@@ -588,10 +602,13 @@ testRun(void)
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo1: backup set size: 3MB, backup size: 3KB\n",
                     "text - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
+
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // Cleanup
         HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.3-2", .recurse = true);
@@ -989,22 +1006,28 @@ testRun(void)
         StringList *argListMultiRepoJson = strLstDup(argListMultiRepo);
         hrnCfgArgRawZ(argListMultiRepoJson, cfgOptOutput, "json");
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
-                sleepMSec(1000);
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
+
                 lockRelease(true);
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                sleepMSec(250);
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
 
                 HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoJson);
                 TEST_RESULT_STR_Z(
@@ -1402,27 +1425,36 @@ testRun(void)
                         "}"
                     "]",
                     "json - multiple stanzas, some with valid backups, archives in latest DB, backup lock held on one stanza");
-            }
-            HARNESS_FORK_PARENT_END();
-        }
-        HARNESS_FORK_END();
 
-        HARNESS_FORK_BEGIN()
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
+            HRN_FORK_CHILD_BEGIN()
             {
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
-                sleepMSec(1000);
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
+
                 lockRelease(true);
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                sleepMSec(250);
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
 
                 HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepo);
                 TEST_RESULT_STR_Z(
@@ -1506,10 +1538,13 @@ testRun(void)
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo2: backup set size: 3MB, backup size: 3KB\n",
                     "text - multiple stanzas, multi-repo with valid backups, backup lock held on one stanza");
+
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: stanza exists but requested backup does not");

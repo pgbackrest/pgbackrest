@@ -26,9 +26,9 @@ testRun(void)
         THROW_ON_SYS_ERROR(pipe(pipeRead) == -1, KernelError, "unable to read test pipe");
         THROW_ON_SYS_ERROR(pipe(pipeWrite) == -1, KernelError, "unable to write test pipe");
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
@@ -37,24 +37,20 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
-                cmdLocal(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
+                cmdLocal(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
-                ProtocolClient *client = protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_LOCAL_STR, read, write);
+                ProtocolClient *client = protocolClientNew(
+                    STRDEF("test"), PROTOCOL_SERVICE_LOCAL_STR, HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0));
                 protocolClientNoOp(client);
                 protocolClientFree(client);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

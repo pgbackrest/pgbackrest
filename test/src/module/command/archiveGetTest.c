@@ -731,51 +731,41 @@ testRun(void)
         TEST_TITLE("unable to get lock");
 
         // Make sure the process times out when it can't get a lock
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("child read"), HARNESS_FORK_CHILD_READ(), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
-
                 TEST_RESULT_VOID(
                     lockAcquire(
                         cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("999-dededede"), cfgLockType(), 30000,
                         true),
                     "acquire lock");
 
-                // Let the parent know the lock has been acquired and wait for the parent to allow lock release
-                ioWriteStrLine(write, strNew());
-                ioWriteFlush(write);
-                ioReadLine(read);
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
 
                 lockRelease(true);
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
-                // Wait for the child to acquire the lock
-                ioReadLine(read);
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
 
                 TEST_ERROR(
                     cmdArchiveGet(), ArchiveTimeoutError,
                     "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
 
-                // Notify the child to release the lock
-                ioWriteLine(write, bufNew(0));
-                ioWriteFlush(write);
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("too many parameters specified");

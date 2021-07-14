@@ -245,24 +245,23 @@ testRun(void)
             "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" | sudo tee -a /etc/hosts >"
                 " /dev/null");
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
                 // Start server to test various certificate errors
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(STRDEF("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        HRN_FORK_CHILD_READ(), hrnServerProtocolTls,
                         .certificate = STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-alt-name.crt"),
                         .key = STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".key")),
                     "tls alt name server run");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN(.prefix = "test client", .timeout = 1000)
             {
-                IoWrite *tls = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000));
+                IoWrite *tls = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("certificate error on invalid ca path");
@@ -351,9 +350,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(tls);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 #endif // TEST_CONTAINER_REQUIRED
     }
 
@@ -363,21 +362,17 @@ testRun(void)
         IoClient *client = NULL;
         IoSession *session = NULL;
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(
-                        ioFdReadNew(STRDEF("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls),
-                    "tls server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls), "tls server run");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN(.prefix = "test client", .timeout = 1000)
             {
-                IoWrite *tls =
-                    hrnServerScriptBegin(ioFdWriteNew(STRDEF("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000));
+                IoWrite *tls = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
                 ioBufferSizeSet(12);
 
                 TEST_ASSIGN(
@@ -493,9 +488,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(tls);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stastistics exist");

@@ -38,12 +38,9 @@ cmdLocal(int fdRead, int fdWrite)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%s", strZ(cfgOptionDisplay(cfgOptProcess)));
-        IoRead *read = ioFdReadNew(name, fdRead, cfgOptionUInt64(cfgOptProtocolTimeout));
-        ioReadOpen(read);
-        IoWrite *write = ioFdWriteNew(name, fdWrite, cfgOptionUInt64(cfgOptProtocolTimeout));
-        ioWriteOpen(write);
-
-        ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);
+        ProtocolServer *server = protocolServerNew(
+            name, PROTOCOL_SERVICE_LOCAL_STR, ioFdReadNewOpen(name, fdRead, cfgOptionUInt64(cfgOptProtocolTimeout)),
+            ioFdWriteNewOpen(name, fdWrite, cfgOptionUInt64(cfgOptProtocolTimeout)));
         protocolServerProcess(
             server, cfgCommandJobRetry(), commandLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandLocalHandlerList));
     }

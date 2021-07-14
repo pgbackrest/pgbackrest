@@ -147,9 +147,9 @@ testRun(void)
         CHECK(TEST_SCALE <= 2000);
         uint64_t fileTotal = (uint64_t)1000000 * TEST_SCALE;
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN(.timeout = 60000)
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
                 // Create a basic configuration so the remote storage driver can determine the storage type
                 StringList *argList = strLstNew();
@@ -172,28 +172,20 @@ testRun(void)
                     strIdFromZ(stringIdBit6, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
 
                 // Setup handler for remote storage protocol
-                IoRead *read = ioFdReadNew(STRDEF("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("storage server write"), HARNESS_FORK_CHILD_WRITE(), 1000);
-                ioWriteOpen(write);
-
-                ProtocolServer *server = protocolServerNew(STRDEF("storage test server"), STRDEF("test"), read, write);
+                ProtocolServer *server = protocolServerNew(
+                    STRDEF("storage test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
                 protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
 
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
                 // Create client
-                IoRead *read = ioFdReadNew(STRDEF("storage client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 60000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("storage client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 1000);
-                ioWriteOpen(write);
-
-                ProtocolClient *client = protocolClientNew(STRDEF("storage test client"), STRDEF("test"), read, write);
+                ProtocolClient *client = protocolClientNew(
+                    STRDEF("storage test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0));
 
                 // Create remote storage
                 Storage *storageRemote = storageRemoteNew(
@@ -210,9 +202,9 @@ testRun(void)
                 // Free client
                 protocolClientFree(client);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************

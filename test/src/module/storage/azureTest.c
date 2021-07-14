@@ -265,20 +265,17 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("StorageAzure, StorageReadAzure, and StorageWriteAzure"))
     {
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(.prefix = "azure server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(ioFdReadNew(STRDEF("azure server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls),
-                    "azure server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls), "azure server run");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN(.prefix = "azure client")
             {
-                IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("azure client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                IoWrite *service = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test against local host");
@@ -857,9 +854,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -113,6 +113,15 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify <cmd>restore</cmd> <br-option>--type</br-option> behavior in command reference.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1446"/>
 
                         <release-item-contributor-list>

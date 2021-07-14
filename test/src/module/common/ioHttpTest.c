@@ -279,22 +279,18 @@ testRun(void)
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
             "unable to connect to 'localhost:%u': [111] Connection refused", hrnServerPort(0));
 
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
                 // Start HTTP test server
-                TEST_RESULT_VOID(
-                    hrnServerRunP(
-                        ioFdReadNew(STRDEF("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket),
-                    "http server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket), "http server run");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoWrite *http = hrnServerScriptBegin(
-                    ioFdWriteNew(STRDEF("test client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                IoWrite *http = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("create client");
@@ -717,9 +713,9 @@ testRun(void)
                 hrnServerScriptClose(http);
                 hrnServerScriptEnd(http);
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("statistics exist");
