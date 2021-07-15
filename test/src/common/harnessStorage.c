@@ -485,7 +485,7 @@ hrnStoragePathCreate(const Storage *const storage, const char *const path, HrnSt
 
     ASSERT(storage != NULL);
 
-    const String *const pathFull = storagePathP(storage, STR(path));
+    const String *const pathFull = storagePathP(storage, path == NULL ? NULL : STR(path));
 
     printf("create path '%s'", strZ(pathFull));
 
