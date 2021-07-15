@@ -205,10 +205,6 @@ Macros to compare results of common data types
     TEST_RESULT_Z(strZNull(statement), strZNull(resultExpected), comment)
 #define TEST_RESULT_STR_Z(statement, resultExpected, comment)                                                                      \
     TEST_RESULT_Z(strZNull(statement), resultExpected, comment)
-#define TEST_RESULT_STR_KEYRPL(statement, resultExpected, comment)                                                                 \
-    TEST_RESULT_Z(strZNull(statement), strZ(resultExpected), comment)
-#define TEST_RESULT_STR_Z_KEYRPL(statement, resultExpected, comment)                                                               \
-    TEST_RESULT_Z(strZNull(statement), resultExpected, comment)
 #define TEST_RESULT_Z_STR(statement, resultExpected, comment)                                                                      \
     TEST_RESULT_Z(statement, strZNull(resultExpected), comment)
 
