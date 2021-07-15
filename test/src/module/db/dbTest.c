@@ -470,10 +470,11 @@ testRun(void)
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 250),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
 
-            // Checkpoint target not reached
+            // Checkpoint target timeout waiting for sync
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", true, "5/5"),
             HRNPQ_MACRO_CHECKPOINT(2),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4"),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 250),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 0),
 
             // Wait for standby to sync
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
@@ -481,7 +482,7 @@ testRun(void)
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
             HRNPQ_MACRO_CHECKPOINT(2),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X"),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0),
 
             // Close standby
             HRNPQ_MACRO_CLOSE(2),
@@ -509,8 +510,8 @@ testRun(void)
             "timeout before standby replayed to 5/5 - only reached 5/3");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 1000), ArchiveTimeoutError,
-            "the checkpoint lsn 5/4 is less than the target lsn 5/5 even though the replay lsn is 5/5");
+            dbReplayWait(db.standby, STRDEF("5/5"), 200), ArchiveTimeoutError,
+            "timeout before standby checkpoint lsn reached 5/5 - only reached 5/4");
 
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), 1000), "sync standby");
 
