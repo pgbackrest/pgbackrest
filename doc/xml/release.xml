@@ -61,6 +61,19 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1462"/>
+                        <github-pull-request id="1339"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.coleman"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <cmd>restore</cmd> <br-setting>--type=lsn</br-setting>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1277"/>
                         <github-pull-request id="1455"/>
 
@@ -10074,6 +10087,11 @@
         <contributor id="james.chanco.jr">
             <contributor-name-display>James Chanco Jr</contributor-name-display>
             <contributor-id type="github">jameschancojr</contributor-id>
+        </contributor>
+
+        <contributor id="james.coleman">
+            <contributor-name-display>James Coleman</contributor-name-display>
+            <contributor-id type="github">jcoleman</contributor-id>
         </contributor>
 
         <contributor id="james.sewell">
