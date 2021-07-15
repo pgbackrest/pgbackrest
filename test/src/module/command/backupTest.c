@@ -413,7 +413,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
                 HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, " test1"),
+                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
 
                 // Get copy start time
@@ -456,7 +456,6 @@ testRun(void)
     const String *backupLabel = STRDEF("20190718-155825F");
     const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
     BackupFileResult result = {0};
-    VariantList *paramList = varLstNew();
 
     // *****************************************************************************************************************************
     if (testBegin("segmentNumber()"))
@@ -553,7 +552,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit");
 
-        paramList = varLstNew();
+        VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(pgFile));            // pgFile
         varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
         varLstAdd(paramList, varNewUInt64(8));              // pgFileSize
@@ -1626,7 +1625,7 @@ testRun(void)
             // Add files
             HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_95_STR, .timeModified = backupTimeStart);
-            storagePathCreateP(storagePgWrite(), pgWalPath(PG_VERSION_95), .noParentCreate = true);
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_95)), .noParentCreate = true);
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
@@ -2156,7 +2155,7 @@ testRun(void)
                 "compare file list");
 
             // Remove test files
-            HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(1), NULL, .recurse = true);
+            HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(1), "", .recurse = true);
             HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "base/1", .recurse = true);
         }
 
@@ -2180,7 +2179,7 @@ testRun(void)
 
             // Update wal path
             HRN_STORAGE_PATH_REMOVE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_95)));
-            storagePathCreateP(storagePgWrite(), pgWalPath(PG_VERSION_11), .noParentCreate = true);  // CSHANG Is it worth adding to PATH_CREATE
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_11)), .noParentCreate = true);
 
             // Upgrade stanza
             StringList *argList = strLstNew();
@@ -2247,22 +2246,20 @@ testRun(void)
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x08};
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
             bufUsedSet(relation, bufSize(relation));
-// CSHANG STOPPED HERE
-            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/4"), .timeModified = backupTimeStart), relation);
+
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
             const char *rel1_4Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, relation)));
 
             // Add a tablespace
-            storagePathCreateP(storagePgWrite(), STRDEF(PG_PATH_PGTBLSPC));
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_PGTBLSPC);
             THROW_ON_SYS_ERROR(
                 symlink("../../pg1-tblspc/32768", strZ(storagePathP(storagePg(), STRDEF(PG_PATH_PGTBLSPC "/32768")))) == -1,
                 FileOpenError, "unable to create symlink");
 
-            storagePutP(
-                storageNewWriteP(
-                    storageTest,
-                    strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, hrnPgCatalogVersion(PG_VERSION_11)))),
-                    .timeModified = backupTimeStart),
-                NULL);
+            HRN_STORAGE_PUT_EMPTY(
+                storageTest,
+                strZ(strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, hrnPgCatalogVersion(PG_VERSION_11))))),
+                .timeModified = backupTimeStart);
 
             // Disable storageFeatureSymLink so tablespace (and latest) symlinks will not be created
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureSymLink;
@@ -2387,7 +2384,7 @@ testRun(void)
         {
             // Load options
             StringList *argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
@@ -2409,8 +2406,7 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DB764000000000, lsn = 5db7640/0");
 
             // Remove partial backup so it won't be resumed (since it errored before any checksums were written)
-            storagePathRemoveP(
-                storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F_20191028-220000I"), .recurse = true);
+            HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191027-181320F_20191028-220000I", .recurse = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2421,7 +2417,7 @@ testRun(void)
         {
             // Load options
             StringList *argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
             hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
             hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
@@ -2430,7 +2426,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
-            strLstAddZ(argList, "--" CFGOPT_DELTA);
+            hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
