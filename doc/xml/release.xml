@@ -216,6 +216,9 @@
                             <github-pull-request id="1456"/>
                         </commit>
                         <commit subject="Add cipher parameters to TEST_STORAGE_GET() macro."/>
+                        <commit subject="Update command/backup tests to use standard patterns.">
+                            <github-pull-request id="1463"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
