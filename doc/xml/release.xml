@@ -18,15 +18,22 @@
 
                 <release-bug-list>
                     <release-item>
-                        <github-issue id="1116"/>
-                        <github-issue id="1433"/>
-                        <github-pull-request id="1438"/>
+                        <commit subject="Detect errors in S3 multi-part upload finalize.">
+                            <github-issue id="1116"/>
+                            <github-issue id="1290"/>
+                            <github-issue id="1433"/>
+                            <github-pull-request id="1438"/>
+                        </commit>
+                        <commit subject="Add contributors missed in 8e187cdb."/>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="marco.montagna"/>
                             <release-item-ideator id="lev.kokotov"/>
+                            <release-item-ideator id="anderson.a.mallmann"/>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="marco.montagna"/>
                         </release-item-contributor-list>
 
                         <p>Detect errors in <proper>S3</proper> multi-part upload finalize.</p>
@@ -9785,6 +9792,11 @@
         <contributor id="ales.zeleny">
             <contributor-name-display>Ale&amp;scaron; Zelen&amp;yacute;</contributor-name-display>
             <contributor-id type="github">aleszeleny</contributor-id>
+        </contributor>
+
+        <contributor id="anderson.a.mallmann">
+            <contributor-name-display>Anderson A. Mallmann</contributor-name-display>
+            <contributor-id type="github">aamallmann</contributor-id>
         </contributor>
 
         <contributor id="andres.freund">
