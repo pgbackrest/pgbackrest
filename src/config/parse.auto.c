@@ -2975,6 +2975,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 cfgOptType,
                 "default",
                 "immediate",
+                "lsn",
                 "name",
                 "time",
                 "standby",
@@ -6273,6 +6274,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
                 (
                     cfgOptType,
+                    "lsn",
                     "name",
                     "time",
                     "xid"
@@ -6311,6 +6313,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (
                     cfgOptType,
                     "immediate",
+                    "lsn",
                     "name",
                     "time",
                     "xid"
@@ -6343,6 +6346,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
                 (
                     cfgOptType,
+                    "lsn",
                     "time",
                     "xid"
                 ),
@@ -6375,6 +6379,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (
                     cfgOptType,
                     "default",
+                    "lsn",
                     "name",
                     "standby",
                     "time",
@@ -6689,6 +6694,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST
                 (
+                    "lsn",
                     "name",
                     "time",
                     "xid",

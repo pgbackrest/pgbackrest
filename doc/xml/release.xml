@@ -18,15 +18,22 @@
 
                 <release-bug-list>
                     <release-item>
-                        <github-issue id="1116"/>
-                        <github-issue id="1433"/>
-                        <github-pull-request id="1438"/>
+                        <commit subject="Detect errors in S3 multi-part upload finalize.">
+                            <github-issue id="1116"/>
+                            <github-issue id="1290"/>
+                            <github-issue id="1433"/>
+                            <github-pull-request id="1438"/>
+                        </commit>
+                        <commit subject="Add contributors missed in 8e187cdb."/>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="marco.montagna"/>
                             <release-item-ideator id="lev.kokotov"/>
+                            <release-item-ideator id="anderson.a.mallmann"/>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="marco.montagna"/>
                         </release-item-contributor-list>
 
                         <p>Detect errors in <proper>S3</proper> multi-part upload finalize.</p>
@@ -61,6 +68,19 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1462"/>
+                        <github-pull-request id="1339"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.coleman"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <cmd>restore</cmd> <br-setting>--type=lsn</br-setting>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1277"/>
                         <github-pull-request id="1455"/>
 
@@ -71,6 +91,19 @@
                         </release-item-contributor-list>
 
                         <p>Change level of <cmd>backup</cmd>/<cmd>restore</cmd> copied file logging to detail.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1460"/>
+                        <github-pull-request id="1450"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="fatih.mencutekin"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Loop while waiting for checkpoint LSN to reach replay LSN.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -9761,6 +9794,11 @@
             <contributor-id type="github">aleszeleny</contributor-id>
         </contributor>
 
+        <contributor id="anderson.a.mallmann">
+            <contributor-name-display>Anderson A. Mallmann</contributor-name-display>
+            <contributor-id type="github">aamallmann</contributor-id>
+        </contributor>
+
         <contributor id="andres.freund">
             <contributor-name-display>Andres Freund</contributor-name-display>
             <contributor-id type="github">anarazel</contributor-id>
@@ -9999,6 +10037,11 @@
             <contributor-id type="github">evanbenoit</contributor-id>
         </contributor>
 
+        <contributor id="fatih.mencutekin">
+            <contributor-name-display>Fatih Mencutekin</contributor-name-display>
+            <contributor-id type="github">fatihmtekin</contributor-id>
+        </contributor>
+
         <contributor id="floris.van.nee">
             <contributor-name-display>Floris van Nee</contributor-name-display>
             <contributor-id type="github">fvannee</contributor-id>
@@ -10056,6 +10099,11 @@
         <contributor id="james.chanco.jr">
             <contributor-name-display>James Chanco Jr</contributor-name-display>
             <contributor-id type="github">jameschancojr</contributor-id>
+        </contributor>
+
+        <contributor id="james.coleman">
+            <contributor-name-display>James Coleman</contributor-name-display>
+            <contributor-id type="github">jcoleman</contributor-id>
         </contributor>
 
         <contributor id="james.sewell">

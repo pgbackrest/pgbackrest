@@ -1615,6 +1615,7 @@
                         <ul>
                             <li><id>default</id> - recover to the end of the archive stream.</li>
                             <li><id>immediate</id> - recover only until the database becomes consistent. This option is only supported on <postgres/> &gt;= 9.4.</li>
+                            <li><id>lsn</id> - recover to the LSN (Log Sequence Number) specified in <br-option>--target</br-option>. This option is only supported on <postgres/> &gt;= 10.</li>
                             <li><id>name</id> - recover the restore point specified in <br-option>--target</br-option>.</li>
                             <li><id>xid</id> - recover to the transaction id specified in <br-option>--target</br-option>.</li>
                             <li><id>time</id> - recover to the time specified in <br-option>--target</br-option>.</li>
@@ -1629,7 +1630,7 @@
                     <option id="target" name="Target">
                         <summary>Recovery target.</summary>
 
-                        <text>Defines the recovery target when <br-option>--type</br-option> is <id>name</id>, <id>xid</id>, or <id>time</id>. If the target is prior to the latest backup and <br-option>--type</br-option> is not <id>time</id>, then use the <br-option>--set</br-option> option to specify the backup set.</text>
+                        <text>Defines the recovery target when <br-option>--type</br-option> is <id>lsn</id>, <id>name</id>, <id>xid</id>, or <id>time</id>. If the target is prior to the latest backup and <br-option>--type</br-option> is not <id>time</id>, then use the <br-option>--set</br-option> option to specify the backup set.</text>
                         <example>2015-01-30 14:15:11 EST</example>
                     </option>
 
@@ -1637,7 +1638,7 @@
                     <option id="target-exclusive" name="Target Exclusive">
                         <summary>Stop just before the recovery target is reached.</summary>
 
-                        <text>Defines whether recovery to the target would be exclusive (the default is inclusive) and is only valid when <br-option>--type</br-option> is <id>time</id> or <id>xid</id>.  For example, using <br-option>--target-exclusive</br-option> would exclude the contents of transaction <id>1007</id> when <br-option>--type=xid</br-option> and <br-option>--target=1007</br-option>.  See the <setting>recovery_target_inclusive</setting> option in the <postgres/> docs for more information.</text>
+                        <text>Defines whether recovery to the target would be exclusive (the default is inclusive) and is only valid when <br-option>--type</br-option> is <id>lsn</id>, <id>time</id> or <id>xid</id>. For example, using <br-option>--target-exclusive</br-option> would exclude the contents of transaction <id>1007</id> when <br-option>--type=xid</br-option> and <br-option>--target=1007</br-option>.  See the <setting>recovery_target_inclusive</setting> option in the <postgres/> docs for more information.</text>
 
                         <example>n</example>
                     </option>

@@ -213,6 +213,7 @@ Option value constants
 #define CFGOPTVAL_TYPE_FULL_Z                                       "full"
 #define CFGOPTVAL_TYPE_IMMEDIATE_Z                                  "immediate"
 #define CFGOPTVAL_TYPE_INCR_Z                                       "incr"
+#define CFGOPTVAL_TYPE_LSN_Z                                        "lsn"
 #define CFGOPTVAL_TYPE_NAME_Z                                       "name"
 #define CFGOPTVAL_TYPE_NONE_Z                                       "none"
 #define CFGOPTVAL_TYPE_PRESERVE_Z                                   "preserve"
