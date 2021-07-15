@@ -219,6 +219,9 @@
                         <commit subject="Update command/backup tests to use standard patterns.">
                             <github-pull-request id="1463"/>
                         </commit>
+                        <commit subject="Update command/help test to use standard patterns.">
+                            <github-pull-request id="1464"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
