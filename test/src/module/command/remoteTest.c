@@ -9,6 +9,7 @@ Test Remote Command
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -32,8 +33,8 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--stanza=test1");
-                strLstAddZ(argList, "--process=1");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+                hrnCfgArgRawZ(argList, cfgOptProcess, "1");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdInfo, argList, .role = cfgCmdRoleRemote);
 
@@ -62,10 +63,10 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--process=0");
+                hrnCfgArgRawZ(argList, cfgOptProcess, "0");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-                strLstAddZ(argList, "--lock-path=/bogus");
-                strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+                hrnCfgArgRawZ(argList, cfgOptLockPath, "/bogus");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
@@ -97,10 +98,10 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--stanza=test");
-                strLstAddZ(argList, "--process=0");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+                hrnCfgArgRawZ(argList, cfgOptProcess, "0");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-                strLstAddZ(argList, "--lock-path=/bogus");
+                hrnCfgArgRawZ(argList, cfgOptLockPath, "/bogus");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
                 cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
@@ -128,8 +129,8 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--stanza=test");
-                strLstAddZ(argList, "--process=0");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+                hrnCfgArgRawZ(argList, cfgOptProcess, "0");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
@@ -150,9 +151,7 @@ testRun(void)
                     "create client");
                 protocolClientNoOp(client);
 
-                TEST_RESULT_BOOL(
-                    storageExistsP(storagePosixNewP(HRN_PATH_STR), STRDEF("lock/test-archive" LOCK_FILE_EXT)),
-                    true, "lock exists");
+                TEST_STORAGE_EXISTS(hrnStorage, "lock/test-archive" LOCK_FILE_EXT, .comment = "lock exists");
 
                 protocolClientFree(client);
             }
@@ -168,8 +167,8 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--stanza=test");
-                strLstAddZ(argList, "--process=0");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+                hrnCfgArgRawZ(argList, cfgOptProcess, "0");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
@@ -179,7 +178,7 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                storagePutP(storageNewWriteP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), NULL);
+                HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/all" STOP_FILE_EXT);
 
                 TEST_ERROR(
                     protocolClientNew(
@@ -188,7 +187,7 @@ testRun(void)
                         ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
                     StopError, "raised from test: stop file exists for all stanzas");
 
-                storageRemoveP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT));
+                HRN_STORAGE_REMOVE(hrnStorage, "lock/all" STOP_FILE_EXT);
             }
             HRN_FORK_PARENT_END();
         }
