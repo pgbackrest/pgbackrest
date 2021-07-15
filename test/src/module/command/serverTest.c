@@ -30,7 +30,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
                 hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-                HRN_CFG_LOAD(cfgCmdBackup, argList);
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
                 ProtocolClient *client = NULL;
                 TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "new client");
@@ -49,7 +49,7 @@ testRun(void)
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
                 HRN_CFG_LOAD(cfgCmdServer, argList);
 
-                TEST_RESULT_VOID(cmdServer(3), "server");
+                TEST_RESULT_VOID(cmdServer(1), "server");
             }
             HRN_FORK_PARENT_END();
         }

@@ -8,6 +8,7 @@ Server Command
 #include "common/io/tls/server.h"
 #include "common/io/socket/server.h"
 #include "config/config.h"
+#include "config/load.h"
 #include "config/protocol.h"
 #include "db/protocol.h"
 #include "protocol/helper.h"
@@ -54,6 +55,15 @@ cmdServer(uint64_t connectionMax)
 
             // Get the command and put data end. No need to check parameters since we know this is the first noop.
             CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_NOOP);
+            protocolServerDataEndPut(server);
+
+            // Get parameter list from the client and load it
+            ProtocolServerCommandGetResult command = protocolServerCommandGet(server);
+            CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
+
+            const StringList *const paramList = pckReadStrLstP(pckReadNewBuf(command.param));
+            cfgLoad(strLstSize(paramList), strLstPtr(paramList));
+
             protocolServerDataEndPut(server);
 
             protocolServerProcess(

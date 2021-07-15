@@ -570,6 +570,7 @@ protocolRemoteExec(
         protocolClientMove(helper->client, execMemContext(helper->exec));
     else
     {
+        // Pass parameters to server
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
         pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
         protocolClientExecute(helper->client, command, false);
