@@ -41,30 +41,27 @@ cmdServer(uint64_t connectionMax)
         IoServer *const tlsServer = tlsServerNew(
            host, cfgOptionStr(cfgOptTlsServerKey), cfgOptionStr(cfgOptTlsServerCert), cfgOptionUInt64(cfgOptProtocolTimeout));
 
-    // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE
-    // REPLACED WITH A STOP REQUEST FROM AN AUTHENTICATED CLIENT.
-    do
-    {
-        IoSession *const socketSession = ioServerAccept(socketServer, NULL);
-        IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
-        (void)tlsSession; // !!!
+        // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE
+        // REPLACED WITH A STOP REQUEST FROM AN AUTHENTICATED CLIENT.
+        do
+        {
+            IoSession *const socketSession = ioServerAccept(socketServer, NULL);
+            IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
 
-        ProtocolServer *const server = protocolServerNew(
-            strNewFmt(PROTOCOL_SERVICE_REMOTE "-%s", "0" /* !!! strZ(cfgOptionDisplay(cfgOptProcess))*/), PROTOCOL_SERVICE_REMOTE_STR,
-            ioSessionIoRead(tlsSession), ioSessionIoWrite(tlsSession));
+            ProtocolServer *const server = protocolServerNew(
+                PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
+                ioSessionIoWrite(tlsSession));
 
-        // Get the command and put data end. No need to check parameters since we know this is the first noop.
-        CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_NOOP);
-        protocolServerDataEndPut(server);
+            // Get the command and put data end. No need to check parameters since we know this is the first noop.
+            CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_NOOP);
+            protocolServerDataEndPut(server);
 
-        protocolServerProcess(
-            server, NULL, commandRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandRemoteHandlerList));
+            protocolServerProcess(
+                server, NULL, commandRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandRemoteHandlerList));
 
-        ioSessionFree(tlsSession);
-    }
-    while (--connectionMax > 0);
-
-// port 8242
+            ioSessionFree(tlsSession);
+        }
+        while (--connectionMax > 0);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -568,6 +568,12 @@ protocolRemoteExec(
 
     if (remoteType == CFGOPTVAL_REPO_HOST_TYPE_SSH)
         protocolClientMove(helper->client, execMemContext(helper->exec));
+    else
+    {
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
+        pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
+        protocolClientExecute(helper->client, command, false);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
