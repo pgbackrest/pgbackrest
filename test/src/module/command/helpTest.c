@@ -530,7 +530,6 @@ testRun(void)
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
-        // const String *stdoutFile = STRDEF(TEST_PATH "/stdout.help");
 
         THROW_ON_SYS_ERROR(freopen(TEST_PATH "/stdout.help", "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
