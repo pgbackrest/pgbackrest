@@ -1669,7 +1669,7 @@ testRun(void)
                 "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
                 "P00   INFO: new backup label = 20191002-070640F");
 
-            TEST_RESULT_STR_Z_KEYRPL(
+            TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191002-070640F}\n"
                 "pg_data {path}\n"
@@ -1830,7 +1830,7 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105D95D3000000000 to backup\n"
                 "P00   INFO: new backup label = 20191003-105320F");
 
-            TEST_RESULT_STR_Z_KEYRPL(
+            TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191003-105320F}\n"
                 "pg_data {path}\n"
@@ -1990,7 +1990,7 @@ testRun(void)
                 "P00   INFO: new backup label = 20191003-105320F_20191004-144000D");
 
             // Check repo directory
-            TEST_RESULT_STR_Z_KEYRPL(
+            TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191003-105320F_20191004-144000D}\n"
                 "pg_data {path}\n"
@@ -2111,7 +2111,7 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   WARN: no prior backup exists, incr backup has been changed to full");
 
-            TEST_RESULT_STR_Z_KEYRPL(
+            TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191016-042640F}\n"
                 "pg_data {path}\n"
@@ -2300,7 +2300,7 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB5DE000000002 to backup\n"
                 "P00   INFO: new backup label = 20191027-181320F");
 
-            TEST_RESULT_STR_KEYRPL(
+            TEST_RESULT_STR(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
                 strNewFmt(
                     "pg_data {path}\n"
@@ -2459,7 +2459,7 @@ testRun(void)
                 "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000000\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I");
 
-            TEST_RESULT_STR_Z_KEYRPL(
+            TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191027-181320F_20191030-014640I}\n"
                 "pg_data {path}\n"
