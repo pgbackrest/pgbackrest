@@ -476,7 +476,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create the pg path
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "", .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg file missing - ignoreMissing=true");
@@ -931,7 +931,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
 
         argList = strLstNew();
@@ -956,7 +956,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
 
         argList = strLstNew();
@@ -983,7 +983,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830}));
 
         argList = strLstNew();
@@ -1007,7 +1007,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         argList = strLstNew();
@@ -1031,7 +1031,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         argList = strLstNew();
@@ -1063,7 +1063,7 @@ testRun(void)
 
         // Create pg_control with page checksums
         HRN_STORAGE_PUT(
-            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .pageChecksum = true}));
 
         argList = strLstNew();
@@ -1089,7 +1089,7 @@ testRun(void)
 
         // Create pg_control without page checksums
         HRN_STORAGE_PUT(
-            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
@@ -1121,7 +1121,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
@@ -1342,11 +1342,6 @@ testRun(void)
         hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F_[0-9]{8}-[0-9]{6}D", NULL, "DIFF", true);
         hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F", NULL, "FULL", true);
 
-        // Create pg_control
-        HRN_STORAGE_PUT(
-            storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
-
         // Create stanza
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1354,6 +1349,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        // Create pg_control
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1593,12 +1593,6 @@ testRun(void)
         time_t backupTimeStart = BACKUP_EPOCH;
 
         {
-            // Create pg_control
-            HRN_STORAGE_PUT(
-                storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}),
-                .timeModified = backupTimeStart);
-
             // Create stanza
             StringList *argList = strLstNew();
             hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1606,6 +1600,12 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawBool(argList, cfgOptOnline, false);
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+            // Create pg_control
+            HRN_STORAGE_PUT(
+                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}),
+                .timeModified = backupTimeStart);
 
             cmdStanzaCreate();
             TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -2034,7 +2034,7 @@ testRun(void)
         {
             // Update pg_control
             HRN_STORAGE_PUT(
-                storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
                 hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}),
                 .timeModified = backupTimeStart);
 
@@ -2167,7 +2167,7 @@ testRun(void)
         {
             // Update pg_control
             HRN_STORAGE_PUT(
-                storageTest, "pg1/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
                 hrnPgControlToBuffer(
                     (PgControl){
                         .version = PG_VERSION_11, .systemId = 1000000000000001100, .pageChecksum = true,
