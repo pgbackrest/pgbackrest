@@ -151,7 +151,8 @@ typedef struct HrnStoragePathCreateParam
 {
     VAR_PARAM_HEADER;
     mode_t mode;                                                    // Path mode (defaults to STORAGE_MODE_PATH_DEFAULT)
-    bool noErrorOnExists;                                           // Do no error if the path already exists
+    bool noErrorOnExists;                                           // Do not error if the path already exists
+    bool noParentCreate;                                            // Do not attempt to create the parent path (it must exist)
     const char *comment;                                            // Comment
 } HrnStoragePathCreateParam;
 
