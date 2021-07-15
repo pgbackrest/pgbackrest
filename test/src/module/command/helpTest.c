@@ -70,17 +70,17 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("helpRenderSplitSize()"))
     {
-        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def"), " ", 3), "-"), "abc-def", "two items");
-        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def"), " ", 4), "-"), "abc-def", "one items");
-        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 4), "-"), "abc-def-ghi", "three items");
-        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 8), "-"), "abc def-ghi", "three items");
-        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def "), " ", 4), "-"), "abc-def ", "two items");
+        TEST_RESULT_STRLST_Z(helpRenderSplitSize(STRDEF("abc def"), " ", 3), "abc\ndef\n", "two items");
+        TEST_RESULT_STRLST_Z(helpRenderSplitSize(STRDEF("abc def"), " ", 4), "abc\ndef\n", "two items");
+        TEST_RESULT_STRLST_Z(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 4), "abc\ndef\nghi\n", "three items");
+        TEST_RESULT_STRLST_Z(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 8), "abc def\nghi\n", "three items");
+        TEST_RESULT_STRLST_Z(helpRenderSplitSize(STRDEF("abc def "), " ", 4), "abc\ndef \n", "two items");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(helpRenderSplitSize(STRDEF("this is a short sentence"), " ", 10), "\n"),
+        TEST_RESULT_STRLST_Z(
+            helpRenderSplitSize(STRDEF("this is a short sentence"), " ", 10),
             "this is a\n"
             "short\n"
-            "sentence",
+            "sentence\n",
             "empty list");
     }
 
