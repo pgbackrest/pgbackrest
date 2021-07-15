@@ -59,15 +59,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("Db and dbProtocol()"))
     {
-        HARNESS_FORK_BEGIN()
+        HRN_FORK_BEGIN()
         {
-            HARNESS_FORK_CHILD_BEGIN(0, true)
+            HRN_FORK_CHILD_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("client read"), HARNESS_FORK_CHILD_READ(), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("client write"), HARNESS_FORK_CHILD_WRITE(), 2000);
-                ioWriteOpen(write);
-
                 // Set options
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
@@ -99,7 +94,10 @@ testRun(void)
                 // Create server
                 ProtocolServer *server = NULL;
 
-                TEST_ASSIGN(server, protocolServerNew(STRDEF("db test server"), STRDEF("test"), read, write), "create server");
+                TEST_ASSIGN(
+                    server,
+                    protocolServerNew(STRDEF("db test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
+                    "create server");
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_DB_LIST};
 
@@ -108,20 +106,18 @@ testRun(void)
                     "run process loop");
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
             }
-            HARNESS_FORK_CHILD_END();
+            HRN_FORK_CHILD_END();
 
-            HARNESS_FORK_PARENT_BEGIN()
+            HRN_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
-                ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
-                ioWriteOpen(write);
-
                 // Create client
                 ProtocolClient *client = NULL;
                 Db *db = NULL;
 
-                TEST_ASSIGN(client, protocolClientNew(STRDEF("db test client"), STRDEF("test"), read, write), "create client");
+                TEST_ASSIGN(
+                    client,
+                    protocolClientNew(STRDEF("db test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    "create client");
 
                 TRY_BEGIN()
                 {
@@ -169,9 +165,9 @@ testRun(void)
                 }
                 TRY_END();
             }
-            HARNESS_FORK_PARENT_END();
+            HRN_FORK_PARENT_END();
         }
-        HARNESS_FORK_END();
+        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************
@@ -474,10 +470,11 @@ testRun(void)
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 250),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
 
-            // Checkpoint target not reached
+            // Checkpoint target timeout waiting for sync
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", true, "5/5"),
             HRNPQ_MACRO_CHECKPOINT(2),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4"),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 250),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 0),
 
             // Wait for standby to sync
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
@@ -485,7 +482,7 @@ testRun(void)
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
             HRNPQ_MACRO_CHECKPOINT(2),
-            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X"),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0),
 
             // Close standby
             HRNPQ_MACRO_CLOSE(2),
@@ -513,8 +510,8 @@ testRun(void)
             "timeout before standby replayed to 5/5 - only reached 5/3");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 1000), ArchiveTimeoutError,
-            "the checkpoint lsn 5/4 is less than the target lsn 5/5 even though the replay lsn is 5/5");
+            dbReplayWait(db.standby, STRDEF("5/5"), 200), ArchiveTimeoutError,
+            "timeout before standby checkpoint lsn reached 5/5 - only reached 5/4");
 
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), 1000), "sync standby");
 

@@ -72,6 +72,19 @@
 
                         <p>Change level of <cmd>backup</cmd>/<cmd>restore</cmd> copied file logging to detail.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1460"/>
+                        <github-pull-request id="1450"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="fatih.mencutekin"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Loop while waiting for checkpoint LSN to reach replay LSN.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -112,6 +125,15 @@
 
             <release-doc-list>
                 <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify <cmd>restore</cmd> <br-option>--type</br-option> behavior in command reference.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1446"/>
 
@@ -9988,6 +10010,11 @@
         <contributor id="evan.benoit">
             <contributor-name-display>Evan Benoit</contributor-name-display>
             <contributor-id type="github">evanbenoit</contributor-id>
+        </contributor>
+
+        <contributor id="fatih.mencutekin">
+            <contributor-name-display>Fatih Mencutekin</contributor-name-display>
+            <contributor-id type="github">fatihmtekin</contributor-id>
         </contributor>
 
         <contributor id="floris.van.nee">
