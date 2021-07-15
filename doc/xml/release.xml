@@ -78,7 +78,7 @@
                         <github-pull-request id="1450"/>
 
                         <release-item-contributor-list>
-                            <release-item-ideator id="fatihmtekin"/>
+                            <release-item-ideator id="fatih.mencutekin"/>
                             <release-item-contributor id="stefan.fercot"/>
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
@@ -10003,8 +10003,8 @@
             <contributor-id type="github">evanbenoit</contributor-id>
         </contributor>
 
-        <contributor id="fatihmtekin">
-            <contributor-name-display>fatihmtekin</contributor-name-display>
+        <contributor id="fatih.mencutekin">
+            <contributor-name-display>Fatih Mencutekin</contributor-name-display>
             <contributor-id type="github">fatihmtekin</contributor-id>
         </contributor>
 
