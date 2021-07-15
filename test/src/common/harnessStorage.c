@@ -494,7 +494,8 @@ hrnStoragePathCreate(const Storage *const storage, const char *const path, HrnSt
 
     hrnTestResultComment(param.comment);
 
-    storagePathCreateP(storage, pathFull, .mode = param.mode, .errorOnExists = !param.noErrorOnExists);
+    storagePathCreateP(
+        storage, pathFull, .mode = param.mode, .errorOnExists = !param.noErrorOnExists, .noParentCreate = param.noParentCreate);
 
     hrnTestResultEnd();
 }

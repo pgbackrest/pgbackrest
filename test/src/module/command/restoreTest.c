@@ -1577,6 +1577,21 @@ testRun(void)
             "check recovery options");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery target lsn");
+
+        argList = strLstDup(argBaseList);
+        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "5218/5E35BBA8");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_10, restoreLabel),
+            RECOVERY_SETTING_HEADER
+            "restore_command = 'my_restore_command'\n"
+            "recovery_target_lsn = '5218/5E35BBA8'\n",
+            "check recovery options");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recovery target action = shutdown");
 
         argList = strLstDup(argBaseList);
