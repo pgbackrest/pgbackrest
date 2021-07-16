@@ -87,7 +87,7 @@ testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest 
         "pg path info list for restore compare");
 
     // Compare
-    TEST_RESULT_STR_Z(callbackData.content, compare, "    compare result manifest");
+    TEST_RESULT_STR_Z(callbackData.content, compare, "    compare result manifest");  // CSHANG Maybe remove spaces
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -162,13 +162,16 @@ testRun(void)
 
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // Create the pg path
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sparse-zero file");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -176,7 +179,10 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, TEST_USER_STR,
                 TEST_GROUP_STR, 0, true, false, NULL),
             false, "zero sparse 1TB file");
-        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "    check size");
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("normal-zero file");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -184,17 +190,15 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 false, false, NULL),
             true, "zero-length file");
-        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "    check size");
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Create a compressed encrypted repo file
-        StorageWrite *ceRepoFile = storageNewWriteP(
-            storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)));
-        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(ceRepoFile));
-        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpass"), NULL));
+        TEST_TITLE("compressed encrypted repo file - fail");
 
-        storagePutP(ceRepoFile, BUFSTRDEF("acefile"));
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1))),
+            "acefile", .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpass",
+            .comment = "create a compressed encrypted repo file");
 
         TEST_ERROR(
             restoreFile(
@@ -205,11 +209,12 @@ testRun(void)
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compressed encrypted repo file - retry");
+
         // Create normal file to make it look like a prior restore file failed partway through to ensure that retries work. It will
         // be clear if the file was overwritten when checking the info below since the size and timestamp will be changed.
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("normal"), .modeFile = 0600), BUFSTRDEF("PRT")),
-            "    create normal file");
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "normal", "PRT", .modeFile = 0600, .comment = "create normal file in pg");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -219,20 +224,21 @@ testRun(void)
             true, "copy file");
 
         StorageInfo info = storageInfoP(storagePg(), STRDEF("normal"));
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_UINT(info.size, 7, "    check size");
-        TEST_RESULT_UINT(info.mode, 0600, "    check mode");
-        TEST_RESULT_INT(info.timeModified, 1557432154, "    check time");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
-        TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("normal")))), "acefile", "    check contents");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_UINT(info.size, 7, "check size");
+        TEST_RESULT_UINT(info.mode, 0600, "check mode");
+        TEST_RESULT_INT(info.timeModified, 1557432154, "check time");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
+        TEST_STORAGE_GET(storagePg(), "normal", "acefile", .comment = "check contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file missing - delta option set");
+
         // Create a repo file
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1))),
-            BUFSTRDEF("atestfile"));
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1))),
+            "atestfile");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -240,11 +246,13 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             true, "sha1 delta missing");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
+        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
         size_t oldBufferSize = ioBufferSize();
         ioBufferSizeSet(4);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file exists - delta option set");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -262,8 +270,11 @@ testRun(void)
                 1557432155, true, true, NULL),
             false, "sha1 delta force existing");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file exists, size mismatch - delta option set");
+
         // Change the existing file so it no longer matches by size
-        storagePutP(storageNewWriteP(storagePgWrite(), strNewZ("delta")), BUFSTRDEF("atestfile2"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "atestfile2");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -271,10 +282,9 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             true, "sha1 delta existing, size differs");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
+        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF("atestfile2"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "atestfile2");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -282,11 +292,13 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
                 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
+        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file exists, content mismatch - delta option set");
 
         // Change the existing file so it no longer matches by content
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF("btestfile"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "btestfile");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -294,10 +306,9 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             true, "sha1 delta existing, content differs");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
+        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF("btestfile"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "btestfile");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -314,7 +325,7 @@ testRun(void)
             true, "delta force existing, timestamp after copy time");
 
         // Change the existing file to zero-length
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF(""));
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "delta");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -327,19 +338,16 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("restorePathValidate()"))
     {
-        const String *pgPath = STRDEF(TEST_PATH "/pg");
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg appears to be running");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postmaster.pid")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(),"postmaster.pid");
 
         TEST_ERROR(
             restorePathValidate(), PgRunningError,
@@ -347,16 +355,16 @@ testRun(void)
             "HINT: presence of 'postmaster.pid' in '" TEST_PATH "/pg' indicates PostgreSQL is running.\n"
             "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.");
 
-        storageRemoveP(storagePgWrite(), STRDEF("postmaster.pid"), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "postmaster.pid", .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on data directory does not look valid");
+        TEST_TITLE("error on data directory does not look valid - delta");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--delta");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with invalid PGDATA");
@@ -367,15 +375,18 @@ testRun(void)
                 " exist in the destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("backup.manifest")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "backup.manifest");
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with valid PGDATA");
-        storageRemoveP(storagePgWrite(), STRDEF("backup.manifest"), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "backup.manifest", .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on data directory does not look valid - force");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        strLstAddZ(argList, "--force");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with invalid PGDATA");
@@ -386,14 +397,15 @@ testRun(void)
                 " exist in the destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION)), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_PGVERSION);
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with valid PGDATA");
-        storageRemoveP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_PGVERSION, .errorOnMissing = true);
     }
 
     // *****************************************************************************************************************************
     if (testBegin("getEpoch()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("system time UTC");
 
         setenv("TZ", "UTC", true);
@@ -436,9 +448,9 @@ testRun(void)
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
