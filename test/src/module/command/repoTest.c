@@ -19,9 +19,6 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-
     // *****************************************************************************************************************************
     if (testBegin("cmdRepoCreate()"))
     {
@@ -176,9 +173,8 @@ testRun(void)
         TEST_TITLE("redirect stdout to a file");
 
         int stdoutSave = dup(STDOUT_FILENO);
-        const String *stdoutFile = STRDEF(TEST_PATH "/stdout.txt");
 
-        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+        THROW_ON_SYS_ERROR(freopen(TEST_PATH "/stdout.txt", "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         // Not in a test wrapper to avoid writing to stdout
         cmdStorageList();
@@ -186,7 +182,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storageTest, stdoutFile))), "ccc\n", "check text");
+        TEST_STORAGE_GET(storagePosixNewP(TEST_PATH_STR), "stdout.txt", "ccc\n", .comment = "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("too many paths");
@@ -528,8 +524,6 @@ testRun(void)
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
-        // const String *stdoutFile = STRDEF(TEST_PATH "/repo/stdout.txt");
-        // THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         THROW_ON_SYS_ERROR(freopen(TEST_PATH "/repo/stdout.txt", "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
@@ -539,9 +533,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        TEST_STORAGE_GET(storageRepo(), "stdout.txt", fileRawContent, .comment = "get matches put"); // CSHANG Not sure I like the mods to this test
-        // TEST_RESULT_STR(
-        //     strNewBuf(storageGetP(storageNewReadP(storageRepo(), stdoutFile))), strNewBuf(fileRawContent), "get matches put");
+        TEST_STORAGE_GET(storageRepo(), "stdout.txt", fileRawContent, .comment = "get matches put");
 
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -549,7 +541,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        strLstAddZ(argList, "--" CFGOPT_IGNORE_MISSING);
+        hrnCfgArgRawBool(argList, cfgOptIgnoreMissing, true);
         strLstAddZ(argList, BOGUS_STR);
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
@@ -591,13 +583,14 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test2");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE);
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
-        TEST_ERROR(storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
+        TEST_ERROR(
+            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
             "stanza name 'test2' given in option doesn't match the given path");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -611,21 +604,21 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveInfoFileBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveInfoFileBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted archive.info.copy");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE ".copy");
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveInfoFileBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveInfoFileBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted backup.info");
@@ -638,7 +631,7 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, backupInfoFileBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, backupInfoFileBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted backup.info.copy");
@@ -651,9 +644,11 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, backupInfoFileBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, backupInfoFileBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted WAL file");
+
         // Set higher buffer size for the WAL archive tests
         ioBufferSizeSet(oldBufferSize);
 
@@ -671,7 +666,7 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveFileBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveFileBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted backup.manifest");
@@ -684,7 +679,7 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted backup.manifest.copy");
@@ -697,7 +692,7 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted backup.history manifest");
@@ -710,7 +705,7 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted backup_label");
@@ -723,11 +718,12 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
-        TEST_RESULT_BOOL(bufEq(writeBuffer, backupLabelBuffer), true, "    get matches put");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, backupLabelBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Reset env
-        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         // Reset buffer size
         ioBufferSizeSet(oldBufferSize);
@@ -737,7 +733,7 @@ testRun(void)
     if (testBegin("cmdStorageRemove()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--repo-path=" TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdRepoRm, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -751,15 +747,14 @@ testRun(void)
         strLstAddZ(argList, "path");
         HRN_CFG_LOAD(cfgCmdRepoRm, argList);
 
-        TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite(), STRDEF("path")), "add path");
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), "path", .comment = "add path");
         TEST_RESULT_VOID(cmdStorageRemove(), "remove path");
-        TEST_RESULT_BOOL(storagePathExistsP(storageRepo(), STRDEF("path")), false, "    check path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), NULL, .comment = "check path removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail when path is not empty and no recurse");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("path/aaa.txt")), BUFSTRDEF("TESTDATA")), "add path/file");
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), "path/aaa.txt", "TESTDATA", .comment = "add path/file");
         TEST_ERROR(cmdStorageRemove(), OptionInvalidError, "recurse option must be used to delete non-empty path");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -767,6 +762,7 @@ testRun(void)
 
         cfgOptionSet(cfgOptRecurse, cfgSourceParam, BOOL_TRUE_VAR);
         TEST_RESULT_VOID(cmdStorageRemove(), "remove path");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), NULL, .comment = "check path removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on more than one path");
@@ -786,11 +782,9 @@ testRun(void)
         strLstAddZ(argList, "path/aaa.txt");
         HRN_CFG_LOAD(cfgCmdRepoRm, argList);
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("path/aaa.txt")), BUFSTRDEF("TESTDATA")), "add path/file");
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), "path/aaa.txt", "TESTDATA", .comment = "add path/file");
         TEST_RESULT_VOID(cmdStorageRemove(), "remove file");
-        TEST_RESULT_BOOL(storagePathExistsP(storageRepo(), STRDEF("path/aaa.txt")), false, "    check file removed");
-        TEST_RESULT_BOOL(storagePathExistsP(storageRepo(), STRDEF("path")), true, "    check path exists");
+        TEST_STORAGE_LIST(storageRepo(), NULL, "path/\n", .comment = "check path exists and file removed");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
