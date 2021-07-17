@@ -115,10 +115,6 @@ use constant VM_D9                                                  => 'd9';
 use constant VM_EXPECT                                              => VM_CO7;
     push @EXPORT, qw(VM_EXPECT);
 
-# Defines the host VM (the VM that the containers run in)
-use constant VM_HOST_DEFAULT                                        => VM_U18;
-    push @EXPORT, qw(VM_HOST_DEFAULT);
-
 # VM aliases for run matrices (numbered oldest to newest)
 use constant VM2                                                    => VM_U12;
     push @EXPORT, qw(VM2);

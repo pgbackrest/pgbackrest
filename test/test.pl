@@ -155,7 +155,6 @@ my $bQuiet = false;
 my $strPgVersion = 'minimal';
 my $bLogForce = false;
 my $strVm;
-my $strVmHost = VM_HOST_DEFAULT;
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bBuildOnly = false;
@@ -201,7 +200,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'log-level-test-file=s' => \$strLogLevelTestFile,
             'no-log-timestamp' => \$bNoLogTimestamp,
             'vm=s' => \$strVm,
-            'vm-host=s' => \$strVmHost,
             'vm-out' => \$bVmOut,
             'vm-build' => \$bVmBuild,
             'vm-force' => \$bVmForce,
@@ -1141,11 +1139,11 @@ eval
                 if (!defined($$oyProcess[$iVmIdx]) && $iTestIdx < @{$oyTestRun})
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
-                        $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $strVmHost, $bVmOut,
-                        $iVmIdx, $iVmMax, $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile,
-                        !$bNoLogTimestamp, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage,
-                        $bCoverageSummary, !$bNoOptimize, $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug,
-                        $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
+                        $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx, $iVmMax,
+                        $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, !$bNoLogTimestamp,
+                        $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary,
+                        !$bNoOptimize, $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                        $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
                     if ($oJob->run())
