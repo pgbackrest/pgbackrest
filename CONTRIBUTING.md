@@ -21,7 +21,7 @@ pgbackrest-dev => Install development tools
 sudo apt-get install rsync git devscripts build-essential valgrind lcov autoconf \
        autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config \
        libxml-checker-perl libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool \
-       zstd libzstd-dev bzip2 libbz2-dev
+       zstd libzstd-dev bzip2 libbz2-dev libyaml-dev
 ```
 
 Some unit tests and all the integration tests require Docker. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of PostgreSQL, and use sudo without affecting the host system.

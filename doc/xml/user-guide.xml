@@ -36,7 +36,7 @@
         <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
-        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:16.04</variable>
+        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:18.04</variable>
         <variable key="os-image" if="{[os-type-is-rhel]}">centos:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
@@ -355,7 +355,10 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim 2>&amp;1
+        RUN yum install -y openssh-server openssh-clients sudo wget vim dnf-plugins-core 2>&amp;1
+
+        # Enable PowerTools repository (only available on RHEL8)
+        RUN dnf config-manager --set-enabled powertools || true
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -836,7 +839,7 @@
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
                     apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config
-                    liblz4-dev libzstd-dev libbz2-dev libz-dev
+                    liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -844,7 +847,7 @@
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
                     yum install make gcc postgresql{[pg-version-nodot]}-devel
-                    openssl-devel libxml2-devel lz4-devel libzstd-devel bzip2-devel
+                    openssl-devel libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>

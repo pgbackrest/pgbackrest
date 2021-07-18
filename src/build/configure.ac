@@ -119,6 +119,12 @@ fi
 AC_CHECK_LIB([xml2], [xmlSaveToBuffer], [], [AC_MSG_ERROR([library 'xml2' is required])])
 AC_CHECK_HEADER(libxml/parser.h, [], [AC_MSG_ERROR([header file <libxml/parser.h> is required])])
 
+# Check required yaml library (only required for build)
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [yaml], [yaml_parser_initialize], [AC_SUBST(LIBS_BUILD, "${LIBS_BUILD} -lyaml")], [AC_MSG_ERROR([library 'yaml' is required])])
+AC_CHECK_HEADER(zlib.h, [], [AC_MSG_ERROR([header file <yaml.h> is required])])
+
 # Check required gz library
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CHECK_LIB([z], [deflate], [], [AC_MSG_ERROR([library 'z' is required])])

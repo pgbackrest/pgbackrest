@@ -73,6 +73,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
+      - name: Install Packages
+        run: sudo apt-get install -y --no-install-recommends libyaml-dev
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v1
         with:

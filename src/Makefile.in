@@ -5,6 +5,42 @@
 ####################################################################################################################################
 # List of required source files.  main.c should always be listed last and the rest in alpha order.
 ####################################################################################################################################
+SRCS_BUILD = \
+	common/debug.c \
+	common/encode.c \
+	common/error.c \
+	common/io/filter/buffer.c \
+	common/io/filter/filter.c \
+	common/io/filter/group.c \
+	common/io/filter/sink.c \
+	common/io/io.c \
+	common/io/read.c \
+	common/io/write.c \
+	common/log.c \
+	common/memContext.c \
+	common/regExp.c \
+	common/stackTrace.c \
+	common/time.c \
+	common/type/buffer.c \
+	common/type/convert.c \
+	common/type/keyValue.c \
+	common/type/list.c \
+	common/type/object.c \
+	common/type/pack.c \
+	common/type/string.c \
+	common/type/stringId.c \
+	common/type/stringList.c \
+	common/type/variant.c \
+	common/type/variantList.c \
+	common/user.c \
+	common/wait.c \
+	storage/posix/read.c \
+	storage/posix/storage.c \
+	storage/posix/write.c \
+	storage/read.c \
+	storage/storage.c \
+	storage/write.c
+
 SRCS = \
 	command/archive/common.c \
 	command/archive/get/file.c \
@@ -15,11 +51,11 @@ SRCS = \
 	command/archive/push/push.c \
 	command/backup/backup.c \
 	command/backup/common.c \
-	command/backup/file.c \
 	command/backup/pageChecksum.c \
+	command/backup/protocol.c \
+	command/backup/file.c \
 	command/check/check.c \
 	command/check/common.c \
-	command/backup/protocol.c \
 	command/expire/expire.c \
 	command/help/help.c \
 	command/info/info.c \
@@ -60,22 +96,16 @@ SRCS = \
 	common/crypto/cipherBlock.c \
 	common/crypto/common.c \
 	common/crypto/hash.c \
-	common/debug.c \
-	common/encode.c \
-	common/error.c \
 	common/exec.c \
 	common/exit.c \
 	common/fork.c \
+	common/ini.c \
 	common/io/bufferRead.c \
 	common/io/bufferWrite.c \
 	common/io/client.c \
 	common/io/fd.c \
 	common/io/fdRead.c \
 	common/io/fdWrite.c \
-	common/io/filter/buffer.c \
-	common/io/filter/filter.c \
-	common/io/filter/group.c \
-	common/io/filter/sink.c \
 	common/io/filter/size.c \
 	common/io/http/client.c \
 	common/io/http/common.c \
@@ -85,39 +115,17 @@ SRCS = \
 	common/io/http/response.c \
 	common/io/http/session.c \
 	common/io/http/url.c \
-	common/io/io.c \
-	common/io/read.c \
 	common/io/session.c \
 	common/io/socket/client.c \
 	common/io/socket/common.c \
 	common/io/socket/session.c \
 	common/io/tls/client.c \
 	common/io/tls/session.c \
-	common/io/write.c \
-	common/ini.c \
 	common/lock.c \
-	common/log.c \
-	common/memContext.c \
-	common/regExp.c \
-	common/stackTrace.c \
 	common/stat.c \
-	common/time.c \
-	common/type/buffer.c \
-	common/type/convert.c \
 	common/type/json.c \
-	common/type/keyValue.c \
-	common/type/list.c \
 	common/type/mcv.c \
-	common/type/object.c \
-	common/type/pack.c \
-	common/type/string.c \
-	common/type/stringId.c \
-	common/type/stringList.c \
-	common/type/variant.c \
-	common/type/variantList.c \
 	common/type/xml.c \
-	common/user.c \
-	common/wait.c \
 	config/config.c \
 	config/exec.c \
 	config/load.c \
@@ -161,21 +169,14 @@ SRCS = \
 	storage/gcs/read.c \
 	storage/gcs/storage.c \
 	storage/gcs/write.c \
-	storage/posix/read.c \
-	storage/posix/storage.c \
-	storage/posix/write.c \
+	storage/helper.c \
 	storage/remote/read.c \
 	storage/remote/protocol.c \
 	storage/remote/storage.c \
 	storage/remote/write.c \
 	storage/s3/read.c \
 	storage/s3/storage.c \
-	storage/s3/write.c \
-	storage/helper.c \
-	storage/read.c \
-	storage/storage.c \
-	storage/write.c \
-	main.c
+	storage/s3/write.c
 
 ####################################################################################################################################
 # Compiler options
@@ -185,6 +186,7 @@ CFLAGS = $(CFLAGS_EXTRA) @CFLAGS@
 CPPFLAGS = @CPPFLAGS@ -I@srcdir@
 LDFLAGS = $(LDFLAGS_EXTRA) @LDFLAGS@
 LIBS = @LIBS@
+LIBS_BUILD = @LIBS_BUILD@
 
 ####################################################################################################################################
 # Directory options
@@ -196,15 +198,27 @@ bindir = @bindir@
 BUILDDIR=.build
 
 ####################################################################################################################################
-# Create object list from source list
+# Compile and link pgbackrest
 ####################################################################################################################################
-OBJS = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS))
+OBJS_PGBACKREST = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS) main.c)
+
+pgbackrest: $(OBJS_PGBACKREST)
+	$(CC) -o pgbackrest $(OBJS_PGBACKREST) $(LDFLAGS) $(LIBS)
 
 ####################################################################################################################################
-# Compile and link
+# Compile and link config generator
 ####################################################################################################################################
-pgbackrest: $(OBJS)
-	$(CC) -o pgbackrest $(OBJS) $(LDFLAGS) $(LIBS)
+SRCS_BUILD_CONFIG = \
+	build/common/yaml.c \
+	build/config/main.c \
+	build/config/parse.c \
+	build/config/render.c
+
+OBJS_BUILD_CONFIG = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_CONFIG))
+
+build-config: $(OBJS_BUILD_CONFIG) build/config/config.yaml config/config.auto.h
+	$(CC) -o build-config $(OBJS_BUILD_CONFIG) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
+	./build-config $(VPATH)
 
 ####################################################################################################################################
 # Installation.  DESTDIR can be used to modify the install location.
@@ -227,7 +241,7 @@ uninstall:
 # Clean build files and executable created by make
 clean:
 	rm -rf $(BUILDDIR)
-	rm -f pgbackrest
+	rm -f pgbackrest build-config
 
 .PHONY = clean-all
 

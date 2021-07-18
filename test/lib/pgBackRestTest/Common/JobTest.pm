@@ -262,7 +262,7 @@ sub run
                     "CFLAGS_CONFIG = \@CFLAGS\@\n" .
                     "CPPFLAGS_CONFIG = \@CPPFLAGS\@\n" .
                     "LDFLAGS_CONFIG = \@LDFLAGS\@\n" .
-                    "LIBS_CONFIG = \@LIBS\@\n";
+                    "LIBS_CONFIG = \@LIBS\@ \@LIBS_BUILD\@\n";
 
                 # If Makefile.in has changed then configure needs to be run and all files cleaned
                 if (buildPutDiffers($self->{oStorageTest}, $self->{strGCovPath} . "/Makefile.in", $strMakefileIn))
