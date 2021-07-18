@@ -24,7 +24,7 @@
     </variable-list>
 
     <!-- Setup hosts used to build the documentation =========================================================================== -->
-    <host-define if="{[os-type-is-debian]}" image="{[host-contrib-image]}" from="ubuntu:18.04">
+    <host-define if="{[os-type-is-debian]}" image="{[host-contrib-image]}" from="ubuntu:20.04">
         {[copy-ca-cert]}
 
         # Fix root tty
@@ -65,9 +65,9 @@
     <section id="environment">
         <title>Building a Development Environment</title>
 
-        <p>This example is based on <proper>Ubuntu 18.04</proper>, but it should work on many versions of <proper>Debian</proper> and <proper>Ubuntu</proper>.</p>
+        <p>This example is based on <proper>Ubuntu 20.04</proper>, but it should work on many versions of <proper>Debian</proper> and <proper>Ubuntu</proper>.</p>
 
-        <host-add id="{[host-contrib-id]}" name="{[host-contrib]}" user="{[host-contrib-user]}" image="{[host-contrib-image]}" os="u18" option="-v /var/run/docker.sock:/var/run/docker.sock -v {[cwd]}/test:{[cwd]}/test" mount="/home/{[host-contrib-user]}/pgbackrest:/home/{[host-contrib-user]}/pgbackrest"/>
+        <host-add id="{[host-contrib-id]}" name="{[host-contrib]}" user="{[host-contrib-user]}" image="{[host-contrib-image]}" os="u20" option="-v /var/run/docker.sock:/var/run/docker.sock -v {[cwd]}/test:{[cwd]}/test" mount="/home/{[host-contrib-user]}/pgbackrest:/home/{[host-contrib-user]}/pgbackrest"/>
 
         <execute-list host="{[host-contrib]}">
             <title>Install development tools</title>
@@ -368,13 +368,13 @@ pgbackrest/doc/doc.pl --help
             <section id="with-docker" depend="/environment">
                 <title>With Docker</title>
 
-                <p>Build a container to run tests. The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
+                <p>Build a container to run tests. The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. <id>u20</id> for <proper>Ubuntu 20.04</proper>.</p>
 
                 <execute-list host="{[host-contrib]}">
                     <title>Build a VM</title>
 
                     <execute output="y">
-                        <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u18</exe-cmd>
+                        <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u20</exe-cmd>
                         <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                     </execute>
                 </execute-list>
@@ -385,7 +385,7 @@ pgbackrest/doc/doc.pl --help
                     <title>Run a Specific Test Run</title>
 
                     <execute output="y">
-                        <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u18 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
+                        <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u20 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
                         <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                     </execute>
                 </execute-list>
@@ -563,7 +563,7 @@ TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check ind
             <p>Unit tests are run for all files that are listed in <file>define.yaml</file> and a coverage report generated for each file listed under the tag <code>coverage:</code>. Note that some files are listed in multiple <code>coverage:</code> sections for a module; in this case, each test for the file being modified should be specified for the module in which the file exists (e.g. <code>--module=storage --test=posix --test=gcs</code>, etc.) or, alternatively, simply run the module without the <code>--test</code> option. It is recommended that a <code>--vm</code> be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the <b>define.yaml</b> section detailed above.</p>
 
             <code-block>
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u18
+pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u20
             </code-block>
 
 <admonition type="note">Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.</admonition>

@@ -94,12 +94,8 @@ use constant VM_CO7                                                 => 'co7';
     push @EXPORT, qw(VM_CO7);
 use constant VM_CO8                                                 => 'co8';
     push @EXPORT, qw(VM_CO8);
-use constant VM_F32                                                 => 'f32';
-    push @EXPORT, qw(VM_F32);
-use constant VM_U12                                                 => 'u12';
-    push @EXPORT, qw(VM_U12);
-use constant VM_U14                                                 => 'u14';
-    push @EXPORT, qw(VM_U14);
+use constant VM_F33                                                 => 'f33';
+    push @EXPORT, qw(VM_F33);
 use constant VM_U16                                                 => 'u16';
     push @EXPORT, qw(VM_U16);
 use constant VM_U18                                                 => 'u18';
@@ -116,11 +112,11 @@ use constant VM_EXPECT                                              => VM_CO7;
     push @EXPORT, qw(VM_EXPECT);
 
 # VM aliases for run matrices (numbered oldest to newest)
-use constant VM2                                                    => VM_U12;
+use constant VM2                                                    => VM_U16;
     push @EXPORT, qw(VM2);
 use constant VM3                                                    => VM_CO7;
     push @EXPORT, qw(VM3);
-use constant VM4                                                    => VM_U18;
+use constant VM4                                                    => VM_U20;
     push @EXPORT, qw(VM4);
 
 # List of default test VMs
@@ -179,12 +175,12 @@ my $oyVm =
         ],
     },
 
-    # Fedora 32
-    &VM_F32 =>
+    # Fedora 33
+    &VM_F33 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_OS => VM_OS_CENTOS,
-        &VM_IMAGE => 'fedora:32',
+        &VM_IMAGE => 'fedora:33',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
@@ -194,11 +190,11 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
+            PG_VERSION_13,
         ],
 
         &VM_DB_TEST =>
@@ -265,83 +261,23 @@ my $oyVm =
         ],
     },
 
-    # Ubuntu 12.04
-    &VM_U12 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
-        &VM_OS_REPO => 'precise',
-        &VM_IMAGE => 'i386/ubuntu:12.04',
-        &VM_ARCH => VM_ARCH_I386,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-        &VMDEF_WITH_LZ4 => false,
-
-        &VM_DB =>
-        [
-            PG_VERSION_83,
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_83,
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-        ],
-    },
-
-    # Ubuntu 14.04
-    &VM_U14 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
-        &VM_OS_REPO => 'trusty',
-        &VM_IMAGE => 'ubuntu:14.04',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VM_DB =>
-        [
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-            PG_VERSION_13,
-        ],
-
-        &VM_DB =>
-        [
-            PG_VERSION_94,
-        ],
-    },
-
     # Ubuntu 16.04
     &VM_U16 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'xenial',
-        &VM_IMAGE => 'ubuntu:16.04',
-        &VM_ARCH => VM_ARCH_AMD64,
+        &VM_IMAGE => 'i386/ubuntu:16.04',
+        &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VMDEF_WITH_BACKTRACE => true,
 
         &VM_DB =>
         [
+            PG_VERSION_83,
+            PG_VERSION_84,
+            PG_VERSION_90,
             PG_VERSION_91,
             PG_VERSION_92,
             PG_VERSION_93,
@@ -356,8 +292,11 @@ my $oyVm =
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_94,
-            PG_VERSION_95,
+            PG_VERSION_83,
+            PG_VERSION_84,
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
         ],
     },
 
@@ -390,7 +329,6 @@ my $oyVm =
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
-            PG_VERSION_14,
         ],
 
         &VM_DB_TEST =>
@@ -402,7 +340,6 @@ my $oyVm =
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
-            PG_VERSION_14,
         ],
     },
 
@@ -433,11 +370,11 @@ my $oyVm =
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
+            PG_VERSION_14,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_92,
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
@@ -445,6 +382,7 @@ my $oyVm =
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
+            PG_VERSION_14,
         ],
     },
 };

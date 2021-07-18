@@ -302,7 +302,8 @@
         RUN export DEBIAN_FRONTEND=noninteractive &amp;&amp; \
             rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
-            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates tzdata locales 2>&amp;1
+            apt-get install -y --no-install-recommends sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates \
+                    tzdata locales 2>&amp;1
 
         {[sudo-disable-core-dump]}
 
@@ -315,10 +316,10 @@
                 tee -a /etc/apt/sources.list.d/pgdg.list &amp;&amp; \
             wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - &amp;&amp; \
             apt-get update &amp;&amp; \
-            apt-get install -y postgresql-common 2>&amp;1 &amp;&amp; \
+            apt-get install -y --no-install-recommends postgresql-common 2>&amp;1 &amp;&amp; \
             sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/' \
                 /etc/postgresql-common/createcluster.conf &amp;&amp; \
-            apt-get install -y postgresql-{[pg-version]} postgresql-{[pg-version-upgrade]} 2>&amp;1
+            apt-get install -y --no-install-recommends postgresql-{[pg-version]} postgresql-{[pg-version-upgrade]} 2>&amp;1
 
         # Create an ssh key for root so all hosts can ssh to each other as root
         RUN \ {[ssh-key-install]}

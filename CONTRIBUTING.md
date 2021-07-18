@@ -14,7 +14,7 @@ Coding standards are defined in [CODING.md](https://github.com/pgbackrest/pgback
 
 ## Building a Development Environment
 
-This example is based on Ubuntu 18.04, but it should work on many versions of Debian and Ubuntu.
+This example is based on Ubuntu 20.04, but it should work on many versions of Debian and Ubuntu.
 
 pgbackrest-dev => Install development tools
 ```
@@ -315,24 +315,24 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
 
 #### With Docker
 
-Build a container to run tests. The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. `u18` for Ubuntu 18.04.
+Build a container to run tests. The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. `u20` for Ubuntu 20.04.
 
 pgbackrest-dev => Build a VM
 ```
-pgbackrest/test/test.pl --vm-build --vm=u18
+pgbackrest/test/test.pl --vm-build --vm=u20
 
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u18-base-20210521A image (a92925d1200fd12d5f3d59f3a3db555c6efa00be) ...
-    P00   INFO: Building pgbackrest/test:u18-test image ...
+    P00   INFO: Using cached pgbackrest/test:u20-base-20210717A image (738bc9b702a18d1fcb5ba33dae74c74e01e67527) ...
+    P00   INFO: Building pgbackrest/test:u20-test image ...
     P00   INFO: Build Complete
 ```
 > **NOTE:** to build all the vms, just omit the `--vm` option above.
 
 pgbackrest-dev => Run a Specific Test Run
 ```
-pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
+pgbackrest/test/test.pl --vm=u20 --dev --module=mock --test=archive --run=2
 
 --- output ---
 
@@ -340,13 +340,13 @@ pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data and containers
     P00   INFO: builds required: bin, bin host
-    P00   INFO:     bin dependencies have changed for u18, rebuilding...
-    P00   INFO:     build bin for u18 (/home/vagrant/test/bin/u18)
+    P00   INFO:     bin dependencies have changed for u20, rebuilding...
+    P00   INFO:     build bin for u20 (/home/docker/test/bin/u20)
     P00   INFO:     bin dependencies have changed for none, rebuilding...
-    P00   INFO:     build bin for none (/home/vagrant/test/bin/none)
+    P00   INFO:     build bin for none (/home/docker/test/bin/none)
     P00   INFO: 1 test selected
                 
-    P00   INFO: P1-T1/1 - vm=u18, module=mock, test=archive, run=2
+    P00   INFO: P1-T1/1 - vm=u20, module=mock, test=archive, run=2
     P00   INFO: no code modules had all tests run required for coverage
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
@@ -498,7 +498,7 @@ TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check ind
 
 Unit tests are run for all files that are listed in `define.yaml` and a coverage report generated for each file listed under the tag `coverage:`. Note that some files are listed in multiple `coverage:` sections for a module; in this case, each test for the file being modified should be specified for the module in which the file exists (e.g. `--module=storage --test=posix --test=gcs`, etc.) or, alternatively, simply run the module without the `--test` option. It is recommended that a `--vm` be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the **define.yaml** section detailed above.
 ```
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u18
+pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u20
 ```
 > **NOTE:** Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.
 

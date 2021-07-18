@@ -29,16 +29,16 @@ jobs:
       matrix:
         include:
           # All unit (without coverage) and integration tests for 32-bit
-          - param: test --vm=u12 --param=no-performance
+          - param: test --vm=u16 --param=no-performance
 
           # Debian/Ubuntu documentation
           - param: doc --vm=u18
 
           # All integration tests
-          - param: test --vm=u18 --param=build-package --param=module=mock --param=module=real
+          - param: test --vm=u20 --param=build-package --param=module=mock --param=module=real
 
           # All unit tests (with coverage) on the newest gcc available
-          - param: test --vm=f32 --param=c-only --param=tz=America/New_York
+          - param: test --vm=f33 --param=c-only --param=tz=America/New_York
 
           # RHEL/CentOS 8 documentation
           - param: doc --vm=co8

@@ -934,7 +934,7 @@ eval
 
                         executeTest(
                             ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                            "bash -c 'cd ${strBuildPath} && debuild -i -us -uc -b'");
+                            "bash -c 'cd ${strBuildPath} && debuild -d -i -us -uc -b'");
 
                         executeTest(
                             ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
