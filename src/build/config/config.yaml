@@ -1246,9 +1246,38 @@ option:
     section: stanza
     group: pg
     type: string
-    command: pg-port
+    command:
+      backup: {}
+      check: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
     default: postgres
-    depend: pg-port
+    depend:
+      option: pg-path
+
+  pg-local:
+    section: stanza
+    group: pg
+    type: boolean
+    internal: true
+    default: false
+    command:
+      archive-get:
+        internal: true
+      archive-push:
+        internal: true
+      backup: {}
+      check: {}
+      restore:
+        internal: true
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    command-role:
+      async: {}
+      main: {}
+      local: {}
 
   pg-host:
     section: stanza
@@ -1327,29 +1356,6 @@ option:
       db-user: {index: 1, reset: false}
       db?-user: {reset: false}
 
-  pg-local:
-    section: stanza
-    group: pg
-    type: boolean
-    internal: true
-    default: false
-    command:
-      archive-get:
-        internal: true
-      archive-push:
-        internal: true
-      backup: {}
-      check: {}
-      restore:
-        internal: true
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-    command-role:
-      async: {}
-      main: {}
-      local: {}
-
   pg-host-type:
     section: global
     group: pg
@@ -1392,14 +1398,8 @@ option:
     type: integer
     default: 5432
     allow-range: [0, 65535]
-    command:
-      backup: {}
-      check: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-    depend:
-      option: pg-path
+    command: pg-database
+    depend: pg-database
     deprecate:
       db-port: {index: 1, reset: false}
       db?-port: {reset: false}
@@ -1502,6 +1502,127 @@ option:
           main: {}
           local: {}
           remote: {}
+
+  repo-local:
+    section: global
+    group: repo
+    type: boolean
+    internal: true
+    default: false
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup:
+        internal: true
+      check: {}
+      expire:
+        internal: true
+      info: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create:
+        internal: true
+      stanza-delete:
+        internal: true
+      stanza-upgrade:
+        internal: true
+      verify: {}
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+
+  repo-type:
+    section: global
+    group: repo
+    type: string
+    default: posix
+    allow-list:
+      - azure
+      - cifs
+      - gcs
+      - posix
+      - s3
+    command:
+      archive-get:
+        command-role:
+          async: {}
+          main: {}
+          local: {}
+          remote: {}
+      archive-push:
+        command-role:
+          async: {}
+          main: {}
+          local: {}
+          remote: {}
+      backup:
+        command-role:
+          main: {}
+          local: {}
+      check:
+        command-role:
+          main: {}
+          remote: {}
+      expire:
+        command-role:
+          main: {}
+      info:
+        command-role:
+          main: {}
+          remote: {}
+      repo-create:
+        command-role:
+          main: {}
+          remote: {}
+      repo-get:
+        command-role:
+          main: {}
+          remote: {}
+      repo-ls:
+        command-role:
+          main: {}
+          remote: {}
+      repo-put:
+        command-role:
+          main: {}
+          remote: {}
+      repo-rm:
+        command-role:
+          main: {}
+          remote: {}
+      restore:
+        command-role:
+          main: {}
+          local: {}
+          remote: {}
+      stanza-create:
+        command-role:
+          main: {}
+          remote: {}
+      stanza-delete:
+        command-role:
+          main: {}
+          remote: {}
+      stanza-upgrade:
+        command-role:
+          main: {}
+          remote: {}
+      start:
+        command-role: {}
+      stop:
+        command-role: {}
+      verify:
+        command-role:
+          main: {}
+          local: {}
+          remote: {}
+    deprecate:
+      repo-type: {index: 1, reset: false}
 
   repo-azure-account:
     section: global
@@ -1739,39 +1860,6 @@ option:
     deprecate:
       backup-user: {index: 1, reset: false}
 
-  repo-local:
-    section: global
-    group: repo
-    type: boolean
-    internal: true
-    default: false
-    command:
-      archive-get: {}
-      archive-push: {}
-      backup:
-        internal: true
-      check: {}
-      expire:
-        internal: true
-      info: {}
-      repo-create: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create:
-        internal: true
-      stanza-delete:
-        internal: true
-      stanza-upgrade:
-        internal: true
-      verify: {}
-    command-role:
-      async: {}
-      main: {}
-      local: {}
-
   repo-path:
     section: global
     group: repo
@@ -1826,18 +1914,6 @@ option:
     deprecate:
       retention-diff: {index: 1, reset: false}
 
-  repo-retention-full:
-    section: global
-    group: repo
-    type: integer
-    required: false
-    allow-range: [1, 9999999]
-    command: repo-retention-full-type
-    command-role:
-      main: {}
-    deprecate:
-      retention-full: {index: 1, reset: false}
-
   repo-retention-full-type:
     section: global
     group: repo
@@ -1851,6 +1927,18 @@ option:
       expire: {}
     command-role:
       main: {}
+
+  repo-retention-full:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command: repo-retention-full-type
+    command-role:
+      main: {}
+    deprecate:
+      retention-full: {index: 1, reset: false}
 
   repo-retention-history:
     section: global
@@ -2000,91 +2088,3 @@ option:
       repo?-azure-verify-tls: {index: 1}
       repo?-s3-verify-ssl: {index: 1, reset: false}
       repo?-s3-verify-tls: {index: 1}
-
-  repo-type:
-    section: global
-    group: repo
-    type: string
-    default: posix
-    allow-list:
-      - azure
-      - cifs
-      - gcs
-      - posix
-      - s3
-    command:
-      archive-get:
-        command-role:
-          async: {}
-          main: {}
-          local: {}
-          remote: {}
-      archive-push:
-        command-role:
-          async: {}
-          main: {}
-          local: {}
-          remote: {}
-      backup:
-        command-role:
-          main: {}
-          local: {}
-      check:
-        command-role:
-          main: {}
-          remote: {}
-      expire:
-        command-role:
-          main: {}
-      info:
-        command-role:
-          main: {}
-          remote: {}
-      repo-create:
-        command-role:
-          main: {}
-          remote: {}
-      repo-get:
-        command-role:
-          main: {}
-          remote: {}
-      repo-ls:
-        command-role:
-          main: {}
-          remote: {}
-      repo-put:
-        command-role:
-          main: {}
-          remote: {}
-      repo-rm:
-        command-role:
-          main: {}
-          remote: {}
-      restore:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
-      stanza-create:
-        command-role:
-          main: {}
-          remote: {}
-      stanza-delete:
-        command-role:
-          main: {}
-          remote: {}
-      stanza-upgrade:
-        command-role:
-          main: {}
-          remote: {}
-      start:
-        command-role: {}
-      stop:
-        command-role: {}
-      verify:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
-    deprecate:
-      repo-type: {index: 1, reset: false}
