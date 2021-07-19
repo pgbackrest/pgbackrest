@@ -86,7 +86,6 @@ cmdServerFork(IoSession *const socketSession, const String *const host)
     FUNCTION_LOG_RETURN(BOOL, pid != 0);
 }
 
-
 void
 cmdServer(uint64_t connectionMax)
 {
