@@ -506,9 +506,8 @@ hrnStoragePathRemove(const Storage *const storage, const char *const path, HrnSt
     hrnTestResultBegin(__func__, false);
 
     ASSERT(storage != NULL);
-    ASSERT(path != NULL);
 
-    const String *const pathFull = storagePathP(storage, STR(path));
+    const String *const pathFull = storagePathP(storage, path == NULL ? NULL : STR(path));
 
     printf("remove path '%s'", strZ(pathFull));
     hrnTestResultComment(param.comment);
