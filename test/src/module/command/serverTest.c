@@ -38,6 +38,8 @@ testRun(void)
                 TEST_RESULT_VOID(protocolClientCommandPut(client, protocolCommandNew(PROTOCOL_COMMAND_EXIT)), "exit");
 
                 TEST_RESULT_VOID(protocolClientFree(client), "client free");
+
+                HRN_FORK_CHILD_NOTIFY_PUT();
             }
             HRN_FORK_CHILD_END();
 
@@ -49,7 +51,16 @@ testRun(void)
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
                 HRN_CFG_LOAD(cfgCmdServer, argList);
 
+                // Get pid of this process to identify child process later
+                pid_t pid = getpid();
+
                 TEST_RESULT_VOID(cmdServer(1), "server");
+
+                // If this is a child process then exit immediately
+                if (pid != getpid())
+                    exit(0);
+
+                HRN_FORK_PARENT_NOTIFY_GET(0);
             }
             HRN_FORK_PARENT_END();
         }
