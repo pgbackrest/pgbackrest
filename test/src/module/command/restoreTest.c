@@ -1194,12 +1194,12 @@ testRun(void)
         TEST_TITLE("no valid databases");
 
         StringList *argListClean = strLstNew();
-        strLstAddZ(argListClean, "--stanza=test1");
-        strLstAddZ(argListClean, "--repo1-path=/repo");
-        strLstAddZ(argListClean, "--pg1-path=/pg");
+        hrnCfgArgRawZ(argListClean, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argListClean, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argListClean, cfgOptPgPath, "/pg");
 
         StringList *argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=" UTF8_DB_NAME);
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, UTF8_DB_NAME);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         Manifest *manifest = NULL;
@@ -1247,7 +1247,7 @@ testRun(void)
         TEST_TITLE("database id to exclude is missing on disk");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=" UTF8_DB_NAME);
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, UTF8_DB_NAME);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to exclude '" UTF8_DB_NAME "' does not exist");
@@ -1265,7 +1265,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=" UTF8_DB_NAME);
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, UTF8_DB_NAME);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
@@ -1278,7 +1278,7 @@ testRun(void)
         TEST_TITLE("error on system database selected");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=1");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "1");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -1291,7 +1291,7 @@ testRun(void)
         TEST_TITLE("error on system database with non-systemId selected");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=16385");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "16385");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -1304,7 +1304,7 @@ testRun(void)
         TEST_TITLE("error on system database with non-systemId selected, by name");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=postgres");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "postgres");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -1317,7 +1317,7 @@ testRun(void)
         TEST_TITLE("error on missing database selected");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=7777777");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "7777777");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include '7777777' does not exist");
@@ -1336,7 +1336,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=16384");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "16384");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)", "check expression");
@@ -1395,7 +1395,7 @@ testRun(void)
         TEST_TITLE("exclude database by id");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=16384");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "16384");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1411,7 +1411,7 @@ testRun(void)
         TEST_TITLE("exclude database by name");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=" UTF8_DB_NAME);
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, UTF8_DB_NAME);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1427,7 +1427,7 @@ testRun(void)
         TEST_TITLE("exclude system database");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=16385");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "16385");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1443,7 +1443,7 @@ testRun(void)
         TEST_TITLE("error on missing database to exclude selected");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=7777777");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "7777777");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to exclude '7777777' does not exist");
@@ -1454,8 +1454,8 @@ testRun(void)
         TEST_TITLE("error on combining include and exclude options");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=test2");
-        strLstAddZ(argList, "--db-exclude=test2");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "test2");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "test2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbInvalidError, "database to include '32768' is in the exclude list");
@@ -1466,10 +1466,10 @@ testRun(void)
         TEST_TITLE("combine include and exclude options");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=16384");
-        strLstAddZ(argList, "--db-exclude=1");
-        strLstAddZ(argList, "--db-exclude=16385");
-        strLstAddZ(argList, "--db-exclude=32768");  // user databases excluded will be silently ignored
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "16384");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "1");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "16385");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "32768");  // user databases excluded will be silently ignored
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
