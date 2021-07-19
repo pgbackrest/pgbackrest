@@ -209,8 +209,6 @@ Examples of test runs are provided in the following sections. There are several 
 
 - `--run` - a number identifying the run within a test if testing a single run rather than the entire test
 
-- `--dev` - sets several flags that are appropriate for development but should be omitted when performing final testing prior to submitting a Pull Request to the project. Most importantly, it reuses object files from the previous test run to speed testing.
-
 - `--vm-out` - displays the test output (helpful for monitoring the progress)
 
 - `--vm` - identifies the pre-built container when using Docker, otherwise the setting should be `none`
@@ -244,7 +242,7 @@ pgbackrest/test/test.pl --vm=none --dry-run
 
 pgbackrest-dev => Run a test
 ```
-pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
+pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait
 
 --- output ---
 
@@ -296,7 +294,7 @@ An entire module can be run by using only the `--module` option.
 
 pgbackrest-dev => Run a module
 ```
-pgbackrest/test/test.pl --vm=none --dev --module=postgres
+pgbackrest/test/test.pl --vm=none --module=postgres
 
 --- output ---
 
@@ -332,7 +330,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 
 pgbackrest-dev => Run a Specific Test Run
 ```
-pgbackrest/test/test.pl --vm=u20 --dev --module=mock --test=archive --run=2
+pgbackrest/test/test.pl --vm=u20 --module=mock --test=archive --run=2
 
 --- output ---
 
@@ -498,7 +496,7 @@ TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check ind
 
 Unit tests are run for all files that are listed in `define.yaml` and a coverage report generated for each file listed under the tag `coverage:`. Note that some files are listed in multiple `coverage:` sections for a module; in this case, each test for the file being modified should be specified for the module in which the file exists (e.g. `--module=storage --test=posix --test=gcs`, etc.) or, alternatively, simply run the module without the `--test` option. It is recommended that a `--vm` be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the **define.yaml** section detailed above.
 ```
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u20
+pgbackrest/test/test.pl --vm-out --module=command --test=check --vm=u20
 ```
 > **NOTE:** Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.
 
@@ -510,7 +508,7 @@ If 100 percent code coverage has not been achieved, an error message will be dis
 
 Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option `--no-cleanup` provided. Again, continuing with the check command, from **define.yaml** above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in `test/test-0` can be inspected.
 ```
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --no-cleanup
+pgbackrest/test/test.pl --vm-out --module=command --test=check --run=1 --no-cleanup
 ```
 
 ## Adding an Option
