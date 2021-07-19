@@ -31,9 +31,9 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--stanza=test1");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-                strLstAddZ(argList, "--process=1");
+                hrnCfgArgRawZ(argList, cfgOptProcess, "1");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
