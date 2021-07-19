@@ -1281,6 +1281,7 @@ sub configCreate
         if ($self->nameTest(HOST_BACKUP))
         {
             $oParamHash{$strStanza}{'pg1-host'} = $oHostDb1->nameGet();
+            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg1-host-type'} = 'tls' : undef;
             $oParamHash{$strStanza}{'pg1-host-user'} = $oHostDb1->userGet();
             $oParamHash{$strStanza}{'pg1-host-cmd'} = $oHostDb1->backrestExe();
             $oParamHash{$strStanza}{'pg1-host-config'} = $oHostDb1->backrestConfig();
