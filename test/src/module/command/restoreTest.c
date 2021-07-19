@@ -338,13 +338,16 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("restorePathValidate()"))
     {
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg appears to be running");
 
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(),"postmaster.pid");
@@ -362,8 +365,8 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawBool(argList, cfgOptDelta, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
@@ -384,8 +387,8 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
@@ -449,8 +452,8 @@ testRun(void)
 
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -470,10 +473,10 @@ testRun(void)
             TEST_RESTORE_BACKUP_INFO_DB);
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--set=BOGUS");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSet, "BOGUS");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "backup set BOGUS is not valid");
@@ -485,12 +488,12 @@ testRun(void)
         const String *repoPath2 = STRDEF(TEST_PATH "/repo2");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath2);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=time");
-        strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:28:04-0500");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
@@ -505,12 +508,12 @@ testRun(void)
 
         // Switch repo paths and confirm same result but on repo1
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=time");
-        strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:28:04-0500");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
@@ -651,9 +654,9 @@ testRun(void)
         TEST_TITLE("remap data directory");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is not remapped");
@@ -663,9 +666,9 @@ testRun(void)
         pgPath = STRDEF(TEST_PATH "/pg2");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is remapped");
@@ -676,10 +679,10 @@ testRun(void)
         TEST_TITLE("remap tablespaces");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map=bogus=/bogus");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "bogus=/bogus");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreManifestMap(manifest), TablespaceMapError, "unable to remap invalid tablespace 'bogus'");
@@ -700,11 +703,11 @@ testRun(void)
 
         // Error on different paths
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map=2=/2");
-        strLstAddZ(argList, "--tablespace-map=ts2=/ts2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "2=/2");
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "ts2=/ts2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -712,20 +715,20 @@ testRun(void)
 
         // Remap one tablespace using the id and another with the name
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map=1=/1-2");
-        strLstAddZ(argList, "--tablespace-map=ts2=/2-2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "1=/1-2");
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "ts2=/2-2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/1-2", "    check tablespace 1 target");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/1-2", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/1-2", "    check tablespace 1 link");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-2", "    check tablespace 1 target");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/1-2", "check tablespace 1 link");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-2", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-2", "    check tablespace 1 link");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-2", "check tablespace 1 link");
 
         TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/1-2'\n"
@@ -733,20 +736,20 @@ testRun(void)
 
         // Remap a tablespace using just the id and map the rest with tablespace-map-all
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map=2=/2-3");
-        strLstAddZ(argList, "--tablespace-map-all=/all");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "2=/2-3");
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMapAll, "/all");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all/1", "    check tablespace 1 target");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all/1", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all/1", "    check tablespace 1 link");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-3", "    check tablespace 1 target");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all/1", "check tablespace 1 link");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-3", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-3", "    check tablespace 1 link");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-3", "check tablespace 1 link");
 
         TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/all/1'\n"
@@ -756,19 +759,19 @@ testRun(void)
         manifest->pub.data.pgVersion = PG_VERSION_92;
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map-all=/all2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMapAll, "/all2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all2/1", "    check tablespace 1 target");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all2/1", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all2/1", "    check tablespace 1 link");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/all2/ts2", "    check tablespace 1 target");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all2/1", "check tablespace 1 link");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/all2/ts2", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/all2/ts2", "    check tablespace 1 link");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/all2/ts2", "check tablespace 1 link");
 
         TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/all2/1'\n"
@@ -779,10 +782,10 @@ testRun(void)
         TEST_TITLE("remap links");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--link-map=bogus=bogus");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "bogus=bogus");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreManifestMap(manifest), LinkMapError, "unable to remap invalid link 'bogus'");
@@ -801,10 +804,10 @@ testRun(void)
 
         // Error on invalid file link path
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--link-map=pg_hba.conf=bogus");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=bogus");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -815,21 +818,20 @@ testRun(void)
 
         // Remap both links
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--link-map=pg_hba.conf=../conf2/pg_hba2.conf");
-        strLstAddZ(argList, "--link-map=pg_wal=/wal2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=../conf2/pg_hba2.conf");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_wal=/wal2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap links");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "    check link file");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "check link path");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "check link file");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "    check link dest");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "    check link path");
-        TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "    check link dest");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "check link dest");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "check link path");
+        TEST_RESULT_STR_Z(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "check link dest");
 
         TEST_RESULT_LOG(
             "P00   INFO: map link 'pg_hba.conf' to '../conf2/pg_hba2.conf'\n"
@@ -837,26 +839,25 @@ testRun(void)
 
         // Leave all links as they are
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--link-all");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptLinkAll, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "leave links as they are");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "    check link file");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "check link path");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "check link file");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "    check link dest");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "    check link path");
-        TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "    check link dest");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "check link dest");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "check link path");
+        TEST_RESULT_STR_Z(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "check link dest");
 
         // Remove all links
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remove all links");
