@@ -278,7 +278,7 @@ sub entryPointSetup
 
     my $oVm = vmGet();
 
-    if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL || $strOS eq VM_U12)
+    if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
         $strScript .= '/usr/sbin/sshd -D';
     }
@@ -358,27 +358,18 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP";
+                "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP";
         }
         else
         {
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
-                "    apt-get -y install openssh-server wget sudo gcc make valgrind git \\\n" .
+                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
-                "        libbz2-dev bzip2";
-
-            if ($strOS eq VM_U12)
-            {
-                $strScript .= ' libperl5.14';
-            }
-            else
-            {
-                $strScript .= ' libjson-pp-perl liblz4-dev liblz4-tool';
-            }
+                "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool";
         }
 
         # Add zst command-line tool and development libs when available
@@ -415,13 +406,6 @@ sub containerBuild
             $strScript .= sectionHeader() .
                 "# Suppress dpkg interactive output\n" .
                 "    rm /etc/apt/apt.conf.d/70debconf";
-
-            if ($strOS eq VM_U12)
-            {
-                $strScript .= sectionHeader() .
-                    "# Create run directory required by SSH (not created automatically on Ubuntu 12.04)\n" .
-                    "    mkdir -p /var/run/sshd";
-            }
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -470,11 +454,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F32)
+                elsif ($strOS eq VM_F33)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-32-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-33-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -484,11 +468,11 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . ($strOS eq VM_U18 ? ' 14' : '') .
+                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . ($strOS eq VM_U20 ? ' 14' : '') .
                         "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
-                    "    apt-get install -y postgresql-common libpq-dev && \\\n" .
+                    "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
             }
@@ -504,7 +488,7 @@ sub containerBuild
                 }
                 else
                 {
-                    $strScript .= "    apt-get install -y";
+                    $strScript .= "    apt-get install -y --no-install-recommends";
                 }
 
                 # Construct list of databases to install
@@ -516,6 +500,12 @@ sub containerBuild
                         $strDbVersionNoDot =~ s/\.//;
 
                         $strScript .=  " postgresql${strDbVersionNoDot}-server";
+
+                        # Add development package for the latest version of postgres
+                        if ($strDbVersion eq @{$oOS->{&VM_DB}}[-1])
+                        {
+                            $strScript .=  " postgresql${strDbVersionNoDot}-devel";
+                        }
                     }
                     else
                     {
@@ -525,6 +515,12 @@ sub containerBuild
             }
         }
 
+        # Add path to lastest version of postgres
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+        {
+            $strScript .=
+                "\n\nENV PATH=/usr/pgsql-" . @{$oOS->{&VM_DB}}[-1] . "/bin:\$PATH\n";
+        }
 
         #---------------------------------------------------------------------------------------------------------------------------
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
@@ -532,7 +528,10 @@ sub containerBuild
         $strScript .=  sectionHeader() .
             "# Cleanup\n";
 
-            $strScript .= "    apt-get clean";
+            $strScript .=
+                "    apt-get autoremove -y && \\\n" .
+                "    apt-get clean && \\\n" .
+                "    rm -rf /var/lib/apt/lists/*";
         }
 
         containerWrite(
@@ -573,7 +572,8 @@ sub containerBuild
                 $strScript .=
                     # Don't allow sudo to disable core dump (suppresses errors, see https://github.com/sudo-project/sudo/issues/42)
                     "    echo \"Set disable_coredump false\" >> /etc/sudo.conf && \\\n" .
-                    "    echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP . " && \\\n" .
+                    "    echo '%" . TEST_GROUP . "        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/" . TEST_GROUP .
+                        " && \\\n" .
                     "    sed -i 's/^Defaults    requiretty\$/\\# Defaults    requiretty/' /etc/sudoers";
             }
             else

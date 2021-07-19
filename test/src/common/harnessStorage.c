@@ -262,16 +262,15 @@ hrnStorageListCallback(void *list, const StorageInfo *info)
 }
 
 void
-hrnStorageList(
-    const Storage *const storage, const char *const path, const char *const expected, const HrnStorageListParam param)
+hrnStorageList(const Storage *const storage, const char *const path, const char *const expected, const HrnStorageListParam param)
 {
     // Log list test
     hrnTestResultBegin(__func__, false);
 
     ASSERT(storage != NULL);
-    ASSERT(storagePathExistsP(storage, STR(path)));
+    ASSERT(storagePathExistsP(storage, path == NULL ? NULL : STR(path)));
 
-    const String *const pathFull = storagePathP(storage, STR(path));
+    const String *const pathFull = storagePathP(storage, path == NULL ? NULL : STR(path));
     printf("list%s contents of '%s'", param.remove ? "/remove": "", strZ(pathFull));
     hrnTestResultComment(param.comment);
 
@@ -485,7 +484,7 @@ hrnStoragePathCreate(const Storage *const storage, const char *const path, HrnSt
 
     ASSERT(storage != NULL);
 
-    const String *const pathFull = storagePathP(storage, STR(path));
+    const String *const pathFull = storagePathP(storage, path == NULL ? NULL : STR(path));
 
     printf("create path '%s'", strZ(pathFull));
 

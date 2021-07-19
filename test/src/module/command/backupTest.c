@@ -413,7 +413,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
                 HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, " test1"),
+                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
 
                 // Get copy start time
@@ -456,7 +456,6 @@ testRun(void)
     const String *backupLabel = STRDEF("20190718-155825F");
     const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
     BackupFileResult result = {0};
-    VariantList *paramList = varLstNew();
 
     // *****************************************************************************************************************************
     if (testBegin("segmentNumber()"))
@@ -470,28 +469,30 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create the pg path
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
 
-        // Pg file missing - ignoreMissing=true
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file missing - ignoreMissing=true");
+
         TEST_ASSIGN(
             result,
             backupFile(
                 missingFile, true, 0, true, NULL, false, 0, missingFile, false, compressTypeNone, 1, backupLabel, false,
                 cipherTypeNone, NULL),
             "pg file missing, ignoreMissing=true, no delta");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy/repo size 0");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "    skip file");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy/repo size 0");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
 
-        // Pg file missing - ignoreMissing=false
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file missing - ignoreMissing=false");
+
         TEST_ERROR(
             backupFile(
                 missingFile, false, 0, true, NULL, false, 0, missingFile, false, compressTypeNone, 1, backupLabel, false,
@@ -499,10 +500,10 @@ testRun(void)
             FileMissingError, "unable to open missing file '" TEST_PATH "/pg/missing' for read");
 
         // Create a pg file to backup
-        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
+        TEST_TITLE("copy file to repo success - no prior checksum, no compression, no pageChecksum, no delta, no hasReference");
 
         // With the expected backupCopyResultCopy, unset the storageFeatureCompress bit for the storageRepo for code coverage
         uint64_t feature = storageRepo()->pub.interface.feature;
@@ -517,21 +518,22 @@ testRun(void)
 
         ((Storage *)storageRepo())->pub.interface.feature = feature;
 
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    copy file to repo success");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_EXISTS(storageRepo(), strZ(backupPathFile));
 
-        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), backupPathFile), "    remove repo file");
+        // Remove repo file
+        HRN_STORAGE_REMOVE(storageRepoWrite(), strZ(backupPathFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Test pagechecksum
+        TEST_TITLE("test pagechecksum while db file grows");
 
         // Increase the file size but most of the following tests will still treat the file as size 9.  This tests the common case
         // where a file grows while a backup is running.
-        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile###"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile###");
 
         TEST_ASSIGN(
             result,
@@ -539,21 +541,18 @@ testRun(void)
                 pgFile, false, 9, true, NULL, true, 0xFFFFFFFFFFFFFFFF, pgFile, false, compressTypeNone, 1, backupLabel, false,
                 cipherTypeNone, NULL),
             "file checksummed with pageChecksum enabled");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile)),
-            true,"    copy file to repo success");
-        TEST_RESULT_PTR_NE(result.pageChecksumResult, NULL, "    pageChecksumResult is set");
-        TEST_RESULT_BOOL(
-            varBool(kvGet(result.pageChecksumResult, VARSTRDEF("valid"))), false, "    pageChecksumResult valid=false");
-        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), backupPathFile), "    remove repo file");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
+        TEST_RESULT_PTR_NE(result.pageChecksumResult, NULL, "pageChecksumResult is set");
+        TEST_RESULT_BOOL(varBool(kvGet(result.pageChecksumResult, VARSTRDEF("valid"))), false, "pageChecksumResult valid=false");
+        TEST_STORAGE_EXISTS(storageRepoWrite(), strZ(backupPathFile), .remove = true, .comment = "check exists in repo, remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit");
 
-        paramList = varLstNew();
+        VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(pgFile));            // pgFile
         varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
         varLstAdd(paramList, varNewUInt64(8));              // pgFileSize
@@ -576,31 +575,33 @@ testRun(void)
                 pgFile, false, 8, false, NULL, true, 0xFFFFFFFFFFFFFFFF, pgFile, false, compressTypeNone, 1, backupLabel, false,
                 cipherTypeNone, NULL),
             "backup file");
-
         TEST_RESULT_UINT(result.copySize, 12, "copy size");
         TEST_RESULT_UINT(result.repoSize, 12, "repo size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
         TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "checksum");
         TEST_RESULT_STR_Z(jsonFromKv(result.pageChecksumResult), "{\"align\":false,\"valid\":false}", "page checksum");
-        TEST_STORAGE_EXISTS(storageRepo(), strZ(backupPathFile));
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile###");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // File exists in repo and db, checksum match, delta set, ignoreMissing false, hasReference - NOOP
+        TEST_TITLE("file exists in repo and db, checksum match - NOOP");
+
+        // File exists in repo and db, pg checksum match, delta set, ignoreMissing false, hasReference - NOOP
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "file in db and repo, checksum equal, no ignoreMissing, no pageChecksum, delta, hasReference");
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
-        TEST_RESULT_UINT(result.repoSize, 0, "    repo size not set since already exists in repo");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultNoOp, "    noop file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    noop");
+        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 0, "repo size not set since already exists in repo");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultNoOp, "noop file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile###", .comment = "file not modified");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file exists in repo and db, checksum mismatch - COPY");
+
         // File exists in repo and db, pg checksum mismatch, delta set, ignoreMissing false, hasReference - COPY
         TEST_ASSIGN(
             result,
@@ -608,118 +609,127 @@ testRun(void)
                 pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, true,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "file in db and repo, pg checksum not equal, no ignoreMissing, no pageChecksum, delta, hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    copy");
+        TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum for file size 9");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile", .comment = "9 bytes copied");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // File exists in repo and db, pg checksum same, pg size different, delta set, ignoreMissing false, hasReference - COPY
+        TEST_TITLE("file exists in repo and pg, copy only exact file even if size passed is greater - COPY");
+
+        // File exists in repo and pg, pg checksum same, pg size passed is different, delta set, ignoreMissing false, hasReference
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9999999, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 24, "    copy=repo=pgFile size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "TEST");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    copy");
+        TEST_RESULT_UINT(result.copySize, 12, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 12, "repo=pgFile size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "copy checksum updated");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile###", .comment = "confirm contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("resumed file is missing in repo but present in resumed manfest, recopy");
+        TEST_TITLE("resumed file is missing in repo but present in resumed manifest, file same name in repo - RECOPY");
 
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", "testfile\n", .comment = "resumed file is missing in repo");
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, STRDEF(BOGUS_STR), false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
-            "backup file");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    check copy result");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    recopy");
+            "backup 9 bytes of pgfile to file to resume in repo");
+        TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "check recopy result");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum for file size 9");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfile###", .comment = "existing file with same name as pgFile not modified");
+        TEST_STORAGE_GET(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F/" BOGUS_STR, "atestfile", .comment = "resumed file copied");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // File exists in repo and db, checksum not same in repo, delta set, ignoreMissing false, no hasReference - RECOPY
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), backupPathFile), BUFSTRDEF("adifferentfile")),
-            "create different file (size and checksum) with same name in repo");
+        TEST_TITLE("file exists in repo & db, checksum not same in repo - RECOPY");
+
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), strZ(backupPathFile), "adifferentfile",
+            .comment = "create different file (size and checksum) with same name in repo");
+
+        // Delta set, ignoreMissing false, no hasReference
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
-            "    db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    recopy");
+            "db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
+        TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum for file size 9");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile", .comment = "existing file recopied");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // File exists in repo but missing from db, checksum same in repo, delta set, ignoreMissing true, no hasReference - SKIP
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), backupPathFile), BUFSTRDEF("adifferentfile")),
-            "create different file with same name in repo");
+        TEST_TITLE("file exists in repo but missing from db, checksum same in repo - SKIP");
+
         TEST_ASSIGN(
             result,
             backupFile(
                 missingFile, true, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
-            "    file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy=repo=0 size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "    skip file");
-        TEST_RESULT_BOOL(
-            (result.copyChecksum == NULL && !storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    skip and remove file from repo");
+            "file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=0 size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
+        TEST_RESULT_PTR(result.copyChecksum, NULL, "copy checksum NULL");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", BOGUS_STR "\n", .comment = "file removed from repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // No prior checksum, compression, no page checksum, no pageChecksum, no delta, no hasReference
+        TEST_TITLE("compression set, all other boolean parameters false - COPY");
+
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, NULL, false, 0, pgFile, false, compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL),
             "pg file exists, no checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
-
-        TEST_RESULT_UINT(result.copySize, 9, "    copy=pgFile size");
-        TEST_RESULT_UINT(result.repoSize, 29, "    repo compress size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))) &&
-                result.pageChecksumResult == NULL),
-            true, "    copy file to repo compress success");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_EXISTS(
+            storageRepo(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))),
+            .comment = "copy file to repo compress success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Pg and repo file exist & match, prior checksum, compression, no page checksum, no pageChecksum, no delta, no hasReference
+        TEST_TITLE("pg and repo file exist & match, prior checksum, compression - COPY CHECKSUM");
+
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, compressTypeGz,
                 3, backupLabel, false, cipherTypeNone, NULL),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
-
-        TEST_RESULT_UINT(result.copySize, 9, "    copy=pgFile size");
-        TEST_RESULT_UINT(result.repoSize, 29, "    repo compress size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultChecksum, "    checksum file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))) &&
-                result.pageChecksumResult == NULL),
-            true, "    compressed repo file matches");
+        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
+        TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultChecksum, "checksum file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "compressed repo file checksum matches");
+        TEST_STORAGE_EXISTS(
+            storageRepo(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))),
+            .comment = "compressed file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("zerofile")), BUFSTRDEF(""));
+        TEST_TITLE("create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied");
+
+        // Create zero sized file in pg
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zerofile");
 
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
@@ -728,13 +738,16 @@ testRun(void)
                 STRDEF("zerofile"), false, 0, true, NULL, false, 0, STRDEF("zerofile"), false, compressTypeNone, 1, backupLabel,
                 false, cipherTypeNone, NULL),
             "zero-sized pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy=repo=pgFile size 0");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_PTR_NE(result.copyChecksum, NULL, "    checksum set");
-        TEST_RESULT_BOOL(
-            (storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/zerofile", strZ(backupLabel))) &&
-                result.pageChecksumResult == NULL),
-            true, "    copy zero file to repo success");
+        TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=pgFile size 0");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_PTR_NE(result.copyChecksum, NULL, "checksum set");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F",
+            BOGUS_STR "\n"
+            "testfile.gz\n"
+            "zerofile\n",
+            .comment = "copy zero file to repo success");
     }
 
     // *****************************************************************************************************************************
@@ -742,100 +755,101 @@ testRun(void)
     {
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
-        setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
-        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
+        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
-        // Create the pg path
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
-
-        // Create a pg file to backup
-        storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile"));
+        // Create the pg path and pg file to backup
+        HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy file to encrypted repo");
+
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 9, true, NULL, false, 0, pgFile, false, compressTypeNone, 1, backupLabel, false, cipherTypeAes256Cbc,
-                STRDEF("12345678")),
+                STRDEF(TEST_CIPHER_PASS)),
             "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
-
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-            storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    copy file to encrypted repo success");
+        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
+        TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc,
+            .comment = "copy file to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Delta but pgMatch false (pg File size different), prior checksum, no compression, no pageChecksum, delta, no hasReference
+        TEST_TITLE("delta, copy file (size mismatch) to encrypted repo");
+
+        // Delta but pgFile does not match size passed, prior checksum, no compression, no pageChecksum, delta, no hasReference
         TEST_ASSIGN(
             result,
             backupFile(
                 pgFile, false, 8, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
-                compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, STRDEF("12345678")),
+                compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 8, "    copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    copy file (size missmatch) to encrypted repo success");
+        TEST_RESULT_UINT(result.copySize, 8, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "acc972a8319d4903b839c64ec217faa3e77b4fcb", "copy checksum for size passed");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
+        TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfil", .cipherType = cipherTypeAes256Cbc,
+            .comment = "delta, copy file (size missmatch) to encrypted repo success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Check repo with cipher filter.
-        // pg/repo file size same but checksum different, prior checksum, no compression, no pageChecksum, no delta, no hasReference
-        TEST_ASSIGN(
-            result,
-            backupFile(
-                pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
-                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF("12345678")),
-            "pg and repo file exists, repo checksum no match, no ignoreMissing, no pageChecksum, no delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    recopy file to encrypted repo success");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("recopy, encrypt");
+        TEST_TITLE("no delta, recopy (size mismatch) file to encrypted repo");
 
         TEST_ASSIGN(
             result,
             backupFile(
+                pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
+                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
+            "pg and repo file exists, checksum mismatch, no ignoreMissing, no pageChecksum, no delta, no hasReference");
+        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
+        TEST_STORAGE_GET(
+            storageRepoWrite(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc,
+            .comment = "recopy file to encrypted repo success");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no delta, recopy (checksum mismatch), file to encrypted repo");
+
+        TEST_ASSIGN(
+            result,
+            backupFile(
                 pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
-                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF("12345678")),
+                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)),
             "backup file");
 
-        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
-        TEST_RESULT_BOOL(
-            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
-                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
-            true, "    recopy file to encrypted repo success");
+        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum for size passed");
+        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
+        TEST_STORAGE_GET(
+            storageRepo(), strZ(backupPathFile), "atestfile",
+            .cipherType = cipherTypeAes256Cbc, .comment = "recopy file to encrypted repo, success");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("backupLabelCreate()"))
     {
-        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -845,53 +859,44 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when no history");
 
-        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/backup.history/2019"));
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2019");
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when history is older");
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
-                    strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 4)))),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), strZ(
+                strNewFmt(STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 4)))));
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when backup is older");
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 2)))),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), strZ(
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 2)))));
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("advance time when backup is same");
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp)))),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), strZ(
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp)))));
 
         TEST_RESULT_STR_Z(backupLabelCreate(backupTypeFull, NULL, timestamp), "20191203-193413F", "create label");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when new label is in the past even with advanced time");
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 1)))),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), strZ(
+                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 1)))));
 
         TEST_ERROR(
             backupLabelCreate(backupTypeFull, NULL, timestamp), FormatError,
@@ -903,9 +908,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupInit()"))
     {
-        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
 
@@ -913,11 +915,11 @@ testRun(void)
         TEST_TITLE("error when backup from standby is not supported");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
+        hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
@@ -928,23 +930,23 @@ testRun(void)
         TEST_TITLE("warn and reset when backup from standby used in offline mode");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, hrnPgCatalogVersion(PG_VERSION_92), NULL)),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    check backup-standby");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "check backup-standby");
 
         TEST_RESULT_LOG(
             "P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary");
@@ -953,16 +955,16 @@ testRun(void)
         TEST_TITLE("error when pg_control does not match stanza");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
@@ -980,23 +982,23 @@ testRun(void)
         TEST_TITLE("reset start-fast when PostgreSQL < 8.4");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        strLstAddZ(argList, "--" CFGOPT_START_FAST);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawBool(argList, cfgOptStartFast, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, hrnPgCatalogVersion(PG_VERSION_83), NULL)),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "    check start-fast");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "check start-fast");
 
         TEST_RESULT_LOG("P00   WARN: start-fast option is only available in PostgreSQL >= 8.4");
 
@@ -1004,23 +1006,23 @@ testRun(void)
         TEST_TITLE("reset stop-auto when PostgreSQL < 9.3");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, hrnPgCatalogVersion(PG_VERSION_84), NULL)),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "    check stop-auto");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "check stop-auto");
 
         TEST_RESULT_LOG("P00   WARN: stop-auto option is only available in PostgreSQL >= 9.3");
 
@@ -1028,22 +1030,22 @@ testRun(void)
         TEST_TITLE("reset checksum-page when the cluster does not have checksums enabled");
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
+        hrnCfgArgRawBool(argList, cfgOptChecksumPage, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
 
             HRNPQ_MACRO_DONE()
         });
@@ -1051,7 +1053,7 @@ testRun(void)
         TEST_RESULT_VOID(
             dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
         TEST_RESULT_LOG(
             "P00   WARN: checksum-page option set to true but checksums are not enabled on the cluster, resetting to false");
@@ -1060,22 +1062,22 @@ testRun(void)
         TEST_TITLE("ok if cluster checksums are enabled and checksum-page is any value");
 
         // Create pg_control with page checksums
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .pageChecksum = true}));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_CHECKSUM_PAGE);
+        hrnCfgArgRawBool(argList, cfgOptChecksumPage, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
 
             HRNPQ_MACRO_DONE()
         });
@@ -1083,17 +1085,17 @@ testRun(void)
         TEST_RESULT_VOID(
             dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
         // Create pg_control without page checksums
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
 
             HRNPQ_MACRO_DONE()
         });
@@ -1101,34 +1103,31 @@ testRun(void)
         TEST_RESULT_VOID(
             dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("backupTime()"))
     {
-        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sleep retries and stall error");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, strZ(pg1Path), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Advance the time slowly to force retries
             HRNPQ_MACRO_TIME_QUERY(1, 1575392588998),
@@ -1156,21 +1155,19 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupResumeFind()"))
     {
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        hrnCfgArgRawBool(argList, cfgOptCompress, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when manifest and copy are missing");
 
-        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F"));
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F");
 
         TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
 
@@ -1180,22 +1177,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when resume is disabled");
 
-        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F"));
+        HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F");
 
         cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_FALSE_VAR);
 
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
-            NULL);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
 
         TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
 
-        TEST_RESULT_LOG(
-            "P00   WARN: backup '20191003-105320F' cannot be resumed: resume is disabled");
+        TEST_RESULT_LOG("P00   WARN: backup '20191003-105320F' cannot be resumed: resume is disabled");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_TRUE_VAR);
 
@@ -1228,8 +1220,7 @@ testRun(void)
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
                 " new pgBackRest version 'BOGUS' does not match resumable pgBackRest version '" PROJECT_VERSION "'");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifest->pub.data.backrestVersion = STRDEF(PROJECT_VERSION);
 
@@ -1251,8 +1242,7 @@ testRun(void)
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
                 " new prior backup label '<undef>' does not match resumable prior backup label '20191003-105320F'");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifest->pub.data.backupLabelPrior = NULL;
 
@@ -1274,8 +1264,7 @@ testRun(void)
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
                 " new prior backup label '20191003-105320F' does not match resumable prior backup label '<undef>'");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifestResume->pub.data.backupLabelPrior = NULL;
 
@@ -1296,8 +1285,7 @@ testRun(void)
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
                 " new compression 'none' does not match resumable compression 'gz'");
 
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifestResume->pub.data.backupOptionCompressType = compressTypeNone;
     }
@@ -1346,9 +1334,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdBackup() offline"))
     {
-        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
-        const String *repoPath = STRDEF(TEST_PATH "/repo");
-
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
 
@@ -1357,18 +1342,18 @@ testRun(void)
         hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F_[0-9]{8}-[0-9]{6}D", NULL, "DIFF", true);
         hrnLogReplaceAdd("[0-9]{8}-[0-9]{6}F", NULL, "FULL", true);
 
-        // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
-
         // Create stanza
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        // Create pg_control
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1377,14 +1362,14 @@ testRun(void)
         TEST_TITLE("error when pg appears to be running");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR), BUFSTRDEF("PID"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_POSTMASTERPID, "PID");
 
         TEST_ERROR(
             cmdBackup(), PgRunningError,
@@ -1397,16 +1382,16 @@ testRun(void)
         TEST_TITLE("offline full backup");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
-        strLstAddZ(argList, "--" CFGOPT_FORCE);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawBool(argList, cfgOptCompress, false);
+        hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postgresql.conf")), BUFSTRDEF("CONFIGSTUFF"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF");
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
@@ -1424,18 +1409,18 @@ testRun(void)
                 "8bb70506d988a8698d9e8cf90736ada23634571b");
 
         // Make pg no longer appear to be running
-        storageRemoveP(storagePgWrite(), PG_FILE_POSTMASTERPID_STR, .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMASTERPID, .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when no files have changed");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        strLstAddZ(argList, "--" CFGOPT_COMPRESS);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawBool(argList, cfgOptCompress, true);
         hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
@@ -1451,17 +1436,17 @@ testRun(void)
         TEST_TITLE("offline incr backup to test unresumable backup");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
-        strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawBool(argList, cfgOptCompress, false);
+        hrnCfgArgRawBool(argList, cfgOptChecksumPage, true);
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VER"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VER");
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
@@ -1479,17 +1464,17 @@ testRun(void)
         TEST_TITLE("offline diff backup to test prior backup must be full");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
-        strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawBool(argList, cfgOptCompress, false);
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VR2"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR2");
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
@@ -1510,8 +1495,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
-        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         cmdStanzaCreate();
@@ -1526,8 +1511,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
-        TEST_RESULT_LOG(
-            "P00   WARN: no prior backup exists, diff backup has been changed to full");
+        TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo");
@@ -1536,7 +1520,7 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // Add repo1 to the configuration
-        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -1558,7 +1542,7 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VER"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VER");
 
         unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
 
@@ -1609,44 +1593,39 @@ testRun(void)
         time_t backupTimeStart = BACKUP_EPOCH;
 
         {
-            // Create pg_control
-            storagePutP(
-                storageNewWriteP(
-                    storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path)),
-                    .timeModified = backupTimeStart),
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}));
-
             // Create stanza
             StringList *argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
-            strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+            hrnCfgArgRawBool(argList, cfgOptOnline, false);
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+            // Create pg_control
+            HRN_STORAGE_PUT(
+                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}),
+                .timeModified = backupTimeStart);
 
             cmdStanzaCreate();
             TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
 
             // Load options
             argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-            strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
-            strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
-            strLstAddZ(argList, "--no-" CFGOPT_ARCHIVE_CHECK);
+            hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
+            hrnCfgArgRawBool(argList, cfgOptCompress, false);
+            hrnCfgArgRawBool(argList, cfgOptArchiveCheck, false);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Add files
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), STRDEF("postgresql.conf"), .timeModified = backupTimeStart),
-                BUFSTRDEF("CONFIGSTUFF"));
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .timeModified = backupTimeStart),
-                BUFSTRDEF(PG_VERSION_95_STR));
-            storagePathCreateP(storagePgWrite(), pgWalPath(PG_VERSION_95), .noParentCreate = true);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_95_STR, .timeModified = backupTimeStart);
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_95)), .noParentCreate = true);
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
@@ -1658,9 +1637,9 @@ testRun(void)
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
             // Copy a file to be resumed that has not changed in the repo
-            storageCopy(
-                storageNewReadP(storagePg(), PG_FILE_PGVERSION_STR),
-                storageNewWriteP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(resumeLabel))));
+            HRN_STORAGE_COPY(
+                storagePg(), PG_FILE_PGVERSION, storageRepoWrite(),
+                strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(resumeLabel))));
 
             strcpy(
                 ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/PG_VERSION")))->checksumSha1,
@@ -1726,14 +1705,14 @@ testRun(void)
         {
             // Load options
             StringList *argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-            strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
+            hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
+            hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Create a backup manifest that looks like a halted backup manifest
@@ -1747,66 +1726,53 @@ testRun(void)
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
             // File exists in cluster and repo but not in the resume manifest
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), STRDEF("not-in-resume"), .timeModified = backupTimeStart), BUFSTRDEF("TEST"));
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/not-in-resume.gz", strZ(resumeLabel))),
-                NULL);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "not-in-resume", "TEST", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/not-in-resume.gz", strZ(resumeLabel))));
 
             // Remove checksum from file so it won't be resumed
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strZ(resumeLabel))),
-                NULL);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strZ(resumeLabel))));
 
             ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/global/pg_control")))->checksumSha1[0] = 0;
 
             // Size does not match between cluster and resume manifest
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), STRDEF("size-mismatch"), .timeModified = backupTimeStart), BUFSTRDEF("TEST"));
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/size-mismatch.gz", strZ(resumeLabel))),
-                NULL);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "size-mismatch", "TEST", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/size-mismatch.gz", strZ(resumeLabel))));
             manifestFileAdd(
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/size-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
                     .size = 33});
 
             // Time does not match between cluster and resume manifest
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), STRDEF("time-mismatch"), .timeModified = backupTimeStart), BUFSTRDEF("TEST"));
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch.gz", strZ(resumeLabel))),
-                NULL);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "time-mismatch", "TEST", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch.gz", strZ(resumeLabel))));
             manifestFileAdd(
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", .size = 4,
                     .timestamp = backupTimeStart - 1});
 
             // Size is zero in cluster and resume manifest. ??? We'd like to remove this requirement after the migration.
-            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("zero-size"), .timeModified = backupTimeStart), NULL);
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/zero-size.gz", strZ(resumeLabel))),
-                BUFSTRDEF("ZERO-SIZE"));
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero-size", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/zero-size.gz", strZ(resumeLabel))),
+                "ZERO-SIZE");
             manifestFileAdd(
                 manifestResume, &(ManifestFile){.name = STRDEF("pg_data/zero-size"), .size = 0, .timestamp = backupTimeStart});
 
             // Path is not in manifest
-            storagePathCreateP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/bogus_path", strZ(resumeLabel)));
+            HRN_STORAGE_PATH_CREATE(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/bogus_path", strZ(resumeLabel))));
 
             // File is not in manifest
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus.gz", strZ(resumeLabel))),
-                NULL);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus.gz", strZ(resumeLabel))));
 
             // File has incorrect compression type
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus", strZ(resumeLabel))),
-                NULL);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus", strZ(resumeLabel))));
 
             // Save the resume manifest
             manifestSave(
@@ -1904,10 +1870,10 @@ testRun(void)
                 "compare file list");
 
             // Remove test files
-            storageRemoveP(storagePgWrite(), STRDEF("not-in-resume"), .errorOnMissing = true);
-            storageRemoveP(storagePgWrite(), STRDEF("size-mismatch"), .errorOnMissing = true);
-            storageRemoveP(storagePgWrite(), STRDEF("time-mismatch"), .errorOnMissing = true);
-            storageRemoveP(storagePgWrite(), STRDEF("zero-size"), .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "not-in-resume", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "size-mismatch", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "time-mismatch", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "zero-size", .errorOnMissing = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1917,13 +1883,13 @@ testRun(void)
 
         {
             StringList *argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
-            strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
-            strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
+            hrnCfgArgRawBool(argList, cfgOptCompress, false);
+            hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -1946,27 +1912,21 @@ testRun(void)
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
             // Reference in manifest
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION.gz", strZ(resumeLabel))),
-                NULL);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION.gz", strZ(resumeLabel))));
 
             // Reference in resumed manifest
-            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("resume-ref"), .timeModified = backupTimeStart), NULL);
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/resume-ref.gz", strZ(resumeLabel))),
-                NULL);
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "resume-ref", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/resume-ref.gz", strZ(resumeLabel))));
             manifestFileAdd(
                 manifestResume, &(ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
 
             // Time does not match between cluster and resume manifest (but resume because time is in future so delta enabled). Note
             // also that the repo file is intenionally corrupt to generate a warning about corruption in the repository.
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), STRDEF("time-mismatch2"), .timeModified = backupTimeStart + 100),
-                BUFSTRDEF("TEST"));
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch2.gz", strZ(resumeLabel))),
-                NULL);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "time-mismatch2", "TEST", .timeModified = backupTimeStart + 100);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch2.gz", strZ(resumeLabel))));
             manifestFileAdd(
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch2"), .checksumSha1 = "984816fd329622876e14907634264e6f332e9fb3", .size = 4,
@@ -2062,8 +2022,8 @@ testRun(void)
                 "compare file list");
 
             // Remove test files
-            storageRemoveP(storagePgWrite(), STRDEF("resume-ref"), .errorOnMissing = true);
-            storageRemoveP(storagePgWrite(), STRDEF("time-mismatch2"), .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "resume-ref", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "time-mismatch2", .errorOnMissing = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2073,23 +2033,20 @@ testRun(void)
 
         {
             // Update pg_control
-            storagePutP(
-                storageNewWriteP(
-                    storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path)),
-                    .timeModified = backupTimeStart),
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
+            HRN_STORAGE_PUT(
+                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}),
+                .timeModified = backupTimeStart);
 
             // Update version
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .timeModified = backupTimeStart),
-                BUFSTRDEF(PG_VERSION_96_STR));
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_96_STR, .timeModified = backupTimeStart);
 
             // Upgrade stanza
             StringList *argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
-            strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+            hrnCfgArgRawBool(argList, cfgOptOnline, false);
             HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
@@ -2097,43 +2054,37 @@ testRun(void)
 
             // Load options
             argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
             hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
             hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-            strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
-            strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
-            strLstAddZ(argList, "--" CFGOPT_START_FAST);
-            strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
+            hrnCfgArgRawBool(argList, cfgOptCompress, false);
+            hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
+            hrnCfgArgRawBool(argList, cfgOptStartFast, true);
+            hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
             // but no bytes will be copied.
-            storagePutP(storageNewWriteP(storagePgIdxWrite(0), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), NULL);
-            storagePutP(storageNewWriteP(storagePgIdxWrite(1), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("1234"));
+            HRN_STORAGE_PUT_EMPTY(storagePgIdxWrite(0), PG_PATH_BASE "/1/1", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgIdxWrite(1), PG_PATH_BASE "/1/1", "1234");
 
             // Create file to copy from the standby. This file will be smaller on the primary than the standby and have no common
             // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
             // the checksum will change but not the size.
-            storagePutP(
-                storageNewWriteP(storagePgIdxWrite(0), STRDEF(PG_PATH_BASE "/1/2"), .timeModified = backupTimeStart),
-                BUFSTRDEF("DA"));
-            storagePutP(storageNewWriteP(storagePgIdxWrite(1), STRDEF(PG_PATH_BASE "/1/2")), BUFSTRDEF("5678"));
+            HRN_STORAGE_PUT_Z(storagePgIdxWrite(0), PG_PATH_BASE "/1/2", "DA", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgIdxWrite(1), PG_PATH_BASE "/1/2", "5678");
 
             // Create file to copy from the standby. This file will be larger on the primary than the standby and have no common
             // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
             // the checksum and size will change.
-            storagePutP(
-                storageNewWriteP(storagePgIdxWrite(0), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart),
-                BUFSTRDEF("TEST"));
-            storagePutP(storageNewWriteP(storagePgIdxWrite(1), STRDEF(PG_PATH_BASE "/1/3")), BUFSTRDEF("ABC"));
+            HRN_STORAGE_PUT_Z(storagePgIdxWrite(0), PG_PATH_BASE "/1/3", "TEST", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgIdxWrite(1), PG_PATH_BASE "/1/3", "ABC");
 
             // Create a file on the primary that does not exist on the standby to test that the file is removed from the manifest
-            storagePutP(
-                storageNewWriteP(storagePgIdxWrite(0), STRDEF(PG_PATH_BASE "/1/0"), .timeModified = backupTimeStart),
-                BUFSTRDEF("DATA"));
+            HRN_STORAGE_PUT_Z(storagePgIdxWrite(0), PG_PATH_BASE "/1/0", "DATA", .timeModified = backupTimeStart);
 
             // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
             harnessLogLevelSet(logLevelWarn);
@@ -2148,7 +2099,7 @@ testRun(void)
                 "HINT: run the 'start' command if the stanza was previously stopped.");
 
             // Remove halted backup so there's no resume
-            storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191016-042640F"), .recurse = true);
+            HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191016-042640F", .recurse = true);
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
@@ -2204,8 +2155,8 @@ testRun(void)
                 "compare file list");
 
             // Remove test files
-            storagePathRemoveP(storagePgIdxWrite(1), NULL, .recurse = true);
-            storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);
+            HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(1), "", .recurse = true);
+            HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "base/1", .recurse = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2215,30 +2166,27 @@ testRun(void)
 
         {
             // Update pg_control
-            storagePutP(
-                storageNewWriteP(
-                    storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path)),
-                    .timeModified = backupTimeStart),
+            HRN_STORAGE_PUT(
+                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
                 hrnPgControlToBuffer(
                     (PgControl){
                         .version = PG_VERSION_11, .systemId = 1000000000000001100, .pageChecksum = true,
-                        .walSegmentSize = 1024 * 1024}));
+                        .walSegmentSize = 1024 * 1024}),
+                .timeModified = backupTimeStart);
 
             // Update version
-            storagePutP(
-                storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR, .timeModified = backupTimeStart),
-                BUFSTRDEF(PG_VERSION_11_STR));
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
 
             // Update wal path
-            storagePathRemoveP(storagePgWrite(), pgWalPath(PG_VERSION_95));
-            storagePathCreateP(storagePgWrite(), pgWalPath(PG_VERSION_11), .noParentCreate = true);
+            HRN_STORAGE_PATH_REMOVE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_95)));
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_11)), .noParentCreate = true);
 
             // Upgrade stanza
             StringList *argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
-            strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+            hrnCfgArgRawBool(argList, cfgOptOnline, false);
             HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
@@ -2246,14 +2194,14 @@ testRun(void)
 
             // Load options
             argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            strLstAddZ(argList, "--" CFGOPT_MANIFEST_SAVE_THRESHOLD "=1");
-            strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
+            hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "1");
+            hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Move pg1-path and put a link in its place. This tests that backup works when pg1-path is a symlink yet should be
@@ -2268,7 +2216,7 @@ testRun(void)
 
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
-            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), relation);
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/1", relation, .timeModified = backupTimeStart);
 
             // Zeroed file which will fail on alignment
             relation = bufNew(PG_PAGE_SIZE_DEFAULT + 1);
@@ -2277,7 +2225,7 @@ testRun(void)
 
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
-            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/2"), .timeModified = backupTimeStart), relation);
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
 
             // File with bad page checksums
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
@@ -2288,7 +2236,7 @@ testRun(void)
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0xEF};
             bufUsedSet(relation, bufSize(relation));
 
-            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart), relation);
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
             const char *rel1_3Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, relation)));
 
             // File with bad page checksum
@@ -2299,21 +2247,19 @@ testRun(void)
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
             bufUsedSet(relation, bufSize(relation));
 
-            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_BASE "/1/4"), .timeModified = backupTimeStart), relation);
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
             const char *rel1_4Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, relation)));
 
             // Add a tablespace
-            storagePathCreateP(storagePgWrite(), STRDEF(PG_PATH_PGTBLSPC));
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_PGTBLSPC);
             THROW_ON_SYS_ERROR(
                 symlink("../../pg1-tblspc/32768", strZ(storagePathP(storagePg(), STRDEF(PG_PATH_PGTBLSPC "/32768")))) == -1,
                 FileOpenError, "unable to create symlink");
 
-            storagePutP(
-                storageNewWriteP(
-                    storageTest,
-                    strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, hrnPgCatalogVersion(PG_VERSION_11)))),
-                    .timeModified = backupTimeStart),
-                NULL);
+            HRN_STORAGE_PUT_EMPTY(
+                storageTest,
+                strZ(strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, hrnPgCatalogVersion(PG_VERSION_11))))),
+                .timeModified = backupTimeStart);
 
             // Disable storageFeatureSymLink so tablespace (and latest) symlinks will not be created
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureSymLink;
@@ -2438,7 +2384,7 @@ testRun(void)
         {
             // Load options
             StringList *argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
@@ -2460,8 +2406,7 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DB764000000000, lsn = 5db7640/0");
 
             // Remove partial backup so it won't be resumed (since it errored before any checksums were written)
-            storagePathRemoveP(
-                storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F_20191028-220000I"), .recurse = true);
+            HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191027-181320F_20191028-220000I", .recurse = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2472,7 +2417,7 @@ testRun(void)
         {
             // Load options
             StringList *argList = strLstNew();
-            strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
             hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
             hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
@@ -2481,7 +2426,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
-            strLstAddZ(argList, "--" CFGOPT_DELTA);
+            hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
