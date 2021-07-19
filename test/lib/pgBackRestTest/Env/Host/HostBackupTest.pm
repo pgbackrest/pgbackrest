@@ -156,7 +156,7 @@ sub new
     $strUser = testRunGet()->pgUser();
 
     # Create the host
-    my $self = $class->SUPER::new($strName, {strImage => $strImage, strUser => $strUser});
+    my $self = $class->SUPER::new($strName, {strImage => $strImage, strUser => $strUser, bTls => $oParam->{bTls}});
     bless $self, $class;
 
     # If repo is on local filesystem then set the repo-path locally
@@ -1300,6 +1300,7 @@ sub configCreate
             # Add an invalid replica to simulate more than one replica. A warning should be thrown when a stanza is created and a
             # valid replica should be chosen.
             $oParamHash{$strStanza}{"pg2-host"} = BOGUS;
+            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg2-host-type'} = 'tls' : undef;
             $oParamHash{$strStanza}{"pg2-host-user"} = $oHostDb2->userGet();
             $oParamHash{$strStanza}{"pg2-host-cmd"} = $oHostDb2->backrestExe();
             $oParamHash{$strStanza}{"pg2-host-config"} = $oHostDb2->backrestConfig();
@@ -1310,6 +1311,7 @@ sub configCreate
 
             # Set a valid replica to a higher index to ensure skipping indexes does not make a difference
             $oParamHash{$strStanza}{"pg8-host"} = $oHostDb2->nameGet();
+            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg8-host-type'} = 'tls' : undef;
             $oParamHash{$strStanza}{"pg8-host-user"} = $oHostDb2->userGet();
             $oParamHash{$strStanza}{"pg8-host-cmd"} = $oHostDb2->backrestExe();
             $oParamHash{$strStanza}{"pg8-host-config"} = $oHostDb2->backrestConfig();
@@ -1345,6 +1347,7 @@ sub configCreate
         if (!$self->isHostBackup())
         {
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host'} = $oHostBackup->nameGet();
+            $oParam->{bTls} ? $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-type'} = 'tls' : undef;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-user'} = $oHostBackup->userGet();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
@@ -1352,6 +1355,7 @@ sub configCreate
             if ($iRepoTotal == 2)
             {
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host'} = $oHostBackup->nameGet();
+                $oParam->{bTls} ? $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-type'} = 'tls' : undef;
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-user'} = $oHostBackup->userGet();
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-cmd'} = $oHostBackup->backrestExe();
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-config'} = $oHostBackup->backrestConfig();

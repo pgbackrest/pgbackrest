@@ -88,7 +88,7 @@ sub setup
 
         $oHostBackup = new pgBackRestTest::Env::Host::HostBackupTest(
             {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest,
-                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
         $oHostGroup->hostAdd($oHostBackup);
     }
     else
@@ -104,13 +104,13 @@ sub setup
     {
         $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
             {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest,
-                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
     }
     else
     {
         $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbTest(
             {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal =>
-                $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
+                $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
     }
 
     $oHostGroup->hostAdd($oHostDbPrimary);
@@ -122,7 +122,7 @@ sub setup
     {
         $oHostDbStandby = new pgBackRestTest::Env::Host::HostDbTest(
             {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest,
-                bRepoLocal => $oConfigParam->{strStorage} eq POSIX});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bTls => $oConfigParam->{bTls}});
 
         $oHostGroup->hostAdd($oHostDbStandby);
     }

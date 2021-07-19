@@ -610,6 +610,7 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      server: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
