@@ -2155,7 +2155,7 @@ testRun(void)
                 "compare file list");
 
             // Remove test files
-            HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(1), "", .recurse = true);
+            HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(1), NULL, .recurse = true);
             HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "base/1", .recurse = true);
         }
 
