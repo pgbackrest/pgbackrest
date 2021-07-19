@@ -621,6 +621,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+LIBS_BUILD
 XML2_CONFIG_EXISTS
 XML2_CONFIG
 EGREP
@@ -4077,6 +4078,60 @@ fi
 
 
 
+# Check required yaml library (only required for build)
+# ----------------------------------------------------------------------------------------------------------------------------------
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for yaml_parser_initialize in -lyaml" >&5
+$as_echo_n "checking for yaml_parser_initialize in -lyaml... " >&6; }
+if ${ac_cv_lib_yaml_yaml_parser_initialize+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lyaml  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char yaml_parser_initialize ();
+int
+main ()
+{
+return yaml_parser_initialize ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_yaml_yaml_parser_initialize=yes
+else
+  ac_cv_lib_yaml_yaml_parser_initialize=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_yaml_yaml_parser_initialize" >&5
+$as_echo "$ac_cv_lib_yaml_yaml_parser_initialize" >&6; }
+if test "x$ac_cv_lib_yaml_yaml_parser_initialize" = xyes; then :
+  LIBS_BUILD="${LIBS_BUILD} -lyaml"
+
+else
+  as_fn_error $? "library 'yaml' is required" "$LINENO" 5
+fi
+
+ac_fn_c_check_header_mongrel "$LINENO" "zlib.h" "ac_cv_header_zlib_h" "$ac_includes_default"
+if test "x$ac_cv_header_zlib_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <yaml.h> is required" "$LINENO" 5
+fi
+
+
+
 # Check required gz library
 # ----------------------------------------------------------------------------------------------------------------------------------
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for deflate in -lz" >&5
@@ -5609,4 +5664,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 dc219d0c0aa8df2e94dca9a451d15f319add2797
+# Generated from src/build/configure.ac sha1 57c7d495f9e82c4aa9aed1b3358b94c4b65c1baf

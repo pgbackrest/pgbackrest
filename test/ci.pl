@@ -177,7 +177,7 @@ eval
     elsif ($ARGV[0] eq 'test')
     {
         # Build list of packages that need to be installed
-        my $strPackage = "rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config";
+        my $strPackage = "rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))
@@ -221,7 +221,7 @@ eval
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --gen-check --log-level-test-file=off --no-coverage-report --vm-host=none --vm-max=2 --vm=${strVm}" .
+            "${strTestExe} --gen-check --log-level-test-file=off --no-coverage-report --vm-max=2 --vm=${strVm}" .
             (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();

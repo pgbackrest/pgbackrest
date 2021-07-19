@@ -1,0 +1,7 @@
+# Newer versions do not have this leak
+{
+    ignore_libcrypto_leaks
+    Memcheck:Leak
+    ...
+    obj:*/libcrypto.so*
+}
