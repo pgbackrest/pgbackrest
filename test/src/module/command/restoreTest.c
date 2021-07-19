@@ -1022,12 +1022,12 @@ testRun(void)
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0600);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0600);
 
         userLocalData.userId = TEST_USER_ID + 1;
 
@@ -1050,13 +1050,13 @@ testRun(void)
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
-        storagePathRemoveP(storagePgWrite(), NULL);
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), NULL);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail on restore with directory not empty");
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYCONF);
 
         TEST_ERROR(
             restoreCleanBuild(manifest), PathNotEmptyError,
@@ -1068,7 +1068,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty");
 
-        storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF);
 
         manifestTargetAdd(
             manifest, &(ManifestTarget){
@@ -1077,7 +1077,7 @@ testRun(void)
         manifestLinkAdd(
             manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_hba.conf"), .destination = STRDEF("../conf/pg_hba.conf")});
 
-        storagePathCreateP(storageTest, STRDEF("conf"), .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storageTest, "conf", .mode = 0700);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
@@ -1089,8 +1089,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when linked file already exists without delta");
 
-        storageRemoveP(storagePgWrite(), STRDEF("pg_hba.conf"));
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("../conf/pg_hba.conf")), NULL);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "pg_hba.conf");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "../conf/pg_hba.conf");
 
         TEST_ERROR(
             restoreCleanBuild(manifest), FileExistsError,
@@ -1101,7 +1101,7 @@ testRun(void)
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/conf' exists");
 
-        storageRemoveP(storagePgWrite(), STRDEF("../conf/pg_hba.conf"), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "../conf/pg_hba.conf", .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty and ignore recovery.conf");
@@ -1109,10 +1109,10 @@ testRun(void)
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=preserve");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "preserve");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
@@ -1124,7 +1124,7 @@ testRun(void)
 
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYCONF);
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "normal restore ignore recovery.conf");
 
         TEST_RESULT_LOG(
@@ -1153,9 +1153,9 @@ testRun(void)
 
         manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)});
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR), NULL);
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR), NULL);
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYSIGNAL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_STANDBYSIGNAL);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
@@ -1171,9 +1171,9 @@ testRun(void)
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
