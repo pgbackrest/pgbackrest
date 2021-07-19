@@ -75,9 +75,9 @@ sub new
 
     my $self = $class->SUPER::new(
         $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, testRunGet()->vm(),
-        ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}", "${strBinPath}:${strBinPath}:ro"]);
-        # undef, "server --tls-server-cert=/home/docker/test/repo/test/certificate/pgbackrest-test.crt --tls-server-key=/home/docker/test/repo/test/certificate/pgbackrest-test.key", undef,
-        # "/home/docker/test/bin/u20/pgbackrest");
+        ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}", "${strBinPath}:${strBinPath}:ro"],
+        undef, "server --log-level-console=debug --tls-server-cert=/home/docker/test/repo/test/certificate/pgbackrest-test.crt --tls-server-key=/home/docker/test/repo/test/certificate/pgbackrest-test.key", undef,
+        "/home/docker/test/bin/u20/pgbackrest");
     bless $self, $class;
 
     # Set test path
