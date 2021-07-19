@@ -36,7 +36,7 @@
         <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
-        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:16.04</variable>
+        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:18.04</variable>
         <variable key="os-image" if="{[os-type-is-rhel]}">centos:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
@@ -302,7 +302,8 @@
         RUN export DEBIAN_FRONTEND=noninteractive &amp;&amp; \
             rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
-            apt-get install -y sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates tzdata locales 2>&amp;1
+            apt-get install -y --no-install-recommends sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates \
+                    tzdata locales 2>&amp;1
 
         {[sudo-disable-core-dump]}
 
@@ -315,10 +316,10 @@
                 tee -a /etc/apt/sources.list.d/pgdg.list &amp;&amp; \
             wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - &amp;&amp; \
             apt-get update &amp;&amp; \
-            apt-get install -y postgresql-common 2>&amp;1 &amp;&amp; \
+            apt-get install -y --no-install-recommends postgresql-common 2>&amp;1 &amp;&amp; \
             sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/' \
                 /etc/postgresql-common/createcluster.conf &amp;&amp; \
-            apt-get install -y postgresql-{[pg-version]} postgresql-{[pg-version-upgrade]} 2>&amp;1
+            apt-get install -y --no-install-recommends postgresql-{[pg-version]} postgresql-{[pg-version-upgrade]} 2>&amp;1
 
         # Create an ssh key for root so all hosts can ssh to each other as root
         RUN \ {[ssh-key-install]}
@@ -354,7 +355,10 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim 2>&amp;1
+        RUN yum install -y openssh-server openssh-clients sudo wget vim dnf-plugins-core 2>&amp;1
+
+        # Enable PowerTools repository (only available on RHEL8)
+        RUN dnf config-manager --set-enabled powertools || true
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -835,7 +839,7 @@
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
                     apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config
-                    liblz4-dev libzstd-dev libbz2-dev libz-dev
+                    liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -843,7 +847,7 @@
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
                     yum install make gcc postgresql{[pg-version-nodot]}-devel
-                    openssl-devel libxml2-devel lz4-devel libzstd-devel bzip2-devel
+                    openssl-devel libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>

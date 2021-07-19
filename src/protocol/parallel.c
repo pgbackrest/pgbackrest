@@ -128,7 +128,7 @@ protocolParallelProcess(ProtocolParallel *this)
         if (this->clientJobList[clientIdx] != NULL)
         {
             int fd = protocolClientIoReadFd(*(ProtocolClient **)lstGet(this->clientList, clientIdx));
-            FD_SET((unsigned int)fd, &selectSet);
+            FD_SET(fd, &selectSet);
 
             // Find the max file descriptor needed for select()
             MAX_ASSIGN(fdMax, fd);
@@ -158,7 +158,7 @@ protocolParallelProcess(ProtocolParallel *this)
 
                 if (job != NULL &&
                     FD_ISSET(
-                        (unsigned int)protocolClientIoReadFd(*(ProtocolClient **)lstGet(this->clientList, clientIdx)),
+                        protocolClientIoReadFd(*(ProtocolClient **)lstGet(this->clientList, clientIdx)),
                         &selectSet))
                 {
                     MEM_CONTEXT_TEMP_BEGIN()

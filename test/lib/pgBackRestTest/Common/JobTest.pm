@@ -52,7 +52,6 @@ sub new
         $self->{strTestPath},
         $self->{oTest},
         $self->{bDryRun},
-        $self->{strVmHost},
         $self->{bVmOut},
         $self->{iVmIdx},
         $self->{iVmMax},
@@ -87,7 +86,6 @@ sub new
             {name => 'strTestPath'},
             {name => 'oTest'},
             {name => 'bDryRun'},
-            {name => 'strVmHost'},
             {name => 'bVmOut'},
             {name => 'iVmIdx'},
             {name => 'iVmMax'},
@@ -264,7 +262,7 @@ sub run
                     "CFLAGS_CONFIG = \@CFLAGS\@\n" .
                     "CPPFLAGS_CONFIG = \@CPPFLAGS\@\n" .
                     "LDFLAGS_CONFIG = \@LDFLAGS\@\n" .
-                    "LIBS_CONFIG = \@LIBS\@\n";
+                    "LIBS_CONFIG = \@LIBS\@ \@LIBS_BUILD\@\n";
 
                 # If Makefile.in has changed then configure needs to be run and all files cleaned
                 if (buildPutDiffers($self->{oStorageTest}, $self->{strGCovPath} . "/Makefile.in", $strMakefileIn))
@@ -737,7 +735,6 @@ sub run
                     ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                     abs_path($0) .
                     " --test-path=${strVmTestPath}" .
-                    " --vm-host=$self->{strVmHost}" .
                     " --vm=$self->{oTest}->{&TEST_VM}" .
                     " --vm-id=$self->{iVmIdx}" .
                     " --module=" . $self->{oTest}->{&TEST_MODULE} .

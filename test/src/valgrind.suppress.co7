@@ -1,0 +1,11 @@
+# This is an issue after calling getaddrinfo() even if freeaddrinfo() is called as well
+{
+   ignore_free_error_after_getaddrinfo
+   Memcheck:Free
+   fun:free
+   fun:__libc_freeres
+   fun:_vgnU_freeres
+   fun:__run_exit_handlers
+   fun:exit
+   ...
+}

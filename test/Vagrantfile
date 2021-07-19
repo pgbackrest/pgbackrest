@@ -76,7 +76,7 @@ Vagrant.configure(2) do |config|
             echo 'Install Build Tools' && date
             apt-get install -y devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
                  libxml2-dev liblz4-dev liblz4-tool libpq-dev valgrind lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev \
-                 pkg-config
+                 pkg-config libyaml-dev
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Docker' && date
@@ -148,13 +148,14 @@ Vagrant.configure(2) do |config|
     # Basic environment to build/test pgBackRest using homebrew installed in the local user account.
     #-------------------------------------------------------------------------------------------------------------------------------
     # mkdir ~/homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C ~/homebrew
-    # ~/homebrew/bin/brew install -q libpq libxml2 cpanm lcov
+    # ~/homebrew/bin/brew install -q libpq libxml2 libyaml cpanm lcov
     # ~/homebrew/bin/cpanm --force --local-lib=~/homebrew/perl5 install YAML::XS XML::Checker::Parser
     #
     # export PATH="${HOME?}/homebrew/bin:$PATH"
     # export LDFLAGS="-L${HOME?}/homebrew/opt/openssl@1.1/lib -L${HOME?}/homebrew/opt/libpq/lib -L${HOME?}/homebrew/opt/libxml2/lib"
+    # export LDFLAGS="${LDFLAGS?} -L${HOME?}/homebrew/opt/libyaml/lib"
     # export CPPFLAGS="-I${HOME?}/homebrew/opt/openssl@1.1/include -I/${HOME?}/homebrew/opt/libpq/include"
-    # export CPPFLAGS="${CPPFLAGS?} -I${HOME?}/homebrew/opt/libxml2/include/libxml2"
+    # export CPPFLAGS="${CPPFLAGS?} -I${HOME?}/homebrew/opt/libxml2/include/libxml2 -I/${HOME?}/homebrew/opt/libyaml/include"
     # export PERL5LIB=~/homebrew/perl5/lib/perl5"${PERL5LIB:+:${PERL5LIB}}"
 
     # Don't share the default vagrant folder
