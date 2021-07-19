@@ -933,15 +933,15 @@ testRun(void)
         TEST_TITLE("owner is root and ownership is good");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=/repo");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
         userLocalData.userRoot = true;
 
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
