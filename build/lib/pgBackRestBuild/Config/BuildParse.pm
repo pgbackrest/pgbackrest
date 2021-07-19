@@ -19,7 +19,6 @@ use pgBackRestDoc::Common::String;
 use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestBuild::Build::Common;
-use pgBackRestBuild::Config::Build;
 use pgBackRestBuild::Config::Data;
 
 ####################################################################################################################################
@@ -80,6 +79,28 @@ my $rhBuild =
 ####################################################################################################################################
 # Generate enum names
 ####################################################################################################################################
+sub buildConfigCommandEnum
+{
+    return bldEnum('cfgCmd', shift)
+}
+
+push @EXPORT, qw(buildConfigCommandEnum);
+
+sub buildConfigOptionEnum
+{
+    return bldEnum('cfgOpt', shift)
+}
+
+push @EXPORT, qw(buildConfigOptionEnum);
+
+sub buildConfigOptionGroupEnum
+{
+    return bldEnum('cfgOptGrp', shift)
+}
+
+push @EXPORT, qw(buildConfigOptionGroupEnum);
+
+
 sub buildConfigDefineOptionTypeEnum
 {
     return bldEnum('cfgOptType', shift);

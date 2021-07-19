@@ -20,7 +20,7 @@ use pgBackRestDoc::Common::String;
 use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestBuild::Build::Common;
-use pgBackRestBuild::Config::Build;
+use pgBackRestBuild::Config::BuildParse;
 use pgBackRestBuild::Config::Data;
 
 ####################################################################################################################################

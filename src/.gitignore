@@ -5,3 +5,4 @@ autom4te.cache
 /Makefile
 /build.auto.h
 /pgbackrest
+/build-*

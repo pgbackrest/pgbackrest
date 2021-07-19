@@ -15,7 +15,7 @@ freebsd_12_task:
     cpu: 4
     memory: 4G
 
-  install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 p5-YAML-LibYAML rsync
+  install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync
 
   script:
     - perl ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
@@ -30,12 +30,12 @@ macos_catalina_task:
     image: catalina-xcode
 
   environment:
-    LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/libpq/lib -L/usr/local/opt/libxml2/lib
-    CPPFLAGS: -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include -I/usr/local/opt/libxml2/include/libxml2
+    LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/libpq/lib -L/usr/local/opt/libxml2/lib -L/usr/local/opt/libyaml/lib
+    CPPFLAGS: -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include -I/usr/local/opt/libxml2/include/libxml2 -I/usr/local/opt/libyaml/include
     PERL5LIB: /usr/local/opt/perl5/lib/perl5
 
   install_script:
-    - brew install -q openssl@1.1 libpq libxml2 cpanm
+    - brew install -q openssl@1.1 libpq libxml2 libyaml cpanm
     - cpanm --local-lib=/usr/local/opt/perl5 install YAML::XS
 
   script:
