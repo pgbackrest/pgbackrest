@@ -317,7 +317,6 @@ myObjToLog(const MyObj *this)
                 <list-item><setting>--module</setting> - identifies the module in which the test is located</list-item>
                 <list-item><setting>--test</setting> - the actual test set to be run</list-item>
                 <list-item><setting>--run</setting> - a number identifying the run within a test if testing a single run rather than the entire test</list-item>
-                <list-item><setting>--dev</setting> - sets several flags that are appropriate for development but should be omitted when performing final testing prior to submitting a Pull Request to the project. Most importantly, it reuses object files from the previous test run to speed testing.</list-item>
                 <list-item><setting>--vm-out</setting> - displays the test output (helpful for monitoring the progress)</list-item>
                 <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code></list-item>
             </list>
@@ -348,7 +347,7 @@ pgbackrest/doc/doc.pl --help
                     <title>Run a test</title>
 
                     <execute output="y">
-                        <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait</exe-cmd>
+                        <exe-cmd>pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait</exe-cmd>
                         <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                     </execute>
                 </execute-list>
@@ -359,7 +358,7 @@ pgbackrest/doc/doc.pl --help
                     <title>Run a module</title>
 
                     <execute output="y">
-                        <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --module=postgres</exe-cmd>
+                        <exe-cmd>pgbackrest/test/test.pl --vm=none --module=postgres</exe-cmd>
                         <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                     </execute>
                 </execute-list>
@@ -563,7 +562,7 @@ TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check ind
             <p>Unit tests are run for all files that are listed in <file>define.yaml</file> and a coverage report generated for each file listed under the tag <code>coverage:</code>. Note that some files are listed in multiple <code>coverage:</code> sections for a module; in this case, each test for the file being modified should be specified for the module in which the file exists (e.g. <code>--module=storage --test=posix --test=gcs</code>, etc.) or, alternatively, simply run the module without the <code>--test</code> option. It is recommended that a <code>--vm</code> be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the <b>define.yaml</b> section detailed above.</p>
 
             <code-block>
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u20
+pgbackrest/test/test.pl --vm-out --module=command --test=check --vm=u20
             </code-block>
 
 <admonition type="note">Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.</admonition>
@@ -577,7 +576,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u20
             <p>Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option <code>--no-cleanup</code> provided. Again, continuing with the check command, from <b>define.yaml</b> above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in <path>test/test-0</path> can be inspected.</p>
 
             <code-block>
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --no-cleanup
+pgbackrest/test/test.pl --vm-out --module=command --test=check --run=1 --no-cleanup
             </code-block>
         </section>
     </section>
