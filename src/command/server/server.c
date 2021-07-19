@@ -105,11 +105,14 @@ cmdServer(uint64_t connectionMax)
         // REPLACED WITH A STOP REQUEST FROM AN AUTHENTICATED CLIENT.
         do
         {
+            // Accept a new connection
             IoSession *const socketSession = ioServerAccept(socketServer, NULL);
 
+            // Fork the child and break out of the loop when the child returns
             if (!cmdServerFork(socketSession, host))
                 break;
 
+            // Free the socket since the child is now using it
             ioSessionFree(socketSession);
         }
         while (--connectionMax > 0);
