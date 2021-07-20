@@ -101,7 +101,9 @@ sub run
         # Some commands will fail because of the bogus host created when a standby is present. These options reset the bogus host
         # so it won't interfere with commands that won't tolerate a connection failure.
         my $strBogusReset = $oHostBackup->bogusHost() ?
-            ' --reset-pg2-host --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user --reset-pg2-path' : '';
+            ' --reset-pg2-host --reset-pg2-host-type --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user' .
+                ' --reset-pg2-path' :
+            '';
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
