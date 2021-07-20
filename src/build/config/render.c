@@ -285,7 +285,7 @@ bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg)
         "\n"
         "#endif\n");
 
-    storagePutP(storageNewWriteP(storageRepo, STRDEF("src/config/config.auto.h"), .noSyncPath = true), BUFSTR(config));
+    bldPut(storageRepo, "src/config/config.auto.h", BUFSTR(config));
 
     // Build C
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -326,5 +326,5 @@ bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg)
         config,
         ")\n");
 
-    storagePutP(storageNewWriteP(storageRepo, STRDEF("src/config/config.auto.c"), .noSyncPath = true), BUFSTR(config));
+    bldPut(storageRepo, "src/config/config.auto.c", BUFSTR(config));
 }
