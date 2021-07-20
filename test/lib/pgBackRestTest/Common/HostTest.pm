@@ -64,7 +64,7 @@ sub new
     executeTest("docker run -itd -h $self->{strName} --name=$self->{strContainer}" .
                 (defined($self->{strOption}) ? ' ' . $self->{strOption} : '') .
                 (defined($self->{stryMount}) ? ' -v ' . join(' -v ', @{$self->{stryMount}}) : '') .
-                (defined($self->{strEntryPoint}) ? " --entrypoint=$self->{strEntryPoint}" : '') .
+                (defined($self->{strEntryPoint}) ? " --entrypoint=$self->{strEntryPoint} --user=$self->{strUser}" : '') .
                 " $self->{strImage} " . (defined($self->{strParam}) ? ' ' . $self->{strParam} : ''),
                 {bSuppressStdErr => true});
 

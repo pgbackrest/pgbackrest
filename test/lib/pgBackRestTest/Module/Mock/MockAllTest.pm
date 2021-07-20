@@ -205,12 +205,12 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM2, remote => false, storage =>   GCS, encrypt => false, delta =>  true, compress => BZ2},
-        {vm => VM2, remote =>  true, storage => AZURE, encrypt =>  true, delta => false, compress =>  GZ},
-        {vm => VM3, remote => false, storage => POSIX, encrypt => false, delta =>  true, compress => ZST},
-        {vm => VM3, remote =>  true, storage =>    S3, encrypt =>  true, delta => false, compress => LZ4},
-        {vm => VM4, remote => false, storage =>   GCS, encrypt => false, delta => false, compress =>  GZ},
-        {vm => VM4, remote =>  true, storage =>    S3, encrypt =>  true, delta =>  true, compress => ZST},
+        {vm => VM2, remote => false, tls => false, storage =>   GCS, encrypt => false, delta =>  true, compress => BZ2},
+        {vm => VM2, remote =>  true, tls => false, storage => AZURE, encrypt =>  true, delta => false, compress =>  GZ},
+        {vm => VM3, remote => false, tls => false, storage => POSIX, encrypt => false, delta =>  true, compress => ZST},
+        {vm => VM3, remote =>  true, tls =>  true, storage =>    S3, encrypt =>  true, delta => false, compress => LZ4},
+        {vm => VM4, remote => false, tls => false, storage =>   GCS, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM4, remote =>  true, tls =>  true, storage =>    S3, encrypt =>  true, delta =>  true, compress => ZST},
     )
     {
         # Only run tests for this vm
@@ -218,18 +218,20 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bRemote = $rhRun->{remote};
+        my $bTls = $rhRun->{tls};
         my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
         my $bDeltaBackup = $rhRun->{delta};
         my $strCompressType = $rhRun->{compress};
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("rmt ${bRemote}, storage ${strStorage}, enc ${bEncrypt}, delta ${bDeltaBackup}")) {next}
+        if (!$self->begin("rmt ${bRemote}, tls ${bTls}, storage ${strStorage}, enc ${bEncrypt}, delta ${bDeltaBackup}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
-            strCompressType => NONE});
+            true, $self->expect(),
+            {bHostBackup => $bRemote, bTls => $bTls, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
+                strCompressType => NONE});
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
