@@ -2239,16 +2239,16 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental delta selective restore");
-// CSHANG STOPPED HERE
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--delta");
-        strLstAddZ(argList, "--type=none");
-        strLstAddZ(argList, "--link-map=pg_wal=../wal");
-        strLstAddZ(argList, "--link-map=postgresql.conf=../config/postgresql.conf");
-        strLstAddZ(argList, "--link-map=pg_hba.conf=../config/pg_hba.conf");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
+        hrnCfgArgRawZ(argList, cfgOptType, "none");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_wal=../wal");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "postgresql.conf=../config/postgresql.conf");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=../config/pg_hba.conf");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         #define TEST_LABEL                                          "20161219-212741F_20161219-212918I"
@@ -2270,7 +2270,7 @@ testRun(void)
             manifestPathAdd(
                 manifest,
                 &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
-            storagePathCreateP(storagePgWrite(), NULL);
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .noErrorOnExists = true);
 
             // global directory
             manifestPathAdd(
@@ -2289,8 +2289,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "5e2b96c19c4f5c63a5afa2de504d29fe64a4c908"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), fileBuffer);
+            HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, fileBuffer);
 
             // global/999
             manifestFileAdd(
@@ -2299,7 +2298,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/999"), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = HASH_TYPE_SHA1_ZERO, .reference = STRDEF(TEST_LABEL)});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/999")), NULL);
+            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/999");
 
             // PG_VERSION
             manifestFileAdd(
@@ -2308,8 +2307,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_94_STR "\n"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base directory
             manifestPathAdd(
@@ -2330,9 +2328,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION)),
-                BUFSTRDEF(PG_VERSION_94_STR "\n"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/1/2
             fileBuffer = bufNew(8192);
@@ -2345,7 +2341,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/1/2"), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/2")), fileBuffer);
+            HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/1/2", fileBuffer);
 
             // system db name
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
@@ -2363,9 +2359,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/16384/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION)),
-                BUFSTRDEF(PG_VERSION_94_STR "\n"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/16384/16385
             fileBuffer = bufNew(16384);
@@ -2378,7 +2372,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/16384/16385"), .size = 16384, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f"});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/16385")), fileBuffer);
+            HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/16384/16385", fileBuffer);
 
             // base/32768 directory
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
@@ -2394,9 +2388,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/32768/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION)),
-                BUFSTRDEF(PG_VERSION_94_STR "\n"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/32768/32769
             fileBuffer = bufNew(32768);
@@ -2409,7 +2401,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/32768/32769"), .size = 32768, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "a40f0986acb1531ce0cc75a23dcf8aa406ae9081"});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/32769")), fileBuffer);
+            HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/32768/32769", fileBuffer);
 
             // File link to postgresql.conf
             const String *name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.conf");
@@ -2426,8 +2418,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "postgresql.conf"), .size = 15, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "98b8abb2e681e2a5a7d8ab082c0a79727887558d"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "postgresql.conf")), BUFSTRDEF("POSTGRESQL.CONF"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "postgresql.conf", "POSTGRESQL.CONF");
 
             // File link to pg_hba.conf
             name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_hba.conf");
@@ -2444,8 +2435,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "pg_hba.conf"), .size = 11, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "401215e092779574988a854d8c7caed7f91dba4b"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "pg_hba.conf")), BUFSTRDEF("PG_HBA.CONF"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "pg_hba.conf", "PG_HBA.CONF");
 
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
@@ -2453,7 +2443,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
+            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);
 
             // Path link to pg_wal
             name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_wal");
@@ -2506,8 +2496,8 @@ testRun(void)
                 STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         // Add a few bogus paths/files/links to be removed in delta
-        storagePathCreateP(storagePgWrite(), STRDEF("bogus1/bogus2"));
-        storagePathCreateP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/bogus3"));
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "bogus1/bogus2");
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_GLOBAL "/bogus3");
 
         // Add a few bogus links to be deleted
         THROW_ON_SYS_ERROR(
@@ -2607,18 +2597,18 @@ testRun(void)
         TEST_TITLE("incremental delta selective restore");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
-        strLstAddZ(argList, "--delta");
-        strLstAddZ(argList, "--type=preserve");
-        strLstAddZ(argList, "--link-map=pg_wal=../wal");
-        strLstAddZ(argList, "--link-map=postgresql.conf=../config/postgresql.conf");
-        strLstAddZ(argList, "--link-map=pg_hba.conf=../config/pg_hba.conf");
-        strLstAddZ(argList, "--db-include=16384");
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
+        hrnCfgArgRawZ(argList, cfgOptType, "preserve");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_wal=../wal");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "postgresql.conf=../config/postgresql.conf");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=../config/pg_hba.conf");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "16384");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // Move pg1-path and put a link in its place. This tests that restore works when pg1-path is a symlink yet should be
@@ -2630,7 +2620,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE "/empty.txt");
 
         // Write recovery.conf so we don't get a preserve warning
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), BUFSTRDEF("Some Settings"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_RECOVERYCONF, "Some Settings");
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
@@ -2690,8 +2680,8 @@ testRun(void)
         // Keep this test at the end since is corrupts the repo
         TEST_TITLE("remove a repo file so a restore job errors");
 
-        storageRemoveP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .errorOnMissing = true);
-        storageRemoveP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
 
         // Set log level to warn
         harnessLogLevelSet(logLevelWarn);
