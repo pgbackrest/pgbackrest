@@ -88,9 +88,6 @@ test.pl [options]
    --no-gen             do not run code generation
    --gen-check          check that auto-generated files are correct (used in CI to detect changes)
    --code-count         generate code counts
-   --smart              perform bin/package builds only when source timestamps have changed
-   --dev                --smart --no-optimize
-   --dev-test           does nothing -- kept for backward compatibility
    --expect             --vm=co7 --pg-version=9.6 --log-force
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
@@ -171,9 +168,6 @@ my $bGenOnly = false;
 my $bGenCheck = false;
 my $bNoGen = false;
 my $bCodeCount = false;
-my $bSmart = false;
-my $bDev = false;
-my $bDevTest = false;
 my $bBackTrace = false;
 my $bProfile = false;
 my $bExpect = false;
@@ -226,9 +220,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'gen-check' => \$bGenCheck,
             'no-gen' => \$bNoGen,
             'code-count' => \$bCodeCount,
-            'smart' => \$bSmart,
-            'dev' => \$bDev,
-            'dev-test' => \$bDevTest,
             'backtrace' => \$bBackTrace,
             'profile' => \$bProfile,
             'expect' => \$bExpect,
@@ -284,20 +275,6 @@ eval
     {
         $bCoverageOnly = true;
         $bCOnly = true;
-    }
-
-    ################################################################################################################################
-    # Update options for --dev and --dev-fast and --dev-test
-    ################################################################################################################################
-    if ($bDev && $bDevTest)
-    {
-        confess "cannot combine --dev and --dev-test";
-    }
-
-    if ($bDev)
-    {
-        $bSmart = true;
-        $bNoOptimize = true;
     }
 
     ################################################################################################################################
@@ -590,52 +567,19 @@ eval
             }
         }
 
-        # Make a copy of the repo to track which files have been changed.  Eventually all builds will be done from this directory.
+        # Make a copy of the repo to track which files have been changed
         #---------------------------------------------------------------------------------------------------------------------------
         my $strRepoCachePath = "${strTestPath}/repo";
-        my $strRepoCacheManifest = 'repo.manifest';
 
         # Create the repo path -- this should hopefully prevent obvious rsync errors below
-        $oStorageTest->pathCreate("${strTestPath}/repo", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+        $oStorageTest->pathCreate($strRepoCachePath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
-        # Check if there are any files existing already.  If none, that means a full copy is happening and we shouldn't report
-        # modified files
-        my @stryExistingList = $oStorageTest->list($strRepoCachePath, {bIgnoreMissing => true});
-
-        # First check if there is an old manifest that has not been cleared.  This indicates that an error happened before all new
-        # files could be processed, which means they should be processed again.
-        my @stryModifiedList;
-        my $rstrModifiedList = $oStorageTest->get(
-            $oStorageTest->openRead("${strRepoCachePath}/${strRepoCacheManifest}", {bIgnoreMissing => true}));
-
-        if (defined($rstrModifiedList))
-        {
-            @stryModifiedList = split("\n", trim($$rstrModifiedList));
-        }
-
-        push(
-            @stryModifiedList,
-            split(
-                "\n",
-                trim(
-                    executeTest(
-                        "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
-                            " rsync -rtW --out-format=\"\%n\" --delete" .
-                            # This option is not supported on MacOS. The eventual plan is to remove the need for it.
-                            (trim(`uname`) ne 'Darwin' ? ' --ignore-missing-args' : '') .
-                            " --exclude=test/result --exclude=repo.manifest" .
-                            " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}" .
-                            " | grep -E -v '/\$' | cat"))));
-
-        if (@stryModifiedList > 0)
-        {
-            $oStorageTest->put("${strRepoCachePath}/${strRepoCacheManifest}", join("\n", @stryModifiedList));
-
-            if (@stryExistingList > 0)
-            {
-                &log(INFO, "modified since last run: " . join(', ', @stryModifiedList));
-            }
-        }
+        # Copy the repo
+        executeTest(
+            "git -C ${strBackRestBase} ls-files -c --others --exclude-standard | rsync -rtW --delete --exclude=test/result" .
+                # This option is not supported on MacOS. The eventual plan is to remove the need for it.
+                (trim(`uname`) ne 'Darwin' ? ' --ignore-missing-args' : '') .
+                " ${strBackRestBase}/ ${strRepoCachePath}");
 
         # Generate code counts
         #---------------------------------------------------------------------------------------------------------------------------
@@ -670,7 +614,7 @@ eval
 
             executeTest(
                 "chmod 700 -R ${strTestPath}/test-* 2>&1 || true && rm -rf ${strTestPath}/temp ${strTestPath}/test-*" .
-                    " ${strTestPath}/data-*" . ($bDev ? '' : " ${strTestPath}/gcov-*"));
+                    " ${strTestPath}/data-*");
             $oStorageTest->pathCreate("${strTestPath}/temp", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
             # Remove old lcov dirs -- do it this way so the dirs stay open in finder/explorer, etc.
@@ -771,8 +715,8 @@ eval
                 foreach my $strBuildVM (@stryBuildVm)
                 {
                     my $strBuildPath = "${strBinPath}/${strBuildVM}";
-                    my $bRebuild = !$bSmart;
-                    $rhBinBuild->{$strBuildVM} = true;
+                    my $bRebuild = false;
+                    $rhBinBuild->{$strBuildVM} = false;
 
                     # Build configure/compile options and see if they have changed from the previous build
                     my $strCFlags =
@@ -785,59 +729,46 @@ eval
                     my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
 
                     my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
-                    $bBuildOptionsDiffer |= grep(/^src\/configure|src\/Makefile.in|src\/build\.auto\.h\.in$/, @stryModifiedList);
 
-                    # Rebuild if the modification time of the bin file is less than the last changes in source paths
-                    my $strBinSmart = "${strBuildPath}/pgbackrest";
+                    &log(INFO, "    build bin for ${strBuildVM} (${strBuildPath})");
 
-                    if ($bBuildOptionsDiffer ||
-                        ($bSmart &&
-                         (!$oStorageBackRest->exists($strBinSmart) ||
-                          $oStorageBackRest->info($strBinSmart)->mtime < $lTimestampLast)))
+                    if ($strBuildVM ne VM_NONE)
                     {
-                        &log(
-                            INFO, "    bin dependencies have changed for ${strBuildVM}, " . ($bBuildOptionsDiffer ? 're' : '') .
-                            'building...');
-
-                        $bRebuild = true;
+                        executeTest(
+                            "docker run -itd -h test-build --name=test-build" .
+                                " -v ${strBackRestBase}:${strBackRestBase} -v ${strTestPath}:${strTestPath} " .
+                                containerRepo() . ":${strBuildVM}-test",
+                            {bSuppressStdErr => true});
                     }
 
-                    if ($bRebuild)
+                    if ($bBuildOptionsDiffer ||
+                        !-e "${strBuildPath}/Makefile" ||
+                        stat("${strBackRestBase}/src/Makefile.in")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
+                        stat("${strBackRestBase}/src/configure")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
+                        stat("${strBackRestBase}/src/build.auto.h.in")->mtime > stat("${strBuildPath}/Makefile")->mtime)
                     {
-                        &log(INFO, "    build bin for ${strBuildVM} (${strBuildPath})");
+                        &log(INFO, '        bin dependencies have changed, rebuilding');
 
-                        if ($strBuildVM ne VM_NONE)
-                        {
-                            executeTest(
-                                "docker run -itd -h test-build --name=test-build" .
-                                    " -v ${strBackRestBase}:${strBackRestBase} -v ${strTestPath}:${strTestPath} " .
-                                    containerRepo() . ":${strBuildVM}-test",
-                                {bSuppressStdErr => true});
-                        }
-
-                        if (!$bSmart || $bBuildOptionsDiffer || !$oStorageBackRest->exists("${strBuildPath}/Makefile"))
-                        {
-                            # Remove old path if it exists and save the build flags
-                            executeTest("rm -rf ${strBuildPath}");
-                            buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
-
-                            executeTest(
-                                ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
-                                "bash -c 'cd ${strBuildPath} && ${strBackRestBase}/src/configure -q${strConfigOptions}'",
-                                {bShowOutputAsync => $bLogDetail});
-                        }
+                        # Remove old path if it exists and save the build flags
+                        executeTest("rm -rf ${strBuildPath}");
+                        buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
 
                         executeTest(
                             ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
-                            "${strMakeCmd} -s -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
-                                " --directory ${strBuildPath} CFLAGS_EXTRA='${strCFlags}'" .
-                                ($strLdFlags ne '' ? " LDFLAGS_EXTRA='${strLdFlags}'" : ''),
+                            "bash -c 'cd ${strBuildPath} && ${strBackRestBase}/src/configure -q${strConfigOptions}'",
                             {bShowOutputAsync => $bLogDetail});
+                    }
 
-                        if ($strBuildVM ne VM_NONE)
-                        {
-                            executeTest("docker rm -f test-build");
-                        }
+                    executeTest(
+                        ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
+                        "${strMakeCmd} -s -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
+                            " --directory ${strBuildPath} CFLAGS_EXTRA='${strCFlags}'" .
+                            ($strLdFlags ne '' ? " LDFLAGS_EXTRA='${strLdFlags}'" : ''),
+                        {bShowOutputAsync => $bLogDetail});
+
+                    if ($strBuildVM ne VM_NONE)
+                    {
+                        executeTest("docker rm -f test-build");
                     }
                 }
             }
@@ -1033,10 +964,6 @@ eval
             # Exit if only testing builds
             exit 0 if $bBuildOnly;
         }
-
-        # Remove repo.manifest now that all processing that depends on modified files has been completed
-        #---------------------------------------------------------------------------------------------------------------------------
-        $oStorageTest->remove("${strRepoCachePath}/${strRepoCacheManifest}");
 
         # Perform static source code analysis
         #---------------------------------------------------------------------------------------------------------------------------

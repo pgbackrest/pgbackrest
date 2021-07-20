@@ -40,4 +40,14 @@ bldHeader(const char *const module, const char *const description)
         description, module);
 }
 
+// Put the file if it is different than the existing file
+__attribute__((always_inline)) static inline void
+bldPut(const Storage *const storage, const char *const file, const Buffer *const contentNew)
+{
+    const Buffer *const contentOld = storageGetP(storageNewReadP(storage, STR(file), .ignoreMissing = true));
+
+    if (contentOld == NULL || !bufEq(contentOld, contentNew))
+        storagePutP(storageNewWriteP(storage, STR(file), .noSyncPath = true), contentNew);
+}
+
 #endif
