@@ -501,7 +501,6 @@ eval
         # Create the build path
         #---------------------------------------------------------------------------------------------------------------------------
         my $strBuildPath = "${strTestPath}/build";
-        my $bBuildDiffer = false;
 
         if (!-e "${strBuildPath}/Makefile" ||
             stat("${strBackRestBase}/src/Makefile.in")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
@@ -513,8 +512,6 @@ eval
             $oStorageTest->pathCreate("${strBuildPath}/repo", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
             executeTest("find ${strBuildPath} -mindepth 1 -print0 | xargs -0 rm -rf");
             executeTest("cd ${strBuildPath} && ${strBackRestBase}/src/configure -q --enable-test");
-
-            $bBuildDiffer = true;
         }
 
         # Auto-generate code files unless --no-gen specified
@@ -572,16 +569,17 @@ eval
 
         # Make a copy of the repo to track which files have been changed
         #---------------------------------------------------------------------------------------------------------------------------
+        my $strRepoCachePath = "${strTestPath}/repo";
+
         # Create the repo path -- this should hopefully prevent obvious rsync errors below
-        $oStorageTest->pathCreate("${strTestPath}/repo", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
+        $oStorageTest->pathCreate($strRepoCachePath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
         # Copy the repo
         executeTest(
-            "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
-                " rsync -rtW --out-format=\"\%n\" --delete" .
+            "git -C ${strBackRestBase} ls-files -c --others --exclude-standard | rsync -rtW --delete --exclude=test/result" .
                 # This option is not supported on MacOS. The eventual plan is to remove the need for it.
                 (trim(`uname`) ne 'Darwin' ? ' --ignore-missing-args' : '') .
-                " --exclude=test/result ${strBackRestBase}/ | grep -E -v '/\$' | cat");
+                " ${strBackRestBase}/ ${strRepoCachePath}");
 
         # Generate code counts
         #---------------------------------------------------------------------------------------------------------------------------
@@ -743,7 +741,11 @@ eval
                             {bSuppressStdErr => true});
                     }
 
-                    if ($bBuildDiffer || $bBuildOptionsDiffer || !$oStorageBackRest->exists("${strBuildPath}/Makefile"))
+                    if ($bBuildOptionsDiffer ||
+                        !-e "${strBuildPath}/Makefile" ||
+                        stat("${strBackRestBase}/src/Makefile.in")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
+                        stat("${strBackRestBase}/src/configure")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
+                        stat("${strBackRestBase}/src/build.auto.h.in")->mtime > stat("${strBuildPath}/Makefile")->mtime)
                     {
                         &log(INFO, '        bin dependencies have changed, rebuilding');
 

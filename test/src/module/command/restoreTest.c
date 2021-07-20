@@ -87,7 +87,7 @@ testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest 
         "pg path info list for restore compare");
 
     // Compare
-    TEST_RESULT_STR_Z(callbackData.content, compare, "    compare result manifest");
+    TEST_RESULT_STR_Z(callbackData.content, compare, "compare result manifest");
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -162,13 +162,16 @@ testRun(void)
 
         // Load Parameters
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // Create the pg path
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sparse-zero file");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -176,7 +179,10 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, TEST_USER_STR,
                 TEST_GROUP_STR, 0, true, false, NULL),
             false, "zero sparse 1TB file");
-        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "    check size");
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("normal-zero file");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -184,17 +190,15 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 false, false, NULL),
             true, "zero-length file");
-        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "    check size");
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Create a compressed encrypted repo file
-        StorageWrite *ceRepoFile = storageNewWriteP(
-            storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)));
-        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(ceRepoFile));
-        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("badpass"), NULL));
+        TEST_TITLE("compressed encrypted repo file - fail");
 
-        storagePutP(ceRepoFile, BUFSTRDEF("acefile"));
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1))),
+            "acefile", .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpass",
+            .comment = "create a compressed encrypted repo file");
 
         TEST_ERROR(
             restoreFile(
@@ -205,11 +209,12 @@ testRun(void)
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compressed encrypted repo file - retry");
+
         // Create normal file to make it look like a prior restore file failed partway through to ensure that retries work. It will
         // be clear if the file was overwritten when checking the info below since the size and timestamp will be changed.
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("normal"), .modeFile = 0600), BUFSTRDEF("PRT")),
-            "    create normal file");
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "normal", "PRT", .modeFile = 0600, .comment = "create normal file in pg");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -219,20 +224,21 @@ testRun(void)
             true, "copy file");
 
         StorageInfo info = storageInfoP(storagePg(), STRDEF("normal"));
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_UINT(info.size, 7, "    check size");
-        TEST_RESULT_UINT(info.mode, 0600, "    check mode");
-        TEST_RESULT_INT(info.timeModified, 1557432154, "    check time");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
-        TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("normal")))), "acefile", "    check contents");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_UINT(info.size, 7, "check size");
+        TEST_RESULT_UINT(info.mode, 0600, "check mode");
+        TEST_RESULT_INT(info.timeModified, 1557432154, "check time");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
+        TEST_STORAGE_GET(storagePg(), "normal", "acefile", .comment = "check contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file missing - delta option set");
+
         // Create a repo file
-        storagePutP(
-            storageNewWriteP(
-                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1))),
-            BUFSTRDEF("atestfile"));
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1))),
+            "atestfile");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -240,11 +246,13 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             true, "sha1 delta missing");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
+        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
         size_t oldBufferSize = ioBufferSize();
         ioBufferSizeSet(4);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file exists - delta option set");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -262,8 +270,11 @@ testRun(void)
                 1557432155, true, true, NULL),
             false, "sha1 delta force existing");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file exists, size mismatch - delta option set");
+
         // Change the existing file so it no longer matches by size
-        storagePutP(storageNewWriteP(storagePgWrite(), strNewZ("delta")), BUFSTRDEF("atestfile2"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "atestfile2");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -271,10 +282,9 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             true, "sha1 delta existing, size differs");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
+        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF("atestfile2"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "atestfile2");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -282,11 +292,13 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
                 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
+        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg file exists, content mismatch - delta option set");
 
         // Change the existing file so it no longer matches by content
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF("btestfile"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "btestfile");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -294,10 +306,9 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             true, "sha1 delta existing, content differs");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
+        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF("btestfile"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "btestfile");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -314,7 +325,7 @@ testRun(void)
             true, "delta force existing, timestamp after copy time");
 
         // Change the existing file to zero-length
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF(""));
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "delta");
 
         TEST_RESULT_BOOL(
             restoreFile(
@@ -334,12 +345,12 @@ testRun(void)
         TEST_TITLE("error when pg appears to be running");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postmaster.pid")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(),"postmaster.pid");
 
         TEST_ERROR(
             restorePathValidate(), PgRunningError,
@@ -347,16 +358,16 @@ testRun(void)
             "HINT: presence of 'postmaster.pid' in '" TEST_PATH "/pg' indicates PostgreSQL is running.\n"
             "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.");
 
-        storageRemoveP(storagePgWrite(), STRDEF("postmaster.pid"), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "postmaster.pid", .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on data directory does not look valid");
+        TEST_TITLE("error on data directory does not look valid - delta");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--delta");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with invalid PGDATA");
@@ -367,15 +378,18 @@ testRun(void)
                 " exist in the destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("backup.manifest")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "backup.manifest");
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with valid PGDATA");
-        storageRemoveP(storagePgWrite(), STRDEF("backup.manifest"), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "backup.manifest", .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on data directory does not look valid - force");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
-        strLstAddZ(argList, "--force");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with invalid PGDATA");
@@ -386,14 +400,15 @@ testRun(void)
                 " exist in the destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION)), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_PGVERSION);
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with valid PGDATA");
-        storageRemoveP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_PGVERSION, .errorOnMissing = true);
     }
 
     // *****************************************************************************************************************************
     if (testBegin("getEpoch()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("system time UTC");
 
         setenv("TZ", "UTC", true);
@@ -436,9 +451,9 @@ testRun(void)
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -458,10 +473,10 @@ testRun(void)
             TEST_RESTORE_BACKUP_INFO_DB);
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--set=BOGUS");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSet, "BOGUS");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "backup set BOGUS is not valid");
@@ -473,12 +488,12 @@ testRun(void)
         const String *repoPath2 = STRDEF(TEST_PATH "/repo2");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath2);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=time");
-        strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:28:04-0500");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
@@ -493,12 +508,12 @@ testRun(void)
 
         // Switch repo paths and confirm same result but on repo1
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=time");
-        strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:28:04-0500");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
@@ -639,9 +654,9 @@ testRun(void)
         TEST_TITLE("remap data directory");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is not remapped");
@@ -651,9 +666,9 @@ testRun(void)
         pgPath = STRDEF(TEST_PATH "/pg2");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is remapped");
@@ -664,10 +679,10 @@ testRun(void)
         TEST_TITLE("remap tablespaces");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map=bogus=/bogus");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "bogus=/bogus");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreManifestMap(manifest), TablespaceMapError, "unable to remap invalid tablespace 'bogus'");
@@ -688,11 +703,11 @@ testRun(void)
 
         // Error on different paths
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map=2=/2");
-        strLstAddZ(argList, "--tablespace-map=ts2=/ts2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "2=/2");
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "ts2=/ts2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -700,20 +715,20 @@ testRun(void)
 
         // Remap one tablespace using the id and another with the name
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map=1=/1-2");
-        strLstAddZ(argList, "--tablespace-map=ts2=/2-2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "1=/1-2");
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "ts2=/2-2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/1-2", "    check tablespace 1 target");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/1-2", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/1-2", "    check tablespace 1 link");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-2", "    check tablespace 1 target");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/1-2", "check tablespace 1 link");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-2", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-2", "    check tablespace 1 link");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-2", "check tablespace 1 link");
 
         TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/1-2'\n"
@@ -721,20 +736,20 @@ testRun(void)
 
         // Remap a tablespace using just the id and map the rest with tablespace-map-all
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map=2=/2-3");
-        strLstAddZ(argList, "--tablespace-map-all=/all");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "2=/2-3");
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMapAll, "/all");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all/1", "    check tablespace 1 target");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all/1", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all/1", "    check tablespace 1 link");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-3", "    check tablespace 1 target");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all/1", "check tablespace 1 link");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/2-3", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-3", "    check tablespace 1 link");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/2-3", "check tablespace 1 link");
 
         TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/all/1'\n"
@@ -744,19 +759,19 @@ testRun(void)
         manifest->pub.data.pgVersion = PG_VERSION_92;
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--tablespace-map-all=/all2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMapAll, "/all2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all2/1", "    check tablespace 1 target");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/1"))->path, "/all2/1", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all2/1", "    check tablespace 1 link");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/all2/ts2", "    check tablespace 1 target");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/1"))->destination, "/all2/1", "check tablespace 1 link");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_tblspc/2"))->path, "/all2/ts2", "check tablespace 1 target");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/all2/ts2", "    check tablespace 1 link");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/2"))->destination, "/all2/ts2", "check tablespace 1 link");
 
         TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/all2/1'\n"
@@ -767,10 +782,10 @@ testRun(void)
         TEST_TITLE("remap links");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--link-map=bogus=bogus");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "bogus=bogus");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreManifestMap(manifest), LinkMapError, "unable to remap invalid link 'bogus'");
@@ -789,10 +804,10 @@ testRun(void)
 
         // Error on invalid file link path
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--link-map=pg_hba.conf=bogus");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=bogus");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -803,21 +818,20 @@ testRun(void)
 
         // Remap both links
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--link-map=pg_hba.conf=../conf2/pg_hba2.conf");
-        strLstAddZ(argList, "--link-map=pg_wal=/wal2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=../conf2/pg_hba2.conf");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_wal=/wal2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap links");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "    check link file");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "check link path");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "check link file");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "    check link dest");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "    check link path");
-        TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "    check link dest");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "check link dest");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "check link path");
+        TEST_RESULT_STR_Z(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "check link dest");
 
         TEST_RESULT_LOG(
             "P00   INFO: map link 'pg_hba.conf' to '../conf2/pg_hba2.conf'\n"
@@ -825,26 +839,25 @@ testRun(void)
 
         // Leave all links as they are
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--link-all");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptLinkAll, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "leave links as they are");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "    check link path");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "    check link file");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf2", "check link path");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba2.conf", "check link file");
         TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "    check link dest");
-        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "    check link path");
-        TEST_RESULT_STR_Z(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "    check link dest");
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "check link dest");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "check link path");
+        TEST_RESULT_STR_Z(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "check link dest");
 
         // Remove all links
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remove all links");
@@ -920,15 +933,15 @@ testRun(void)
         TEST_TITLE("owner is root and ownership is good");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=/repo");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
         userLocalData.userRoot = true;
 
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
@@ -1009,12 +1022,12 @@ testRun(void)
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0600);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0600);
 
         userLocalData.userId = TEST_USER_ID + 1;
 
@@ -1037,13 +1050,13 @@ testRun(void)
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
-        storagePathRemoveP(storagePgWrite(), NULL);
-        storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), NULL);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail on restore with directory not empty");
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYCONF);
 
         TEST_ERROR(
             restoreCleanBuild(manifest), PathNotEmptyError,
@@ -1055,7 +1068,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty");
 
-        storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF);
 
         manifestTargetAdd(
             manifest, &(ManifestTarget){
@@ -1064,7 +1077,7 @@ testRun(void)
         manifestLinkAdd(
             manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_hba.conf"), .destination = STRDEF("../conf/pg_hba.conf")});
 
-        storagePathCreateP(storageTest, STRDEF("conf"), .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storageTest, "conf", .mode = 0700);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
@@ -1076,8 +1089,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when linked file already exists without delta");
 
-        storageRemoveP(storagePgWrite(), STRDEF("pg_hba.conf"));
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("../conf/pg_hba.conf")), NULL);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "pg_hba.conf");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "../conf/pg_hba.conf");
 
         TEST_ERROR(
             restoreCleanBuild(manifest), FileExistsError,
@@ -1088,7 +1101,7 @@ testRun(void)
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/conf' exists");
 
-        storageRemoveP(storagePgWrite(), STRDEF("../conf/pg_hba.conf"), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "../conf/pg_hba.conf", .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty and ignore recovery.conf");
@@ -1096,10 +1109,10 @@ testRun(void)
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=preserve");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "preserve");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
@@ -1111,7 +1124,7 @@ testRun(void)
 
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYCONF);
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "normal restore ignore recovery.conf");
 
         TEST_RESULT_LOG(
@@ -1140,9 +1153,9 @@ testRun(void)
 
         manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)});
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR), NULL);
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR), NULL);
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYSIGNAL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_STANDBYSIGNAL);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
@@ -1158,9 +1171,9 @@ testRun(void)
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
@@ -1181,12 +1194,12 @@ testRun(void)
         TEST_TITLE("no valid databases");
 
         StringList *argListClean = strLstNew();
-        strLstAddZ(argListClean, "--stanza=test1");
-        strLstAddZ(argListClean, "--repo1-path=/repo");
-        strLstAddZ(argListClean, "--pg1-path=/pg");
+        hrnCfgArgRawZ(argListClean, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argListClean, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argListClean, cfgOptPgPath, "/pg");
 
         StringList *argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=" UTF8_DB_NAME);
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, UTF8_DB_NAME);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         Manifest *manifest = NULL;
@@ -1234,7 +1247,7 @@ testRun(void)
         TEST_TITLE("database id to exclude is missing on disk");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=" UTF8_DB_NAME);
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, UTF8_DB_NAME);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to exclude '" UTF8_DB_NAME "' does not exist");
@@ -1252,7 +1265,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=" UTF8_DB_NAME);
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, UTF8_DB_NAME);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
@@ -1265,7 +1278,7 @@ testRun(void)
         TEST_TITLE("error on system database selected");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=1");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "1");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -1278,7 +1291,7 @@ testRun(void)
         TEST_TITLE("error on system database with non-systemId selected");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=16385");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "16385");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -1291,7 +1304,7 @@ testRun(void)
         TEST_TITLE("error on system database with non-systemId selected, by name");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=postgres");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "postgres");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -1304,7 +1317,7 @@ testRun(void)
         TEST_TITLE("error on missing database selected");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=7777777");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "7777777");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include '7777777' does not exist");
@@ -1323,7 +1336,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=16384");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "16384");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)", "check expression");
@@ -1382,7 +1395,7 @@ testRun(void)
         TEST_TITLE("exclude database by id");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=16384");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "16384");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1398,7 +1411,7 @@ testRun(void)
         TEST_TITLE("exclude database by name");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=" UTF8_DB_NAME);
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, UTF8_DB_NAME);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1414,7 +1427,7 @@ testRun(void)
         TEST_TITLE("exclude system database");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=16385");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "16385");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1430,7 +1443,7 @@ testRun(void)
         TEST_TITLE("error on missing database to exclude selected");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-exclude=7777777");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "7777777");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to exclude '7777777' does not exist");
@@ -1441,8 +1454,8 @@ testRun(void)
         TEST_TITLE("error on combining include and exclude options");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=test2");
-        strLstAddZ(argList, "--db-exclude=test2");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "test2");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "test2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbInvalidError, "database to include '32768' is in the exclude list");
@@ -1453,10 +1466,10 @@ testRun(void)
         TEST_TITLE("combine include and exclude options");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=16384");
-        strLstAddZ(argList, "--db-exclude=1");
-        strLstAddZ(argList, "--db-exclude=16385");
-        strLstAddZ(argList, "--db-exclude=32768");  // user databases excluded will be silently ignored
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "16384");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "1");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "16385");
+        hrnCfgArgRawZ(argList, cfgOptDbExclude, "32768");  // user databases excluded will be silently ignored
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1476,9 +1489,9 @@ testRun(void)
     if (testBegin("restoreRecoveryOption() and restoreRecoveryConf()"))
     {
         StringList *argBaseList = strLstNew();
-        strLstAddZ(argBaseList, "--stanza=test1");
-        strLstAddZ(argBaseList, "--repo1-path=/repo");
-        strLstAddZ(argBaseList, "--pg1-path=/pg");
+        hrnCfgArgRawZ(argBaseList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argBaseList, cfgOptPgPath, "/pg");
 
         const String *restoreLabel = STRDEF("LABEL");
         #define RECOVERY_SETTING_HEADER                             "# Recovery settings generated by pgBackRest restore on LABEL\n"
@@ -1487,8 +1500,8 @@ testRun(void)
         TEST_TITLE("user-specified options");
 
         StringList *argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--recovery-option=a-setting=a");
-        strLstAddZ(argList, "--recovery-option=b_setting=b");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "a-setting=a");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "b_setting=b");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1503,7 +1516,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("override restore_command");
 
-        strLstAddZ(argBaseList, "--recovery-option=restore-command=my_restore_command");
+        hrnCfgArgRawZ(argBaseList, cfgOptRecoveryOption, "restore-command=my_restore_command");
         argList = strLstDup(argBaseList);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
@@ -1517,7 +1530,7 @@ testRun(void)
         TEST_TITLE("recovery target immediate");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=immediate");
+        hrnCfgArgRawZ(argList, cfgOptType, "immediate");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1531,9 +1544,9 @@ testRun(void)
         TEST_TITLE("recovery target time with timeline");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=time");
-        strLstAddZ(argList, "--target=TIME");
-        strLstAddZ(argList, "--target-timeline=3");
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "TIME");
+        hrnCfgArgRawZ(argList, cfgOptTargetTimeline, "3");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1548,9 +1561,9 @@ testRun(void)
         TEST_TITLE("recovery target inclusive");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=time");
-        strLstAddZ(argList, "--target=TIME");
-        strLstAddZ(argList, "--target-exclusive");
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "TIME");
+        hrnCfgArgRawBool(argList, cfgOptTargetExclusive, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1565,8 +1578,8 @@ testRun(void)
         TEST_TITLE("no recovery_target_inclusive for target=name");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=name");
-        strLstAddZ(argList, "--target=NAME");
+        hrnCfgArgRawZ(argList, cfgOptType, "name");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "NAME");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1595,8 +1608,8 @@ testRun(void)
         TEST_TITLE("recovery target action = shutdown");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=immediate");
-        strLstAddZ(argList, "--target-action=shutdown");
+        hrnCfgArgRawZ(argList, cfgOptType, "immediate");
+        hrnCfgArgRawZ(argList, cfgOptTargetAction, "shutdown");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1615,8 +1628,8 @@ testRun(void)
         TEST_TITLE("recovery target action = pause");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=immediate");
-        strLstAddZ(argList, "--target-action=promote");
+        hrnCfgArgRawZ(argList, cfgOptType, "immediate");
+        hrnCfgArgRawZ(argList, cfgOptTargetAction, "promote");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1635,7 +1648,7 @@ testRun(void)
         TEST_TITLE("recovery type = standby");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=standby");
+        hrnCfgArgRawZ(argList, cfgOptType, "standby");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1649,8 +1662,8 @@ testRun(void)
         TEST_TITLE("recovery type = standby with timeline");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=standby");
-        strLstAddZ(argList, "--target-timeline=current");
+        hrnCfgArgRawZ(argList, cfgOptType, "standby");
+        hrnCfgArgRawZ(argList, cfgOptTargetTimeline, "current");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1665,7 +1678,7 @@ testRun(void)
         TEST_TITLE("error when archive-mode set on PG < 12");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--archive-mode=off");
+        hrnCfgArgRawZ(argList, cfgOptArchiveMode, "off");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -1677,8 +1690,8 @@ testRun(void)
         TEST_TITLE("recovery type = standby with recovery GUCs and archive-mode=off");
 
         argList = strLstDup(argBaseList);
-        strLstAddZ(argList, "--type=standby");
-        strLstAddZ(argList, "--archive-mode=off");
+        hrnCfgArgRawZ(argList, cfgOptType, "standby");
+        hrnCfgArgRawZ(argList, cfgOptArchiveMode, "off");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
@@ -1693,7 +1706,7 @@ testRun(void)
     if (testBegin("restoreRecoveryWrite*()"))
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");
-        storagePathCreateP(storageTest, pgPath, .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storageTest, strZ(pgPath), .mode = 0700);
 
         const String *restoreLabel = STRDEF("LABEL");
         #define RECOVERY_SETTING_PREFIX                             "# Removed by pgBackRest restore on LABEL # "
@@ -1702,11 +1715,11 @@ testRun(void)
         TEST_TITLE("error when standby_mode setting is present");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=/repo");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=default");
-        strLstAddZ(argList, "--recovery-option=standby-mode=on");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "default");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "standby-mode=on");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
@@ -1720,19 +1733,20 @@ testRun(void)
         TEST_TITLE("PG12 restore missing postgresql.auto.conf");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=/repo");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=none");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "none");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
 
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))),
-            "", "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
+        TEST_STORAGE_GET_EMPTY(storagePg(), PG_FILE_POSTGRESQLAUTOCONF, .comment = "check postgresql.auto.conf");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            PG_FILE_POSTGRESQLAUTOCONF "\n"
+            PG_FILE_RECOVERYSIGNAL "\n",
+            .comment = "recovery.signal exists, standby.signal missing");
 
         TEST_RESULT_LOG(
             "P00   WARN: postgresql.auto.conf does not exist -- creating to contain recovery settings\n"
@@ -1743,21 +1757,23 @@ testRun(void)
 
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
-        storagePutP(
-            storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
-            BUFSTRDEF(
-                "# DO NOT MODIFY\n"
-                "\t recovery_target_action='promote'\n\n"));
+        HRN_STORAGE_PUT_Z(
+            storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF,
+            "# DO NOT MODIFY\n"
+            "\t recovery_target_action='promote'\n\n");
 
         restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
 
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))),
+        TEST_STORAGE_GET(
+            storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
             "# DO NOT MODIFY\n"
             RECOVERY_SETTING_PREFIX "\t recovery_target_action='promote'\n\n",
-            "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
+            .comment = "check postgresql.auto.conf");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            PG_FILE_POSTGRESQLAUTOCONF "\n"
+            PG_FILE_RECOVERYSIGNAL "\n",
+            .comment = "recovery.signal exists, standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
 
@@ -1766,34 +1782,36 @@ testRun(void)
 
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
-        storagePutP(
-            storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
-            BUFSTRDEF(
-                "# DO NOT MODIFY\n"
-                "recovery_target_name\t='name'\n"
-                "recovery_target_inclusive = false\n"));
+        HRN_STORAGE_PUT_Z(
+            storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF,
+            "# DO NOT MODIFY\n"
+            "recovery_target_name\t='name'\n"
+            "recovery_target_inclusive = false\n");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=/repo");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--recovery-option=restore-command=my_restore_command");
-        strLstAddZ(argList, "--type=standby");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "standby");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "restore-command=my_restore_command");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         restoreRecoveryWriteAutoConf(PG_VERSION_12, restoreLabel);
 
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))),
+        TEST_STORAGE_GET(
+            storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
             "# DO NOT MODIFY\n"
-                RECOVERY_SETTING_PREFIX "recovery_target_name\t='name'\n"
-                RECOVERY_SETTING_PREFIX "recovery_target_inclusive = false\n"
-                "\n"
-                RECOVERY_SETTING_HEADER
-                "restore_command = 'my_restore_command'\n",
-            "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), false, "recovery.signal exists");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), true, "standby.signal missing");
+            RECOVERY_SETTING_PREFIX "recovery_target_name\t='name'\n"
+            RECOVERY_SETTING_PREFIX "recovery_target_inclusive = false\n"
+            "\n"
+            RECOVERY_SETTING_HEADER
+            "restore_command = 'my_restore_command'\n",
+            .comment = "check postgresql.auto.conf");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            PG_FILE_POSTGRESQLAUTOCONF "\n"
+            PG_FILE_STANDBYSIGNAL "\n",
+            .comment = "recovery.signal missing, standby.signal exists");
 
         TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
 
@@ -1804,37 +1822,37 @@ testRun(void)
 
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR), BUFSTRDEF("# DO NOT MODIFY\n"));
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR), NULL);
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, "# DO NOT MODIFY\n");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_STANDBYSIGNAL);
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=/repo");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=preserve");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "preserve");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         restoreRecoveryWrite(manifest);
 
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR))), "# DO NOT MODIFY\n",
-            "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), false, "recovery.signal missing");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), true, "standby.signal exists");
+        TEST_STORAGE_GET(
+            storagePg(), PG_FILE_POSTGRESQLAUTOCONF, "# DO NOT MODIFY\n", .comment = "check postgresql.auto.conf");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            PG_FILE_POSTGRESQLAUTOCONF "\n"
+            PG_FILE_STANDBYSIGNAL "\n",
+            .comment = "recovery.signal missing, standby.signal exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type default");
 
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
-        storagePutP(
-            storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
-            BUFSTRDEF("# DO NOT MODIFY\n"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, "# DO NOT MODIFY\n");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=/repo");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         restoreRecoveryWrite(manifest);
@@ -1842,8 +1860,11 @@ testRun(void)
         TEST_RESULT_BOOL(
             bufEq(storageGetP(storageNewReadP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR)), BUFSTRDEF("# DO NOT MODIFY\n")),
             false, "check postgresql.auto.conf has changed");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            PG_FILE_POSTGRESQLAUTOCONF "\n"
+            PG_FILE_RECOVERYSIGNAL "\n",
+            .comment = "recovery.signal exists, standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
     }
@@ -1872,10 +1893,10 @@ testRun(void)
         TEST_TITLE("incorrect locality");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--pg1-host=pg1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptPgHost, "pg1");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(cmdRestore(), HostInvalidError, "restore command must be run on the PostgreSQL host");
@@ -1884,11 +1905,11 @@ testRun(void)
         TEST_TITLE("full restore without delta, multi-repo");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPathEncrpyt);
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--set=20161219-212741F");
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSet, "20161219-212741F");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
@@ -1927,13 +1948,11 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "797e375b924134687cbf9eacd37a4355f3d825e4"});
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoIdxWrite(0), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_84_STR "\n"));
+            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_84_STR "\n");
 
             // Store the file also to the encrypted repo
-            HRN_STORAGE_PUT(
-                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, BUFSTRDEF(PG_VERSION_84_STR "\n"),
+            HRN_STORAGE_PUT_Z(
+                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_84_STR "\n",
                 .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
             // pg_tblspc/1
@@ -2026,7 +2045,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'", TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH)));
 
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
-        storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF, .errorOnMissing = true);
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2045,14 +2064,14 @@ testRun(void)
         TEST_TITLE("full restore with delta force");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPathEncrpyt);
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=preserve");
-        strLstAddZ(argList, "--set=20161219-212741F");
-        strLstAddZ(argList, "--" CFGOPT_DELTA);
-        strLstAddZ(argList, "--force");
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "preserve");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20161219-212741F");
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
+        hrnCfgArgRawBool(argList, cfgOptForce, true);
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
@@ -2064,21 +2083,19 @@ testRun(void)
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
         // Make sure existing backup.manifest file is ignored
-        storagePutP(storageNewWriteP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), BACKUP_MANIFEST_FILE);
 
         // Add a bogus file that will be removed
-        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("bogus-file")), NULL);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "bogus-file");
 
         // Add a special file that will be removed
         HRN_SYSTEM_FMT("mkfifo %s/pipe", strZ(pgPath));
 
         // Overwrite PG_VERSION with bogus content that will not be detected by delta force because the time and size are the same
-        storagePutP(
-            storageNewWriteP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION), .modeFile = 0600, .timeModified = 1482182860),
-            BUFSTRDEF("BOG\n"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "BOG\n", .modeFile = 0600, .timeModified = 1482182860);
 
         // Change destination of tablespace link
-        storageRemoveP(storagePgWrite(), STRDEF("pg_tblspc/1"), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "pg_tblspc/1", .errorOnMissing = true);
         THROW_ON_SYS_ERROR(
             symlink("/bogus", strZ(strNewFmt("%s/pg_tblspc/1", strZ(pgPath)))) == -1, FileOpenError,
             "unable to create symlink");
@@ -2091,7 +2108,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
+            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);
 
             // pg_tblspc/1/16384/PG_VERSION
             manifestFileAdd(
@@ -2100,11 +2117,9 @@ testRun(void)
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION), .size = 4,
                     .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "797e375b924134687cbf9eacd37a4355f3d825e4"});
-            storagePutP(
-                storageNewWriteP(
-                    storageRepoWrite(),
-                    STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION)),
-                BUFSTRDEF(PG_VERSION_84_STR "\n"));
+            HRN_STORAGE_PUT_Z(
+                storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION,
+                PG_VERSION_84_STR "\n");
 
             // Always sort
             lstSort(manifest->pub.targetList, sortOrderAsc);
@@ -2166,24 +2181,22 @@ testRun(void)
             "16384/PG_VERSION {file, s=4, t=1482182860}\n");
 
         // PG_VERSION was not restored because delta force relies on time and size which were the same in the manifest and on disk
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF(PG_FILE_PGVERSION)))), "BOG\n",
-            "check PG_VERSION was not restored");
+        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, "BOG\n", .comment = "check PG_VERSION was not restored");
 
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
-        storagePathRemoveP(storageRepoIdxWrite(1), NULL, .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageRepoIdxWrite(1), NULL, .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with force");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawStrId(argList, cfgOptType, CFGOPTVAL_TYPE_PRESERVE);
-        strLstAddZ(argList, "--" CFGOPT_SET "=20161219-212741F");
-        strLstAddZ(argList, "--" CFGOPT_FORCE);
+        hrnCfgArgRawZ(argList, cfgOptSet, "20161219-212741F");
+        hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         cmdRestore();
@@ -2222,22 +2235,20 @@ testRun(void)
             "16384/PG_VERSION {file, s=4, t=1482182860}\n");
 
         // PG_VERSION was restored by the force option
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF(PG_FILE_PGVERSION)))), PG_VERSION_84_STR "\n",
-            "check PG_VERSION was restored");
+        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_84_STR "\n", .comment = "check PG_VERSION was restored");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental delta selective restore");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--delta");
-        strLstAddZ(argList, "--type=none");
-        strLstAddZ(argList, "--link-map=pg_wal=../wal");
-        strLstAddZ(argList, "--link-map=postgresql.conf=../config/postgresql.conf");
-        strLstAddZ(argList, "--link-map=pg_hba.conf=../config/pg_hba.conf");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
+        hrnCfgArgRawZ(argList, cfgOptType, "none");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_wal=../wal");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "postgresql.conf=../config/postgresql.conf");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=../config/pg_hba.conf");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         #define TEST_LABEL                                          "20161219-212741F_20161219-212918I"
@@ -2259,7 +2270,7 @@ testRun(void)
             manifestPathAdd(
                 manifest,
                 &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = groupName(), .user = userName()});
-            storagePathCreateP(storagePgWrite(), NULL);
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .noErrorOnExists = true);
 
             // global directory
             manifestPathAdd(
@@ -2278,8 +2289,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "5e2b96c19c4f5c63a5afa2de504d29fe64a4c908"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), fileBuffer);
+            HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, fileBuffer);
 
             // global/999
             manifestFileAdd(
@@ -2288,7 +2298,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/999"), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = HASH_TYPE_SHA1_ZERO, .reference = STRDEF(TEST_LABEL)});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/999")), NULL);
+            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/999");
 
             // PG_VERSION
             manifestFileAdd(
@@ -2297,8 +2307,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_94_STR "\n"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base directory
             manifestPathAdd(
@@ -2319,9 +2328,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION)),
-                BUFSTRDEF(PG_VERSION_94_STR "\n"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/1/2
             fileBuffer = bufNew(8192);
@@ -2334,7 +2341,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/1/2"), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/2")), fileBuffer);
+            HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/1/2", fileBuffer);
 
             // system db name
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
@@ -2352,9 +2359,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/16384/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION)),
-                BUFSTRDEF(PG_VERSION_94_STR "\n"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/16384/16385
             fileBuffer = bufNew(16384);
@@ -2367,7 +2372,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/16384/16385"), .size = 16384, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f"});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/16385")), fileBuffer);
+            HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/16384/16385", fileBuffer);
 
             // base/32768 directory
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
@@ -2383,9 +2388,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/32768/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION)),
-                BUFSTRDEF(PG_VERSION_94_STR "\n"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/32768/32769
             fileBuffer = bufNew(32768);
@@ -2398,7 +2401,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "base/32768/32769"), .size = 32768, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "a40f0986acb1531ce0cc75a23dcf8aa406ae9081"});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/32768/32769")), fileBuffer);
+            HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/32768/32769", fileBuffer);
 
             // File link to postgresql.conf
             const String *name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.conf");
@@ -2415,8 +2418,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "postgresql.conf"), .size = 15, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "98b8abb2e681e2a5a7d8ab082c0a79727887558d"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "postgresql.conf")), BUFSTRDEF("POSTGRESQL.CONF"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "postgresql.conf", "POSTGRESQL.CONF");
 
             // File link to pg_hba.conf
             name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_hba.conf");
@@ -2433,8 +2435,7 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "pg_hba.conf"), .size = 11, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "401215e092779574988a854d8c7caed7f91dba4b"});
-            storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "pg_hba.conf")), BUFSTRDEF("PG_HBA.CONF"));
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "pg_hba.conf", "PG_HBA.CONF");
 
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
@@ -2442,7 +2443,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
-            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_TABLESPACEMAP)), NULL);
+            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);
 
             // Path link to pg_wal
             name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_wal");
@@ -2495,8 +2496,8 @@ testRun(void)
                 STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         // Add a few bogus paths/files/links to be removed in delta
-        storagePathCreateP(storagePgWrite(), STRDEF("bogus1/bogus2"));
-        storagePathCreateP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/bogus3"));
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "bogus1/bogus2");
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_GLOBAL "/bogus3");
 
         // Add a few bogus links to be deleted
         THROW_ON_SYS_ERROR(
@@ -2596,18 +2597,18 @@ testRun(void)
         TEST_TITLE("incremental delta selective restore");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
-        strLstAddZ(argList, "--delta");
-        strLstAddZ(argList, "--type=preserve");
-        strLstAddZ(argList, "--link-map=pg_wal=../wal");
-        strLstAddZ(argList, "--link-map=postgresql.conf=../config/postgresql.conf");
-        strLstAddZ(argList, "--link-map=pg_hba.conf=../config/pg_hba.conf");
-        strLstAddZ(argList, "--db-include=16384");
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
+        hrnCfgArgRawZ(argList, cfgOptType, "preserve");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_wal=../wal");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "postgresql.conf=../config/postgresql.conf");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=../config/pg_hba.conf");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "16384");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // Move pg1-path and put a link in its place. This tests that restore works when pg1-path is a symlink yet should be
@@ -2619,7 +2620,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE "/empty.txt");
 
         // Write recovery.conf so we don't get a preserve warning
-        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), BUFSTRDEF("Some Settings"));
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_RECOVERYCONF, "Some Settings");
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
@@ -2679,8 +2680,8 @@ testRun(void)
         // Keep this test at the end since is corrupts the repo
         TEST_TITLE("remove a repo file so a restore job errors");
 
-        storageRemoveP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .errorOnMissing = true);
-        storageRemoveP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
 
         // Set log level to warn
         harnessLogLevelSet(logLevelWarn);
