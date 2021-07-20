@@ -225,8 +225,11 @@
                         <commit subject="Update command/local and command/remote tests to use standard patterns.">
                             <github-pull-request id="1466"/>
                         </commit>
-                        <commit subject="Update command/repo test to use standard patterns. ">
+                        <commit subject="Update command/repo test to use standard patterns.">
                             <github-pull-request id="1467"/>
+                        </commit>
+                        <commit subject="Update command/restore test to use standard patterns.">
+                            <github-pull-request id="1468"/>
                         </commit>
 
                         <release-item-contributor-list>
