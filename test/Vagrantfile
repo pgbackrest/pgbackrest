@@ -15,7 +15,7 @@ Vagrant.configure(2) do |config|
     #-------------------------------------------------------------------------------------------------------------------------------
     config.vm.define "default", primary: true do |default|
         default.vm.box = "ubuntu/bionic64"
-        default.vm.box_version = "20201119.0.0"
+        default.vm.box_version = "20210623.0.0"
 
         default.vm.provider :virtualbox do |vb|
             vb.name = "pgbackrest-test"
