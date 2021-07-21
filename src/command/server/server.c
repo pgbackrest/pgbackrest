@@ -43,7 +43,7 @@ cmdServerFork(IoSession *const socketSession, const String *const host)
     if (pid == 0)
     {
         IoServer *const tlsServer = tlsServerNew(
-           host, cfgOptionStr(cfgOptTlsServerKey), cfgOptionStr(cfgOptTlsServerCert), cfgOptionUInt64(cfgOptProtocolTimeout));
+           host, cfgOptionStr(cfgOptTlsServerKey), cfgOptionStr(cfgOptTlsServerCert), cfgOptionUInt64(cfgOptIoTimeout));
         IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
 
         ProtocolServer *const server = protocolServerNew(
@@ -63,6 +63,8 @@ cmdServerFork(IoSession *const socketSession, const String *const host)
         cfgLoad(strLstSize(paramList), strLstPtr(paramList));
 
         protocolServerDataEndPut(server);
+
+        // !!! NEED TO SET READ TIMEOUT TO PROTOCOL-TIMEOUT HERE
 
         // Detach from parent process
         forkDetach();
@@ -97,8 +99,7 @@ cmdServer(uint64_t connectionMax)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        IoServer *const socketServer = sckServerNew(
-            host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
+        IoServer *const socketServer = sckServerNew(host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptIoTimeout));
 
         // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE
         // REPLACED WITH A STOP REQUEST FROM AN AUTHENTICATED CLIENT.

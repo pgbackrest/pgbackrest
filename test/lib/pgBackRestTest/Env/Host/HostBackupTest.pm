@@ -1298,13 +1298,15 @@ sub configCreate
         if (defined($oHostDb2))
         {
             # Add an invalid replica to simulate more than one replica. A warning should be thrown when a stanza is created and a
-            # valid replica should be chosen.
-            $oParamHash{$strStanza}{"pg2-host"} = BOGUS;
-            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg2-host-type'} = 'tls' : undef;
-            $oParamHash{$strStanza}{"pg2-host-user"} = $oHostDb2->userGet();
-            $oParamHash{$strStanza}{"pg2-host-cmd"} = $oHostDb2->backrestExe();
-            $oParamHash{$strStanza}{"pg2-host-config"} = $oHostDb2->backrestConfig();
-            $oParamHash{$strStanza}{"pg2-path"} = $oHostDb2->dbBasePath();
+            # valid replica should be chosen. Only do this for SSH since TLS takes longer to timeout.
+            if (!$oParam->{bTls})
+            {
+                $oParamHash{$strStanza}{"pg2-host"} = BOGUS;
+                $oParamHash{$strStanza}{"pg2-host-user"} = $oHostDb2->userGet();
+                $oParamHash{$strStanza}{"pg2-host-cmd"} = $oHostDb2->backrestExe();
+                $oParamHash{$strStanza}{"pg2-host-config"} = $oHostDb2->backrestConfig();
+                $oParamHash{$strStanza}{"pg2-path"} = $oHostDb2->dbBasePath();
+            }
 
             # Set a flag so we know there's a bogus host
             $self->{bBogusHost} = true;
