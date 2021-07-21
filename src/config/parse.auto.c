@@ -190,6 +190,17 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
+        PARSE_RULE_COMMAND_NAME("server-ping"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)
+        ),
+    ),
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_COMMAND
+    (
         PARSE_RULE_COMMAND_NAME("stanza-create"),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
@@ -584,6 +595,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -871,6 +883,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -942,6 +955,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -1013,6 +1027,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -1228,6 +1243,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -1380,6 +1396,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -1645,6 +1662,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -1727,6 +1745,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -1809,6 +1828,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -1891,6 +1911,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -2029,6 +2050,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -2889,6 +2911,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -5819,6 +5842,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -5888,6 +5912,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -6418,6 +6443,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -6492,6 +6518,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -6566,6 +6593,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
@@ -6656,6 +6684,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServerPing)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST

@@ -119,7 +119,12 @@ command:
       local: {}
       remote: {}
 
-  server: {}
+  server:
+    internal: true
+
+  server-ping:
+    internal: true
+    log-file: false
 
   stanza-create:
     command-role:
@@ -611,6 +616,7 @@ option:
       repo-rm: {}
       restore: {}
       server: {}
+      server-ping: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -835,6 +841,7 @@ option:
       repo-rm: {}
       restore: {}
       server: {}
+      server-ping: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -915,6 +922,7 @@ option:
     allow-range: [1, 65535]
     command:
       server: {}
+      server-ping: {}
 
   tls-server-key:
     section: global
@@ -1525,6 +1533,7 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      # !!! SHOULD THESE STILL BE INTERNAL?
       stanza-create:
         internal: true
       stanza-delete:

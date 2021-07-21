@@ -135,5 +135,13 @@ testRun(void)
         HRN_FORK_END();
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("cmdServerPing()"))
+    {
+        TEST_TITLE("!!!");
+
+        cmdServerPing();
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }

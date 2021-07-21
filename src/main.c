@@ -25,6 +25,7 @@ Main
 #include "command/repo/put.h"
 #include "command/repo/rm.h"
 #include "command/restore/restore.h"
+#include "command/server/ping.h"
 #include "command/server/server.h"
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
@@ -202,6 +203,12 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdServer:
                     cmdServer(UINT64_MAX);
+                    break;
+
+                // Server ping command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdServerPing:
+                    cmdServerPing();
                     break;
 
                 // Restore command

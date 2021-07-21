@@ -73,6 +73,7 @@ SRCS = \
 	command/restore/protocol.c \
 	command/restore/restore.c \
 	command/remote/remote.c \
+	command/server/ping.c \
 	command/server/server.c \
 	command/stanza/common.c \
 	command/stanza/create.c \

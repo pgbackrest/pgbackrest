@@ -1732,6 +1732,13 @@
                 <text>!!!.</text>
             </command>
 
+            <!-- =============================================================================================================== -->
+            <command id="server-ping" name="Server Ping">
+                <summary>Ping <backrest/> server.</summary>
+
+                <text>!!!.</text>
+            </command>
+
             <!-- OPERATION - START COMMAND -->
             <command id="start" name="Start">
                 <summary>Allow <backrest/> processes to run.</summary>

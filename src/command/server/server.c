@@ -69,6 +69,7 @@ cmdServerFork(IoSession *const socketSession, const String *const host)
         // Detach from parent process
         forkDetach();
 
+        // !!! NEED TO CALL cmdRemote() DIRECTLY, WHICH WILL REQUIRE SOME REFACTORING
         protocolServerProcess(
             server, NULL, commandRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandRemoteHandlerList));
 
@@ -78,6 +79,8 @@ cmdServerFork(IoSession *const socketSession, const String *const host)
     {
         // The process that was just forked should return immediately
         int processStatus;
+
+        LOG_DEBUG_FMT("!!!FORK1 IS %d", pid);
 
         THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
 
