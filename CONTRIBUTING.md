@@ -223,7 +223,7 @@ Examples of test runs are provided in the following sections. There are several 
 
 - `--vm-out` - displays the test output (helpful for monitoring the progress)
 
-- `--vm` - identifies the pre-built container when using Docker, otherwise the setting should be `none`. See [VmTest.pm](https://github.com/pgbackrest/pgbackrest/blob/master/test/lib/pgBackRestTest/Common/VmTest.pm) for a list of valid vm codes.
+- `--vm` - identifies the pre-built container when using Docker, otherwise the setting should be `none`. See [test.yml](https://github.com/pgbackrest/pgbackrest/blob/master.github/workflows/test.yml) for a list of valid vm codes noted by `param: test`.
 
 For more options, run the test or documentation engine with the `--help` option:
 ```
@@ -448,7 +448,7 @@ Tests are run and results confirmed via macros that are described in [harnessTes
 - `TEST_RESULT_VOID` - The function being tested returns a `void`. This is then usually followed by tests that ensure other actions occurred (e.g. a file was written to disk).
 
 - `TEST_ERROR` / `TEST_ERROR_FMT` - Test that a specific error code was raised with specific wording.
-> **NOTE:** `HRN_*` macros should be used only for test setup and cleanup. `TEST_*` macros must be used for actual test results.
+> **NOTE:** `HRN_*` macros should be used only for test setup and cleanup. `TEST_*` macros must be used for testing results.
 
 #### Testing a log message
 
@@ -457,7 +457,7 @@ If a function being tested logs something with `LOG_WARN`, `LOG_INFO` or other `
 TEST_RESULT_LOG(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
 ```
-In the above, `Pxx` indicates the process (P) and the process number (xx) which usually is P00 or P01.
+In the above, `Pxx` indicates the process (P) and the process number (xx), e.g. P00, P01.
 
 #### Testing using child process
 
@@ -552,9 +552,9 @@ run 8/1 ------------- L2285 no current backups
 
 **run 8/1 ------------- L2285 no current backups** - this is the first test (1) in run 8 which is the `TEST_TITLE("no current backups");` at line number 2285.
 
-**000.002s L2298 empty backup.info** - the first number, 000.002s, is the time in seconds that the test started from the beginning of the run. L2298 is the line number of the actual test and `empty backup.info` is the test comment.
+**000.002s L2298 empty backup.info** - the first number, 000.002s, is the time in seconds that the test started from the beginning of the run. L2298 is the line number of the test and `empty backup.info` is the test comment.
 
-**000.009s 000.007s L2300 no backups to expire** - again, 000.009s, is the time in seconds that the test started from the beginning of the run. The second number, 000.007s, is the run time of the **previous** test (i.e. `empty backup.info` test took 000.007 seconds to execute). L2300 is the line number of the actual test and `no backups to expire` is the test comment.
+**000.009s 000.007s L2300 no backups to expire** - again, 000.009s, is the time in seconds that the test started from the beginning of the run. The second number, 000.007s, is the run time of the **previous** test (i.e. `empty backup.info` test took 000.007 seconds to execute). L2300 is the line number of the test and `no backups to expire` is the test comment.
 
 ## Adding an Option
 
@@ -711,7 +711,7 @@ Before submitting a Pull Request:
 - If your submission includes changes to the help or online documentation, have the [help](#testing-the-help) and [documentation](#testing-the-documentation) tests been run?
 
 
-- Has it passed continuous integration testing? Simply renaming your branch with the appendix `-cig` and pushing it to your remote GitHub account will initiate GitHub Actions to run CI tests.
+- Has it passed continuous integration testing? Simply renaming your branch with the appendix `-cig` and pushing it to your GitHub account will initiate GitHub Actions to run CI tests.
 
 
 When submitting a Pull Request:
@@ -724,7 +724,7 @@ When submitting a Pull Request:
 
 After submitting a Pull Request:
 
-- One or more reviewers will be assigned (or you may assign one yourself).
+- One or more reviewers will be assigned.
 
 
 - Respond to any issues (conversations) in GitHub but do not resolve the conversation; the reviewer is responsible for ensuring the issue raised has been resolved and marking the conversation resolved. It is helpful to supply the commit in your reply if one was submitted to fix the issue.

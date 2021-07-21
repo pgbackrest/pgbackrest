@@ -501,7 +501,7 @@ TEST_RESULT_LOG(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
                 </code-block>
 
-                <p>In the above, <code>Pxx</code> indicates the process (P) and the process number (xx) which usually is P00 or P01.</p>
+                <p>In the above, <code>Pxx</code> indicates the process (P) and the process number (xx), e.g. P00, P01.</p>
             </section>
 
             <section id="test-child">
@@ -611,9 +611,9 @@ run 8/1 ------------- L2285 no current backups
 
             <p><b>run 8/1 ------------- L2285 no current backups</b> - this is the first test (1) in run 8 which is the <code>TEST_TITLE("no current backups");</code> at line number 2285.</p>
 
-            <p><b>000.002s          L2298     empty backup.info</b> -  the first number, 000.002s, is the time in seconds that the test started from the beginning of the run. L2298 is the line number of the actual test and <code>empty backup.info</code> is the test comment.</p>
+            <p><b>000.002s          L2298     empty backup.info</b> -  the first number, 000.002s, is the time in seconds that the test started from the beginning of the run. L2298 is the line number of the test and <code>empty backup.info</code> is the test comment.</p>
 
-            <p><b>000.009s 000.007s L2300     no backups to expire</b> -  again, 000.009s, is the time in seconds that the test started from the beginning of the run. The second number, 000.007s, is the run time of the <b>previous</b> test (i.e. <code>empty backup.info</code> test took 000.007 seconds to execute). L2300 is the line number of the actual test and <code>no backups to expire</code> is the test comment.</p>
+            <p><b>000.009s 000.007s L2300     no backups to expire</b> -  again, 000.009s, is the time in seconds that the test started from the beginning of the run. The second number, 000.007s, is the run time of the <b>previous</b> test (i.e. <code>empty backup.info</code> test took 000.007 seconds to execute). L2300 is the line number of the test and <code>no backups to expire</code> is the test comment.</p>
         </section>
     </section>
 
@@ -790,7 +790,7 @@ pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --va
             </list-item>
             <list-item>If your submission includes changes to the help or online documentation, have the <link section="/option/help-test">help</link> and <link section="/option/doc-test">documentation</link> tests been run?
             </list-item>
-            <list-item>Has it passed continuous integration testing? Simply renaming your branch with the appendix <code>-cig</code> and pushing it to your remote GitHub account will initiate GitHub Actions to run CI tests.
+            <list-item>Has it passed continuous integration testing? Simply renaming your branch with the appendix <code>-cig</code> and pushing it to your GitHub account will initiate GitHub Actions to run CI tests.
             </list-item>
         </list>
 
@@ -805,7 +805,7 @@ pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --va
         <p>After submitting a Pull Request:</p>
 
         <list>
-            <list-item>One or more reviewers will be assigned (or you may assign one yourself).
+            <list-item>One or more reviewers will be assigned.
             </list-item>
             <list-item>Respond to any issues (conversations) in GitHub but do not resolve the conversation; the reviewer is responsible for ensuring the issue raised has been resolved and marking the conversation resolved. It is helpful to supply the commit in your reply if one was submitted to fix the issue.
             </list-item>
