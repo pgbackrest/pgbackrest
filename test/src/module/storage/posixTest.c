@@ -79,13 +79,19 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageNew()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create new storage with defaults");
+
         Storage *storageTest = NULL;
         TEST_ASSIGN(storageTest, storagePosixNewP(STRDEF("/")), "new storage (defaults)");
-        TEST_RESULT_STR_Z(storageTest->path, "/", "    check path");
-        TEST_RESULT_INT(storageTest->modeFile, 0640, "    check file mode");
-        TEST_RESULT_INT(storageTest->modePath, 0750, "     check path mode");
-        TEST_RESULT_BOOL(storageTest->write, false, "    check write");
-        TEST_RESULT_BOOL(storageTest->pathExpressionFunction == NULL, true, "    check expression function is not set");
+        TEST_RESULT_STR_Z(storageTest->path, "/", "check path");
+        TEST_RESULT_INT(storageTest->modeFile, 0640, "check file mode");
+        TEST_RESULT_INT(storageTest->modePath, 0750, " check path mode");
+        TEST_RESULT_BOOL(storageTest->write, false, "check write");
+        TEST_RESULT_BOOL(storageTest->pathExpressionFunction == NULL, true, "check expression function is not set");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create new storage - override defaults");
 
         TEST_ASSIGN(
             storageTest,
@@ -93,17 +99,17 @@ testRun(void)
                 STRDEF("/path/to"), .modeFile = 0600, .modePath = 0700, .write = true,
                 .pathExpressionFunction = storageTestPathExpression),
             "new storage (non-default)");
-        TEST_RESULT_STR_Z(storageTest->path, "/path/to", "    check path");
-        TEST_RESULT_INT(storageTest->modeFile, 0600, "    check file mode");
-        TEST_RESULT_INT(storageTest->modePath, 0700, "     check path mode");
-        TEST_RESULT_BOOL(storageTest->write, true, "    check write");
-        TEST_RESULT_BOOL(storageTest->pathExpressionFunction != NULL, true, "    check expression function is set");
+        TEST_RESULT_STR_Z(storageTest->path, "/path/to", "check path");
+        TEST_RESULT_INT(storageTest->modeFile, 0600, "check file mode");
+        TEST_RESULT_INT(storageTest->modePath, 0700, " check path mode");
+        TEST_RESULT_BOOL(storageTest->write, true, "check write");
+        TEST_RESULT_BOOL(storageTest->pathExpressionFunction != NULL, true, "check expression function is set");
 
-        TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->pub.interface.info, "    check interface");
-        TEST_RESULT_PTR(storageDriver(storageTest), storageTest->pub.driver, "    check driver");
-        TEST_RESULT_UINT(storageType(storageTest), storageTest->pub.type, "    check type");
-        TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "    check path feature");
-        TEST_RESULT_BOOL(storageFeature(storageTest, storageFeatureCompress), true, "    check compress feature");
+        TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->pub.interface.info, "check interface");
+        TEST_RESULT_PTR(storageDriver(storageTest), storageTest->pub.driver, "check driver");
+        TEST_RESULT_UINT(storageType(storageTest), storageTest->pub.type, "check type");
+        TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "check path feature");
+        TEST_RESULT_BOOL(storageFeature(storageTest, storageFeatureCompress), true, "check compress feature");
     }
 
     // *****************************************************************************************************************************
@@ -114,10 +120,14 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file");
+
         TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF("missing")), false, "file does not exist");
         TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF("missing"), .timeout = 100), false, "file does not exist");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path");
+
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, STRDEF("missing")), false, "path does not exist");
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, NULL), true, "test path exists");
 
@@ -132,6 +142,8 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file and path");
+
         const String *fileExists = STRDEF(TEST_PATH "/exists");
         const String *pathExists = STRDEF(TEST_PATH "/pathExists");
         HRN_SYSTEM_FMT("touch %s", strZ(fileExists));
@@ -143,6 +155,8 @@ testRun(void)
         HRN_SYSTEM_FMT("rm %s", strZ(fileExists));
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file after wait");
+
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -162,7 +176,7 @@ testRun(void)
 
         HRN_SYSTEM_FMT("rm %s", strZ(fileExists));
     }
-
+// CSHANG STOPPED HERE
     // *****************************************************************************************************************************
     if (testBegin("storageInfo()"))
     {
@@ -188,7 +202,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         StorageInfo info = {0};
         TEST_ASSIGN(info, storageInfoP(storageTest, fileName, .ignoreMissing = true), "get file info (missing)");
-        TEST_RESULT_BOOL(info.exists, false, "    check not exists");
+        TEST_RESULT_BOOL(info.exists, false, "check not exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info outside of base path");
@@ -204,17 +218,17 @@ testRun(void)
         HRN_STORAGE_TIME(storageTest, TEST_PATH, 1555160000);
 
         TEST_ASSIGN(info, storageInfoP(storageTest, TEST_PATH_STR), "get path info");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypePath, "    check type");
-        TEST_RESULT_UINT(info.size, 0, "    check size");
-        TEST_RESULT_INT(info.mode, 0770, "    check mode");
-        TEST_RESULT_INT(info.timeModified, 1555160000, "    check mod time");
-        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
-        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "    check user id");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "    check group id");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypePath, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0770, "check mode");
+        TEST_RESULT_INT(info.timeModified, 1555160000, "check mod time");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "check user id");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "check group id");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *buffer = BUFSTRDEF("TESTFILE");
@@ -227,16 +241,16 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         TEST_ASSIGN(info, storageInfoP(storageTest, fileName), "get file info");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
-        TEST_RESULT_UINT(info.size, 8, "    check size");
-        TEST_RESULT_INT(info.mode, 0640, "    check mode");
-        TEST_RESULT_INT(info.timeModified, 1555155555, "    check mod time");
-        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeFile, "check type");
+        TEST_RESULT_UINT(info.size, 8, "check size");
+        TEST_RESULT_INT(info.mode, 0640, "check mode");
+        TEST_RESULT_INT(info.timeModified, 1555155555, "check mod time");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
 #ifdef TEST_CONTAINER_REQUIRED
-        TEST_RESULT_STR(info.user, NULL, "    check user");
-        TEST_RESULT_STR(info.group, NULL, "    check group");
+        TEST_RESULT_STR(info.user, NULL, "check user");
+        TEST_RESULT_STR(info.group, NULL, "check group");
 #endif // TEST_CONTAINER_REQUIRED
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
@@ -246,24 +260,24 @@ testRun(void)
         HRN_SYSTEM_FMT("ln -s /tmp %s", strZ(linkName));
 
         TEST_ASSIGN(info, storageInfoP(storageTest, linkName), "get link info");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
-        TEST_RESULT_UINT(info.size, 0, "    check size");
-        TEST_RESULT_INT(info.mode, 0777, "    check mode");
-        TEST_RESULT_STR_Z(info.linkDestination, "/tmp", "    check link destination");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeLink, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0777, "check mode");
+        TEST_RESULT_STR_Z(info.linkDestination, "/tmp", "check link destination");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
 
         TEST_ASSIGN(info, storageInfoP(storageTest, linkName, .followLink = true), "get info from path pointed to by link");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypePath, "    check type");
-        TEST_RESULT_UINT(info.size, 0, "    check size");
-        TEST_RESULT_INT(info.mode, 0777, "    check mode");
-        TEST_RESULT_STR(info.linkDestination, NULL, "    check link destination");
-        TEST_RESULT_STR_Z(info.user, "root", "    check user");
-        TEST_RESULT_STR_Z(info.group, strEqZ(info.group, "wheel") ? "wheel" : "root", "    check group");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypePath, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0777, "check mode");
+        TEST_RESULT_STR(info.linkDestination, NULL, "check link destination");
+        TEST_RESULT_STR_Z(info.user, "root", "check user");
+        TEST_RESULT_STR_Z(info.group, strEqZ(info.group, "wheel") ? "wheel" : "root", "check group");
 
         storageRemoveP(storageTest, linkName, .errorOnMissing = true);
 
@@ -272,14 +286,14 @@ testRun(void)
         HRN_SYSTEM_FMT("mkfifo -m 666 %s", strZ(pipeName));
 
         TEST_ASSIGN(info, storageInfoP(storageTest, pipeName), "get info from pipe (special file)");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
-        TEST_RESULT_UINT(info.size, 0, "    check size");
-        TEST_RESULT_INT(info.mode, 0666, "    check mode");
-        TEST_RESULT_STR(info.linkDestination, NULL, "    check link destination");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeSpecial, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0666, "check mode");
+        TEST_RESULT_STR(info.linkDestination, NULL, "check link destination");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
 
         storageRemoveP(storageTest, pipeName, .errorOnMissing = true);
     }
@@ -321,7 +335,7 @@ testRun(void)
                 (StoragePosix *)storageDriver(storageTest), STRDEF("pg"), STRDEF("missing"), storageInfoLevelBasic,
                 hrnStorageInfoListCallback, &callbackData),
             "missing path");
-        TEST_RESULT_STR_Z(callbackData.content, "", "    check content");
+        TEST_RESULT_STR_Z(callbackData.content, "", "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
@@ -331,7 +345,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
             "directory with one dot file sorted");
-        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0766, u=" TEST_USER ", g=" TEST_GROUP "}\n", "    check content");
+        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0766, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef TEST_CONTAINER_REQUIRED
@@ -584,9 +598,9 @@ testRun(void)
         Storage *storageTest = NULL;
 
         TEST_ASSIGN(storageTest, storagePosixNewP(STRDEF("/")), "new storage /");
-        TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/", "    root dir");
-        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/")), "/", "    same as root dir");
-        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("subdir")), "/subdir", "    simple subdir");
+        TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/", "root dir");
+        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/")), "/", "same as root dir");
+        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("subdir")), "/subdir", "simple subdir");
 
         TEST_ERROR(
             storagePathP(storageTest, STRDEF("<TEST>")), AssertError, "expression '<TEST>' not valid without callback function");
@@ -595,9 +609,9 @@ testRun(void)
         TEST_ASSIGN(
             storageTest, storagePosixNewP(STRDEF("/path/to"), .pathExpressionFunction = storageTestPathExpression),
             "new storage /path/to with expression");
-        TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/path/to", "    root dir");
-        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/path/to")), "/path/to", "    absolute root dir");
-        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("is/a/subdir")), "/path/to/is/a/subdir", "    subdir");
+        TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/path/to", "root dir");
+        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/path/to")), "/path/to", "absolute root dir");
+        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("is/a/subdir")), "/path/to/is/a/subdir", "subdir");
 
         TEST_ERROR(
             storagePathP(storageTest, STRDEF("/bogus")), AssertError, "absolute path '/bogus' is not in base path '/path/to'");
@@ -613,11 +627,11 @@ testRun(void)
             storagePathP(storageTest, STRDEF("<TEST>" BOGUS_STR)), AssertError,
             "'/' should separate expression and path '<TEST>BOGUS'");
 
-        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("<TEST>")), "/path/to/test", "    expression");
+        TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("<TEST>")), "/path/to/test", "expression");
         TEST_ERROR(strZ(storagePathP(storageTest, STRDEF("<TEST>/"))), AssertError, "path '<TEST>/' should not end in '/'");
 
         TEST_RESULT_STR_Z(
-            storagePathP(storageTest, STRDEF("<TEST>/something")), "/path/to/test/something", "    expression with path");
+            storagePathP(storageTest, STRDEF("<TEST>/something")), "/path/to/test/something", "expression with path");
 
         TEST_ERROR(storagePathP(storageTest, STRDEF("<NULL>")), AssertError, "evaluated path '<NULL>' cannot be null");
 
@@ -744,9 +758,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_SYSTEM_FMT("touch %s", strZ(fileName));
 
-        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "    open file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_RESULT_INT(ioReadFd(storageReadIo(file)), ((StorageReadPosix *)file->driver)->fd, "check read fd");
-        TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "    close file");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
     }
 
     // *****************************************************************************************************************************
@@ -769,12 +783,12 @@ testRun(void)
             file,
             storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
             "new write file (defaults)");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), ((StorageWritePosix *)file->driver)->fd, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
-        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
-        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "    check file mode");
-        TEST_RESULT_INT(storageInfoP(storageTest, fileName).timeModified, 1, "    check file modified times");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "check file mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).timeModified, 1, "check file modified times");
 
         // Test that a premature free (from error or otherwise) does not rename the file
         // -------------------------------------------------------------------------------------------------------------------------
@@ -783,14 +797,14 @@ testRun(void)
 
         TEST_ASSIGN(
             file, storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR), "new write file (defaults)");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), BUFSTRDEF("TESTDATA")), "write data");
         TEST_RESULT_VOID(ioWriteFlush(storageWriteIo(file)), "flush data");
         TEST_RESULT_VOID(ioWriteFree(storageWriteIo(file)), "   free file");
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, fileName), false, "destination file does not exist");
         TEST_RESULT_BOOL(storageExistsP(storageTest, fileNameTmp), true, "destination tmp file exists");
-        TEST_RESULT_UINT(storageInfoP(storageTest, fileNameTmp).size, 8, "    check temp file size");
+        TEST_RESULT_UINT(storageInfoP(storageTest, fileNameTmp).size, 8, "check temp file size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         fileName = STRDEF(TEST_PATH "/sub2/testfile");
@@ -798,11 +812,11 @@ testRun(void)
         TEST_ASSIGN(
             file, storageNewWriteP(storageTest, fileName, .modePath = 0700, .modeFile = 0600, .group = TEST_GROUP_STR),
             "new write file (set mode)");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
         TEST_RESULT_VOID(storageWritePosixClose(file->driver), "   close file again");
-        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
-        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "    check file mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
     }
 
     // *****************************************************************************************************************************
@@ -900,8 +914,8 @@ testRun(void)
         TEST_CREATE_NOPERM();
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true), "new read file");
-        TEST_RESULT_BOOL(storageReadIgnoreMissing(file), true, "    check ignore missing");
-        TEST_RESULT_STR(storageReadName(file), fileNoPerm, "    check name");
+        TEST_RESULT_BOOL(storageReadIgnoreMissing(file), true, "check ignore missing");
+        TEST_RESULT_STR(storageReadName(file), fileNoPerm, "check name");
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -950,40 +964,40 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "   open file");
-        TEST_RESULT_STR(storageReadName(file), fileName, "    check file name");
-        TEST_RESULT_UINT(storageReadType(file), STORAGE_POSIX_TYPE, "    check file type");
-        TEST_RESULT_UINT(varUInt64(storageReadLimit(file)), 44, "    check limit");
+        TEST_RESULT_STR(storageReadName(file), fileName, "check file name");
+        TEST_RESULT_UINT(storageReadType(file), STORAGE_POSIX_TYPE, "check file type");
+        TEST_RESULT_UINT(varUInt64(storageReadLimit(file)), 44, "check limit");
 
-        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
-        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
-        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
-        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
-        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), false, "    check file contents (not all loaded yet)");
+        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), false, "check file contents (not all loaded yet)");
 
-        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "    load data");
+        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
 
-        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "    no data to load");
-        TEST_RESULT_UINT(bufUsed(outBuffer), 0, "    buffer is empty");
+        TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "no data to load");
+        TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
-        TEST_RESULT_VOID(storageReadPosix(file->driver, outBuffer, true), "    no data to load from driver either");
-        TEST_RESULT_UINT(bufUsed(outBuffer), 0, "    buffer is empty");
+        TEST_RESULT_VOID(storageReadPosix(file->driver, outBuffer, true), "no data to load from driver either");
+        TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
-        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents (all loaded)");
+        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "check file contents (all loaded)");
 
-        TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "    eof");
-        TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "    still eof");
+        TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "eof");
+        TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "still eof");
 
-        TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "    close file");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
 
         TEST_RESULT_VOID(storageReadFree(storageNewReadP(storageTest, fileName)), "   free file");
 
@@ -1005,13 +1019,13 @@ testRun(void)
                 .noSyncPath = true, .noAtomic = true),
             "new write file");
 
-        TEST_RESULT_BOOL(storageWriteAtomic(file), false, "    check atomic");
-        TEST_RESULT_BOOL(storageWriteCreatePath(file), false, "    check create path");
-        TEST_RESULT_INT(storageWriteModeFile(file), 0444, "    check mode file");
-        TEST_RESULT_INT(storageWriteModePath(file), 0555, "    check mode path");
-        TEST_RESULT_STR(storageWriteName(file), fileNoPerm, "    check name");
-        TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "    check sync path");
-        TEST_RESULT_BOOL(storageWriteSyncFile(file), false, "    check sync file");
+        TEST_RESULT_BOOL(storageWriteAtomic(file), false, "check atomic");
+        TEST_RESULT_BOOL(storageWriteCreatePath(file), false, "check create path");
+        TEST_RESULT_INT(storageWriteModeFile(file), 0444, "check mode file");
+        TEST_RESULT_INT(storageWriteModePath(file), 0555, "check mode path");
+        TEST_RESULT_STR(storageWriteName(file), fileNoPerm, "check name");
+        TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "check sync path");
+        TEST_RESULT_BOOL(storageWriteSyncFile(file), false, "check sync file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file");
@@ -1032,8 +1046,8 @@ testRun(void)
         const Buffer *buffer = BUFSTRDEF("TESTFILE\n");
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
-        TEST_RESULT_STR(storageWriteName(file), fileName, "    check file name");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
+        TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
 
         // Close the file descriptor so operations will fail
         close(((StorageWritePosix *)file->driver)->fd);
@@ -1058,9 +1072,9 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
-        TEST_RESULT_STR(storageWriteName(file), fileName, "    check file name");
-        TEST_RESULT_UINT(storageWriteType(file), STORAGE_POSIX_TYPE, "    check file type");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
+        TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
+        TEST_RESULT_UINT(storageWriteType(file), STORAGE_POSIX_TYPE, "check file type");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
 
         // Rename the file back to original name from tmp -- this will cause the rename in close to fail
         TEST_RESULT_INT(rename(strZ(fileTmp), strZ(fileName)), 0, " rename tmp file");
@@ -1080,7 +1094,7 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), NULL), "   write null buffer to file");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), bufNew(0)), "   write zero buffer to file");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), buffer), "   write to file");
@@ -1089,9 +1103,9 @@ testRun(void)
         TEST_RESULT_VOID(storageWriteMove(NULL, memContextTop()), "   move null file");
 
         Buffer *expectedBuffer = storageGetP(storageNewReadP(storageTest, fileName));
-        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents");
-        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "    check path mode");
-        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "    check file mode");
+        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "check file contents");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "check file mode");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
@@ -1104,14 +1118,14 @@ testRun(void)
                 storageTest, fileName, .modePath = 0700, .modeFile = 0600, .noSyncPath = true, .noSyncFile = true,
                 .noAtomic = true),
             "new write file");
-        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), buffer), "   write to file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "   close file");
 
         expectedBuffer = storageGetP(storageNewReadP(storageTest, fileName));
-        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "    check file contents");
-        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "    check path mode");
-        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "    check file mode");
+        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "check file contents");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
     }
