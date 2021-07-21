@@ -199,7 +199,7 @@ testRun(void)
         TEST_TITLE("storage with default options");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
@@ -209,13 +209,13 @@ testRun(void)
 
         Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
-        TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
-        TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->bucket, TEST_BUCKET_STR, "    check bucket");
-        TEST_RESULT_STR_Z(((StorageGcs *)storageDriver(storage))->endpoint, "storage.googleapis.com", "    check endpoint");
-        TEST_RESULT_UINT(((StorageGcs *)storageDriver(storage))->chunkSize, STORAGE_GCS_CHUNKSIZE_DEFAULT, "    check chunk size");
-        TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->token, TEST_TOKEN_STR, "    check token");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
+        TEST_RESULT_STR_Z(storage->path, "/repo", "check path");
+        TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->bucket, TEST_BUCKET_STR, "check bucket");
+        TEST_RESULT_STR_Z(((StorageGcs *)storageDriver(storage))->endpoint, "storage.googleapis.com", "check endpoint");
+        TEST_RESULT_UINT(((StorageGcs *)storageDriver(storage))->chunkSize, STORAGE_GCS_CHUNKSIZE_DEFAULT, "check chunk size");
+        TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->token, TEST_TOKEN_STR, "check token");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "check path feature");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "check compress feature");
     }
 
     // *****************************************************************************************************************************
@@ -313,7 +313,7 @@ testRun(void)
                 TEST_TITLE("test service auth");
 
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
                 hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
@@ -464,8 +464,8 @@ testRun(void)
 
                 StorageRead *read = NULL;
                 TEST_ASSIGN(read, storageNewReadP(storage, STRDEF("file.txt"), .ignoreMissing = true), "new read file");
-                TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
-                TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
+                TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "check ignore missing");
+                TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "check name");
 
                 TEST_ERROR_FMT(
                     ioReadOpen(storageReadIo(read)), ProtocolError,
@@ -656,10 +656,10 @@ testRun(void)
 
                 StorageInfo info;
                 TEST_ASSIGN(info, storageInfoP(storage, STRDEF("subdir/file1.txt")), "file exists");
-                TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                TEST_RESULT_UINT(info.size, 9999, "    check exists");
-                TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
+                TEST_RESULT_BOOL(info.exists, true, "check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
+                TEST_RESULT_UINT(info.size, 9999, "check exists");
+                TEST_RESULT_INT(info.timeModified, 1445412480, "check time");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");
@@ -669,10 +669,10 @@ testRun(void)
 
                 TEST_ASSIGN(
                     info, storageInfoP(storage, STRDEF("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
-                TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                TEST_RESULT_UINT(info.size, 0, "    check exists");
-                TEST_RESULT_INT(info.timeModified, 0, "    check time");
+                TEST_RESULT_BOOL(info.exists, true, "check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
+                TEST_RESULT_UINT(info.size, 0, "check exists");
+                TEST_RESULT_INT(info.timeModified, 0, "check time");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list basic level");
