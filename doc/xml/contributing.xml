@@ -328,7 +328,7 @@ myObjToLog(const MyObj *this)
                 <list-item><setting>--test</setting> - the actual test set to be run</list-item>
                 <list-item><setting>--run</setting> - a number identifying the run within a test if testing a single run rather than the entire test</list-item>
                 <list-item><setting>--vm-out</setting> - displays the test output (helpful for monitoring the progress)</list-item>
-                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code>. See <link url="{[github-url-master]}/test/lib/pgBackRestTest/Common/VmTest.pm">VmTest.pm</link> for a list of valid vm codes.</list-item>
+                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code>. See <link url="{[github-url-master]}.github/workflows/test.yml">test.yml</link> for a list of valid vm codes noted by <code>param: test</code>.</list-item>
             </list>
 
             <p>For more options, run the test or documentation engine with the <setting>--help</setting> option:</p>
@@ -488,7 +488,7 @@ HRN_STORAGE_PUT_EMPTY(
                     <list-item><id>TEST_ERROR</id> / <id>TEST_ERROR_FMT</id> - Test that a specific error code was raised with specific wording.</list-item>
                 </list>
 
-                <admonition type="note"><code>HRN_*</code> macros should be used only for test setup and cleanup. <code>TEST_*</code> macros must be used for actual test results.</admonition>
+                <admonition type="note"><code>HRN_*</code> macros should be used only for test setup and cleanup. <code>TEST_*</code> macros must be used for testing results.</admonition>
             </section>
 
             <section id="test-log">
