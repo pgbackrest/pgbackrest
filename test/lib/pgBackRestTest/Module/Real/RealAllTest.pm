@@ -285,7 +285,7 @@ sub run
             # Update message for standby
             $oHostDbPrimary->sqlExecute("update test set message = '$strStandbyMessage'");
 
-            if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
+            if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY && !$bTls)
             {
                 # If there is only a primary and a replica and the replica is the backup destination, then if pg2-host and pg3-host
                 # are BOGUS, confirm failure to reach the primary
