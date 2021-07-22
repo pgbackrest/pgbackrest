@@ -967,6 +967,7 @@ testRun(void)
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt")), .exactSize = 64), FileReadError,
             "unable to read 64 byte(s) from '" TEST_PATH "/test.txt'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get - smaller buffer size");
 
