@@ -43,6 +43,8 @@ cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const S
 
     if (pid == 0)
     {
+        // !!! DO WE NEED TO FREE THE SOCKET SERVER HERE?
+
         // Start protocol handshake on the bare socket
         ProtocolServer *const socketServer = protocolServerNew(
             PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(socketSession),
@@ -52,29 +54,16 @@ cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const S
         CHECK(protocolServerCommandGet(socketServer).id == PROTOCOL_COMMAND_NOOP);
         protocolServerDataEndPut(socketServer);
 
-        // Check if TLS negotiation was requested
-        bool tls = false;
-
+        // Negotiate TLS if requested
         ProtocolServerCommandGetResult command = protocolServerCommandGet(socketServer);
 
         if (command.id == PROTOCOL_COMMAND_TLS)
         {
-            // Negotiate TLS
-            tls = true;
-
-            // Acknowledge TLS request
+            // Acknowledge TLS request. It is very important that the client and server are synchronized here because we need to
+            // hand the bare socket off the TLS and there should not be any data held in the IoRead/IoWrite buffers.
             protocolServerDataEndPut(socketServer);
 
-            // Get next command, which should be exit
-            command = protocolServerCommandGet(socketServer);
-        }
-
-        // Get exit commmand. Do not send a response.
-        CHECK(command.id == PROTOCOL_COMMAND_EXIT);
-
-        // Negotiate TLS if requested
-        if (tls)
-        {
+            // Start TLS
             IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
 
             ProtocolServer *const tlsServer = protocolServerNew(

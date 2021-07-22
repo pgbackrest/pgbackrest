@@ -563,6 +563,7 @@ protocolRemoteExec(
         ProtocolClient *client = protocolClientNew(
             strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u socket protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR,
             ioSessionIoRead(socketSession), ioSessionIoWrite(socketSession));
+        protocolClientNoExit(client);
         protocolClientExecute(client, protocolCommandNew(PROTOCOL_COMMAND_TLS), false);
         protocolClientFree(client);
 
@@ -576,8 +577,8 @@ protocolRemoteExec(
 
     // Create protocol object
     helper->client = protocolClientNew(
-        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u TLS protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR, read,
-        write);
+        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u %s protocol on '%s'", processId, strZ(strIdToStr(remoteType)), strZ(host)),
+        PROTOCOL_SERVICE_REMOTE_STR, read, write);
 
     if (remoteType == CFGOPTVAL_REPO_HOST_TYPE_SSH)
         protocolClientMove(helper->client, execMemContext(helper->exec));

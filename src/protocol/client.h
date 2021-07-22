@@ -94,6 +94,13 @@ protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
     return objMove(this, parentNew);
 }
 
+// Do not send exit command to the server when the client is freed
+__attribute__((always_inline)) static inline void
+protocolClientNoExit(ProtocolClient *const this)
+{
+    memContextCallbackClear(THIS_PUB(ProtocolClient)->memContext);
+}
+
 // Send noop to test connection or keep it alive
 void protocolClientNoOp(ProtocolClient *this);
 
