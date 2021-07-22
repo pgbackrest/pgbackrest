@@ -38,7 +38,7 @@ testRun(void)
     StringList *argList = strLstNew();
     hrnCfgArgRawZ(argList, cfgOptStanza, "db");
     hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
-    strLstAddZ(argList, "--buffer-size=16384");
+    hrnCfgArgRawZ(argList, cfgOptBufferSize, "16384");
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
     hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "localhost");
     hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 2, TEST_USER);
@@ -50,13 +50,13 @@ testRun(void)
 
     // Load configuration and get repo remote storage
     argList = strLstNew();
-    strLstAddZ(argList, "--stanza=db");
-    strLstAddZ(argList, "--protocol-timeout=10");
+    hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
     hrnCfgArgRawFmt(argList, cfgOptBufferSize, "%zu", ioBufferSize());
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
-    strLstAddZ(argList, "--repo1-host=localhost");
-    strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
-    strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
+    hrnCfgArgRawZ(argList, cfgOptRepoHost, "localhost");
+    hrnCfgArgRawZ(argList, cfgOptRepoHostUser, TEST_USER);
+    hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
     hrnCfgArgRawZ(argList, cfgOptRepo, "1");
     HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
@@ -74,17 +74,18 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageInterface(), storageFeature, and storagePathP()"))
     {
-        TEST_RESULT_UINT(storageInterface(storageRepoWrite).feature, storageInterface(storageTest).feature, "    check features");
-        TEST_RESULT_BOOL(storageFeature(storageRepoWrite, storageFeaturePath), true, "    check path feature");
-        TEST_RESULT_BOOL(storageFeature(storageRepoWrite, storageFeatureCompress), true, "    check compress feature");
-        TEST_RESULT_STR_Z(storagePathP(storageRepo, NULL), TEST_PATH "/repo", "    check repo path");
-        TEST_RESULT_STR_Z(storagePathP(storageRepoWrite, NULL), TEST_PATH "/repo", "    check repo write path");
-        TEST_RESULT_STR_Z(storagePathP(storagePgWrite, NULL), TEST_PATH "/pg2", "    check pg write path");
+        TEST_RESULT_UINT(storageInterface(storageRepoWrite).feature, storageInterface(storageTest).feature, "check features");
+        TEST_RESULT_BOOL(storageFeature(storageRepoWrite, storageFeaturePath), true, "check path feature");
+        TEST_RESULT_BOOL(storageFeature(storageRepoWrite, storageFeatureCompress), true, "check compress feature");
+        TEST_RESULT_STR_Z(storagePathP(storageRepo, NULL), TEST_PATH "/repo", "check repo path");
+        TEST_RESULT_STR_Z(storagePathP(storageRepoWrite, NULL), TEST_PATH "/repo", "check repo write path");
+        TEST_RESULT_STR_Z(storagePathP(storagePgWrite, NULL), TEST_PATH "/pg2", "check pg write path");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("storageInfo()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing file/path");
 
         TEST_ERROR(
@@ -100,17 +101,17 @@ testRun(void)
 
         StorageInfo info = {.exists = false};
         TEST_ASSIGN(info, storageInfoP(storageRepo, NULL), "valid path");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypePath, "    check type");
-        TEST_RESULT_UINT(info.size, 0, "    check size");
-        TEST_RESULT_INT(info.mode, 0750, "    check mode");
-        TEST_RESULT_INT(info.timeModified, 1555160000, "    check mod time");
-        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
-        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "    check user id");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "    check group id");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypePath, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0750, "check mode");
+        TEST_RESULT_INT(info.timeModified, 1555160000, "check mod time");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "check user id");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "check group id");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file info");
@@ -118,28 +119,28 @@ testRun(void)
         storagePutP(storageNewWriteP(storageRepoWrite, STRDEF("test"), .timeModified = 1555160001), BUFSTRDEF("TESTME"));
 
         TEST_ASSIGN(info, storageInfoP(storageRepo, STRDEF("test")), "valid file");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
-        TEST_RESULT_UINT(info.size, 6, "    check size");
-        TEST_RESULT_INT(info.mode, 0640, "    check mode");
-        TEST_RESULT_INT(info.timeModified, 1555160001, "    check mod time");
-        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
-        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "    check user id");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "    check group id");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeFile, "check type");
+        TEST_RESULT_UINT(info.size, 6, "check size");
+        TEST_RESULT_INT(info.mode, 0640, "check mode");
+        TEST_RESULT_INT(info.timeModified, 1555160001, "check mod time");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "check user id");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "check group id");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file info (basic level)");
 
         TEST_ASSIGN(info, storageInfoP(storageRepo, STRDEF("test"), .level = storageInfoLevelBasic), "file basic info");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    exists");
-        TEST_RESULT_INT(info.type, storageTypeFile, "    type");
-        TEST_RESULT_UINT(info.size, 6, "    size");
-        TEST_RESULT_INT(info.timeModified, 1555160001, "    mod time");
-        TEST_RESULT_STR(info.user, NULL, "    user not set");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "exists");
+        TEST_RESULT_INT(info.type, storageTypeFile, "type");
+        TEST_RESULT_UINT(info.size, 6, "size");
+        TEST_RESULT_INT(info.timeModified, 1555160001, "mod time");
+        TEST_RESULT_STR(info.user, NULL, "user not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("special info");
@@ -147,16 +148,16 @@ testRun(void)
         HRN_SYSTEM("mkfifo -m 666 " TEST_PATH "/repo/fifo");
 
         TEST_ASSIGN(info, storageInfoP(storageRepo, STRDEF("fifo")), "valid fifo");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypeSpecial, "    check type");
-        TEST_RESULT_UINT(info.size, 0, "    check size");
-        TEST_RESULT_INT(info.mode, 0666, "    check mode");
-        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
-        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "    check user id");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "    check group id");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeSpecial, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0666, "check mode");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "check user id");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "check group id");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("link info");
@@ -164,31 +165,31 @@ testRun(void)
         HRN_SYSTEM("ln -s ../repo/test " TEST_PATH "/repo/link");
 
         TEST_ASSIGN(info, storageInfoP(storageRepo, STRDEF("link")), "valid link");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypeLink, "    check type");
-        TEST_RESULT_UINT(info.size, 0, "    check size");
-        TEST_RESULT_INT(info.mode, 0777, "    check mode");
-        TEST_RESULT_STR_Z(info.linkDestination, "../repo/test", "    check link destination");
-        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "    check user id");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "    check group id");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeLink, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0777, "check mode");
+        TEST_RESULT_STR_Z(info.linkDestination, "../repo/test", "check link destination");
+        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "check user id");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "check group id");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("link info follow");
 
         TEST_ASSIGN(info, storageInfoP(storageRepo, STRDEF("link"), .followLink = true), "valid link follow");
-        TEST_RESULT_STR(info.name, NULL, "    name is not set");
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_INT(info.type, storageTypeFile, "    check type");
-        TEST_RESULT_UINT(info.size, 6, "    check size");
-        TEST_RESULT_INT(info.mode, 0640, "    check mode");
-        TEST_RESULT_STR(info.linkDestination, NULL, "    no link destination");
-        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "    check user id");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
-        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "    check group id");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeFile, "check type");
+        TEST_RESULT_UINT(info.size, 6, "check size");
+        TEST_RESULT_INT(info.mode, 0640, "check mode");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+        TEST_RESULT_UINT(info.userId, TEST_USER_ID, "check user id");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "check group id");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
     }
 
     // *****************************************************************************************************************************
@@ -204,8 +205,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageInfoListP(storageRepo, STRDEF(BOGUS_STR), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
             false, "info list");
-        TEST_RESULT_STR_Z(
-            callbackData.content, "", "check content");
+        TEST_RESULT_STR_Z(callbackData.content, "", "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("list path and file");
@@ -236,6 +236,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageNewRead()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing");
 
         TEST_ERROR_FMT(
@@ -256,7 +257,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
         TEST_RESULT_STR_Z(storageReadName(fileRead), TEST_PATH "/repo/test.txt", "check name");
         TEST_RESULT_UINT(storageReadRemote(fileRead->driver, bufNew(32), false), 0, "nothing more to read");
-        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, bufSize(contentBuf), "    check read size");
+        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, bufSize(contentBuf), "check read size");
 
         // Enable protocol compression in the storage object
         ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 3;
@@ -265,19 +266,18 @@ testRun(void)
         TEST_TITLE("read file with limit");
 
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
-        TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "BABABABABAB", "    check contents");
-        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "    check read size");
+        TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "BABABABABAB", "check contents");
+        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "check read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file with compression");
 
         TEST_ASSIGN(
             fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .compressible = true), "get file (protocol compress)");
-        TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "    check contents");
+        TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "check contents");
         // We don't know how much protocol compression there will be exactly, but make sure this is some
         TEST_RESULT_BOOL(
-            ((StorageReadRemote *)fileRead->driver)->protocolReadBytes < bufSize(contentBuf), true,
-            "    check compressed read size");
+            ((StorageReadRemote *)fileRead->driver)->protocolReadBytes < bufSize(contentBuf), true, "check compressed read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing");
@@ -360,7 +360,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
-        TEST_RESULT_UINT(((StorageWriteRemote *)write->driver)->protocolWriteBytes, bufSize(contentBuf), "    check write size");
+        TEST_RESULT_UINT(((StorageWriteRemote *)write->driver)->protocolWriteBytes, bufSize(contentBuf), "check write size");
         TEST_RESULT_VOID(storageWriteRemoteClose(write->driver), "close file again");
         TEST_RESULT_VOID(storageWriteFree(write), "free file");
 
@@ -392,14 +392,14 @@ testRun(void)
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF("repo/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");
 
-        // Write the file again with protocol compression
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write the file again with protocol compression");
+
         TEST_ASSIGN(
             write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt"), .compressible = true), "new write file (compress)");
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_BOOL(
-            ((StorageWriteRemote *)write->driver)->protocolWriteBytes < bufSize(contentBuf), true,
-            "    check compressed write size");
+            ((StorageWriteRemote *)write->driver)->protocolWriteBytes < bufSize(contentBuf), true, "check compressed write size");
     }
 
     // *****************************************************************************************************************************
@@ -407,12 +407,15 @@ testRun(void)
     {
         const String *path = STRDEF("testpath");
 
-        // Create a path via the remote. Check the repo via the local test storage to ensure the remote created it.
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create path via the remote");
+
+        // Check the repo via the local test storage to ensure the remote created it.
         TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "new path");
         StorageInfo info = {0};
-        TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strZ(path))), "  get path info");
-        TEST_RESULT_BOOL(info.exists, true, "  path exists");
-        TEST_RESULT_INT(info.mode, STORAGE_MODE_PATH_DEFAULT, "  mode is default");
+        TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strZ(path))), "get path info");
+        TEST_RESULT_BOOL(info.exists, true, "path exists");
+        TEST_RESULT_INT(info.mode, STORAGE_MODE_PATH_DEFAULT, "mode is default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on existing path");
@@ -455,6 +458,9 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("repo"));
         TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "new path");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote remove path");
+
         // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), true, "path exists");
         TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite, path), "remote remove path");
@@ -468,7 +474,7 @@ testRun(void)
             "new path and file");
 
         TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite, STRDEF("testpath"), .recurse = true), "remove missing path");
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "  recurse path removed");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "recurse path removed");
     }
 
     // *****************************************************************************************************************************
@@ -477,6 +483,9 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("repo"));
 
         const String *file = STRDEF("file.txt");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote remove path");
 
         // Write the file to the repo via the remote so owner is pgbackrest
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite, file), BUFSTRDEF("TEST")), "new file");
