@@ -195,7 +195,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         memContextCallbackSet(driver->memContext, sckServerFreeResource, driver);
 
         // Listen for client connections !!! NEED TO DECIDE HOW BIG BACKLOG CAN BE
-        THROW_ON_SYS_ERROR(listen(driver->socket, 1) == -1, FileOpenError, "unable to listen on socket");
+        THROW_ON_SYS_ERROR(listen(driver->socket, 5) == -1, FileOpenError, "unable to listen on socket");
 
         statInc(SOCKET_STAT_SERVER_STR);
 
