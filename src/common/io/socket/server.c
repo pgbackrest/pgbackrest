@@ -53,6 +53,25 @@ sckServerToLog(const THIS_VOID)
 #define FUNCTION_LOG_SOCKET_SERVER_FORMAT(value, buffer, bufferSize)                                                               \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckServerToLog, buffer, bufferSize)
 
+/***********************************************************************************************************************************
+Free connection
+***********************************************************************************************************************************/
+static void
+sckServerFreeResource(THIS_VOID)
+{
+    THIS(SocketServer);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(SOCKET_SERVER, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    close(this->socket);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 static IoSession *
 sckServerAccept(THIS_VOID, IoSession *const session)
@@ -171,6 +190,9 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         while (result == -1 && waitMore(wait)); // {uncovered} !!! FIX COVERAGE
 
         THROW_ON_SYS_ERROR(result == -1, FileOpenError, "unable to bind socket");
+
+        // Ensure file descriptor is closed
+        memContextCallbackSet(driver->memContext, sckServerFreeResource, driver);
 
         // Listen for client connections !!! NEED TO DECIDE HOW BIG BACKLOG CAN BE
         THROW_ON_SYS_ERROR(listen(driver->socket, 1) == -1, FileOpenError, "unable to listen on socket");

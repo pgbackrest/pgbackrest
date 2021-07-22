@@ -555,12 +555,18 @@ protocolRemoteExec(
         if (cfgOptionIdxTest(portOption, hostIdx))
             port = cfgOptionIdxUInt(portOption, hostIdx);
 
+        // Open socket
         IoClient *socketClient = sckClientNew(host, port, timeout);
         IoSession *socketSession = ioClientOpen(socketClient);
-        // ProtocolClient *client = protocolClientNew(
-        //     strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR,
-        //     ioSessionIoRead(socketClient), ioSessionIoWrite(socketClient));
 
+        // Send TLS request
+        ProtocolClient *client = protocolClientNew(
+            strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u socket protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR,
+            ioSessionIoRead(socketSession), ioSessionIoWrite(socketSession));
+        protocolClientExecute(client, protocolCommandNew(PROTOCOL_COMMAND_TLS), false);
+        protocolClientFree(client);
+
+        // Negotiate TLS
         helper->ioClient = tlsClientNew(socketClient, host, timeout, false, NULL, NULL);
         helper->ioSession = ioClientOpenSession(helper->ioClient, socketSession);
 
@@ -570,7 +576,8 @@ protocolRemoteExec(
 
     // Create protocol object
     helper->client = protocolClientNew(
-        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR, read, write);
+        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u TLS protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR, read,
+        write);
 
     if (remoteType == CFGOPTVAL_REPO_HOST_TYPE_SSH)
         protocolClientMove(helper->client, execMemContext(helper->exec));

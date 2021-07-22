@@ -140,7 +140,45 @@ testRun(void)
     {
         TEST_TITLE("!!!");
 
-        cmdServerPing();
+        HRN_FORK_BEGIN()
+        {
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "client")
+            {
+                StringList *argList = strLstNew();
+                hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                HRN_CFG_LOAD(cfgCmdServerPing, argList);
+
+                TEST_RESULT_VOID(cmdServerPing(), "ping");
+
+                // Notify parent on exit
+                HRN_FORK_CHILD_NOTIFY_PUT();
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "server")
+            {
+                StringList *argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptTlsServerCert, HRN_PATH_REPO "/test/certificate/pgbackrest-test.crt");
+                hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_PATH_REPO "/test/certificate/pgbackrest-test.key");
+                hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                HRN_CFG_LOAD(cfgCmdServer, argList);
+
+                // Get pid of this process to identify child process later
+                pid_t pid = getpid();
+
+                TEST_RESULT_VOID(cmdServer(1), "server");
+
+                // If this is a child process then exit immediately
+                if (pid != getpid())
+                    exit(0);
+
+                // Wait for child process to exit
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

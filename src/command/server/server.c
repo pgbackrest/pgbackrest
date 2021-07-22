@@ -43,36 +43,72 @@ cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const S
 
     if (pid == 0)
     {
-        IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
-
-        ProtocolServer *const server = protocolServerNew(
-            PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
-            ioSessionIoWrite(tlsSession));
+        // Start protocol handshake on the bare socket
+        ProtocolServer *const socketServer = protocolServerNew(
+            PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(socketSession),
+            ioSessionIoWrite(socketSession));
 
         // Get the command and put data end. No need to check parameters since we know this is the first noop.
-        CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_NOOP);
-        protocolServerDataEndPut(server);
+        CHECK(protocolServerCommandGet(socketServer).id == PROTOCOL_COMMAND_NOOP);
+        protocolServerDataEndPut(socketServer);
 
-        // Get parameter list from the client and load it
-        ProtocolServerCommandGetResult command = protocolServerCommandGet(server);
-        CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
+        // Check if TLS negotiation was requested
+        bool tls = false;
 
-        StringList *const paramList = pckReadStrLstP(pckReadNewBuf(command.param));
-        strLstInsert(paramList, 0, cfgExe());
-        cfgLoad(strLstSize(paramList), strLstPtr(paramList));
+        ProtocolServerCommandGetResult command = protocolServerCommandGet(socketServer);
 
-        protocolServerDataEndPut(server);
+        if (command.id == PROTOCOL_COMMAND_TLS)
+        {
+            // Negotiate TLS
+            tls = true;
 
-        // !!! NEED TO SET READ TIMEOUT TO PROTOCOL-TIMEOUT HERE
+            // Acknowledge TLS request
+            protocolServerDataEndPut(socketServer);
 
-        // Detach from parent process
-        forkDetach();
+            // Get next command, which should be exit
+            command = protocolServerCommandGet(socketServer);
+        }
 
-        // !!! NEED TO CALL cmdRemote() DIRECTLY, WHICH WILL REQUIRE SOME REFACTORING
-        protocolServerProcess(
-            server, NULL, commandRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandRemoteHandlerList));
+        // Get exit commmand. Do not send a response.
+        CHECK(command.id == PROTOCOL_COMMAND_EXIT);
 
-        ioSessionFree(tlsSession);
+        // Negotiate TLS if requested
+        if (tls)
+        {
+            IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
+
+            ProtocolServer *const tlsServer = protocolServerNew(
+                PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
+                ioSessionIoWrite(tlsSession));
+
+            // Get the command and put data end. No need to check parameters since we know this is the first noop.
+            CHECK(protocolServerCommandGet(tlsServer).id == PROTOCOL_COMMAND_NOOP);
+            protocolServerDataEndPut(tlsServer);
+
+            // Get parameter list from the client and load it
+            command = protocolServerCommandGet(tlsServer);
+            CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
+
+            StringList *const paramList = pckReadStrLstP(pckReadNewBuf(command.param));
+            strLstInsert(paramList, 0, cfgExe());
+            cfgLoad(strLstSize(paramList), strLstPtr(paramList));
+
+            protocolServerDataEndPut(tlsServer);
+
+            // !!! NEED TO SET READ TIMEOUT TO PROTOCOL-TIMEOUT HERE
+
+            // Detach from parent process
+            forkDetach();
+
+            // !!! NEED TO CALL cmdRemote() DIRECTLY, WHICH WILL REQUIRE SOME REFACTORING
+            protocolServerProcess(
+                tlsServer, NULL, commandRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandRemoteHandlerList));
+
+            ioSessionFree(tlsSession);
+        }
+        // Else exit
+        else
+            ioSessionFree(socketSession);
     }
     else
     {

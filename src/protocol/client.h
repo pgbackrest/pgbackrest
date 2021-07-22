@@ -45,6 +45,7 @@ Constants
 #define PROTOCOL_COMMAND_CONFIG                                     STRID5("config", 0xe9339e30)
 #define PROTOCOL_COMMAND_EXIT                                       STRID5("exit", 0xa27050)
 #define PROTOCOL_COMMAND_NOOP                                       STRID5("noop", 0x83dee0)
+#define PROTOCOL_COMMAND_TLS                                        STRID5("tls", 0x4d940)
 
 /***********************************************************************************************************************************
 This size should be safe for most pack data without wasting a lot of space. If binary data is being transferred then this size can
