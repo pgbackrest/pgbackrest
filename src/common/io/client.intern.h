@@ -22,6 +22,9 @@ typedef struct IoClientInterface
     // Open a session
     IoSession *(*open)(void *driver);
 
+    // Open a session from a session
+    IoSession *(*openSession)(void *driver, IoSession *ioSession);
+
     // Driver log function
     String *(*toLog)(const void *driver);
 } IoClientInterface;

@@ -30,9 +30,10 @@ static const ProtocolServerHandler commandRemoteHandlerList[] =
 
 /**********************************************************************************************************************************/
 static bool
-cmdServerFork(IoSession *const socketSession, const String *const host)
+cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const String *const host)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_SERVER, tlsServer);
         FUNCTION_LOG_PARAM(IO_SESSION, socketSession);
         FUNCTION_LOG_PARAM(STRING, host);
     FUNCTION_LOG_END();
@@ -42,8 +43,6 @@ cmdServerFork(IoSession *const socketSession, const String *const host)
 
     if (pid == 0)
     {
-        IoServer *const tlsServer = tlsServerNew(
-           host, cfgOptionStr(cfgOptTlsServerKey), cfgOptionStr(cfgOptTlsServerCert), cfgOptionUInt64(cfgOptIoTimeout));
         IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
 
         ProtocolServer *const server = protocolServerNew(
@@ -80,8 +79,6 @@ cmdServerFork(IoSession *const socketSession, const String *const host)
         // The process that was just forked should return immediately
         int processStatus;
 
-        LOG_DEBUG_FMT("!!!FORK1 IS %d", pid);
-
         THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
 
         // The first fork should exit with success. If not, something went wrong during the second fork.
@@ -102,6 +99,8 @@ cmdServer(uint64_t connectionMax)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        IoServer *const tlsServer = tlsServerNew(
+           host, cfgOptionStr(cfgOptTlsServerKey), cfgOptionStr(cfgOptTlsServerCert), cfgOptionUInt64(cfgOptIoTimeout));
         IoServer *const socketServer = sckServerNew(host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptIoTimeout));
 
         // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE
@@ -112,7 +111,7 @@ cmdServer(uint64_t connectionMax)
             IoSession *const socketSession = ioServerAccept(socketServer, NULL);
 
             // Fork the child and break out of the loop when the child returns
-            if (!cmdServerFork(socketSession, host))
+            if (!cmdServerFork(tlsServer, socketSession, host))
                 break;
 
             // Free the socket since the child is now using it

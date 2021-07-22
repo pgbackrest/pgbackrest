@@ -43,10 +43,7 @@ forkDetach(void)
     // Fork again and let the parent process terminate to ensure that we get rid of the session leading process. Only session
     // leaders may get a TTY again.
     if (forkSafe() != 0)
-    {
-        LOG_DEBUG_FMT("!!!FORK2 IS %d", getpid());
         exit(0);
-    }
 
     // Reset SIGCHLD to the default handler so waitpid() calls in the process will work as expected
     signal(SIGCHLD, SIG_DFL);

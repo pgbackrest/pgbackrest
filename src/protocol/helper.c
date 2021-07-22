@@ -555,8 +555,14 @@ protocolRemoteExec(
         if (cfgOptionIdxTest(portOption, hostIdx))
             port = cfgOptionIdxUInt(portOption, hostIdx);
 
-        helper->ioClient = tlsClientNew(sckClientNew(host, port, timeout), host, timeout, false, NULL, NULL);
-        helper->ioSession = ioClientOpen(helper->ioClient);
+        IoClient *socketClient = sckClientNew(host, port, timeout);
+        IoSession *socketSession = ioClientOpen(socketClient);
+        // ProtocolClient *client = protocolClientNew(
+        //     strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR,
+        //     ioSessionIoRead(socketClient), ioSessionIoWrite(socketClient));
+
+        helper->ioClient = tlsClientNew(socketClient, host, timeout, false, NULL, NULL);
+        helper->ioSession = ioClientOpenSession(helper->ioClient, socketSession);
 
         read = ioSessionIoRead(helper->ioSession);
         write = ioSessionIoWrite(helper->ioSession);

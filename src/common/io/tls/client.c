@@ -217,6 +217,72 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
+Open connection from a session
+***********************************************************************************************************************************/
+static IoSession *
+tlsClientOpenSession(THIS_VOID, IoSession *const ioSession)
+{
+    THIS(TlsClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace)
+        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    IoSession *result = NULL;
+    SSL *tlsSession = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Move io session into this mem context
+        ioSessionMove(ioSession, this->memContext);
+
+        // Create internal TLS session. If there is a failure before the TlsSession object is created there may be a leak
+        // of the TLS session but this is likely to result in program termination so it doesn't seem worth coding for.
+        cryptoError((tlsSession = SSL_new(this->context)) == NULL, "unable to create TLS session");
+
+        // Set server host name used for validation
+        cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
+
+        // Create the TLS session
+        result = ioSessionMove(tlsSessionNew(tlsSession, ioSession, this->timeout), memContextPrior());
+
+        // Verify that the certificate presented by the server is valid
+        if (this->verifyPeer)                                                                                       // {vm_covered}
+        {
+            // Verify that the chain of trust leads to a valid CA
+            long int verifyResult = SSL_get_verify_result(tlsSession);                                              // {vm_covered}
+
+            if (verifyResult != X509_V_OK)                                                                          // {vm_covered}
+            {
+                THROW_FMT(                                                                                          // {vm_covered}
+                    CryptoError, "unable to verify certificate presented by '%s': [%ld] %s",                        // {vm_covered}
+                    strZ(ioClientName(this->ioClient)), verifyResult,                                               // {vm_covered}
+                    X509_verify_cert_error_string(verifyResult));                                                   // {vm_covered}
+            }
+
+            // Verify that the hostname appears in the certificate
+            X509 *certificate = SSL_get_peer_certificate(tlsSession);                                               // {vm_covered}
+            bool nameResult = tlsClientHostVerify(this->host, certificate);                                         // {vm_covered}
+            X509_free(certificate);                                                                                 // {vm_covered}
+
+            if (!nameResult)                                                                                        // {vm_covered}
+            {
+                THROW_FMT(                                                                                          // {vm_covered}
+                    CryptoError,                                                                                    // {vm_covered}
+                    "unable to find hostname '%s' in certificate common name or subject alternative names",         // {vm_covered}
+                    strZ(this->host));                                                                              // {vm_covered}
+            }
+        }
+
+        // Move TLS session to prior context
+        result = ioSessionMove(result, memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(IO_SESSION, result);
+}
+
+/***********************************************************************************************************************************
 Open connection if this is a new client or if the connection was closed by the server
 ***********************************************************************************************************************************/
 static IoSession *
@@ -231,7 +297,6 @@ tlsClientOpen(THIS_VOID)
     ASSERT(this != NULL);
 
     IoSession *result = NULL;
-    SSL *session = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -248,15 +313,8 @@ tlsClientOpen(THIS_VOID)
                 // Open the underlying session first since this is mostly likely to fail
                 IoSession *ioSession = ioClientOpen(this->ioClient);
 
-                // Create internal TLS session. If there is a failure before the TlsSession object is created there may be a leak
-                // of the TLS session but this is likely to result in program termination so it doesn't seem worth coding for.
-                cryptoError((session = SSL_new(this->context)) == NULL, "unable to create TLS session");
-
-                // Set server host name used for validation
-                cryptoError(SSL_set_tlsext_host_name(session, strZ(this->host)) != 1, "unable to set TLS host name");
-
-                // Create the TLS session
-                result = tlsSessionNew(session, ioSession, this->timeout);
+                // Open session
+                result = ioSessionMove(tlsClientOpenSession(this, ioSession), memContextPrior());
             }
             CATCH_ANY()
             {
@@ -276,39 +334,10 @@ tlsClientOpen(THIS_VOID)
             TRY_END();
         }
         while (retry);
-
-        ioSessionMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
     statInc(TLS_STAT_SESSION_STR);
-
-    // Verify that the certificate presented by the server is valid
-    if (this->verifyPeer)                                                                                           // {vm_covered}
-    {
-        // Verify that the chain of trust leads to a valid CA
-        long int verifyResult = SSL_get_verify_result(session);                                                     // {vm_covered}
-
-        if (verifyResult != X509_V_OK)                                                                              // {vm_covered}
-        {
-            THROW_FMT(                                                                                              // {vm_covered}
-                CryptoError, "unable to verify certificate presented by '%s': [%ld] %s",                            // {vm_covered}
-                strZ(ioClientName(this->ioClient)), verifyResult, X509_verify_cert_error_string(verifyResult));     // {vm_covered}
-        }
-
-        // Verify that the hostname appears in the certificate
-        X509 *certificate = SSL_get_peer_certificate(session);                                                      // {vm_covered}
-        bool nameResult = tlsClientHostVerify(this->host, certificate);                                             // {vm_covered}
-        X509_free(certificate);                                                                                     // {vm_covered}
-
-        if (!nameResult)                                                                                            // {vm_covered}
-        {
-            THROW_FMT(                                                                                              // {vm_covered}
-                CryptoError,                                                                                        // {vm_covered}
-                "unable to find hostname '%s' in certificate common name or subject alternative names",             // {vm_covered}
-                strZ(this->host));                                                                                  // {vm_covered}
-        }
-    }
 
     FUNCTION_LOG_RETURN(IO_SESSION, result);
 }
@@ -334,6 +363,7 @@ static const IoClientInterface tlsClientInterface =
     .type = IO_CLIENT_TLS_TYPE,
     .name = tlsClientName,
     .open = tlsClientOpen,
+    .openSession = tlsClientOpenSession,
     .toLog = tlsClientToLog,
 };
 
