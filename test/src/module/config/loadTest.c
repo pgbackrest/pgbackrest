@@ -34,6 +34,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadUpdateOption()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error if user passes pg/repo options when they are internal");
 
         StringList *argList = strLstNew();
@@ -258,17 +259,22 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("retention warning - help command");
+
         argList = strLstNew();
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "process-max");
 
         harnessLogLevelSet(logLevelWarn);
         HRN_CFG_LOAD(cfgCmdHelp, argList, .comment = "load help config -- no retention warning");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "    command is help");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "command is help");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("retention warning - expire command");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--no-log-timestamp");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawBool(argList, cfgOptLogTimestamp, false);
 
         harnessLogLevelSet(logLevelWarn);
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
@@ -277,17 +283,17 @@ testRun(void)
                 " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
                 " maximum.");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
+        TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config no retention warning");
 
-        TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 1, "    repo1-retention-archive set");
-
+        TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 1, "repo1-retention-archive set");
+// CSHANG What does this mean? We have multi-repo but I removed these 2 lines and it fails on coverage. repo-type defaults normally to posix so what is this really doing? Maybe I just need to add another repo with a type other than posix or cifs? I don't understand why commenting this test out results in loss of coverage on line 260 of load.c
         // Munge repo-type for coverage.  This will go away when there are multiple repos.
-        cfgOptionSet(cfgOptRepoType, cfgSourceParam, NULL);
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "load config no repo-type");
-
+        // cfgOptionSet(cfgOptRepoType, cfgSourceParam, NULL);
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "load config no repo-type");
+exit(0);
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--no-log-timestamp");
