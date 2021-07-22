@@ -27,6 +27,8 @@ cmdServerPing(void)
         ProtocolClient *protocolClient = protocolClientNew(
             strNewFmt(PROTOCOL_SERVICE_REMOTE " socket protocol on '%s'", strZ(host)), PROTOCOL_SERVICE_REMOTE_STR,
             ioSessionIoRead(socketSession), ioSessionIoWrite(socketSession));
+        protocolClientNoExit(protocolClient);
+        protocolClientNoOp(protocolClient);
         protocolClientFree(protocolClient);
     }
     MEM_CONTEXT_TEMP_END();

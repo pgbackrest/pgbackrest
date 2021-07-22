@@ -110,12 +110,20 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                TEST_ERROR(
+                ProtocolClient *client = NULL;
+                TEST_ASSIGN(
+                    client,
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
                         ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
-                    PathCreateError, "raised from test: unable to create path '/bogus': [13] Permission denied");
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)), "new client");
+
+                TEST_ERROR(
+                    protocolClientNoOp(client), PathCreateError,
+                    "raised from test: unable to create path '/bogus': [13] Permission denied");
+
+                TEST_RESULT_VOID(protocolClientNoExit(client), "client no exit");
+                TEST_RESULT_VOID(protocolClientFree(client), "client free");
             }
             HRN_FORK_PARENT_END();
         }
@@ -180,13 +188,18 @@ testRun(void)
             {
                 HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/all" STOP_FILE_EXT);
 
-                TEST_ERROR(
+                ProtocolClient *client = NULL;
+                TEST_ASSIGN(
+                    client,
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
                         ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
-                    StopError, "raised from test: stop file exists for all stanzas");
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)), "new client");
 
+                TEST_ERROR(protocolClientNoOp(client), StopError, "raised from test: stop file exists for all stanzas");
+
+                TEST_RESULT_VOID(protocolClientNoExit(client), "client no exit");
+                TEST_RESULT_VOID(protocolClientFree(client), "client free");
                 HRN_STORAGE_REMOVE(hrnStorage, "lock/all" STOP_FILE_EXT);
             }
             HRN_FORK_PARENT_END();

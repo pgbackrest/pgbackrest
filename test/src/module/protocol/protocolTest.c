@@ -672,9 +672,6 @@ testRun(void)
                     protocolServerNew(STRDEF("local server 1"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
                     "local server 1");
 
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
-                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
-
                 // Command with output
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-one"), "c-one command get");
 
@@ -697,9 +694,6 @@ testRun(void)
                     server,
                     protocolServerNew(STRDEF("local server 2"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
                     "local server 2");
-
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_NOOP, "noop command get");
-                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
                 // Command with output
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c2"), "c2 command get");

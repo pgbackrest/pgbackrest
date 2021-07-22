@@ -201,6 +201,10 @@ protocolLocalExec(
         strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u protocol", processId),
         PROTOCOL_SERVICE_LOCAL_STR, execIoRead(helper->exec), execIoWrite(helper->exec));
 
+    // Send one noop to catch any errors that might happen after the greeting
+    protocolClientNoOp(helper->client);
+
+    // Move client to prior context
     protocolClientMove(helper->client, execMemContext(helper->exec));
 
     FUNCTION_TEST_RETURN_VOID();
@@ -581,9 +585,17 @@ protocolRemoteExec(
         PROTOCOL_SERVICE_REMOTE_STR, read, write);
 
     if (remoteType == CFGOPTVAL_REPO_HOST_TYPE_SSH)
+    {
+        // Send one noop to catch any errors that might happen after the greeting
+        protocolClientNoOp(helper->client);
+
+        // Client is now owned by exec so they get freed together
         protocolClientMove(helper->client, execMemContext(helper->exec));
+    }
     else
     {
+        ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
+
         // Pass parameters to server
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
         pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));

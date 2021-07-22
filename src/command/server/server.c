@@ -50,10 +50,6 @@ cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const S
             PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(socketSession),
             ioSessionIoWrite(socketSession));
 
-        // Get the command and put data end. No need to check parameters since we know this is the first noop.
-        CHECK(protocolServerCommandGet(socketServer).id == PROTOCOL_COMMAND_NOOP);
-        protocolServerDataEndPut(socketServer);
-
         // Negotiate TLS if requested
         ProtocolServerCommandGetResult command = protocolServerCommandGet(socketServer);
 
@@ -69,10 +65,6 @@ cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const S
             ProtocolServer *const tlsServer = protocolServerNew(
                 PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
                 ioSessionIoWrite(tlsSession));
-
-            // Get the command and put data end. No need to check parameters since we know this is the first noop.
-            CHECK(protocolServerCommandGet(tlsServer).id == PROTOCOL_COMMAND_NOOP);
-            protocolServerDataEndPut(tlsServer);
 
             // Get parameter list from the client and load it
             command = protocolServerCommandGet(tlsServer);
@@ -95,9 +87,15 @@ cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const S
 
             ioSessionFree(tlsSession);
         }
-        // Else exit
+        // Else a noop used to ping the server
         else
+        {
+            // Process noop
+            CHECK(command.id == PROTOCOL_COMMAND_NOOP);
+            protocolServerDataEndPut(socketServer);
+
             ioSessionFree(socketSession);
+        }
     }
     else
     {
