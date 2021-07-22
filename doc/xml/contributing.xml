@@ -47,6 +47,16 @@
     </host-define>
 
     <!-- ======================================================================================================================= -->
+    <section id="contents">
+        <title>Table of Contents</title>
+
+        <p><link section="/introduction">Introduction</link></p>
+        <p><link section="/environment">Building a Development Environment</link></p>
+        <p><link section="/coding">Coding</link></p>
+        <p><link section="/testing">Testing</link></p>
+        <p><link section="/pr">Submitting a Pull Request</link></p>
+    </section>
+
     <section id="introduction">
         <title>Introduction</title>
 
@@ -58,7 +68,7 @@
 
         You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.
 
-        Coding standards are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link> and some important coding details and an example are provided in the <link section="/coding">Coding</link> section below. At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the <link section="/testing">Testing</link> section below for details.</p>
+        Coding standards are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link> and some important coding details and an example are provided in the <link section="/coding">Coding</link> section below. At a minimum, unit tests must be written and run and the documentation generated before <link section="/pr">submitting a Pull Request</link>; see the <link section="/testing">Testing</link> section below for details.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -318,7 +328,7 @@ myObjToLog(const MyObj *this)
                 <list-item><setting>--test</setting> - the actual test set to be run</list-item>
                 <list-item><setting>--run</setting> - a number identifying the run within a test if testing a single run rather than the entire test</list-item>
                 <list-item><setting>--vm-out</setting> - displays the test output (helpful for monitoring the progress)</list-item>
-                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code></list-item>
+                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code>. See <link url="{[github-url-master]}.github/workflows/test.yml">test.yml</link> for a list of valid vm codes noted by <code>param: test</code>.</list-item>
             </list>
 
             <p>For more options, run the test or documentation engine with the <setting>--help</setting> option:</p>
@@ -433,7 +443,7 @@ pgbackrest/doc/doc.pl --help
 // *****************************************************************************************************************************
 if (testBegin("expireBackup()"))
 {
-    //--------------------------------------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("manifest file removal");
                 </code-block>
             </section>
@@ -477,6 +487,8 @@ HRN_STORAGE_PUT_EMPTY(
                     <list-item><id>TEST_RESULT_VOID</id> - The function being tested returns a <code>void</code>. This is then usually followed by tests that ensure other actions occurred (e.g. a file was written to disk).</list-item>
                     <list-item><id>TEST_ERROR</id> / <id>TEST_ERROR_FMT</id> - Test that a specific error code was raised with specific wording.</list-item>
                 </list>
+
+                <admonition type="note"><code>HRN_*</code> macros should be used only for test setup and cleanup. <code>TEST_*</code> macros must be used for testing results.</admonition>
             </section>
 
             <section id="test-log">
@@ -488,6 +500,8 @@ HRN_STORAGE_PUT_EMPTY(
 TEST_RESULT_LOG(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
                 </code-block>
+
+                <p>In the above, <code>Pxx</code> indicates the process (P) and the process number (xx), e.g. P00, P01.</p>
             </section>
 
             <section id="test-child">
@@ -578,6 +592,28 @@ pgbackrest/test/test.pl --vm-out --module=command --test=check --vm=u20
             <code-block>
 pgbackrest/test/test.pl --vm-out --module=command --test=check --run=1 --no-cleanup
             </code-block>
+        </section>
+
+        <section id="test-output">
+            <title>Understanding Test Output</title>
+
+            <p>The following is a small sample of a typical test output.</p>
+
+            <code-block>
+run 8 - expireTimeBasedBackup()
+
+run 8/1 ------------- L2285 no current backups
+    000.002s          L2298     empty backup.info
+    000.009s 000.007s L2300     no backups to expire
+            </code-block>
+
+            <p><b>run 8 - expireTimeBasedBackup()</b> - indicates the run number (8) within the module and the parameter provided to testBegin, e.g. <code>testBegin("expireTimeBasedBackup()")</code></p>
+
+            <p><b>run 8/1 ------------- L2285 no current backups</b> - this is the first test (1) in run 8 which is the <code>TEST_TITLE("no current backups");</code> at line number 2285.</p>
+
+            <p><b>000.002s          L2298     empty backup.info</b> -  the first number, 000.002s, is the time in seconds that the test started from the beginning of the run. L2298 is the line number of the test and <code>empty backup.info</code> is the test comment.</p>
+
+            <p><b>000.009s 000.007s L2300     no backups to expire</b> -  again, 000.009s, is the time in seconds that the test started from the beginning of the run. The second number, 000.007s, is the run time of the <b>previous</b> test (i.e. <code>empty backup.info</code> test took 000.007 seconds to execute). L2300 is the line number of the test and <code>no backups to expire</code> is the test comment.</p>
         </section>
     </section>
 
@@ -730,7 +766,7 @@ pgbackrest/doc/doc.pl --output=html --no-exe
 
             <p>The generated HTML files will be placed in the <file>doc/output/html</file> directory where they can be viewed locally in a browser.</p>
 
-            <p>If Docker is installed, it will be used by the documentation generator to execute the code elements while building the documentation. <setting>--no-cache</setting> may be used to force a full build even when no code elements have changed since the last build. <setting>--pre</setting> will reuse the container definitions from the prior build and saves time during development.</p>
+            <p>If Docker is installed, it will be used by the documentation generator to execute the code elements while building the documentation, therefore, the <setting>--no-exe</setting> should be omitted, (i.e. <code>pgbackrest/doc/doc.pl --output=html</code>). <setting>--no-cache</setting> may be used to force a full build even when no code elements have changed since the last build. <setting>--pre</setting> will reuse the container definitions from the prior build and saves time during development.</p>
 
             <p>The containers created for documentation builds can be useful for manually testing or trying out new code or features. The following demonstrates building through just the <code>quickstart</code> section of the <file>user-guide</file> without encryption.</p>
 
@@ -740,5 +776,41 @@ pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --va
 
             <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec doc-pg-primary bash</code>.  Additionally, the <code>-u</code> option can be added for entering the container as a specific user (e.g. <code>postgres</code>).</p>
         </section>
+    </section>
+
+    <section id="pr">
+        <title>Submitting a Pull Request</title>
+
+        <p>Before submitting a Pull Request:</p>
+
+        <list>
+            <list-item>Does it meet the <link url="{[github-url-master]}/CODING.md">coding standards</link>?
+            </list-item>
+            <list-item>Have <link section="/testing/unit-test">Unit Tests</link> been written and <link section="/testing/unit-test-run">run</link> with 100% coverage?
+            </list-item>
+            <list-item>If your submission includes changes to the help or online documentation, have the <link section="/option/help-test">help</link> and <link section="/option/doc-test">documentation</link> tests been run?
+            </list-item>
+            <list-item>Has it passed continuous integration testing? Simply renaming your branch with the appendix <code>-cig</code> and pushing it to your GitHub account will initiate GitHub Actions to run CI tests.
+            </list-item>
+        </list>
+
+        <p>When submitting a Pull Request:</p>
+        <list>
+            <list-item>Provide a short submission title.
+            </list-item>
+            <list-item>Write a detailed comment to describe the purpose of your submission and any issue(s), if any, it is resolving; a link to the GitHub issue is also helpful.
+            </list-item>
+        </list>
+
+        <p>After submitting a Pull Request:</p>
+
+        <list>
+            <list-item>One or more reviewers will be assigned.
+            </list-item>
+            <list-item>Respond to any issues (conversations) in GitHub but do not resolve the conversation; the reviewer is responsible for ensuring the issue raised has been resolved and marking the conversation resolved. It is helpful to supply the commit in your reply if one was submitted to fix the issue.
+            </list-item>
+        </list>
+
+        <p>Lastly, thank you for contributing to <backrest/>!</p>
     </section>
 </doc>

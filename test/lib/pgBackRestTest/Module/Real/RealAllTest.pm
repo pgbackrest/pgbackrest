@@ -284,7 +284,7 @@ sub run
 
             if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
             {
-                # If there is only a primary and a replica and the replica is the backup destination, then if pg2-host and pg3-host
+                # If there is only a primary and a replica and the replica is the backup destination, then if pg2-host and pg8-host
                 # are BOGUS, confirm failure to reach the primary
                 if (!$bHostBackup && $bHostStandby && $strBackupDestination eq HOST_DB_STANDBY)
                 {

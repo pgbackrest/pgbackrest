@@ -146,6 +146,17 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-pull-request id="1469"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Update contributing documentation and add pull request template.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                             <release-item-reviewer id="david.steele"/>
