@@ -403,7 +403,7 @@ testRun(void)
             "file {file, s=8, m=0660}\n"
             "link {link, d=../file}\n"
             "pipe {special}\n",
-            "    check content");
+            "check content");
 
 #ifdef TEST_CONTAINER_REQUIRED
         HRN_SYSTEM("sudo rmdir " TEST_PATH "/pg/.include");
@@ -429,7 +429,7 @@ testRun(void)
             "link {link, d=../file}\n"
             "file {file, s=8, m=0660}\n"
             ". {path}\n",
-            "    check content");
+            "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path - filter");
@@ -444,7 +444,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             callbackData.content,
             "path {path, m=0700}\n",
-            "    check content");
+            "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("filter in subpath during recursion");
