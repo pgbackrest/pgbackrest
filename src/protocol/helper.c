@@ -201,7 +201,7 @@ protocolLocalExec(
         strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u protocol", processId),
         PROTOCOL_SERVICE_LOCAL_STR, execIoRead(helper->exec), execIoWrite(helper->exec));
 
-    // Move client to prior context
+    // Move client to exec context so they are freed together
     protocolClientMove(helper->client, execMemContext(helper->exec));
 
     FUNCTION_TEST_RETURN_VOID();
@@ -599,7 +599,7 @@ protocolRemoteExec(
     {
         // SSH remote
         case CFGOPTVAL_REPO_HOST_TYPE_SSH:
-            // Client is now owned by exec so they get freed together
+            // Move client to exec context so they are freed together
             protocolClientMove(helper->client, execMemContext(helper->exec));
             break;
 

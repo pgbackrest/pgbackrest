@@ -573,6 +573,11 @@ testRun(void)
                 harnessLogLevelReset();
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("noop command");
+
+                TEST_RESULT_VOID(protocolClientNoOp(client), "noop");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("simple command");
 
                 TEST_RESULT_STR_Z(
