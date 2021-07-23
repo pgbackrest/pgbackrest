@@ -15,7 +15,8 @@ typedef enum
     protocolStorageTypeRepo = STRID5("repo", 0x7c0b20),
 } ProtocolStorageType;
 
-#include "protocol/client.h"
+#include "common/io/server.h"
+#include "protocol/server.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -58,6 +59,9 @@ ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsig
 
 // Free (shutdown) a remote
 void protocolRemoteFree(unsigned int hostId);
+
+// Initialize a server
+ProtocolServer *protocolServer(IoServer *const tlsServer, IoSession *const socketSession);
 
 /***********************************************************************************************************************************
 Destructor
