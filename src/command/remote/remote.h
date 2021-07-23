@@ -4,10 +4,12 @@ Remote Command
 #ifndef COMMAND_REMOTE_REMOTE_H
 #define COMMAND_REMOTE_REMOTE_H
 
+#include "protocol/server.h"
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Remote command
-void cmdRemote(int fdRead, int fdWrite);
+void cmdRemote(ProtocolServer *server);
 
 #endif

@@ -75,13 +75,13 @@ testRun(void)
             {
                 StringList *argList = strLstNew();
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/BOGUS");
-                hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
                 hrnCfgArgRawZ(argList, cfgOptPgHost, host);
                 hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
                 hrnCfgArgRawZ(argList, cfgOptPgHostType, "tls");
                 hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-                HRN_CFG_LOAD(cfgCmdBackup, argList);
+                hrnCfgArgRawZ(argList, cfgOptProcess, "1");
+                HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal);
 
                 // Client 3
                 const Storage *storageRemote = NULL;

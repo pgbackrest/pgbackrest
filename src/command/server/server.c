@@ -5,6 +5,7 @@ Server Command
 
 #include <sys/wait.h>
 
+#include "command/remote/remote.h"
 #include "command/server/server.h"
 #include "common/debug.h"
 #include "common/fork.h"
@@ -18,16 +19,6 @@ Server Command
 #include "protocol/server.h"
 #include "storage/remote/protocol.h"
 
-/***********************************************************************************************************************************
-Command handlers
-***********************************************************************************************************************************/
-static const ProtocolServerHandler commandRemoteHandlerList[] =
-{
-    PROTOCOL_SERVER_HANDLER_DB_LIST
-    PROTOCOL_SERVER_HANDLER_OPTION_LIST
-    PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
-};
-
 /**********************************************************************************************************************************/
 static bool
 cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const String *const host)
@@ -38,7 +29,7 @@ cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const S
         FUNCTION_LOG_PARAM(STRING, host);
     FUNCTION_LOG_END();
 
-    // Fork off the async process
+    // Fork off the server process
     pid_t pid = forkSafe();
 
     if (pid == 0)
@@ -81,9 +72,8 @@ cmdServerFork(IoServer *const tlsServer, IoSession *const socketSession, const S
             // Detach from parent process
             forkDetach();
 
-            // !!! NEED TO CALL cmdRemote() DIRECTLY, WHICH WILL REQUIRE SOME REFACTORING
-            protocolServerProcess(
-                tlsServer, NULL, commandRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandRemoteHandlerList));
+            // Start standard remote processing
+            cmdRemote(tlsServer);
 
             ioSessionFree(tlsSession);
         }

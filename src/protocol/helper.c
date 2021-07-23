@@ -201,9 +201,6 @@ protocolLocalExec(
         strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u protocol", processId),
         PROTOCOL_SERVICE_LOCAL_STR, execIoRead(helper->exec), execIoWrite(helper->exec));
 
-    // Send one noop to catch any errors that might happen after the greeting
-    protocolClientNoOp(helper->client);
-
     // Move client to prior context
     protocolClientMove(helper->client, execMemContext(helper->exec));
 
@@ -247,6 +244,9 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx, 
             protocolLocalExec(protocolHelperClient, protocolStorageType, hostIdx, processId);
         }
         MEM_CONTEXT_END();
+
+        // Send noop to catch initialization errors
+        protocolClientNoOp(protocolHelperClient->client);
     }
 
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient->client);
@@ -532,51 +532,61 @@ protocolRemoteExec(
     const String *const host = cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx);
     const TimeMSec timeout = cfgOptionUInt64(cfgOptProtocolTimeout);
 
-    // If SSH remote
+    // Handle remote types
     IoRead *read;
     IoWrite *write;
 
-    if (remoteType == CFGOPTVAL_REPO_HOST_TYPE_SSH)
+    switch (remoteType)
     {
-        helper->exec = execNew(
-            cfgOptionStr(cfgOptCmdSsh), protocolRemoteParamSsh(protocolStorageType, hostIdx),
-            strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(host)),
-            cfgOptionUInt64(cfgOptProtocolTimeout));
-        execOpen(helper->exec);
+        // SSH remote
+        case CFGOPTVAL_REPO_HOST_TYPE_SSH:
+        {
+            // Exec SSH
+            helper->exec = execNew(
+                cfgOptionStr(cfgOptCmdSsh), protocolRemoteParamSsh(protocolStorageType, hostIdx),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(host)),
+                cfgOptionUInt64(cfgOptProtocolTimeout));
+            execOpen(helper->exec);
 
-        read = execIoRead(helper->exec);
-        write = execIoWrite(helper->exec);
-    }
-    // Else TLS remote
-    else
-    {
-        ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
+            read = execIoRead(helper->exec);
+            write = execIoWrite(helper->exec);
 
-        // !!! THIS SHOULD BE HANDLED BY A DEFAULT
-        unsigned int port = 8432;
-        ConfigOption portOption = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
+            break;
+        }
 
-        if (cfgOptionIdxTest(portOption, hostIdx))
-            port = cfgOptionIdxUInt(portOption, hostIdx);
+        // TLS remote
+        default:
+        {
+            ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
 
-        // Open socket
-        IoClient *socketClient = sckClientNew(host, port, timeout);
-        IoSession *socketSession = ioClientOpen(socketClient);
+            // !!! THIS SHOULD BE HANDLED BY A DEFAULT
+            unsigned int port = 8432;
+            ConfigOption portOption = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
 
-        // Send TLS request
-        ProtocolClient *client = protocolClientNew(
-            strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u socket protocol on '%s'", processId, strZ(host)), PROTOCOL_SERVICE_REMOTE_STR,
-            ioSessionIoRead(socketSession), ioSessionIoWrite(socketSession));
-        protocolClientNoExit(client);
-        protocolClientExecute(client, protocolCommandNew(PROTOCOL_COMMAND_TLS), false);
-        protocolClientFree(client);
+            if (cfgOptionIdxTest(portOption, hostIdx))
+                port = cfgOptionIdxUInt(portOption, hostIdx);
 
-        // Negotiate TLS
-        helper->ioClient = tlsClientNew(socketClient, host, timeout, false, NULL, NULL);
-        helper->ioSession = ioClientOpenSession(helper->ioClient, socketSession);
+            // Open socket
+            IoClient *socketClient = sckClientNew(host, port, timeout);
+            IoSession *socketSession = ioClientOpen(socketClient);
 
-        read = ioSessionIoRead(helper->ioSession);
-        write = ioSessionIoWrite(helper->ioSession);
+            // Send TLS request
+            ProtocolClient *client = protocolClientNew(
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u socket protocol on '%s'", processId, strZ(host)),
+                PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(socketSession), ioSessionIoWrite(socketSession));
+            protocolClientNoExit(client);
+            protocolClientExecute(client, protocolCommandNew(PROTOCOL_COMMAND_TLS), false);
+            protocolClientFree(client);
+
+            // Negotiate TLS
+            helper->ioClient = tlsClientNew(socketClient, host, timeout, false, NULL, NULL);
+            helper->ioSession = ioClientOpenSession(helper->ioClient, socketSession);
+
+            read = ioSessionIoRead(helper->ioSession);
+            write = ioSessionIoWrite(helper->ioSession);
+
+            break;
+        }
     }
 
     // Create protocol object
@@ -584,22 +594,27 @@ protocolRemoteExec(
         strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u %s protocol on '%s'", processId, strZ(strIdToStr(remoteType)), strZ(host)),
         PROTOCOL_SERVICE_REMOTE_STR, read, write);
 
-    if (remoteType == CFGOPTVAL_REPO_HOST_TYPE_SSH)
+    // Remote initialization
+    switch (remoteType)
     {
-        // Send one noop to catch any errors that might happen after the greeting
-        protocolClientNoOp(helper->client);
+        // SSH remote
+        case CFGOPTVAL_REPO_HOST_TYPE_SSH:
+            // Client is now owned by exec so they get freed together
+            protocolClientMove(helper->client, execMemContext(helper->exec));
+            break;
 
-        // Client is now owned by exec so they get freed together
-        protocolClientMove(helper->client, execMemContext(helper->exec));
-    }
-    else
-    {
-        ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
+        // TLS remote
+        default:
+        {
+            ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
 
-        // Pass parameters to server
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
-        pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
-        protocolClientExecute(helper->client, command, false);
+            // Pass parameters to server
+            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
+            pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
+            protocolClientExecute(helper->client, command, false);
+
+            break;
+        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -650,6 +665,9 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
             protocolRemoteExec(protocolHelperClient, protocolStorageType, hostIdx, processId);
+
+            // Send noop to catch initialization errors
+            protocolClientNoOp(protocolHelperClient->client);
 
             // Get cipher options from the remote if none are locally configured
             if (isRepo && cfgOptionIdxStrId(cfgOptRepoCipherType, hostIdx) == cipherTypeNone)
