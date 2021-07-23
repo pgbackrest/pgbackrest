@@ -274,7 +274,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawBool(argList, cfgOptLogTimestamp, false);
+        hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
 
         harnessLogLevelSet(logLevelWarn);
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
@@ -305,7 +305,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawBool(argList, cfgOptLogTimestamp, false);
+        hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "incr");
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
 
@@ -323,7 +323,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawBool(argList, cfgOptLogTimestamp, false);
+        hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "diff");
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
 
@@ -351,7 +351,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawBool(argList, cfgOptLogTimestamp, false);
+        hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "diff");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "3");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
@@ -367,7 +367,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawBool(argList, cfgOptLogTimestamp, false);
+        hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "diff");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "3");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionDiff, "2");
@@ -379,7 +379,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawBool(argList, cfgOptLogTimestamp, false);
+        hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFullType, "time");
         harnessLogLevelSet(logLevelWarn);
@@ -425,7 +425,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 1, "bogus.bucket");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "region");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 1, "endpoint");
-        hrnCfgArgKeyRawBool(argList, cfgOptRepoStorageVerifyTls, 1, false);
+        hrnCfgArgKeyRawNegate(argList, cfgOptRepoStorageVerifyTls, 1);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .comment = "invalid bucket with no verification");
 
@@ -455,7 +455,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawBool(argList, cfgOptCompress, false);
+        hrnCfgArgRawNegate(argList, cfgOptCompress);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "compress-type=none");
@@ -480,7 +480,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawBool(argList, cfgOptCompress, false);
+        hrnCfgArgRawNegate(argList, cfgOptCompress);
         hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -497,17 +497,17 @@ testRun(void)
     if (testBegin("cfgLoadLogFile()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--pg1-path=/path");
-        strLstAddZ(argList, "--lock-path=" HRN_PATH "/lock");
-        strLstAddZ(argList, "--log-path=/bogus");
-        strLstAddZ(argList, "--log-level-file=info");
-        strLstAddZ(argList, "backup");
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path");
+        hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
+        hrnCfgArgRawZ(argList, cfgOptLogPath, "/bogus");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "info");
+        strLstAddZ(argList, CFGCMD_BACKUP);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for backup");
         lockRelease(true);
 
-        // On the error case is tested here, success is tested in cfgLoad()
+        // Only the error case is tested here, success is tested in cfgLoad()
         TEST_RESULT_VOID(cfgLoadLogFile(), "attempt to open bogus log file");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLogLevelFile), "off", "log-level-file should now be off");
     }
@@ -520,84 +520,94 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
-        strLstAddZ(argList, "--" CFGOPT_LOCK_PATH "=" HRN_PATH "/lock");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
         strLstAddZ(argList, CFGCMD_EXPIRE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
-        TEST_RESULT_VOID(storageRepoWrite(), "  check writable storage");
+        TEST_RESULT_VOID(storageRepoWrite(), "check writable storage");
         lockRelease(true);
 
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("dry-run valid, dry-run");
 
-        strLstAddZ(argList, "--" CFGOPT_DRY_RUN);
+        hrnCfgArgRawBool(argList, cfgOptDryRun, true);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
         TEST_ERROR(
             storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
         lockRelease(true);
 
-        // Command does not have umask and disables keep-alives
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("command does not have umask and disables keep-alives");
+
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--no-" CFGOPT_SCK_KEEP_ALIVE);
-        strLstAddZ(argList, "--" CFGOPT_SCK_BLOCK);
-        strLstAddZ(argList, "info");
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawNegate(argList, cfgOptSckKeepAlive);
+        hrnCfgArgRawBool(argList, cfgOptSckBlock, true);
+        strLstAddZ(argList, CFGCMD_INFO);
 
         socketLocal = (struct SocketLocal){.init = false};
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config and don't set umask");
-        TEST_RESULT_BOOL(socketLocal.init, true, "   check socketLocal.init");
-        TEST_RESULT_BOOL(socketLocal.block, true, "   check socketLocal.block");
-        TEST_RESULT_BOOL(socketLocal.keepAlive, false, "   check socketLocal.keepAlive");
-        TEST_RESULT_UINT(ioTimeoutMs(), 60000, "   check io timeout");
+        TEST_RESULT_BOOL(socketLocal.init, true, "check socketLocal.init");
+        TEST_RESULT_BOOL(socketLocal.block, true, "check socketLocal.block");
+        TEST_RESULT_BOOL(socketLocal.keepAlive, false, "check socketLocal.keepAlive");
+        TEST_RESULT_UINT(ioTimeoutMs(), 60000, "check io timeout");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("umask is reset, neutral-umask=y");
 
         // Set a distinct umask value and test that the umask is reset by configLoad since default for neutral-umask=y
-        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--log-level-console=off");
-        strLstAddZ(argList, "--log-level-stderr=off");
-        strLstAddZ(argList, "--log-level-file=off");
-        strLstAddZ(argList, "--io-timeout=95.5");
-        strLstAddZ(argList, "archive-get");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
+        hrnCfgArgRawZ(argList, cfgOptIoTimeout, "95.5");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
 
         umask(0111);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for neutral-umask");
-        TEST_RESULT_INT(umask(0111), 0000, "    umask was reset");
-        TEST_RESULT_UINT(ioTimeoutMs(), 95500, "   check io timeout");
+        TEST_RESULT_INT(umask(0111), 0000, "umask was reset");
+        TEST_RESULT_UINT(ioTimeoutMs(), 95500, "check io timeout");
+
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("umask is reset, neutral-umask=n");
 
         // Set a distinct umask value and test that the umask is not reset by configLoad with option --no-neutral-umask
-        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--no-neutral-umask");
-        strLstAddZ(argList, "--log-level-console=off");
-        strLstAddZ(argList, "--log-level-stderr=off");
-        strLstAddZ(argList, "--log-level-file=off");
-        strLstAddZ(argList, "archive-get");
+        hrnCfgArgRawNegate(argList, cfgOptNeutralUmask);
+        hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
 
         umask(0111);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for no-neutral-umask");
-        TEST_RESULT_INT(umask(0), 0111, "    umask was not reset");
+        TEST_RESULT_INT(umask(0), 0111, "umask was not reset");
 
-        // No command
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no command");
+
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, PROJECT_BIN);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "no command");
 
-        // Help command only
+
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("help command only");
+
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "help");
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAddZ(argList, CFGCMD_HELP);
 
         ioBufferSizeSet(333);
         socketLocal = (struct SocketLocal){.init = false};
@@ -606,130 +616,134 @@ testRun(void)
         TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
         TEST_RESULT_BOOL(socketLocal.init, false, "socketLocal not updated by help command");
 
-        // Help command for backup
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("help command for backup");
+
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
+        strLstAddZ(argList, PROJECT_BIN);
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "backup");
-        strLstAddZ(argList, "--log-level-console=off");
-        strLstAddZ(argList, "--log-level-stderr=off");
-        strLstAddZ(argList, "--log-level-file=off");
-        strLstAddZ(argList, "--repo1-retention-full=2");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
         TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
 
-        // Command takes lock and opens log file and uses custom tcp settings
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("command takes lock and opens log file and uses custom tcp settings");
+
         socketLocal = (struct SocketLocal){.init = false};
         struct stat statLog;
 
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--pg1-path=/path");
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--lock-path=" HRN_PATH "/lock");
-        strLstAddZ(argList, "--log-path=" TEST_PATH);
-        strLstAddZ(argList, "--log-level-console=off");
-        strLstAddZ(argList, "--log-level-stderr=off");
-        strLstAddZ(argList, "--log-level-file=warn");
-        strLstAddZ(argList, "--" CFGOPT_TCP_KEEP_ALIVE_COUNT "=11");
-        strLstAddZ(argList, "--" CFGOPT_TCP_KEEP_ALIVE_IDLE "=2222");
-        strLstAddZ(argList, "--" CFGOPT_TCP_KEEP_ALIVE_INTERVAL "=888");
-        strLstAddZ(argList, "backup");
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
+        hrnCfgArgRawZ(argList, cfgOptLogPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "warn");
+        hrnCfgArgRawZ(argList, cfgOptTcpKeepAliveCount, "11");
+        hrnCfgArgRawZ(argList, cfgOptTcpKeepAliveIdle, "2222");
+        hrnCfgArgRawZ(argList, cfgOptTcpKeepAliveInterval, "888");
+        strLstAddZ(argList, CFGCMD_BACKUP);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
-        TEST_RESULT_INT(lstat(TEST_PATH "/db-backup.log", &statLog), 0, "   check log file exists");
-        TEST_RESULT_PTR_NE(cfgOptionStr(cfgOptExecId), NULL, "   exec-id is set");
-        TEST_RESULT_BOOL(socketLocal.init, true, "   check socketLocal.init");
-        TEST_RESULT_BOOL(socketLocal.block, false, "   check socketLocal.block");
-        TEST_RESULT_BOOL(socketLocal.keepAlive, true, "   check socketLocal.keepAlive");
-        TEST_RESULT_INT(socketLocal.tcpKeepAliveCount, 11, "   check socketLocal.tcpKeepAliveCount");
-        TEST_RESULT_INT(socketLocal.tcpKeepAliveIdle, 2222, "   check socketLocal.tcpKeepAliveIdle");
-        TEST_RESULT_INT(socketLocal.tcpKeepAliveInterval, 888, "   check socketLocal.tcpKeepAliveInterval");
+        TEST_RESULT_INT(lstat(TEST_PATH "/db-backup.log", &statLog), 0, "check log file exists");
+        TEST_RESULT_PTR_NE(cfgOptionStr(cfgOptExecId), NULL, "exec-id is set");
+        TEST_RESULT_BOOL(socketLocal.init, true, "check socketLocal.init");
+        TEST_RESULT_BOOL(socketLocal.block, false, "check socketLocal.block");
+        TEST_RESULT_BOOL(socketLocal.keepAlive, true, "check socketLocal.keepAlive");
+        TEST_RESULT_INT(socketLocal.tcpKeepAliveCount, 11, "check socketLocal.tcpKeepAliveCount");
+        TEST_RESULT_INT(socketLocal.tcpKeepAliveIdle, 2222, "check socketLocal.tcpKeepAliveIdle");
+        TEST_RESULT_INT(socketLocal.tcpKeepAliveInterval, 888, "check socketLocal.tcpKeepAliveInterval");
 
         lockRelease(true);
 
-        // Local command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local command opens log file with special filename");
+
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--log-path=" TEST_PATH);
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptLogPath, TEST_PATH);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
-        strLstAddZ(argList, "--process=1");
+        hrnCfgArgRawZ(argList, cfgOptProcess, "1");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-        strLstAddZ(argList, "--log-level-file=warn");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "warn");
         hrnCfgArgRawZ(argList, cfgOptExecId, "1111-fe70d611");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(lstat(TEST_PATH "/db-backup-local-001.log", &statLog), 0, "   check log file exists");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptExecId), "1111-fe70d611", "   exec-id is preserved");
+        TEST_RESULT_INT(lstat(TEST_PATH "/db-backup-local-001.log", &statLog), 0, "check log file exists");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptExecId), "1111-fe70d611", "exec-id is preserved");
 
-        // Remote command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote command opens log file with special filename");
+
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--log-path=" TEST_PATH);
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptLogPath, TEST_PATH);
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
-        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
-        strLstAddZ(argList, "--process=0");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "info");
+        hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
+        hrnCfgArgRawZ(argList, cfgOptProcess, "0");
         strLstAddZ(argList, CFGCMD_INFO ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(lstat(TEST_PATH "/all-info-remote-000.log", &statLog), 0, "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/all-info-remote-000.log", &statLog), 0, "check log file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remote command without archive-async option");
 
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--log-path=" TEST_PATH);
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptLogPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
-        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
-        strLstAddZ(argList, "--process=1");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "info");
+        hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
+        hrnCfgArgRawZ(argList, cfgOptProcess, "1");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-get-remote-001.log", &statLog), 0, "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-get-remote-001.log", &statLog), 0, "check log file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local command with archive-async option");
 
         argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest");
-        strLstAddZ(argList, "--log-path=" TEST_PATH);
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptLogPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-        strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
-        strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
-        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        strLstAddZ(argList, "--process=1");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "info");
+        hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptProcess, "1");
         strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-push-async-local-001.log", &statLog), 0, "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-push-async-local-001.log", &statLog), 0, "check log file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive-get command with async role");
 
         argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
-        strLstAddZ(argList, "--" CFGOPT_LOG_PATH "=" TEST_PATH);
-        strLstAddZ(argList, "--lock-path=" HRN_PATH "/lock");
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        hrnCfgArgRawZ(argList, cfgOptLogPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-get-async.log", &statLog), 0, "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-get-async.log", &statLog), 0, "check log file exists");
 
         lockRelease(true);
     }
