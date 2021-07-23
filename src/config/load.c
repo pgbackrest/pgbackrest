@@ -286,6 +286,9 @@ cfgLoadUpdateOption(void)
         }
     }
 
+    // Set pg-host-port/repo-host-port default when pg-host-type/repo-host-type is tls
+    // !!!
+
     // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.
     if (cfgOptionValid(cfgOptCompress))
     {

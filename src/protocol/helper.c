@@ -606,15 +606,9 @@ protocolRemoteExec(
         {
             ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
 
-            // !!! THIS SHOULD BE HANDLED BY A DEFAULT
-            unsigned int port = 8432;
-            ConfigOption portOption = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
-
-            if (cfgOptionIdxTest(portOption, hostIdx))
-                port = cfgOptionIdxUInt(portOption, hostIdx);
-
             // Open socket
-            IoClient *socketClient = sckClientNew(host, port, timeout);
+            IoClient *socketClient = sckClientNew(
+                host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx), timeout);
             IoSession *socketSession = ioClientOpen(socketClient);
 
             // Send TLS request
