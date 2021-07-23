@@ -245,6 +245,9 @@
                         <commit subject="Update storage tests to use standard patterns.">
                             <github-pull-request id="1470"/>
                         </commit>
+                        <commit subject="Update config tests (except parse) to use standard patterns.">
+                            <github-pull-request id="1473"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
