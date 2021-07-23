@@ -2,6 +2,7 @@
 Test Exec Configuration
 ***********************************************************************************************************************************/
 #include "common/harnessConfig.h"
+#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -15,21 +16,21 @@ testRun(void)
     if (testBegin("cfgExecParam()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "5");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/db path");
-        strLstAddZ(argList, "--pg2-path=/db2");
-        strLstAddZ(argList, "--log-subprocess");
-        strLstAddZ(argList, "--no-config");
-        strLstAddZ(argList, "--reset-neutral-umask");
-        strLstAddZ(argList, "--repo-cipher-type=aes-256-cbc");
-        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/db path");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/db2");
+        hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
+        hrnCfgArgRawBool(argList, cfgOptConfig, false);
+        hrnCfgArgRawReset(argList, cfgOptNeutralUmask);
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
 
         // Set repo1-cipher-pass to make sure it is not passed on the command line
-        setenv("PGBACKREST_REPO1_CIPHER_PASS", "1234", true);
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
-        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
+        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
         TEST_RESULT_STRLST_Z(
             cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, NULL, false, true),
@@ -46,18 +47,18 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/db path");
-        strLstAddZ(argList, "--db-include=1");
-        strLstAddZ(argList, "--db-include=2");
-        strLstAddZ(argList, "--recovery-option=a=b");
-        strLstAddZ(argList, "--recovery-option=c=d");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/db path");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "1");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "2");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "a=b");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "c=d");
         hrnCfgArgRawReset(argList, cfgOptLogPath);
 
-        setenv("PGBACKREST_REPO1_HOST", "bogus", true);
+        hrnCfgEnvRawZ(cfgOptRepoHost, "bogus");
         HRN_CFG_LOAD(cfgCmdRestore, argList, .noStd = true);
-        unsetenv("PGBACKREST_REPO1_HOST");
+        hrnCfgEnvRemoveRaw(cfgOptRepoHost);
 
         KeyValue *optionReplace = kvNew();
         kvPut(optionReplace, VARSTRDEF("repo1-path"), VARSTRDEF("/replace/path"));
