@@ -38,7 +38,9 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdInfo, argList, .role = cfgCmdRoleRemote);
 
-                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
+                cmdRemote(
+                    protocolServerNew(
+                        PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()));
             }
             HRN_FORK_CHILD_END();
 
@@ -70,7 +72,9 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
-                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
+                cmdRemote(
+                    protocolServerNew(
+                        PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()));
             }
             HRN_FORK_CHILD_END();
 
@@ -104,7 +108,9 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptLockPath, "/bogus");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote, .noStd = true);
 
-                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
+                cmdRemote(
+                    protocolServerNew(
+                        PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()));
             }
             HRN_FORK_CHILD_END();
 
@@ -150,7 +156,9 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
-                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
+                cmdRemote(
+                    protocolServerNew(
+                        PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()));
             }
             HRN_FORK_CHILD_END();
 
@@ -187,7 +195,9 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
-                cmdRemote(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
+                cmdRemote(
+                    protocolServerNew(
+                        PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()));
             }
             HRN_FORK_CHILD_END();
 

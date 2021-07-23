@@ -20,12 +20,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdLocal()"))
     {
-        // Create pipes for testing.  Read/write is from the perspective of the client.
-        int pipeRead[2];
-        int pipeWrite[2];
-        THROW_ON_SYS_ERROR(pipe(pipeRead) == -1, KernelError, "unable to read test pipe");
-        THROW_ON_SYS_ERROR(pipe(pipeWrite) == -1, KernelError, "unable to write test pipe");
-
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -37,7 +31,9 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
-                cmdLocal(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
+                cmdLocal(
+                    protocolServerNew(
+                        PROTOCOL_SERVICE_LOCAL_STR, PROTOCOL_SERVICE_LOCAL_STR, HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()));
             }
             HRN_FORK_CHILD_END();
 

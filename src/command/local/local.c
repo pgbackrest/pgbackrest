@@ -9,8 +9,6 @@ Local Command
 #include "command/restore/protocol.h"
 #include "command/verify/protocol.h"
 #include "common/debug.h"
-#include "common/io/fdRead.h"
-#include "common/io/fdWrite.h"
 #include "common/log.h"
 #include "config/config.intern.h"
 #include "config/protocol.h"
@@ -31,16 +29,12 @@ static const ProtocolServerHandler commandLocalHandlerList[] =
 
 /**********************************************************************************************************************************/
 void
-cmdLocal(int fdRead, int fdWrite)
+cmdLocal(ProtocolServer *server)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%s", strZ(cfgOptionDisplay(cfgOptProcess)));
-        ProtocolServer *server = protocolServerNew(
-            name, PROTOCOL_SERVICE_LOCAL_STR, ioFdReadNewOpen(name, fdRead, cfgOptionUInt64(cfgOptProtocolTimeout)),
-            ioFdWriteNewOpen(name, fdWrite, cfgOptionUInt64(cfgOptProtocolTimeout)));
         protocolServerProcess(
             server, cfgCommandJobRetry(), commandLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandLocalHandlerList));
     }
