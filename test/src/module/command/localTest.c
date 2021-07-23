@@ -37,7 +37,9 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
-                cmdLocal(HRN_FORK_CHILD_READ_FD(), HRN_FORK_CHILD_WRITE_FD());
+                cmdLocal(
+                    protocolServerNew(
+                        PROTOCOL_SERVICE_LOCAL_STR, PROTOCOL_SERVICE_LOCAL_STR, HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()));
             }
             HRN_FORK_CHILD_END();
 

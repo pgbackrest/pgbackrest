@@ -4,10 +4,12 @@ Local Command
 #ifndef COMMAND_LOCAL_LOCAL_H
 #define COMMAND_LOCAL_LOCAL_H
 
+#include "protocol/server.h"
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Local command
-void cmdLocal(int fdRead, int fdWrite);
+void cmdLocal(ProtocolServer *server);
 
 #endif

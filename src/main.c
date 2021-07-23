@@ -90,7 +90,12 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         else if (commandRole == cfgCmdRoleLocal)
         {
-            cmdLocal(STDIN_FILENO, STDOUT_FILENO);
+            String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%s", strZ(cfgOptionDisplay(cfgOptProcess)));
+
+            cmdLocal(
+                protocolServerNew(
+                    name, PROTOCOL_SERVICE_LOCAL_STR, ioFdReadNewOpen(name, STDIN_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout)),
+                    ioFdWriteNewOpen(name, STDOUT_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout))));
         }
         // Remote role
         // -------------------------------------------------------------------------------------------------------------------------
