@@ -357,8 +357,9 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
     }
     while (!done);
 
-    // Free TLS server
+    // Free servers
     ioServerFree(tlsServer);
+    ioServerFree(socketServer);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
