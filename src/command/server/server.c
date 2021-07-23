@@ -45,6 +45,10 @@ cmdServer(uint64_t connectionMax)
                 // Close the server socket so we don't hold the port open if the parent exits first
                 ioServerFree(socketServer);
 
+                // Disable logging and close log file !!! REOPEN LOG FILE HERE TO CATCH ERRORS? MAYBE SOMETHING LIKE
+                // logCloseConsole()
+                logClose();
+
                 // Detach from parent process
                 forkDetach();
 
