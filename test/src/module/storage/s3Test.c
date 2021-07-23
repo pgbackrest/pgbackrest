@@ -223,7 +223,7 @@ testRun(void)
 
     // Config settings that are required for every test (without endpoint for special tests)
     StringList *commonArgWithoutEndpointList = strLstNew();
-    strLstAddZ(commonArgWithoutEndpointList, "--" CFGOPT_STANZA "=db");
+    hrnCfgArgRawZ(commonArgWithoutEndpointList, cfgOptStanza, "db");
     hrnCfgArgRawZ(commonArgWithoutEndpointList, cfgOptRepoType, "s3");
     hrnCfgArgRaw(commonArgWithoutEndpointList, cfgOptRepoPath, path);
     hrnCfgArgRaw(commonArgWithoutEndpointList, cfgOptRepoS3Bucket, bucket);
@@ -345,7 +345,7 @@ testRun(void)
             "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
                 "SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,"
                 "Signature=85278841678ccbc0f137759265030d7b5e237868dd36eea658426b18344d1685",
-            "    check authorization header");
+            "check authorization header");
     }
 
     // *****************************************************************************************************************************
@@ -389,8 +389,9 @@ testRun(void)
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
 
-                // Coverage for noop functions
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("coverage for noop functions");
+
                 TEST_RESULT_VOID(storagePathSyncP(s3, STRDEF("path")), "path sync is a noop");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -572,8 +573,8 @@ testRun(void)
 
                 StorageRead *read = NULL;
                 TEST_ASSIGN(read, storageNewReadP(s3, STRDEF("file.txt"), .ignoreMissing = true), "new read file");
-                TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
-                TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
+                TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "check ignore missing");
+                TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "check name");
 
                 TEST_ERROR(
                     ioReadOpen(storageReadIo(read)), ProtocolError,
@@ -811,10 +812,10 @@ testRun(void)
 
                 StorageInfo info;
                 TEST_ASSIGN(info, storageInfoP(s3, STRDEF("subdir/file1.txt")), "file exists");
-                TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                TEST_RESULT_UINT(info.size, 9999, "    check exists");
-                TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
+                TEST_RESULT_BOOL(info.exists, true, "check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
+                TEST_RESULT_UINT(info.size, 9999, "check exists");
+                TEST_RESULT_INT(info.timeModified, 1445412480, "check time");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");
@@ -823,10 +824,10 @@ testRun(void)
                 testResponseP(service, .header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
 
                 TEST_ASSIGN(info, storageInfoP(s3, STRDEF("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
-                TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                TEST_RESULT_UINT(info.size, 0, "    check exists");
-                TEST_RESULT_INT(info.timeModified, 0, "    check time");
+                TEST_RESULT_BOOL(info.exists, true, "check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
+                TEST_RESULT_UINT(info.size, 0, "check exists");
+                TEST_RESULT_INT(info.timeModified, 0, "check time");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("errorOnMissing invalid because there are no paths");
