@@ -388,6 +388,39 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("set default when pg-host-type is tls");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "host1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostType, 1, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "host2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostType, 2, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostPort, 2, "3333");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgHostPort, 0), 8432, "default port");
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgHostPort, 1), 3333, "set port");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("set default when repo-host-type is tls");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "host1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostType, 1, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "host2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostType, 2, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostPort, 2, "4444");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptRepoHostPort, 0), 8432, "default port");
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptRepoHostPort, 1), 4444, "set port");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid bucket name with verification enabled fails");
 
         argList = strLstNew();
