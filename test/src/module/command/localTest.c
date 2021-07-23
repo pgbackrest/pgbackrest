@@ -20,12 +20,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdLocal()"))
     {
-        // Create pipes for testing.  Read/write is from the perspective of the client.
-        int pipeRead[2];
-        int pipeWrite[2];
-        THROW_ON_SYS_ERROR(pipe(pipeRead) == -1, KernelError, "unable to read test pipe");
-        THROW_ON_SYS_ERROR(pipe(pipeWrite) == -1, KernelError, "unable to write test pipe");
-
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
