@@ -177,7 +177,7 @@ testRun(void)
         TEST_TITLE("storage with default options");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
@@ -187,16 +187,16 @@ testRun(void)
 
         Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
-        TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
-        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->account, TEST_ACCOUNT_STR, "    check account");
-        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->container, TEST_CONTAINER_STR, "    check container");
+        TEST_RESULT_STR_Z(storage->path, "/repo", "check path");
+        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->account, TEST_ACCOUNT_STR, "check account");
+        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->container, TEST_CONTAINER_STR, "check container");
         TEST_RESULT_STR(
-            strNewEncode(encodeBase64, ((StorageAzure *)storageDriver(storage))->sharedKey), TEST_KEY_SHARED_STR, "    check key");
-        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
-        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "    check path prefix");
-        TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
+            strNewEncode(encodeBase64, ((StorageAzure *)storageDriver(storage))->sharedKey), TEST_KEY_SHARED_STR, "check key");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".blob.core.windows.net", "check host");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "check path prefix");
+        TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "check block size");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "check path feature");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "check compress feature");
     }
 
     // *****************************************************************************************************************************
@@ -281,7 +281,7 @@ testRun(void)
                 TEST_TITLE("test against local host");
 
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
                 hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
@@ -296,9 +296,9 @@ testRun(void)
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
                 driver = (StorageAzure *)storageDriver(storage);
-                TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
-                TEST_RESULT_STR_Z(driver->pathPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check path prefix");
-                TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
+                TEST_RESULT_STR(driver->host, hrnServerHost(), "check host");
+                TEST_RESULT_STR_Z(driver->pathPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "check path prefix");
+                TEST_RESULT_BOOL(driver->fileId == 0, false, "check file id");
 
                 // Tests need the block size to be 16
                 driver->blockSize = 16;
@@ -349,8 +349,8 @@ testRun(void)
 
                 StorageRead *read = NULL;
                 TEST_ASSIGN(read, storageNewReadP(storage, STRDEF("file.txt"), .ignoreMissing = true), "new read file");
-                TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
-                TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
+                TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "check ignore missing");
+                TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "check name");
 
                 TEST_ERROR_FMT(
                     ioReadOpen(storageReadIo(read)), ProtocolError,
@@ -494,10 +494,10 @@ testRun(void)
 
                 StorageInfo info;
                 TEST_ASSIGN(info, storageInfoP(storage, STRDEF("subdir/file1.txt")), "file exists");
-                TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                TEST_RESULT_UINT(info.size, 9999, "    check exists");
-                TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
+                TEST_RESULT_BOOL(info.exists, true, "check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
+                TEST_RESULT_UINT(info.size, 9999, "check exists");
+                TEST_RESULT_INT(info.timeModified, 1445412480, "check time");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");
@@ -507,10 +507,10 @@ testRun(void)
 
                 TEST_ASSIGN(
                     info, storageInfoP(storage, STRDEF("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
-                TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                TEST_RESULT_UINT(info.size, 0, "    check exists");
-                TEST_RESULT_INT(info.timeModified, 0, "    check time");
+                TEST_RESULT_BOOL(info.exists, true, "check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
+                TEST_RESULT_UINT(info.size, 0, "check exists");
+                TEST_RESULT_INT(info.timeModified, 0, "check time");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list basic level");

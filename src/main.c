@@ -32,10 +32,13 @@ Main
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/exit.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "common/stat.h"
 #include "config/config.h"
 #include "config/load.h"
 #include "postgres/interface.h"
+#include "protocol/helper.h"
 #include "storage/helper.h"
 #include "version.h"
 
@@ -85,13 +88,23 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         else if (commandRole == cfgCmdRoleLocal)
         {
-            cmdLocal(STDIN_FILENO, STDOUT_FILENO);
+            String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%s", strZ(cfgOptionDisplay(cfgOptProcess)));
+
+            cmdLocal(
+                protocolServerNew(
+                    name, PROTOCOL_SERVICE_LOCAL_STR, ioFdReadNewOpen(name, STDIN_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout)),
+                    ioFdWriteNewOpen(name, STDOUT_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout))));
         }
         // Remote role
         // -------------------------------------------------------------------------------------------------------------------------
         else if (commandRole == cfgCmdRoleRemote)
         {
-            cmdRemote(STDIN_FILENO, STDOUT_FILENO);
+            String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-%s", strZ(cfgOptionDisplay(cfgOptProcess)));
+
+            cmdRemote(
+                protocolServerNew(
+                    name, PROTOCOL_SERVICE_REMOTE_STR, ioFdReadNewOpen(name, STDIN_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout)),
+                    ioFdWriteNewOpen(name, STDOUT_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout))));
         }
         else
         {

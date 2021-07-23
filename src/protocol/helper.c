@@ -196,6 +196,7 @@ protocolLocalExec(
         strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u protocol", processId),
         PROTOCOL_SERVICE_LOCAL_STR, execIoRead(helper->exec), execIoWrite(helper->exec));
 
+    // Move client to exec context so they are freed together
     protocolClientMove(helper->client, execMemContext(helper->exec));
 
     FUNCTION_TEST_RETURN_VOID();
@@ -238,6 +239,9 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx, 
             protocolLocalExec(protocolHelperClient, protocolStorageType, hostIdx, processId);
         }
         MEM_CONTEXT_END();
+
+        // Send noop to catch initialization errors
+        protocolClientNoOp(protocolHelperClient->client);
     }
 
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient->client);
@@ -507,6 +511,7 @@ protocolRemoteExec(
         strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, host), PROTOCOL_SERVICE_REMOTE_STR,
         execIoRead(helper->exec), execIoWrite(helper->exec));
 
+    // Move client to exec context so they are freed together
     protocolClientMove(helper->client, execMemContext(helper->exec));
 
     FUNCTION_TEST_RETURN_VOID();
@@ -557,6 +562,9 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
             protocolRemoteExec(protocolHelperClient, protocolStorageType, hostIdx, processId);
+
+            // Send noop to catch initialization errors
+            protocolClientNoOp(protocolHelperClient->client);
 
             // Get cipher options from the remote if none are locally configured
             if (isRepo && cfgOptionIdxStrId(cfgOptRepoCipherType, hostIdx) == cipherTypeNone)

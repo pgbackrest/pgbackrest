@@ -128,9 +128,6 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         }
         MEM_CONTEXT_TEMP_END();
 
-        // Send one noop to catch any errors that might happen after the greeting
-        protocolClientNoOp(this);
-
         // Set a callback to shutdown the protocol
         memContextCallbackSet(this->pub.memContext, protocolClientFreeResource, this);
     }
