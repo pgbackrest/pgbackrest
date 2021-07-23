@@ -110,12 +110,27 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                TEST_ERROR(
+                ProtocolClient *client = NULL;
+                TEST_ASSIGN(
+                    client,
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
                         ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
-                    PathCreateError, "raised from test: unable to create path '/bogus': [13] Permission denied");
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)), "new client");
+
+                TEST_ERROR(
+                    protocolClientNoOp(client), PathCreateError,
+                    "raised from test: unable to create path '/bogus': [13] Permission denied");
+
+                // The server is in an error state so ignore any client errors
+                TRY_BEGIN()
+                {
+                    protocolClientFree(client);
+                }
+                CATCH_ANY()
+                {
+                }
+                TRY_END();
             }
             HRN_FORK_PARENT_END();
         }
@@ -180,12 +195,25 @@ testRun(void)
             {
                 HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/all" STOP_FILE_EXT);
 
-                TEST_ERROR(
+                ProtocolClient *client = NULL;
+                TEST_ASSIGN(
+                    client,
                     protocolClientNew(
                         STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
                         ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
-                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
-                    StopError, "raised from test: stop file exists for all stanzas");
+                        ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)), "new client");
+
+                TEST_ERROR(protocolClientNoOp(client), StopError, "raised from test: stop file exists for all stanzas");
+
+                // The server is in an error state so ignore any client errors
+                TRY_BEGIN()
+                {
+                    protocolClientFree(client);
+                }
+                CATCH_ANY()
+                {
+                }
+                TRY_END();
 
                 HRN_STORAGE_REMOVE(hrnStorage, "lock/all" STOP_FILE_EXT);
             }
