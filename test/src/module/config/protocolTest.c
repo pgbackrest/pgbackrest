@@ -25,10 +25,10 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN()
             {
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--stanza=test1");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-                strLstAddZ(argList, "--repo1-host=repo-host");
-                strLstAddZ(argList, "--repo1-host-user=repo-host-user");
+                hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo-host");
+                hrnCfgArgRawZ(argList, cfgOptRepoHostUser, "repo-host-user");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
                 ProtocolServer *server = protocolServerNew(
