@@ -14,6 +14,7 @@ Test Protocol
 #include "common/harnessError.h"
 #include "common/harnessFork.h"
 #include "common/harnessPack.h"
+#include "common/harnessServer.h"
 
 /***********************************************************************************************************************************
 Test protocol server command handlers
@@ -631,6 +632,100 @@ testRun(void)
                 TEST_TITLE("free client");
 
                 TEST_RESULT_VOID(protocolClientFree(client), "free");
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("protocolRemoteExec() and protocolServer()"))
+    {
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("ping server");
+
+                // Connect to server
+                IoClient *socketClient = sckClientNew(STRDEF("localhost"), hrnServerPort(0), cfgOptionUInt64(cfgOptIoTimeout));
+                IoSession *socketSession = ioClientOpen(socketClient);
+
+                // Send ping
+                ProtocolClient *protocolClient = protocolClientNew(
+                    PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(socketSession),
+                    ioSessionIoWrite(socketSession));
+                protocolClientNoExit(protocolClient);
+                protocolClientNoOp(protocolClient);
+                protocolClientFree(protocolClient);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("connect to repo server");
+
+                StringList *argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+                hrnCfgArgRawZ(argList, cfgOptRepoHost, "localhost");
+                hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
+                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+                ProtocolHelperClient helper = {0};
+
+                TEST_RESULT_VOID(protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), "get remote protocol");
+                TEST_RESULT_VOID(protocolClientFree(helper.client), "free remote protocol");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("connect to pg server");
+
+                argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+                hrnCfgArgRawZ(argList, cfgOptPgHost, "localhost");
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+                hrnCfgArgRawZ(argList, cfgOptPgHostType, "tls");
+                hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+                hrnCfgArgRawZ(argList, cfgOptProcess, "1");
+                HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal);
+
+                helper = (ProtocolHelperClient){0};
+
+                TEST_RESULT_VOID(protocolRemoteExec(&helper, protocolStorageTypePg, 0, 0), "get remote protocol");
+                TEST_RESULT_VOID(protocolClientFree(helper.client), "free remote protocol");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoServer *const tlsServer = tlsServerNew(
+                   STRDEF("localhost"), STRDEF(HRN_PATH_REPO "/test/certificate/pgbackrest-test.key"),
+                   STRDEF(HRN_PATH_REPO "/test/certificate/pgbackrest-test.crt"), 5000);
+                IoServer *const socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
+                ProtocolServer *server = NULL;
+
+                // Server ping
+                // -----------------------------------------------------------------------------------------------------------------
+                IoSession *socketSession = ioServerAccept(socketServer, NULL);
+
+                TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");
+                TEST_RESULT_PTR(server, NULL, "server is null");
+
+                // Repo server
+                // -----------------------------------------------------------------------------------------------------------------
+                socketSession = ioServerAccept(socketServer, NULL);
+
+                TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");
+                TEST_RESULT_PTR_NE(server, NULL, "server is not null");
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
+
+                // Pg server
+                // -----------------------------------------------------------------------------------------------------------------
+                socketSession = ioServerAccept(socketServer, NULL);
+
+                TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");
+                TEST_RESULT_PTR_NE(server, NULL, "server is not null");
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
             }
             HRN_FORK_PARENT_END();
         }

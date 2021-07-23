@@ -290,27 +290,9 @@ protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
         }
         TRY_END();
 
-        // Try free the io session but only warn on error
-        TRY_BEGIN()
-        {
-            ioSessionFree(protocolHelperClient->ioSession);
-        }
-        CATCH_ANY()
-        {
-            LOG_WARN(errorMessage());
-        }
-        TRY_END();
-
-        // Try free the io client but only warn on error
-        TRY_BEGIN()
-        {
-            ioClientFree(protocolHelperClient->ioClient);
-        }
-        CATCH_ANY()
-        {
-            LOG_WARN(errorMessage());
-        }
-        TRY_END();
+        // Free the io client/session (there should be no errors)
+        ioSessionFree(protocolHelperClient->ioSession);
+        ioClientFree(protocolHelperClient->ioClient);
 
         protocolHelperClient->ioSession = NULL;
         protocolHelperClient->ioClient = NULL;
