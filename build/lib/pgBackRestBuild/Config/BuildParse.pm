@@ -253,7 +253,7 @@ sub buildConfigParse
         # Build command data
         $strBuildSource .=
             "\n" .
-            "    //" . (qw{-} x 126) . "\n" .
+            "    // " . (qw{-} x 125) . "\n" .
             "    PARSE_RULE_COMMAND\n" .
             "    (\n" .
             "        PARSE_RULE_COMMAND_NAME(\"${strCommand}\"),\n";
@@ -299,7 +299,7 @@ sub buildConfigParse
     {
         $strBuildSource .=
             "\n" .
-            "    //" . (qw{-} x 126) . "\n" .
+            "    // " . (qw{-} x 125) . "\n" .
             "    PARSE_RULE_OPTION_GROUP\n" .
             "    (\n" .
             "        PARSE_RULE_OPTION_GROUP_NAME(\"" . $strGroup . "\"),\n" .
