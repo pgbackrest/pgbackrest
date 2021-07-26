@@ -43,39 +43,6 @@ typedef enum
 #define CFG_COMMAND_ROLE_TOTAL                           4
 
 /***********************************************************************************************************************************
-Constants for configuration option values
-
-??? These should be generated automatically but for now just put them here so they are easy to find when it is time to replace them
-with the auto-generated values. Note that the _Z variants of these constants are auto-generated.
-***********************************************************************************************************************************/
-#define CFGOPTVAL_ARCHIVE_MODE_OFF                                  STRID5("off", 0x18cf0)
-#define CFGOPTVAL_ARCHIVE_MODE_PRESERVE                             STRID5("preserve", 0x2da45996500)
-
-#define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
-#define CFGOPTVAL_OUTPUT_JSON                                       STRID5("json", 0x73e6a0)
-
-#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                  STRID5("diff", 0x319240)
-#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL                  STRID5("full", 0x632a60)
-#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR                  STRID5("incr", 0x90dc90)
-
-#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT                    STRID5("count", 0x14755e30)
-#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME                     STRID5("time", 0x2b5340)
-
-#define CFGOPTVAL_TARGET_ACTION_PAUSE                               STRID5("pause", 0x59d4300)
-#define CFGOPTVAL_TARGET_ACTION_SHUTDOWN                            STRID5("shutdown", 0x75de4a55130)
-
-#define CFGOPTVAL_SORT_ASC                                          STRID5("asc", 0xe610)
-#define CFGOPTVAL_SORT_DESC                                         STRID5("desc", 0x1cca40)
-#define CFGOPTVAL_SORT_NONE                                         STRID5("none", 0x2b9ee0)
-
-#define CFGOPTVAL_TYPE_DEFAULT                                      STRID5("default", 0x5195098a40)
-#define CFGOPTVAL_TYPE_IMMEDIATE                                    STRID5("immediate", 0x5a05242b5a90)
-#define CFGOPTVAL_TYPE_NONE                                         STRID5("none", 0x2b9ee0)
-#define CFGOPTVAL_TYPE_PRESERVE                                     STRID5("preserve", 0x2da45996500)
-#define CFGOPTVAL_TYPE_STANDBY                                      STRID5("standby", 0x6444706930)
-#define CFGOPTVAL_TYPE_TIME                                         STRID5("time", 0x2b5340)
-
-/***********************************************************************************************************************************
 Command Functions
 
 Access the current command and command parameters.

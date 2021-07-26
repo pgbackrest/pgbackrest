@@ -196,14 +196,16 @@ bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg)
                 for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(allowList); allowListIdx++)
                 {
                     const String *const allowListItem = strLstGet(allowList, allowListIdx);
+                    const String *const constPrefix = strUpper(
+                        strReplaceChr(strNewFmt("CFGOPTVAL_%s_%s", strZ(opt->name), strZ(allowListItem)), '-', '_'));
 
+                    // Render StringId
+                    strCatFmt(config, "%s\n", strZ(bldDefineRender(constPrefix, bldStrId(strZ(allowListItem)))));
+
+                    // Render Z
                     strCatFmt(
                         config, "%s\n",
-                        strZ(
-                            bldDefineRender(
-                                strUpper(
-                                    strReplaceChr(strNewFmt("CFGOPTVAL_%s_%s_Z", strZ(opt->name), strZ(allowListItem)), '-', '_')),
-                                strNewFmt("\"%s\"", strZ(allowListItem)))));
+                        strZ(bldDefineRender(strNewFmt("%s_Z", strZ(constPrefix)), strNewFmt("\"%s\"", strZ(allowListItem)))));
                 }
 
                 lf = true;

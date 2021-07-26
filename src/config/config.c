@@ -1149,11 +1149,19 @@ cfgOptionStrIdInternal(
     FUNCTION_TEST_END();
 
     const String *const value = varStr(cfgOptionIdxInternal(optionId, optionIdx, varTypeString, false));
+    StringId result = 0;
 
-    if (optionId == cfgOptRepoType)
-        FUNCTION_TEST_RETURN(strIdFromStr(stringIdBit6, value));
+    TRY_BEGIN()
+    {
+        result = strIdFromStr(stringIdBit5, value);
+    }
+    CATCH_ANY()
+    {
+        result = strIdFromStr(stringIdBit6, value);
+    }
+    TRY_END();
 
-    FUNCTION_TEST_RETURN(strIdFromStr(stringIdBit5, value));
+    FUNCTION_TEST_RETURN(result);
 }
 
 StringId
