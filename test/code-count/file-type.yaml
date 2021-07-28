@@ -11,15 +11,7 @@ build/lib/pgBackRestBuild/Build/Common.pm:
   class: build
   type: perl
 
-build/lib/pgBackRestBuild/Config/Build.pm:
-  class: build
-  type: perl
-
 build/lib/pgBackRestBuild/Config/BuildHelp.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Config/BuildParse.pm:
   class: build
   type: perl
 
