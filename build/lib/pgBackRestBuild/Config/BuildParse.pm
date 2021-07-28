@@ -395,6 +395,7 @@ sub buildConfigParse
         {
             my $strBuildSourceOptionalCommand;
             my $rhCommand = $rhOption->{&CFGDEF_COMMAND}{$strCommand};
+            $rhCommand->{&CFGDEF_TYPE} = $rhOption->{&CFGDEF_TYPE};
 
             if (defined($rhCommand))
             {
