@@ -34,12 +34,17 @@ typedef struct Config
 {
     MemContext *memContext;                                         // Mem context for config data
 
-    // Generally set by the command parser but can also be set by during execute to change commands, i.e. backup -> expire
+    // Generally set by the command parser but can also be set during execute to change commands, i.e. backup -> expire
     ConfigCommand command;                                          // Current command
     ConfigCommandRole commandRole;                                  // Current command role
 
     String *exe;                                                    // Location of the executable
     bool help;                                                      // Was help requested for the command?
+    bool lockRequired;                                              // Is an immediate lock required?
+    bool lockRemoteRequired;                                        // Is a lock required on the remote?
+    LockType lockType;                                              // Lock type required
+    bool logFile;                                                   // Will the command log to a file?
+    LogLevel logLevelDefault;                                       // Default log level
     StringList *paramList;                                          // Parameters passed to the command (if any)
 
     // Group options that are related together to allow valid and test checks across all options in the group

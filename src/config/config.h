@@ -53,8 +53,8 @@ ConfigCommand cfgCommand(void);
 // Current command role (async, local, remote)
 ConfigCommandRole cfgCommandRole(void);
 
-// Get command name by id
-const char *cfgCommandName(ConfigCommand commandId);
+// Get command name
+const char *cfgCommandName(void);
 
 // Get command:role name
 String *cfgCommandRoleName(void);
@@ -165,17 +165,7 @@ config/load.c.
 // Was help requested?
 bool cfgCommandHelp(void);
 
-// Get command id by name
-ConfigCommand cfgCommandId(const char *commandName);
-
 void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
-
-// Get command/role name with custom separator
-String *cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const String *separator);
-
-// Convert command role from String to enum and vice versa
-ConfigCommandRole cfgCommandRoleEnum(const String *commandRole);
-const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
 
 // pgBackRest exe
 const String *cfgExe(void);

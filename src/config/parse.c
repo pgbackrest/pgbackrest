@@ -83,6 +83,11 @@ typedef struct ParseRuleCommand
 {
     const char *name;                                               // Name
     unsigned int commandRoleValid:CFG_COMMAND_ROLE_TOTAL;           // Valid for the command role?
+    bool lockRequired:1;                                            // Is an immediate lock required?
+    bool lockRemoteRequired:1;                                      // Is a lock required on the remote?
+    unsigned int lockType:2;                                        // Lock type required
+    bool logFile:1;                                                 // Will the command log to a file?
+    unsigned int logLevelDefault:4;                                 // Default log level
     bool parameterAllowed:1;                                        // Command-line parameters are allowed
 } ParseRuleCommand;
 
@@ -98,6 +103,21 @@ typedef struct ParseRuleCommand
 
 #define PARSE_RULE_COMMAND_ROLE(commandRoleParam)                                                                                  \
     | (1 << commandRoleParam)
+
+#define PARSE_RULE_COMMAND_LOCK_REQUIRED(lockRequiredParam)                                                                        \
+    .lockRequired = lockRequiredParam
+
+#define PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(lockRemoteRequiredParam)                                                           \
+    .lockRemoteRequired = lockRemoteRequiredParam
+
+#define PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeParam)                                                                                \
+    .lockType = lockTypeParam
+
+#define PARSE_RULE_COMMAND_LOG_FILE(logFileParam)                                                                                  \
+    .logFile = logFileParam
+
+#define PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelDefaultParam)                                                                 \
+    .logLevelDefault = logLevelDefaultParam
 
 #define PARSE_RULE_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                \
     .parameterAllowed = parameterAllowedParam
@@ -388,6 +408,116 @@ parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int
 
     // Return the indexed value
     FUNCTION_TEST_RETURN(&optionList[optionId].indexList[optionKeyIdx]);
+}
+
+/***********************************************************************************************************************************
+Get command id by name
+***********************************************************************************************************************************/
+static ConfigCommand
+cfgParseCommandId(const char *const commandName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, commandName);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandName != NULL);
+
+    ConfigCommand commandId;
+
+    for (commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
+    {
+        if (strcmp(commandName, parseRuleCommand[commandId].name) == 0)
+            break;
+    }
+
+    FUNCTION_TEST_RETURN(commandId);
+}
+
+/**********************************************************************************************************************************/
+const char *
+cfgParseCommandName(const ConfigCommand commandId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandId < cfgCmdNone);
+
+    FUNCTION_TEST_RETURN(parseRuleCommand[commandId].name);
+}
+
+/***********************************************************************************************************************************
+Convert command role from String to enum and vice versa
+***********************************************************************************************************************************/
+STRING_STATIC(CONFIG_COMMAND_ROLE_ASYNC_STR,                        CONFIG_COMMAND_ROLE_ASYNC);
+STRING_STATIC(CONFIG_COMMAND_ROLE_LOCAL_STR,                        CONFIG_COMMAND_ROLE_LOCAL);
+STRING_STATIC(CONFIG_COMMAND_ROLE_REMOTE_STR,                       CONFIG_COMMAND_ROLE_REMOTE);
+
+static ConfigCommandRole
+cfgParseCommandRoleEnum(const String *const commandRole)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, commandRole);
+    FUNCTION_TEST_END();
+
+    if (commandRole == NULL)
+        FUNCTION_TEST_RETURN(cfgCmdRoleMain);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_ASYNC_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleAsync);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_LOCAL_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleLocal);
+    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_REMOTE_STR))
+        FUNCTION_TEST_RETURN(cfgCmdRoleRemote);
+
+    THROW_FMT(CommandInvalidError, "invalid command role '%s'", strZ(commandRole));
+}
+
+const String *
+cfgParseCommandRoleStr(const ConfigCommandRole commandRole)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandRole);
+    FUNCTION_TEST_END();
+
+    const String *result = NULL;
+
+    switch (commandRole)
+    {
+        case cfgCmdRoleMain:
+            break;
+
+        case cfgCmdRoleAsync:
+            result = CONFIG_COMMAND_ROLE_ASYNC_STR;
+            break;
+
+        case cfgCmdRoleLocal:
+            result = CONFIG_COMMAND_ROLE_LOCAL_STR;
+            break;
+
+        case cfgCmdRoleRemote:
+            result = CONFIG_COMMAND_ROLE_REMOTE_STR;
+            break;
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+String *
+cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole commandRoleId, const String *const separator)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
+        FUNCTION_TEST_PARAM(STRING, separator);
+    FUNCTION_TEST_END();
+
+    String *result = strNewZ(cfgParseCommandName(commandId));
+
+    if (commandRoleId != cfgCmdRoleMain)
+        strCatFmt(result, "%s%s", strZ(separator), strZ(cfgParseCommandRoleStr(commandRoleId)));
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /***********************************************************************************************************************************
@@ -1077,7 +1207,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (!commandSet)
                 {
                     // Try getting the command from the valid command list
-                    config->command = cfgCommandId(arg);
+                    config->command = cfgParseCommandId(arg);
                     config->commandRole = cfgCmdRoleMain;
 
                     // If not successful then a command role may be appended
@@ -1088,11 +1218,11 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         if (strLstSize(commandPart) == 2)
                         {
                             // Get command id
-                            config->command = cfgCommandId(strZ(strLstGet(commandPart, 0)));
+                            config->command = cfgParseCommandId(strZ(strLstGet(commandPart, 0)));
 
                             // If command id is valid then get command role id
                             if (config->command != cfgCmdNone)
-                                config->commandRole = cfgCommandRoleEnum(strLstGet(commandPart, 1));
+                                config->commandRole = cfgParseCommandRoleEnum(strLstGet(commandPart, 1));
                         }
                     }
 
@@ -1108,6 +1238,13 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         config->help = true;
                     else
                         commandSet = true;
+
+                    // Set command options
+                    config->lockRequired = parseRuleCommand[config->command].lockRequired;
+                    config->lockRemoteRequired = parseRuleCommand[config->command].lockRemoteRequired;
+                    config->lockType = (LockType)parseRuleCommand[config->command].lockType;
+                    config->logFile = parseRuleCommand[config->command].logFile;
+                    config->logLevelDefault = (LogLevel)parseRuleCommand[config->command].logLevelDefault;
                 }
                 // Additional arguments are command arguments
                 else
@@ -1253,11 +1390,11 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                 if (stanza != NULL)
                 {
-                    strLstAdd(sectionList, strNewFmt("%s:%s", strZ(stanza), cfgCommandName(config->command)));
+                    strLstAdd(sectionList, strNewFmt("%s:%s", strZ(stanza), cfgParseCommandName(config->command)));
                     strLstAdd(sectionList, stanza);
                 }
 
-                strLstAdd(sectionList, strNewFmt(CFGDEF_SECTION_GLOBAL ":%s", cfgCommandName(config->command)));
+                strLstAdd(sectionList, strNewFmt(CFGDEF_SECTION_GLOBAL ":%s", cfgParseCommandName(config->command)));
                 strLstAddZ(sectionList, CFGDEF_SECTION_GLOBAL);
 
                 // Loop through sections to search for options
@@ -1415,7 +1552,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     {
                         THROW_FMT(
                             OptionInvalidError, "option '%s' not valid for command '%s'", cfgParseOptionName(optionId),
-                            cfgCommandName(config->command));
+                            cfgParseCommandName(config->command));
                     }
 
                     // Continue to the next option
@@ -1871,7 +2008,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                     hint = "\nHINT: does this stanza exist?";
 
                                 THROW_FMT(
-                                    OptionRequiredError, "%s command requires option: %s%s", cfgCommandName(config->command),
+                                    OptionRequiredError, "%s command requires option: %s%s", cfgParseCommandName(config->command),
                                     cfgParseOptionKeyIdxName(optionId, optionKeyIdx), hint);
                             }
                         }

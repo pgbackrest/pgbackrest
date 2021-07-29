@@ -94,7 +94,7 @@ repoIsLocalVerifyIdx(unsigned int repoIdx)
     FUNCTION_TEST_VOID();
 
     if (!repoIsLocal(repoIdx))
-        THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName(cfgCommand()));
+        THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName());
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -117,7 +117,7 @@ pgIsLocalVerify(void)
     FUNCTION_TEST_VOID();
 
     if (!pgIsLocal(cfgOptionGroupIdxDefault(cfgOptGrpPg)))
-        THROW_FMT(HostInvalidError, "%s command must be run on the " PG_NAME " host", cfgCommandName(cfgCommand()));
+        THROW_FMT(HostInvalidError, "%s command must be run on the " PG_NAME " host", cfgCommandName());
 
     FUNCTION_TEST_RETURN_VOID();
 }

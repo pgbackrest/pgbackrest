@@ -25,7 +25,7 @@ dbGetIdx(unsigned int pgIdx)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *applicationName = strNewFmt(PROJECT_NAME " [%s]", cfgCommandName(cfgCommand()));
+        const String *applicationName = strNewFmt(PROJECT_NAME " [%s]", cfgCommandName());
 
         if (pgIsLocal(pgIdx))
         {
