@@ -17,7 +17,7 @@ When assigning a StringId to an enum, it will be necessary to cast the StringId 
 values, since some compilers will complain about the implicit conversion without a cast. The enum will be 32-bit if all values of
 the enum are <= 0xffffffff.
 
-See strIdGenerate() for information on StringId constants.
+See bldStrId() for information on generating StringId constants.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_STRINGID_H
 #define COMMON_TYPE_STRINGID_H
@@ -41,6 +41,11 @@ when calling strIdToZN. If the buffer needs to be zero-terminated then an extra 
 #define STRID_MAX                                                   STRID5_MAX
 
 /***********************************************************************************************************************************
+Constants used to extract information from the header
+***********************************************************************************************************************************/
+#define STRING_ID_BIT_MASK                                          3
+
+/***********************************************************************************************************************************
 StringId typedef to make them more recognizable in the code
 ***********************************************************************************************************************************/
 typedef uint64_t StringId;
@@ -55,8 +60,8 @@ typedef enum
 } StringIdBit;
 
 /***********************************************************************************************************************************
-Macros to define constant StringIds. ALWAYS use strIdGenerate() to create these macros. The parameters in the macros are not
-verified against each other so the str parameter is included only for documentation purposes.
+Macros to define constant StringIds. ALWAYS use bldStrId() to create these macros. The parameters in the macros are not verified
+against each other so the str parameter is included only for documentation purposes.
 ***********************************************************************************************************************************/
 #define STRID5(str, strId)                                          strId
 #define STRID6(str, strId)                                          strId
@@ -93,31 +98,6 @@ String *strIdToStr(const StringId strId);
 
 // Convert StringId to zero-terminated string. See strIdToZN() for buffer sizing and return value.
 size_t strIdToZ(const StringId strId, char *const buffer);
-
-/***********************************************************************************************************************************
-Generate constant StringIds
-
-To generate a constant StringId call strIdGenerate() in any debug build. It will throw an error with the generated StringId macro
-in the error message.
-
-For example:
-
-strIdGenerate("test");
-
-will throw the following error message:
-
-STRID5("test", 0xa4cb40)
-
-which can be used in a function, switch, or #define, e.g.:
-
-#define TEST_STRID                                                  STRID5("test", 0xa4cb40)
-
-DO NOT MODIFY either parameter in the macro -- ALWAYS use strIdGenerate() to create a new constant StringId.
-***********************************************************************************************************************************/
-#ifdef DEBUG
-    // Generate a new constant StringId
-    void strIdGenerate(const char *const buffer) __attribute__((__noreturn__));
-#endif
 
 /***********************************************************************************************************************************
 Macros for function logging

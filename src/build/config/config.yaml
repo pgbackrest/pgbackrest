@@ -247,7 +247,7 @@ option:
     type: string
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
     default-literal: true
-    negate: y
+    negate: true
 
   config-include-path:
     type: path
@@ -287,7 +287,7 @@ option:
   online:
     type: boolean
     default: true
-    negate: y
+    negate: true
     command:
       backup: {}
       stanza-create: {}
@@ -742,9 +742,9 @@ option:
     allow-range: [0, 360]
     command:
       archive-get:
-        default: true
+        default: 1
       archive-push:
-        default: true
+        default: 1
       backup: {}
       restore: {}
       verify: {}
@@ -802,7 +802,7 @@ option:
   process-max:
     section: global
     type: integer
-    default: true
+    default: 1
     allow-range: [1, 999]
     command:
       archive-get: {}
@@ -1964,6 +1964,24 @@ option:
     command: repo-type
     depend: repo-s3-bucket
 
+  repo-storage-verify-tls:
+    section: global
+    group: repo
+    type: boolean
+    default: true
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3
+    deprecate:
+      repo-s3-verify-ssl: {index: 1, reset: false}
+      repo?-azure-verify-tls: {index: 1}
+      repo?-s3-verify-ssl: {index: 1, reset: false}
+      repo?-s3-verify-tls: {index: 1}
+
   repo-storage-ca-file:
     section: global
     group: repo
@@ -2011,21 +2029,3 @@ option:
     deprecate:
       repo?-azure-port: {index: 1}
       repo?-s3-port: {index: 1}
-
-  repo-storage-verify-tls:
-    section: global
-    group: repo
-    type: boolean
-    default: true
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - azure
-        - gcs
-        - s3
-    deprecate:
-      repo-s3-verify-ssl: {index: 1, reset: false}
-      repo?-azure-verify-tls: {index: 1}
-      repo?-s3-verify-ssl: {index: 1, reset: false}
-      repo?-s3-verify-tls: {index: 1}

@@ -545,6 +545,8 @@ testRun(void)
         TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz2-y56?", 13), TEST_STR5ID13, "5 bits 13 chars");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz2-y56??", 14), TEST_STR5ID13, "5 bits 14 chars");
 
+        TEST_ERROR(strIdFromZN(stringIdBit5, "AB", 2), FormatError, "'A' is invalid for 5-bit encoding in 'AB'");
+
         #define TEST_STR6ID1                                        (stringIdBit6 | (uint16_t)('a' - 96) << 4)
         #define TEST_STR6ID2                                        (TEST_STR6ID1 | (uint16_t)('b' - 96) << 10)
         #define TEST_STR6ID3                                        ((uint32_t)TEST_STR6ID2 | (uint32_t)('C' - 27) << 16)
@@ -562,6 +564,8 @@ testRun(void)
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9", 10), TEST_STR6ID10, "6 bits 10 chars");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9?", 11), TEST_STR6ID11, "6 bits 11 chars");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9??", 12), TEST_STR6ID11, "6 bits 12 chars");
+
+        TEST_ERROR(strIdFromZN(stringIdBit6, "|B", 2), FormatError, "'|' is invalid for 6-bit encoding in '|B'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STRID*()");
@@ -661,13 +665,6 @@ testRun(void)
         TEST_RESULT_STR_Z(strIdToStr(testEnum), "remote", "assign to enum");
 
         TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumTest), "test", "pass to StringId param");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("strIdGenerate()");
-
-        TEST_ERROR(strIdGenerate("watcha"), FormatError, "STRID5(\"watcha\", 0x281d0370)");
-        TEST_ERROR(strIdGenerate("Watcha"), FormatError, "STRID6(\"Watcha\", 0x480d407c1)");
-        TEST_ERROR(strIdGenerate("%tcha"), FormatError, "'%' is invalid for 6-bit encoding in '%tcha'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToLog()");

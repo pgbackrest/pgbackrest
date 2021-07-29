@@ -54,7 +54,6 @@ strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
             };
 
-#ifdef DEBUG
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
@@ -64,7 +63,6 @@ strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
                     THROW_FMT(FormatError, "'%c' is invalid for 5-bit encoding in '%s'", buffer[bufferIdx], buffer);
             }
-#endif
 
             // Set encoding in header
             uint64_t result = stringIdBit5;
@@ -144,7 +142,6 @@ strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
             };
 
-#ifdef DEBUG
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
@@ -154,7 +151,6 @@ strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
                     THROW_FMT(FormatError, "'%c' is invalid for 6-bit encoding in '%s'", buffer[bufferIdx], buffer);
             }
-#endif
 
             // Set encoding in header
             uint64_t result = stringIdBit6;
@@ -340,30 +336,6 @@ strIdToZ(const StringId strId, char *const buffer)
 
     FUNCTION_TEST_RETURN(size);
 }
-
-
-/**********************************************************************************************************************************/
-#ifdef DEBUG
-
-void
-strIdGenerate(const char *const buffer)
-{
-    StringId result = 0;
-
-    TRY_BEGIN()
-    {
-        result = strIdFromZ(stringIdBit5, buffer);
-    }
-    CATCH_ANY()
-    {
-        result = strIdFromZ(stringIdBit6, buffer);
-    }
-    TRY_END();
-
-    THROW_FMT(FormatError, "STRID%u(\"%s\", 0x%" PRIx64 ")", (unsigned int)(result & STRING_ID_BIT_MASK) + 5, buffer, result);
-}
-
-#endif
 
 /**********************************************************************************************************************************/
 size_t
