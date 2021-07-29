@@ -359,6 +359,17 @@ eval
     my $oStorageBackRest = new pgBackRestTest::Common::Storage(
         $strBackRestBase, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
+    # Check that the test path is not in the git repo path
+    if (index("${strTestPath}/", "${strBackRestBase}/") != -1)
+    {
+        confess &log(
+            ERROR,
+            "test path '${strTestPath}' may not be in the repo path '${strBackRestBase}'\n" .
+            "HINT: was test.pl run in '${strBackRestBase}'?\n" .
+            "HINT: use --test-path to set a test path\n" .
+            "HINT: run test.pl from outside the repo, e.g. 'pgbackrest/test/test.pl'");
+    }
+
     ################################################################################################################################
     # Clean working and result paths
     ################################################################################################################################
