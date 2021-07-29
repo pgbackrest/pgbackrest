@@ -15,6 +15,9 @@ main(int argListSize, const char *argList[])
     // Check parameters
     CHECK(argListSize <= 2);
 
+    // Initialize logging
+    logInit(logLevelWarn, logLevelError, logLevelOff, false, 0, 1, false);
+
     // If the path was specified
     const String *pathRepo;
 

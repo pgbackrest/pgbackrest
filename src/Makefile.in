@@ -216,7 +216,7 @@ SRCS_BUILD_CONFIG = \
 
 OBJS_BUILD_CONFIG = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_CONFIG))
 
-build-config: $(OBJS_BUILD_CONFIG) build/config/config.yaml config/config.auto.h
+build-config: $(OBJS_BUILD_CONFIG) build/config/config.yaml config/config.auto.h config/config.auto.c config/parse.auto.c
 	$(CC) -o build-config $(OBJS_BUILD_CONFIG) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
 	./build-config $(VPATH)
 
