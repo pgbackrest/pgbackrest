@@ -3,7 +3,8 @@ Command and Option Parse
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <getopt.h>
+#include <ctype.h>
+#include <getopt.h> // !!! REMOVE
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
@@ -144,6 +145,8 @@ typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
     unsigned int type:3;                                            // e.g. string, int, boolean
+    bool negate:1;                                                  // Can the option be negated on the command line?
+    bool reset:1;                                                   // Can the option be reset on the command line?
     bool required:1;                                                // Is the option required?
     unsigned int section:2;                                         // e.g. global, stanza, cmd-line
     bool secure:1;                                                  // Needs to be redacted in logs and cmd-line?
@@ -178,6 +181,12 @@ typedef enum
 
 #define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
     .type = typeParam
+
+#define PARSE_RULE_OPTION_NEGATE(negateParam)                                                                                      \
+    .negate = negateParam
+
+#define PARSE_RULE_OPTION_RESET(resetParam)                                                                                        \
+    .reset = resetParam
 
 #define PARSE_RULE_OPTION_REQUIRED(requiredParam)                                                                                  \
     .required = requiredParam
@@ -548,7 +557,10 @@ cfgParseOption(const String *const optionName, const CfgParseOptionParam param)
 
     ASSERT(optionName != NULL);
 
-    // Search for an exact match
+    CfgParseOptionResult result = {0};
+    const String *optionNameMod = optionName;
+
+    // Search deprecations for an exact match
     unsigned int findIdx = 0;
 
     while (optionList[findIdx].name != NULL)
@@ -584,6 +596,102 @@ cfgParseOption(const String *const optionName, const CfgParseOptionParam param)
         // If a single partial match was found
         if (findPartialTotal == 1)
             FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findPartialIdx].val));
+    }
+
+    // If this looks like negate
+    if (strBeginsWithZ(optionName, "no-"))
+    {
+        result.negate = true;
+        optionNameMod = strNewZ(strZ(optionName) + 3);
+    }
+    // Else if looks like reset
+    else if (strBeginsWithZ(optionName, "reset-"))
+    {
+        result.reset = true;
+        optionNameMod = strNewZ(strZ(optionName) + 6);
+    }
+
+    LOG_DEBUG_FMT("!!!OPT '%s' MOD '%s'", strZ(optionName), strZ(optionNameMod));
+
+    // Find the first - and see if there is a number before it. !!!
+    size_t dashPos = (size_t)strChr(optionNameMod, '-');
+    size_t numberPos = dashPos;
+
+    if (dashPos != (size_t)-1)
+    {
+        LOG_DEBUG("FOUND DASH");
+
+        ASSERT(dashPos != 0);
+
+        while (numberPos > 0 && isdigit(strZ(optionNameMod)[numberPos - 1]))
+            numberPos--;
+
+        LOG_DEBUG_FMT("!!!DASH %zu NUM %zu", dashPos, numberPos);
+
+        if (numberPos != dashPos)
+        {
+            for (unsigned int optGrpIdx = 0; optGrpIdx < CFG_OPTION_GROUP_TOTAL; optGrpIdx++)
+            {
+                if (strncmp(strZ(optionNameMod), parseRuleOptionGroup[optGrpIdx].name, numberPos) == 0)
+                {
+                    char buffer[21];
+
+                    if (dashPos - numberPos > sizeof(buffer) - 1)
+                        THROW(OptionInvalidError, "NUMBER IS TOO BIG");
+
+                    strncpy(buffer, strZ(optionNameMod) + numberPos, dashPos - numberPos);
+                    buffer[dashPos - numberPos] = '\0';
+
+                    LOG_DEBUG_FMT("!!!BUFFER IS %s", buffer);
+
+                    result.keyIdx = cvtZToUInt(buffer) - 1;
+
+                    LOG_DEBUG_FMT("!!!KEY IDX IS %u", result.keyIdx);
+
+                    optionNameMod = strNewFmt("%s%s", parseRuleOptionGroup[optGrpIdx].name, strZ(optionNameMod) + dashPos);
+                    LOG_DEBUG_FMT("!!!MOD IS %s", strZ(optionNameMod));
+                }
+            }
+        }
+    }
+
+    // Search for the option
+    int found = cfgParseOptionId(strZ(optionNameMod));
+
+    // If the option was not found then do a partial match
+    if (found == -1 && param.prefixMatch)
+    {
+        unsigned int findPartialIdx = 0;
+        unsigned int findPartialTotal = 0;
+
+        for (unsigned int findIdx = 0; findIdx < CFG_OPTION_TOTAL; findIdx++)
+        {
+            if (strBeginsWith(STR(parseRuleOption[findIdx].name), optionName))
+            {
+                findPartialIdx = findIdx;
+                findPartialTotal++;
+
+                if (findPartialTotal > 1)
+                    break;
+            }
+        }
+
+        // If a single partial match was found
+        if (findPartialTotal == 1)
+            found = (int)findPartialIdx;
+    }
+
+    // !!! HOORAY IT IS A MATCH. BUT IF THERE IS A DEPRECATION WITH THE SAME NAME THEN MAKE SURE WE SET THE DEPRECATION FLAG AND
+    // CHECK THE INDEX. THAT MEANS MOVING THE DEPRECATION SEARCH DOWN FROM ABOVE. ONLY DO THIS CHECK IF THE OPTION WAS NOT INDEXED.
+
+    LOG_DEBUG_FMT("!!!OPT '%s' MOD '%s' FOUND %d", strZ(optionName), strZ(optionNameMod), found);
+
+    if (found >= 0 && (!result.negate || parseRuleOption[found].negate) && (!result.reset || parseRuleOption[found].reset))
+    {
+        result.found = true;
+        result.id = (ConfigOption)found;
+
+        FUNCTION_TEST_RETURN(result);
     }
 
     FUNCTION_TEST_RETURN((CfgParseOptionResult){0});

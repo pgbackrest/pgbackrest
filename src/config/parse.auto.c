@@ -343,6 +343,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("archive-async"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -381,6 +383,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("archive-check"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -412,6 +416,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("archive-copy"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -442,6 +448,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("archive-get-queue-max"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -467,6 +474,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("archive-header-check"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -491,6 +500,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("archive-mode"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -516,6 +526,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("archive-mode-check"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -542,6 +554,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("archive-push-queue-max"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -566,6 +579,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("archive-timeout"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -589,6 +603,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("backup-standby"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -611,6 +627,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("buffer-size"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -694,6 +711,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("checksum-page"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -723,6 +742,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("cmd-ssh"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -771,6 +791,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("compress"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -791,6 +813,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("compress-level"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -816,6 +839,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("compress-level-network"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -863,6 +887,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("compress-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -897,6 +922,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("config"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_NEGATE(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
@@ -1107,6 +1133,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("db-exclude"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeList),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
@@ -1122,6 +1149,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("db-include"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeList),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
@@ -1137,6 +1165,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("db-timeout"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1197,6 +1226,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("delta"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1236,6 +1267,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("exclude"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeList),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
@@ -1316,6 +1348,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("expire-auto"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1402,6 +1436,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("io-timeout"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1471,6 +1506,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("job-retry"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1524,6 +1560,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("job-retry-interval"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1577,6 +1614,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("link-all"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1596,6 +1635,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("link-map"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
@@ -1611,6 +1651,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("lock-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1666,6 +1707,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("log-level-console"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1747,6 +1789,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("log-level-file"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1828,6 +1871,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("log-level-stderr"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1909,6 +1953,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("log-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -1979,6 +2024,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("log-subprocess"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -2046,6 +2093,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("log-timestamp"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -2116,6 +2165,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("manifest-save-threshold"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -2136,6 +2186,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("neutral-umask"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -2204,6 +2256,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("online"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
@@ -2288,6 +2341,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-database"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2328,6 +2382,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-host"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2374,6 +2429,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-cmd"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2404,6 +2460,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-config"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2435,6 +2492,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-config-include-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2466,6 +2524,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-config-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2497,6 +2556,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-port"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2528,6 +2588,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-user"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2559,6 +2620,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-local"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2601,6 +2664,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2660,6 +2724,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-port"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2701,6 +2766,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-socket-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2741,6 +2807,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("pg-user"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -2822,6 +2889,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("process-max"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -2852,6 +2920,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("protocol-timeout"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -2940,6 +3009,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("recovery-option"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
@@ -3097,6 +3167,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-account"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_SECURE(true),
@@ -3171,6 +3242,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-container"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -3244,6 +3316,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-endpoint"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_SECURE(true),
@@ -3320,6 +3393,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-key"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_SECURE(true),
@@ -3394,6 +3468,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-key-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -3475,6 +3550,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-cipher-pass"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_SECURE(true),
@@ -3549,6 +3625,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-cipher-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -3624,6 +3701,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-gcs-bucket"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -3693,6 +3771,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-gcs-endpoint"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -3763,6 +3842,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-gcs-key"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_SECURE(true),
@@ -3838,6 +3918,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-gcs-key-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -3920,6 +4001,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-hardlink"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -3941,6 +4024,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-host"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -3996,6 +4080,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-cmd"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4044,6 +4129,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-config"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4093,6 +4179,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-config-include-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4142,6 +4229,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-config-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4191,6 +4279,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-port"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4240,6 +4329,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-user"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4289,6 +4379,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-local"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4340,6 +4432,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4409,6 +4502,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-archive"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4431,6 +4525,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-archive-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4460,6 +4555,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-diff"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4482,6 +4578,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-full"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4504,6 +4601,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-full-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4532,6 +4630,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-history"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4554,6 +4653,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-bucket"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4627,6 +4727,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-endpoint"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4700,6 +4801,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-key"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_SECURE(true),
@@ -4774,6 +4876,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-key-secret"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_SECURE(true),
@@ -4848,6 +4951,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-key-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -4929,6 +5033,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-region"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -5002,6 +5107,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-role"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -5075,6 +5181,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-token"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_SECURE(true),
@@ -5149,6 +5256,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-uri-style"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -5230,6 +5338,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-storage-ca-file"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -5305,6 +5414,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-storage-ca-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -5380,6 +5490,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-storage-host"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -5454,6 +5565,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-storage-port"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -5531,6 +5643,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-storage-verify-tls"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -5608,6 +5722,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("repo-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
@@ -5686,6 +5801,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("resume"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -5705,6 +5822,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("sck-block"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -5773,6 +5892,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("sck-keep-alive"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -5916,6 +6037,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("spool-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -6096,6 +6218,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("start-fast"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -6115,6 +6239,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("stop-auto"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -6134,6 +6260,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("tablespace-map"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
@@ -6149,6 +6276,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("tablespace-map-all"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -6302,6 +6430,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("tcp-keep-alive-count"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -6375,6 +6504,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("tcp-keep-alive-idle"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -6448,6 +6578,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("tcp-keep-alive-interval"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
@@ -6574,116 +6705,9 @@ Option data for getopt_long()
 ***********************************************************************************************************************************/
 static const struct option optionList[] =
 {
-    // archive-async option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "archive-async",
-        .val = PARSE_OPTION_FLAG | cfgOptArchiveAsync,
-    },
-    {
-        .name = "no-archive-async",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveAsync,
-    },
-    {
-        .name = "reset-archive-async",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveAsync,
-    },
-
-    // archive-check option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "archive-check",
-        .val = PARSE_OPTION_FLAG | cfgOptArchiveCheck,
-    },
-    {
-        .name = "no-archive-check",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveCheck,
-    },
-    {
-        .name = "reset-archive-check",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveCheck,
-    },
-
-    // archive-copy option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "archive-copy",
-        .val = PARSE_OPTION_FLAG | cfgOptArchiveCopy,
-    },
-    {
-        .name = "no-archive-copy",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveCopy,
-    },
-    {
-        .name = "reset-archive-copy",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveCopy,
-    },
-
-    // archive-get-queue-max option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "archive-get-queue-max",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptArchiveGetQueueMax,
-    },
-    {
-        .name = "reset-archive-get-queue-max",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveGetQueueMax,
-    },
-
-    // archive-header-check option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "archive-header-check",
-        .val = PARSE_OPTION_FLAG | cfgOptArchiveHeaderCheck,
-    },
-    {
-        .name = "no-archive-header-check",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveHeaderCheck,
-    },
-    {
-        .name = "reset-archive-header-check",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveHeaderCheck,
-    },
-
-    // archive-mode option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "archive-mode",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptArchiveMode,
-    },
-    {
-        .name = "reset-archive-mode",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveMode,
-    },
-
-    // archive-mode-check option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "archive-mode-check",
-        .val = PARSE_OPTION_FLAG | cfgOptArchiveModeCheck,
-    },
-    {
-        .name = "no-archive-mode-check",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveModeCheck,
-    },
-    {
-        .name = "reset-archive-mode-check",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveModeCheck,
-    },
 
     // archive-push-queue-max option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "archive-push-queue-max",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptArchivePushQueueMax,
-    },
-    {
-        .name = "reset-archive-push-queue-max",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchivePushQueueMax,
-    },
     {
         .name = "archive-queue-max",
         .has_arg = required_argument,
@@ -6694,567 +6718,8 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | cfgOptArchivePushQueueMax,
     },
 
-    // archive-timeout option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "archive-timeout",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptArchiveTimeout,
-    },
-    {
-        .name = "reset-archive-timeout",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveTimeout,
-    },
-
-    // backup-standby option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "backup-standby",
-        .val = PARSE_OPTION_FLAG | cfgOptBackupStandby,
-    },
-    {
-        .name = "no-backup-standby",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptBackupStandby,
-    },
-    {
-        .name = "reset-backup-standby",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptBackupStandby,
-    },
-
-    // buffer-size option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "buffer-size",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptBufferSize,
-    },
-    {
-        .name = "reset-buffer-size",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptBufferSize,
-    },
-
-    // checksum-page option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "checksum-page",
-        .val = PARSE_OPTION_FLAG | cfgOptChecksumPage,
-    },
-    {
-        .name = "no-checksum-page",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptChecksumPage,
-    },
-    {
-        .name = "reset-checksum-page",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptChecksumPage,
-    },
-
-    // cipher-pass option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "cipher-pass",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptCipherPass,
-    },
-
-    // cmd-ssh option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "cmd-ssh",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptCmdSsh,
-    },
-    {
-        .name = "reset-cmd-ssh",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCmdSsh,
-    },
-
-    // compress option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "compress",
-        .val = PARSE_OPTION_FLAG | cfgOptCompress,
-    },
-    {
-        .name = "no-compress",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptCompress,
-    },
-    {
-        .name = "reset-compress",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompress,
-    },
-
-    // compress-level option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "compress-level",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptCompressLevel,
-    },
-    {
-        .name = "reset-compress-level",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressLevel,
-    },
-
-    // compress-level-network option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "compress-level-network",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptCompressLevelNetwork,
-    },
-    {
-        .name = "reset-compress-level-network",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressLevelNetwork,
-    },
-
-    // compress-type option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "compress-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptCompressType,
-    },
-    {
-        .name = "reset-compress-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressType,
-    },
-
-    // config option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptConfig,
-    },
-    {
-        .name = "no-config",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptConfig,
-    },
-
-    // config-include-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptConfigIncludePath,
-    },
-
-    // config-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptConfigPath,
-    },
-
-    // db-exclude option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-exclude",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptDbExclude,
-    },
-    {
-        .name = "reset-db-exclude",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDbExclude,
-    },
-
-    // db-include option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-include",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptDbInclude,
-    },
-    {
-        .name = "reset-db-include",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDbInclude,
-    },
-
-    // db-timeout option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-timeout",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptDbTimeout,
-    },
-    {
-        .name = "reset-db-timeout",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDbTimeout,
-    },
-
-    // delta option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "delta",
-        .val = PARSE_OPTION_FLAG | cfgOptDelta,
-    },
-    {
-        .name = "no-delta",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptDelta,
-    },
-    {
-        .name = "reset-delta",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDelta,
-    },
-
-    // dry-run option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "dry-run",
-        .val = PARSE_OPTION_FLAG | cfgOptDryRun,
-    },
-
-    // exclude option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "exclude",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptExclude,
-    },
-    {
-        .name = "reset-exclude",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
-    },
-
-    // exec-id option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "exec-id",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptExecId,
-    },
-
-    // expire-auto option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "expire-auto",
-        .val = PARSE_OPTION_FLAG | cfgOptExpireAuto,
-    },
-    {
-        .name = "no-expire-auto",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptExpireAuto,
-    },
-    {
-        .name = "reset-expire-auto",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExpireAuto,
-    },
-
-    // filter option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "filter",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptFilter,
-    },
-
-    // force option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "force",
-        .val = PARSE_OPTION_FLAG | cfgOptForce,
-    },
-
-    // ignore-missing option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "ignore-missing",
-        .val = PARSE_OPTION_FLAG | cfgOptIgnoreMissing,
-    },
-
-    // io-timeout option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "io-timeout",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptIoTimeout,
-    },
-    {
-        .name = "reset-io-timeout",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptIoTimeout,
-    },
-
-    // job-retry option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "job-retry",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptJobRetry,
-    },
-    {
-        .name = "reset-job-retry",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptJobRetry,
-    },
-
-    // job-retry-interval option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "job-retry-interval",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptJobRetryInterval,
-    },
-    {
-        .name = "reset-job-retry-interval",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptJobRetryInterval,
-    },
-
-    // link-all option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "link-all",
-        .val = PARSE_OPTION_FLAG | cfgOptLinkAll,
-    },
-    {
-        .name = "no-link-all",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLinkAll,
-    },
-    {
-        .name = "reset-link-all",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLinkAll,
-    },
-
-    // link-map option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "link-map",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptLinkMap,
-    },
-    {
-        .name = "reset-link-map",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLinkMap,
-    },
-
-    // lock-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "lock-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptLockPath,
-    },
-    {
-        .name = "reset-lock-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLockPath,
-    },
-
-    // log-level-console option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "log-level-console",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptLogLevelConsole,
-    },
-    {
-        .name = "reset-log-level-console",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogLevelConsole,
-    },
-
-    // log-level-file option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "log-level-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptLogLevelFile,
-    },
-    {
-        .name = "reset-log-level-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogLevelFile,
-    },
-
-    // log-level-stderr option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "log-level-stderr",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptLogLevelStderr,
-    },
-    {
-        .name = "reset-log-level-stderr",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogLevelStderr,
-    },
-
-    // log-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "log-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptLogPath,
-    },
-    {
-        .name = "reset-log-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogPath,
-    },
-
-    // log-subprocess option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "log-subprocess",
-        .val = PARSE_OPTION_FLAG | cfgOptLogSubprocess,
-    },
-    {
-        .name = "no-log-subprocess",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogSubprocess,
-    },
-    {
-        .name = "reset-log-subprocess",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogSubprocess,
-    },
-
-    // log-timestamp option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "log-timestamp",
-        .val = PARSE_OPTION_FLAG | cfgOptLogTimestamp,
-    },
-    {
-        .name = "no-log-timestamp",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogTimestamp,
-    },
-    {
-        .name = "reset-log-timestamp",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogTimestamp,
-    },
-
-    // manifest-save-threshold option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "manifest-save-threshold",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptManifestSaveThreshold,
-    },
-    {
-        .name = "reset-manifest-save-threshold",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptManifestSaveThreshold,
-    },
-
-    // neutral-umask option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "neutral-umask",
-        .val = PARSE_OPTION_FLAG | cfgOptNeutralUmask,
-    },
-    {
-        .name = "no-neutral-umask",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptNeutralUmask,
-    },
-    {
-        .name = "reset-neutral-umask",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptNeutralUmask,
-    },
-
-    // online option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "online",
-        .val = PARSE_OPTION_FLAG | cfgOptOnline,
-    },
-    {
-        .name = "no-online",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptOnline,
-    },
-
-    // output option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "output",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptOutput,
-    },
-
-    // pg option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptPg,
-    },
-
-    // pg-database option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-database",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "reset-pg1-database",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "pg2-database",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "reset-pg2-database",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "pg3-database",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "reset-pg3-database",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "pg4-database",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "reset-pg4-database",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "pg5-database",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "reset-pg5-database",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "pg6-database",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "reset-pg6-database",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "pg7-database",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "reset-pg7-database",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "pg8-database",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-    {
-        .name = "reset-pg8-database",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
-    },
-
     // pg-host option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "reset-pg1-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
     {
         .name = "db-host",
         .has_arg = required_argument,
@@ -7266,27 +6731,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
     },
     {
-        .name = "pg2-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "reset-pg2-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
         .name = "db2-host",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "pg3-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "reset-pg3-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
     },
     {
         .name = "db3-host",
@@ -7294,27 +6741,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
     },
     {
-        .name = "pg4-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "reset-pg4-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
         .name = "db4-host",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "pg5-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "reset-pg5-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
     },
     {
         .name = "db5-host",
@@ -7322,41 +6751,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
     },
     {
-        .name = "pg6-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "reset-pg6-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
         .name = "db6-host",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
     },
     {
-        .name = "pg7-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "reset-pg7-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
         .name = "db7-host",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "pg8-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "reset-pg8-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
     },
     {
         .name = "db8-host",
@@ -7366,15 +6768,6 @@ static const struct option optionList[] =
 
     // pg-host-cmd option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "reset-pg1-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
     {
         .name = "db-cmd",
         .has_arg = required_argument,
@@ -7386,27 +6779,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
     },
     {
-        .name = "pg2-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "reset-pg2-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
         .name = "db2-cmd",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "pg3-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "reset-pg3-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
     },
     {
         .name = "db3-cmd",
@@ -7414,27 +6789,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
     },
     {
-        .name = "pg4-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "reset-pg4-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
         .name = "db4-cmd",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "pg5-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "reset-pg5-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
     },
     {
         .name = "db5-cmd",
@@ -7442,41 +6799,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
     },
     {
-        .name = "pg6-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "reset-pg6-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
         .name = "db6-cmd",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
     },
     {
-        .name = "pg7-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "reset-pg7-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
         .name = "db7-cmd",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "pg8-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "reset-pg8-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
     },
     {
         .name = "db8-cmd",
@@ -7486,15 +6816,6 @@ static const struct option optionList[] =
 
     // pg-host-config option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "reset-pg1-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
     {
         .name = "db-config",
         .has_arg = required_argument,
@@ -7506,27 +6827,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
     },
     {
-        .name = "pg2-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "reset-pg2-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
         .name = "db2-config",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "pg3-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "reset-pg3-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
     },
     {
         .name = "db3-config",
@@ -7534,27 +6837,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
     },
     {
-        .name = "pg4-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "reset-pg4-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
         .name = "db4-config",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "pg5-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "reset-pg5-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
     },
     {
         .name = "db5-config",
@@ -7562,27 +6847,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
     },
     {
-        .name = "pg6-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "reset-pg6-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
         .name = "db6-config",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "pg7-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "reset-pg7-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
     },
     {
         .name = "db7-config",
@@ -7590,181 +6857,13 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
     },
     {
-        .name = "pg8-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "reset-pg8-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
         .name = "db8-config",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
     },
 
-    // pg-host-config-include-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "reset-pg1-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "pg2-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "reset-pg2-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "pg3-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "reset-pg3-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "pg4-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "reset-pg4-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "pg5-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "reset-pg5-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "pg6-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "reset-pg6-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "pg7-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "reset-pg7-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "pg8-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-    {
-        .name = "reset-pg8-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigIncludePath,
-    },
-
-    // pg-host-config-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "reset-pg1-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "pg2-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "reset-pg2-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "pg3-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "reset-pg3-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "pg4-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "reset-pg4-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "pg5-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "reset-pg5-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "pg6-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "reset-pg6-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "pg7-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "reset-pg7-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "pg8-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-    {
-        .name = "reset-pg8-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfigPath,
-    },
-
     // pg-host-port option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "reset-pg1-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
     {
         .name = "db-ssh-port",
         .has_arg = required_argument,
@@ -7776,27 +6875,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
     },
     {
-        .name = "pg2-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "reset-pg2-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
         .name = "db2-ssh-port",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "pg3-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "reset-pg3-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
     },
     {
         .name = "db3-ssh-port",
@@ -7804,27 +6885,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
     },
     {
-        .name = "pg4-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "reset-pg4-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
         .name = "db4-ssh-port",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "pg5-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "reset-pg5-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
     },
     {
         .name = "db5-ssh-port",
@@ -7832,41 +6895,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
     },
     {
-        .name = "pg6-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "reset-pg6-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
         .name = "db6-ssh-port",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
     },
     {
-        .name = "pg7-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "reset-pg7-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
         .name = "db7-ssh-port",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "pg8-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "reset-pg8-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
     },
     {
         .name = "db8-ssh-port",
@@ -7876,15 +6912,6 @@ static const struct option optionList[] =
 
     // pg-host-user option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "reset-pg1-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
     {
         .name = "db-user",
         .has_arg = required_argument,
@@ -7896,27 +6923,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
     },
     {
-        .name = "pg2-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "reset-pg2-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
         .name = "db2-user",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "pg3-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "reset-pg3-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
     },
     {
         .name = "db3-user",
@@ -7924,27 +6933,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
     },
     {
-        .name = "pg4-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "reset-pg4-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
         .name = "db4-user",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "pg5-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "reset-pg5-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
     },
     {
         .name = "db5-user",
@@ -7952,27 +6943,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
     },
     {
-        .name = "pg6-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "reset-pg6-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
         .name = "db6-user",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "pg7-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "reset-pg7-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
     },
     {
         .name = "db7-user",
@@ -7980,130 +6953,13 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
     },
     {
-        .name = "pg8-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "reset-pg8-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
         .name = "db8-user",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
     },
 
-    // pg-local option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-local",
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "no-pg1-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "reset-pg1-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "pg2-local",
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "no-pg2-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "reset-pg2-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "pg3-local",
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "no-pg3-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "reset-pg3-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "pg4-local",
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "no-pg4-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "reset-pg4-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "pg5-local",
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "no-pg5-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "reset-pg5-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "pg6-local",
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "no-pg6-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "reset-pg6-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "pg7-local",
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "no-pg7-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "reset-pg7-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "pg8-local",
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "no-pg8-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-    {
-        .name = "reset-pg8-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgLocal,
-    },
-
     // pg-path option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "reset-pg1-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
     {
         .name = "db-path",
         .has_arg = required_argument,
@@ -8115,27 +6971,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
     },
     {
-        .name = "pg2-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "reset-pg2-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
         .name = "db2-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "pg3-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "reset-pg3-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
     },
     {
         .name = "db3-path",
@@ -8143,27 +6981,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
     },
     {
-        .name = "pg4-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "reset-pg4-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
         .name = "db4-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "pg5-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "reset-pg5-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
     },
     {
         .name = "db5-path",
@@ -8171,41 +6991,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
     },
     {
-        .name = "pg6-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "reset-pg6-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
         .name = "db6-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
     },
     {
-        .name = "pg7-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "reset-pg7-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
         .name = "db7-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "pg8-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "reset-pg8-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
     },
     {
         .name = "db8-path",
@@ -8215,15 +7008,6 @@ static const struct option optionList[] =
 
     // pg-port option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "reset-pg1-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
     {
         .name = "db-port",
         .has_arg = required_argument,
@@ -8235,27 +7019,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
     },
     {
-        .name = "pg2-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "reset-pg2-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
         .name = "db2-port",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "pg3-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "reset-pg3-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
     },
     {
         .name = "db3-port",
@@ -8263,27 +7029,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
     },
     {
-        .name = "pg4-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "reset-pg4-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
         .name = "db4-port",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "pg5-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "reset-pg5-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
     },
     {
         .name = "db5-port",
@@ -8291,41 +7039,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
     },
     {
-        .name = "pg6-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "reset-pg6-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
         .name = "db6-port",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
     },
     {
-        .name = "pg7-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "reset-pg7-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
         .name = "db7-port",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "pg8-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "reset-pg8-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
     },
     {
         .name = "db8-port",
@@ -8335,15 +7056,6 @@ static const struct option optionList[] =
 
     // pg-socket-path option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "reset-pg1-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
     {
         .name = "db-socket-path",
         .has_arg = required_argument,
@@ -8355,27 +7067,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
     },
     {
-        .name = "pg2-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "reset-pg2-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
         .name = "db2-socket-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "pg3-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "reset-pg3-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
     },
     {
         .name = "db3-socket-path",
@@ -8383,27 +7077,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
     },
     {
-        .name = "pg4-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "reset-pg4-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
         .name = "db4-socket-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "pg5-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "reset-pg5-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
     },
     {
         .name = "db5-socket-path",
@@ -8411,27 +7087,9 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
     },
     {
-        .name = "pg6-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "reset-pg6-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
         .name = "db6-socket-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "pg7-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "reset-pg7-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
     },
     {
         .name = "db7-socket-path",
@@ -8439,622 +7097,29 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
     },
     {
-        .name = "pg8-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "reset-pg8-socket-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
         .name = "db8-socket-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
     },
 
-    // pg-user option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg1-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "reset-pg1-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "pg2-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "reset-pg2-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "pg3-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "reset-pg3-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "pg4-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "reset-pg4-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "pg5-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "reset-pg5-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "pg6-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "reset-pg6-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "pg7-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "reset-pg7-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "pg8-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-    {
-        .name = "reset-pg8-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgUser,
-    },
-
-    // process option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "process",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptProcess,
-    },
-
-    // process-max option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "process-max",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptProcessMax,
-    },
-    {
-        .name = "reset-process-max",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptProcessMax,
-    },
-
-    // protocol-timeout option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "protocol-timeout",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptProtocolTimeout,
-    },
-    {
-        .name = "reset-protocol-timeout",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptProtocolTimeout,
-    },
-
-    // raw option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "raw",
-        .val = PARSE_OPTION_FLAG | cfgOptRaw,
-    },
-
-    // recovery-option option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "recovery-option",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRecoveryOption,
-    },
-    {
-        .name = "reset-recovery-option",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRecoveryOption,
-    },
-
-    // recurse option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "recurse",
-        .val = PARSE_OPTION_FLAG | cfgOptRecurse,
-    },
-
-    // remote-type option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "remote-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
-    },
-
-    // repo option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRepo,
-    },
-
-    // repo-azure-account option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-azure-account",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureAccount,
-    },
-    {
-        .name = "reset-repo1-azure-account",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureAccount,
-    },
-    {
-        .name = "repo2-azure-account",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureAccount,
-    },
-    {
-        .name = "reset-repo2-azure-account",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureAccount,
-    },
-    {
-        .name = "repo3-azure-account",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureAccount,
-    },
-    {
-        .name = "reset-repo3-azure-account",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureAccount,
-    },
-    {
-        .name = "repo4-azure-account",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureAccount,
-    },
-    {
-        .name = "reset-repo4-azure-account",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureAccount,
-    },
-
-    // repo-azure-container option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-azure-container",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureContainer,
-    },
-    {
-        .name = "reset-repo1-azure-container",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureContainer,
-    },
-    {
-        .name = "repo2-azure-container",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureContainer,
-    },
-    {
-        .name = "reset-repo2-azure-container",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureContainer,
-    },
-    {
-        .name = "repo3-azure-container",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureContainer,
-    },
-    {
-        .name = "reset-repo3-azure-container",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureContainer,
-    },
-    {
-        .name = "repo4-azure-container",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureContainer,
-    },
-    {
-        .name = "reset-repo4-azure-container",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureContainer,
-    },
-
-    // repo-azure-endpoint option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-azure-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureEndpoint,
-    },
-    {
-        .name = "reset-repo1-azure-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureEndpoint,
-    },
-    {
-        .name = "repo2-azure-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureEndpoint,
-    },
-    {
-        .name = "reset-repo2-azure-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureEndpoint,
-    },
-    {
-        .name = "repo3-azure-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureEndpoint,
-    },
-    {
-        .name = "reset-repo3-azure-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureEndpoint,
-    },
-    {
-        .name = "repo4-azure-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureEndpoint,
-    },
-    {
-        .name = "reset-repo4-azure-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureEndpoint,
-    },
-
-    // repo-azure-key option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-azure-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKey,
-    },
-    {
-        .name = "reset-repo1-azure-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKey,
-    },
-    {
-        .name = "repo2-azure-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKey,
-    },
-    {
-        .name = "reset-repo2-azure-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKey,
-    },
-    {
-        .name = "repo3-azure-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKey,
-    },
-    {
-        .name = "reset-repo3-azure-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKey,
-    },
-    {
-        .name = "repo4-azure-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKey,
-    },
-    {
-        .name = "reset-repo4-azure-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKey,
-    },
-
-    // repo-azure-key-type option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-azure-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKeyType,
-    },
-    {
-        .name = "reset-repo1-azure-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKeyType,
-    },
-    {
-        .name = "repo2-azure-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKeyType,
-    },
-    {
-        .name = "reset-repo2-azure-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKeyType,
-    },
-    {
-        .name = "repo3-azure-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKeyType,
-    },
-    {
-        .name = "reset-repo3-azure-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKeyType,
-    },
-    {
-        .name = "repo4-azure-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKeyType,
-    },
-    {
-        .name = "reset-repo4-azure-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureKeyType,
-    },
-
     // repo-cipher-pass option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-cipher-pass",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
-    },
-    {
-        .name = "reset-repo1-cipher-pass",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
-    },
     {
         .name = "repo-cipher-pass",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
     },
-    {
-        .name = "repo2-cipher-pass",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
-    },
-    {
-        .name = "reset-repo2-cipher-pass",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
-    },
-    {
-        .name = "repo3-cipher-pass",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
-    },
-    {
-        .name = "reset-repo3-cipher-pass",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
-    },
-    {
-        .name = "repo4-cipher-pass",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
-    },
-    {
-        .name = "reset-repo4-cipher-pass",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
-    },
 
     // repo-cipher-type option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-cipher-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
-    {
-        .name = "reset-repo1-cipher-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
     {
         .name = "repo-cipher-type",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
     },
-    {
-        .name = "repo2-cipher-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
-    {
-        .name = "reset-repo2-cipher-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
-    {
-        .name = "repo3-cipher-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
-    {
-        .name = "reset-repo3-cipher-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
-    {
-        .name = "repo4-cipher-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
-    {
-        .name = "reset-repo4-cipher-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
-
-    // repo-gcs-bucket option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-gcs-bucket",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsBucket,
-    },
-    {
-        .name = "reset-repo1-gcs-bucket",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsBucket,
-    },
-    {
-        .name = "repo2-gcs-bucket",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsBucket,
-    },
-    {
-        .name = "reset-repo2-gcs-bucket",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsBucket,
-    },
-    {
-        .name = "repo3-gcs-bucket",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsBucket,
-    },
-    {
-        .name = "reset-repo3-gcs-bucket",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsBucket,
-    },
-    {
-        .name = "repo4-gcs-bucket",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsBucket,
-    },
-    {
-        .name = "reset-repo4-gcs-bucket",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsBucket,
-    },
-
-    // repo-gcs-endpoint option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-gcs-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsEndpoint,
-    },
-    {
-        .name = "reset-repo1-gcs-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsEndpoint,
-    },
-    {
-        .name = "repo2-gcs-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsEndpoint,
-    },
-    {
-        .name = "reset-repo2-gcs-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsEndpoint,
-    },
-    {
-        .name = "repo3-gcs-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsEndpoint,
-    },
-    {
-        .name = "reset-repo3-gcs-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsEndpoint,
-    },
-    {
-        .name = "repo4-gcs-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsEndpoint,
-    },
-    {
-        .name = "reset-repo4-gcs-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsEndpoint,
-    },
-
-    // repo-gcs-key option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-gcs-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKey,
-    },
-    {
-        .name = "reset-repo1-gcs-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKey,
-    },
-    {
-        .name = "repo2-gcs-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKey,
-    },
-    {
-        .name = "reset-repo2-gcs-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKey,
-    },
-    {
-        .name = "repo3-gcs-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKey,
-    },
-    {
-        .name = "reset-repo3-gcs-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKey,
-    },
-    {
-        .name = "repo4-gcs-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKey,
-    },
-    {
-        .name = "reset-repo4-gcs-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKey,
-    },
-
-    // repo-gcs-key-type option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-gcs-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKeyType,
-    },
-    {
-        .name = "reset-repo1-gcs-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKeyType,
-    },
-    {
-        .name = "repo2-gcs-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKeyType,
-    },
-    {
-        .name = "reset-repo2-gcs-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKeyType,
-    },
-    {
-        .name = "repo3-gcs-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKeyType,
-    },
-    {
-        .name = "reset-repo3-gcs-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKeyType,
-    },
-    {
-        .name = "repo4-gcs-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKeyType,
-    },
-    {
-        .name = "reset-repo4-gcs-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoGcsKeyType,
-    },
 
     // repo-hardlink option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-hardlink",
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "no-repo1-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "reset-repo1-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
     {
         .name = "hardlink",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
@@ -9063,1077 +7128,129 @@ static const struct option optionList[] =
         .name = "no-hardlink",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
     },
-    {
-        .name = "repo2-hardlink",
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "no-repo2-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "reset-repo2-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "repo3-hardlink",
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "no-repo3-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "reset-repo3-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "repo4-hardlink",
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "no-repo4-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "reset-repo4-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
 
     // repo-host option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
-    },
-    {
-        .name = "reset-repo1-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
-    },
     {
         .name = "backup-host",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
     },
-    {
-        .name = "repo2-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
-    },
-    {
-        .name = "reset-repo2-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
-    },
-    {
-        .name = "repo3-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
-    },
-    {
-        .name = "reset-repo3-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
-    },
-    {
-        .name = "repo4-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
-    },
-    {
-        .name = "reset-repo4-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
-    },
 
     // repo-host-cmd option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
-    },
-    {
-        .name = "reset-repo1-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
-    },
     {
         .name = "backup-cmd",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
     },
-    {
-        .name = "repo2-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
-    },
-    {
-        .name = "reset-repo2-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
-    },
-    {
-        .name = "repo3-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
-    },
-    {
-        .name = "reset-repo3-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
-    },
-    {
-        .name = "repo4-host-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
-    },
-    {
-        .name = "reset-repo4-host-cmd",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
-    },
 
     // repo-host-config option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
-    },
-    {
-        .name = "reset-repo1-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
-    },
     {
         .name = "backup-config",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
     },
-    {
-        .name = "repo2-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
-    },
-    {
-        .name = "reset-repo2-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
-    },
-    {
-        .name = "repo3-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
-    },
-    {
-        .name = "reset-repo3-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
-    },
-    {
-        .name = "repo4-host-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
-    },
-    {
-        .name = "reset-repo4-host-config",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
-    },
-
-    // repo-host-config-include-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigIncludePath,
-    },
-    {
-        .name = "reset-repo1-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigIncludePath,
-    },
-    {
-        .name = "repo2-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigIncludePath,
-    },
-    {
-        .name = "reset-repo2-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigIncludePath,
-    },
-    {
-        .name = "repo3-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigIncludePath,
-    },
-    {
-        .name = "reset-repo3-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigIncludePath,
-    },
-    {
-        .name = "repo4-host-config-include-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigIncludePath,
-    },
-    {
-        .name = "reset-repo4-host-config-include-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigIncludePath,
-    },
-
-    // repo-host-config-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigPath,
-    },
-    {
-        .name = "reset-repo1-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigPath,
-    },
-    {
-        .name = "repo2-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigPath,
-    },
-    {
-        .name = "reset-repo2-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigPath,
-    },
-    {
-        .name = "repo3-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigPath,
-    },
-    {
-        .name = "reset-repo3-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigPath,
-    },
-    {
-        .name = "repo4-host-config-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigPath,
-    },
-    {
-        .name = "reset-repo4-host-config-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfigPath,
-    },
 
     // repo-host-port option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
-    },
-    {
-        .name = "reset-repo1-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
-    },
     {
         .name = "backup-ssh-port",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
     },
-    {
-        .name = "repo2-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
-    },
-    {
-        .name = "reset-repo2-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
-    },
-    {
-        .name = "repo3-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
-    },
-    {
-        .name = "reset-repo3-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
-    },
-    {
-        .name = "repo4-host-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
-    },
-    {
-        .name = "reset-repo4-host-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
-    },
 
     // repo-host-user option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
-    },
-    {
-        .name = "reset-repo1-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
-    },
     {
         .name = "backup-user",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
     },
-    {
-        .name = "repo2-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
-    },
-    {
-        .name = "reset-repo2-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
-    },
-    {
-        .name = "repo3-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
-    },
-    {
-        .name = "reset-repo3-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
-    },
-    {
-        .name = "repo4-host-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
-    },
-    {
-        .name = "reset-repo4-host-user",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
-    },
-
-    // repo-local option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-local",
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "no-repo1-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "reset-repo1-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "repo2-local",
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "no-repo2-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "reset-repo2-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "repo3-local",
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "no-repo3-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "reset-repo3-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "repo4-local",
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "no-repo4-local",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
-    {
-        .name = "reset-repo4-local",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoLocal,
-    },
 
     // repo-path option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
-    },
-    {
-        .name = "reset-repo1-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
-    },
     {
         .name = "repo-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
     },
-    {
-        .name = "repo2-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
-    },
-    {
-        .name = "reset-repo2-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
-    },
-    {
-        .name = "repo3-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
-    },
-    {
-        .name = "reset-repo3-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
-    },
-    {
-        .name = "repo4-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
-    },
-    {
-        .name = "reset-repo4-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
-    },
 
     // repo-retention-archive option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-retention-archive",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
-    },
-    {
-        .name = "reset-repo1-retention-archive",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
-    },
     {
         .name = "retention-archive",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
     },
-    {
-        .name = "repo2-retention-archive",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
-    },
-    {
-        .name = "reset-repo2-retention-archive",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
-    },
-    {
-        .name = "repo3-retention-archive",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
-    },
-    {
-        .name = "reset-repo3-retention-archive",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
-    },
-    {
-        .name = "repo4-retention-archive",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
-    },
-    {
-        .name = "reset-repo4-retention-archive",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
-    },
 
     // repo-retention-archive-type option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-retention-archive-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
-    },
-    {
-        .name = "reset-repo1-retention-archive-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
-    },
     {
         .name = "retention-archive-type",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
     },
-    {
-        .name = "repo2-retention-archive-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
-    },
-    {
-        .name = "reset-repo2-retention-archive-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
-    },
-    {
-        .name = "repo3-retention-archive-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
-    },
-    {
-        .name = "reset-repo3-retention-archive-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
-    },
-    {
-        .name = "repo4-retention-archive-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
-    },
-    {
-        .name = "reset-repo4-retention-archive-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
-    },
 
     // repo-retention-diff option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-retention-diff",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
-    },
-    {
-        .name = "reset-repo1-retention-diff",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
-    },
     {
         .name = "retention-diff",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
     },
-    {
-        .name = "repo2-retention-diff",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
-    },
-    {
-        .name = "reset-repo2-retention-diff",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
-    },
-    {
-        .name = "repo3-retention-diff",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
-    },
-    {
-        .name = "reset-repo3-retention-diff",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
-    },
-    {
-        .name = "repo4-retention-diff",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
-    },
-    {
-        .name = "reset-repo4-retention-diff",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
-    },
 
     // repo-retention-full option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-retention-full",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
-    },
-    {
-        .name = "reset-repo1-retention-full",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
-    },
     {
         .name = "retention-full",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
     },
-    {
-        .name = "repo2-retention-full",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
-    },
-    {
-        .name = "reset-repo2-retention-full",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
-    },
-    {
-        .name = "repo3-retention-full",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
-    },
-    {
-        .name = "reset-repo3-retention-full",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
-    },
-    {
-        .name = "repo4-retention-full",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
-    },
-    {
-        .name = "reset-repo4-retention-full",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
-    },
-
-    // repo-retention-full-type option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-retention-full-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFullType,
-    },
-    {
-        .name = "reset-repo1-retention-full-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFullType,
-    },
-    {
-        .name = "repo2-retention-full-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFullType,
-    },
-    {
-        .name = "reset-repo2-retention-full-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFullType,
-    },
-    {
-        .name = "repo3-retention-full-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFullType,
-    },
-    {
-        .name = "reset-repo3-retention-full-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFullType,
-    },
-    {
-        .name = "repo4-retention-full-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFullType,
-    },
-    {
-        .name = "reset-repo4-retention-full-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFullType,
-    },
-
-    // repo-retention-history option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-retention-history",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
-    },
-    {
-        .name = "reset-repo1-retention-history",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
-    },
-    {
-        .name = "repo2-retention-history",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
-    },
-    {
-        .name = "reset-repo2-retention-history",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
-    },
-    {
-        .name = "repo3-retention-history",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
-    },
-    {
-        .name = "reset-repo3-retention-history",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
-    },
-    {
-        .name = "repo4-retention-history",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
-    },
-    {
-        .name = "reset-repo4-retention-history",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionHistory,
-    },
 
     // repo-s3-bucket option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-bucket",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
-    },
-    {
-        .name = "reset-repo1-s3-bucket",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
-    },
     {
         .name = "repo-s3-bucket",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
     },
-    {
-        .name = "repo2-s3-bucket",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
-    },
-    {
-        .name = "reset-repo2-s3-bucket",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
-    },
-    {
-        .name = "repo3-s3-bucket",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
-    },
-    {
-        .name = "reset-repo3-s3-bucket",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
-    },
-    {
-        .name = "repo4-s3-bucket",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
-    },
-    {
-        .name = "reset-repo4-s3-bucket",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
-    },
 
     // repo-s3-endpoint option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
-    },
-    {
-        .name = "reset-repo1-s3-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
-    },
     {
         .name = "repo-s3-endpoint",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
     },
-    {
-        .name = "repo2-s3-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
-    },
-    {
-        .name = "reset-repo2-s3-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
-    },
-    {
-        .name = "repo3-s3-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
-    },
-    {
-        .name = "reset-repo3-s3-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
-    },
-    {
-        .name = "repo4-s3-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
-    },
-    {
-        .name = "reset-repo4-s3-endpoint",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
-    },
 
     // repo-s3-key option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
-    },
-    {
-        .name = "reset-repo1-s3-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
-    },
     {
         .name = "repo-s3-key",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
     },
-    {
-        .name = "repo2-s3-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
-    },
-    {
-        .name = "reset-repo2-s3-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
-    },
-    {
-        .name = "repo3-s3-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
-    },
-    {
-        .name = "reset-repo3-s3-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
-    },
-    {
-        .name = "repo4-s3-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
-    },
-    {
-        .name = "reset-repo4-s3-key",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
-    },
 
     // repo-s3-key-secret option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-key-secret",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
-    },
-    {
-        .name = "reset-repo1-s3-key-secret",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
-    },
     {
         .name = "repo-s3-key-secret",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
     },
-    {
-        .name = "repo2-s3-key-secret",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
-    },
-    {
-        .name = "reset-repo2-s3-key-secret",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
-    },
-    {
-        .name = "repo3-s3-key-secret",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
-    },
-    {
-        .name = "reset-repo3-s3-key-secret",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
-    },
-    {
-        .name = "repo4-s3-key-secret",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
-    },
-    {
-        .name = "reset-repo4-s3-key-secret",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
-    },
-
-    // repo-s3-key-type option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeyType,
-    },
-    {
-        .name = "reset-repo1-s3-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeyType,
-    },
-    {
-        .name = "repo2-s3-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeyType,
-    },
-    {
-        .name = "reset-repo2-s3-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeyType,
-    },
-    {
-        .name = "repo3-s3-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeyType,
-    },
-    {
-        .name = "reset-repo3-s3-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeyType,
-    },
-    {
-        .name = "repo4-s3-key-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeyType,
-    },
-    {
-        .name = "reset-repo4-s3-key-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeyType,
-    },
 
     // repo-s3-region option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-region",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
-    },
-    {
-        .name = "reset-repo1-s3-region",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
-    },
     {
         .name = "repo-s3-region",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
     },
-    {
-        .name = "repo2-s3-region",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
-    },
-    {
-        .name = "reset-repo2-s3-region",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
-    },
-    {
-        .name = "repo3-s3-region",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
-    },
-    {
-        .name = "reset-repo3-s3-region",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
-    },
-    {
-        .name = "repo4-s3-region",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
-    },
-    {
-        .name = "reset-repo4-s3-region",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
-    },
-
-    // repo-s3-role option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-role",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Role,
-    },
-    {
-        .name = "reset-repo1-s3-role",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Role,
-    },
-    {
-        .name = "repo2-s3-role",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Role,
-    },
-    {
-        .name = "reset-repo2-s3-role",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Role,
-    },
-    {
-        .name = "repo3-s3-role",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Role,
-    },
-    {
-        .name = "reset-repo3-s3-role",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Role,
-    },
-    {
-        .name = "repo4-s3-role",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Role,
-    },
-    {
-        .name = "reset-repo4-s3-role",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Role,
-    },
-
-    // repo-s3-token option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-token",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Token,
-    },
-    {
-        .name = "reset-repo1-s3-token",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Token,
-    },
-    {
-        .name = "repo2-s3-token",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Token,
-    },
-    {
-        .name = "reset-repo2-s3-token",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Token,
-    },
-    {
-        .name = "repo3-s3-token",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Token,
-    },
-    {
-        .name = "reset-repo3-s3-token",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Token,
-    },
-    {
-        .name = "repo4-s3-token",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Token,
-    },
-    {
-        .name = "reset-repo4-s3-token",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Token,
-    },
-
-    // repo-s3-uri-style option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-uri-style",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3UriStyle,
-    },
-    {
-        .name = "reset-repo1-s3-uri-style",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3UriStyle,
-    },
-    {
-        .name = "repo2-s3-uri-style",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3UriStyle,
-    },
-    {
-        .name = "reset-repo2-s3-uri-style",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3UriStyle,
-    },
-    {
-        .name = "repo3-s3-uri-style",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3UriStyle,
-    },
-    {
-        .name = "reset-repo3-s3-uri-style",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3UriStyle,
-    },
-    {
-        .name = "repo4-s3-uri-style",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3UriStyle,
-    },
-    {
-        .name = "reset-repo4-s3-uri-style",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3UriStyle,
-    },
 
     // repo-storage-ca-file option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-storage-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "reset-repo1-storage-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
     {
         .name = "repo-s3-ca-file",
         .has_arg = required_argument,
@@ -10157,45 +7274,9 @@ static const struct option optionList[] =
         .name = "reset-repo1-s3-ca-file",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
     },
-    {
-        .name = "repo2-storage-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "reset-repo2-storage-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "repo3-storage-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "reset-repo3-storage-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "repo4-storage-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "reset-repo4-storage-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
 
     // repo-storage-ca-path option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-storage-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "reset-repo1-storage-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
     {
         .name = "repo-s3-ca-path",
         .has_arg = required_argument,
@@ -10219,45 +7300,9 @@ static const struct option optionList[] =
         .name = "reset-repo1-s3-ca-path",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
     },
-    {
-        .name = "repo2-storage-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "reset-repo2-storage-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "repo3-storage-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "reset-repo3-storage-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "repo4-storage-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "reset-repo4-storage-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
 
     // repo-storage-host option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-storage-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "reset-repo1-storage-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
     {
         .name = "repo-s3-host",
         .has_arg = required_argument,
@@ -10281,45 +7326,9 @@ static const struct option optionList[] =
         .name = "reset-repo1-s3-host",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
     },
-    {
-        .name = "repo2-storage-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "reset-repo2-storage-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "repo3-storage-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "reset-repo3-storage-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "repo4-storage-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "reset-repo4-storage-host",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
 
     // repo-storage-port option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-storage-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
-    {
-        .name = "reset-repo1-storage-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
     {
         .name = "repo1-azure-port",
         .has_arg = required_argument,
@@ -10338,48 +7347,9 @@ static const struct option optionList[] =
         .name = "reset-repo1-s3-port",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
     },
-    {
-        .name = "repo2-storage-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
-    {
-        .name = "reset-repo2-storage-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
-    {
-        .name = "repo3-storage-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
-    {
-        .name = "reset-repo3-storage-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
-    {
-        .name = "repo4-storage-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
-    {
-        .name = "reset-repo4-storage-port",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
 
     // repo-storage-verify-tls option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "no-repo1-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "reset-repo1-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
     {
         .name = "repo-s3-verify-ssl",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
@@ -10420,295 +7390,13 @@ static const struct option optionList[] =
         .name = "reset-repo1-s3-verify-tls",
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
-    {
-        .name = "repo2-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "no-repo2-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "reset-repo2-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "repo3-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "no-repo3-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "reset-repo3-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "repo4-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "no-repo4-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "reset-repo4-storage-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
 
     // repo-type option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = "repo1-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
-    },
-    {
-        .name = "reset-repo1-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
-    },
-    {
         .name = "repo-type",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
-    },
-    {
-        .name = "repo2-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
-    },
-    {
-        .name = "reset-repo2-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
-    },
-    {
-        .name = "repo3-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
-    },
-    {
-        .name = "reset-repo3-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
-    },
-    {
-        .name = "repo4-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
-    },
-    {
-        .name = "reset-repo4-type",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
-    },
-
-    // resume option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "resume",
-        .val = PARSE_OPTION_FLAG | cfgOptResume,
-    },
-    {
-        .name = "no-resume",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptResume,
-    },
-    {
-        .name = "reset-resume",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptResume,
-    },
-
-    // sck-block option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "sck-block",
-        .val = PARSE_OPTION_FLAG | cfgOptSckBlock,
-    },
-    {
-        .name = "no-sck-block",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptSckBlock,
-    },
-    {
-        .name = "reset-sck-block",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptSckBlock,
-    },
-
-    // sck-keep-alive option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "sck-keep-alive",
-        .val = PARSE_OPTION_FLAG | cfgOptSckKeepAlive,
-    },
-    {
-        .name = "no-sck-keep-alive",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptSckKeepAlive,
-    },
-    {
-        .name = "reset-sck-keep-alive",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptSckKeepAlive,
-    },
-
-    // set option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "set",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptSet,
-    },
-
-    // sort option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "sort",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptSort,
-    },
-
-    // spool-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "spool-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptSpoolPath,
-    },
-    {
-        .name = "reset-spool-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptSpoolPath,
-    },
-
-    // stanza option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "stanza",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptStanza,
-    },
-
-    // start-fast option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "start-fast",
-        .val = PARSE_OPTION_FLAG | cfgOptStartFast,
-    },
-    {
-        .name = "no-start-fast",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptStartFast,
-    },
-    {
-        .name = "reset-start-fast",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptStartFast,
-    },
-
-    // stop-auto option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "stop-auto",
-        .val = PARSE_OPTION_FLAG | cfgOptStopAuto,
-    },
-    {
-        .name = "no-stop-auto",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptStopAuto,
-    },
-    {
-        .name = "reset-stop-auto",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptStopAuto,
-    },
-
-    // tablespace-map option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "tablespace-map",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTablespaceMap,
-    },
-    {
-        .name = "reset-tablespace-map",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTablespaceMap,
-    },
-
-    // tablespace-map-all option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "tablespace-map-all",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTablespaceMapAll,
-    },
-    {
-        .name = "reset-tablespace-map-all",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTablespaceMapAll,
-    },
-
-    // target option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "target",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTarget,
-    },
-
-    // target-action option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "target-action",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTargetAction,
-    },
-
-    // target-exclusive option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "target-exclusive",
-        .val = PARSE_OPTION_FLAG | cfgOptTargetExclusive,
-    },
-
-    // target-timeline option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "target-timeline",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTargetTimeline,
-    },
-
-    // tcp-keep-alive-count option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "tcp-keep-alive-count",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAliveCount,
-    },
-    {
-        .name = "reset-tcp-keep-alive-count",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveCount,
-    },
-
-    // tcp-keep-alive-idle option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "tcp-keep-alive-idle",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAliveIdle,
-    },
-    {
-        .name = "reset-tcp-keep-alive-idle",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveIdle,
-    },
-
-    // tcp-keep-alive-interval option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "tcp-keep-alive-interval",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAliveInterval,
-    },
-    {
-        .name = "reset-tcp-keep-alive-interval",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveInterval,
-    },
-
-    // type option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptType,
     },
     // Terminate option list
     {

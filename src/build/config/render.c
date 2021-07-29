@@ -536,11 +536,20 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             "    PARSE_RULE_OPTION\n"
             "    (\n"
             "        PARSE_RULE_OPTION_NAME(\"%s\"),\n"
-            "        PARSE_RULE_OPTION_TYPE(%s),\n"
+            "        PARSE_RULE_OPTION_TYPE(%s),\n",
+            strZ(opt->name), strZ(bldEnum("cfgOptType", opt->type)));
+
+        if (opt->negate)
+            strCatZ(config, "        PARSE_RULE_OPTION_NEGATE(true),\n");
+
+        if (opt->reset)
+            strCatZ(config, "        PARSE_RULE_OPTION_RESET(true),\n");
+
+        strCatFmt(
+            config,
             "        PARSE_RULE_OPTION_REQUIRED(%s),\n"
             "        PARSE_RULE_OPTION_SECTION(%s),\n",
-            strZ(opt->name), strZ(bldEnum("cfgOptType", opt->type)), cvtBoolToConstZ(opt->required),
-            strZ(bldEnum("cfgSection", opt->section)));
+            cvtBoolToConstZ(opt->required), strZ(bldEnum("cfgSection", opt->section)));
 
         if (opt->secure)
             strCatZ(config, "        PARSE_RULE_OPTION_SECURE(true),\n");
@@ -686,6 +695,9 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
     {
         const BldCfgOption *const opt = lstGet(bldCfg.optList, optIdx);
 
+        if (opt->deprecateList == NULL)
+            continue;
+
         // Determine if the option is indexed
         unsigned int indexTotal = 1;
         const BldCfgOptionGroup *optGrp = NULL;
@@ -718,38 +730,38 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 optShift = strNewFmt(" | (%u << PARSE_KEY_IDX_SHIFT)", index);
             }
 
-            strCatFmt(
-                config,
-                "    {\n"
-                "        .name = \"%s\",\n"
-                "%s"
-                "        .val = PARSE_OPTION_FLAG%s | %s,\n"
-                "    },\n",
-                strZ(optName),
-                strEq(opt->type, OPT_TYPE_BOOLEAN_STR) ? "" : "        .has_arg = required_argument,\n", strZ(optShift),
-                strZ(bldEnum("cfgOpt", opt->name)));
-
-            if (opt->negate)
-            {
-                strCatFmt(
-                    config,
-                    "    {\n"
-                    "        .name = \"no-%s\",\n"
-                    "        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG%s | %s,\n"
-                    "    },\n",
-                    strZ(optName), strZ(optShift), strZ(bldEnum("cfgOpt", opt->name)));
-            }
-
-            if (opt->reset)
-            {
-                strCatFmt(
-                    config,
-                    "    {\n"
-                    "        .name = \"reset-%s\",\n"
-                    "        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG%s | %s,\n"
-                    "    },\n",
-                    strZ(optName), strZ(optShift), strZ(bldEnum("cfgOpt", opt->name)));
-            }
+            // strCatFmt(
+            //     config,
+            //     "    {\n"
+            //     "        .name = \"%s\",\n"
+            //     "%s"
+            //     "        .val = PARSE_OPTION_FLAG%s | %s,\n"
+            //     "    },\n",
+            //     strZ(optName),
+            //     strEq(opt->type, OPT_TYPE_BOOLEAN_STR) ? "" : "        .has_arg = required_argument,\n", strZ(optShift),
+            //     strZ(bldEnum("cfgOpt", opt->name)));
+            //
+            // if (opt->negate)
+            // {
+            //     strCatFmt(
+            //         config,
+            //         "    {\n"
+            //         "        .name = \"no-%s\",\n"
+            //         "        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG%s | %s,\n"
+            //         "    },\n",
+            //         strZ(optName), strZ(optShift), strZ(bldEnum("cfgOpt", opt->name)));
+            // }
+            //
+            // if (opt->reset)
+            // {
+            //     strCatFmt(
+            //         config,
+            //         "    {\n"
+            //         "        .name = \"reset-%s\",\n"
+            //         "        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG%s | %s,\n"
+            //         "    },\n",
+            //         strZ(optName), strZ(optShift), strZ(bldEnum("cfgOpt", opt->name)));
+            // }
 
             if (opt->deprecateList != 0)
             {
