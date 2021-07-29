@@ -22,6 +22,7 @@ freebsd_12_task:
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
+    - ls -lah ${CIRRUS_WORKING_DIR}/..
 
 # MacOS Catalina
 # ----------------------------------------------------------------------------------------------------------------------------------
