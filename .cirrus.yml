@@ -18,29 +18,8 @@ freebsd_12_task:
   install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync
 
   script:
-    - perl ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - true
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
     - ls -lah ${CIRRUS_WORKING_DIR}/..
-
-# MacOS Catalina
-# ----------------------------------------------------------------------------------------------------------------------------------
-macos_catalina_task:
-  osx_instance:
-    image: catalina-xcode
-
-  environment:
-    LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/libpq/lib -L/usr/local/opt/libxml2/lib -L/usr/local/opt/libyaml/lib
-    CPPFLAGS: -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include -I/usr/local/opt/libxml2/include/libxml2 -I/usr/local/opt/libyaml/include
-    PERL5LIB: /usr/local/opt/perl5/lib/perl5
-
-  install_script:
-    - brew install -q openssl@1.1 libpq libxml2 libyaml cpanm
-    - cpanm --local-lib=/usr/local/opt/perl5 install YAML::XS
-
-  script:
-    - ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
-
-  debug_script:
-    - ls -lah ${CIRRUS_WORKING_DIR}
