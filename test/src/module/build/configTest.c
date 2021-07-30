@@ -34,31 +34,9 @@ testRun(void)
             "    internal: true\n"                                                                                                 \
             "\n"
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("option group parse errors");
-
-        HRN_STORAGE_PUT_Z(
-            storageTest, "src/build/config/config.yaml",
-            TEST_COMMAND_VALID
-            "optionGroup:\n"
-            "  repo:\n"
-            "    bogus: test\n");
-
-        TEST_ERROR(bldCfgParse(storageTest), FormatError, "unknown option group definition 'bogus'");
-
-        HRN_STORAGE_PUT_Z(
-            storageTest, "src/build/config/config.yaml",
-            TEST_COMMAND_VALID
-            "optionGroup:\n"
-            "  repo: \n"
-            "    prefix: test\n");
-
-        TEST_ERROR(bldCfgParse(storageTest), FormatError, "option group 'repo' requires 'indexTotal'");
-
         #define TEST_OPTION_GROUP_VALID                                                                                            \
             "optionGroup:\n"                                                                                                       \
-            "  repo:\n"                                                                                                            \
-            "    indexTotal: 2\n"                                                                                                  \
+            "  repo: {}\n"                                                                                                         \
             "\n"
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -94,17 +72,6 @@ testRun(void)
             "      bogus: test\n");
 
         TEST_ERROR(bldCfgParse(storageTest), FormatError, "unknown depend definition 'bogus'");
-
-        HRN_STORAGE_PUT_Z(
-            storageTest, "src/build/config/config.yaml",
-            TEST_COMMAND_VALID
-            TEST_OPTION_GROUP_VALID
-            "option:\n"
-            "  config:\n"
-            "    deprecate:\n"
-            "      old: {bogus: test}\n");
-
-        TEST_ERROR(bldCfgParse(storageTest), FormatError, "unknown deprecate definition 'bogus'");
 
         HRN_STORAGE_PUT_Z(
             storageTest, "src/build/config/config.yaml",
@@ -254,12 +221,8 @@ testRun(void)
             "  version: {}\n"
             "\n"
             "optionGroup:\n"
-            "  pg:\n"
-            "    indexTotal: 2\n"
-            "    prefix: pg\n"
-            "  repo:\n"
-            "    indexTotal: 2\n"
-            "    prefix: repo\n"
+            "  pg: {}\n"
+            "  repo: {}\n"
             "\n"
             "option:\n"
             "  timeout:\n"
@@ -375,8 +338,8 @@ testRun(void)
             "    deprecate:\n"
             "      pg-path: {}\n"
             "      pg?-path-indexed: {}\n"
-            "      db-path: {index: 1, reset: false}\n"
-            "      db?-path: {reset: false}\n");
+            "      db-path: {}\n"
+            "      db?-path: {}\n");
 
         TEST_RESULT_VOID(bldCfgRender(storageTest, bldCfgParse(storageTest)), "parse and render");
 

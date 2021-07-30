@@ -283,10 +283,10 @@ Render parse.auto.c
 
 typedef struct BldCfgRenderOptionDeprecate
 {
-    const String *name;                                             // Deprecated name
-    const String *optionName;                                       // Option name
-    bool indexed;                                                   // Can the deprecation be indexed?
-    bool unindexed;                                                 // Can the deprecation be unindexed?
+    const String *const name;                                       // Deprecated name
+    const BldCfgOption *const option;                               // Option name
+    const bool indexed;                                             // Can the deprecation be indexed?
+    const bool unindexed;                                           // Can the deprecation be unindexed?
 } BldCfgRenderOptionDeprecate;
 
 static void
@@ -705,7 +705,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
     // Option deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    List *const deprecateFinalList = lstNewP(sizeof(BldCfgRenderOptionDeprecate), .comparator = lstComparatorStr);
+    List *const deprecateCombineList = lstNewP(sizeof(BldCfgRenderOptionDeprecate), .comparator = lstComparatorStr);
 
     for (unsigned int optIdx = 0; optIdx < lstSize(bldCfg.optList); optIdx++)
     {
@@ -716,40 +716,21 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(opt->deprecateList); deprecateIdx++)
             {
                 const BldCfgOptionDeprecate *const deprecate = lstGet(opt->deprecateList, deprecateIdx);
-                const String *deprecateName = deprecate->name;
-                bool indexed = false;
 
-                // Determine if this deprecation is indexed
-                const size_t questionPos = (size_t)strChr(deprecateName, '?');
-
-                if (questionPos != (size_t)-1)
-                {
-                    deprecateName = strNewFmt(
-                        "%s%s", strZ(strSubN(deprecateName, 0, questionPos)), strZ(strSub(deprecateName, questionPos + 1)));
-                    indexed = true;
-                }
-
-                // Create the final deprecation if it does not aready exist
-                BldCfgRenderOptionDeprecate *deprecateFinal = lstFind(deprecateFinalList, &deprecateName);
-
-                if (deprecateFinal == NULL)
-                {
-                    lstAdd(deprecateFinalList, &(BldCfgRenderOptionDeprecate){.name = deprecateName, .optionName = opt->name});
-
-                    deprecateFinal = lstFind(deprecateFinalList, &deprecateName);
-                    CHECK(deprecateFinal != NULL);
-                }
-
-                // ???
-                if (indexed)
-                    deprecateFinal->indexed = true;
-                else
-                    deprecateFinal->unindexed = true;
+                lstAdd(
+                    deprecateCombineList,
+                    &(BldCfgRenderOptionDeprecate)
+                    {
+                        .name = deprecate->name,
+                        .option = opt,
+                        .indexed = deprecate->indexed,
+                        .unindexed = deprecate->unindexed,
+                    });
             }
         }
     }
 
-    lstSort(deprecateFinalList, sortOrderAsc);
+    lstSort(deprecateCombineList, sortOrderAsc);
 
     strCatFmt(
         config,
@@ -761,11 +742,11 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         "\n"
         "static const ParseRuleOptionDeprecate parseRuleOptionDeprecate[CFG_OPTION_DEPRECATE_TOTAL] =\n"
         "{\n",
-        strZ(bldDefineRender(STRDEF("CFG_OPTION_DEPRECATE_TOTAL"), strNewFmt("%u", lstSize(deprecateFinalList)))));
+        strZ(bldDefineRender(STRDEF("CFG_OPTION_DEPRECATE_TOTAL"), strNewFmt("%u", lstSize(deprecateCombineList)))));
 
-    for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(deprecateFinalList); deprecateIdx++)
+    for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(deprecateCombineList); deprecateIdx++)
     {
-        const BldCfgRenderOptionDeprecate *const deprecate = lstGet(deprecateFinalList, deprecateIdx);
+        const BldCfgRenderOptionDeprecate *const deprecate = lstGet(deprecateCombineList, deprecateIdx);
 
         bldCfgRenderLf(config, deprecateIdx != 0);
 
@@ -775,7 +756,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             "    {\n"
             "        .name = \"%s\",\n"
             "        .id = %s,\n",
-            strZ(deprecate->optionName), strZ(deprecate->name), strZ(bldEnum("cfgOpt", deprecate->optionName)));
+            strZ(deprecate->option->name), strZ(deprecate->name), strZ(bldEnum("cfgOpt", deprecate->option->name)));
 
         if (deprecate->indexed)
             strCatZ(config, "        .indexed = true,\n");

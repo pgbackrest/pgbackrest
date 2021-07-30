@@ -34,43 +34,6 @@ use pgBackRestDoc::ProjectInfo;
 use constant DOC_USER                                              => getpwuid($UID) eq 'root' ? 'ubuntu' : getpwuid($UID) . '';
 
 ####################################################################################################################################
-# Generate indexed defines
-####################################################################################################################################
-my $rhConfigDefineIndex = cfgDefine();
-
-foreach my $strKey (sort(keys(%{$rhConfigDefineIndex})))
-{
-    # Build options for all possible db configurations
-    if (defined($rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX}) &&
-        $rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX} eq CFGDEF_PREFIX_PG)
-    {
-        my $strPrefix = $rhConfigDefineIndex->{$strKey}{&CFGDEF_PREFIX};
-
-        for (my $iIndex = 1; $iIndex <= CFGDEF_INDEX_PG; $iIndex++)
-        {
-            my $strKeyNew = "${strPrefix}${iIndex}" . substr($strKey, length($strPrefix));
-
-            $rhConfigDefineIndex->{$strKeyNew} = dclone($rhConfigDefineIndex->{$strKey});
-
-            $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_INDEX_TOTAL} = CFGDEF_INDEX_PG;
-            $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_INDEX} = $iIndex - 1;
-
-            # Options indexed > 1 are never required
-            if ($iIndex != 1)
-            {
-                $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_REQUIRED} = false;
-            }
-        }
-
-        delete($rhConfigDefineIndex->{$strKey});
-    }
-    else
-    {
-        $rhConfigDefineIndex->{$strKey}{&CFGDEF_INDEX} = 0;
-    }
-}
-
-####################################################################################################################################
 # CONSTRUCTOR
 ####################################################################################################################################
 sub new
@@ -563,17 +526,9 @@ sub backrestConfig
                 }
                 else
                 {
-                    # Make sure the specified option exists
-                    # ??? This is too simplistic to handle new indexed options.  The check below works for now but it would be good
-                    # ??? to bring back more sophisticated checking in the future.
-                    # if (!defined($rhConfigDefineIndex->{$strKey}))
-                    # {
-                    #     confess &log(ERROR, "option ${strKey} does not exist");
-                    # }
-
                     # If this option is a hash and the value is already set then append to the array
-                    if (defined($rhConfigDefineIndex->{$strKey}) &&
-                        $rhConfigDefineIndex->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH &&
+                    if (defined(cfgDefine()->{$strKey}) &&
+                        cfgDefine()->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH &&
                         defined(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey}))
                     {
                         my @oValue = ();

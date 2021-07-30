@@ -158,12 +158,8 @@ command:
 # the group.
 ####################################################################################################################################
 optionGroup:
-  pg:
-    indexTotal: 8
-    prefix: pg
-  repo:
-    indexTotal: 4
-    prefix: repo
+  pg: {}
+  repo: {}
 
 ####################################################################################################################################
 # Options
@@ -1271,8 +1267,8 @@ option:
       list:
         - false
     deprecate:
-      db-host: {index: 1, reset: false}
-      db?-host: {reset: false}
+      db-host: {}
+      db?-host: {}
 
   pg-host-cmd:
     section: stanza
@@ -1292,8 +1288,8 @@ option:
     depend:
       option: pg-host
     deprecate:
-      db-cmd: {index: 1, reset: false}
-      db?-cmd: {reset: false}
+      db-cmd: {}
+      db?-cmd: {}
 
   pg-host-config:
     inherit: pg-host-cmd
@@ -1301,8 +1297,8 @@ option:
     default-literal: true
     required: true
     deprecate:
-      db-config: {index: 1, reset: false}
-      db?-config: {reset: false}
+      db-config: {}
+      db?-config: {}
 
   pg-host-config-include-path:
     inherit: pg-host-cmd
@@ -1322,16 +1318,16 @@ option:
     required: false
     allow-range: [0, 65535]
     deprecate:
-      db-ssh-port: {index: 1, reset: false}
-      db?-ssh-port: {reset: false}
+      db-ssh-port: {}
+      db?-ssh-port: {}
 
   pg-host-user:
     inherit: pg-host-cmd
     default: postgres
     required: false
     deprecate:
-      db-user: {index: 1, reset: false}
-      db?-user: {reset: false}
+      db-user: {}
+      db?-user: {}
 
   pg-path:
     section: stanza
@@ -1348,8 +1344,8 @@ option:
       stanza-delete: {}
       stanza-upgrade: {}
     deprecate:
-      db-path: {index: 1, reset: false}
-      db?-path: {reset: false}
+      db-path: {}
+      db?-path: {}
 
   pg-port:
     section: stanza
@@ -1360,8 +1356,8 @@ option:
     command: pg-database
     depend: pg-database
     deprecate:
-      db-port: {index: 1, reset: false}
-      db?-port: {reset: false}
+      db-port: {}
+      db?-port: {}
 
   pg-socket-path:
     inherit: pg-port
@@ -1369,8 +1365,8 @@ option:
     required: false
     default: ~
     deprecate:
-      db-socket-path: {index: 1, reset: false}
-      db?-socket-path: {reset: false}
+      db-socket-path: {}
+      db?-socket-path: {}
 
   pg-user:
     section: stanza
@@ -1581,7 +1577,7 @@ option:
           local: {}
           remote: {}
     deprecate:
-      repo-type: {index: 1, reset: false}
+      repo-type: {}
 
   repo-azure-account:
     section: global
@@ -1626,7 +1622,7 @@ option:
         - aes-256-cbc
     group: repo
     deprecate:
-      repo-cipher-pass: {index: 1, reset: false}
+      repo-cipher-pass: {}
 
   repo-cipher-type:
     section: global
@@ -1638,7 +1634,7 @@ option:
       - aes-256-cbc
     command: repo-type
     deprecate:
-      repo-cipher-type: {index: 1, reset: false}
+      repo-cipher-type: {}
 
   repo-gcs-bucket:
     section: global
@@ -1693,7 +1689,7 @@ option:
     command-role:
       main: {}
     deprecate:
-      hardlink: {index: 1, reset: false}
+      hardlink: {}
 
   repo-host:
     section: global
@@ -1710,7 +1706,7 @@ option:
       list:
         - false
     deprecate:
-      backup-host: {index: 1, reset: false}
+      backup-host: {}
 
   repo-host-cmd:
     section: global
@@ -1739,7 +1735,7 @@ option:
     depend:
       option: repo-host
     deprecate:
-      backup-cmd: {index: 1, reset: false}
+      backup-cmd: {}
 
   repo-host-config:
     section: global
@@ -1755,7 +1751,7 @@ option:
     depend:
       option: repo-host
     deprecate:
-      backup-config: {index: 1, reset: false}
+      backup-config: {}
 
   repo-host-config-include-path:
     inherit: repo-host-config
@@ -1783,7 +1779,7 @@ option:
     depend:
       option: repo-host
     deprecate:
-      backup-ssh-port: {index: 1, reset: false}
+      backup-ssh-port: {}
 
   repo-host-user:
     section: global
@@ -1799,7 +1795,7 @@ option:
     depend:
       option: repo-host
     deprecate:
-      backup-user: {index: 1, reset: false}
+      backup-user: {}
 
   repo-path:
     section: global
@@ -1808,7 +1804,7 @@ option:
     default: /var/lib/pgbackrest
     command: repo-type
     deprecate:
-      repo-path: {index: 1, reset: false}
+      repo-path: {}
 
   repo-retention-archive:
     section: global
@@ -1822,7 +1818,7 @@ option:
     command-role:
       main: {}
     deprecate:
-      retention-archive: {index: 1, reset: false}
+      retention-archive: {}
 
   repo-retention-archive-type:
     section: global
@@ -1839,7 +1835,7 @@ option:
     command-role:
       main: {}
     deprecate:
-      retention-archive-type: {index: 1, reset: false}
+      retention-archive-type: {}
 
   repo-retention-diff:
     section: global
@@ -1853,7 +1849,7 @@ option:
     command-role:
       main: {}
     deprecate:
-      retention-diff: {index: 1, reset: false}
+      retention-diff: {}
 
   repo-retention-full-type:
     section: global
@@ -1879,7 +1875,7 @@ option:
     command-role:
       main: {}
     deprecate:
-      retention-full: {index: 1, reset: false}
+      retention-full: {}
 
   repo-retention-history:
     section: global
@@ -1903,12 +1899,12 @@ option:
       list:
         - s3
     deprecate:
-      repo-s3-bucket: {index: 1, reset: false}
+      repo-s3-bucket: {}
 
   repo-s3-endpoint:
     inherit: repo-s3-bucket
     deprecate:
-      repo-s3-endpoint: {index: 1, reset: false}
+      repo-s3-endpoint: {}
 
   repo-s3-key:
     section: global
@@ -1921,12 +1917,12 @@ option:
       list:
         - shared
     deprecate:
-      repo-s3-key: {index: 1, reset: false}
+      repo-s3-key: {}
 
   repo-s3-key-secret:
     inherit: repo-s3-key
     deprecate:
-      repo-s3-key-secret: {index: 1, reset: false}
+      repo-s3-key-secret: {}
 
   repo-s3-key-type:
     inherit: repo-s3-bucket
@@ -1938,7 +1934,7 @@ option:
   repo-s3-region:
     inherit: repo-s3-bucket
     deprecate:
-      repo-s3-region: {index: 1, reset: false}
+      repo-s3-region: {}
 
   repo-s3-role:
     inherit: repo-s3-bucket
@@ -1977,10 +1973,10 @@ option:
         - gcs
         - s3
     deprecate:
-      repo-s3-verify-ssl: {index: 1, reset: false}
-      repo?-azure-verify-tls: {index: 1}
-      repo?-s3-verify-ssl: {index: 1, reset: false}
-      repo?-s3-verify-tls: {index: 1}
+      repo-s3-verify-ssl: {}
+      repo?-azure-verify-tls: {}
+      repo?-s3-verify-ssl: {}
+      repo?-s3-verify-tls: {}
 
   repo-storage-ca-file:
     section: global
@@ -1990,17 +1986,17 @@ option:
     command: repo-type
     depend: repo-storage-verify-tls
     deprecate:
-      repo-s3-ca-file: {index: 1, reset: false}
-      repo?-azure-ca-file: {index: 1}
-      repo?-s3-ca-file: {index: 1}
+      repo-s3-ca-file: {}
+      repo?-azure-ca-file: {}
+      repo?-s3-ca-file: {}
 
   repo-storage-ca-path:
     inherit: repo-storage-ca-file
     type: path
     deprecate:
-      repo-s3-ca-path: {index: 1, reset: false}
-      repo?-azure-ca-path: {index: 1}
-      repo?-s3-ca-path: {index: 1}
+      repo-s3-ca-path: {}
+      repo?-azure-ca-path: {}
+      repo?-s3-ca-path: {}
 
   repo-storage-host:
     section: global
@@ -2014,9 +2010,9 @@ option:
         - azure
         - s3
     deprecate:
-      repo-s3-host: {index: 1, reset: false}
-      repo?-azure-host: {index: 1}
-      repo?-s3-host: {index: 1}
+      repo-s3-host: {}
+      repo?-azure-host: {}
+      repo?-s3-host: {}
 
   repo-storage-port:
     section: global
@@ -2027,5 +2023,5 @@ option:
     command: repo-type
     depend: repo-storage-host
     deprecate:
-      repo?-azure-port: {index: 1}
-      repo?-s3-port: {index: 1}
+      repo?-azure-port: {}
+      repo?-s3-port: {}

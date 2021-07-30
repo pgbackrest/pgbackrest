@@ -143,7 +143,12 @@ yamlEventNext(Yaml *this)
             (unsigned long)this->parser.problem_mark.line + 1, (unsigned long)this->parser.problem_mark.column + 1);
     }
 
-    YamlEvent result = {.type = yamlEventType(event.type)};
+    YamlEvent result =
+    {
+        .type = yamlEventType(event.type),
+        .line = event.start_mark.line + 1,
+        .column = event.start_mark.column + 1,
+    };
 
     if (result.type == yamlEventTypeScalar)
         result.value = strNewZ((const char *)event.data.scalar.value);
@@ -178,7 +183,11 @@ yamlEventCheck(YamlEvent event, YamlEventType type)
     FUNCTION_TEST_END();
 
     if (event.type != type)
-        THROW_FMT(FormatError, "expected event type '%s' but got '%s'", strZ(strIdToStr(type)), strZ(strIdToStr(event.type)));
+    {
+        THROW_FMT(
+            FormatError, "expected event type '%s' but got '%s' at line %zu, column %zu", strZ(strIdToStr(type)),
+            strZ(strIdToStr(event.type)), event.line, event.column);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
