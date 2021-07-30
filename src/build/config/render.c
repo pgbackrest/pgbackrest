@@ -574,7 +574,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 strZ(bldEnum("cfgOptGrp", opt->group)));
         }
 
-        // ???
+        // !!!
         if (opt->deprecateList != NULL)
         {
             for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(opt->deprecateList); deprecateIdx++)

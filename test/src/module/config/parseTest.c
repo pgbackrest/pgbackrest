@@ -625,6 +625,16 @@ testRun(void)
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError, "invalid option '--c'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on ambiguous deprecated partial option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--retention");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "invalid option '--retention'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on spaces in option name");
 
         argList = strLstNew();
@@ -648,6 +658,104 @@ testRun(void)
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "invalid option '--BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error if option exceeds maximum size");
+
+        char optionMax[OPTION_SIZE_MAX + 2];
+
+        for (unsigned int optionMaxIdx = 0; optionMaxIdx < OPTION_SIZE_MAX + 1; optionMaxIdx++)
+            optionMax[optionMaxIdx] = 'X';
+
+        optionMax[OPTION_SIZE_MAX + 1] = '\0';
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAdd(argList, strNewFmt("--%s", optionMax));
+        TEST_ERROR_FMT(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option '%s' exceeds maximum size of 64", optionMax);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error if option cannot be negated or reset");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--no-force");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'no-force' cannot be negated");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--reset-force");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'reset-force' cannot be reset");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error if option exceeds key max");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg257-path");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'pg257-path' key exceeds maximum of 256");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error if option begins with a number");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--257-path");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option '257-path' cannot begin with a number");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error if option begins with a dash");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "---pg1-path");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option '-pg1-path' cannot begin with a dash");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error if unindexed option cannot have an index");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--compress77-type");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'compress77-type' cannot have an index");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--retention128-full");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "deprecated option 'retention128-full' cannot have an index");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error if indexed option does not have an index");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--repo-storage-ca-file");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'repo-storage-ca-file' must have an index");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--repo-azure-ca-path");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "deprecated option 'repo-azure-ca-path' must have an index");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1300,6 +1408,7 @@ testRun(void)
         strLstAddZ(argList, "--reset-pg1-host");
         strLstAddZ(argList, "--reset-pg3-host");
         strLstAddZ(argList, "--reset-backup-standby");
+        strLstAddZ(argList, "--retention-ful=55");
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
         setenv("PGBACKRESTXXX_NOTHING", "xxx", true);
@@ -1394,6 +1503,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "    repo-hardlink is set");
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptRepoHardlink), "true", "    repo-hardlink display is true");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "    repo-hardlink is source config");
+        TEST_RESULT_UINT(cfgOptionUInt(cfgOptRepoRetentionFull), 55, "    repo-retention-full is set");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "    compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "    compress-level is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    backup-standby not is set");
@@ -1752,7 +1862,7 @@ testRun(void)
         testOptionFind("db-ssh-port", cfgOptPgHostPort, 0, false, false, true);
         testOptionFind("db-user", cfgOptPgHostUser, 0, false, false, true);
 
-        TEST_RESULT_BOOL(cfgParseOptionP(STR("no-db-user")).found, false, "no-db-user not found");
+        TEST_ERROR(cfgParseOptionP(STR("no-db-user")), OptionInvalidError, "option 'no-db-user' cannot be negated");
 
         // Only check 1-8 since 8 was the max index when these option names were deprecated
         for (unsigned int optionIdx = 0; optionIdx < 8; optionIdx++)
