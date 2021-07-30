@@ -6710,707 +6710,296 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 };
 
 /***********************************************************************************************************************************
-Option data for getopt_long()
+Option deprecations()
 ***********************************************************************************************************************************/
-static const struct option optionList[] =
-{
+#define CFG_OPTION_DEPRECATE_TOTAL                                  39
 
-    // archive-push-queue-max option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+static const ParseRuleOptionDeprecate parseRuleOptionDeprecate[CFG_OPTION_DEPRECATE_TOTAL] =
+{
+    // archive-push-queue-max deprecation
     {
         .name = "archive-queue-max",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | cfgOptArchivePushQueueMax,
-    },
-    {
-        .name = "reset-archive-queue-max",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | cfgOptArchivePushQueueMax,
+        .id = cfgOptArchivePushQueueMax,
+        .unindexed = true,
     },
 
-    // pg-host option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "db1-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "db2-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "db3-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "db4-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "db5-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "db6-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "db7-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-    {
-        .name = "db8-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHost,
-    },
-
-    // pg-host-cmd option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "db1-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "db2-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "db3-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "db4-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "db5-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "db6-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "db7-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-    {
-        .name = "db8-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostCmd,
-    },
-
-    // pg-host-config option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "db1-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "db2-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "db3-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "db4-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "db5-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "db6-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "db7-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-    {
-        .name = "db8-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostConfig,
-    },
-
-    // pg-host-port option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "db1-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "db2-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "db3-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "db4-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "db5-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "db6-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "db7-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-    {
-        .name = "db8-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostPort,
-    },
-
-    // pg-host-user option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "db1-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "db2-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "db3-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "db4-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "db5-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "db6-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "db7-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-    {
-        .name = "db8-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
-    },
-
-    // pg-path option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "db1-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "db2-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "db3-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "db4-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "db5-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "db6-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "db7-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-    {
-        .name = "db8-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPath,
-    },
-
-    // pg-port option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "db1-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "db2-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "db3-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "db4-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "db5-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "db6-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "db7-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-    {
-        .name = "db8-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgPort,
-    },
-
-    // pg-socket-path option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "db-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "db1-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "db2-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "db3-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "db4-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "db5-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "db6-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "db7-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-    {
-        .name = "db8-socket-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgSocketPath,
-    },
-
-    // repo-cipher-pass option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo-cipher-pass",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherPass,
-    },
-
-    // repo-cipher-type option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo-cipher-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
-
-    // repo-hardlink option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-    {
-        .name = "no-hardlink",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHardlink,
-    },
-
-    // repo-host option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "backup-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHost,
-    },
-
-    // repo-host-cmd option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-host-cmd deprecation
     {
         .name = "backup-cmd",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostCmd,
+        .id = cfgOptRepoHostCmd,
+        .unindexed = true,
     },
 
-    // repo-host-config option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-host-config deprecation
     {
         .name = "backup-config",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostConfig,
+        .id = cfgOptRepoHostConfig,
+        .unindexed = true,
     },
 
-    // repo-host-port option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-host deprecation
+    {
+        .name = "backup-host",
+        .id = cfgOptRepoHost,
+        .unindexed = true,
+    },
+
+    // repo-host-port deprecation
     {
         .name = "backup-ssh-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostPort,
+        .id = cfgOptRepoHostPort,
+        .unindexed = true,
     },
 
-    // repo-host-user option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-host-user deprecation
     {
         .name = "backup-user",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
+        .id = cfgOptRepoHostUser,
+        .unindexed = true,
     },
 
-    // repo-path option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // pg-host-cmd deprecation
+    {
+        .name = "db-cmd",
+        .id = cfgOptPgHostCmd,
+        .indexed = true,
+        .unindexed = true,
+    },
+
+    // pg-host-config deprecation
+    {
+        .name = "db-config",
+        .id = cfgOptPgHostConfig,
+        .indexed = true,
+        .unindexed = true,
+    },
+
+    // pg-host deprecation
+    {
+        .name = "db-host",
+        .id = cfgOptPgHost,
+        .indexed = true,
+        .unindexed = true,
+    },
+
+    // pg-path deprecation
+    {
+        .name = "db-path",
+        .id = cfgOptPgPath,
+        .indexed = true,
+        .unindexed = true,
+    },
+
+    // pg-port deprecation
+    {
+        .name = "db-port",
+        .id = cfgOptPgPort,
+        .indexed = true,
+        .unindexed = true,
+    },
+
+    // pg-socket-path deprecation
+    {
+        .name = "db-socket-path",
+        .id = cfgOptPgSocketPath,
+        .indexed = true,
+        .unindexed = true,
+    },
+
+    // pg-host-port deprecation
+    {
+        .name = "db-ssh-port",
+        .id = cfgOptPgHostPort,
+        .indexed = true,
+        .unindexed = true,
+    },
+
+    // pg-host-user deprecation
+    {
+        .name = "db-user",
+        .id = cfgOptPgHostUser,
+        .indexed = true,
+        .unindexed = true,
+    },
+
+    // repo-hardlink deprecation
+    {
+        .name = "hardlink",
+        .id = cfgOptRepoHardlink,
+        .unindexed = true,
+    },
+
+    // repo-storage-ca-file deprecation
+    {
+        .name = "repo-azure-ca-file",
+        .id = cfgOptRepoStorageCaFile,
+        .indexed = true,
+    },
+
+    // repo-storage-ca-path deprecation
+    {
+        .name = "repo-azure-ca-path",
+        .id = cfgOptRepoStorageCaPath,
+        .indexed = true,
+    },
+
+    // repo-storage-host deprecation
+    {
+        .name = "repo-azure-host",
+        .id = cfgOptRepoStorageHost,
+        .indexed = true,
+    },
+
+    // repo-storage-port deprecation
+    {
+        .name = "repo-azure-port",
+        .id = cfgOptRepoStoragePort,
+        .indexed = true,
+    },
+
+    // repo-storage-verify-tls deprecation
+    {
+        .name = "repo-azure-verify-tls",
+        .id = cfgOptRepoStorageVerifyTls,
+        .indexed = true,
+    },
+
+    // repo-cipher-pass deprecation
+    {
+        .name = "repo-cipher-pass",
+        .id = cfgOptRepoCipherPass,
+        .unindexed = true,
+    },
+
+    // repo-cipher-type deprecation
+    {
+        .name = "repo-cipher-type",
+        .id = cfgOptRepoCipherType,
+        .unindexed = true,
+    },
+
+    // repo-path deprecation
     {
         .name = "repo-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoPath,
+        .id = cfgOptRepoPath,
+        .unindexed = true,
     },
 
-    // repo-retention-archive option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "retention-archive",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchive,
-    },
-
-    // repo-retention-archive-type option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "retention-archive-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionArchiveType,
-    },
-
-    // repo-retention-diff option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "retention-diff",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionDiff,
-    },
-
-    // repo-retention-full option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "retention-full",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoRetentionFull,
-    },
-
-    // repo-s3-bucket option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-s3-bucket deprecation
     {
         .name = "repo-s3-bucket",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
+        .id = cfgOptRepoS3Bucket,
+        .unindexed = true,
     },
 
-    // repo-s3-endpoint option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo-s3-endpoint",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Endpoint,
-    },
-
-    // repo-s3-key option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo-s3-key",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Key,
-    },
-
-    // repo-s3-key-secret option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo-s3-key-secret",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3KeySecret,
-    },
-
-    // repo-s3-region option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo-s3-region",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Region,
-    },
-
-    // repo-storage-ca-file option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-storage-ca-file deprecation
     {
         .name = "repo-s3-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "repo1-azure-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "reset-repo1-azure-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "repo1-s3-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
-    },
-    {
-        .name = "reset-repo1-s3-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+        .id = cfgOptRepoStorageCaFile,
+        .indexed = true,
+        .unindexed = true,
     },
 
-    // repo-storage-ca-path option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-storage-ca-path deprecation
     {
         .name = "repo-s3-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "repo1-azure-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "reset-repo1-azure-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "repo1-s3-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
-    },
-    {
-        .name = "reset-repo1-s3-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+        .id = cfgOptRepoStorageCaPath,
+        .indexed = true,
+        .unindexed = true,
     },
 
-    // repo-storage-host option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-s3-endpoint deprecation
+    {
+        .name = "repo-s3-endpoint",
+        .id = cfgOptRepoS3Endpoint,
+        .unindexed = true,
+    },
+
+    // repo-storage-host deprecation
     {
         .name = "repo-s3-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "repo1-azure-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "reset-repo1-azure-host",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "repo1-s3-host",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
-    },
-    {
-        .name = "reset-repo1-s3-host",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageHost,
+        .id = cfgOptRepoStorageHost,
+        .indexed = true,
+        .unindexed = true,
     },
 
-    // repo-storage-port option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-s3-key deprecation
     {
-        .name = "repo1-azure-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
-    {
-        .name = "reset-repo1-azure-port",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
-    {
-        .name = "repo1-s3-port",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
-    },
-    {
-        .name = "reset-repo1-s3-port",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStoragePort,
+        .name = "repo-s3-key",
+        .id = cfgOptRepoS3Key,
+        .unindexed = true,
     },
 
-    // repo-storage-verify-tls option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-s3-key-secret deprecation
+    {
+        .name = "repo-s3-key-secret",
+        .id = cfgOptRepoS3KeySecret,
+        .unindexed = true,
+    },
+
+    // repo-storage-port deprecation
+    {
+        .name = "repo-s3-port",
+        .id = cfgOptRepoStoragePort,
+        .indexed = true,
+    },
+
+    // repo-s3-region deprecation
+    {
+        .name = "repo-s3-region",
+        .id = cfgOptRepoS3Region,
+        .unindexed = true,
+    },
+
+    // repo-storage-verify-tls deprecation
     {
         .name = "repo-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "no-repo-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "repo1-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "no-repo1-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "reset-repo1-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "repo1-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "no-repo1-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "repo1-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "no-repo1-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
-    },
-    {
-        .name = "reset-repo1-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
+        .id = cfgOptRepoStorageVerifyTls,
+        .indexed = true,
+        .unindexed = true,
     },
 
-    // repo-type option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
+    // repo-storage-verify-tls deprecation
+    {
+        .name = "repo-s3-verify-tls",
+        .id = cfgOptRepoStorageVerifyTls,
+        .indexed = true,
+    },
+
+    // repo-type deprecation
     {
         .name = "repo-type",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoType,
+        .id = cfgOptRepoType,
+        .unindexed = true,
     },
-    // Terminate option list
+
+    // repo-retention-archive deprecation
     {
-        .name = NULL
-    }
+        .name = "retention-archive",
+        .id = cfgOptRepoRetentionArchive,
+        .unindexed = true,
+    },
+
+    // repo-retention-archive-type deprecation
+    {
+        .name = "retention-archive-type",
+        .id = cfgOptRepoRetentionArchiveType,
+        .unindexed = true,
+    },
+
+    // repo-retention-diff deprecation
+    {
+        .name = "retention-diff",
+        .id = cfgOptRepoRetentionDiff,
+        .unindexed = true,
+    },
+
+    // repo-retention-full deprecation
+    {
+        .name = "retention-full",
+        .id = cfgOptRepoRetentionFull,
+        .unindexed = true,
+    },
 };
 
 /***********************************************************************************************************************************

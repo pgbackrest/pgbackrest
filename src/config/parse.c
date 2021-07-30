@@ -4,7 +4,6 @@ Command and Option Parse
 #include "build.auto.h"
 
 #include <ctype.h>
-#include <getopt.h> // !!! REMOVE
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
@@ -264,6 +263,18 @@ typedef enum
 
 #define PARSE_RULE_OPTION_OPTIONAL_REQUIRED(requiredParam)                                                                         \
     PARSE_RULE_OPTION_OPTIONAL_PUSH(parseRuleOptionDataTypeRequired, 0, requiredParam)
+
+/***********************************************************************************************************************************
+Define option deprecations
+***********************************************************************************************************************************/
+typedef struct ParseRuleOptionDeprecate
+{
+    const char *name;                                               // Deprecated name
+    ConfigOption id;                                                // Option Id
+    bool indexed;                                                   // Can the deprecation be indexed?
+    bool unindexed;                                                 // Can the deprecation be unindexed?
+    // !!!uint8_t prefixSize;                                             // Size of prefix if indexed, e.g. 2 for db-host
+} ParseRuleOptionDeprecate;
 
 /***********************************************************************************************************************************
 Include automatically generated parse data
@@ -536,21 +547,6 @@ cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole c
 /***********************************************************************************************************************************
 Find an option by name in the option list
 ***********************************************************************************************************************************/
-// Helper to parse the option info into a structure
-__attribute__((always_inline)) static inline CfgParseOptionResult
-cfgParseOptionInfo(const int info)
-{
-    return (CfgParseOptionResult)
-    {
-        .found = true,
-        .id = info & PARSE_OPTION_MASK,
-        .keyIdx = (info >> PARSE_KEY_IDX_SHIFT) & PARSE_KEY_IDX_MASK,
-        .negate = info & PARSE_NEGATE_FLAG,
-        .reset = info & PARSE_RESET_FLAG,
-        .deprecated = info & PARSE_DEPRECATE_FLAG,
-    };
-}
-
 CfgParseOptionResult
 cfgParseOption(const String *const optionName, const CfgParseOptionParam param)
 {
@@ -577,50 +573,31 @@ cfgParseOption(const String *const optionName, const CfgParseOptionParam param)
         optionNameMod = strNewZ(strZ(optionName) + 6);
     }
 
-    LOG_DEBUG_FMT("!!!OPT '%s' MOD '%s'", strZ(optionName), strZ(optionNameMod));
-
     // Find the first - and see if there is a number before it. !!!
     const size_t dashPos = (size_t)strChr(optionNameMod, '-');
     size_t numberPos = dashPos;
     bool indexed = false;
 
-    if (dashPos != (size_t)-1)
+    if (dashPos > 0)
     {
-        LOG_DEBUG("FOUND DASH");
-
-        ASSERT(dashPos != 0);
-
-        while (numberPos > 0 && isdigit(strZ(optionNameMod)[numberPos - 1]))
+        while (numberPos > 1 && isdigit(strZ(optionNameMod)[numberPos - 1]))
             numberPos--;
-
-        LOG_DEBUG_FMT("!!!DASH %zu NUM %zu", dashPos, numberPos);
 
         if (numberPos != dashPos)
         {
-            for (unsigned int optGrpIdx = 0; optGrpIdx < CFG_OPTION_GROUP_TOTAL; optGrpIdx++)
-            {
-                if (strncmp(strZ(optionNameMod), parseRuleOptionGroup[optGrpIdx].name, numberPos) == 0)
-                {
-                    char buffer[21];
+            char buffer[21];
 
-                    if (dashPos - numberPos > sizeof(buffer) - 1)
-                        THROW(OptionInvalidError, "NUMBER IS TOO BIG");
+            if (dashPos - numberPos > sizeof(buffer) - 1)
+                THROW(OptionInvalidError, "NUMBER IS TOO BIG");
 
-                    strncpy(buffer, strZ(optionNameMod) + numberPos, dashPos - numberPos);
-                    buffer[dashPos - numberPos] = '\0';
+            strncpy(buffer, strZ(optionNameMod) + numberPos, dashPos - numberPos);
+            buffer[dashPos - numberPos] = '\0';
 
-                    LOG_DEBUG_FMT("!!!BUFFER IS %s", buffer);
+            result.keyIdx = cvtZToUInt(buffer) - 1;
 
-                    result.keyIdx = cvtZToUInt(buffer) - 1;
+            optionNameMod = strNewFmt("%s%s", strZ(strSubN(optionNameMod, 0, numberPos)), strZ(optionNameMod) + dashPos);
 
-                    LOG_DEBUG_FMT("!!!KEY IDX IS %u", result.keyIdx);
-
-                    optionNameMod = strNewFmt("%s%s", parseRuleOptionGroup[optGrpIdx].name, strZ(optionNameMod) + dashPos);
-                    LOG_DEBUG_FMT("!!!MOD IS %s", strZ(optionNameMod));
-
-                    indexed = true;
-                }
-            }
+            indexed = true;
         }
     }
 
@@ -628,80 +605,88 @@ cfgParseOption(const String *const optionName, const CfgParseOptionParam param)
     int found = cfgParseOptionId(strZ(optionNameMod));
 
     // If the option was not found then do a partial match
-    if (found == -1 && param.prefixMatch)
+    if (found == -1)
     {
-        unsigned int findPartialIdx = 0;
-        unsigned int findPartialTotal = 0;
-
-        for (unsigned int findIdx = 0; findIdx < CFG_OPTION_TOTAL; findIdx++)
+        if (param.prefixMatch)
         {
-            if (strBeginsWith(STR(parseRuleOption[findIdx].name), optionName))
-            {
-                findPartialIdx = findIdx;
-                findPartialTotal++;
+            unsigned int findPartialIdx = 0;
+            unsigned int findPartialTotal = 0;
 
-                if (findPartialTotal > 1)
-                    break;
+            for (unsigned int findIdx = 0; findIdx < CFG_OPTION_TOTAL; findIdx++)
+            {
+                if (strBeginsWith(STR(parseRuleOption[findIdx].name), optionName))
+                {
+                    findPartialIdx = findIdx;
+                    findPartialTotal++;
+
+                    if (findPartialTotal > 1)
+                        break;
+                }
             }
+
+            // If a single partial match was found
+            if (findPartialTotal == 1)
+                found = (int)findPartialIdx;
         }
 
-        // If a single partial match was found
-        if (findPartialTotal == 1)
-            found = (int)findPartialIdx;
+        // Search deprecations for an exact match
+        if (found == -1)
+        {
+            const ParseRuleOptionDeprecate *deprecate = NULL;
+
+            for (unsigned int deprecateIdx = 0; deprecateIdx < CFG_OPTION_DEPRECATE_TOTAL; deprecateIdx++)
+            {
+                if (strEqZ(optionNameMod, parseRuleOptionDeprecate[deprecateIdx].name))
+                {
+                    deprecate = &parseRuleOptionDeprecate[deprecateIdx];
+                    break;
+                }
+            }
+
+            // Search for a single partial match if requested
+            if (deprecate == NULL && param.prefixMatch)
+            {
+                unsigned int findPartialIdx = 0;
+                unsigned int findPartialTotal = 0;
+
+                for (unsigned int deprecateIdx = 0; deprecateIdx < CFG_OPTION_DEPRECATE_TOTAL; deprecateIdx++)
+                {
+                    if (strBeginsWith(STR(parseRuleOptionDeprecate[deprecateIdx].name), optionName))
+                    {
+                        findPartialIdx = deprecateIdx;
+                        findPartialTotal++;
+
+                        if (findPartialTotal > 1)
+                            break;
+                    }
+                }
+
+                // If a single partial match was found
+                if (findPartialTotal == 1)
+                    deprecate = &parseRuleOptionDeprecate[findPartialIdx];
+            }
+
+            if (deprecate != NULL)
+            {
+                if ((indexed && deprecate->indexed) || (!indexed && deprecate->unindexed))
+                {
+                    result.deprecated = true;
+                    found = (int)deprecate->id;
+                }
+            }
+        }
     }
 
-    // !!! HOORAY IT IS A MATCH. BUT IF THERE IS A DEPRECATION WITH THE SAME NAME THEN MAKE SURE WE SET THE DEPRECATION FLAG AND
-    // CHECK THE INDEX. THAT MEANS MOVING THE DEPRECATION SEARCH DOWN FROM ABOVE. ONLY DO THIS CHECK IF THE OPTION WAS NOT INDEXED.
-
-    LOG_DEBUG_FMT("!!!OPT '%s' MOD '%s' FOUND %d", strZ(optionName), strZ(optionNameMod), found);
-
-    if (found >= 0 && (!result.negate || parseRuleOption[found].negate) && (!result.reset || parseRuleOption[found].reset))
+    if (found != -1 && (!result.negate || parseRuleOption[found].negate) && (!result.reset || parseRuleOption[found].reset))
     {
         result.found = true;
         result.id = (ConfigOption)found;
 
+        // !!! REMOVE SECOND CONDITION?
         if (indexed == false && parseRuleOption[found].deprecateMatch)
             result.deprecated = true;
 
         FUNCTION_TEST_RETURN(result);
-    }
-
-    // Search deprecations for an exact match
-    unsigned int findIdx = 0;
-
-    while (optionList[findIdx].name != NULL)
-    {
-        if (strEqZ(optionName, optionList[findIdx].name))
-            break;
-
-        findIdx++;
-    }
-
-    // If the option was found
-    if (optionList[findIdx].name != NULL)
-        FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findIdx].val));
-
-    // Search for a single partial match if requested
-    if (param.prefixMatch)
-    {
-        unsigned int findPartialIdx = 0;
-        unsigned int findPartialTotal = 0;
-
-        for (findIdx = 0; findIdx < sizeof(optionList) / sizeof(struct option) - 1; findIdx++)
-        {
-            if (strBeginsWith(STR(optionList[findIdx].name), optionName))
-            {
-                findPartialIdx = findIdx;
-                findPartialTotal++;
-
-                if (findPartialTotal > 1)
-                    break;
-            }
-        }
-
-        // If a single partial match was found
-        if (findPartialTotal == 1)
-            FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findPartialIdx].val));
     }
 
     FUNCTION_TEST_RETURN((CfgParseOptionResult){0});

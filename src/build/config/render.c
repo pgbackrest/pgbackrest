@@ -281,6 +281,14 @@ Render parse.auto.c
 ***********************************************************************************************************************************/
 #define PARSE_AUTO_COMMENT                                          "Config Parse Rules"
 
+typedef struct BldCfgRenderOptionDeprecate
+{
+    const String *name;                                             // Deprecated name
+    const String *optionName;                                       // Option name
+    bool indexed;                                                   // Can the deprecation be indexed?
+    bool unindexed;                                                 // Can the deprecation be unindexed?
+} BldCfgRenderOptionDeprecate;
+
 static void
 bldCfgRenderLf(String *const config, const bool lf)
 {
@@ -695,156 +703,90 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         config,
         "};\n");
 
-    // Option data for getopt_long()
+    // Option deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
-    strCatFmt(
-        config,
-        "\n"
-        COMMENT_BLOCK_BEGIN "\n"
-        "Option data for getopt_long()\n"
-        COMMENT_BLOCK_END "\n"
-        "static const struct option optionList[] =\n"
-        "{\n");
+    List *const deprecateFinalList = lstNewP(sizeof(BldCfgRenderOptionDeprecate), .comparator = lstComparatorStr);
 
     for (unsigned int optIdx = 0; optIdx < lstSize(bldCfg.optList); optIdx++)
     {
         const BldCfgOption *const opt = lstGet(bldCfg.optList, optIdx);
 
-        if (opt->deprecateList == NULL)
-            continue;
-
-        // Determine if the option is indexed
-        unsigned int indexTotal = 1;
-        const BldCfgOptionGroup *optGrp = NULL;
-
-        if (opt->group != NULL)
+        if (opt->deprecateList != NULL)
         {
-            optGrp = lstFind(bldCfg.optGrpList, &opt->group);
-            CHECK(optGrp != NULL);
-
-            indexTotal = optGrp->indexTotal;
-        }
-
-        bldCfgRenderLf(config, optIdx != 0);
-
-        strCatFmt(
-            config,
-            "    // %s option%s\n"
-            COMMENT_SEPARATOR "\n",
-            strZ(opt->name), opt->deprecateList != NULL ? " and deprecations" : "");
-
-        for (unsigned int index = 0; index < indexTotal; index++)
-        {
-            const String *optName = opt->name;
-            const String *optShift = EMPTY_STR;
-
-            // Generate indexed name
-            if (optGrp != NULL)
+            for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(opt->deprecateList); deprecateIdx++)
             {
-                optName = strNewFmt("%s%u%s", strZ(optGrp->name), index + 1, strZ(strSub(optName, strSize(optGrp->name))));
-                optShift = strNewFmt(" | (%u << PARSE_KEY_IDX_SHIFT)", index);
-            }
+                const BldCfgOptionDeprecate *const deprecate = lstGet(opt->deprecateList, deprecateIdx);
+                const String *deprecateName = deprecate->name;
+                bool indexed = false;
 
-            // strCatFmt(
-            //     config,
-            //     "    {\n"
-            //     "        .name = \"%s\",\n"
-            //     "%s"
-            //     "        .val = PARSE_OPTION_FLAG%s | %s,\n"
-            //     "    },\n",
-            //     strZ(optName),
-            //     strEq(opt->type, OPT_TYPE_BOOLEAN_STR) ? "" : "        .has_arg = required_argument,\n", strZ(optShift),
-            //     strZ(bldEnum("cfgOpt", opt->name)));
-            //
-            // if (opt->negate)
-            // {
-            //     strCatFmt(
-            //         config,
-            //         "    {\n"
-            //         "        .name = \"no-%s\",\n"
-            //         "        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG%s | %s,\n"
-            //         "    },\n",
-            //         strZ(optName), strZ(optShift), strZ(bldEnum("cfgOpt", opt->name)));
-            // }
-            //
-            // if (opt->reset)
-            // {
-            //     strCatFmt(
-            //         config,
-            //         "    {\n"
-            //         "        .name = \"reset-%s\",\n"
-            //         "        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG%s | %s,\n"
-            //         "    },\n",
-            //         strZ(optName), strZ(optShift), strZ(bldEnum("cfgOpt", opt->name)));
-            // }
+                // Determine if this deprecation is indexed
+                const size_t questionPos = (size_t)strChr(deprecateName, '?');
 
-            if (opt->deprecateList != 0)
-            {
-                for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(opt->deprecateList); deprecateIdx++)
+                if (questionPos != (size_t)-1)
                 {
-                    const BldCfgOptionDeprecate *const deprecate = lstGet(opt->deprecateList, deprecateIdx);
-                    const String *deprecateName = deprecate->name;
-
-                    // Skip the deprecation if it does not apply to this index
-                    if (deprecate->index > 0 && deprecate->index != index + 1)
-                        continue;
-
-                    // Generate name if deprecation applies to all indexes
-                    int deprecateIndexPos = strChr(deprecateName, '?');
-
-                    if (deprecateIndexPos != -1)
-                    {
-                        CHECK(optGrp != NULL);
-
-                        deprecateName = strNewFmt(
-                            "%s%u%s", strZ(strSubN(deprecateName, 0, (size_t)deprecateIndexPos)), index + 1,
-                            strZ(strSub(deprecateName, (size_t)deprecateIndexPos + 1)));
-                    }
-
-                    strCatFmt(
-                        config,
-                        "    {\n"
-                        "        .name = \"%s\",\n"
-                        "%s"
-                        "        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG%s | %s,\n"
-                        "    },\n",
-                        strZ(deprecateName),
-                        strEq(opt->type, OPT_TYPE_BOOLEAN_STR) ? "" : "        .has_arg = required_argument,\n", strZ(optShift),
-                        strZ(bldEnum("cfgOpt", opt->name)));
-
-                    if (opt->negate)
-                    {
-                        strCatFmt(
-                            config,
-                            "    {\n"
-                            "        .name = \"no-%s\",\n"
-                            "        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG%s | %s,\n"
-                            "    },\n",
-                            strZ(deprecateName), strZ(optShift), strZ(bldEnum("cfgOpt", opt->name)));
-                    }
-
-                    if (opt->reset && deprecate->reset)
-                    {
-                        strCatFmt(
-                            config,
-                            "    {\n"
-                            "        .name = \"reset-%s\",\n"
-                            "        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG%s | %s,\n"
-                            "    },\n",
-                            strZ(deprecateName), strZ(optShift), strZ(bldEnum("cfgOpt", opt->name)));
-                    }
+                    deprecateName = strNewFmt(
+                        "%s%s", strZ(strSubN(deprecateName, 0, questionPos)), strZ(strSub(deprecateName, questionPos + 1)));
+                    indexed = true;
                 }
+
+                // Create the final deprecation if it does not aready exist
+                BldCfgRenderOptionDeprecate *deprecateFinal = lstFind(deprecateFinalList, &deprecateName);
+
+                if (deprecateFinal == NULL)
+                {
+                    lstAdd(deprecateFinalList, &(BldCfgRenderOptionDeprecate){.name = deprecateName, .optionName = opt->name});
+
+                    deprecateFinal = lstFind(deprecateFinalList, &deprecateName);
+                    CHECK(deprecateFinal != NULL);
+                }
+
+                // ???
+                if (indexed)
+                    deprecateFinal->indexed = true;
+                else
+                    deprecateFinal->unindexed = true;
             }
         }
     }
 
-    strCatZ(
+    lstSort(deprecateFinalList, sortOrderAsc);
+
+    strCatFmt(
         config,
-        "    // Terminate option list\n"
-        "    {\n"
-        "        .name = NULL\n"
-        "    }\n"
-        "};\n");
+        "\n"
+        COMMENT_BLOCK_BEGIN "\n"
+        "Option deprecations()\n"
+        COMMENT_BLOCK_END "\n"
+        "%s\n"
+        "\n"
+        "static const ParseRuleOptionDeprecate parseRuleOptionDeprecate[CFG_OPTION_DEPRECATE_TOTAL] =\n"
+        "{\n",
+        strZ(bldDefineRender(STRDEF("CFG_OPTION_DEPRECATE_TOTAL"), strNewFmt("%u", lstSize(deprecateFinalList)))));
+
+    for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(deprecateFinalList); deprecateIdx++)
+    {
+        const BldCfgRenderOptionDeprecate *const deprecate = lstGet(deprecateFinalList, deprecateIdx);
+
+        bldCfgRenderLf(config, deprecateIdx != 0);
+
+        strCatFmt(
+            config,
+            "    // %s deprecation\n"
+            "    {\n"
+            "        .name = \"%s\",\n"
+            "        .id = %s,\n",
+            strZ(deprecate->optionName), strZ(deprecate->name), strZ(bldEnum("cfgOpt", deprecate->optionName)));
+
+        if (deprecate->indexed)
+            strCatZ(config, "        .indexed = true,\n");
+
+        if (deprecate->unindexed)
+            strCatZ(config, "        .unindexed = true,\n");
+
+        strCatZ(config, "    },\n");
+    }
+
+    strCatZ(config, "};\n");
 
     // Order for option parse resolution
     // -----------------------------------------------------------------------------------------------------------------------------
