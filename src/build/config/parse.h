@@ -118,7 +118,6 @@ struct BldCfgOption
     const String *const allowRangeMin;                              // Allow range min, if any
     const String *const allowRangeMax;                              // Allow range max, if any
     const List *const cmdList;                                      // Command override list
-    const StringList *const cmdRoleList;                            // Roles valid for the option
     const List *const deprecateList;                                // List of option deprecations
 };
 
