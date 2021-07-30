@@ -574,14 +574,14 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 strZ(bldEnum("cfgOptGrp", opt->group)));
         }
 
-        // !!!
+        // If an unindexed deprecation matches the base option name of an indexed option
         if (opt->deprecateList != NULL)
         {
             for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(opt->deprecateList); deprecateIdx++)
             {
                 const BldCfgOptionDeprecate *const deprecate = lstGet(opt->deprecateList, deprecateIdx);
 
-                if (strEq(deprecate->name, opt->name))
+                if (strEq(deprecate->name, opt->name) && deprecate->unindexed)
                 {
                     strCatZ(config, "        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),\n");
                     break;
