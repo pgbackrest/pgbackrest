@@ -1456,6 +1456,7 @@ testRun(void)
                     "[db]\n"
                     "pg1-host=db\n"
                     "pg1-path=/path/to/db\n"
+                    "pg256-path=/path/to/db256\n"
                     "%s=ignore\n"
                     "%s=/path/to/db2\n"
                     "pg3-host=ignore\n"
@@ -1483,11 +1484,13 @@ testRun(void)
         TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "    pg2 is index 2");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    default pg-path");
         TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), true, "    pg group is valid");
-        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "    pg1 and pg2 are set");
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 3, "    pg1, pg2, and pg256 are set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "    pg2-local is set");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 1), false, "    pg2-host is not set (pg2-local override)");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 2)), "/path/to/db2", "    pg2-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
+        TEST_RESULT_STR_Z(
+            cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 256)), "/path/to/db256", "    pg256-path is set");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLockPath), "/", "    lock-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "    lock-path is source config");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "    pg1-socket-path is set");
@@ -1777,7 +1780,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 128, "/pg128");
         hrnCfgArgRawZ(argList, cfgOptPg, "4");
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdBackup, argList, .role = cfgCmdRoleLocal), OptionInvalidValueError,

@@ -2332,7 +2332,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(1, 8),
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(1, 256),
         ),
     ),
 
@@ -3158,7 +3158,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(1, 4),
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(1, 256),
         ),
     ),
 

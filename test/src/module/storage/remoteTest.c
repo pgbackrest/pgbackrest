@@ -40,9 +40,9 @@ testRun(void)
     hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
     hrnCfgArgRawZ(argList, cfgOptBufferSize, "16384");
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
-    hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "localhost");
-    hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 2, TEST_USER);
-    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 256, "localhost");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 256, TEST_USER);
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 256, TEST_PATH "/pg256");
     hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
     HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -54,10 +54,10 @@ testRun(void)
     hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
     hrnCfgArgRawFmt(argList, cfgOptBufferSize, "%zu", ioBufferSize());
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
-    hrnCfgArgRawZ(argList, cfgOptRepoHost, "localhost");
-    hrnCfgArgRawZ(argList, cfgOptRepoHostUser, TEST_USER);
-    hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-    hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+    hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 128, "localhost");
+    hrnCfgArgKeyRawZ(argList, cfgOptRepoHostUser, 128, TEST_USER);
+    hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 128, TEST_PATH "/repo128");
+    hrnCfgArgRawZ(argList, cfgOptRepo, "128");
     HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
     const Storage *const storageRepoWrite = storageRepoGet(0, true);
@@ -77,9 +77,9 @@ testRun(void)
         TEST_RESULT_UINT(storageInterface(storageRepoWrite).feature, storageInterface(storageTest).feature, "check features");
         TEST_RESULT_BOOL(storageFeature(storageRepoWrite, storageFeaturePath), true, "check path feature");
         TEST_RESULT_BOOL(storageFeature(storageRepoWrite, storageFeatureCompress), true, "check compress feature");
-        TEST_RESULT_STR_Z(storagePathP(storageRepo, NULL), TEST_PATH "/repo", "check repo path");
-        TEST_RESULT_STR_Z(storagePathP(storageRepoWrite, NULL), TEST_PATH "/repo", "check repo write path");
-        TEST_RESULT_STR_Z(storagePathP(storagePgWrite, NULL), TEST_PATH "/pg2", "check pg write path");
+        TEST_RESULT_STR_Z(storagePathP(storageRepo, NULL), TEST_PATH "/repo128", "check repo path");
+        TEST_RESULT_STR_Z(storagePathP(storageRepoWrite, NULL), TEST_PATH "/repo128", "check repo write path");
+        TEST_RESULT_STR_Z(storagePathP(storagePgWrite, NULL), TEST_PATH "/pg256", "check pg write path");
     }
 
     // *****************************************************************************************************************************
@@ -90,14 +90,14 @@ testRun(void)
 
         TEST_ERROR(
             storageInfoP(storageRepo, STRDEF(BOGUS_STR)), FileOpenError,
-            "unable to get info for missing path/file '" TEST_PATH "/repo/BOGUS'");
+            "unable to get info for missing path/file '" TEST_PATH "/repo128/BOGUS'");
         TEST_RESULT_BOOL(storageInfoP(storageRepo, STRDEF(BOGUS_STR), .ignoreMissing = true).exists, false, "missing file/path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path info");
 
-        storagePathCreateP(storageTest, STRDEF("repo"));
-        HRN_STORAGE_TIME(storageTest, "repo", 1555160000);
+        storagePathCreateP(storageTest, STRDEF("repo128"));
+        HRN_STORAGE_TIME(storageTest, "repo128", 1555160000);
 
         StorageInfo info = {.exists = false};
         TEST_ASSIGN(info, storageInfoP(storageRepo, NULL), "valid path");
@@ -145,7 +145,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("special info");
 
-        HRN_SYSTEM("mkfifo -m 666 " TEST_PATH "/repo/fifo");
+        HRN_SYSTEM("mkfifo -m 666 " TEST_PATH "/repo128/fifo");
 
         TEST_ASSIGN(info, storageInfoP(storageRepo, STRDEF("fifo")), "valid fifo");
         TEST_RESULT_STR(info.name, NULL, "name is not set");
@@ -162,7 +162,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("link info");
 
-        HRN_SYSTEM("ln -s ../repo/test " TEST_PATH "/repo/link");
+        HRN_SYSTEM("ln -s ../repo128/test " TEST_PATH "/repo128/link");
 
         TEST_ASSIGN(info, storageInfoP(storageRepo, STRDEF("link")), "valid link");
         TEST_RESULT_STR(info.name, NULL, "name is not set");
@@ -170,7 +170,7 @@ testRun(void)
         TEST_RESULT_INT(info.type, storageTypeLink, "check type");
         TEST_RESULT_UINT(info.size, 0, "check size");
         TEST_RESULT_INT(info.mode, 0777, "check mode");
-        TEST_RESULT_STR_Z(info.linkDestination, "../repo/test", "check link destination");
+        TEST_RESULT_STR_Z(info.linkDestination, "../repo128/test", "check link destination");
         TEST_RESULT_UINT(info.userId, TEST_USER_ID, "check user id");
         TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
         TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "check group id");
@@ -241,12 +241,12 @@ testRun(void)
 
         TEST_ERROR_FMT(
             strZ(strNewBuf(storageGetP(storageNewReadP(storagePgWrite, STRDEF("test.txt"))))), FileMissingError,
-            "raised from remote-0 shim protocol: " STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg2/test.txt");
+            "raised from remote-0 shim protocol: " STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file without compression");
 
-        HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo/test.txt", contentBuf);
+        HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo128/test.txt", contentBuf);
 
         // Disable protocol compression in the storage object
         ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 0;
@@ -255,7 +255,7 @@ testRun(void)
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt")), "new file");
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "get file");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
-        TEST_RESULT_STR_Z(storageReadName(fileRead), TEST_PATH "/repo/test.txt", "check name");
+        TEST_RESULT_STR_Z(storageReadName(fileRead), TEST_PATH "/repo128/test.txt", "check name");
         TEST_RESULT_UINT(storageReadRemote(fileRead->driver, bufNew(32), false), 0, "nothing more to read");
         TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, bufSize(contentBuf), "check read size");
 
@@ -287,9 +287,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read with filters");
 
-        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo/test.txt", "TESTDATA!");
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo128/test.txt", "TESTDATA!");
 
-        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo/test.txt"), .limit = VARUINT64(8)), "new read");
+        TEST_ASSIGN(
+            fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .limit = VARUINT64(8)), "new read");
 
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -313,9 +314,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read into sink (no data returned)");
 
-        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo/test.txt", "TESTDATA");
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo128/test.txt", "TESTDATA");
 
-        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo/test.txt"), .limit = VARUINT64(8)), "new read");
+        TEST_ASSIGN(
+            fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .limit = VARUINT64(8)), "new read");
 
         filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -355,7 +357,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
         TEST_RESULT_UINT(storageWriteModeFile(write), STORAGE_MODE_FILE_DEFAULT, "file mode is default");
         TEST_RESULT_UINT(storageWriteModePath(write), STORAGE_MODE_PATH_DEFAULT, "path mode is default");
-        TEST_RESULT_STR_Z(storageWriteName(write), TEST_PATH "/repo/test.txt", "check file name");
+        TEST_RESULT_STR_Z(storageWriteName(write), TEST_PATH "/repo128/test.txt", "check file name");
         TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
 
@@ -390,7 +392,7 @@ testRun(void)
         TEST_RESULT_VOID(storageWriteFree(write), "free file");
 
         TEST_RESULT_UINT(
-            storageInfoP(storageTest, STRDEF("repo/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");
+            storageInfoP(storageTest, STRDEF("repo128/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write the file again with protocol compression");
@@ -413,7 +415,7 @@ testRun(void)
         // Check the repo via the local test storage to ensure the remote created it.
         TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "new path");
         StorageInfo info = {0};
-        TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strZ(path))), "get path info");
+        TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo128/%s", strZ(path))), "get path info");
         TEST_RESULT_BOOL(info.exists, true, "path exists");
         TEST_RESULT_INT(info.mode, STORAGE_MODE_PATH_DEFAULT, "mode is default");
 
@@ -422,14 +424,14 @@ testRun(void)
 
         TEST_ERROR(
             storagePathCreateP(storageRepoWrite, STRDEF("testpath"), .errorOnExists = true), PathCreateError,
-            "raised from remote-0 shim protocol: unable to create path '" TEST_PATH "/repo/testpath': [17] File exists");
+            "raised from remote-0 shim protocol: unable to create path '" TEST_PATH "/repo128/testpath': [17] File exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing parent path");
 
         TEST_ERROR(
             storagePathCreateP(storageRepoWrite, STRDEF("parent/testpath"), .noParentCreate = true), PathCreateError,
-            "raised from remote-0 shim protocol: unable to create path '" TEST_PATH "/repo/parent/testpath': [2] No such"
+            "raised from remote-0 shim protocol: unable to create path '" TEST_PATH "/repo128/parent/testpath': [2] No such"
                 " file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -441,7 +443,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             storageInfoListP(
-                storageRepo, STRDEF(TEST_PATH "/repo/parent"), hrnStorageInfoListCallback, &callbackData,
+                storageRepo, STRDEF(TEST_PATH "/repo128/parent"), hrnStorageInfoListCallback, &callbackData,
                 .sortOrder = sortOrderAsc),
             true, "info list");
         TEST_RESULT_STR_Z(
@@ -455,16 +457,16 @@ testRun(void)
     if (testBegin("storagePathRemove()"))
     {
         const String *path = STRDEF("testpath");
-        storagePathCreateP(storageTest, STRDEF("repo"));
+        storagePathCreateP(storageTest, STRDEF("repo128"));
         TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "new path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remote remove path");
 
         // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), true, "path exists");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), true, "path exists");
         TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite, path), "remote remove path");
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "path removed");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), false, "path removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove recursive");
@@ -474,13 +476,13 @@ testRun(void)
             "new path and file");
 
         TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite, STRDEF("testpath"), .recurse = true), "remove missing path");
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "recurse path removed");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), false, "recurse path removed");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("storageRemove()"))
     {
-        storagePathCreateP(storageTest, STRDEF("repo"));
+        storagePathCreateP(storageTest, STRDEF("repo128"));
 
         const String *file = STRDEF("file.txt");
 
@@ -491,16 +493,16 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite, file), BUFSTRDEF("TEST")), "new file");
 
         // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
-        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strZ(file))), true, "file exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo128/%s", strZ(file))), true, "file exists");
         TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, file), "remote remove file");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strZ(file))), false, "file removed");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo128/%s", strZ(file))), false, "file removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing file");
 
         TEST_ERROR(
             storageRemoveP(storageRepoWrite, file, .errorOnMissing = true), FileRemoveError,
-            "raised from remote-0 shim protocol: unable to remove '" TEST_PATH "/repo/file.txt': [2] No such file or directory");
+            "raised from remote-0 shim protocol: unable to remove '" TEST_PATH "/repo128/file.txt': [2] No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ignore missing file");
@@ -511,7 +513,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storagePathSync()"))
     {
-        storagePathCreateP(storageTest, STRDEF("repo"));
+        storagePathCreateP(storageTest, STRDEF("repo128"));
 
         const String *path = STRDEF("testpath");
         TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "new path");

@@ -1209,7 +1209,7 @@ option:
     type: integer
     internal: true
     required: false
-    allow-range: [1, 8]
+    allow-range: [1, 256]
     command:
       backup:
         command-role:
@@ -1388,7 +1388,7 @@ option:
   repo:
     type: integer
     required: false
-    allow-range: [1, 4]
+    allow-range: [1, 256]
     command:
       archive-get:
         command-role:
