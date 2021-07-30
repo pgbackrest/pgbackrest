@@ -3556,6 +3556,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -3630,6 +3631,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -4437,6 +4439,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -4658,6 +4661,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -4732,6 +4736,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -4807,6 +4812,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -4882,6 +4888,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -5038,6 +5045,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -5727,6 +5735,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (

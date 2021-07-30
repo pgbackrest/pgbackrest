@@ -566,6 +566,21 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 strZ(bldEnum("cfgOptGrp", opt->group)));
         }
 
+        // ???
+        if (opt->deprecateList != NULL)
+        {
+            for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(opt->deprecateList); deprecateIdx++)
+            {
+                const BldCfgOptionDeprecate *const deprecate = lstGet(opt->deprecateList, deprecateIdx);
+
+                if (strEq(deprecate->name, opt->name))
+                {
+                    strCatZ(config, "        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),\n");
+                    break;
+                }
+            }
+        }
+
         // Build command role valid lists
         for (unsigned int cmdRoleAllIdx = 0; cmdRoleAllIdx < strLstSize(cmdRoleAllList); cmdRoleAllIdx++)
         {
