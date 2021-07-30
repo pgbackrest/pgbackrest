@@ -57,28 +57,6 @@ VARIANT_STRDEF_STATIC(OPTION_VALUE_0,                               ZERO_Z);
 VARIANT_STRDEF_STATIC(OPTION_VALUE_1,                               ONE_Z);
 
 /***********************************************************************************************************************************
-Parse option flags
-***********************************************************************************************************************************/
-// Offset the option values so they don't conflict with getopt_long return codes
-#define PARSE_OPTION_FLAG                                           (1 << 30)
-
-// Add a flag for negation rather than checking "--no-"
-#define PARSE_NEGATE_FLAG                                           (1 << 29)
-
-// Add a flag for reset rather than checking "--reset-"
-#define PARSE_RESET_FLAG                                            (1 << 28)
-
-// Indicate that option name has been deprecated and will be removed in a future release
-#define PARSE_DEPRECATE_FLAG                                        (1 << 27)
-
-// Mask for option id (must be 0-255)
-#define PARSE_OPTION_MASK                                           0xFF
-
-// Shift and mask for option key index (must be 0-255)
-#define PARSE_KEY_IDX_SHIFT                                         8
-#define PARSE_KEY_IDX_MASK                                          0xFF
-
-/***********************************************************************************************************************************
 Define how a command is parsed
 ***********************************************************************************************************************************/
 typedef struct ParseRuleCommand
@@ -558,6 +536,7 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, optionCandidate);
         FUNCTION_TEST_PARAM(BOOL, param.prefixMatch);
+        FUNCTION_TEST_PARAM(BOOL, param.ignoreMissingIndex);
     FUNCTION_TEST_END();
 
     ASSERT(optionCandidate != NULL);
@@ -708,7 +687,7 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
                     THROW_FMT(OptionInvalidError, "deprecated option '%s' cannot have an index", strZ(optionCandidate));
 
                 // Error if the option is unindexed but the deprecation is not
-                if (!indexed && !deprecate->unindexed)
+                if (!indexed && !deprecate->unindexed && !param.ignoreMissingIndex)
                     THROW_FMT(OptionInvalidError, "deprecated option '%s' must have an index", strZ(optionCandidate));
 
                 result.deprecated = true;
@@ -746,7 +725,7 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
                 THROW_FMT(OptionInvalidError, "option '%s' cannot have an index", strZ(optionCandidate));
 
             // Error if the option is unindexed but the deprecation is not
-            if (!indexed && optionFound->group)
+            if (!indexed && optionFound->group && !param.ignoreMissingIndex)
                 THROW_FMT(OptionInvalidError, "option '%s' must have an index", strZ(optionCandidate));
         }
 
@@ -774,25 +753,6 @@ cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_RETURN((const char *)data.list[0]);
 
     FUNCTION_TEST_RETURN(NULL);
-}
-
-/**********************************************************************************************************************************/
-int
-cfgParseOptionId(const char *optionName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, optionName);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionName != NULL);
-
-    int result = -1;
-
-    for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
-        if (strcmp(optionName, parseRuleOption[optionId].name) == 0)
-            result = (int)optionId;
-
-    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/

@@ -484,20 +484,7 @@ helpRender(void)
 
                 // Ensure the option is valid
                 const String *optionName = strLstGet(cfgCommandParam(), 0);
-                CfgParseOptionResult option = cfgParseOptionP(optionName);
-
-                // If the option was not found it might be an indexed option without the index, e.g. repo-host instead of
-                // repo1-host. This is valid for help even though the parser will reject it.
-                if (!option.found)
-                {
-                    int optionId = cfgParseOptionId(strZ(optionName));
-
-                    if (optionId != -1)
-                    {
-                        option.id = (unsigned int)optionId;
-                        option.found = true;
-                    }
-                }
+                CfgParseOptionResult option = cfgParseOptionP(optionName, .ignoreMissingIndex = true);
 
                 // Error when option is not found or is invalid for the current command
                 if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleMain, option.id))

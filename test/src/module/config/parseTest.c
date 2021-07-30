@@ -58,11 +58,6 @@ testRun(void)
         TEST_TITLE("config command defaults to none before cfgInit()");
 
         TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
-
-        TEST_TITLE("parse option name to id");
-
-        TEST_RESULT_INT(cfgParseOptionId(BOGUS_STR), -1, "invalid option");
-        TEST_RESULT_INT(cfgParseOptionId(CFGOPT_STANZA), cfgOptStanza, "valid option");
     }
 
     // config and config-include-path options
@@ -756,6 +751,13 @@ testRun(void)
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "deprecated option 'repo-azure-ca-path' must have an index");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("allow option parse without an index");
+
+        TEST_RESULT_BOOL(cfgParseOptionP(STRDEF("repo-storage-ca-file"), .ignoreMissingIndex = true).found, true, "option");
+        TEST_RESULT_BOOL(
+            cfgParseOptionP(STRDEF("repo-azure-ca-path"), .ignoreMissingIndex = true).found, true, "deprecated option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
