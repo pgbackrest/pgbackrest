@@ -1016,7 +1016,7 @@ testRun(void)
             "};\n"
             "\n"
             COMMENT_BLOCK_BEGIN "\n"
-            "Option deprecations()\n"
+            "Option deprecations\n"
             COMMENT_BLOCK_END "\n"
             "#define CFG_OPTION_DEPRECATE_TOTAL                                  7\n"
             "\n"
