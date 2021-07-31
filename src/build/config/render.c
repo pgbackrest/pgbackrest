@@ -736,7 +736,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         config,
         "\n"
         COMMENT_BLOCK_BEGIN "\n"
-        "Option deprecations()\n"
+        "Option deprecations\n"
         COMMENT_BLOCK_END "\n"
         "%s\n"
         "\n"
