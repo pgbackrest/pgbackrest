@@ -1,15 +1,26 @@
 /***********************************************************************************************************************************
-Render Configuration Data
+Parse Error Yaml
 ***********************************************************************************************************************************/
-#ifndef BUILD_CONFIG_RENDER_H
-#define BUILD_CONFIG_RENDER_H
+#ifndef BUILD_ERROR_PARSE_H
+#define BUILD_ERROR_PARSE_H
 
-#include "build/config/parse.h"
+#include "common/type/string.h"
+
+typedef struct BldErrError
+{
+    const String *const name;                                       // Name
+    const unsigned int code;                                        // Code
+} BldErrError;
+
+typedef struct BldErr
+{
+    const List *const errList;                                      // Command list
+} BldErr;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Render auto-generated config files
-void bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg);
+// Parse error.yaml
+BldErr bldErrParse(const Storage *const storageRepo);
 
 #endif

@@ -1,15 +1,15 @@
 /***********************************************************************************************************************************
-Render Configuration Data
+Render Error Data
 ***********************************************************************************************************************************/
-#ifndef BUILD_CONFIG_RENDER_H
-#define BUILD_CONFIG_RENDER_H
+#ifndef BUILD_ERROR_RENDER_H
+#define BUILD_ERROR_RENDER_H
 
-#include "build/config/parse.h"
+#include "build/error/parse.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Render auto-generated config files
-void bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg);
+void bldErrRender(const Storage *const storageRepo, const BldErr bldErr);
 
 #endif
