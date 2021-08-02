@@ -933,7 +933,6 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                         .allowList = strLstDup(optRaw->allowList),
                         .allowRangeMin = strDup(optRaw->allowRangeMin),
                         .allowRangeMax = strDup(optRaw->allowRangeMax),
-                        .cmdRoleList = strLstDup(optRaw->cmdRoleList), // Is this used?
                         .deprecateList = bldCfgParseOptionDeprecateReconcile(optRaw->deprecateList),
                 });
             }

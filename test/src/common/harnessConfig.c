@@ -50,7 +50,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
 
     // Insert the command so it does not interfere with parameters
     if (commandId != cfgCmdNone)
-        strLstInsert(argList, 0, cfgCommandRoleNameParam(commandId, param.role, COLON_STR));
+        strLstInsert(argList, 0, cfgParseCommandRoleName(commandId, param.role, COLON_STR));
 
     // Insert the project exe
     strLstInsert(argList, 0, param.exeBogus ? STRDEF("pgbackrest-bogus") : STRDEF(testProjectExe()));

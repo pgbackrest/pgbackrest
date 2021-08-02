@@ -44,7 +44,7 @@ testRun(void)
         TEST_ERROR(yamlBoolParse((YamlEvent){.value = STRDEF("ack")}), FormatError, "invalid boolean 'ack'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("type map (remaning types)");
+        TEST_TITLE("type map (remaining types)");
 
         TEST_RESULT_UINT(yamlEventType(YAML_STREAM_END_EVENT), yamlEventTypeStreamEnd, "stream end");
         TEST_RESULT_UINT(yamlEventType(YAML_DOCUMENT_END_EVENT), yamlEventTypeDocEnd, "doc end");
@@ -53,7 +53,7 @@ testRun(void)
 
         TEST_ERROR(
             yamlEventCheck((YamlEvent){.type = yamlEventTypeAlias}, yamlEventTypeScalar), FormatError,
-                "expected event type 'scalar' but got 'alias'");
+                "expected event type 'scalar' but got 'alias' at line 0, column 0");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

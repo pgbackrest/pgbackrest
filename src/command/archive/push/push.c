@@ -321,7 +321,7 @@ cmdArchivePush(void)
         lockStopTest();
 
         // Get the segment name
-        String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStrNull(cfgOptPgPath), STR(cfgCommandName(cfgCommand())));
+        String *walFile = walPath(strLstGet(commandParam, 0), cfgOptionStrNull(cfgOptPgPath), STR(cfgCommandName()));
         String *archiveFile = strBase(walFile);
 
         if (cfgOptionBool(cfgOptArchiveAsync))
