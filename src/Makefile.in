@@ -209,6 +209,7 @@ pgbackrest: $(OBJS_PGBACKREST)
 # Compile and link config generator
 ####################################################################################################################################
 SRCS_BUILD_CONFIG = \
+	build/common/render.c \
 	build/common/yaml.c \
 	build/config/main.c \
 	build/config/parse.c \
