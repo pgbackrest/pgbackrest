@@ -346,7 +346,8 @@ testRun(void)
         strLstAddZ(argList, "--repo1-host-config-include-path=/path/include");
         strLstAddZ(argList, "--repo1-host-config-path=/path/config");
         strLstAddZ(argList, "--repo1-host-user=repo-host-user");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, "posix");      // Will not be passed to the remote
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, "posix");      // Not passed to the remote because only the repo options
+                                                                    // required by the remote are passed, in this case repo1
         HRN_CFG_LOAD(cfgCmdCheck, argList, .noStd = true);
 
         TEST_RESULT_STRLST_Z(
