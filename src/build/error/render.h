@@ -9,7 +9,7 @@ Render Error Data
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Render auto-generated config files
+// Render auto-generated error files
 void bldErrRender(const Storage *const storageRepo, const BldErr bldErr);
 
 #endif

@@ -12,7 +12,7 @@ Render Error Data
 #include "build/error/render.h"
 
 /***********************************************************************************************************************************
-Build enum from a string
+Build error name from a string
 ***********************************************************************************************************************************/
 static String *
 bldErrName(const String *const value)

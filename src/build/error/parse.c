@@ -6,11 +6,18 @@ Parse Error Yaml
 #include <yaml.h>
 
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/type/convert.h"
 #include "storage/posix/storage.h"
 
 #include "build/common/yaml.h"
 #include "build/error/parse.h"
+
+/***********************************************************************************************************************************
+Error min/max codes
+***********************************************************************************************************************************/
+#define ERROR_CODE_MIN                                              25
+#define ERROR_CODE_MAX                                              125
 
 /***********************************************************************************************************************************
 Parse error list
@@ -41,9 +48,18 @@ bldErrParseErrorList(Yaml *const yaml)
                 .name = err.value,
             };
 
+            // Parse error code and check that it is valid
             YamlEvent errVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
             errRaw.code = cvtZToUInt(strZ(errVal.value));
 
+            if (errRaw.code < ERROR_CODE_MIN || errRaw.code > ERROR_CODE_MAX)
+            {
+                THROW_FMT(
+                    FormatError, "error '%s' code must be >= " STRINGIFY(ERROR_CODE_MIN) " and <= " STRINGIFY(ERROR_CODE_MAX),
+                    strZ(errRaw.name));
+            }
+
+            // Add to list
             MEM_CONTEXT_BEGIN(lstMemContext(result))
             {
                 lstAdd(
@@ -59,8 +75,6 @@ bldErrParseErrorList(Yaml *const yaml)
             err = yamlEventNext(yaml);
         }
         while (err.type != yamlEventTypeMapEnd);
-
-        // !!! lstSort(result, sortOrderAsc);
     }
     MEM_CONTEXT_TEMP_END();
 
