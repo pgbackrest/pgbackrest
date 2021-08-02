@@ -410,6 +410,11 @@ eval
     ################################################################################################################################
     if (!defined($iVmId))
     {
+        # Clean any existing files in the src path that might interfere with the vpath build. This is kosher because the user should
+        # be expecting us to do builds in the src path during testing. Instead we clean the src path and do the builds elsewhere.
+        #---------------------------------------------------------------------------------------------------------------------------
+        executeTest("make -C ${strBackRestBase}/src -f Makefile.in clean-all");
+
         # Auto-generate configure files unless --no-gen specified
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bNoGen)
@@ -512,6 +517,7 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         my $strBuildPath = "${strTestPath}/build";
 
+        # Determine if we need to start from scratch due to changes that make may not detect
         if (!-e "${strBuildPath}/Makefile" ||
             stat("${strBackRestBase}/src/Makefile.in")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
             stat("${strBackRestBase}/src/configure")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
