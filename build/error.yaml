@@ -1,7 +1,6 @@
 # Error Definitions
 #
-# Master file for all errors in the C and Perl code.  For C, errors are written to src/common/error.auto.c/h.  For Perl, errors are
-# written to lib/pgBackRest/Common/ExceptionAuto.pm.
+# Definitions for all C errors, auto-generated to src/common/error.auto.c/h.
 
 # Errors in the code that it should not be possible for the user to encounter -- i.e., a likely bug
 assert: 25
