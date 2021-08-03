@@ -209,6 +209,7 @@ pgbackrest: $(OBJS_PGBACKREST)
 # Compile and link config generator
 ####################################################################################################################################
 SRCS_BUILD_CONFIG = \
+	build/common/render.c \
 	build/common/yaml.c \
 	build/config/main.c \
 	build/config/parse.c \
@@ -216,9 +217,25 @@ SRCS_BUILD_CONFIG = \
 
 OBJS_BUILD_CONFIG = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_CONFIG))
 
-build-config: $(OBJS_BUILD_CONFIG) build/config/config.yaml config/config.auto.h config/config.auto.c config/parse.auto.c
+build-config: $(OBJS_BUILD_CONFIG) build/config/config.yaml config/config.auto.h config/parse.auto.c
 	$(CC) -o build-config $(OBJS_BUILD_CONFIG) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
 	./build-config $(VPATH)
+
+####################################################################################################################################
+# Compile and link error generator
+####################################################################################################################################
+SRCS_BUILD_ERROR = \
+	build/common/render.c \
+	build/common/yaml.c \
+	build/error/main.c \
+	build/error/parse.c \
+	build/error/render.c
+
+OBJS_BUILD_ERROR = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_ERROR))
+
+build-error: $(OBJS_BUILD_ERROR) build/error/error.yaml
+	$(CC) -o build-error $(OBJS_BUILD_ERROR) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
+	./build-error $(VPATH)
 
 ####################################################################################################################################
 # Installation.  DESTDIR can be used to modify the install location.
@@ -264,6 +281,6 @@ $(BUILDDIR)/%.o : %.c
 # Recursive wildcard function
 rwildcard = $(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
-# Include depedency files
+# Include dependency files
 DEP_FILES = $(call rwildcard,$(BUILDDIR),*.dep)
-include $(DEP_FILES)
+-include $(DEP_FILES)

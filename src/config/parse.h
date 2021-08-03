@@ -28,6 +28,16 @@ Functions
 // Parse the command-line arguments and config file to produce final config data
 void configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel);
 
+// Get command name by id
+const char *cfgParseCommandName(ConfigCommand commandId);
+
+// Get command/role name with custom separator
+String *cfgParseCommandRoleName(
+    const ConfigCommand commandId, const ConfigCommandRole commandRoleId, const String *separator);
+
+// Convert command role enum to String
+const String *cfgParseCommandRoleStr(ConfigCommandRole commandRole);
+
 // Parse option name and return option info
 typedef struct CfgParseOptionParam
 {

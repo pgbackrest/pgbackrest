@@ -37,7 +37,7 @@ testRun(void)
     // ordering the second remote will never be sent an explicit exit and may not save coverage data.
     StringList *argList = strLstNew();
     hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "20");
     hrnCfgArgRawZ(argList, cfgOptBufferSize, "16384");
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
     hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "localhost");
@@ -51,7 +51,7 @@ testRun(void)
     // Load configuration and get repo remote storage
     argList = strLstNew();
     hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "20");
     hrnCfgArgRawFmt(argList, cfgOptBufferSize, "%zu", ioBufferSize());
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
     hrnCfgArgRawZ(argList, cfgOptRepoHost, "localhost");

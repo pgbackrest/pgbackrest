@@ -97,6 +97,21 @@ lstComparatorStr(const void *item1, const void *item2)
     FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
 }
 
+/**********************************************************************************************************************************/
+int
+lstComparatorZ(const void *item1, const void *item2)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
+    FUNCTION_TEST_END();
+
+    ASSERT(item1 != NULL);
+    ASSERT(item2 != NULL);
+
+    FUNCTION_TEST_RETURN(strcmp(*(char **)item1, *(char **)item2));
+}
+
 /***********************************************************************************************************************************
 General function for a descending comparator that simply switches the parameters on the main comparator (which should be asc)
 ***********************************************************************************************************************************/

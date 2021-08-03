@@ -13,6 +13,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("archive-get"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeArchive),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
@@ -28,6 +30,9 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("archive-push"),
+        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeArchive),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
@@ -43,6 +48,11 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("backup"),
+        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),
+        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeBackup),
+        PARSE_RULE_COMMAND_LOG_FILE(true),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -56,6 +66,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("check"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -68,6 +80,10 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("expire"),
+        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeBackup),
+        PARSE_RULE_COMMAND_LOG_FILE(true),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -79,6 +95,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("help"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
@@ -91,6 +109,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("info"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -103,6 +123,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("repo-create"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -115,6 +137,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("repo-get"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
@@ -128,6 +152,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("repo-ls"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
@@ -141,6 +167,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("repo-put"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
@@ -154,6 +182,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("repo-rm"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
@@ -167,6 +197,9 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("restore"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_FILE(true),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -180,6 +213,10 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stanza-create"),
+        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeAll),
+        PARSE_RULE_COMMAND_LOG_FILE(true),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -192,6 +229,10 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stanza-delete"),
+        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeAll),
+        PARSE_RULE_COMMAND_LOG_FILE(true),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -204,6 +245,10 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stanza-upgrade"),
+        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeAll),
+        PARSE_RULE_COMMAND_LOG_FILE(true),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -216,6 +261,9 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("start"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_FILE(true),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -227,6 +275,9 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stop"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_FILE(true),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -238,6 +289,9 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("verify"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_FILE(true),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -251,6 +305,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("version"),
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (

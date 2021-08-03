@@ -626,7 +626,7 @@ cmdArchiveGet(void)
 
         // Destination is wherever we were told to move the WAL segment
         const String *walDestination =
-            walPath(strLstGet(commandParam, 1), cfgOptionStr(cfgOptPgPath), STR(cfgCommandName(cfgCommand())));
+            walPath(strLstGet(commandParam, 1), cfgOptionStr(cfgOptPgPath), STR(cfgCommandName()));
 
         // Async get can only be performed on WAL segments, history or other files must use synchronous mode
         if (cfgOptionBool(cfgOptArchiveAsync) && walIsSegment(walSegment))

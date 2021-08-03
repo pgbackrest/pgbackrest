@@ -133,7 +133,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
         }
 
         // Add the command
-        strLstAdd(result, cfgCommandRoleNameParam(commandId, commandRoleId, COLON_STR));
+        strLstAdd(result, cfgParseCommandRoleName(commandId, commandRoleId, COLON_STR));
 
         // Move list to the prior context
         strLstMove(result, memContextPrior());

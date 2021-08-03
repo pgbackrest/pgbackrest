@@ -181,6 +181,19 @@
             <release-test-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="1472"/>
+                        <github-pull-request id="1474"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="greg.sabino.mullane"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="greg.sabino.mullane"/>
+                        </release-item-contributor-list>
+
+                        <p>Add check for test path inside repo path.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1457"/>
 
                         <release-item-contributor-list>
@@ -10087,6 +10100,11 @@
         <contributor id="vidhya.gurumoorthi">
             <contributor-name-display>Vidhya Gurumoorthi</contributor-name-display>
             <contributor-id type="github">fpa-postgres</contributor-id>
+        </contributor>
+
+        <contributor id="greg.sabino.mullane">
+            <contributor-name-display>Greg Sabino Mullane</contributor-name-display>
+            <contributor-id type="github">turnstep</contributor-id>
         </contributor>
 
         <contributor id="greg.smith">

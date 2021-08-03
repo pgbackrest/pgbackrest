@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Render Configuration Yaml
+Render Configuration Data
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -277,57 +277,6 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
 }
 
 /***********************************************************************************************************************************
-Render config.auto.c
-***********************************************************************************************************************************/
-static void
-bldCfgRenderConfigAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
-{
-    String *const config = bldHeader(CONFIG_MODULE, CONFIG_AUTO_COMMENT);
-
-    // Command data
-    // -----------------------------------------------------------------------------------------------------------------------------
-    strCatZ(
-        config,
-        "\n"
-        COMMENT_BLOCK_BEGIN "\n"
-        "Command data\n"
-        COMMENT_BLOCK_END "\n"
-        "static const ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_LIST\n"
-        "(\n");
-
-    for (unsigned int cmdIdx = 0; cmdIdx < lstSize(bldCfg.cmdList); cmdIdx++)
-    {
-        const BldCfgCommand *const cmd = lstGet(bldCfg.cmdList, cmdIdx);
-
-        if (cmdIdx != 0)
-            strCatZ(config, "\n");
-
-        strCatFmt(
-            config,
-            "    CONFIG_COMMAND\n"
-            "    (\n"
-            "        CONFIG_COMMAND_NAME(%s)\n"
-            "\n"
-            "        CONFIG_COMMAND_LOG_FILE(%s)\n"
-            "        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(%s)\n"
-            "        CONFIG_COMMAND_LOCK_REQUIRED(%s)\n"
-            "        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(%s)\n"
-            "        CONFIG_COMMAND_LOCK_TYPE(%s)\n"
-            "    )\n",
-            strZ(bldConst("CFGCMD", cmd->name)), cvtBoolToConstZ(cmd->logFile), strZ(bldEnum("logLevel", cmd->logLevelDefault)),
-            cvtBoolToConstZ(cmd->lockRequired), cvtBoolToConstZ(cmd->lockRemoteRequired), strZ(bldEnum("lockType", cmd->lockType)));
-    }
-
-    strCatZ(
-        config,
-        ")\n");
-
-    // Write to storage
-    // -----------------------------------------------------------------------------------------------------------------------------
-    bldPut(storageRepo, "src/config/config.auto.c", BUFSTR(config));
-}
-
-/***********************************************************************************************************************************
 Render parse.auto.c
 ***********************************************************************************************************************************/
 #define PARSE_AUTO_COMMENT                                          "Config Parse Rules"
@@ -486,6 +435,19 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             "    (\n"
             "        PARSE_RULE_COMMAND_NAME(\"%s\"),\n",
             strZ(cmd->name));
+
+        if (cmd->lockRequired)
+            strCatZ(config, "        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),\n");
+
+        if (cmd->lockRemoteRequired)
+            strCatZ(config, "        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),\n");
+
+        strCatFmt(config, "        PARSE_RULE_COMMAND_LOCK_TYPE(%s),\n", strZ(bldEnum("lockType", cmd->lockType)));
+
+        if (cmd->logFile)
+            strCatZ(config, "        PARSE_RULE_COMMAND_LOG_FILE(true),\n");
+
+        strCatFmt(config, "        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(%s),\n", strZ(bldEnum("logLevel", cmd->logLevelDefault)));
 
         if (cmd->parameterAllowed)
             strCatZ(config, "        PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),\n");
@@ -887,6 +849,5 @@ void
 bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg)
 {
     bldCfgRenderConfigAutoH(storageRepo, bldCfg);
-    bldCfgRenderConfigAutoC(storageRepo, bldCfg);
     bldCfgRenderParseAutoC(storageRepo, bldCfg);
 }

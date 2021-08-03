@@ -162,9 +162,9 @@ testRun(void)
             strZ(strNewFmt("%s/global-backup.confsave", strZ(configIncludePath))));
 
         // Set up defaults
-        String *backupCmdDefConfigValue = strNewZ(cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
+        String *backupCmdDefConfigValue = strNewZ(cfgParseOptionDefault(cfgParseCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
         String *backupCmdDefConfigInclPathValue = strNewZ(
-            cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
+            cfgParseOptionDefault(cfgParseCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
         const String *oldConfigDefault = STRDEF(TEST_PATH PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
@@ -852,7 +852,7 @@ testRun(void)
         hrnLogLevelStdErrSet(logLevelError);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load remote config");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleRemote, "    command role is remote");
-        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "    remote role name");
+        TEST_RESULT_STR_Z(cfgParseCommandRoleStr(cfgCmdRoleRemote), "remote", "    remote role name");
         TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelError, "console logging is error");
         TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "stderr logging is error");
 
@@ -1168,6 +1168,7 @@ testRun(void)
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "help command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "    command is help");
+        TEST_RESULT_Z(cfgCommandName(), "help", "    command name is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1227,11 +1228,11 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLogFile(), true, "    backup command does file logging");
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "    backup command requires remote lock");
         TEST_RESULT_STRLST_Z(cfgCommandParam(), NULL, "    check command arguments");
-        TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleMain, "command role main enum");
-        TEST_ERROR(cfgCommandRoleEnum(STRDEF("bogus")), CommandInvalidError, "invalid command role 'bogus'");
+        TEST_RESULT_UINT(cfgParseCommandRoleEnum(NULL), cfgCmdRoleMain, "command role main enum");
+        TEST_ERROR(cfgParseCommandRoleEnum(STRDEF("bogus")), CommandInvalidError, "invalid command role 'bogus'");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleMain, "    command role is main");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "    command/role name is backup");
-        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleMain), NULL, "    main role name is NULL");
+        TEST_RESULT_STR_Z(cfgParseCommandRoleStr(cfgCmdRoleMain), NULL, "    main role name is NULL");
 
         TEST_RESULT_STR_Z(cfgExe(), TEST_BACKREST_EXE, "    exe is set");
 
@@ -1446,7 +1447,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("set command to expire");
 
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdExpire, cfgCommandRoleEnum(STRDEF("async"))), "set command");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdExpire, cfgParseCommandRoleEnum(STRDEF("async"))), "set command");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "expire:async", "command/role name is expire:async");
 
         // -------------------------------------------------------------------------------------------------------------------------
