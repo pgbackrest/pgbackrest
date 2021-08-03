@@ -86,7 +86,7 @@ typedef struct BldCfgOptionDepend
 
 typedef struct BldCfgOptionDeprecate
 {
-    const String *const name;                                       // Deprecated name
+    const String *const name;                                       // Deprecated option name
     bool indexed;                                                   // Can the deprecation be indexed?
     bool unindexed;                                                 // Can the deprecation be unindexed?
 } BldCfgOptionDeprecate;

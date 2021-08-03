@@ -283,8 +283,8 @@ Render parse.auto.c
 
 typedef struct BldCfgRenderOptionDeprecate
 {
-    const String *const name;                                       // Deprecated name
-    const BldCfgOption *const option;                               // Option name
+    const String *const name;                                       // Deprecated option name
+    const BldCfgOption *const option;                               // Option
     const bool indexed;                                             // Can the deprecation be indexed?
     const bool unindexed;                                           // Can the deprecation be unindexed?
 } BldCfgRenderOptionDeprecate;
