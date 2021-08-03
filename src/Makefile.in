@@ -281,6 +281,6 @@ $(BUILDDIR)/%.o : %.c
 # Recursive wildcard function
 rwildcard = $(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
-# Include depedency files
+# Include dependency files
 DEP_FILES = $(call rwildcard,$(BUILDDIR),*.dep)
 -include $(DEP_FILES)
