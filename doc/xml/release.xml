@@ -51,6 +51,20 @@
 
                         <p>Fix detection of circular symlinks.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1480"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="greg.sabino.mullane"/>
+                            <release-item-ideator id="david.christensen"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="david.christensen"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Only pass selected <br-setting>repo</br-setting> options to the remote.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
