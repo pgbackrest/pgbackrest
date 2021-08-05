@@ -474,7 +474,7 @@
     <block-define if="'{[package]}' eq 'none'" id="br-install">
         <p><backrest/> needs to be installed from a package or installed manually as shown here.</p>
 
-        <execute-list host="{[host-build]}">
+        <execute-list host="{[br-install-host]}">
             <title>Install dependencies</title>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
@@ -866,7 +866,7 @@
     <section id="installation">
         <title>Installation</title>
 
-        <p>A new host named <host>pg1</host> is created to contain the demo cluster and run <backrest/> examples.</p>
+        <p>A new host named <host>{[host-pg1]}</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
         <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-option]}"/>
 
