@@ -144,6 +144,20 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-pull-request id="1479"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="greg.sabino.mullane"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect host names in user guide.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-pull-request id="1469"/>
