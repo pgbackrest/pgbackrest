@@ -132,7 +132,7 @@ typedef struct ParseRuleOption
     bool multi:1;                                                   // Can be specified multiple times?
     bool group:1;                                                   // In a group?
     unsigned int groupId:1;                                         // Id if in a group
-    bool deprecateMatch:1;                                          // Does a deprecated name excactly match the option name?
+    bool deprecateMatch:1;                                          // Does a deprecated name exactly match the option name?
     uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
     const void **data;                                              // Optional data and command overrides
