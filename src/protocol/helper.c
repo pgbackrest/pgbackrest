@@ -353,12 +353,26 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         bool remove = false;
         bool skipHostZero = false;
 
-        // Remove repo options when the remote type is pg since they won't be used
+        // Remove repo options that are not needed on the remote
         if (cfgOptionGroupId(optionId) == cfgOptGrpRepo)
         {
-            remove = protocolStorageType == protocolStorageTypePg;
+            // If remote type is pg then remove all repo options since they will not be used
+            if (protocolStorageType == protocolStorageTypePg)
+            {
+                remove = true;
+            }
+            // Else remove repo options for indexes that are not being passed to the repo. This prevents the remote from getting
+            // partial info about a repo, which could cause an error during validation.
+            else
+            {
+                for (unsigned int optionIdx = 0; optionIdx < cfgOptionIdxTotal(optionId); optionIdx++)
+                {
+                    if (cfgOptionIdxTest(optionId, optionIdx) && optionIdx != hostIdx)
+                        kvPut(optionReplace, VARSTRZ(cfgOptionIdxName(optionId, optionIdx)), NULL);
+                }
+            }
         }
-        // Remove pg host options that are not needed on the remote
+        // Remove pg options that are not needed on the remote
         else
         {
             ASSERT(cfgOptionGroupId(optionId) == cfgOptGrpPg);
