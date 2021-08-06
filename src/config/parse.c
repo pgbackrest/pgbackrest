@@ -528,7 +528,7 @@ Find an option by name in the option list
 ***********************************************************************************************************************************/
 #define OPTION_PREFIX_NEGATE                                        "no-"
 #define OPTION_PREFIX_RESET                                         "reset-"
-#define OPTION_SIZE_MAX                                             64
+#define OPTION_NAME_SIZE_MAX                                        64
 
 CfgParseOptionResult
 cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam param)
@@ -544,11 +544,14 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
     CfgParseOptionResult result = {0};
 
     // Copy the option to a buffer so it can be efficiently manipulated
-    char optionName[OPTION_SIZE_MAX + 1];
+    char optionName[OPTION_NAME_SIZE_MAX + 1];
     size_t optionNameSize = strSize(optionCandidate);
 
     if (optionNameSize > sizeof(optionName) - 1)
-        THROW_FMT(OptionInvalidError, "option '%s' exceeds maximum size of " STRINGIFY(OPTION_SIZE_MAX), strZ(optionCandidate));
+    {
+        THROW_FMT(
+            OptionInvalidError, "option '%s' exceeds maximum size of " STRINGIFY(OPTION_NAME_SIZE_MAX), strZ(optionCandidate));
+    }
 
     strcpy(optionName, strZ(optionCandidate));
 

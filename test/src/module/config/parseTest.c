@@ -657,12 +657,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error if option exceeds maximum size");
 
-        char optionMax[OPTION_SIZE_MAX + 2];
+        char optionMax[OPTION_NAME_SIZE_MAX + 2];
 
-        for (unsigned int optionMaxIdx = 0; optionMaxIdx < OPTION_SIZE_MAX + 1; optionMaxIdx++)
+        for (unsigned int optionMaxIdx = 0; optionMaxIdx < OPTION_NAME_SIZE_MAX + 1; optionMaxIdx++)
             optionMax[optionMaxIdx] = 'X';
 
-        optionMax[OPTION_SIZE_MAX + 1] = '\0';
+        optionMax[OPTION_NAME_SIZE_MAX + 1] = '\0';
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1410,7 +1410,7 @@ testRun(void)
         strLstAddZ(argList, "--reset-pg1-host");
         strLstAddZ(argList, "--reset-pg3-host");
         strLstAddZ(argList, "--reset-backup-standby");
-        strLstAddZ(argList, "--retention-ful=55");
+        strLstAddZ(argList, "--retention-ful=55");                  // Partial match for deprecated option
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
         setenv("PGBACKRESTXXX_NOTHING", "xxx", true);
