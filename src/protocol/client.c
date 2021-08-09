@@ -147,19 +147,23 @@ protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
 
     ASSERT(this != NULL);
 
-    // End the pack
-    if (data != NULL)
-        pckWriteEndP(data);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // End the pack
+        if (data != NULL)
+            pckWriteEndP(data);
 
-    // Write the data
-    PackWrite *dataMessage = pckWriteNew(this->write);
-    pckWriteU32P(dataMessage, protocolMessageTypeData, .defaultWrite = true);
-    pckWritePackP(dataMessage, data);
-    pckWriteEndP(dataMessage);
+        // Write the data
+        PackWrite *dataMessage = pckWriteNew(this->write);
+        pckWriteU32P(dataMessage, protocolMessageTypeData, .defaultWrite = true);
+        pckWritePackP(dataMessage, data);
+        pckWriteEndP(dataMessage);
 
-    // Flush when there is no more data to put
-    if (data == NULL)
-        ioWriteFlush(this->write);
+        // Flush when there is no more data to put
+        if (data == NULL)
+            ioWriteFlush(this->write);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -175,26 +179,30 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
         FUNCTION_LOG_PARAM(PACK_READ, error);
     FUNCTION_LOG_END();
 
-    if (type == protocolMessageTypeError)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const ErrorType *type = errorTypeFromCode(pckReadI32P(error));
-        String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
-        const String *const stack = pckReadStrP(error);
-        pckReadEndP(error);
-
-        CHECK(message != NULL);
-
-        // Add stack trace if the error is an assertion or debug-level logging is enabled
-        if (type == &AssertError || logAny(logLevelDebug))
+        if (type == protocolMessageTypeError)
         {
-            CHECK(stack != NULL);
+            const ErrorType *type = errorTypeFromCode(pckReadI32P(error));
+            String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
+            const String *const stack = pckReadStrP(error);
+            pckReadEndP(error);
 
-            strCat(message, LF_STR);
-            strCat(message, stack);
+            CHECK(message != NULL);
+
+            // Add stack trace if the error is an assertion or debug-level logging is enabled
+            if (type == &AssertError || logAny(logLevelDebug))
+            {
+                CHECK(stack != NULL);
+
+                strCat(message, LF_STR);
+                strCat(message, stack);
+            }
+
+            THROWP(type, strZ(message));
         }
-
-        THROWP(type, strZ(message));
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
