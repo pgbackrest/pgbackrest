@@ -177,7 +177,12 @@
 
                 <release-improvement-list>
                     <release-item>
-                        <github-pull-request id="1469"/>
+                        <commit subject="Update contributing documentation and add pull request template.">
+                            <github-pull-request id="1469"/>
+                        </commit>
+                        <commit subject="Fix links and update child process example.">
+                            <github-pull-request id="1487"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
