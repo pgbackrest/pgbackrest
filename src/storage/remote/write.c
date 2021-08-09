@@ -5,6 +5,7 @@ Remote Storage File write
 
 #include "common/compress/helper.h"
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/write.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -132,7 +133,12 @@ storageWriteRemote(THIS_VOID, const Buffer *buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    protocolClientDataPut(this->client, pckWriteBinP(protocolPackNew(), buffer));
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        protocolClientDataPut(
+            this->client, pckWriteBinP(pckWriteNewBuf(bufNew(ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE)), buffer));
+    }
+    MEM_CONTEXT_TEMP_END();
 
 #ifdef DEBUG
     this->protocolWriteBytes += bufUsed(buffer);
@@ -158,10 +164,14 @@ storageWriteRemoteClose(THIS_VOID)
     // Close if the file has not already been closed
     if (this->client != NULL)
     {
-        protocolClientDataPut(this->client, NULL);
-        ioFilterGroupResultAllSet(
-            ioWriteFilterGroup(storageWriteIo(this->write)), jsonToVar(pckReadStrP(protocolClientDataGet(this->client))));
-        protocolClientDataEndGet(this->client);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            protocolClientDataPut(this->client, NULL);
+            ioFilterGroupResultAllSet(
+                ioWriteFilterGroup(storageWriteIo(this->write)), jsonToVar(pckReadStrP(protocolClientDataGet(this->client))));
+            protocolClientDataEndGet(this->client);
+        }
+        MEM_CONTEXT_TEMP_END();
 
         this->client = NULL;
         memContextCallbackClear(this->memContext);

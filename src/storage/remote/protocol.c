@@ -365,9 +365,13 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
 
                 if (!bufEmpty(buffer))
                 {
-                    PackWrite *write = protocolPackNew();
-                    pckWriteBinP(write, buffer);
-                    protocolServerDataPut(server, write);
+                    MEM_CONTEXT_TEMP_BEGIN()
+                    {
+                        PackWrite *write = pckWriteNewBuf(bufNew(ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE));
+                        pckWriteBinP(write, buffer);
+                        protocolServerDataPut(server, write);
+                    }
+                    MEM_CONTEXT_TEMP_END();
 
                     bufUsedZero(buffer);
                 }
