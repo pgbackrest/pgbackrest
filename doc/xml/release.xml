@@ -292,6 +292,9 @@
                         <commit subject="Update config tests (except parse) to use standard patterns.">
                             <github-pull-request id="1473"/>
                         </commit>
+                        <commit subject="Update db/db test to use standard patterns.">
+                            <github-pull-request id="1486"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
