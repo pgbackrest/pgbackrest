@@ -519,8 +519,12 @@ testRun(void)
     }
 
     // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be
-    // sure coverage data has been written by the remote. protocolFree() is still required to free the client objects.
+    // sure coverage data has been written by the remote. We also need to make sure that the mem context callback is cleared so that
+    // protocolClientFreeResource() will not be called and send another exit. protocolFree() is still required to free the client
+    // objects.
+    memContextCallbackClear(((ProtocolClientPub *)protocolRemoteGet(protocolStorageTypeRepo, 0))->memContext);
     protocolClientExecute(protocolRemoteGet(protocolStorageTypeRepo, 0), protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
+    memContextCallbackClear(((ProtocolClientPub *)protocolRemoteGet(protocolStorageTypePg, 1))->memContext);
     protocolClientExecute(protocolRemoteGet(protocolStorageTypePg, 1), protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
     protocolFree();
 
