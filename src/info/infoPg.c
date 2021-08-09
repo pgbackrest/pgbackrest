@@ -347,7 +347,7 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
     if (saveData->callbackFunction != NULL)
         saveData->callbackFunction(saveData->callbackData, sectionNext, infoSaveData);
 
-    FUNCTION_TEST_RETURN_VOID()
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 void
