@@ -90,15 +90,19 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     ASSERT(message != NULL);
     ASSERT(stack != NULL);
 
-    // Write the error and flush to be sure it gets sent immediately
-    PackWrite *error = pckWriteNew(this->write);
-    pckWriteU32P(error, protocolMessageTypeError);
-    pckWriteI32P(error, code);
-    pckWriteStrP(error, message);
-    pckWriteStrP(error, stack);
-    pckWriteEndP(error);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Write the error and flush to be sure it gets sent immediately
+        PackWrite *error = pckWriteNew(this->write);
+        pckWriteU32P(error, protocolMessageTypeError);
+        pckWriteI32P(error, code);
+        pckWriteStrP(error, message);
+        pckWriteStrP(error, stack);
+        pckWriteEndP(error);
 
-    ioWriteFlush(this->write);
+        ioWriteFlush(this->write);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -306,19 +310,23 @@ protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
         FUNCTION_LOG_PARAM(PACK_WRITE, data);
     FUNCTION_LOG_END();
 
-    // End the pack
-    if (data != NULL)
-        pckWriteEndP(data);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // End the pack
+        if (data != NULL)
+            pckWriteEndP(data);
 
-    // Write the result
-    PackWrite *resultMessage = pckWriteNew(this->write);
-    pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
-    pckWritePackP(resultMessage, data);
-    pckWriteEndP(resultMessage);
+        // Write the result
+        PackWrite *resultMessage = pckWriteNew(this->write);
+        pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
+        pckWritePackP(resultMessage, data);
+        pckWriteEndP(resultMessage);
 
-    // Flush on NULL result since it might be used to synchronize
-    if (data == NULL)
-        ioWriteFlush(this->write);
+        // Flush on NULL result since it might be used to synchronize
+        if (data == NULL)
+            ioWriteFlush(this->write);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -331,10 +339,14 @@ protocolServerDataEndPut(ProtocolServer *const this)
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
     FUNCTION_LOG_END();
 
-    // Write the response and flush to be sure it gets sent immediately
-    PackWrite *response = pckWriteNew(this->write);
-    pckWriteU32P(response, protocolMessageTypeDataEnd, .defaultWrite = true);
-    pckWriteEndP(response);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Write the response and flush to be sure it gets sent immediately
+        PackWrite *response = pckWriteNew(this->write);
+        pckWriteU32P(response, protocolMessageTypeDataEnd, .defaultWrite = true);
+        pckWriteEndP(response);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     ioWriteFlush(this->write);
 
