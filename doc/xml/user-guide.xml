@@ -1194,7 +1194,7 @@
         <section id="perform-backup">
             <title>Perform a Backup</title>
 
-            <p>By default <backrest/> will wait for the next regularly scheduled checkpoint before starting a backup. Depending on the <pg-option>checkpoint_timeout</pg-option> and <pg-option>checkpoint_segments</pg-option> settings in <postgres/> it may be quite some time before a checkpoint completes and the backup can begin. Generally, it is best to set <br-setting>start-fast=y</br-setting> so that the backup starts immediately. This forces an immediate checkpoint, but since backups are usually run once a day an additional checkpoint should not have a noticeable impact on performance. However, on very busy clusters it may be best to pass <br-setting>{[dash]}-start-fast</br-setting> on the command-line as needed.</p>
+            <p>By default <backrest/>will wait for the next regularly scheduled checkpoint before starting a backup. Depending on the <pg-option>checkpoint_timeout</pg-option> and <pg-option>checkpoint_segments</pg-option> settings in <postgres/> it may be quite some time before a checkpoint completes and the backup can begin. Generally, it is best to set <br-setting>start-fast=y</br-setting> so that the backup starts immediately. This forces an immediate checkpoint, but since backups are usually run once a day an additional checkpoint should not have a noticeable impact on performance. However, on very busy clusters it may be best to pass <br-setting>{[dash]}-start-fast</br-setting> on the command-line as needed.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure backup fast start</title>
