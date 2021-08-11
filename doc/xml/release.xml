@@ -194,6 +194,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1488"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Rearrange backup documentation in user guide.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                             <release-item-reviewer id="david.steele"/>
