@@ -79,8 +79,8 @@ P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION (3B
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? (0B, 100%)
-P00   INFO: full backup size = 192KB
 P00   INFO: new backup label = [BACKUP-FULL-1]
+P00   INFO: full backup size = 192KB, file total = 15
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-type=cifs --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -323,8 +323,8 @@ P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/1/PG_VERSI
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/PG_VERSION (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/zero_from_start (0B, 100%)
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? (0B, 100%)
-P00   INFO: full backup size = 192KB
 P00   INFO: new backup label = [BACKUP-FULL-2]
+P00   INFO: full backup size = 192KB, file total = 18
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -563,6 +563,7 @@ P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/pg_tblspc'
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/global'
+P00   INFO: restore size = 192KB, file total = 18
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
@@ -624,6 +625,7 @@ P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/pg_tblspc'
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/global'
+P00   INFO: restore size = 192KB, file total = 18
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
@@ -685,6 +687,7 @@ P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/pg_tblspc'
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/global'
+P00   INFO: restore size = 192KB, file total = 18
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
@@ -749,6 +752,7 @@ P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/pg_subtrans'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/pg_tblspc'
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/global'
+P00   INFO: restore size = 192KB, file total = 18
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/db/base/recovery.conf
@@ -786,8 +790,8 @@ P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
-P00   INFO: incr backup size = 22B
 P00   INFO: new backup label = [BACKUP-INCR-1]
+P00   INFO: incr backup size = 22B, file total = 21
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -1001,8 +1005,8 @@ P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
-P00   INFO: incr backup size = 192KB
 P00   INFO: new backup label = [BACKUP-INCR-2]
+P00   INFO: incr backup size = 192KB, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -1219,8 +1223,8 @@ P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
-P00   INFO: diff backup size = 192KB
 P00   INFO: new backup label = [BACKUP-DIFF-1]
+P00   INFO: diff backup size = 192KB, file total = 21
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -1466,6 +1470,7 @@ P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/global'
+P00   INFO: restore size = 192KB, file total = 21
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/db/base-2/recovery.conf
@@ -1535,6 +1540,7 @@ P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/global'
+P00   INFO: restore size = 192KB, file total = 21
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/db/base-2/recovery.conf
@@ -1573,8 +1579,8 @@ P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zerosize.txt to [BACKUP-DIFF-1]
 P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-DIFF-1]
-P00   INFO: incr backup size = 13B
 P00   INFO: new backup label = [BACKUP-INCR-3]
+P00   INFO: incr backup size = 13B, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -1793,8 +1799,8 @@ P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zerosize.txt to [BACKUP-DIFF-1]
 P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-DIFF-1]
 P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt to [BACKUP-INCR-3]
-P00   INFO: incr backup size = 176KB
 P00   INFO: new backup label = [BACKUP-INCR-4]
+P00   INFO: incr backup size = 176KB, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -2010,8 +2016,8 @@ P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
-P00   INFO: diff backup size = 176KB
 P00   INFO: new backup label = [BACKUP-DIFF-2]
+P00   INFO: diff backup size = 176KB, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -2227,8 +2233,8 @@ P00 DETAIL: reference pg_data/pg_stat/global.stat to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
-P00   INFO: diff backup size = 176KB
 P00   INFO: new backup label = [BACKUP-DIFF-3]
+P00   INFO: diff backup size = 176KB, file total = 20
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -2426,8 +2432,8 @@ P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/zero_from_start (0B, 99
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? (0B, 99%)
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
-P00   INFO: full backup size = 176KB
 P00   INFO: new backup label = [BACKUP-FULL-3]
+P00   INFO: full backup size = 176KB, file total = 21
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -2642,8 +2648,8 @@ P00 DETAIL: hardlink pg_data/zero_from_start to [BACKUP-FULL-3]
 P00 DETAIL: hardlink pg_data/zerosize.txt to [BACKUP-FULL-3]
 P00 DETAIL: hardlink pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-FULL-3]
 P00 DETAIL: hardlink pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt to [BACKUP-FULL-3]
-P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-4]
+P00   INFO: diff backup size = 9B, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -2869,6 +2875,7 @@ P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/global'
+P00   INFO: restore size = 176KB, file total = 22
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/db/base-2/recovery.conf
@@ -2934,6 +2941,7 @@ P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/global'
+P00   INFO: restore size = 176KB, file total = 22
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/db/base-2/recovery.conf
@@ -3023,6 +3031,7 @@ P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PAT
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768'
 P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base-2/base/global'
+P00   INFO: restore size = 176KB, file total = 22
 P00   INFO: restore command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/db/base-2/base/recovery.conf
@@ -3056,8 +3065,8 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
-P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-5]
+P00   INFO: diff backup size = 9B, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
