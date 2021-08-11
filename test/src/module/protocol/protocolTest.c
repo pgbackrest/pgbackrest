@@ -385,7 +385,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "repo-host");
-        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal, .noStd = true);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal, .noStd = true); // CSHANG this says role local so why is archive-get:remote
 
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypeRepo, 0),
