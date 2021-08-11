@@ -1355,7 +1355,7 @@
 
             <p>The <postgres/> <id>COPY</id> command allows <backrest/> info to be loaded into a table.  The following example wraps that logic in a function that can be used to perform real-time queries.</p>
 
-            <execute-list host="{[host-pg1]}">
+             <execute-list host="{[host-pg1]}">
                 <title>Load <backrest/> info function for <postgres/></title>
 
                 <execute user="postgres" show="n">
