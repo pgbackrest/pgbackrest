@@ -711,7 +711,7 @@
         <!-- Create S3 server first to allow it time to boot before being used -->
         <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
-        <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example, the <link section="/backup">Backup</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section.  Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
+        <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
         <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> {[pg-version-min]}-{[pg-version-max]}, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the location to install the executable may vary.
 
@@ -1194,6 +1194,14 @@
         <section id="perform-backup">
             <title>Perform a Backup</title>
 
+            <p>By default <backrest/> will wait for the next regularly scheduled checkpoint before starting a backup. Depending on the <pg-option>checkpoint_timeout</pg-option> and <pg-option>checkpoint_segments</pg-option> settings in <postgres/> it may be quite some time before a checkpoint completes and the backup can begin. Generally, it is best to set <br-setting>start-fast=y</br-setting> so that the backup starts immediately. This forces a checkpoint, but since backups are usually run once a day an additional checkpoint should not have a noticeable impact on performance. However, on very busy clusters it may be best to pass <br-setting>{[dash]}-start-fast</br-setting> on the command-line as needed.</p>
+
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
+                <title>Configure backup fast start</title>
+
+                <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
+            </backrest-config>
+
             <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command.</p>
 
             <execute-list host="{[host-pg1]}">
@@ -1226,7 +1234,7 @@
 
             <p>This time there was no warning because a full backup already existed.  While incremental backups can be based on a full <i>or</i> differential backup, differential backups must be based on a full backup.  A full backup can be performed by running the <cmd>backup</cmd> command with <br-setting>{[dash]}-type=full</br-setting>.</p>
 
-            <p>More information about the <cmd>backup</cmd> command can be found in the <link section="/backup">Backup</link> section.</p>
+            <p>During an online backup <backrest/> waits for WAL segments that are required for backup consistency to be archived. This wait time is governed by the <backrest/> <br-option>archive-timeout</br-option> option which defaults to 60 seconds. If archiving an individual segment is known to take longer then this option should be increased.</p>
         </section>
 
         <!-- SECTION => QUICKSTART - SCHEDULE BACKUP -->
@@ -1331,118 +1339,6 @@
             <p>This time the cluster started successfully since the restore replaced the missing <file>pg_control</file> file.</p>
 
             <p>More information about the <cmd>restore</cmd> command can be found in the <link section="/restore">Restore</link> section.</p>
-        </section>
-    </section>
-
-    <!-- SECTION => BACKUP -->
-    <section id="backup" depend="/quickstart/create-stanza">
-        <title>Backup</title>
-
-        <p>The Backup section introduces additional <cmd>backup</cmd> command features not covered in the <link section="/quickstart/perform-backup">Quick Start - Perform a Backup</link> section.</p>
-
-        <!-- SECTION => BACKUP - START-FAST -->
-        <section id="option-start-fast">
-            <title>Fast Start Option</title>
-
-            <p>By default <backrest/> will wait for the next regularly scheduled checkpoint before starting a backup.  Depending on the <pg-option>checkpoint_timeout</pg-option> and <pg-option>checkpoint_segments</pg-option> settings in <postgres/> it may be quite some time before a checkpoint completes and the backup can begin.</p>
-
-            <execute-list host="{[host-pg1]}">
-                <title>Incremental backup of the {[postgres-cluster-demo]} cluster with the regularly scheduled checkpoint</title>
-
-                <execute user="postgres" output="y">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr
-                        --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>backup begins after the next regular checkpoint completes</exe-highlight>
-                </execute>
-            </execute-list>
-
-            <p>When <br-setting>{[dash]}-start-fast</br-setting> is passed on the command-line or  <br-setting>start-fast=y</br-setting> is set in <file>{[backrest-config-demo]}</file> an immediate checkpoint is requested and the backup will start more quickly. This is convenient for testing and for ad-hoc backups.  For instance, if a backup is being taken at the beginning of a release window it makes no sense to wait for a checkpoint.  Since regularly scheduled backups generally only happen once per day it is unlikely that enabling the <br-option>start-fast</br-option> in <file>{[backrest-config-demo]}</file> will negatively affect performance, however for high-volume transactional systems you may want to pass <br-setting>{[dash]}-start-fast</br-setting> on the command-line instead. Alternately, it is possible to override the setting in the configuration file by passing <br-setting>{[dash]}-no-start-fast</br-setting> on the command-line.</p>
-
-            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
-                <title>Enable the <br-option>start-fast</br-option> option</title>
-
-                <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
-            </backrest-config>
-
-            <execute-list host="{[host-pg1]}">
-                <title>Incremental backup of the {[postgres-cluster-demo]} cluster with an immediate checkpoint</title>
-
-                <execute user="postgres" output="y">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr
-                        --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>backup begins after the requested immediate checkpoint completes</exe-highlight>
-                </execute>
-            </execute-list>
-        </section>
-
-        <!-- SECTION => BACKUP - STOP-AUTO -->
-        <section if="{[pg-version]} &lt; 9.6" id="option-stop-auto">
-            <title>Automatic Stop Option</title>
-
-            <p>Sometimes <backrest/> will exit unexpectedly and the backup in progress on the <postgres/> cluster will not be properly stopped.  <backrest/> exits as quickly as possible when an error occurs so that the cause can be reported accurately and is not masked by another problem that might happen during a more extensive cleanup.</p>
-
-            <p>Here an error is intentionally caused by removing repository permissions.</p>
-
-            <execute-list host="{[host-pg1]}">
-                <title>Revoke write privileges in the <backrest/> repository and attempt a backup</title>
-
-                <execute user="root">
-                    <exe-cmd>chmod 550 {[backrest-repo-path]}/backup/{[postgres-cluster-demo]}/</exe-cmd>
-                </execute>
-
-                <execute user="postgres" output="y" err-expect="47">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr
-                        --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>ERROR:</exe-highlight>
-                </execute>
-            </execute-list>
-
-            <p>Even when the permissions are fixed <backrest/> will still be unable to perform a backup because the <postgres/> cluster is stuck in backup mode.</p>
-
-            <execute-list host="{[host-pg1]}">
-                <title>Restore write privileges in the <backrest/> repository and attempt a backup</title>
-
-                <execute user="root">
-                    <exe-cmd>chmod 750 {[backrest-repo-path]}/backup/{[postgres-cluster-demo]}/</exe-cmd>
-                </execute>
-
-                <execute user="postgres" output="y" err-expect="57">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr
-                        --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>ERROR:</exe-highlight>
-                </execute>
-            </execute-list>
-
-            <p>Enabling the <br-option>stop-auto</br-option> option allows <backrest/> to stop the current backup if it detects that no other <backrest/> backup process is running.</p>
-
-            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
-                <title>Enable the <br-option>stop-auto</br-option> option</title>
-
-                <backrest-config-option section="global" key="stop-auto">y</backrest-config-option>
-            </backrest-config>
-
-            <p>Now <backrest/> will stop the old backup and start a new one so the process completes successfully.</p>
-
-            <execute-list host="{[host-pg1]}">
-                <title>Perform an incremental backup</title>
-
-                <execute user="postgres" output="y">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr
-                        --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>cluster is already in backup mode|backup begins after the requested immediate checkpoint completes</exe-highlight>
-                </execute>
-            </execute-list>
-
-            <p>Although useful this feature may not be appropriate when another third-party backup solution is being used to take online backups as <backrest/> will not recognize that the other software is running and may terminate a backup started by that software.  However, it would be unusual to run more than one third-party backup solution at the same time so this is not likely to be a problem.</p>
-
-            <admonition type="note"><id>pg_dump</id> and <id>pg_basebackup</id> do not take online backups so are not affected.  It is safe to run them in conjunction with <backrest/>.</admonition>
-        </section>
-
-        <!-- SECTION => BACKUP - ARCHIVE-TIMEOUT -->
-        <section id="option-archive-timeout">
-            <title>Archive Timeout</title>
-
-            <p>During an online backup <backrest/> waits for WAL segments that are required for backup consistency to be archived. This wait time is governed by the <backrest/> <br-option>archive-timeout</br-option> option which defaults to 60 seconds. If archiving an individual segment is known to take longer then this option should be increased.</p>
         </section>
     </section>
 
