@@ -2337,6 +2337,10 @@ cmdRestore(void)
         // Sync global path
         LOG_DETAIL_FMT("sync path '%s'", strZ(storagePathP(storagePg(), PG_PATH_GLOBAL_STR)));
         storagePathSyncP(storagePgWrite(), PG_PATH_GLOBAL_STR);
+
+        // Restore info
+        LOG_INFO_FMT(
+            "restore size = %s, file total = %u", strZ(strSizeFormat(sizeRestored)), manifestFileTotal(jobData.manifest));
     }
     MEM_CONTEXT_TEMP_END();
 
