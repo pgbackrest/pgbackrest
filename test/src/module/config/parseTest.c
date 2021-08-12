@@ -1569,17 +1569,6 @@ testRun(void)
             "key/value 'a' not valid for 'recovery-option' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        argList = strLstNew(); // CSHANG This is an exact duplicate of test above - why? Removing it still gets coverage but maybe there is a reason for this being a duplicate?
-        strLstAddZ(argList, TEST_BACKREST_EXE);
-        strLstAddZ(argList, "--pg1-path=/path/to/db");
-        strLstAddZ(argList, "--recovery-option=a");
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, TEST_COMMAND_RESTORE);
-        TEST_ERROR(
-            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "key/value 'a' not valid for 'recovery-option' option");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default job retry and valid duplicate options");
 
         argList = strLstNew();
@@ -1734,7 +1723,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLogFile(), false, "check logging");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("option key 1 is not required");  // CSHANG Why is this commented out? Uncommenting results in check command requires option: pg1-path so we should probably remove this dead code or change it to make sure it errors with pg1-path required
+        // TEST_TITLE("option key 1 is not required");
         //
         // argList = strLstNew();
         // hrnCfgArgRawZ(argList, cfgOptStanza, "test");
