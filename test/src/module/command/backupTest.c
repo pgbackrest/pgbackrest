@@ -1402,8 +1402,8 @@ testRun(void)
             "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100%%) checksum"
                 " e3db315c260e79211b7b52587123b7aa060f30ab\n"
-            "P00   INFO: full backup size = 8KB\n"
-            "P00   INFO: new backup label = [FULL-1]",
+            "P00   INFO: new backup label = [FULL-1]\n"
+            "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
                 (TEST_BIG_ENDIAN() ? "749acedef8f8d5fe35fc20c0375657f876ccc38e" : "21e2ddc99cdf4cfca272eee4f38891146092e358") :
                 "8bb70506d988a8698d9e8cf90736ada23634571b");
@@ -1457,8 +1457,8 @@ testRun(void)
             "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
-            "P00   INFO: incr backup size = 3B\n"
-            "P00   INFO: new backup label = [INCR-1]");
+            "P00   INFO: new backup label = [INCR-1]\n"
+            "P00   INFO: incr backup size = 3B, file total = 3");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("offline diff backup to test prior backup must be full");
@@ -1483,8 +1483,8 @@ testRun(void)
             "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
-            "P00   INFO: diff backup size = 3B\n"
-            "P00   INFO: new backup label = [DIFF-2]");
+            "P00   INFO: new backup label = [DIFF-2]\n"
+            "P00   INFO: diff backup size = 3B, file total = 3");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("only repo2 configured");
@@ -1532,8 +1532,8 @@ testRun(void)
             "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
-            "P00   INFO: diff backup size = 3B\n"
-            "P00   INFO: new backup label = [DIFF-3]");
+            "P00   INFO: new backup label = [DIFF-3]\n"
+            "P00   INFO: diff backup size = 3B, file total = 3");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo - specify repo");
@@ -1552,8 +1552,8 @@ testRun(void)
             "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-2]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-2]\n"
-            "P00   INFO: diff backup size = 3B\n"
-            "P00   INFO: new backup label = [DIFF-4]");
+            "P00   INFO: new backup label = [DIFF-4]\n"
+            "P00   INFO: diff backup size = 3B, file total = 3");
         TEST_RESULT_UINT(
             strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1"))), backupCount + 1,
             "new backup repo2");
@@ -1664,10 +1664,10 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-                "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
-                "P00   INFO: new backup label = 20191002-070640F");
+                "P00   INFO: new backup label = 20191002-070640F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 3");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -1823,12 +1823,12 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/zero-size (0B, [PCT])\n"
-                "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D95D3000000000, lsn = 5d95d30/800000\n"
                 "P00   INFO: check archive for segment(s) 0000000105D95D3000000000:0000000105D95D3000000000\n"
                 "P00 DETAIL: copy segment 0000000105D95D3000000000 to backup\n"
-                "P00   INFO: new backup label = 20191003-105320F");
+                "P00   INFO: new backup label = 20191003-105320F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 8");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -1983,11 +1983,11 @@ testRun(void)
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191003-105320F\n"
                 "P00 DETAIL: hardlink pg_data/global/pg_control to 20191003-105320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
-                "P00   INFO: diff backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
                     "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
-                "P00   INFO: new backup label = 20191003-105320F_20191004-144000D");
+                "P00   INFO: new backup label = 20191003-105320F_20191004-144000D\n"
+                "P00   INFO: diff backup size = [SIZE], file total = 5");
 
             // Check repo directory
             TEST_RESULT_STR_Z(
@@ -2290,7 +2290,6 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
-                "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB5DE000000002, lsn = 5db5de0/280000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
@@ -2298,7 +2297,8 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB5DE000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000001 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000002 to backup\n"
-                "P00   INFO: new backup label = 20191027-181320F");
+                "P00   INFO: new backup label = 20191027-181320F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 12");
 
             TEST_RESULT_STR(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
@@ -2452,12 +2452,12 @@ testRun(void)
                 "P00 DETAIL: hardlink pg_data/global/pg_control to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
-                "P00   INFO: incr backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000002C05DB8EB000000000, lsn = 5db8eb0/80000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000000\n"
-                "P00   INFO: new backup label = 20191027-181320F_20191030-014640I");
+                "P00   INFO: new backup label = 20191027-181320F_20191030-014640I\n"
+                "P00   INFO: incr backup size = [SIZE], file total = 6");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),

@@ -2042,7 +2042,9 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'", TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH)));
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
+            "P00   INFO: restore size = 4B, file total = 1",
+            TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH)));
 
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF, .errorOnMissing = true);
@@ -2163,7 +2165,8 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'");
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
+            "P00   INFO: restore size = 8B, file total = 3");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2217,7 +2220,8 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'");
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
+            "P00   INFO: restore size = 8B, file total = 3");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2557,7 +2561,8 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'");
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
+            "P00   INFO: restore size = 64KB, file total = 11");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2671,7 +2676,8 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'");
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
+            "P00   INFO: restore size = 64KB, file total = 11");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);

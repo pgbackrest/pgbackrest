@@ -49,6 +49,40 @@ git commit -m "Release test"
 git push origin release-ci
 ```
 
+## Perform stress testing on release
+
+- Build the documentation with stress testing enabled:
+```
+${PGBR_REPO?}/doc/doc.pl --out=html --include=user-guide --require=/stress --var=stress=y --var=stress-scale-table=100 --var=stress-scale-data=1000 --pre --no-cache
+```
+
+During data load the archive-push and archive-get processes can be monitored with:
+```
+docker exec -it doc-pg-primary tail -f /var/log/pgbackrest/demo-archive-push-async.log
+docker exec -it doc-pg-standby tail -f /var/log/pgbackrest/demo-archive-get-async.log
+```
+
+During backup/restore the processes can be monitored with:
+```
+docker exec -it doc-repository tail -f /var/log/pgbackrest/demo-backup.log
+docker exec -it doc-pg-standby tail -f /var/log/pgbackrest/demo-restore.log
+```
+
+Processes can generally be monitored using 'top'. Once `top` is running, press `o` then enter `COMMAND=pgbackrest`. This will filter output to pgbackrest processes
+
+- Check for many log entries in the `archive-push`/`archive-get` logs to ensure aync archiving was enabled:
+```
+docker exec -it doc-pg-primary vi /var/log/pgbackrest/demo-archive-push-async.log
+docker exec -it doc-pg-standby vi /var/log/pgbackrest/demo-archive-get-async.log
+```
+
+- Check the backup log to ensure the correct tables/data were created and backed up. It should look something like:
+```
+INFO: full backup size = 14.9GB, file total = 101004
+```
+
+- Check the restore log to ensure the correct tables/data were restored. The size and file total should match exactly.
+
 ## Clone web documentation into `doc/site`
 ```
 cd ${PGBR_REPO?}/doc

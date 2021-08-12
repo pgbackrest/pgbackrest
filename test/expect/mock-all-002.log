@@ -2448,8 +2448,8 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
 P00   INFO: last backup label = [BACKUP-FULL-3], version = [VERSION-1]
-P00   INFO: diff backup size = 9B
 P00   INFO: new backup label = [BACKUP-DIFF-5]
+P00   INFO: diff backup size = 9B, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/backup/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log --no-log-timestamp --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-storage-verify-tls --repo1-type=s3 --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
