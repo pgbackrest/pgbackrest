@@ -303,7 +303,7 @@ testRun(void)
             protocolLocalParam(protocolStorageTypeRepo, 0, 0),
             "--exec-id=1-test\n--log-level-console=off\n--log-level-file=off\n--log-level-stderr=error\n--pg1-path=/path/to/pg\n"
                 "--process=0\n--remote-type=repo\n--stanza=test1\narchive-get:local\n",
-            "local repo protocol params");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check local pg params");
@@ -319,7 +319,7 @@ testRun(void)
             protocolLocalParam(protocolStorageTypePg, 0, 1),
             "--exec-id=1-test\n--log-level-console=off\n--log-level-file=info\n--log-level-stderr=error\n--log-subprocess\n--pg=1\n"
                 "--pg1-path=/pg\n--process=1\n--remote-type=pg\n--stanza=test1\nbackup:local\n",
-            "local pg protocol params");
+            "check config");
     }
 
     // *****************************************************************************************************************************
@@ -346,10 +346,10 @@ testRun(void)
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\nrepo-host-user@repo-host\n"
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/pg --process=0 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
-            "remote protocol params");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("replace and exclude certain params to remote");
+        TEST_TITLE("replace and exclude certain params for repo remote");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -373,10 +373,10 @@ testRun(void)
                 TEST_PROJECT_EXE " --config=/path/pgbackrest.conf --config-include-path=/path/include --config-path=/path/config"
                 " --exec-id=1-test --log-level-console=off --log-level-file=info --log-level-stderr=error --log-subprocess"
                 " --pg1-path=/unused --process=0 --remote-type=repo --repo=1 --stanza=test1 check:remote\n",
-            "remote protocol params with replacements");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("params for backup local");  // CSHANG What does this mean? The command is archive-get so why is this "params for backup local" and this test has the repo as remote so this is really params sent to remote repo for archive-get, no?
+        TEST_TITLE("remote repo protocol params for archive-get");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -385,17 +385,17 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "repo-host");
-        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal, .noStd = true); // CSHANG this says role local so why is archive-get:remote
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal, .noStd = true);
 
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypeRepo, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npgbackrest@repo-host\n"
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/pg --process=3 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
-            "remote protocol params for backup local");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("params for backup when pg is remote"); // CSHANG Is this correct?
+        TEST_TITLE("remote pg server, backup params for remote");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -409,10 +409,10 @@ testRun(void)
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg1-host\n"
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote\n",
-            "remote protocol params for db backup");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("local and remote pg servers, params for backup for remote pg"); // CSHANG Is this correct? It doesn't match the test comment below...
+        TEST_TITLE("local and remote pg servers, params for remote");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -421,7 +421,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgSocketPath, 1, "/socket3");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 1, "1111");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/path/to/2"); // CSHANG so pg2 is remote and in sending pg2 it's data, we treat the path as pg1-path?
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/path/to/2");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "pg2-host");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
         HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal, .noStd = true);
@@ -431,10 +431,10 @@ testRun(void)
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg2-host\n"
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote\n",
-            "remote protocol params for db local");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("local and remote pg servers, params for backup for remote pg"); // CSHANG Is this correct? It doesn't match the test comment below...
+        TEST_TITLE("local and remote pg servers, params for remote including additional params");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -442,7 +442,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPg, "3");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 3, "/path/to/3");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 3, "pg3-host");  // CSHANG here we have path, socket-path and port for the remote pg
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 3, "pg3-host");
         hrnCfgArgKeyRawZ(argList, cfgOptPgSocketPath, 3, "/socket3");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 3, "3333");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
@@ -454,7 +454,7 @@ testRun(void)
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1"
                 " backup:remote\n",
-            "remote protocol params for db local");
+            "check config");
     }
 
     // *****************************************************************************************************************************
