@@ -31,6 +31,11 @@
         <!-- Will encryption be used in the documentation? It can be useful for testing to omit encryption. -->
         <variable key="encrypt">y</variable>
 
+        <!-- Will stress-testing be performed? -->
+        <variable key="stress">n</variable>
+        <variable key="stress-scale-table">1</variable> <!-- Tables to create * 1000 -->
+        <variable key="stress-scale-data">1</variable> <!-- Value passed to pgbench -s -->
+
         <!-- Common if expressions for testing os-type -->
         <variable key="os-type-is-debian">'{[os-type]}' eq '{[os-debian]}'</variable>
         <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
@@ -239,26 +244,6 @@
 
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-debian]}">pg_lsclusters</variable>
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-rhel]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
-
-        <!-- Add more tables to make the backup more interesting. This is a rough and ready solution that can be pasted into the
-             document where needed to grow the number of files as needed for performance testing. -->
-        <!-- <execute user="postgres" show="n">
-            <exe-cmd>psql -c "
-                create or replace function create_test_table(prefix int, scale int) returns void as \$\$
-                declare
-                    index int;
-                begin
-                    for index in 1 .. scale loop
-                        execute 'create table test_' || prefix || '_' || index || ' (id int)';
-                    end loop;
-                end \$\$ LANGUAGE plpgsql;"</exe-cmd>
-        </execute>
-
-        <execute user="postgres" show="n">
-            <exe-cmd>
-                bash -c 'for i in {1..100}; do psql -c "select create_test_table(${i?}, 1000)"; done'
-            </exe-cmd>
-        </execute> -->
 
         <!-- Common commands -->
         <variable key="ssh-key-install">
@@ -706,10 +691,10 @@
         <title>Introduction</title>
 
         <!-- Create Azure server first to allow it time to boot before being used -->
-        <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="mcr.microsoft.com/azure-storage/azurite" os="{[os-type]}" option="-v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
+        <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="mcr.microsoft.com/azure-storage/azurite" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -803,7 +788,7 @@
 
         <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
 
-        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="{[host-option]}"/>
+        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="-m 256m {[host-option]}"/>
 
         <p>When building from source it is best to use a build host rather than building on production.  Many of the tools required for the build should generally not be installed in production.  <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
@@ -858,6 +843,7 @@
 
             <execute>
                 <exe-cmd>cd /build/pgbackrest-release-{[version]}/src &amp;&amp; ./configure &amp;&amp; make</exe-cmd>
+                <exe-cmd-extra>-j 4</exe-cmd-extra>
             </execute>
         </execute-list>
     </section>
@@ -868,7 +854,7 @@
 
         <p>A new host named <host>{[host-pg1]}</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
-        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-option]}"/>
+        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="-m 512m {[host-option]}"/>
 
         <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
             <title>Create <user>{[br-user]}</user> user</title>
@@ -921,6 +907,10 @@
 
                 <execute if="{[os-type-is-debian]}" user="root" output="y" filter="n">
                     <exe-cmd>{[pg-cluster-create]}</exe-cmd>
+                </execute>
+
+                <execute user="root" show="n" user-force="y">
+                    <exe-cmd>echo 'shared_buffers = 16MB' >> {[postgres-config-demo]}</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -2273,7 +2263,7 @@
 
             <admonition type="note">The <backrest/> version installed on the <host>repository</host> host must exactly match the version installed on the <postgres/> host.</admonition>
 
-            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-option]}"/>
+            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="-m 512m {[host-option]}"/>
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository.  Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
 
@@ -2635,7 +2625,7 @@
 
             <p>A new host named <host>{[host-pg2]}</host> is created to run the standby.</p>
 
-            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="{[host-option]}"/>
+            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="-m 1024m {[host-option]}"/>
 
             <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
                 <title>Create <user>{[br-user]}</user> user</title>
@@ -2737,6 +2727,10 @@
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>cat {[pg-recovery-path-demo]}</exe-cmd>
+                </execute>
+
+                <execute user="root" show="n" user-force="y">
+                    <exe-cmd>echo 'shared_buffers = 16MB' >> {[postgres-config-demo]}</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -3179,6 +3173,260 @@
         <p>This incremental backup shows that most of the files are copied from the <host>{[host-pg2]}</host> host and only a few are copied from the <host>{[host-pg1]}</host> host.</p>
 
         <p><backrest/> creates a standby backup that is identical to a backup performed on the primary.  It does this by starting/stopping the backup on the <host>{[host-pg1]}</host> host, copying only files that are replicated from the <host>{[host-pg2]}</host> host, then copying the remaining few files from the <host>{[host-pg1]}</host> host.  This means that logs and statistics from the primary database will be included in the backup.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="stress" if="'{[stress]}' eq 'y'">
+        <title>Stress Testing</title>
+
+        <section id="configuration">
+            <title>Configuration</title>
+
+            <backrest-config host="{[host-repo1]}" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
+                <title>Configure {[host-repo1]} for stress testing</title>
+
+                <backrest-config-option section="global" key="process-max">8</backrest-config-option>
+                <backrest-config-option section="global" key="compress-type">lz4</backrest-config-option>
+                <backrest-config-option section="global" key="compress-level">1</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-retention-full">1</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">y</backrest-config-option>
+            </backrest-config>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Create the {[host-pg1]} spool directory</title>
+
+                <execute user="root">
+                    <exe-cmd>mkdir -p -m 750 {[spool-path]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>chown postgres:postgres {[spool-path]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
+                <title>Configure {[host-pg1]} for stress testing</title>
+
+                <backrest-config-option section="global" key="process-max">8</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">y</backrest-config-option>
+                <backrest-config-option section="global" key="compress-type">lz4</backrest-config-option>
+                <backrest-config-option section="global" key="compress-level">1</backrest-config-option>
+                <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
+                <backrest-config-option section="global" key="archive-async">y</backrest-config-option>
+                <backrest-config-option section="global:archive-push" key="process-max">4</backrest-config-option>
+                <backrest-config-option section="global:archive-get" key="process-max">4</backrest-config-option>
+            </backrest-config>
+
+            <execute-list host="{[host-pg2]}">
+                <title>Create the {[host-pg2]} spool directory</title>
+
+                <execute user="root">
+                    <exe-cmd>mkdir -p -m 750 {[spool-path]}</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>chown postgres:postgres {[spool-path]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <backrest-config host="{[host-pg2]}" file="{[backrest-config-demo]}">
+                <title>Configure {[host-pg2]} for stress testing</title>
+
+                <backrest-config-option section="global" key="process-max">8</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">y</backrest-config-option>
+                <backrest-config-option section="global" key="compress-type">lz4</backrest-config-option>
+                <backrest-config-option section="global" key="compress-level">1</backrest-config-option>
+                <backrest-config-option section="global" key="spool-path">{[spool-path]}</backrest-config-option>
+                <backrest-config-option section="global" key="archive-async">y</backrest-config-option>
+                <backrest-config-option section="global:archive-push" key="process-max">4</backrest-config-option>
+                <backrest-config-option section="global:archive-get" key="process-max">4</backrest-config-option>
+            </backrest-config>
+        </section>
+
+        <section id="data-load">
+            <title>Create Tables and Load Data</title>
+
+            <section id="streaming-break">
+                <title>Break Streaming Replication</title>
+
+                <p>Break streaming replication to force the standby to replicate from the archive during data load.</p>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Break streaming replication by changing the replication password</title>
+
+                    <execute user="postgres" output="y" filter="n">
+                        <exe-cmd>
+                            psql -c "alter user replicator password 'bogus'"
+                        </exe-cmd>
+                    </execute>
+                </execute-list>
+
+                <execute-list host="{[host-pg2]}">
+                    <title>Restart standby to break connection</title>
+
+                    <execute user="root">
+                        <exe-cmd>{[pg-cluster-restart]}</exe-cmd>
+                    </execute>
+                </execute-list>
+            </section>
+
+            <section id="table-create">
+                <title>Create Tables</title>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Create tables</title>
+
+                    <execute user="postgres" show="n">
+                        <exe-cmd>psql -c "
+                            create or replace function create_test_table(prefix int, scale int) returns void as \$\$
+                            declare
+                                index int;
+                            begin
+                                for index in 1 .. scale loop
+                                    execute 'create table test_' || prefix || '_' || index || ' (id int)';
+                                end loop;
+                            end \$\$ LANGUAGE plpgsql;"</exe-cmd>
+                    </execute>
+
+                    <execute user="postgres">
+                        <exe-cmd>
+                            bash -c 'for i in {1..{[stress-scale-table]}};
+                                do psql -c "select create_test_table(${i?}, 1000)";
+                                done'
+                        </exe-cmd>
+                    </execute>
+                </execute-list>
+            </section>
+
+            <section id="data-load">
+                <title>Load Data</title>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Load data</title>
+
+                    <execute user="postgres">
+                        <exe-cmd>pgbench -n -i -s {[stress-scale-data]}</exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+            </section>
+
+            <section id="streaming-fix">
+                <title>Fix Streaming Replication</title>
+
+                <p>Fix streaming replication so backups will work. Note that streaming replication will not start again until all WAL in the archive has been exhausted.</p>
+
+                <execute-list host="{[host-pg1]}">
+                    <title>Fix streaming replication by changing the replication password</title>
+
+                    <execute user="postgres" output="y" filter="n">
+                        <exe-cmd>
+                            psql -c "alter user replicator password 'jw8s0F4'"
+                        </exe-cmd>
+                    </execute>
+                </execute-list>
+            </section>
+        </section>
+
+        <section id="test">
+            <title>Testing</title>
+
+            <section id="backup-full">
+                <title>Full Backup</title>
+
+                <execute-list host="{[host-repo1]}">
+                    <title>Full backup</title>
+
+                    <execute user="{[br-user]}" output="y" filter="n">
+                        <exe-cmd>
+                            pgbackrest --stanza=demo --type=full
+                            --log-level-console=info --log-level-file=detail backup
+                        </exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+            </section>
+
+            <section id="backup-diff-delta">
+                <title>Diff Backup with Delta</title>
+
+                <execute-list host="{[host-repo1]}">
+                    <title>Diff backup</title>
+
+                    <execute user="{[br-user]}" output="y" filter="n">
+                        <exe-cmd>
+                            pgbackrest --stanza=demo --type=diff --delta
+                            --log-level-console=info --log-level-file=detail backup
+                        </exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+            </section>
+
+            <section id="restore-delta">
+                <title>Restore with Delta</title>
+
+                <execute-list host="{[host-pg2]}">
+                    <title>Stop <postgres/></title>
+
+                    <execute user="root">
+                        <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
+                    </execute>
+                </execute-list>
+
+                <execute-list host="{[host-pg2]}">
+                    <title>Restore</title>
+
+                    <execute user="postgres" output="y" filter="n">
+                        <exe-cmd>
+                            pgbackrest --stanza=demo --type=standby --delta
+                            --log-level-console=info --log-level-file=detail restore
+                        </exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+            </section>
+
+            <section id="restore">
+                <title>Restore</title>
+
+                <execute-list host="{[host-pg2]}">
+                    <title>Remove data</title>
+
+                    <execute user="postgres">
+                        <exe-cmd>
+                            rm -rf {[pg-path]}
+                        </exe-cmd>
+                    </execute>
+                </execute-list>
+
+                <execute-list host="{[host-pg2]}">
+                    <title>Restore</title>
+
+                    <execute user="postgres" output="y" filter="n">
+                        <exe-cmd>
+                            pgbackrest --stanza=demo --type=standby
+                            --log-level-console=info --log-level-file=detail restore
+                        </exe-cmd>
+                        <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+
+                <execute-list host="{[host-pg2]}">
+                    <title>Start <postgres/></title>
+
+                    <execute user="root">
+                        <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+                    </execute>
+                </execute-list>
+
+                <execute-list host="{[host-pg2]}">
+                    <title>Check cluster</title>
+
+                    <execute user="postgres" output="y" retry="30" filter="n">
+                        <exe-cmd>psql -c "select count(*) from pg_class"</exe-cmd>
+                    </execute>
+                </execute-list>
+            </section>
+        </section>
     </section>
 
     <!-- SECTION => STANZA UPGRADE -->
