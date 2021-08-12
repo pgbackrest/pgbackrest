@@ -195,27 +195,32 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("repoIsLocal() and pgIsLocal()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo - command valid on local repo but not on remote");
+
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--repo1-path=/repo-local");
-        strLstAddZ(argList, "--repo4-path=/remote-host-new");
-        strLstAddZ(argList, "--repo4-host=remote-host-new");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-local");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/remote-host-new");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 4, "remote-host-new");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_BOOL(repoIsLocal(0), true, "repo is local");
-        TEST_RESULT_VOID(repoIsLocalVerify(), "    local verified");
-        TEST_RESULT_VOID(repoIsLocalVerifyIdx(0), "    local by index verified");
+        TEST_RESULT_VOID(repoIsLocalVerify(), "local verified");
+        TEST_RESULT_VOID(repoIsLocalVerifyIdx(0), "local by index verified");
         TEST_ERROR(
             repoIsLocalVerifyIdx(cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1), HostInvalidError,
             "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single-repo - command invalid on remote");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--repo1-host=remote-host");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "remote-host");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_BOOL(repoIsLocal(0), false, "repo is remote");
@@ -225,9 +230,9 @@ testRun(void)
         TEST_TITLE("pg1 is local");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--pg1-path=/path/to");
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList, .noStd = true);
 
         TEST_RESULT_BOOL(pgIsLocal(0), true, "pg is local");
@@ -237,9 +242,9 @@ testRun(void)
         TEST_TITLE("pg1 is not local");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgHost, "test1");
-        strLstAddZ(argList, "--pg1-path=/path/to");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         HRN_CFG_LOAD(cfgCmdRestore, argList, .noStd = true);
 
         TEST_RESULT_BOOL(pgIsLocal(0), false, "pg1 is remote");
@@ -249,13 +254,13 @@ testRun(void)
         TEST_TITLE("pg7 is not local");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/bogus");
-        strLstAddZ(argList, "--pg7-path=/path/to");
-        strLstAddZ(argList, "--pg7-host=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/bogus");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 7, "/path/to");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 7, "test1");
         hrnCfgArgRawZ(argList, cfgOptPg, "7");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
-        strLstAddZ(argList, "--process=0");
+        hrnCfgArgRawZ(argList, cfgOptProcess, "0");
         HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal, .noStd = true);
 
         TEST_RESULT_BOOL(pgIsLocal(1), false, "pg7 is remote");
@@ -264,6 +269,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolHelperClientFree()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free with errors output as warnings");
 
         // Create and free a mem context to give us an error to use
@@ -285,8 +291,11 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolLocalParam()"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check local repo params");
+
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
@@ -294,21 +303,23 @@ testRun(void)
             protocolLocalParam(protocolStorageTypeRepo, 0, 0),
             "--exec-id=1-test\n--log-level-console=off\n--log-level-file=off\n--log-level-stderr=error\n--pg1-path=/path/to/pg\n"
                 "--process=0\n--remote-type=repo\n--stanza=test1\narchive-get:local\n",
-            "local repo protocol params");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check local pg params");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--pg1-path=/pg");
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--log-subprocess");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList, .noStd = true);
 
         TEST_RESULT_STRLST_Z(
             protocolLocalParam(protocolStorageTypePg, 0, 1),
             "--exec-id=1-test\n--log-level-console=off\n--log-level-file=info\n--log-level-stderr=error\n--log-subprocess\n--pg=1\n"
                 "--pg1-path=/pg\n--process=1\n--remote-type=pg\n--stanza=test1\nbackup:local\n",
-            "local pg protocol params");
+            "check config");
     }
 
     // *****************************************************************************************************************************
@@ -316,15 +327,18 @@ testRun(void)
     {
         storagePutP(storageNewWriteP(storageTest, STRDEF("pgbackrest.conf")), bufNew(0));
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local config params not passed to remote");
+
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--repo1-host=repo-host");
-        strLstAddZ(argList, "--repo1-host-user=repo-host-user");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "repo-host");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostUser, 1, "repo-host-user");
         // Local config settings should never be passed to the remote
-        strLstAddZ(argList, "--config=" TEST_PATH "/pgbackrest.conf");
-        strLstAddZ(argList, "--config-include-path=" TEST_PATH);
-        strLstAddZ(argList, "--config-path=" TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
+        hrnCfgArgRawZ(argList, cfgOptConfigIncludePath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptConfigPath, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_STRLST_Z(
@@ -332,20 +346,22 @@ testRun(void)
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\nrepo-host-user@repo-host\n"
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/pg --process=0 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
-            "remote protocol params");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("replace and exclude certain params for repo remote");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--log-subprocess");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");            // Will be passed to remote (required)
         hrnCfgArgRawZ(argList, cfgOptPgPort, "777");                // Not passed to remote (required but has default)
-        strLstAddZ(argList, "--repo1-host=repo-host");
-        strLstAddZ(argList, "--repo1-host-port=444");
-        strLstAddZ(argList, "--repo1-host-config=/path/pgbackrest.conf");
-        strLstAddZ(argList, "--repo1-host-config-include-path=/path/include");
-        strLstAddZ(argList, "--repo1-host-config-path=/path/config");
-        strLstAddZ(argList, "--repo1-host-user=repo-host-user");
+        hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo-host");
+        hrnCfgArgRawZ(argList, cfgOptRepoHostPort, "444");
+        hrnCfgArgRawZ(argList, cfgOptRepoHostConfig, "/path/pgbackrest.conf");
+        hrnCfgArgRawZ(argList, cfgOptRepoHostConfigIncludePath, "/path/include");
+        hrnCfgArgRawZ(argList, cfgOptRepoHostConfigPath, "/path/config");
+        hrnCfgArgRawZ(argList, cfgOptRepoHostUser, "repo-host-user");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, "posix");      // Not passed to the remote because only the repo options
                                                                     // required by the remote are passed, in this case repo1,
                                                                     // because there might be validation errors
@@ -357,16 +373,18 @@ testRun(void)
                 TEST_PROJECT_EXE " --config=/path/pgbackrest.conf --config-include-path=/path/include --config-path=/path/config"
                 " --exec-id=1-test --log-level-console=off --log-level-file=info --log-level-stderr=error --log-subprocess"
                 " --pg1-path=/unused --process=0 --remote-type=repo --repo=1 --stanza=test1 check:remote\n",
-            "remote protocol params with replacements");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote repo protocol params for archive-get");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--process=3");
+        hrnCfgArgRawZ(argList, cfgOptProcess, "3");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-        strLstAddZ(argList, "--repo1-host=repo-host");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "repo-host");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal, .noStd = true);
 
         TEST_RESULT_STRLST_Z(
@@ -374,14 +392,16 @@ testRun(void)
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npgbackrest@repo-host\n"
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/pg --process=3 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
-            "remote protocol params for backup local");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote pg server, backup params for remote");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--pg1-path=/path/to/1");
-        strLstAddZ(argList, "--pg1-host=pg1-host");
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/1");
+        hrnCfgArgRawZ(argList, cfgOptPgHost, "pg1-host");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList, .noStd = true);
 
         TEST_RESULT_STRLST_Z(
@@ -389,18 +409,20 @@ testRun(void)
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg1-host\n"
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote\n",
-            "remote protocol params for db backup");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local and remote pg servers, params for remote");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--process=4");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptProcess, "4");
         hrnCfgArgRawZ(argList, cfgOptPg, "2");
-        strLstAddZ(argList, "--pg1-path=/path/to/1");
-        strLstAddZ(argList, "--pg1-socket-path=/socket3");
-        strLstAddZ(argList, "--pg1-port=1111");
-        strLstAddZ(argList, "--pg2-path=/path/to/2");
-        strLstAddZ(argList, "--pg2-host=pg2-host");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgSocketPath, 1, "/socket3");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 1, "1111");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/path/to/2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "pg2-host");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
         HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal, .noStd = true);
 
@@ -409,18 +431,20 @@ testRun(void)
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg2-host\n"
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote\n",
-            "remote protocol params for db local");
+            "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local and remote pg servers, params for remote including additional params");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--process=4");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptProcess, "4");
         hrnCfgArgRawZ(argList, cfgOptPg, "3");
-        strLstAddZ(argList, "--pg1-path=/path/to/1");
-        strLstAddZ(argList, "--pg3-path=/path/to/3");
-        strLstAddZ(argList, "--pg3-host=pg3-host");
-        strLstAddZ(argList, "--pg3-socket-path=/socket3");
-        strLstAddZ(argList, "--pg3-port=3333");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 3, "/path/to/3");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 3, "pg3-host");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgSocketPath, 3, "/socket3");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 3, "3333");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
         HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal, .noStd = true);
 
@@ -430,7 +454,7 @@ testRun(void)
                 TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
                 " --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1"
                 " backup:remote\n",
-            "remote protocol params for db local");
+            "check config");
     }
 
     // *****************************************************************************************************************************
@@ -440,8 +464,9 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                // Various bogus greetings
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("bogus greetings - child process");
+
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("bogus greeting"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":999}"));
@@ -496,7 +521,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("bogus greetings");
+                TEST_TITLE("bogus greetings - client");
 
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
@@ -643,6 +668,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolParallel and ProtocolParallelJob"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("job state transitions");
 
         ProtocolParallelJob *job = NULL;
@@ -669,6 +695,8 @@ testRun(void)
         TEST_RESULT_VOID(protocolParallelJobFree(job), "free job");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("client/server setup");
+
         HRN_FORK_BEGIN(.timeout = 5000)
         {
             // Local 1
@@ -861,8 +889,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolGet()"))
     {
-        // Call remote free before any remotes exist
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("call remote free before any remotes exist");
+
         TEST_RESULT_VOID(protocolRemoteFree(1), "free remote (non exist)");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -870,18 +899,20 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolLocalFree(2), "free");
 
-        // Call keep alive before any remotes exist
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("call keep alive free before any remotes exist");
+
         TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
 
-        // Simple protocol start
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("simple protocol start");
+
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--protocol-timeout=10");
-        strLstAddZ(argList, "--repo1-host=localhost");
-        strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostUser, 1, TEST_USER);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         ProtocolClient *client = NULL;
@@ -895,8 +926,9 @@ testRun(void)
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects again");
 
-        // Start protocol with local encryption settings
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("start protocol with local encryption settings");
+
         storagePut(
             storageNewWriteP(storageTest, STRDEF("pgbackrest.conf")),
             BUFSTRDEF(
@@ -905,14 +937,14 @@ testRun(void)
                 "repo1-cipher-pass=acbd\n"));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--protocol-timeout=10");
-        strLstAddZ(argList, "--config=" TEST_PATH "/pgbackrest.conf");
-        strLstAddZ(argList, "--repo1-host=localhost");
-        strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH);
-        strLstAddZ(argList, "--process=999");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+        hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostUser, 1, TEST_USER);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptProcess, "999");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
@@ -923,8 +955,9 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
 
-        // Start protocol with remote encryption settings
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("start protocol with remote encryption settings");
+
         storagePut(
             storageNewWriteP(storageTest, STRDEF("pgbackrest.conf")),
             BUFSTRDEF(
@@ -935,17 +968,17 @@ testRun(void)
                 "repo2-cipher-pass=xxxx\n"));
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--pg1-path=/pg");
-        strLstAddZ(argList, "--protocol-timeout=10");
-        strLstAddZ(argList, "--repo1-host-config=" TEST_PATH "/pgbackrest.conf");
-        strLstAddZ(argList, "--repo1-host=localhost");
-        strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
-        strLstAddZ(argList, "--repo1-path=" TEST_PATH);
-        strLstAddZ(argList, "--repo2-host-config=" TEST_PATH "/pgbackrest.conf");
-        strLstAddZ(argList, "--repo2-host=localhost");
-        strLstAddZ(argList, "--repo2-host-user=" TEST_USER);
-        strLstAddZ(argList, "--repo2-path=" TEST_PATH "2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostConfig, 1, TEST_PATH "/pgbackrest.conf");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostUser, 1, TEST_USER);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostConfig, 2, TEST_PATH "/pgbackrest.conf");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostUser, 2, TEST_USER);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "2");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 0), NULL, "check repo1 cipher pass before");
@@ -958,15 +991,16 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
 
-        // Start remote protocol
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("start remote protocol");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--protocol-timeout=10");
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--pg1-host=localhost");
-        strLstAddZ(argList, "--pg1-host-user=" TEST_USER);
-        strLstAddZ(argList, "--pg1-path=" TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 1, TEST_USER);
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 0), "get remote protocol");
@@ -976,10 +1010,10 @@ testRun(void)
         // Start local protocol
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--protocol-timeout=10");
-        strLstAddZ(argList, "--process-max=2");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+        hrnCfgArgRawZ(argList, cfgOptProcessMax, "2");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ASSIGN(client, protocolLocalGet(protocolStorageTypeRepo, 0, 1), "get local protocol");

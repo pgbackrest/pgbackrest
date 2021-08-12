@@ -323,6 +323,9 @@
                         <commit subject="Update db/db test to use standard patterns.">
                             <github-pull-request id="1486"/>
                         </commit>
+                        <commit subject="Update protocol/protocol test to use standard patterns.">
+                            <github-pull-request id="1491"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
