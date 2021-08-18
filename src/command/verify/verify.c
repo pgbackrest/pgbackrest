@@ -745,38 +745,31 @@ verifyArchive(void *data)
                 // If there are WAL files, then verify them
                 if (!strLstEmpty(jobData->walFileList))
                 {
-                    do
-                    {
-                        // Get the fully qualified file name and checksum
-                        const String *fileName = strLstGet(jobData->walFileList, 0);
-                        const String *filePathName = strNewFmt(
-                            STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveResult->archiveId), strZ(walPath), strZ(fileName));
-                        String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
+                    // Get the fully qualified file name and checksum
+                    const String *fileName = strLstGet(jobData->walFileList, 0);
+                    const String *filePathName = strNewFmt(
+                        STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveResult->archiveId), strZ(walPath), strZ(fileName));
+                    String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
-                        // Set up the job
-                        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                        PackWrite *const param = protocolCommandParam(command);
+                    // Set up the job
+                    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
+                    PackWrite *const param = protocolCommandParam(command);
 
-                        pckWriteStrP(param, filePathName);
-                        pckWriteStrP(param, checksum);
-                        pckWriteU64P(param, archiveResult->pgWalInfo.size);
-                        pckWriteStrP(param, jobData->walCipherPass);
+                    pckWriteStrP(param, filePathName);
+                    pckWriteStrP(param, checksum);
+                    pckWriteU64P(param, archiveResult->pgWalInfo.size);
+                    pckWriteStrP(param, jobData->walCipherPass);
 
-                        // Assign job to result, prepending the archiveId to the key for consistency with backup processing
-                        result = protocolParallelJobNew(
-                            VARSTR(strNewFmt("%s/%s", strZ(archiveResult->archiveId), strZ(filePathName))), command);
+                    // Assign job to result, prepending the archiveId to the key for consistency with backup processing
+                    result = protocolParallelJobNew(
+                        VARSTR(strNewFmt("%s/%s", strZ(archiveResult->archiveId), strZ(filePathName))), command);
 
-                        // Remove the file to process from the list
-                        strLstRemoveIdx(jobData->walFileList, 0);
+                    // Remove the file to process from the list
+                    strLstRemoveIdx(jobData->walFileList, 0);
 
-                        // If this is the last file to process for this timeline, then remove the path
-                        if (strLstEmpty(jobData->walFileList))
-                            strLstRemoveIdx(jobData->walPathList, 0);
-
-                        // Return to process the job found
-                        break;
-                    }
-                    while (!strLstEmpty(jobData->walFileList));
+                    // If this is the last file to process for this timeline, then remove the path
+                    if (strLstEmpty(jobData->walFileList))
+                        strLstRemoveIdx(jobData->walPathList, 0);
                 }
                 else
                 {
