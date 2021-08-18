@@ -224,8 +224,9 @@ protocolServerProcess(
                                     // sure the remote does not timeout.
                                     protocolKeepAlive();
                                 }
+                                // Else report error to the client
                                 else
-                                    RETHROW();
+                                    protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
                             }
                             TRY_END();
                         }
@@ -263,6 +264,9 @@ protocolServerProcess(
         {
             // Report error to the client
             protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
+
+            // Rethrow so the process exits with an error
+            RETHROW();
         }
         TRY_END();
     }

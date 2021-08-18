@@ -482,7 +482,7 @@ testRun(void)
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("server");
+                TEST_TITLE("server with error");
 
                 ProtocolServer *server = NULL;
 
@@ -500,7 +500,14 @@ testRun(void)
 
                 const ProtocolServerHandler commandHandler[] = {TEST_PROTOCOL_SERVER_HANDLER_LIST};
 
-                // This cannot run in a TEST* macro because tests are run by the command handlers
+                TEST_ERROR(
+                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
+                    ProtocolError, "invalid command 'BOGUS' (0x38eacd271)");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("server restart");
+
+                // This does not run in a TEST* macro because tests are run by the command handlers
                 protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -513,7 +520,7 @@ testRun(void)
                     server, protocolServerNew(STRDEF("test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
                     "new server");
 
-                // This cannot run in a TEST* macro because tests are run by the command handlers
+                // This does not run in a TEST* macro because tests are run by the command handlers
                 protocolServerProcess(server, retryList, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
             }
             HRN_FORK_CHILD_END();
