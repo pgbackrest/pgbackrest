@@ -2625,7 +2625,7 @@
 
             <p>A new host named <host>{[host-pg2]}</host> is created to run the standby.</p>
 
-            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="-m 1024m {[host-option]}"/>
+            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="-m 512m {[host-option]}"/>
 
             <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
                 <title>Create <user>{[br-user]}</user> user</title>
