@@ -60,6 +60,10 @@
         <variable key="fake-cert-path-relative">resource/fake-cert</variable>
         <variable key="fake-cert-path">{[host-repo-path]}/doc/{[fake-cert-path-relative]}</variable>
 
+        <!-- Path where builds are performed -->
+        <variable key="build-path">/build</variable>
+        <variable key="build-br-path">{[build-path]}/pgbackrest-release-{[version]}</variable>
+
         <!-- PostreSQL versions to run documentation for and min/max versions represented -->
         <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
         <variable key="pg-version-min" if="{[os-type-is-debian]}">{[os-debian-pg-version-min]}</variable>
@@ -480,7 +484,7 @@
             <title>Copy <backrest/> binary from build host</title>
 
             <execute user="root">
-                <exe-cmd>scp {[host-build]}:/build/pgbackrest-release-{[version]}/src/pgbackrest /usr/bin</exe-cmd>
+                <exe-cmd>scp {[host-build]}:{[build-br-path]}/src/pgbackrest /usr/bin</exe-cmd>
                 <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
             </execute>
 
@@ -793,24 +797,30 @@
         <p>When building from source it is best to use a build host rather than building on production.  Many of the tools required for the build should generally not be installed in production.  <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
         <execute-list host="{[host-build]}">
-            <title>Download version <id>{[version]}</id> of <backrest/> to pre-created <path>/build</path> path</title>
+            <title>Download version <id>{[version]}</id> of <backrest/> to <path>{[build-path]}</path> path</title>
 
             <!-- This is shown to the user but never actually run for the very good reason that the release is not available before the documentation is built -->
             <execute skip="y">
-                <exe-cmd>wget -q -O -
+                <exe-cmd>mkdir -p {[build-path]}</exe-cmd>
+            </execute>
+
+            <execute skip="y">
+                <exe-cmd>
+                    wget -q -O -
                     {[github-url-release]}/{[version]}.tar.gz |
-                    tar zx -C /build</exe-cmd>
+                    tar zx -C {[build-path]}
+                </exe-cmd>
             </execute>
 
             <!-- These commands simulate what the command above would do if it could be run -->
             <execute user="root" show="n">
-                <exe-cmd>mkdir -p /build/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>mkdir -p {[build-br-path]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src /build/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src {[build-br-path]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>chown -R {[host-build-user]} /build/pgbackrest-release-{[version]}</exe-cmd>
+                <exe-cmd>chown -R {[host-build-user]} {[build-br-path]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -842,7 +852,7 @@
             <title>Configure and compile <backrest/></title>
 
             <execute>
-                <exe-cmd>cd /build/pgbackrest-release-{[version]}/src &amp;&amp; ./configure &amp;&amp; make</exe-cmd>
+                <exe-cmd>cd {[build-br-path]}/src &amp;&amp; ./configure &amp;&amp; make</exe-cmd>
                 <exe-cmd-extra>-j 4</exe-cmd-extra>
             </execute>
         </execute-list>
