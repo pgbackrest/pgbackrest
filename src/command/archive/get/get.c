@@ -840,38 +840,48 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
         FUNCTION_TEST_PARAM(UINT, clientIdx);
     FUNCTION_TEST_END();
 
-    // No special logic based on the client, we'll just get the next job
-    (void)clientIdx;
+    ProtocolParallelJob *result = NULL;
 
-    // Get a new job if there are any left
-    ArchiveGetAsyncData *jobData = data;
-
-    if (jobData->archiveFileIdx < lstSize(jobData->archiveFileMapList))
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
-        jobData->archiveFileIdx++;
+        // No special logic based on the client, we'll just get the next job
+        (void)clientIdx;
 
-        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
-        PackWrite *const param = protocolCommandParam(command);
+        // Get a new job if there are any left
+        ArchiveGetAsyncData *jobData = data;
 
-        pckWriteStrP(param, archiveFileMap->request);
-
-        // Add actual files to get
-        for (unsigned int actualIdx = 0; actualIdx < lstSize(archiveFileMap->actualList); actualIdx++)
+        if (jobData->archiveFileIdx < lstSize(jobData->archiveFileMapList))
         {
-            const ArchiveGetFile *const actual = lstGet(archiveFileMap->actualList, actualIdx);
+            const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
+            jobData->archiveFileIdx++;
 
-            pckWriteStrP(param, actual->file);
-            pckWriteU32P(param, actual->repoIdx);
-            pckWriteStrP(param, actual->archiveId);
-            pckWriteU64P(param, actual->cipherType);
-            pckWriteStrP(param, actual->cipherPassArchive);
+            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
+            PackWrite *const param = protocolCommandParam(command);
+
+            pckWriteStrP(param, archiveFileMap->request);
+
+            // Add actual files to get
+            for (unsigned int actualIdx = 0; actualIdx < lstSize(archiveFileMap->actualList); actualIdx++)
+            {
+                const ArchiveGetFile *const actual = lstGet(archiveFileMap->actualList, actualIdx);
+
+                pckWriteStrP(param, actual->file);
+                pckWriteU32P(param, actual->repoIdx);
+                pckWriteStrP(param, actual->archiveId);
+                pckWriteU64P(param, actual->cipherType);
+                pckWriteStrP(param, actual->cipherPassArchive);
+            }
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result = protocolParallelJobNew(VARSTR(archiveFileMap->request), command);
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
-
-        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(archiveFileMap->request), command));
     }
+    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(result);
 }
 
 void
@@ -918,79 +928,90 @@ cmdArchiveGetAsync(void)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
 
                 // Process jobs
-                do
+                MEM_CONTEXT_TEMP_RESET_BEGIN()
                 {
-                    unsigned int completed = protocolParallelProcess(parallelExec);
-
-                    for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                    do
                     {
-                        // Get the job
-                        ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-                        unsigned int processId = protocolParallelJobProcessId(job);
+                        unsigned int completed = protocolParallelProcess(parallelExec);
 
-                        // Get wal segment name and archive file map
-                        const String *walSegment = varStr(protocolParallelJobKey(job));
-                        const ArchiveFileMap *fileMap = lstFind(checkResult.archiveFileMapList, &walSegment);
-                        ASSERT(fileMap != NULL);
-
-                        // Build warnings for status file
-                        String *warning = strNew();
-
-                        if (!strLstEmpty(fileMap->warnList))
-                            strCatFmt(warning, "%s", strZ(strLstJoin(fileMap->warnList, "\n")));
-
-                        // The job was successful
-                        if (protocolParallelJobErrorCode(job) == 0)
+                        for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                         {
-                            // Get the actual file retrieved
-                            PackRead *const fileResult = protocolParallelJobResult(job);
-                            ArchiveGetFile *file = lstGet(fileMap->actualList, pckReadU32P(fileResult));
-                            ASSERT(file != NULL);
+                            // Get the job
+                            ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                            unsigned int processId = protocolParallelJobProcessId(job);
 
-                            // Output file warnings
-                            StringList *fileWarnList = pckReadStrLstP(fileResult);
+                            // Get wal segment name and archive file map
+                            const String *walSegment = varStr(protocolParallelJobKey(job));
+                            const ArchiveFileMap *fileMap = lstFind(checkResult.archiveFileMapList, &walSegment);
+                            ASSERT(fileMap != NULL);
 
-                            for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
-                                LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
+                            // Build warnings for status file
+                            String *warning = strNew();
 
-                            // Build file warnings for status file
-                            if (!strLstEmpty(fileWarnList))
-                                strCatFmt(warning, "%s%s", strSize(warning) == 0 ? "" : "\n", strZ(strLstJoin(fileWarnList, "\n")));
+                            if (!strLstEmpty(fileMap->warnList))
+                                strCatFmt(warning, "%s", strZ(strLstJoin(fileMap->warnList, "\n")));
 
-                            if (strSize(warning) != 0)
-                                archiveAsyncStatusOkWrite(archiveModeGet, walSegment, warning);
+                            // The job was successful
+                            if (protocolParallelJobErrorCode(job) == 0)
+                            {
+                                // Get the actual file retrieved
+                                PackRead *const fileResult = protocolParallelJobResult(job);
+                                ArchiveGetFile *file = lstGet(fileMap->actualList, pckReadU32P(fileResult));
+                                ASSERT(file != NULL);
 
-                            LOG_DETAIL_PID_FMT(
-                                processId, FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
-                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx), strZ(file->archiveId));
+                                // Output file warnings
+                                StringList *fileWarnList = pckReadStrLstP(fileResult);
 
-                            // Rename temp WAL segment to actual name. This is done after the ok file is written so the ok file is
-                            // guaranteed to exist before the foreground process finds the WAL segment.
-                            storageMoveP(
-                                storageSpoolWrite(),
-                                storageNewReadP(
-                                    storageSpool(),
-                                    strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s." STORAGE_FILE_TEMP_EXT, strZ(walSegment))),
-                                storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment))));
+                                for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
+                                    LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
+
+                                // Build file warnings for status file
+                                if (!strLstEmpty(fileWarnList))
+                                {
+                                    strCatFmt(
+                                        warning, "%s%s", strSize(warning) == 0 ? "" : "\n", strZ(strLstJoin(fileWarnList, "\n")));
+                                }
+
+                                if (strSize(warning) != 0)
+                                    archiveAsyncStatusOkWrite(archiveModeGet, walSegment, warning);
+
+                                LOG_DETAIL_PID_FMT(
+                                    processId, FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
+                                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx), strZ(file->archiveId));
+
+                                // Rename temp WAL segment to actual name. This is done after the ok file is written so the ok file
+                                // is guaranteed to exist before the foreground process finds the WAL segment.
+                                storageMoveP(
+                                    storageSpoolWrite(),
+                                    storageNewReadP(
+                                        storageSpool(),
+                                        strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s." STORAGE_FILE_TEMP_EXT, strZ(walSegment))),
+                                    storageNewWriteP(
+                                        storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment))));
+                            }
+                            // Else the job errored
+                            else
+                            {
+                                LOG_WARN_PID_FMT(
+                                    processId, "[%s] %s", errorTypeName(errorTypeFromCode(protocolParallelJobErrorCode(job))),
+                                    strZ(protocolParallelJobErrorMessage(job)));
+
+                                archiveAsyncStatusErrorWrite(
+                                    archiveModeGet, walSegment, protocolParallelJobErrorCode(job),
+                                    strNewFmt(
+                                        "%s%s", strZ(protocolParallelJobErrorMessage(job)),
+                                        strSize(warning) == 0 ? "" : strZ(strNewFmt("\n%s", strZ(warning)))));
+                            }
+
+                            protocolParallelJobFree(job);
                         }
-                        // Else the job errored
-                        else
-                        {
-                            LOG_WARN_PID_FMT(
-                                processId, "[%s] %s", errorTypeName(errorTypeFromCode(protocolParallelJobErrorCode(job))),
-                                strZ(protocolParallelJobErrorMessage(job)));
 
-                            archiveAsyncStatusErrorWrite(
-                                archiveModeGet, walSegment, protocolParallelJobErrorCode(job),
-                                strNewFmt(
-                                    "%s%s", strZ(protocolParallelJobErrorMessage(job)),
-                                    strSize(warning) == 0 ? "" : strZ(strNewFmt("\n%s", strZ(warning)))));
-                        }
-
-                        protocolParallelJobFree(job);
+                        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                        MEM_CONTEXT_TEMP_RESET(1000);
                     }
+                    while (!protocolParallelDone(parallelExec));
                 }
-                while (!protocolParallelDone(parallelExec));
+                MEM_CONTEXT_TEMP_END();
             }
 
             // Log an error from archiveGetCheck() after any existing files have been fetched. This ordering is important because we

@@ -449,50 +449,60 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         FUNCTION_TEST_PARAM(UINT, clientIdx);
     FUNCTION_TEST_END();
 
-    // No special logic based on the client, we'll just get the next job
-    (void)clientIdx;
+    ProtocolParallelJob *result = NULL;
 
-    // Get a new job if there are any left
-    ArchivePushAsyncData *jobData = data;
-
-    if (jobData->walFileIdx < strLstSize(jobData->walFileList))
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
-        jobData->walFileIdx++;
+        // No special logic based on the client, we'll just get the next job
+        (void)clientIdx;
 
-        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
-        PackWrite *const param = protocolCommandParam(command);
+        // Get a new job if there are any left
+        ArchivePushAsyncData *jobData = data;
 
-        pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
-        pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveHeaderCheck));
-        pckWriteU32P(param, jobData->archiveInfo.pgVersion);
-        pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
-        pckWriteStrP(param, walFile);
-        pckWriteU32P(param, jobData->compressType);
-        pckWriteI32P(param, jobData->compressLevel);
-        pckWriteStrLstP(param, jobData->archiveInfo.errorList);
-
-        // Add data for each repo to push to
-        pckWriteArrayBeginP(param);
-
-        for (unsigned int repoListIdx = 0; repoListIdx < lstSize(jobData->archiveInfo.repoList); repoListIdx++)
+        if (jobData->walFileIdx < strLstSize(jobData->walFileList))
         {
-            ArchivePushFileRepoData *data = lstGet(jobData->archiveInfo.repoList, repoListIdx);
+            const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
+            jobData->walFileIdx++;
 
-            pckWriteObjBeginP(param);
-            pckWriteU32P(param, data->repoIdx);
-            pckWriteStrP(param, data->archiveId);
-            pckWriteU64P(param, data->cipherType);
-            pckWriteStrP(param, data->cipherPass);
-            pckWriteObjEndP(param);
+            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
+            PackWrite *const param = protocolCommandParam(command);
+
+            pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
+            pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveHeaderCheck));
+            pckWriteU32P(param, jobData->archiveInfo.pgVersion);
+            pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
+            pckWriteStrP(param, walFile);
+            pckWriteU32P(param, jobData->compressType);
+            pckWriteI32P(param, jobData->compressLevel);
+            pckWriteStrLstP(param, jobData->archiveInfo.errorList);
+
+            // Add data for each repo to push to
+            pckWriteArrayBeginP(param);
+
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(jobData->archiveInfo.repoList); repoListIdx++)
+            {
+                ArchivePushFileRepoData *data = lstGet(jobData->archiveInfo.repoList, repoListIdx);
+
+                pckWriteObjBeginP(param);
+                pckWriteU32P(param, data->repoIdx);
+                pckWriteStrP(param, data->archiveId);
+                pckWriteU64P(param, data->cipherType);
+                pckWriteStrP(param, data->cipherPass);
+                pckWriteObjEndP(param);
+            }
+
+            pckWriteArrayEndP(param);
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result = protocolParallelJobNew(VARSTR(walFile), command);
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
-
-        pckWriteArrayEndP(param);
-
-        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));
     }
+    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(result);
 }
 
 void
@@ -563,51 +573,59 @@ cmdArchivePushAsync(void)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
 
                 // Process jobs
-                do
+                MEM_CONTEXT_TEMP_RESET_BEGIN()
                 {
-                    unsigned int completed = protocolParallelProcess(parallelExec);
-
-                    for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                    do
                     {
-                        protocolKeepAlive();
+                        unsigned int completed = protocolParallelProcess(parallelExec);
 
-                        // Get the job and job key
-                        ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-                        unsigned int processId = protocolParallelJobProcessId(job);
-                        const String *walFile = varStr(protocolParallelJobKey(job));
-
-                        // The job was successful
-                        if (protocolParallelJobErrorCode(job) == 0)
+                        for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                         {
-                            // Output file warnings
-                            StringList *fileWarnList = pckReadStrLstP(protocolParallelJobResult(job));
+                            protocolKeepAlive();
 
-                            for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
-                                LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
+                            // Get the job and job key
+                            ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                            unsigned int processId = protocolParallelJobProcessId(job);
+                            const String *walFile = varStr(protocolParallelJobKey(job));
 
-                            // Log success
-                            LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
+                            // The job was successful
+                            if (protocolParallelJobErrorCode(job) == 0)
+                            {
+                                // Output file warnings
+                                StringList *fileWarnList = pckReadStrLstP(protocolParallelJobResult(job));
 
-                            // Write the status file
-                            archiveAsyncStatusOkWrite(
-                                archiveModePush, walFile, strLstEmpty(fileWarnList) ? NULL : strLstJoin(fileWarnList, "\n"));
+                                for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
+                                    LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
+
+                                // Log success
+                                LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
+
+                                // Write the status file
+                                archiveAsyncStatusOkWrite(
+                                    archiveModePush, walFile, strLstEmpty(fileWarnList) ? NULL : strLstJoin(fileWarnList, "\n"));
+                            }
+                            // Else the job errored
+                            else
+                            {
+                                LOG_WARN_PID_FMT(
+                                    processId,
+                                    "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strZ(walFile),
+                                    protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
+
+                                archiveAsyncStatusErrorWrite(
+                                    archiveModePush, walFile, protocolParallelJobErrorCode(job),
+                                    protocolParallelJobErrorMessage(job));
+                            }
+
+                            protocolParallelJobFree(job);
                         }
-                        // Else the job errored
-                        else
-                        {
-                            LOG_WARN_PID_FMT(
-                                processId,
-                                "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strZ(walFile),
-                                protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
-                            archiveAsyncStatusErrorWrite(
-                                archiveModePush, walFile, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
-                        }
-
-                        protocolParallelJobFree(job);
+                        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                        MEM_CONTEXT_TEMP_RESET(1000);
                     }
+                    while (!protocolParallelDone(parallelExec));
                 }
-                while (!protocolParallelDone(parallelExec));
+                MEM_CONTEXT_TEMP_END();
             }
         }
         // On any global error write a single error file to cover all unprocessed files

@@ -1462,7 +1462,11 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 lstRemoveIdx(queue, 0);
 
                 // Assign job to result
-                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), memContextPrior());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = protocolParallelJobNew(VARSTR(file->name), command);
+                }
+                MEM_CONTEXT_PRIOR_END();
 
                 // Break out of the loop early since we found a job
                 break;

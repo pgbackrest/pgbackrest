@@ -1494,119 +1494,127 @@ verifyProcess(unsigned int *errorTotal)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
 
                 // Process jobs
-                do
+                MEM_CONTEXT_TEMP_RESET_BEGIN()
                 {
-                    unsigned int completed = protocolParallelProcess(parallelExec);
-
-                    // Process completed jobs
-                    for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                    do
                     {
-                        // Get the job and job key
-                        ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-                        unsigned int processId = protocolParallelJobProcessId(job);
-                        StringList *filePathLst = strLstNewSplit(varStr(protocolParallelJobKey(job)), FSLASH_STR);
+                        unsigned int completed = protocolParallelProcess(parallelExec);
 
-                        // Remove the result and file type identifier and recreate the path file name
-                        const String *resultId = strLstGet(filePathLst, 0);
-                        strLstRemoveIdx(filePathLst, 0);
-                        const String *fileType = strLstGet(filePathLst, 0);
-                        strLstRemoveIdx(filePathLst, 0);
-                        String *filePathName = strLstJoin(filePathLst, "/");
-
-                        // Initialize the result sets
-                        VerifyArchiveResult *archiveIdResult = NULL;
-                        VerifyBackupResult *backupResult = NULL;
-
-                        // Get archiveId result data
-                        if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
+                        // Process completed jobs
+                        for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                         {
-                            // Find the archiveId in the list - assert if not found since this should never happen
-                            unsigned int index = lstFindIdx(jobData.archiveIdResultList, &resultId);
-                            ASSERT(index != LIST_NOT_FOUND);
+                            // Get the job and job key
+                            ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                            unsigned int processId = protocolParallelJobProcessId(job);
+                            StringList *filePathLst = strLstNewSplit(varStr(protocolParallelJobKey(job)), FSLASH_STR);
 
-                            archiveIdResult = lstGet(jobData.archiveIdResultList, index);
-                        }
-                        // Else get the backup result data
-                        else
-                        {
-                            unsigned int index = lstFindIdx(jobData.backupResultList, &resultId);
-                            ASSERT(index != LIST_NOT_FOUND);
+                            // Remove the result and file type identifier and recreate the path file name
+                            const String *resultId = strLstGet(filePathLst, 0);
+                            strLstRemoveIdx(filePathLst, 0);
+                            const String *fileType = strLstGet(filePathLst, 0);
+                            strLstRemoveIdx(filePathLst, 0);
+                            String *filePathName = strLstJoin(filePathLst, "/");
 
-                            backupResult = lstGet(jobData.backupResultList, index);
-                        }
+                            // Initialize the result sets
+                            VerifyArchiveResult *archiveIdResult = NULL;
+                            VerifyBackupResult *backupResult = NULL;
 
-                        // The job was successful
-                        if (protocolParallelJobErrorCode(job) == 0)
-                        {
-                            const VerifyResult verifyResult = (VerifyResult)pckReadU32P(protocolParallelJobResult(job));
-
-                            // Update the result set for the type of file being processed
+                            // Get archiveId result data
                             if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
                             {
-                                if (verifyResult == verifyOk)
-                                    archiveIdResult->totalValidWal++;
+                                // Find the archiveId in the list - assert if not found since this should never happen
+                                unsigned int index = lstFindIdx(jobData.archiveIdResultList, &resultId);
+                                ASSERT(index != LIST_NOT_FOUND);
+
+                                archiveIdResult = lstGet(jobData.archiveIdResultList, index);
+                            }
+                            // Else get the backup result data
+                            else
+                            {
+                                unsigned int index = lstFindIdx(jobData.backupResultList, &resultId);
+                                ASSERT(index != LIST_NOT_FOUND);
+
+                                backupResult = lstGet(jobData.backupResultList, index);
+                            }
+
+                            // The job was successful
+                            if (protocolParallelJobErrorCode(job) == 0)
+                            {
+                                const VerifyResult verifyResult = (VerifyResult)pckReadU32P(protocolParallelJobResult(job));
+
+                                // Update the result set for the type of file being processed
+                                if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
+                                {
+                                    if (verifyResult == verifyOk)
+                                        archiveIdResult->totalValidWal++;
+                                    else
+                                    {
+                                        jobData.jobErrorTotal += verifyLogInvalidResult(
+                                            fileType, verifyResult, processId, filePathName);
+
+                                        // Add invalid file to the WAL range
+                                        verifyAddInvalidWalFile(
+                                            archiveIdResult->walRangeList, verifyResult, filePathName,
+                                            strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0,
+                                            WAL_SEGMENT_NAME_SIZE));
+                                    }
+                                }
                                 else
                                 {
-                                    jobData.jobErrorTotal += verifyLogInvalidResult(
-                                        fileType, verifyResult, processId, filePathName);
+                                    if (verifyResult == verifyOk)
+                                        backupResult->totalFileValid++;
+                                    else
+                                    {
+                                        jobData.jobErrorTotal += verifyLogInvalidResult(
+                                            fileType, verifyResult, processId, filePathName);
+                                        backupResult->status = backupInvalid;
+                                        verifyInvalidFileAdd(backupResult->invalidFileList, verifyResult, filePathName);
+                                    }
+                                }
+                            }
+                            // Else the job errored
+                            else
+                            {
+                                // Log a protocol error and increment the jobErrorTotal
+                                LOG_ERROR_PID_FMT(
+                                    processId, errorTypeCode(&ProtocolError),
+                                    "%s %s: [%d] %s", strZ(verifyErrorMsg(verifyOtherError)), strZ(filePathName),
+                                    protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
+                                jobData.jobErrorTotal++;
+
+                                // Add invalid file with "OtherError" reason to invalid file list
+                                if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
+                                {
                                     // Add invalid file to the WAL range
                                     verifyAddInvalidWalFile(
-                                        archiveIdResult->walRangeList, verifyResult, filePathName,
+                                        archiveIdResult->walRangeList, verifyOtherError, filePathName,
                                         strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                                 }
-                            }
-                            else
-                            {
-                                if (verifyResult == verifyOk)
-                                    backupResult->totalFileValid++;
                                 else
                                 {
-                                    jobData.jobErrorTotal += verifyLogInvalidResult(
-                                        fileType, verifyResult, processId, filePathName);
                                     backupResult->status = backupInvalid;
-                                    verifyInvalidFileAdd(backupResult->invalidFileList, verifyResult, filePathName);
+                                    verifyInvalidFileAdd(backupResult->invalidFileList, verifyOtherError, filePathName);
                                 }
                             }
-                        }
-                        // Else the job errored
-                        else
-                        {
-                            // Log a protocol error and increment the jobErrorTotal
-                            LOG_ERROR_PID_FMT(
-                                processId, errorTypeCode(&ProtocolError),
-                                "%s %s: [%d] %s", strZ(verifyErrorMsg(verifyOtherError)), strZ(filePathName),
-                                protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
-                            jobData.jobErrorTotal++;
-
-                            // Add invalid file with "OtherError" reason to invalid file list
-                            if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
+                            // Set backup verification complete for a backup if all files have run through verification
+                            if (strEq(fileType, STORAGE_REPO_BACKUP_STR) &&
+                                backupResult->totalFileVerify == backupResult->totalFileManifest)
                             {
-                                // Add invalid file to the WAL range
-                                verifyAddInvalidWalFile(
-                                    archiveIdResult->walRangeList, verifyOtherError, filePathName,
-                                    strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
+                                backupResult->fileVerifyComplete = true;
                             }
-                            else
-                            {
-                                backupResult->status = backupInvalid;
-                                verifyInvalidFileAdd(backupResult->invalidFileList, verifyOtherError, filePathName);
-                            }
+
+                            // Free the job
+                            protocolParallelJobFree(job);
                         }
 
-                        // Set backup verification complete for a backup if all files have run through verification
-                        if (strEq(fileType, STORAGE_REPO_BACKUP_STR) &&
-                            backupResult->totalFileVerify == backupResult->totalFileManifest)
-                        {
-                            backupResult->fileVerifyComplete = true;
-                        }
-
-                        // Free the job
-                        protocolParallelJobFree(job);
+                        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                        MEM_CONTEXT_TEMP_RESET(1000);
                     }
+                    while (!protocolParallelDone(parallelExec));
                 }
-                while (!protocolParallelDone(parallelExec));
+                MEM_CONTEXT_TEMP_END();
 
                 // ??? Need to do the final reconciliation - checking backup required WAL against, valid WAL
 
