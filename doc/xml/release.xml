@@ -74,6 +74,7 @@
                         </commit>
                         <commit subject="Fix memory leaks introduced by the binary protocol in 6a1c0337."/>
                         <commit subject="Fix use after free introduced by the binary protocol in 6a1c0337."/>
+                        <commit subject="Fix more memory leaks introduced by the binary protocol in 6a1c0337."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
