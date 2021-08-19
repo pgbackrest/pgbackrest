@@ -7,7 +7,7 @@ Debug Routines
 #include "common/assert.h"
 #include "common/stackTrace.h"
 #include "common/type/convert.h"
-#include "common/type/stringz.h"
+#include "common/type/stringZ.h"
 
 /***********************************************************************************************************************************
 Base function debugging macros

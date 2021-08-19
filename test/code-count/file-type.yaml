@@ -1119,7 +1119,7 @@ src/common/type/stringList.h:
   class: core
   type: c/h
 
-src/common/type/stringz.h:
+src/common/type/stringZ.h:
   class: core
   type: c/h
 
