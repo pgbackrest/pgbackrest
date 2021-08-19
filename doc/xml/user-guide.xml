@@ -3185,7 +3185,17 @@
         <p><backrest/> creates a standby backup that is identical to a backup performed on the primary.  It does this by starting/stopping the backup on the <host>{[host-pg1]}</host> host, copying only files that are replicated from the <host>{[host-pg2]}</host> host, then copying the remaining few files from the <host>{[host-pg1]}</host> host.  This means that logs and statistics from the primary database will be included in the backup.</p>
     </section>
 
-    <!-- ======================================================================================================================= -->
+    <!-- ===========================================================================================================================
+    This optional section is used to perform stress testing. See the stress* variables for settings.
+
+    Once the stress test has been run, it is common to perform some additional tests with a custom/debug build.
+
+    To initialize the build, run the following. This only needs to be done once per doc build, though running it more that once only costs additional time:
+        ssh build 'mkdir -p /build/dev && cd /build/dev && /pgbackrest/src/configure -\-enable-test && make clean'
+
+    One each host where a new build is required, run the following. This will build pgbackrest, copy it to the host, and display the build time for sanity:
+        ssh build make -C /build/dev -j 8 && scp build:/build/dev/pgbackrest /usr/bin && ls -lah /usr/bin/pgbackrest
+    ============================================================================================================================ -->
     <section id="stress" if="'{[stress]}' eq 'y'">
         <title>Stress Testing</title>
 
