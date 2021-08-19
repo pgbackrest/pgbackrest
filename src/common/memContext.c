@@ -50,11 +50,11 @@ Contains information about the memory context
 ***********************************************************************************************************************************/
 struct MemContext
 {
-    MemContextState state;                                          // Current state of the context
     const char *name;                                               // Indicates what the context is being used for
+    MemContextState state;                                          // Current state of the context
 
-    MemContext *contextParent;                                      // All contexts have a parent except top
     unsigned int contextParentIdx;                                  // Index in the parent context list
+    MemContext *contextParent;                                      // All contexts have a parent except top
 
     MemContext **contextChildList;                                  // List of contexts created in this context
     unsigned int contextChildListSize;                              // Size of child context list (not the actual count of contexts)
