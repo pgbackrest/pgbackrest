@@ -537,31 +537,16 @@ memContextMove(MemContext *this, MemContext *parentNew)
     // Only move if a valid mem context is provided and the old and new parents are not the same
     if (this != NULL && this->contextParent != parentNew)
     {
-        // Find context in the old parent and NULL it out
-        MemContext *parentOld = this->contextParent;
-        unsigned int contextIdx;
-
-        for (contextIdx = 0; contextIdx < parentOld->contextChildListSize; contextIdx++)
-        {
-            if (parentOld->contextChildList[contextIdx] == this)
-            {
-                parentOld->contextChildList[contextIdx] = NULL;
-                break;
-            }
-        }
-
-        // The memory must be found
-        if (contextIdx == parentOld->contextChildListSize)
-            THROW(AssertError, "unable to find mem context in old parent");
+        // Null out the context in the old parent
+        ASSERT(this->contextParent->contextChildList[this->contextParentIdx] == this);
+        this->contextParent->contextChildList[this->contextParentIdx] = NULL;
 
         // Find a place in the new parent context and assign it. The child list may be moved while finding a new index so store the
         // index and use it with (what might be) the new pointer.
-        contextIdx = memContextNewIndex(parentNew, false);
-        ASSERT(parentNew->contextChildList[contextIdx] == NULL);
-        parentNew->contextChildList[contextIdx] = this;
-
-        // Assign new parent
         this->contextParent = parentNew;
+        this->contextParentIdx = memContextNewIndex(parentNew, false);
+        ASSERT(parentNew->contextChildList[this->contextParentIdx] == NULL);
+        parentNew->contextChildList[this->contextParentIdx] = this;
     }
 
     FUNCTION_TEST_RETURN_VOID();

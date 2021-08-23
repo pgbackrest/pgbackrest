@@ -400,7 +400,9 @@ testRun(void)
 
                 // Null out the mem context in the parent so the move will fail
                 memContextCurrent()->contextChildList[1] = NULL;
-                TEST_ERROR(memContextMove(memContext, memContextPrior()), AssertError, "unable to find mem context in old parent");
+                TEST_ERROR(
+                    memContextMove(memContext, memContextPrior()), AssertError,
+                    "assertion 'this->contextParent->contextChildList[this->contextParentIdx] == this' failed");
 
                 // Set it back so the move will succeed
                 memContextCurrent()->contextChildList[1] = memContext;
