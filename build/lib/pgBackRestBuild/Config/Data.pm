@@ -142,12 +142,6 @@ use constant CFGDEF_DEFAULT                                         => 'default'
     push @EXPORT, qw(CFGDEF_DEFAULT);
 use constant CFGDEF_DEFAULT_LITERAL                                 => 'default-literal';
     push @EXPORT, qw(CFGDEF_DEFAULT_LITERAL);
-use constant CFGDEF_DEPEND                                          => 'depend';
-    push @EXPORT, qw(CFGDEF_DEPEND);
-use constant CFGDEF_DEPEND_OPTION                                   => 'option';
-    push @EXPORT, qw(CFGDEF_DEPEND_OPTION);
-use constant CFGDEF_DEPEND_LIST                                     => 'list';
-    push @EXPORT, qw(CFGDEF_DEPEND_LIST);
 
 # Group options together to share common configuration
 use constant CFGDEF_GROUP                                           => 'group';
@@ -247,28 +241,6 @@ my $rhConfigDefine = $rhConfig->{'option'};
 #     {
 #         delete($rhDefine->{&CFGDEF_DEFAULT});
 #         $rhDefine->{&CFGDEF_DEFAULT} = false;
-#     }
-#
-#     # If a depend list value is an empty string set it to false. This must be a mangled boolean since empty strings are not valid
-#     # depend list values.
-#     if (ref($rhDefine->{&CFGDEF_DEPEND}) && defined($rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST}))
-#     {
-#         my @stryList;
-#
-#         for (my $iDependListIdx = 0; $iDependListIdx < @{$rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST}}; $iDependListIdx++)
-#         {
-#             if ($rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST}[$iDependListIdx] eq '')
-#             {
-#                 push(@stryList, false);
-#             }
-#             else
-#             {
-#                 push(@stryList, $rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST}[$iDependListIdx]);
-#             }
-#         }
-#
-#         delete($rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST});
-#         $rhDefine->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST} = \@stryList;
 #     }
 # }
 #
@@ -439,13 +411,6 @@ foreach my $strKey (sort(keys(%{$rhConfigDefine})))
     {
         $rhConfigDefine->{$strKey}{&CFGDEF_COMMAND} =
             dclone($rhConfigDefine->{$rhConfigDefine->{$strKey}{&CFGDEF_COMMAND}}{&CFGDEF_COMMAND});
-    }
-
-    # If the required section is a scalar then copy the section from the referenced option
-    if (defined($rhConfigDefine->{$strKey}{&CFGDEF_DEPEND}) && !ref($rhConfigDefine->{$strKey}{&CFGDEF_DEPEND}))
-    {
-        $rhConfigDefine->{$strKey}{&CFGDEF_DEPEND} =
-            dclone($rhConfigDefine->{$rhConfigDefine->{$strKey}{&CFGDEF_DEPEND}}{&CFGDEF_DEPEND});
     }
 
     # If the allow list is a scalar then copy the list from the referenced option

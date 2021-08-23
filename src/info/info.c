@@ -498,8 +498,8 @@ infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callback
                 loaded = callbackFunction(callbackData, try);
                 done = true;
 
-                // There must be at least one attempt to the load file
-                ASSERT(loaded || try > 0);
+                // There must be at least one attempt to load the file
+                CHECK(loaded || try > 0);
             }
             CATCH_ANY()
             {

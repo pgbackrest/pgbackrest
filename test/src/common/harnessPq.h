@@ -91,7 +91,7 @@ Macros for defining groups of functions that implement various queries and comma
 
 #define HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam)                                                                             \
     {.session = sessionParam, .function = HRNPQ_SENDQUERY,                                                                         \
-        .param = strZ(strNewFmt("[\"set application_name = '" PROJECT_NAME " [%s]'\"]", cfgCommandName(cfgCommand()))),            \
+        .param = strZ(strNewFmt("[\"set application_name = '" PROJECT_NAME " [%s]'\"]", cfgCommandName())),                        \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \

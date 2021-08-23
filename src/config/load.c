@@ -78,7 +78,7 @@ cfgLoadUpdateOption(void)
             OptionRequiredError,
             "%s command requires option: " CFGOPT_REPO "\n"
             "HINT: this command requires a specific repository to operate on",
-            cfgCommandName(cfgCommand()));
+            cfgCommandName());
     }
 
     // If there is more than one repo configured
@@ -363,7 +363,7 @@ cfgLoadLogFile(void)
             // Construct log filename prefix
             String *logFile = strNewFmt(
                 "%s/%s-%s", strZ(cfgOptionStr(cfgOptLogPath)),
-                cfgOptionTest(cfgOptStanza) ? strZ(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName(cfgCommand()));
+                cfgOptionTest(cfgOptStanza) ? strZ(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName());
 
             // ??? Append async for local/remote archive async commands.  It would be good to find a more generic way to do this in
             // case the async role is added to more commands.
@@ -375,7 +375,7 @@ cfgLoadLogFile(void)
 
             // Add command role if it is not main
             if (cfgCommandRole() != cfgCmdRoleMain)
-                strCatFmt(logFile, "-%s", strZ(cfgCommandRoleStr(cfgCommandRole())));
+                strCatFmt(logFile, "-%s", strZ(cfgParseCommandRoleStr(cfgCommandRole())));
 
             // Add process id if local or remote role
             if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)

@@ -89,10 +89,7 @@ regExpNew(const String *expression)
         int result = 0;
 
         if ((result = regcomp(&this->regExp, strZ(expression), REG_EXTENDED)) != 0)
-        {
-            memFree(this);
             regExpError(result);
-        }
 
         // Set free callback to ensure cipher context is freed
         memContextCallbackSet(this->memContext, regExpFreeResource, this);

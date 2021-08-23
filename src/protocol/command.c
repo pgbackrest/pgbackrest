@@ -58,22 +58,26 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
     ASSERT(this != NULL);
     ASSERT(write != NULL);
 
-    // Write the command and flush to be sure the command gets sent immediately
-    PackWrite *commandPack = pckWriteNew(write);
-    pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
-    pckWriteStrIdP(commandPack, this->command);
-
-    // Only write params if there were any
-    if (this->pack != NULL)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        pckWriteEndP(this->pack);
-        pckWritePackP(commandPack, this->pack);
+        // Write the command and flush to be sure the command gets sent immediately
+        PackWrite *commandPack = pckWriteNew(write);
+        pckWriteU32P(commandPack, protocolMessageTypeCommand, .defaultWrite = true);
+        pckWriteStrIdP(commandPack, this->command);
+
+        // Only write params if there were any
+        if (this->pack != NULL)
+        {
+            pckWriteEndP(this->pack);
+            pckWritePackP(commandPack, this->pack);
+        }
+
+        pckWriteEndP(commandPack);
+
+        // Flush to send command immediately
+        ioWriteFlush(write);
     }
-
-    pckWriteEndP(commandPack);
-
-    // Flush to send command immediately
-    ioWriteFlush(write);
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }

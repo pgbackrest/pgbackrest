@@ -4,7 +4,10 @@ Build Common
 #ifndef BUILD_COMMON_COMMON_H
 #define BUILD_COMMON_COMMON_H
 
+#include <inttypes.h>
+
 #include "common/type/string.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Block comments
@@ -16,6 +19,10 @@ Block comments
 #define COMMENT_BLOCK_END                                                                                                          \
     "****************************************************************************************************************************" \
     "*******/"
+
+#define COMMENT_SEPARATOR                                                                                                          \
+    "    // ---------------------------------------------------------------------------------------------------------------------" \
+    "--------"
 
 /***********************************************************************************************************************************
 Functions
@@ -49,5 +56,26 @@ bldPut(const Storage *const storage, const char *const file, const Buffer *const
     if (contentOld == NULL || !bufEq(contentOld, contentNew))
         storagePutP(storageNewWriteP(storage, STR(file), .noSyncPath = true), contentNew);
 }
+
+/***********************************************************************************************************************************
+Generate constant StringIds
+
+To generate a constant StringId call bldStrId(). It will return a String with the generated StringId macro.
+
+For example:
+
+bldStrId("test");
+
+will return the following:
+
+STRID5("test", 0xa4cb40)
+
+which can be used in a function, switch, or #define, e.g.:
+
+#define TEST_STRID                                                  STRID5("test", 0xa4cb40)
+
+DO NOT MODIFY either parameter in the macro -- ALWAYS use bldStrId() to create a new constant StringId.
+***********************************************************************************************************************************/
+String *bldStrId(const char *const buffer);
 
 #endif

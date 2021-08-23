@@ -180,6 +180,16 @@ testRun(void)
         TEST_RESULT_INT(*(int *)lstGet(list, 1), 3, "sort value 1");
         TEST_RESULT_INT(*(int *)lstGet(list, 2), 3, "sort value 2");
         TEST_RESULT_INT(*(int *)lstGet(list, 3), 2, "sort value 3");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lstComparatorZ()");
+
+        const char *string1 = "abc";
+        const char *string2 = "def";
+
+        TEST_RESULT_INT(lstComparatorZ(&string1, &string1), 0, "strings are equal");
+        TEST_RESULT_BOOL(lstComparatorZ(&string1, &string2) < 0, true, "first string is less");
+        TEST_RESULT_BOOL(lstComparatorZ(&string2, &string1) > 0, true, "first string is greater");
     }
 
     // *****************************************************************************************************************************

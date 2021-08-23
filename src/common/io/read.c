@@ -252,7 +252,7 @@ ioReadSmall(IoRead *this, Buffer *buffer)
             {
                 ioReadInternal(this, buffer, true);
             }
-            // Else read as much data as is available. If is not enough we will try again later.
+            // Else read as much data as is available. If it is not enough we will try again later.
             else
             {
                 // Clear the internal output buffer since all data was copied already
@@ -263,7 +263,7 @@ ioReadSmall(IoRead *this, Buffer *buffer)
             }
         }
     }
-    while (!bufFull(buffer));
+    while (!bufFull(buffer) && !ioReadEof(this));
 
     FUNCTION_TEST_RETURN(outputRemains - bufRemains(buffer));
 }

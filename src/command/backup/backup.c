@@ -1462,7 +1462,11 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 lstRemoveIdx(queue, 0);
 
                 // Assign job to result
-                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), memContextPrior());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = protocolParallelJobNew(VARSTR(file->name), command);
+                }
+                MEM_CONTEXT_PRIOR_END();
 
                 // Break out of the loop early since we found a job
                 break;
@@ -1479,7 +1483,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
     FUNCTION_TEST_RETURN(result);
 }
 
-static void
+static uint64_t
 backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart, const String *cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1490,6 +1494,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
+
+    uint64_t sizeTotal = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1552,7 +1558,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
         };
 
-        uint64_t sizeTotal = backupProcessQueue(manifest, &jobData.queueList);
+        sizeTotal = backupProcessQueue(manifest, &jobData.queueList);
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
@@ -1673,12 +1679,10 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                     storagePathSyncP(storageRepoWrite(), path);
             }
         }
-
-        LOG_INFO_FMT("%s backup size = %s", strZ(strIdToStr(backupType)), strZ(strSizeFormat(sizeTotal)));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(UINT64, sizeTotal);
 }
 
 /***********************************************************************************************************************************
@@ -1962,7 +1966,7 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherPassBackup);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
+        uint64_t backupSizeTotal = backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
 
         // Stop the backup
         BackupStopResult backupStopResult = backupStop(backupData, manifest);
@@ -1990,6 +1994,11 @@ cmdBackup(void)
         // Complete the backup
         LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));
         backupComplete(infoBackup, manifest);
+
+        // Backup info
+        LOG_INFO_FMT(
+            "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
+            strZ(strSizeFormat(backupSizeTotal)), manifestFileTotal(manifest));
     }
     MEM_CONTEXT_TEMP_END();
 

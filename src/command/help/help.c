@@ -283,8 +283,8 @@ helpRender(void)
                 if (commandData[commandId].internal)
                     continue;
 
-                if (strlen(cfgCommandName(commandId)) > commandSizeMax)
-                    commandSizeMax = strlen(cfgCommandName(commandId));
+                if (strlen(cfgParseCommandName(commandId)) > commandSizeMax)
+                    commandSizeMax = strlen(cfgParseCommandName(commandId));
             }
 
             // Output help for each command
@@ -294,8 +294,8 @@ helpRender(void)
                     continue;
 
                 strCatFmt(
-                    result, "    %s%*s%s\n", cfgCommandName(commandId),
-                    (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
+                    result, "    %s%*s%s\n", cfgParseCommandName(commandId),
+                    (int)(commandSizeMax - strlen(cfgParseCommandName(commandId)) + 2), "",
                     strZ(helpRenderText(commandData[commandId].summary, false, commandSizeMax + 6, false, CONSOLE_WIDTH)));
             }
 
@@ -305,7 +305,7 @@ helpRender(void)
         else
         {
             ConfigCommand commandId = cfgCommand();
-            const char *commandName = cfgCommandName(commandId);
+            const char *commandName = cfgParseCommandName(commandId);
 
             // Unpack option data
             HelpOptionData *optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);

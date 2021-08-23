@@ -37,7 +37,7 @@ testRun(void)
     // ordering the second remote will never be sent an explicit exit and may not save coverage data.
     StringList *argList = strLstNew();
     hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "20");
     hrnCfgArgRawZ(argList, cfgOptBufferSize, "16384");
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
     hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "localhost");
@@ -51,7 +51,7 @@ testRun(void)
     // Load configuration and get repo remote storage
     argList = strLstNew();
     hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "10");
+    hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "20");
     hrnCfgArgRawFmt(argList, cfgOptBufferSize, "%zu", ioBufferSize());
     hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
     hrnCfgArgRawZ(argList, cfgOptRepoHost, "localhost");
@@ -519,8 +519,12 @@ testRun(void)
     }
 
     // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be
-    // sure coverage data has been written by the remote. protocolFree() is still required to free the client objects.
+    // sure coverage data has been written by the remote. We also need to make sure that the mem context callback is cleared so that
+    // protocolClientFreeResource() will not be called and send another exit. protocolFree() is still required to free the client
+    // objects.
+    memContextCallbackClear(((ProtocolClientPub *)protocolRemoteGet(protocolStorageTypeRepo, 0))->memContext);
     protocolClientExecute(protocolRemoteGet(protocolStorageTypeRepo, 0), protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
+    memContextCallbackClear(((ProtocolClientPub *)protocolRemoteGet(protocolStorageTypePg, 1))->memContext);
     protocolClientExecute(protocolRemoteGet(protocolStorageTypePg, 1), protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
     protocolFree();
 

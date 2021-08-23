@@ -121,8 +121,25 @@ sub htmlRender
             {name => 'iDepth', trace => true}
         );
 
-    # Build the header
-    my $strHtml =
+    # If a pre tag add a linefeed before the tag unless the prior tag was also pre. This makes the output more diffable.
+    my $strHtml = "";
+
+    if ($oElement->{strType} eq HTML_PRE && !$self->{bPretty})
+    {
+        if (!$self->{bPrePrior})
+        {
+            $strHtml .= "\n";
+        }
+
+        $self->{bPrePrior} = true;
+    }
+    else
+    {
+        $self->{bPrePrior} = false;
+    }
+
+    # Build the tag
+    $strHtml .=
         $self->indent($iDepth) . "<$oElement->{strType}" .
             (defined($oElement->{strClass}) ? " class=\"$oElement->{strClass}\"": '') .
             (defined($oElement->{strRef}) ? " href=\"$oElement->{strRef}\"": '') .
@@ -135,7 +152,9 @@ sub htmlRender
         {
             $oElement->{strContent} =~ s/\n/\<br\/>\n/g;
             $oElement->{strContent} = trim($oElement->{strContent});
-            $strHtml .= $self->lf();
+
+            # Add a linefeed before the content if not pre. This makes the output more diffable.
+            $strHtml .= "\n";
         }
         else
         {
@@ -144,9 +163,10 @@ sub htmlRender
 
         $strHtml .= $oElement->{strContent};
 
+        # Add a linefeed after the content if not pre. This makes the output more diffable.
         if (!defined($oElement->{bPre}) || !$oElement->{bPre})
         {
-            $strHtml .= $self->lf() . $self->indent($iDepth);
+            $strHtml .= "\n" . $self->indent($iDepth);
         }
     }
     else
@@ -167,7 +187,10 @@ sub htmlRender
         }
     }
 
-    $strHtml .= "</$oElement->{strType}>" . $self->lf();
+    $strHtml .= "</$oElement->{strType}>";
+
+    # If a pre tag add an lf after the tag. This makes the output more diffable.
+    $strHtml .= $oElement->{strType} eq HTML_PRE ? "\n" : $self->lf();
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -211,40 +234,37 @@ sub htmlGet
                            " \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">" . $self->lf() .
         $self->indent(0) . "<html xmlns=\"http://www.w3.org/1999/xhtml\">" . $self->lf() .
         $self->indent(0) . "<head>" . $self->lf() .
-            $self->indent(1) . '<title>' . $self->escape($self->{strTitle}) . '</title>' . $self->lf() .
-            $self->indent(1) . "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></meta>" . $self->lf();
+            $self->indent(1) . "\n<title>" .
+            $self->indent(2) . $self->escape($self->{strTitle}) . "\n" .
+            $self->indent(1) . '</title>' . $self->lf() .
+            $self->indent(1) . "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"></meta>\n";
 
     if (!$self->{bCompact})
     {
         $strHtml .=
-            # $self->indent(1) . "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></meta>" . $self->lf() .
-            $self->indent(1) .
-                '<meta property="og:site_name" content="' . $self->escape($self->{strName}) . '"></meta>' . $self->lf() .
-            $self->indent(1) .
-                '<meta property="og:title" content="' . $self->escape($self->{strTitle}) . '"></meta>' . $self->lf() .
-            $self->indent(1) . '<meta property="og:type" content="website"></meta>' . $self->lf();
+            # $self->indent(1) . "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></meta>\n" .
+            $self->indent(1) . '<meta property="og:site_name" content="' . $self->escape($self->{strName}) . "\"></meta>\n" .
+            $self->indent(1) . '<meta property="og:title" content="' . $self->escape($self->{strTitle}) . "\"></meta>\n" .
+            $self->indent(1) . "<meta property=\"og:type\" content=\"website\"></meta>\n";
 
         if (defined($self->{strFavicon}))
         {
-            $strHtml .=
-                $self->indent(1) . "<link rel=\"icon\" href=\"$self->{strFavicon}\" type=\"image/png\"></link>" . $self->lf();
+            $strHtml .= $self->indent(1) . "<link rel=\"icon\" href=\"$self->{strFavicon}\" type=\"image/png\"></link>\n";
         }
 
         if (defined($self->{strLogo}))
         {
             $strHtml .=
-                $self->indent(1) . "<meta property=\"og:image:type\" content=\"image/png\"></meta>" . $self->lf() .
-                $self->indent(1) . "<meta property=\"og:image\" content=\"{[backrest-url-base]}/$self->{strLogo}\"></meta>" .
-                $self->lf();
+                $self->indent(1) . "<meta property=\"og:image:type\" content=\"image/png\"></meta>\n" .
+                $self->indent(1) . "<meta property=\"og:image\" content=\"{[backrest-url-base]}/$self->{strLogo}\"></meta>\n";
         }
 
         if (defined($self->{strDescription}))
         {
             $strHtml .=
+                $self->indent(1) . '<meta name="description" content="' . $self->escape($self->{strDescription}) . "\"></meta>\n" .
                 $self->indent(1) .
-                    '<meta name="description" content="' . $self->escape($self->{strDescription}) . '"></meta>' . $self->lf() .
-                $self->indent(1) .
-                    '<meta property="og:description" content="' . $self->escape($self->{strDescription}) . '"></meta>' . $self->lf();
+                    '<meta property="og:description" content="' . $self->escape($self->{strDescription}) . "\"></meta>\n";
         }
     }
 
@@ -259,14 +279,12 @@ sub htmlGet
             $strCss =~ s/\/\*.*?\*\///g;
         }
 
-        $strHtml .=
-            $self->indent(1) . '<style type="text/css">' . $self->lf() . trim($strCss) . $self->lf() .
-            $self->indent(1) . '</style>' . $self->lf();
+        $strHtml .= $self->indent(1) . "<style type=\"text/css\">\n" . trim($strCss) . "\n" . $self->indent(1) . "</style>\n";
     }
     else
     {
         $strHtml .=
-            $self->indent(1) . "<link rel=\"stylesheet\" href=\"default.css\" type=\"text/css\"></link>" . $self->lf();
+            $self->indent(1) . "<link rel=\"stylesheet\" href=\"default.css\" type=\"text/css\"></link>\n";
     }
 
     $strHtml .=

@@ -1,20 +1,29 @@
 /***********************************************************************************************************************************
-CIFS Storage
+Parse Error Yaml
 ***********************************************************************************************************************************/
-#ifndef STORAGE_CIFS_STORAGE_H
-#define STORAGE_CIFS_STORAGE_H
+#ifndef BUILD_ERROR_PARSE_H
+#define BUILD_ERROR_PARSE_H
 
-#include "storage/storage.h"
-
-/***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-#define STORAGE_CIFS_TYPE                                           STRID5("cifs", 0x999230)
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Constructors
+Types
 ***********************************************************************************************************************************/
-Storage *storageCifsNew(
-    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction);
+typedef struct BldErrError
+{
+    const String *const name;                                       // Name
+    const unsigned int code;                                        // Code
+} BldErrError;
+
+typedef struct BldErr
+{
+    const List *const errList;                                      // Command list
+} BldErr;
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Parse error.yaml
+BldErr bldErrParse(const Storage *const storageRepo);
 
 #endif

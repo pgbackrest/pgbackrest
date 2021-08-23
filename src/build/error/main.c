@@ -1,13 +1,13 @@
 /***********************************************************************************************************************************
-Auto-Generate Command and Option Configuration Enums, Constants and Data
+Auto-Generate Errors
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
 #include "common/log.h"
 #include "storage/posix/storage.h"
 
-#include "build/config/parse.h"
-#include "build/config/render.h"
+#include "build/error/parse.h"
+#include "build/error/render.h"
 
 int
 main(int argListSize, const char *argList[])
@@ -34,9 +34,9 @@ main(int argListSize, const char *argList[])
         pathRepo = strPath(STR(currentWorkDir));
     }
 
-    // Render config
+    // Render error
     const Storage *const storageRepo = storagePosixNewP(pathRepo, .write = true);
-    bldCfgRender(storageRepo, bldCfgParse(storageRepo));
+    bldErrRender(storageRepo, bldErrParse(storageRepo));
 
     return 0;
 }

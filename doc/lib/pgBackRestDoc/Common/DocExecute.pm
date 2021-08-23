@@ -60,16 +60,6 @@ foreach my $strKey (sort(keys(%{$rhConfigDefineIndex})))
             {
                 $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_REQUIRED} = false;
             }
-
-            if (defined($rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}) &&
-                defined($rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION}))
-            {
-                $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION} =
-                    "${strPrefix}${iIndex}" .
-                    substr(
-                        $rhConfigDefineIndex->{$strKeyNew}{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_OPTION},
-                        length($strPrefix));
-            }
         }
 
         delete($rhConfigDefineIndex->{$strKey});

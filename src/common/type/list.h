@@ -46,6 +46,9 @@ typedef int ListComparator(const void *item1, const void *item2);
 // General purpose list comparator for Strings or structs with a String as the first member
 int lstComparatorStr(const void *item1, const void *item2);
 
+// General purpose list comparator for zero-terminated strings or structs with a zero-terminated string as the first member
+int lstComparatorZ(const void *item1, const void *item2);
+
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/

@@ -320,8 +320,8 @@ P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/00000001000000010
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 100%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
-P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
+P00   INFO: full backup size = 48MB, file total = 6
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=<redacted> --repo1-gcs-key-type=token --repo1-path=/ --repo1-retention-full=2 --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
@@ -478,8 +478,8 @@ P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/00000001000000010
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 100%) checksum 4969435f3b36bfaa0f5a486bef97f1988a135520
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000002.ready (0B, 100%)
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/000000010000000100000001.ready (0B, 100%)
-P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
+P00   INFO: full backup size = 48MB, file total = 6
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=<redacted> --repo1-gcs-key-type=token --repo1-path=/ --repo1-retention-full=2 --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db

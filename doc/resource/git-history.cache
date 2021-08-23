@@ -1,5 +1,753 @@
 [
     {
+        "commit": "3787cf78032cb928f27044c13b6f50d57bf06d20",
+        "date": "2021-08-23 06:52:51 -0400",
+        "subject": "v2.35: Binary Protocol"
+    },
+    {
+        "commit": "ad5e06399008118d81f41fb103ef2e980343899b",
+        "date": "2021-08-19 17:25:57 -0400",
+        "subject": "Update containers for new PostgreSQL releases.",
+        "body": "Also add a package that is required for older Debian versions."
+    },
+    {
+        "commit": "590e75996891ff1328a4a8f58bf833f4b34b6bf6",
+        "date": "2021-08-19 11:57:37 -0400",
+        "subject": "Rename stringz.h to stringZ.h.",
+        "body": "This is more consistent with our file naming conventions."
+    },
+    {
+        "commit": "0354144c900eb52d0fa9a9166704d225a968eab5",
+        "date": "2021-08-19 11:35:49 -0400",
+        "subject": "Add instructions for dev builds to stress test in user guide."
+    },
+    {
+        "commit": "9b45df70573d54c3a1aa81848642460a9ddc5b28",
+        "date": "2021-08-19 11:12:56 -0400",
+        "subject": "Rearrange MemContext struct members to save space on 64-bit.",
+        "body": "On 64-bit systems this saves a bit of space (10%) due to alignment. 32-bit systems see no benefit.\n\nAlso add tests for the individual struct sizes."
+    },
+    {
+        "commit": "bab7a01f9971b7b45e384141f1777fc86853937e",
+        "date": "2021-08-19 11:00:17 -0400",
+        "subject": "Mark contextTop static.",
+        "body": "This variable is not used outside of the memContext module so no need for it to be extern'd."
+    },
+    {
+        "commit": "bb1ca1d3099db2ccb5cdd11a90a9d62ecabc009b",
+        "date": "2021-08-18 13:32:16 -0400",
+        "subject": "Change ASSERT() to CHECK() in infoLoad().",
+        "body": "Coverity complains that \"Argument loaded of ASSERT() has a side effect because the variable is volatile. The containing function might work differently in a non-debug build.\"\n\nIt does not look like this is a real issue, but a CHECK() here is not too expensive for production so change it to silence Coverity.\n\nAlso fix a typo in the comment."
+    },
+    {
+        "commit": "9ddfcd6a6de5cfd8acf1470216365d6951a692b8",
+        "date": "2021-08-18 13:23:24 -0400",
+        "subject": "Remove dead loop in verifyArchive().",
+        "body": "This loop has been dead since the code was initially committed in ad79932b. It looks like it was used at one point but became dead when the enclosing if-else was added during development.\n\nFound by Coverity."
+    },
+    {
+        "commit": "56ad42765311dd399b3b76025ac639c98bcd6027",
+        "date": "2021-08-18 10:52:35 -0400",
+        "subject": "Add variables for build paths in the user guide.",
+        "body": "This eliminates repetition of the build path so it can be changed more easily.\n\nAlso create the build path explicitly rather than suggest that the user do it."
+    },
+    {
+        "commit": "944a9e8ff10747a4d15187649fcc84308b7d0db9",
+        "date": "2021-08-18 10:17:10 -0400",
+        "subject": "Reduce memory requirements of stress test section in the user guide.",
+        "body": "The standby memory was set to 1024mb in 86a651f9 to compensate for a memory leak in restore. The leak has been fixed (or at least mitigated) in e1e6e475 and 4fb6384f so the memory can be reduced to 512mb, the same as the primary."
+    },
+    {
+        "commit": "d69a5963587136b91abb318aa56efc7249c14a64",
+        "date": "2021-08-18 09:48:37 -0400",
+        "subject": "Fix infinite loop in protocolServerProcess() on error.",
+        "body": "The error was written to the client and then another command read. If the write did not fail then the loop would never exit.\n\nInstead exit on any error that is not raised by the command handler as we can pretty safely assume this is an unrecoverable protocol error. The command handler might throw a protocol error itself, but this should be caught in the next read or write in the main loop."
+    },
+    {
+        "commit": "9a6afe3fc16fcb0685613308e47c19f6b11e7e35",
+        "date": "2021-08-18 09:32:20 -0400",
+        "subject": "Fix EOF behavior of ioReadSmall() to match ioRead().",
+        "body": "If the buffer was not full at EOF then ioReadSmall() would get stuck in an infinite loop. Instead, return on EOF even if the buffer is not full.\n\nThis is not an issue in released versions since ioReadSmall() is not being used.\n\nAlso fix a comment typo."
+    },
+    {
+        "commit": "4fb6384f10f6cd26c422ab9b24feb5ae0ebeeee9",
+        "date": "2021-08-18 08:18:11 -0400",
+        "subject": "Fix more memory leaks introduced by the binary protocol in 6a1c0337.",
+        "body": "Either of these temp mem context blocks fixes the issue of command packs not being freed, but it seems like a good idea to have both in case the code changes."
+    },
+    {
+        "commit": "e1e6e47535db09ea20b5f1826ea9e143ac8d614b",
+        "date": "2021-08-18 08:07:41 -0400",
+        "subject": "Add temp mem context reset blocks in job processing loops.",
+        "body": "Restore definitely needed to be doing cleanup, just as backup does. The archive-get, archive-push, and verify loop did not seem to be a significant source of leaks but that could change in the future so add resets.\n\nAdd temp mem context blocks in the job callbacks where they were missing.\n\nAlso switch to the prior context when creating a job, if possible, to save a move."
+    },
+    {
+        "commit": "eca2fc69589cd44f7c1a43206553984adde5cfb1",
+        "date": "2021-08-12 12:38:07 -0400",
+        "subject": "Update config/parse test to use standard patterns."
+    },
+    {
+        "commit": "e17865a03a5451b82a101557d400ff223d104383",
+        "date": "2021-08-12 11:57:17 -0400",
+        "subject": "Update protocol/protocol test to use standard patterns."
+    },
+    {
+        "commit": "86a651f9b03890af4f79076600e983bba624f8c5",
+        "date": "2021-08-12 07:49:59 -0400",
+        "subject": "Add optional stress test section to the user guide.",
+        "body": "This is intended to provide pre-release stress-testing. Include container memory limits to help check for memory leaks.\n\nAlso add parallelism to make for faster builds."
+    },
+    {
+        "commit": "a0bdfa436c9e1c2723be905ebe5cef7809a26244",
+        "date": "2021-08-11 13:39:36 -0400",
+        "subject": "Log backup file total and restore size/file total.",
+        "body": "The backup size was a bit off because it did not include any files (e.g. backup_label, WAL files) that were added to the manifest after the main copy. To fix this move the log message to the very end of the backup.\r\n\r\nAdd size/file total log message to restore since it did not exist before."
+    },
+    {
+        "commit": "6ab18dc0fa42885aea8eb9405ab0a943c2d49a71",
+        "date": "2021-08-11 12:59:25 -0400",
+        "subject": "Rearrange backup documentation in user guide.",
+        "body": "Remove the \"Automatic Stop Option\" section since it only applies to PostgreSQL <= 9.6, which will soon be EOL. Since we no longer build the user guide for PostgreSQL < 10 this section was no longer being tested. The stop-auto option is still documented in the reference.\r\n\r\nMove the \"Fast Start Option\" to \"Quick Start - Perform Backup\". This is a commonly-used option so it makes sense to mention it earlier. This also makes the backups run more quickly. In the worst case, backups in \"Quick Start - Perform Backup\" could take minutes to start\r\n\r\nMove the \"Archive Timeout\" section to \"Quick Start - Perform Backup\" since it is the last section in \"Backup\"."
+    },
+    {
+        "commit": "f716cb6f4f9765baa03f71b5563786d79d9f04a2",
+        "date": "2021-08-10 14:22:38 -0400",
+        "subject": "Fix use after free introduced by the binary protocol in 6a1c0337.",
+        "body": "The user and group were stored in a temp reset mem context so they could get freed if there were enough files to trigger the reset in storageRemoteInfoList().\n\nAllocate user and group in a mem context provided by the caller to prevent them being freed prematurely."
+    },
+    {
+        "commit": "6789ec420ed375663469efcd5957be8d3746efad",
+        "date": "2021-08-10 10:37:37 -0400",
+        "subject": "Add additional checks to performance/storage test.",
+        "body": "The storageInfoList() test was broken by 54c4eb0c when the remote was changed to use writeable storage. Since the test driver was being injected into the wrong location, new default storage was created and the test effectively did nothing but still \"succeeded\".\n\nTo prevent this type of regression, add checks to ensure the expected test driver is being used and the callback runs the expected number of times."
+    },
+    {
+        "commit": "0eae815ef4185bbf8bfa27856b531cc08db69d4b",
+        "date": "2021-08-09 17:29:09 -0400",
+        "subject": "Protect against mixed FUNCTION_TEST* and FUNCTION_LOG* macros.",
+        "body": "If the macros are mixed then the debug stack may not be cleaned up correctly. Add variables to ensure that the macros cannot be mixed.\n\nFix cases where the macros were mixed and add one missing semicolon."
+    },
+    {
+        "commit": "c8492aac41f29d8a0c29d7b70d1a5bf4b370965f",
+        "date": "2021-08-09 17:11:39 -0400",
+        "subject": "Cleanup inherited clients in protocol test harness.",
+        "body": "Cleanup all clients inherited from the parent process so they cannot be accidentally used to send messages to servers that do not belong to this process.\n\nWe need to do this carefully so that exit commands are not sent and processes are not terminated, so clear the mem context callback on each object before freeing it."
+    },
+    {
+        "commit": "71b654fc29497319862fe01c3917bbc353cc6dd9",
+        "date": "2021-08-09 16:56:06 -0400",
+        "subject": "Fix links and update child process example.",
+        "body": "Removed colon from example titles to fix links, fixed test.yml link, and updated the example for the parent/child test process to use the latest macros instead of sleep()."
+    },
+    {
+        "commit": "f653b59664e757a0e3da63cc8462deafe2d9e0ef",
+        "date": "2021-08-09 16:35:48 -0400",
+        "subject": "Update db/db test to use standard patterns."
+    },
+    {
+        "commit": "2d5cbfc73142fa99df609aa23b64db5342e73c88",
+        "date": "2021-08-09 09:28:17 -0400",
+        "subject": "Fix memory leaks introduced by the binary protocol in 6a1c0337.",
+        "body": "Additional buffers were being allocated for the protocol messages but not being freed.\n\nMost of the allocations were fairly harness, but storageRemoteOpenReadProtocol() and storageWriteRemote() were problematic because they were allocating (but not freeing) buffers equal to the transfer size of the file. Depending on compression, this could be a lot of memory. Though the memory was freed after each file transfer the aggregate of memory used during parallel processing could overwhelm systems with constrained memory.\n\nAlso allocate larger initial buffers in storageRemoteOpenReadProtocol() and storageWriteRemote() so a reallocation is not needed."
+    },
+    {
+        "commit": "33775e53c9160b7ca41c8bcfbf28517f92aff841",
+        "date": "2021-08-06 11:26:12 -0400",
+        "subject": "Fix test added for lstComparatorZ() in 9abf6a27.",
+        "body": "strcmp() returns < 0 and > 0 but these are not guaranteed to be -1 and 1."
+    },
+    {
+        "commit": "06791284618e8840724caa5e65fa535ea0438b61",
+        "date": "2021-08-06 09:48:55 -0400",
+        "subject": "Add linefeeds around content even when not in pretty mode.",
+        "body": "This makes the generated HTML much more readable in diffs because a single word change will not change a line with potentially many tags.\n\nThe output is now slightly larger because of the extra linefeeds."
+    },
+    {
+        "commit": "935de1e7a06d60415c16cad137875b49346337c6",
+        "date": "2021-08-05 14:29:26 -0400",
+        "subject": "Only pass selected repo options to the remote.",
+        "body": "Options for other repos can cause conflicts and should never be used. Each remote can address exactly one repo or pg cluster.\r\n\r\nAlso fix an outdated comment."
+    },
+    {
+        "commit": "155ef85013088a1150a4c15b04af36420d06e9c3",
+        "date": "2021-08-03 14:48:22 -0400",
+        "subject": "Fix incorrect host names in user guide.",
+        "body": "pg1 was incorrectly used instead of {[host-pg1]} which meant the wrong host name was displayed.\r\n\r\nAlso, the install block was installing packages to the build host no matter which host was specified."
+    },
+    {
+        "commit": "07f0a5901f244ccd8f81a07dc95e45744d7e2a55",
+        "date": "2021-08-03 11:48:58 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "74c0c44fc8f2ed04653f1486e421c5d5c9d1b0b0",
+        "date": "2021-08-02 18:32:11 -0400",
+        "subject": "Migrate error code generation to C.",
+        "body": "Parse src/build/error.yaml and write to src/config/error.auto.h and src/config/error.auto.c."
+    },
+    {
+        "commit": "aaa9136820d59d17fa81714d7fda56aa84ae31f3",
+        "date": "2021-08-02 18:16:57 -0400",
+        "subject": "Update error.yaml comment to remove Perl reference."
+    },
+    {
+        "commit": "930fee3a0c94944242e5582a5d1c97908b049c81",
+        "date": "2021-08-02 17:49:05 -0400",
+        "subject": "Move bldStrId() into a C file.",
+        "body": "This function was included in a header but not declared inline, so linker errors happened when the header was included into more than one file.\n\nBecause of the setjmp() in TRY_BEGIN() it can't be inlined so put it in a C file.\n\nAlso add some missing headers."
+    },
+    {
+        "commit": "13de3615678290c820345eadf67cf4cedfaee222",
+        "date": "2021-08-02 17:41:40 -0400",
+        "subject": "Improve comments."
+    },
+    {
+        "commit": "7542eadc9f073cbcb5e1cb1cb33fe451560bd31d",
+        "date": "2021-08-02 14:48:31 -0400",
+        "subject": "Increase timeouts in storage/remote test.",
+        "body": "There have been intermittent failures on f33 (with coverage) but not on u16 (without coverage).\n\nReproducing this reliably has been very difficult, so just try increasing the timeouts. This is based on the observation that tests with coverage take longer than tests without, which may lead the f33 tests to fail if CI is running slower than usual.\n\nThis will not increase the runtime of the test unless there is an error."
+    },
+    {
+        "commit": "4e71c077f1be9665ae7570a8a230e4735c4dd592",
+        "date": "2021-08-02 10:00:42 -0400",
+        "subject": "Clean src path in test.pl before attempting vpath builds.",
+        "body": "If configure/make has been run in the src path it can conflict with tests, which may require different build options.\n\nAlso add a comment when rebuilding for code generation."
+    },
+    {
+        "commit": "c192ec4561fa2f870152b31e034243862d2eed82",
+        "date": "2021-08-02 08:52:49 -0400",
+        "subject": "Fix rsync include list removed from test.pl in 9ee9b1fa.",
+        "body": "This caused the include list to be ignored and all files to be rsync'd, which worked but took a much longer."
+    },
+    {
+        "commit": "2dfca8a61f8305bb94afaf1791af37833e8b0795",
+        "date": "2021-07-30 18:15:07 -0400",
+        "subject": "Remove unused struct member noted in f3f0c64a.",
+        "body": "This variable is used to build the final command role lists, but is not needed after parsing completes."
+    },
+    {
+        "commit": "9abf6a2709e9c1a2cc1c246d8307fd2e2b3d566a",
+        "date": "2021-07-30 18:08:04 -0400",
+        "subject": "Add lstComparatorZ().",
+        "body": "Works just like lstComparatorStr() but with zero-terminated strings."
+    },
+    {
+        "commit": "8bca6946b4771a0d438fe1239ca8cc0a8604efca",
+        "date": "2021-07-30 17:51:56 -0400",
+        "subject": "Add line and column to build yaml error messages.",
+        "body": "This makes it much easier to debug errors in the yaml files."
+    },
+    {
+        "commit": "b47a07b8b9178d2241a9ae06d1a9732337554d21",
+        "date": "2021-07-29 14:40:30 -0400",
+        "subject": "Remove generated config.auto.c file.",
+        "body": "This file duplicated the command list that already exists in parse.auto.c.\n\nCombine the data from config.auto.c into parse.auto.c and adjust the interface functions as needed. Quite a few were able to be moved to parse.c as static."
+    },
+    {
+        "commit": "e32f9e146b11389e3d16feba9665360b73737d66",
+        "date": "2021-07-29 11:09:51 -0400",
+        "subject": "Add check for test path inside repo path.",
+        "body": "If the test path is inside the repo path then it can cause strange issues during testing because the entire repo path is duplicated into the test path so that all tests see a consistent view of the repo.\r\n\r\nAnother solution might be to pick a better test path name and exclude it from the rsync, but this fix at least addresses the immediate issue."
+    },
+    {
+        "commit": "58cc470b3eae5eeb956be6ce6e809e9110ca2dd8",
+        "date": "2021-07-29 08:14:17 -0400",
+        "subject": "Remove code made obsolete by f3f0c64a.",
+        "body": "The code in DocExecute.pm appears to have been obsolete for a long time."
+    },
+    {
+        "commit": "f3f0c64a78e2ac425567d792df204e493ad7bb20",
+        "date": "2021-07-28 19:59:23 -0400",
+        "subject": "Complete migration of config code generation to C.",
+        "body": "This was started in c5ae047e but did not include generation of parse.auto.c.\n\nThe parser has also been improved with better errors and multiple passes to reduce dependency on ordering and produce and cleaner output.\n\nOption order resolution now includes cycle detection."
+    },
+    {
+        "commit": "7517c5fef8bc43464acf961aded8d5ad3f20b52f",
+        "date": "2021-07-28 18:53:10 -0400",
+        "subject": "Fix miscalculation in time option command defaults.",
+        "body": "These defaults were not getting the multiplier so the timeouts were much lower than expected.\n\nSince PostgreSQL retries get/push this was probably not a big deal, but it could be critical in the future for a different time value."
+    },
+    {
+        "commit": "9f3c9496358a88d8ad44a0ff1e6dde265345a9c6",
+        "date": "2021-07-27 14:49:43 -0400",
+        "subject": "Updates to build/config/config.yaml.",
+        "body": "Fix booleans that were set to y rather than true and defaults that were set to true instead of 1. Perl was tolerant of these but C is not.\n\nReorder repo-storage-verify-tls to satisfy inheritance ordering for the dependency."
+    },
+    {
+        "commit": "8ca89fb41f85386666242f6c8fbc7d35db9b96ca",
+        "date": "2021-07-26 14:38:55 -0400",
+        "subject": "Use consistent separator comment spacing in parse.auto.c."
+    },
+    {
+        "commit": "52d4574460455975e8929108080dc89bba6cbc7e",
+        "date": "2021-07-26 12:02:31 -0400",
+        "subject": "Automatically generate option value StringIds in make build-config.",
+        "body": "Remove strIdGenerate() since bldStrId() performs the same function without cluttering the core code. Since bldStrId() is intended to work in non-debug builds, move the validity checks for input strings out of the DEBUG block.\n\nStringIds are generated as 5/6 bit, whichever is most efficient, for each option value. cfgOptionStrIdInternal() has been updated for this logic."
+    },
+    {
+        "commit": "eeaab6a3d192fc788c0f74aadbf4b3de5da52531",
+        "date": "2021-07-23 16:18:50 -0400",
+        "subject": "Update config tests (except parse) to use standard patterns."
+    },
+    {
+        "commit": "947c7a84cb37d09ab925785ca7670c970e32b8a3",
+        "date": "2021-07-23 10:35:36 -0400",
+        "subject": "Refactor cmdLocal()/cmdRemote() to accept a ProtocolServer object.",
+        "body": "This allows a local/remote to be started independently of server initialization, which will be useful for implementing new transport types, e.g. TLS.\n\nAlso remove some dead code in localTest.c."
+    },
+    {
+        "commit": "0999de0279fabf35af80396a9a8d35546ec02d53",
+        "date": "2021-07-23 08:32:30 -0400",
+        "subject": "Move noop from protocolClientNew() to local/remote initialization.",
+        "body": "protocolServerNew() does not automatically process a noop so this made the handshake in the constructors asymmetric. This made testing a bit confusing since an extra noop was needed when cmdLocal()/cmdRemote() were not called (since they processed the noop sent by protocolClientNew()).\n\nThe extra noops also make complex protocol negotiation (coming in a future commit) more complicated and slower because of the additional round trips."
+    },
+    {
+        "commit": "4c9ddf5ef25d0f441e20e918f57c1ec79218cfdb",
+        "date": "2021-07-22 18:17:08 -0400",
+        "subject": "Update storage tests to use standard patterns.",
+        "body": "The storage tests were not modified to the HRN_STORAGE_* nor TEST_STORAGE_* macros as these test are testing the storage drivers.\r\n\r\nNote that posixTest.c removed an extraneous #endif // TEST_CONTAINER_REQUIRED and #ifdef TEST_CONTAINER_REQUIRED.\r\n\r\nThis PR includes all files in the storage/* test directory, namely: azureTest.c, cifsTest.c, gcsTest.c, posixTest.c, remoteTest.c, s3Test.c"
+    },
+    {
+        "commit": "3a37482de90e132770bf76514baeef907f0c5d80",
+        "date": "2021-07-22 15:54:30 -0400",
+        "subject": "Update db test module error for newer libpq versions.",
+        "body": "PostgreSQL 14 libpq throws a more detailed error, so adjust the regular expression to handle the old and the new errors."
+    },
+    {
+        "commit": "eb98b8d2db94488a47df5727aff6d456869cbaae",
+        "date": "2021-07-21 13:19:09 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "e3d05e2b4aa80149219b6d49a3136b34fa268127",
+        "date": "2021-07-21 13:14:06 -0400",
+        "subject": "Update contributing documentation and add pull request template."
+    },
+    {
+        "commit": "46992acd800f7d4fed055a9236f536f2b0f1b0a7",
+        "date": "2021-07-20 15:43:48 -0400",
+        "subject": "Update Vagrantfile box version."
+    },
+    {
+        "commit": "49925087644c76df005828eb27c24f503a09b20b",
+        "date": "2021-07-20 13:30:17 -0400",
+        "subject": "Update command/restore test to use standard patterns."
+    },
+    {
+        "commit": "9ee9b1fad6fc5aa8f34b0b80d0a9aa8d7e166c40",
+        "date": "2021-07-20 12:01:10 -0400",
+        "subject": "Remove test.pl --smart, --dev, and --dev-test options.",
+        "body": "--smart is now the default mode. Since --dev is now just an alias for --no-optimize, remove it. --dev-test has been a noop for a while, so this seems like a good time to remove it.\n\nAlso make the C auto-generator skip writing files that have not changed to avoid updating the timestamp."
+    },
+    {
+        "commit": "1522cb4ed2c493739dfac797fd4cd20e94cbc5ec",
+        "date": "2021-07-19 15:21:40 -0400",
+        "subject": "Allow NULL path in HRN_STORAGE_PATH_REMOVE() macro.",
+        "body": "Update command/backup test to pass NULL where appropriate."
+    },
+    {
+        "commit": "a6cdf5b22f0eed53f33bbd84478af0542c81af7d",
+        "date": "2021-07-19 10:47:49 -0400",
+        "subject": "Update command/repo test to use standard patterns."
+    },
+    {
+        "commit": "ebe5848494d4e37a9c86f1fafb5b3453c1f425a6",
+        "date": "2021-07-19 09:51:11 -0400",
+        "subject": "Update command/local and command/remote tests to use standard patterns.",
+        "body": "Note that the logging output display of a parent/child test may look jumbled on some systems since the child and parent are attempting to log information at the same time. This is not an issue with the actual test, rather a harness issue that would be beyond the scope of this project to fix."
+    },
+    {
+        "commit": "c5ae047e763f01a520286f9f4de7a85afba53942",
+        "date": "2021-07-18 19:02:01 -0400",
+        "subject": "Partial migration of config code generation to C.",
+        "body": "Parse enough of config.yaml to auto-generate config.auto.h and config.auto.c.\n\nThis commit implements most of the infrastructure needed to migrate the rest of the build code to C, but each set of auto-generated files will present its own challenges.\n\nThe build is now dependent on libyaml. At this point there is no need for a hard requirement, but that will come soon so it seems better to add the dependency now."
+    },
+    {
+        "commit": "18ffec72da7f44b08343310d2a3b72d11ed5f121",
+        "date": "2021-07-18 18:31:43 -0400",
+        "subject": "Update order of configuration options.",
+        "body": "The upcoming C parser requires that options be in dependency order, i.e. inherited options must come before the options that inherit them.\n\nThis change has been separated to demonstrate that it does no affect the auto-generated code."
+    },
+    {
+        "commit": "6397d735359b459a7c0c094226f266fe39234318",
+        "date": "2021-07-18 17:29:20 -0400",
+        "subject": "Update test container OS versions.",
+        "body": "Update Ubuntu 12.04 to 16.04. Version 16.04 is recently EOL but testing on an old version is beneficial.\nUpdate Ubuntu 18.04 to 20.04.\nUpdate Fedora 32 to 33. Version 34 would have been preferred but there were some build issues, i.e. the default shell did not work with configure, and after ksh was installed configure locked up.\n\nAdd --no-install-recommends to apt-get commands to save a bit of time and space.\n\nUpdate test Dockerfile to run in multiple steps. This makes the container larger but also makes rebuilding after changes faster. The --squash option may be used to keep the container small.\n\nRemove obsolete casts in protocol/parallel module. These casts were included in the original migration because Ubuntu 12.04 32-bit gcc required them, but Ubuntu 16.04 32-bit gcc complains. There is no production issue here since at this point in the code the file descriptors are guaranteed to be >= 0."
+    },
+    {
+        "commit": "81602f1593927d34f5a0f547e2a633ac224a4b3d",
+        "date": "2021-07-17 11:09:53 -0400",
+        "subject": "Remove test.pl --vm-host option.",
+        "body": "This option was once used to optimize bin builds but has been defunct for some time."
+    },
+    {
+        "commit": "d57299ada8e4e275ed3ee18ca4d7f6d264542154",
+        "date": "2021-07-16 13:07:16 -0400",
+        "subject": "Allow NULL path in TEST_STORAGE_LIST() macro."
+    },
+    {
+        "commit": "117ffe88965fd60ce3dcb328e9d28503870af05a",
+        "date": "2021-07-15 17:51:48 -0400",
+        "subject": "Update command/help test to use standard patterns.",
+        "body": "In the first test (helpRenderSplitSize) added test for empty list and in that and some other tests, the test comment was updated to clarify a bit more what the actual tests is trying to accomplish.\r\n\r\nNote that help test parameters can only use the harnessConfig system when testing option values that have been set since options passed to the help command are not \"set\" options."
+    },
+    {
+        "commit": "4ad0bbda53b34688146f14d130cf0e53c8dd650f",
+        "date": "2021-07-15 17:00:20 -0400",
+        "subject": "Update command/backup tests to use standard patterns.",
+        "body": "Includes backup and backupCommon tests.\r\n\r\nSome tests in backupTest were split out where they were originally combined into a single boolean check - which made it difficult to determine which part of the conditional failed.\r\n\r\nString values were also removed where they were no longer needed."
+    },
+    {
+        "commit": "cdc89fc9759f1ac37938219b76c89e1c3a82ba0a",
+        "date": "2021-07-15 16:05:32 -0400",
+        "subject": "Allow NULL path in HRN_STORAGE_PATH_CREATE() macro."
+    },
+    {
+        "commit": "25508a48e0d3b0a3eabc6d1fe858b9c3dc12dc86",
+        "date": "2021-07-15 14:34:47 -0400",
+        "subject": "Add contributors missed in 8e187cdb."
+    },
+    {
+        "commit": "c0feca4673834867d9ea3dbd0434d02a77ed73db",
+        "date": "2021-07-15 13:31:54 -0400",
+        "subject": "Add noParentCreate parameter to HRN_STORAGE_PATH_CREATE() macro."
+    },
+    {
+        "commit": "4a6ca54b47b3a56a96b2c92c6e7267fe24997ce9",
+        "date": "2021-07-15 13:19:49 -0400",
+        "subject": "Remove last vestiges of key replacement missed in b270253a."
+    },
+    {
+        "commit": "563d117967ab9770f9f646c6186d0bc37121611f",
+        "date": "2021-07-15 13:02:41 -0400",
+        "subject": "Allow restore --type=lsn.",
+        "body": "The LSN recovery target was added in PostgreSQL 10 but did not get added to pgBackRest."
+    },
+    {
+        "commit": "8fac1ac50d28557d162fbb251fbbdcc3c9fb950c",
+        "date": "2021-07-15 07:45:06 -0400",
+        "subject": "Loop while waiting for checkpoint LSN to reach replay LSN.",
+        "body": "It is possible for the checkpoint LSN to lag slightly behind the replay LSN until pg_control has been updated.\r\n\r\nAdd a loop to keep checking rather than failing when the checkpoint LSN has not been updated."
+    },
+    {
+        "commit": "a6691c6f615f90195aeb6c1c6657a6afd79a10d3",
+        "date": "2021-07-14 16:06:42 -0400",
+        "subject": "Clarify restore --type behavior in command reference."
+    },
+    {
+        "commit": "d791bb7298b3ef775f77ad79b28185e255037b09",
+        "date": "2021-07-14 14:31:57 -0400",
+        "subject": "Automatically create IoRead/IoWrite interfaces in HRN_FORK*() macros.",
+        "body": "This removes a lot of boiler plate where every instance needs to create these interfaces.\n\nAlso add HRN_FORK_*_NOTIFY*() macros to standardize synchronizing between the parent and child processes.\n\nIn both cases update the tests with the new macros."
+    },
+    {
+        "commit": "be7b8a485b8f36751347e370c7221c40f0e686fd",
+        "date": "2021-07-13 14:28:58 -0400",
+        "subject": "Error in TEST_STORAGE_LIST() when path does not exist."
+    },
+    {
+        "commit": "1ace1ac938ca555273c150fd3d3b402d75e74ce0",
+        "date": "2021-07-13 14:22:53 -0400",
+        "subject": "Improve HRN_FORK*() macros.",
+        "body": "Simplify HRN_FORK_CHILD_BEGIN() by adding optional parameters with the common defaults.\n\nAdd _FD() to macros that retrieve file descriptors to make their purpose clearer."
+    },
+    {
+        "commit": "76cfbf833d113d6251fb8ffe76239d580dcaf947",
+        "date": "2021-07-13 11:58:23 -0400",
+        "subject": "Rename HARNESS_FORK*() macros to HRN_FORK*().",
+        "body": "This matches the new pattern for harness macro naming and is shorter."
+    },
+    {
+        "commit": "d6797009f8e316e5dc778d42db609f7bd81225ee",
+        "date": "2021-07-13 11:13:57 -0400",
+        "subject": "Add ioFdReadNewOpen() and ioFdWriteNewOpen().",
+        "body": "These functions construct and open in one call, which allows them to be used as function parameters."
+    },
+    {
+        "commit": "f70ddc16d7a12a41f3b757424b73d1f244400d16",
+        "date": "2021-07-13 07:09:55 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "26dd9188568481815e0e47f19c2acd32d79d9f84",
+        "date": "2021-07-12 15:36:52 -0400",
+        "subject": "Add compressType parameter to TEST_STORAGE_GET() macro.",
+        "body": "Also remove duplicate extension output in HRN_STORAGE_PUT()."
+    },
+    {
+        "commit": "f2ec4e00a4c4c388a8f1b094381fd566a3dc9aa7",
+        "date": "2021-07-09 15:59:17 -0400",
+        "subject": "Add cipher parameters to TEST_STORAGE_GET() macro."
+    },
+    {
+        "commit": "3c8819e10f9eff89195566e7e02f349373f5c4c7",
+        "date": "2021-07-09 14:16:10 -0400",
+        "subject": "Add CodeQL static code analysis.",
+        "body": "Also fix some minor issues identified, specifically using gmtime_r()/localtime_r() vs gmtime()/localtime()."
+    },
+    {
+        "commit": "849ab343aa10d66fbbd27cad407eff981c186d06",
+        "date": "2021-07-09 13:50:35 -0400",
+        "subject": "Change level of backup/restore copied file logging to detail.",
+        "body": "The log level for copied files in the backup/restore commands has been changed to detail. This makes the info log level less noisy but if these messages are required then set the log level for the backup/restore commands to detail."
+    },
+    {
+        "commit": "a7a041e2412b598ccc01c37123dd6dc13d46cae9",
+        "date": "2021-07-09 11:18:45 -0400",
+        "subject": "Fix flapping coverage in storage/remote test.",
+        "body": "The protocol does not put an end message on exit so there was a race between the main process exiting and the remote processes exiting. If the main process exited first then the remote processes might not write coverage data causing coverage to fail.\n\nFix by calling exit explicitly at the end of the test and update the harness to put an end message so the exits are synchronized."
+    },
+    {
+        "commit": "3369440eef7eb67062de6d0c150f999b342f49b3",
+        "date": "2021-07-09 09:07:41 -0400",
+        "subject": "Make pgControlFromBuffer() static.",
+        "body": "This function is no longer used externally."
+    },
+    {
+        "commit": "8bb0b28455d59ef884eab7ab25a91f988adbab81",
+        "date": "2021-07-08 16:34:11 -0400",
+        "subject": "Update command/control and command/command tests to use standard patterns.",
+        "body": "In the commandTest the HRN_STORAGE_REMOVE replacement uses .errorOnMissing when the code being tested added the file. The reason for this is 3 fold:\r\n\r\n1. to ensure that an inadvertent typo in the path/file name does not go undetected,\r\n2. to ensure that nothing else has removed the file prior to the call, and\r\n3. consistency\r\n\r\nAlso, added \"stanza\" to comment when a stanza stop file is removed vs an \"all\" stop file."
+    },
+    {
+        "commit": "8e1807cdbe08a6e059ff79220247cf4b3c058979",
+        "date": "2021-07-08 13:06:52 -0400",
+        "subject": "Detect errors in S3 multi-part upload finalize.",
+        "body": "Multi-part upload may fail despite returning an HTTP success code. Check for the ETag field in the result and if not present consider the upload to have failed. This will trigger a retry at the local job level."
+    },
+    {
+        "commit": "43b874628c86ec4fe297dbd5cab5bd3f62b8639b",
+        "date": "2021-07-08 11:30:23 -0400",
+        "subject": "Fix detection of circular symlinks.",
+        "body": "Links were followed before they were checked for validity so a circular link would send the manifest build into endless recursion leading to a crash. Fix by moving the recursion after the link check.\r\n\r\nNote that this issue has existed since the C migration and was not introduced by the refactor in eba013b."
+    },
+    {
+        "commit": "683933563333f39852676eb44110e7eab91b63fb",
+        "date": "2021-07-08 11:17:13 -0400",
+        "subject": "Increase harness log level to detail in command/backup test.",
+        "body": "Also clean up some unneeded calls to harnessLogLevelReset()."
+    },
+    {
+        "commit": "056a3070e0dba299389c7b5049878d40dd91ec9a",
+        "date": "2021-07-08 10:33:19 -0400",
+        "subject": "Automatically create data directory on restore.",
+        "body": "Data directory creation was added during the C migration, but creation of the base data directory (PGDATA) was prevented by a check migrated from Perl.\r\n\r\nRemove the check and update tests to create the data directory at least once."
+    },
+    {
+        "commit": "34e51ee7b6968d254e0b8c6a0970764ca5cdaa42",
+        "date": "2021-07-08 09:25:42 -0400",
+        "subject": "Allow NULL path in HRN_STORAGE_MODE() macro."
+    },
+    {
+        "commit": "62e8d97af03e7628d5710b17aad1cc31f83d7e69",
+        "date": "2021-07-02 12:22:11 -0400",
+        "subject": "Update command/archive tests to use standard patterns.",
+        "body": "Includes archiveCommon, archiveGet and archivePush.\r\n\r\nAlso fixed a test that was looking in repo instead of repo3 in the original archivePush to use the repo3 path as stated by the comment (line 879 in original tests and line 855 in new tests)."
+    },
+    {
+        "commit": "23bdc3deb62a622713064df3b0777110ebba8723",
+        "date": "2021-07-01 11:50:03 -0400",
+        "subject": "Fix documentation and comment typos.",
+        "body": "Identified using `ag -l | igor`."
+    },
+    {
+        "commit": "6a90d469094ee2697ae4c932349756a54136799d",
+        "date": "2021-06-30 08:51:11 -0400",
+        "subject": "Update info/manifest test to use standard patterns."
+    },
+    {
+        "commit": "39c1c1012013f456e951fc149b0f88cbc5dcbcc0",
+        "date": "2021-06-28 13:28:28 -0400",
+        "subject": "Remove TEST_PATH_REPO, TEST_PATH_PG, and TEST_PATH_SPOOL constants.",
+        "body": "It seems better to use TEST_PATH in combination with a constant string rather than have a number of different path constants. This improves readability and reduces confusion about which constant should be used."
+    },
+    {
+        "commit": "c6208113bfce9d637ca3fd0b35ab28a819c1a83e",
+        "date": "2021-06-28 12:14:26 -0400",
+        "subject": "Add timeModified parameter to HRN_STORAGE_PUT() macro."
+    },
+    {
+        "commit": "065a8c8454d2acdd72c0c71a24d6b8bc09669e18",
+        "date": "2021-06-28 10:58:27 -0400",
+        "subject": "Replace defines with string constants in unit tests.",
+        "body": "For tests already updated as part of the macro-replacement effort, the output tests (TEST_ERROR, TEST_RESULT_LOG, TEST_STORAGE_LIST and TEST_RESULT_STR) have been simplified for readability to remove all but the TEST_PATH constants. The ongoing macro-replacement effort will include these changes.\r\n\r\nUpdated: expireTest, stanzaTest, checkTest, infoTest, verifyTest (infoArchive and infoBackup had no changes)."
+    },
+    {
+        "commit": "fb2d111dcd75021313a64a348959482339bf7f2a",
+        "date": "2021-06-24 16:11:14 -0400",
+        "subject": "Update info/infoBackup test to use standard patterns."
+    },
+    {
+        "commit": "d0f3a3f2af3f66c899ded98b62695547fd267081",
+        "date": "2021-06-24 14:01:03 -0400",
+        "subject": "Add HRN_STORAGE_COPY() macro."
+    },
+    {
+        "commit": "50c129ae9d161aba080a0d2d1b012e6358ac3e40",
+        "date": "2021-06-24 13:57:55 -0400",
+        "subject": "Add expression parameter to TEST_STORAGE_LIST() macro."
+    },
+    {
+        "commit": "6a1c0337ddee9900dda58b7d2fa74d82c0586ed2",
+        "date": "2021-06-24 13:31:16 -0400",
+        "subject": "Binary protocol.",
+        "body": "Switch from JSON-based to binary protocol for communicating with local and remote process. The pack type is used to implement the binary protocol.\r\n\r\nThere are a number advantages:\r\n\r\n* The pack type is more compact than JSON and are more efficient to render/parse.\r\n* Packs are more strictly typed than JSON.\r\n* Each protocol message is written entirely within ProtocolServer/ProtocolClient so is less likely to get interrupted by an error and leave the protocol in a bad state.\r\n* There is no limit on message size. Previously this was limited by buffer size without a custom implementation, as was done for read/writing files.\r\n\r\nSome cruft from the Perl days was removed, specifically allowing NULL messages and stack traces. This is no longer possible in C.\r\n\r\nThere is room for improvement here, in particular locking down the allowed sequence of protocol messages and building a state machine to enforce it. This will be useful for resetting the protocol when it gets in a bad state."
+    },
+    {
+        "commit": "bffb43ea3fe00f445a2fc3c44a07f105cee65b4b",
+        "date": "2021-06-24 12:23:09 -0400",
+        "subject": "Update command/check test to use standard patterns."
+    },
+    {
+        "commit": "17c9ed0ef0380fb14fba9a5299b6618ca8c92c2e",
+        "date": "2021-06-24 08:55:44 -0400",
+        "subject": "Update command/info test to use standard patterns.",
+        "body": "Some tests had to be reordered or updated, as follows:\r\n\r\n* Reordered tests at line 317 and 331 to avoid unnecessary file removal.\r\n\r\n* Change \"stanza found\" test at line 1735 to reflect real-life scenario. Originally this test had the cipher-pass environment key set up which caused the RepoGrp to be 2 but with no valid repo path. This resulted in the repo loops executing for the repo2 but since the path was not defined, the tests just reported \"none\" for cipher which is incorrect since the repo IS encrypted.\r\n\r\n* Moved order of HRN_CFG_LOAD in some tests when able to avoid using storageTest."
+    },
+    {
+        "commit": "ff95eddc369597c76a9ea70ffbada493ed4d1951",
+        "date": "2021-06-23 18:09:46 -0400",
+        "subject": "Update command/verify test to use standard patterns."
+    },
+    {
+        "commit": "8dd882badee76b038dc8b494a1112eb3e18ef678",
+        "date": "2021-06-23 16:20:47 -0400",
+        "subject": "Update info/infoArchive test to use standard patterns."
+    },
+    {
+        "commit": "e697f5705a04ef431aa93d63764b12ff98d696c6",
+        "date": "2021-06-23 13:02:19 -0400",
+        "subject": "Clear error when a CATCH() block finishes.",
+        "body": "It is better to clear errors after the catch block completes rather than leave them set until the next error. This also make is possible to tell when a error is currently being handled, which a function further down the stack might use to modify its behavior. Currently this is only useful in testing, but clearing the error seems like a good idea in general.\r\n\r\nTwo places used errors outside the CATCH() block. Mem context cleanup now uses a FINALLY() which is a better implementation anyway. The error handling in main() now calls exitSafe() from withing the CATCH() block."
+    },
+    {
+        "commit": "7ba5aef7633fde709eafdfa7b6fed736493250c0",
+        "date": "2021-06-23 12:07:19 -0400",
+        "subject": "Add mode parameter to HRN_STORAGE_PUT() macro."
+    },
+    {
+        "commit": "03021c6a17f1374e84ef42614fa1dd2a6be4b64d",
+        "date": "2021-06-14 13:28:27 -0400",
+        "subject": "Update command/stanza test to use standard patterns.",
+        "body": "No core code changes; only changes for stanza-create, stanza-upgrade, and stanza-delete command unit tests."
+    },
+    {
+        "commit": "80d63a5e8bc6e5e6d6e4d75b349a44f2aac70954",
+        "date": "2021-06-12 18:00:59 -0400",
+        "subject": "Ignore mismatched close requests in the pq shim during error processing."
+    },
+    {
+        "commit": "fba043717935babe084ebd8e9e1b7352dc9ff679",
+        "date": "2021-06-12 17:48:35 -0400",
+        "subject": "Improve error handling in db test module.",
+        "body": "Errors could cause segfaults since server objects were freed immediately but client destructors were run much later."
+    },
+    {
+        "commit": "0a65e59b5591718e46a4c331fa5301c41d49155d",
+        "date": "2021-06-11 19:16:25 -0400",
+        "subject": "Update pg-path options in db test module to be valid.",
+        "body": "This allows files to be saved in the paths, which would have failed when they were invalid."
+    },
+    {
+        "commit": "97155bad860010514f06d651ef8103355b346ab8",
+        "date": "2021-06-10 12:40:55 -0400",
+        "subject": "Add mode, Pack, and StringId to the Pack type.",
+        "body": "Add StringList, which is not a primitive type but rather an array of String types.\n\nAlso update pckWriteToLog() to work after pckWriteEnd(), i.e. this->tagStackTop is NULL."
+    },
+    {
+        "commit": "85a55bd40181bad943e224619fc936b046b2c8c1",
+        "date": "2021-06-10 09:25:57 -0400",
+        "subject": "Add pckReadMove() and pckWriteMove().",
+        "body": "Move a PackRead or PackWrite object to a new mem context.\n\nAlso note that these functions may not work as expected with pack objects created by pckReadNewBuf() and pckWriteNewBuf() since the pack object does not have ownership of the passed buffer and cannot move it."
+    },
+    {
+        "commit": "788f7c1f30408b6eb3148cb288b67838e6cb718b",
+        "date": "2021-06-10 09:24:42 -0400",
+        "subject": "Skip sleep in sleepMSec() when sleep time is zero.",
+        "body": "There is no point in sleeping when there is no sleep time.\n\nThe advantage is that callers do not need to perform the check themselves."
+    },
+    {
+        "commit": "5e1a8e6895ec59005a3974ac63ecbbc6832d5244",
+        "date": "2021-06-10 09:21:15 -0400",
+        "subject": "Add error test harness/shim.",
+        "body": "The hrnErrorThrowP() macro allows errors with specified fields to be generated, which simplifies testing.\n\nUpdate the common/exit test to use the new macro."
+    },
+    {
+        "commit": "c5897007c4cb420c1e4111c9f9c14e1e706ec5e9",
+        "date": "2021-06-09 12:41:23 -0400",
+        "subject": "Add HRN_STORAGE_MOVE() macro.",
+        "body": "Update command/expire test to show how it is used."
+    },
+    {
+        "commit": "15dfbf4c1d2fd33daa1a89a644683e80eeae4194",
+        "date": "2021-06-09 12:28:40 -0400",
+        "subject": "Use lower-case names from Azure identifiers in integration tests.",
+        "body": "Azurite, which is used for testing, did not enforce this before so the capital letters were not a problem. Now Azurite enforces the same rules as Azure so use lower-case identifiers instead.\n\nThese names were only used in integration tests so there was no production impact."
+    },
+    {
+        "commit": "c6a8528e3158de3e4ccdba00c7af6d47cc28d073",
+        "date": "2021-06-08 14:51:23 -0400",
+        "subject": "Add optional remove to TEST_STORAGE_EXISTS().",
+        "body": "This allows TEST_STORAGE_EXISTS() to be used in most cases where TEST_STORAGE_REMOVE() was used before.\n\nRename TEST_STORAGE_REMOVE() to HRN_STORAGE_REMOVE() now that is is no longer used as a test. Still allow an error when the file is missing just to help keep tests tidy."
+    },
+    {
+        "commit": "4a075b725287aafe12bb2add89ae4b224dafe2bc",
+        "date": "2021-06-08 12:55:00 -0400",
+        "subject": "Add support for more Pack types.",
+        "body": "Since the pack type was stored in 4 bits, only 15 values were allowed (0 was reserved).\r\n\r\nAllow virtually unlimited types by storing type info in a base-128 encoded integer following the tag when the type bits in the tag are set to 0xF.\r\n\r\nAlso separate the type IDs used in the pack (PackTypeMap) from those presented to the user (PackType). The prior PackType enum exposed implementation details to the user, e.g. pckTypeUnknown."
+    },
+    {
+        "commit": "3f9fbc3c24eab48e7ae2871484ea01273049e601",
+        "date": "2021-06-08 11:00:28 -0400",
+        "subject": "Update command/expire test to use standard patterns.",
+        "body": "The way tests are written has evolved over time. Update the command/expire test to use the new test patterns."
+    },
+    {
+        "commit": "12f81f8933b31d528a04b3640f407c9ff7ce9c45",
+        "date": "2021-06-08 09:56:24 -0400",
+        "subject": "Fix comments.",
+        "body": "The extern'd function should not have duplicated the comment in the header. The static helper needed a comment."
+    },
+    {
+        "commit": "4ccb42bb7a84d17bd708b1a4c117037738ef1f6f",
+        "date": "2021-06-08 08:44:10 -0400",
+        "subject": "Rename param structs to match function names.",
+        "body": "The functions were named with short integer representations (e.g. I32) but the param structs were using longer ones, e.g. UInt32. Shorten the integer representations in the param structs to match.\n\nAlso rename pckReadUInt64Internal() to pckReadU64Internal() for the same reason."
+    },
+    {
+        "commit": "df8276f59f4271a80bcf4f0ca13089864d9b95cb",
+        "date": "2021-06-07 11:53:25 -0400",
+        "subject": "Switch order of remote startup in storage/remote test.",
+        "body": "The pg storage must be started before the repo storage to set the max remotes allowed to 2. The protocol helper expects all remotes to have the same type so we are cheating here a bit, but without this ordering the second remote will never be sent an explicit exit and may not save coverage data."
+    },
+    {
+        "commit": "a76cb57c80026e713886bc3205e9ef60fd1e4070",
+        "date": "2021-06-07 08:48:09 -0400",
+        "subject": "Remove parse.auto.h.",
+        "body": "At one time there was a lot more in this header but it got merged with the enums and constants in config.auto.c, leaving only the ConfigOptionType enum.\n\nAuto-generating the ConfigOptionType enum is not very useful since new option types require code in parse.c."
+    },
+    {
+        "commit": "7a449f0e49df4c03bad8a2c468a3fd5adb1e5732",
+        "date": "2021-06-07 08:18:02 -0400",
+        "subject": "Remove unused command string constants."
+    },
+    {
+        "commit": "a607750be1775fa9f74164f8d3768536b86387f6",
+        "date": "2021-06-07 07:46:51 -0400",
+        "subject": "Handle NULL VariantList in JSON.",
+        "body": "This worked if the Variant was NULL but not if the Variant contained a NULL."
+    },
+    {
+        "commit": "aaca4df983e280f8b2357ba923496f4618c72713",
+        "date": "2021-06-07 07:36:56 -0400",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "a7b1d2b9d00014172edd963229ca4d40a3855da7",
+        "date": "2021-06-07 07:32:34 -0400",
+        "subject": "Begin v2.35 development."
+    },
+    {
         "commit": "d10a99d73b772f221807024abbf61fdc5ca3a800",
         "date": "2021-06-07 06:51:08 -0400",
         "subject": "v2.34: PostgreSQL 14 Support"

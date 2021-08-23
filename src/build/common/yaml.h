@@ -41,6 +41,8 @@ typedef struct YamlEvent
 {
     YamlEventType type;                                             // Type (e.g. scalar)
     const String *value;                                            // Value, when type is scalar
+    size_t line;                                                    // Parse line
+    size_t column;                                                  // Parse column
 } YamlEvent;
 
 /***********************************************************************************************************************************

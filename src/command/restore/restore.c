@@ -2161,7 +2161,11 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 lstRemoveIdx(queue, 0);
 
                 // Assign job to result
-                result = protocolParallelJobMove(protocolParallelJobNew(VARSTR(file->name), command), memContextPrior());
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = protocolParallelJobNew(VARSTR(file->name), command);
+                }
+                MEM_CONTEXT_PRIOR_END();
 
                 // Break out of the loop early since we found a job
                 break;
@@ -2257,17 +2261,24 @@ cmdRestore(void)
         // Process jobs
         uint64_t sizeRestored = 0;
 
-        do
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            unsigned int completed = protocolParallelProcess(parallelExec);
-
-            for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+            do
             {
-                sizeRestored = restoreJobResult(
-                    jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored);
+                unsigned int completed = protocolParallelProcess(parallelExec);
+
+                for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                {
+                    sizeRestored = restoreJobResult(
+                        jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored);
+                }
+
+                // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                MEM_CONTEXT_TEMP_RESET(1000);
             }
+            while (!protocolParallelDone(parallelExec));
         }
-        while (!protocolParallelDone(parallelExec));
+        MEM_CONTEXT_TEMP_END();
 
         // Write recovery settings
         restoreRecoveryWrite(jobData.manifest);
@@ -2337,6 +2348,10 @@ cmdRestore(void)
         // Sync global path
         LOG_DETAIL_FMT("sync path '%s'", strZ(storagePathP(storagePg(), PG_PATH_GLOBAL_STR)));
         storagePathSyncP(storagePgWrite(), PG_PATH_GLOBAL_STR);
+
+        // Restore info
+        LOG_INFO_FMT(
+            "restore size = %s, file total = %u", strZ(strSizeFormat(sizeRestored)), manifestFileTotal(jobData.manifest));
     }
     MEM_CONTEXT_TEMP_END();
 

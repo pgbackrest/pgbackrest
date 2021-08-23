@@ -7,7 +7,7 @@ Debug Routines
 #include "common/assert.h"
 #include "common/stackTrace.h"
 #include "common/type/convert.h"
-#include "common/type/stringz.h"
+#include "common/type/stringZ.h"
 
 /***********************************************************************************************************************************
 Base function debugging macros
@@ -289,6 +289,15 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
 
 #ifdef DEBUG_TEST_TRACE_MACRO
     #define FUNCTION_TEST_BEGIN()                                                                                                  \
+        /* Ensure that FUNCTION_LOG_BEGIN() and FUNCTION_TEST_BEGIN() are not both used in a single function by declaring the */   \
+        /* same variable that FUNCTION_LOG_BEGIN() uses to track logging */                                                        \
+        LogLevel FUNCTION_LOG_LEVEL();                                                                                             \
+        (void)FUNCTION_LOG_LEVEL();                                                                                                \
+                                                                                                                                   \
+        /* Ensure that FUNCTION_TEST_RETURN*() is not used with FUNCTION_LOG_BEGIN*() by declaring a variable that will be */      \
+        /* referenced in FUNCTION_TEST_RETURN*() */                                                                                \
+        bool FUNCTION_TEST_BEGIN_exists;                                                                                           \
+                                                                                                                                   \
         if (stackTraceTest())                                                                                                      \
         {                                                                                                                          \
             STACK_TRACE_PUSH(logLevelDebug);                                                                                       \
@@ -305,6 +314,9 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
         FUNCTION_LOG_PARAM_PP(typeName, param)
 
     #define FUNCTION_TEST_END()                                                                                                    \
+            /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                                                     \
+            (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
+                                                                                                                                   \
             stackTraceTestStart();                                                                                                 \
         }
 
@@ -315,13 +327,23 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
     #define FUNCTION_TEST_RETURN(result)                                                                                           \
         do                                                                                                                         \
         {                                                                                                                          \
+            /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                                                     \
+            (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
+                                                                                                                                   \
             STACK_TRACE_POP(true);                                                                                                 \
             return result;                                                                                                         \
         }                                                                                                                          \
         while (0)
 
     #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
-        STACK_TRACE_POP(true)
+        do                                                                                                                         \
+        {                                                                                                                          \
+            /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                                                     \
+            (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
+                                                                                                                                   \
+            STACK_TRACE_POP(true);                                                                                                 \
+        }                                                                                                                          \
+        while (0)
 #else
     #define FUNCTION_TEST_BEGIN()
     #define FUNCTION_TEST_PARAM(typeMacroPrefix, param)

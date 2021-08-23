@@ -28,6 +28,7 @@ struct StorageRemote
 /**********************************************************************************************************************************/
 typedef struct StorageRemoteInfoData
 {
+    MemContext *memContext;                                         // Mem context used to store values from last call
     time_t timeModifiedLast;                                        // timeModified from last call
     mode_t modeLast;                                                // mode from last call
     uid_t userIdLast;                                               // userId from last call
@@ -94,13 +95,23 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
     if (!strEq(info->user, data->user) && info->user != NULL)                                                       // {vm_covered}
     {
         strFree(data->user);
-        data->user = strDup(info->user);
+
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->user = strDup(info->user);
+        }
+        MEM_CONTEXT_END();
     }
 
     if (!strEq(info->group, data->group) && info->group != NULL)                                                    // {vm_covered}
     {
         strFree(data->group);
-        data->group = strDup(info->group);
+
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->group = strDup(info->group);
+        }
+        MEM_CONTEXT_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -141,10 +152,12 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 
         if (result.exists)
         {
+            StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};
+
             // Read info from protocol into prior context
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                storageRemoteInfoGet(&(StorageRemoteInfoData){0}, read, &result);
+                storageRemoteInfoGet(&parseData, read, &result);
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -191,7 +204,7 @@ storageRemoteInfoList(
         protocolClientCommandPut(this->client, command);
 
         // Read list
-        StorageRemoteInfoData parseData = {0};
+        StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
