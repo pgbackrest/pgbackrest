@@ -290,7 +290,7 @@ cfgLoadUpdateOption(void)
     // it requires a default that depends on another option value and that is not currently possible.
     #define HOST_PORT_TLS                                           8432
 
-    if (cfgOptionValid(cfgOptRepoHostType))
+    if (cfgOptionValid(cfgOptRepoHostPort))
     {
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
@@ -302,11 +302,11 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    if (cfgOptionValid(cfgOptPgHostType))
+    if (cfgOptionValid(cfgOptPgHostPort))
     {
         for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
         {
-            if (cfgOptionIdxStrId(cfgOptPgHostType, pgIdx) == CFGOPTVAL_REPO_HOST_TYPE_TLS &&
+            if (cfgOptionIdxStrId(cfgOptPgHostType, pgIdx) == CFGOPTVAL_PG_HOST_TYPE_TLS &&
                 cfgOptionIdxSource(cfgOptPgHostPort, pgIdx) == cfgSourceDefault)
             {
                 cfgOptionIdxSet(cfgOptPgHostPort, pgIdx, cfgSourceDefault, VARINT64(HOST_PORT_TLS));
