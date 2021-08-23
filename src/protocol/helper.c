@@ -333,31 +333,18 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Start protocol handshake on the bare socket
-        ProtocolServer *const socketServer = protocolServerNew(
-            PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(socketSession),
-            ioSessionIoWrite(socketSession));
+        // Start TLS
+        IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
 
-        // Negotiate TLS if requested
-        ProtocolServerCommandGetResult command = protocolServerCommandGet(socketServer);
+        result = protocolServerNew(
+            PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
+            ioSessionIoWrite(tlsSession));
 
-        if (command.id == PROTOCOL_COMMAND_TLS)
+        // Get parameter list from the client and load it
+        const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
+
+        if (command.id == PROTOCOL_COMMAND_CONFIG)
         {
-            // Acknowledge TLS request. It is very important that the client and server are synchronized here because we need to
-            // hand the bare socket off the TLS and there should not be any data held in the IoRead/IoWrite buffers.
-            protocolServerDataEndPut(socketServer);
-
-            // Start TLS
-            IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
-
-            result = protocolServerNew(
-                PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
-                ioSessionIoWrite(tlsSession));
-
-            // Get parameter list from the client and load it
-            command = protocolServerCommandGet(result);
-            CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
-
             StringList *const paramList = pckReadStrLstP(pckReadNewBuf(command.param));
             strLstInsert(paramList, 0, cfgExe());
             cfgLoad(strLstSize(paramList), strLstPtr(paramList));
@@ -369,12 +356,12 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             ioSessionMove(tlsSession, memContextPrior());
             protocolServerMove(result, memContextPrior());
         }
-        // Else a noop used to ping the server
+        // !!! THIS NEEDS TO BE MOVED UP TO RIGHT AFTER THE CLIENT PRESENTS A CERT
         else
         {
-            // Process noop
             CHECK(command.id == PROTOCOL_COMMAND_NOOP);
-            protocolServerDataEndPut(socketServer);
+            protocolServerDataEndPut(result);
+            result = NULL;
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -620,22 +607,11 @@ protocolRemoteExec(
         {
             ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
 
-            // Open socket
-            IoClient *socketClient = sckClientNew(
-                host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx), timeout);
-            IoSession *socketSession = ioClientOpen(socketClient);
-
-            // Send TLS request
-            ProtocolClient *client = protocolClientNew(
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u socket protocol on '%s'", processId, strZ(host)),
-                PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(socketSession), ioSessionIoWrite(socketSession));
-            protocolClientNoExit(client);
-            protocolClientExecute(client, protocolCommandNew(PROTOCOL_COMMAND_TLS), false);
-            protocolClientFree(client);
-
             // Negotiate TLS
-            helper->ioClient = tlsClientNew(socketClient, host, timeout, false, NULL, NULL);
-            helper->ioSession = ioClientOpenSession(helper->ioClient, socketSession);
+            helper->ioClient = tlsClientNew(
+                sckClientNew(host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx), timeout),
+                host, timeout, false, NULL, NULL);
+            helper->ioSession = ioClientOpen(helper->ioClient);
 
             read = ioSessionIoRead(helper->ioSession);
             write = ioSessionIoWrite(helper->ioSession);
