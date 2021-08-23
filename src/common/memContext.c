@@ -802,10 +802,9 @@ memContextFree(MemContext *this)
             THROW(AssertError, "cannot free inactive context");
 
         // Free child contexts
-        if (this->contextChildListSize > 0)
-            for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
-                if (this->contextChildList[contextIdx] && this->contextChildList[contextIdx]->state == memContextStateActive)
-                    memContextFree(this->contextChildList[contextIdx]);
+        for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
+            if (this->contextChildList[contextIdx] && this->contextChildList[contextIdx]->state == memContextStateActive)
+                memContextFree(this->contextChildList[contextIdx]);
 
         // Set state to freeing now that there are no child contexts.  Child contexts might need to interact with their parent while
         // freeing so the parent needs to remain active until they are all gone.
