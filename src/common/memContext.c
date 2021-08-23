@@ -673,7 +673,7 @@ memContextCurrent(void)
 
 /**********************************************************************************************************************************/
 bool
-memContextFreeing(MemContext *this)
+memContextFreeing(const MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -686,7 +686,7 @@ memContextFreeing(MemContext *this)
 
 /**********************************************************************************************************************************/
 const char *
-memContextName(MemContext *this)
+memContextName(const MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
