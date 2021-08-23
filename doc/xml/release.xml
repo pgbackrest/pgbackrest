@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.35dev" title="UNDER DEVELOPMENT">
+        <release date="2021-08-23" version="2.35" title="Binary Protocol">
             <release-core-list>
                 <p><b>IMPORTANT NOTE</b>: The log level for copied files in the <cmd>backup</cmd>/<cmd>restore</cmd> commands has been changed to <id>detail</id>. This makes the <id>info</id> log level less noisy but if these messages are required then set the log level for the <cmd>backup</cmd>/<cmd>restore</cmd> commands to <id>detail</id>.</p>
 
@@ -63,7 +63,7 @@
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Only pass selected <br-setting>repo</br-setting> options to the remote.</p>
+                        <p>Only pass selected <setting>repo</setting> options to the remote.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -107,7 +107,7 @@
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Allow <cmd>restore</cmd> <br-setting>--type=lsn</br-setting>.</p>
+                        <p>Allow <cmd>restore</cmd> <setting>--type=lsn</setting>.</p>
                     </release-item>
 
                     <release-item>

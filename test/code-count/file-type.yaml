@@ -1,8 +1,4 @@
 # File types for source files in the project
-build/error.yaml:
-  class: build
-  type: yaml
-
 build/lib/pgBackRestBuild/Build.pm:
   class: build
   type: perl
@@ -16,14 +12,6 @@ build/lib/pgBackRestBuild/Config/BuildHelp.pm:
   type: perl
 
 build/lib/pgBackRestBuild/Config/Data.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Error/Build.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Error/Data.pm:
   class: build
   type: perl
 
@@ -187,6 +175,22 @@ src/build/aclocal.m4:
   class: build
   type: make
 
+src/build/common/render.c:
+  class: build
+  type: c
+
+src/build/common/render.h:
+  class: build
+  type: c/h
+
+src/build/common/yaml.c:
+  class: build
+  type: c
+
+src/build/common/yaml.h:
+  class: build
+  type: c/h
+
 src/build/config.guess:
   class: build
   type: make
@@ -199,9 +203,53 @@ src/build/config/config.yaml:
   class: build
   type: yaml
 
+src/build/config/main.c:
+  class: build
+  type: c
+
+src/build/config/parse.c:
+  class: build
+  type: c
+
+src/build/config/parse.h:
+  class: build
+  type: c/h
+
+src/build/config/render.c:
+  class: build
+  type: c
+
+src/build/config/render.h:
+  class: build
+  type: c/h
+
 src/build/configure.ac:
   class: build
   type: make
+
+src/build/error/error.yaml:
+  class: build
+  type: yaml
+
+src/build/error/main.c:
+  class: build
+  type: c
+
+src/build/error/parse.c:
+  class: build
+  type: c
+
+src/build/error/parse.h:
+  class: build
+  type: c/h
+
+src/build/error/render.c:
+  class: build
+  type: c
+
+src/build/error/render.h:
+  class: build
+  type: c/h
 
 src/build/install-sh:
   class: build
@@ -1199,10 +1247,6 @@ src/config/parse.auto.c:
   class: core/auto
   type: c
 
-src/config/parse.auto.h:
-  class: core/auto
-  type: c/h
-
 src/config/parse.c:
   class: core
   type: c
@@ -1863,6 +1907,14 @@ test/src/common/harnessDebug.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessError.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessError.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessFork.h:
   class: test/harness
   type: c/h
@@ -2002,6 +2054,18 @@ test/src/common/harnessTest.h:
 test/src/common/harnessTest.intern.h:
   class: test/harness
   type: c/h
+
+test/src/module/build/commonTest.c:
+  class: test/module
+  type: c
+
+test/src/module/build/configTest.c:
+  class: test/module
+  type: c
+
+test/src/module/build/errorTest.c:
+  class: test/module
+  type: c
 
 test/src/module/command/archiveCommonTest.c:
   class: test/module

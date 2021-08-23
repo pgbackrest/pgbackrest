@@ -68,7 +68,7 @@ docker exec -it doc-repository tail -f /var/log/pgbackrest/demo-backup.log
 docker exec -it doc-pg-standby tail -f /var/log/pgbackrest/demo-restore.log
 ```
 
-Processes can generally be monitored using 'top'. Once `top` is running, press `o` then enter `COMMAND=pgbackrest`. This will filter output to pgbackrest processes
+Processes can generally be monitored using 'top'. Once `top` is running, press `o` then enter `COMMAND=pgbackrest`. This will filter output to pgbackrest processes.
 
 - Check for many log entries in the `archive-push`/`archive-get` logs to ensure aync archiving was enabled:
 ```
