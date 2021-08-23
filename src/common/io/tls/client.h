@@ -10,6 +10,7 @@ This object is intended to be used for multiple TLS sessions so ioClientOpen() c
 #define COMMON_IO_TLS_CLIENT_H
 
 #include "common/io/client.h"
+#include "common/time.h"
 
 /***********************************************************************************************************************************
 Io client type
