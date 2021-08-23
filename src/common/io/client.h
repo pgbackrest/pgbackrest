@@ -50,13 +50,6 @@ ioClientOpen(IoClient *const this)
     return THIS_PUB(IoClient)->interface->open(THIS_PUB(IoClient)->driver);
 }
 
-// Open session from a session
-__attribute__((always_inline)) static inline IoSession *
-ioClientOpenSession(IoClient *const this, IoSession *const ioSession)
-{
-    return THIS_PUB(IoClient)->interface->openSession(THIS_PUB(IoClient)->driver, ioSession);
-}
-
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/

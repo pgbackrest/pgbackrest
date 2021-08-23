@@ -217,13 +217,12 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
-Open connection from a session
+Open connection if this is a new client or if the connection was closed by the server
 ***********************************************************************************************************************************/
+// Helper to open the session
 static IoSession *
-tlsClientOpenSession(THIS_VOID, IoSession *const ioSession)
+tlsClientOpenSession(TlsClient *const this, IoSession *const ioSession)
 {
-    THIS(TlsClient);
-
     FUNCTION_LOG_BEGIN(logLevelTrace)
         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
     FUNCTION_LOG_END();
@@ -240,11 +239,11 @@ tlsClientOpenSession(THIS_VOID, IoSession *const ioSession)
         // of the TLS session but this is likely to result in program termination so it doesn't seem worth coding for.
         cryptoError((tlsSession = SSL_new(this->context)) == NULL, "unable to create TLS session");
 
+        // Create the TLS session
+        result = tlsSessionNew(tlsSession, ioSession, this->timeout);
+
         // Set server host name used for validation
         cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
-
-        // Create the TLS session
-        result = ioSessionMove(tlsSessionNew(tlsSession, ioSession, this->timeout), memContextPrior());
 
         // Verify that the certificate presented by the server is valid
         if (this->verifyPeer)                                                                                       // {vm_covered}
@@ -282,9 +281,6 @@ tlsClientOpenSession(THIS_VOID, IoSession *const ioSession)
     FUNCTION_LOG_RETURN(IO_SESSION, result);
 }
 
-/***********************************************************************************************************************************
-Open connection if this is a new client or if the connection was closed by the server
-***********************************************************************************************************************************/
 static IoSession *
 tlsClientOpen(THIS_VOID)
 {
@@ -363,7 +359,6 @@ static const IoClientInterface tlsClientInterface =
     .type = IO_CLIENT_TLS_TYPE,
     .name = tlsClientName,
     .open = tlsClientOpen,
-    .openSession = tlsClientOpenSession,
     .toLog = tlsClientToLog,
 };
 
