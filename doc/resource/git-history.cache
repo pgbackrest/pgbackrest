@@ -1,5 +1,10 @@
 [
     {
+        "commit": "3787cf78032cb928f27044c13b6f50d57bf06d20",
+        "date": "2021-08-23 06:52:51 -0400",
+        "subject": "v2.35: Binary Protocol"
+    },
+    {
         "commit": "ad5e06399008118d81f41fb103ef2e980343899b",
         "date": "2021-08-19 17:25:57 -0400",
         "subject": "Update containers for new PostgreSQL releases.",
