@@ -683,14 +683,15 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ping server");
 
-                // Connect to server
-                IoClient *socketClient = sckClientNew(STRDEF("localhost"), hrnServerPort(0), cfgOptionUInt64(cfgOptIoTimeout));
-                IoSession *socketSession = ioClientOpen(socketClient);
+                // Connect to server without any verification
+                IoClient *tlsClient = tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("localhost"), 5000, false, NULL, NULL);
+                IoSession *tlsSession = ioClientOpen(tlsClient);
 
                 // Send ping
                 ProtocolClient *protocolClient = protocolClientNew(
-                    PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(socketSession),
-                    ioSessionIoWrite(socketSession));
+                    PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
+                    ioSessionIoWrite(tlsSession));
                 protocolClientNoExit(protocolClient);
                 protocolClientNoOp(protocolClient);
                 protocolClientFree(protocolClient);
