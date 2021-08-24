@@ -45,8 +45,8 @@ Constants
 ***********************************************************************************************************************************/
 #define HRN_SERVER_HOST                                             "tls.test.pgbackrest.org"
 #define HRN_SERVER_FAKE_CERT_PATH                                   "/etc/fake-cert"
-#define HRN_SERVER_FAKE_KEY_FILE                                    HRN_SERVER_FAKE_CERT_PATH "/pgbackrest-test-server.key"
-#define HRN_SERVER_FAKE_CERT_FILE                                   HRN_SERVER_FAKE_CERT_PATH "/pgbackrest-test-server.crt"
+#define HRN_SERVER_FAKE_KEY_FILE                                    HRN_SERVER_FAKE_CERT_PATH "/pgbackrest-test.key"
+#define HRN_SERVER_FAKE_CERT_FILE                                   HRN_SERVER_FAKE_CERT_PATH "/pgbackrest-test.crt"
 
 /***********************************************************************************************************************************
 Send commands to the server
@@ -249,8 +249,8 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             // Else use a certificate from the test path -- tests will need to disable verify
             else
             {
-                param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".crt", hrnPathRepo());
-                param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".key", hrnPathRepo());
+                param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.crt", hrnPathRepo());
+                param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo());
             }
         }
 

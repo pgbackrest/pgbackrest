@@ -14,16 +14,16 @@ openssl req -new -x509 -extensions v3_ca -key pgbackrest-test-ca.key -out pgback
 openssl x509 -in pgbackrest-test-ca.crt -text -noout
 ```
 
-## Generating the Test Key (pgbackrest-test.key)
+## Generating the Server Test Key (pgbackrest-test-server.key)
 
 This key will be used for all server certificates to keep things simple.
 
 ```
 cd [pgbackrest-root]/test/certificate
-openssl genrsa -out pgbackrest-test.key 4096
+openssl genrsa -out pgbackrest-test-server.key 4096
 ```
 
-## Generating the Alt Name Test Certificate (pgbackrest-test-alt-name.crt)
+## Generating the Alt Name Server Test Certificate (pgbackrest-test-alt-name.crt)
 
 This certificate will include alternate names and will only be used in unit tests to check alternate name verification functionality.
 
@@ -35,7 +35,7 @@ openssl x509 -req -in pgbackrest-test-alt-name.csr -CA pgbackrest-test-ca.crt -C
 openssl x509 -in pgbackrest-test-alt-name.crt -text -noout
 ```
 
-## Generating the Test Server Certificate (pgbackrest-test-server.crt)
+## Generating the Server Test Certificate (pgbackrest-test-server.crt/key)
 
 This certificate will be used in unit and integration tests.  It is expected to pass verification but won't be subjected to extensive testing.
 
