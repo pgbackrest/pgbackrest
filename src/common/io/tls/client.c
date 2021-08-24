@@ -217,35 +217,199 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
-Open connection if this is a new client or if the connection was closed by the server
+!!!INIT
 ***********************************************************************************************************************************/
 // Helper to open the session
-static IoSession *
-tlsClientOpenSession(TlsClient *const this, IoSession *const ioSession)
+// !!! STEPS FOR CLIENT CERT PULLED FROM src/interfaces/libpq/fe-secure-openssl.c initialize_SSL()
+static void
+tlsClientInit(SSL *const tlsSession)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
+        FUNCTION_LOG_PARAM_P(VOID, tlsSession);
     FUNCTION_LOG_END();
 
     IoSession *result = NULL;
-    SSL *tlsSession = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Move io session into this mem context
-        ioSessionMove(ioSession, this->memContext);
+        // !!! 1------------------------------------------------------------
+        /* THIS WILL GENERATE AN ERROR
+        * Delegate the client cert password prompt to the libpq wrapper callback
+        * if any is defined.
+        *
+        * If the application hasn't installed its own and the sslpassword
+        * parameter is non-null, we install ours now to make sure we supply
+        * PGconn->sslpassword to OpenSSL instead of letting it prompt on stdin.
+        *
+        * This will replace OpenSSL's default PEM_def_callback (which prompts on
+        * stdin), but we're only setting it for this SSL context so it's
+        * harmless.
+        */
+        if (PQsslKeyPassHook
+            || (conn->sslpassword && strlen(conn->sslpassword) > 0))
+        {
+            SSL_CTX_set_default_passwd_cb(SSL_context, PQssl_passwd_cb);
+            SSL_CTX_set_default_passwd_cb_userdata(SSL_context, conn);
+        }
 
-        // Create internal TLS session. If there is a failure before the TlsSession object is created there may be a leak
-        // of the TLS session but this is likely to result in program termination so it doesn't seem worth coding for.
-        cryptoError((tlsSession = SSL_new(this->context)) == NULL, "unable to create TLS session");
+        // !!! 2------------------------------------------------------------
+        // ??? MIN-MAX TLS VERSION? RATHER HAVE SERVER DECIDE?
 
-        // Create the TLS session
-        result = tlsSessionNew(tlsSession, ioSession, this->timeout);
+        // !!! 3------------------------------------------------------------
+        // ??? IS THIS NEEDED IF THE USER WANTS TO USE THE DEFAULT CA STORE
+		if (SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL) != 1)
+		{
+			char	   *err = SSLerrmessage(ERR_get_error());
 
-        // Set server host name used for validation
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not read root certificate file \"%s\": %s\n"),
+							  fnbuf, err);
+			SSLerrfree(err);
+			SSL_CTX_free(SSL_context);
+			return -1;
+		}
+
+        // !!! 4------------------------------------------------------------
+        // LOAD CRL FILE
+		if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
+		{
+			char	   *fname = NULL;
+			char	   *dname = NULL;
+
+			if (conn->sslcrl && strlen(conn->sslcrl) > 0)
+				fname = conn->sslcrl;
+			if (conn->sslcrldir && strlen(conn->sslcrldir) > 0)
+				dname = conn->sslcrldir;
+
+			/* defaults to use the default CRL file */
+			if (!fname && !dname && have_homedir)
+			{
+				snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
+				fname = fnbuf;
+			}
+
+			/* Set the flags to check against the complete CRL chain */
+			if ((fname || dname) &&
+				X509_STORE_load_locations(cvstore, fname, dname) == 1)
+			{
+				X509_STORE_set_flags(cvstore,
+									 X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+			}
+
+			/* if not found, silently ignore;  we do not require CRL */
+			ERR_clear_error();
+
+        // !!! 5------------------------------------------------------------
+        // LOAD CLIENT CERT. IS THIS OPTIONAL?
+		/*
+		 * Cert file exists, so load it. Since OpenSSL doesn't provide the
+		 * equivalent of "SSL_use_certificate_chain_file", we have to load it
+		 * into the SSL context, rather than the SSL object.
+		 */
+		if (SSL_CTX_use_certificate_chain_file(SSL_context, fnbuf) != 1)
+		{
+			char	   *err = SSLerrmessage(ERR_get_error());
+
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not read certificate file \"%s\": %s\n"),
+							  fnbuf, err);
+			SSLerrfree(err);
+			SSL_CTX_free(SSL_context);
+			return -1;
+		}
+
+        // !!! 6------------------------------------------------------------
+        // LOAD ENGINE (LINE 1117). DO WE NEED THIS? CAN WE ASSUME ALWAYS A FILENAME?
+
+        // !!! 7------------------------------------------------------------
+        // ALREADY EXISTS Set server host name used for validation
         cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
 
-        // Verify that the certificate presented by the server is valid
+        // !!! 8------------------------------------------------------------
+		/* read the client key from file */
+
+		if (stat(fnbuf, &buf) != 0)
+		{
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("certificate present, but not private key file \"%s\"\n"),
+							  fnbuf);
+			return -1;
+		}
+#ifndef WIN32
+		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
+		{
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
+							  fnbuf);
+			return -1;
+		}
+#endif
+
+		if (SSL_use_PrivateKey_file(conn->ssl, fnbuf, SSL_FILETYPE_PEM) != 1)
+		{
+			char	   *err = SSLerrmessage(ERR_get_error());
+
+			/*
+			 * We'll try to load the file in DER (binary ASN.1) format, and if
+			 * that fails too, report the original error. This could mask
+			 * issues where there's something wrong with a DER-format cert,
+			 * but we'd have to duplicate openssl's format detection to be
+			 * smarter than this. We can't just probe for a leading -----BEGIN
+			 * because PEM can have leading non-matching lines and blanks.
+			 * OpenSSL doesn't expose its get_name(...) and its PEM routines
+			 * don't differentiate between failure modes in enough detail to
+			 * let us tell the difference between "not PEM, try DER" and
+			 * "wrong password".
+			 */
+			if (SSL_use_PrivateKey_file(conn->ssl, fnbuf, SSL_FILETYPE_ASN1) != 1)
+			{
+				appendPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not load private key file \"%s\": %s\n"),
+								  fnbuf, err);
+				SSLerrfree(err);
+				return -1;
+			}
+
+			SSLerrfree(err);
+
+		}
+
+        /* verify that the cert and key go together */
+        if (have_cert &&
+            SSL_check_private_key(conn->ssl) != 1)
+        {
+            char	   *err = SSLerrmessage(ERR_get_error());
+
+            appendPQExpBuffer(&conn->errorMessage,
+                            libpq_gettext("certificate does not match private key file \"%s\": %s\n"),
+                            fnbuf, err);
+            SSLerrfree(err);
+            return -1;
+        }
+
+        // !!! 9------------------------------------------------------------
+        // !!! NOT CLEAR IF THIS IS NEEDED SINCE IT JUST RETURNS OK IN PG CODE
+        /*
+        * If a root cert was loaded, also set our certificate verification
+        * callback.
+        */
+        if (have_rootcert)
+            SSL_set_verify(conn->ssl, SSL_VERIFY_PEER, verify_cb);
+
+    FUNCTION_RETURN_VOID();
+}
+
+static void
+tlsClientAuth(SSL *const tlsSession)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace)
+        FUNCTION_LOG_PARAM_P(VOID, tlsSession);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // !!! 10------------------------------------------------------------
+        // ALREADY EXISTS Verify that the certificate presented by the server is valid
         if (this->verifyPeer)                                                                                       // {vm_covered}
         {
             // Verify that the chain of trust leads to a valid CA
@@ -281,6 +445,9 @@ tlsClientOpenSession(TlsClient *const this, IoSession *const ioSession)
     FUNCTION_LOG_RETURN(IO_SESSION, result);
 }
 
+/***********************************************************************************************************************************
+Open TLS session on a socket
+***********************************************************************************************************************************/
 static IoSession *
 tlsClientOpen(THIS_VOID)
 {
@@ -304,13 +471,28 @@ tlsClientOpen(THIS_VOID)
             // Assume there will be no retry
             retry = false;
 
+            SSL *tlsSession = SSL_new(this->context);
+            cryptoError(tlsSession == NULL, "unable to create TLS session");
+
             TRY_BEGIN()
             {
                 // Open the underlying session first since this is mostly likely to fail
                 IoSession *ioSession = ioClientOpen(this->ioClient);
 
-                // Open session
-                result = ioSessionMove(tlsClientOpenSession(this, ioSession), memContextPrior());
+                // Move io session into this mem context
+                ioSessionMove(ioSession, this->memContext);
+
+                // Create the TLS session
+                SSL *tlsSession = SSL_new(this->context);
+                cryptoError(tlsSession == NULL, "unable to create TLS session");
+
+                result = tlsSessionNew(tlsSession, ioSession, this->timeout);
+
+                // TLS authentication
+                tlsClientAuth(
+
+                // Move session
+                ioSessionMove(tlsClientAuth(this, ioSession), memContextPrior());
             }
             CATCH_ANY()
             {
