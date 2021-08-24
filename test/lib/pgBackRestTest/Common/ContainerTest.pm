@@ -38,17 +38,6 @@ use constant TEST_GROUP_ID                                          => getgrnam(
     push @EXPORT, qw(TEST_GROUP_ID);
 
 ####################################################################################################################################
-# Cert file constants
-####################################################################################################################################
-use constant CERT_FAKE_PATH                                         => '/etc/fake-cert';
-use constant CERT_FAKE_CA                                           => CERT_FAKE_PATH . '/ca.crt';
-    push @EXPORT, qw(CERT_FAKE_CA);
-use constant CERT_FAKE_SERVER                                       => CERT_FAKE_PATH . '/server.crt';
-    push @EXPORT, qw(CERT_FAKE_SERVER);
-use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE_PATH . '/server.key';
-    push @EXPORT, qw(CERT_FAKE_SERVER_KEY);
-
-####################################################################################################################################
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
 ####################################################################################################################################
 use constant CONTAINER_DEBUG                                        => false;
@@ -229,6 +218,7 @@ sub certSetup
     my $strOS = shift;
 
     my $strScript =
+        # ARE THESE CERTS STILL USED?
         sectionHeader() .
         "# Generate fake certs\n" .
         "    mkdir -p -m 755 /etc/fake-cert && \\\n" .

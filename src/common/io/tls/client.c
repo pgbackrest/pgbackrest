@@ -254,6 +254,7 @@ tlsClientInit(SSL *const tlsSession)
 
         // !!! 2------------------------------------------------------------
         // ??? MIN-MAX TLS VERSION? RATHER HAVE SERVER DECIDE?
+        // ??? SKIP BUT SCAN STRING FOR : AND THROW ERROR
 
         // !!! 3------------------------------------------------------------
         // ??? IS THIS NEEDED IF THE USER WANTS TO USE THE DEFAULT CA STORE
@@ -300,7 +301,7 @@ tlsClientInit(SSL *const tlsSession)
 			ERR_clear_error();
 
         // !!! 5------------------------------------------------------------
-        // LOAD CLIENT CERT. IS THIS OPTIONAL?
+        // LOAD CLIENT CERT
 		/*
 		 * Cert file exists, so load it. Since OpenSSL doesn't provide the
 		 * equivalent of "SSL_use_certificate_chain_file", we have to load it
@@ -320,6 +321,7 @@ tlsClientInit(SSL *const tlsSession)
 
         // !!! 6------------------------------------------------------------
         // LOAD ENGINE (LINE 1117). DO WE NEED THIS? CAN WE ASSUME ALWAYS A FILENAME?
+        // DELAY THIS.
 
         // !!! 7------------------------------------------------------------
         // ALREADY EXISTS Set server host name used for validation
@@ -408,6 +410,8 @@ tlsClientAuth(SSL *const tlsSession)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // !!! SERVER SIDE -- NEED SOME KIND OF CN VERIFICATION
+
         // !!! 10------------------------------------------------------------
         // ALREADY EXISTS Verify that the certificate presented by the server is valid
         if (this->verifyPeer)                                                                                       // {vm_covered}

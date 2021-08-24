@@ -104,8 +104,8 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN(.prefix = "server")
             {
                 StringList *argList = strLstNew();
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCert, HRN_PATH_REPO "/test/certificate/pgbackrest-test.crt");
-                hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_PATH_REPO "/test/certificate/pgbackrest-test.key");
+                hrnCfgArgRawZ(argList, cfgOptTlsServerCert, HRN_SERVER_CERT);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_SERVER_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
                 HRN_CFG_LOAD(cfgCmdServer, argList);
 
@@ -159,8 +159,8 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN(.prefix = "server")
             {
                 StringList *argList = strLstNew();
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCert, HRN_PATH_REPO "/test/certificate/pgbackrest-test.crt");
-                hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_PATH_REPO "/test/certificate/pgbackrest-test.key");
+                hrnCfgArgRawZ(argList, cfgOptTlsServerCert, HRN_SERVER_CERT);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_SERVER_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
                 HRN_CFG_LOAD(cfgCmdServer, argList);
 

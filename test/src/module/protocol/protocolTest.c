@@ -735,8 +735,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 IoServer *const tlsServer = tlsServerNew(
-                   STRDEF("localhost"), STRDEF(HRN_PATH_REPO "/test/certificate/pgbackrest-test.key"),
-                   STRDEF(HRN_PATH_REPO "/test/certificate/pgbackrest-test.crt"), 5000);
+                    STRDEF("localhost"), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), 5000);
                 IoServer *const socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
                 ProtocolServer *server = NULL;
 

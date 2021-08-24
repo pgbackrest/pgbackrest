@@ -78,8 +78,8 @@ sub new
         ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}", "${strBinPath}:${strBinPath}:ro"], undef,
         $oParam->{bTls} ?
             'server --log-level-console=debug --tls-server-cert=' . testRunGet()->basePath() .
-                '/test/certificate/pgbackrest-test.crt --tls-server-key=' . testRunGet()->basePath() .
-                '/test/certificate/pgbackrest-test.key' :
+                '/test/certificate/pgbackrest-test-server.crt --tls-server-key=' . testRunGet()->basePath() .
+                '/test/certificate/pgbackrest-test-server.key' :
             undef,
         undef, $oParam->{bTls} ? testRunGet()->backrestExe() : undef);
     bless $self, $class;

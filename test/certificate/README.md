@@ -35,7 +35,7 @@ openssl x509 -req -in pgbackrest-test-alt-name.csr -CA pgbackrest-test-ca.crt -C
 openssl x509 -in pgbackrest-test-alt-name.crt -text -noout
 ```
 
-## Generating the Test Certificate (pgbackrest-test.crt)
+## Generating the Test Server Certificate (pgbackrest-test-server.crt)
 
 This certificate will be used in unit and integration tests.  It is expected to pass verification but won't be subjected to extensive testing.
 
@@ -43,6 +43,6 @@ This certificate will be used in unit and integration tests.  It is expected to 
 cd [pgbackrest-root]/test/certificate
 openssl req -new -sha256 -nodes -out pgbackrest-test.csr -key pgbackrest-test.key -config pgbackrest-test.cnf
 openssl x509 -req -in pgbackrest-test.csr -CA pgbackrest-test-ca.crt -CAkey pgbackrest-test-ca.key -CAcreateserial \
-    -out pgbackrest-test.crt -days 99999 -extensions v3_req -extfile pgbackrest-test.cnf
-openssl x509 -in pgbackrest-test.crt -text -noout
+    -out pgbackrest-test-server.crt -days 99999 -extensions v3_req -extfile pgbackrest-test.cnf
+openssl x509 -in pgbackrest-test-server.crt -text -noout
 ```
