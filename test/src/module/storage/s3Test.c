@@ -319,7 +319,7 @@ testRun(void)
         argList = strLstDup(commonArgWithoutEndpointList);
         hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "custom.endpoint:333");
         hrnCfgArgRawZ(argList, cfgOptRepoStorageCaPath, "/path/to/cert");
-        hrnCfgArgRawZ(argList, cfgOptRepoStorageCaFile, HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".crt");
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageCaFile, HRN_SERVER_CA);
         hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 

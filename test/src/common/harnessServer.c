@@ -44,9 +44,6 @@ typedef enum
 Constants
 ***********************************************************************************************************************************/
 #define HRN_SERVER_HOST                                             "tls.test.pgbackrest.org"
-#define HRN_SERVER_FAKE_CERT_PATH                                   "/etc/fake-cert"
-#define HRN_SERVER_FAKE_KEY_FILE                                    HRN_SERVER_FAKE_CERT_PATH "/pgbackrest-test-server.key"
-#define HRN_SERVER_FAKE_CERT_FILE                                   HRN_SERVER_FAKE_CERT_PATH "/pgbackrest-test-server.crt"
 
 /***********************************************************************************************************************************
 Send commands to the server
@@ -240,18 +237,8 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
         // If certificate and key are not set then use defaults
         if (param.certificate == NULL)
         {
-            // If running in a container use the installed certificate
-            if (testContainer())
-            {
-                param.certificate = strNewZ(HRN_SERVER_FAKE_CERT_FILE);
-                param.key = strNewZ(HRN_SERVER_FAKE_KEY_FILE);
-            }
-            // Else use a certificate from the test path -- tests will need to disable verify
-            else
-            {
-                param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.crt", hrnPathRepo());
-                param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo());
-            }
+            param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.crt", hrnPathRepo());
+            param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo());
         }
 
         tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.key, param.certificate, 5000);
