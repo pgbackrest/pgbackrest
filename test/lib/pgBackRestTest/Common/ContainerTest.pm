@@ -228,21 +228,7 @@ sub certSetup
 {
     my $strOS = shift;
 
-    my $strScript =
-        # ARE THESE CERTS STILL USED?
-        sectionHeader() .
-        "# Generate fake certs\n" .
-        "    mkdir -p -m 755 /etc/fake-cert && \\\n" .
-        "    cd /etc/fake-cert && \\\n" .
-        "    openssl genrsa -out ca.key 2048 && \\\n" .
-        "    openssl req -new -x509 -extensions v3_ca -key ca.key -out ca.crt -days 99999 \\\n" .
-        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=pgbackrest.org\" && \\\n" .
-        "    openssl genrsa -out server.key 2048 && \\\n" .
-        "    openssl req -new -key server.key -out server.csr \\\n" .
-        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=*.pgbackrest.org\" && \\\n" .
-        "    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 99999 \\\n" .
-        "        -sha256 && \\\n" .
-        "    chmod 644 /etc/fake-cert/* && \\\n";
+    my $strScript = sectionHeader();
 
     my $rhVm = vmGet();
 
