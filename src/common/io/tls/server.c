@@ -71,36 +71,69 @@ tlsServerFreeResource(THIS_VOID)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+!!!INIT STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_init()
+***********************************************************************************************************************************/
+static void
+tlsServerInit(const TlsServer *const this, SSL *const tlsSession)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace)
+        FUNCTION_LOG_PARAM(TLS_SERVER, this);
+        FUNCTION_LOG_PARAM_P(VOID, tlsSession);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 static IoSession *
-tlsServerAccept(THIS_VOID, IoSession *const session)
+tlsServerAccept(THIS_VOID, IoSession *const ioSession)
 {
     THIS(TlsServer);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SERVER, this);
-        FUNCTION_LOG_PARAM(IO_SESSION, session);
+        FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(session != NULL);
+    ASSERT(ioSession != NULL);
 
     IoSession *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        SSL *serverTls = SSL_new(this->context);
-        // !!! CHECK ERROR?
+        SSL *tlsSession = SSL_new(this->context);
 
-        MEM_CONTEXT_PRIOR_BEGIN()
+        // Initialize TLS session
+        TRY_BEGIN()
         {
-            result = tlsSessionNew(serverTls, session, 5000);
+            tlsServerInit(this, tlsSession);
         }
-        MEM_CONTEXT_PRIOR_END();
+        CATCH_ANY()
+        {
+            SSL_free(tlsSession);                                                   // {uncovered - !!! add test}
+            RETHROW();                                                              // {uncovered - !!! add test}
+        }
+        TRY_END();
 
-        statInc(TLS_STAT_SESSION_STR);
+        // Open TLS session
+        result = tlsSessionNew(tlsSession, ioSession, 5000); // !!! FIX TIMEOUT
+
+        // Authenticate TLS session
+        // !!!
+
+        // Move session
+        ioSessionMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
+
+    statInc(TLS_STAT_SESSION_STR);
 
     FUNCTION_LOG_RETURN(IO_SESSION, result);
 }
@@ -166,7 +199,7 @@ tlsServerNew(const String *const host, const String *const keyFile, const String
         driver->context = SSL_CTX_new(method);
         cryptoError(driver->context == NULL, "unable to create TLS context");
 
-        // !!! NEED TO LIMIT PROTOCOLS
+        // !!! NEED TO LIMIT TLS VERSIONS
 
         // Set callback to free context
         memContextCallbackSet(driver->memContext, tlsServerFreeResource, driver);
