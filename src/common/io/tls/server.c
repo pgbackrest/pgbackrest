@@ -34,6 +34,7 @@ typedef struct TlsServer
     String *host;                                                   // Host
     SSL_CTX *context;                                               // TLS context
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
+    bool verifyPeer;                                                // Will the client cert be verified?
 } TlsServer;
 
 /***********************************************************************************************************************************
@@ -93,22 +94,32 @@ tlsServerInit(const TlsServer *const this, SSL *const tlsSession)
 /***********************************************************************************************************************************
 !!!AUTH STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_open_server()
 ***********************************************************************************************************************************/
-static bool
-tlsServerAuth(const TlsServer *const this, SSL *const tlsSession)
+static void
+tlsServerAuth(const TlsServer *const this, IoSession *const ioSession, SSL *const tlsSession)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
         FUNCTION_LOG_PARAM(TLS_SERVER, this);
+        FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
         FUNCTION_LOG_PARAM_P(VOID, tlsSession);
     FUNCTION_LOG_END();
 
-    bool result = false;
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // If peer verification requested
+        if (this->verifyPeer)
+        {
+            // If the client cert was presented then the session is authenticated. An error will be thrown automatically if the
+            // client cert is not valid.
+            X509 *const clientCert = SSL_get_peer_certificate(tlsSession);
+            ioSessionAuthenticatedSet(ioSession, clientCert != NULL);
+            X509_free(clientCert);
+
+            // !!! NEED TO EXTRACT AND SAVE THE COMMON NAME HERE
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -147,7 +158,7 @@ tlsServerAccept(THIS_VOID, IoSession *const ioSession)
         result = tlsSessionNew(tlsSession, ioSession, 60000); // !!! FIX TIMEOUT
 
         // Authenticate TLS session
-        ioSessionAuthenticatedSet(result, tlsServerAuth(this, tlsSession));
+        tlsServerAuth(this, result, tlsSession);
 
         // Move session
         ioSessionMove(result, memContextPrior());
@@ -245,6 +256,12 @@ tlsServerNew(
         // Disable session caching
         SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
 
+        // !!! SET UP ephemeral DH and ECDH keys (https://weakdh.org and https://en.wikipedia.org/wiki/Logjam_(computer_security))
+        // if (!initialize_dh(context, isServerStart))
+        //     goto error;
+        // if (!initialize_ecdh(context, isServerStart))
+        //     goto error;
+
         // Configure the context by setting key and cert
         cryptoError(
             SSL_CTX_use_certificate_file(driver->context, strZ(certFile), SSL_FILETYPE_PEM) != 1,
@@ -274,6 +291,9 @@ tlsServerNew(
             // Always ask for SSL client cert, but don't fail if it's not presented. In this case the client will still be able to
             // send a noop to verify the server is alive.
             SSL_CTX_set_verify(driver->context, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);
+
+            // Set a flag so the client cert will be checked later
+            driver->verifyPeer = true;
         }
 
         statInc(TLS_STAT_SERVER_STR);

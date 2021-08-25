@@ -306,25 +306,6 @@ tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
         //     /* if not found, silently ignore;  we do not require CRL */
         //     ERR_clear_error();
 
-        // !!! 5------------------------------------------------------------
-        // LOAD CLIENT CERT
-        /*
-         * Cert file exists, so load it. Since OpenSSL doesn't provide the
-         * equivalent of "SSL_use_certificate_chain_file", we have to load it
-         * into the SSL context, rather than the SSL object.
-         */
-        // if (SSL_CTX_use_certificate_chain_file(SSL_context, fnbuf) != 1)
-        // {
-        //     char       *err = SSLerrmessage(ERR_get_error());
-
-        //     appendPQExpBuffer(&conn->errorMessage,
-        //                       libpq_gettext("could not read certificate file \"%s\": %s\n"),
-        //                       fnbuf, err);
-        //     SSLerrfree(err);
-        //     SSL_CTX_free(SSL_context);
-        //     return -1;
-        // }
-
         // !!! 6------------------------------------------------------------
         // LOAD ENGINE (LINE 1117). DO WE NEED THIS? CAN WE ASSUME ALWAYS A FILENAME?
         // DELAY THIS BUT CHECK IF THERE IS A COLON

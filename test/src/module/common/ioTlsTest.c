@@ -488,11 +488,6 @@ testRun(void)
         HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("client cert is invalid (signed by another CA)");
-
-        // Socket server to accept connections
-        IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
-
         // Add host name
         HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
 
@@ -504,17 +499,46 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
+                // TLS server to accept connections
+                IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
                 IoServer *tlsServer = tlsServerNew(
                     STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), NULL, 5000);
                 IoSession *socketSession = ioServerAccept(socketServer, NULL);
 
+                // Invalid client cert
                 TEST_ERROR(
                     ioServerAccept(tlsServer, socketSession), ServiceError, "TLS error [1:337100934] certificate verify failed");
+
+                // Valid client cert
+                socketSession = ioServerAccept(socketServer, NULL);
+                IoSession *tlsSession = NULL;
+                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
+
+                TEST_RESULT_BOOL(ioSessionAuthenticated(tlsSession), true, "server session authenticated");
+                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message")), "server write");
+                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
+
+                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
+
+                // No client cert
+                socketSession = ioServerAccept(socketServer, NULL);
+                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
+
+                TEST_RESULT_BOOL(ioSessionAuthenticated(tlsSession), false, "server session not authenticated");
+                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message2")), "server write");
+                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
+
+                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
+
+                // Free socket
+                ioServerFree(socketServer);
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_PARENT_BEGIN(.prefix = "test client")
             {
+                TEST_TITLE("client cert is invalid (signed by another CA)");
+
                 IoSession *clientSession = NULL;
 
                 TEST_ASSIGN(
@@ -529,12 +553,44 @@ testRun(void)
                     ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
                     "TLS error [1:336151576] tlsv1 alert unknown ca");
                 TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("client cert is valid");
+
+                TEST_ASSIGN(
+                    clientSession,
+                    ioClientOpen(
+                        tlsClientNew(
+                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 5000, true, NULL, NULL,
+                            STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(HRN_SERVER_CLIENT_KEY))),
+                    "client open");
+
+                Buffer *buffer = bufNew(7);
+                TEST_RESULT_VOID(ioRead(ioSessionIoRead(clientSession), buffer), "client read");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "message", "check read");
+
+                TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("no client cert");
+
+                TEST_ASSIGN(
+                    clientSession,
+                    ioClientOpen(
+                        tlsClientNew(
+                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 5000, true, NULL, NULL, NULL,
+                            NULL)),
+                    "client open");
+
+                buffer = bufNew(8);
+                TEST_RESULT_VOID(ioRead(ioSessionIoRead(clientSession), buffer), "client read");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "message2", "check read");
+
+                TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
             }
             HRN_FORK_PARENT_END();
         }
         HRN_FORK_END();
-
-        ioServerFree(socketServer);
 #endif // TEST_CONTAINER_REQUIRED
     }
 
