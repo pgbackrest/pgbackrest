@@ -42,6 +42,7 @@ typedef struct HrnServerRunParam
 {
     VAR_PARAM_HEADER;
     unsigned int port;                                              // Server port, defaults to hrnServerPort(0)
+    const String *ca;                                               // TLS CA store when protocol = hrnServerProtocolTls
     const String *certificate;                                      // TLS certificate when protocol = hrnServerProtocolTls
     const String *key;                                              // TLS key when protocol = hrnServerProtocolTls
 } HrnServerRunParam;

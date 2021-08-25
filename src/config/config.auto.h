@@ -117,12 +117,14 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_COUNT                                 "tcp-keep-alive-count"
 #define CFGOPT_TCP_KEEP_ALIVE_IDLE                                  "tcp-keep-alive-idle"
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
+#define CFGOPT_TLS_SERVER_CA                                        "tls-server-ca"
 #define CFGOPT_TLS_SERVER_CERT                                      "tls-server-cert"
+#define CFGOPT_TLS_SERVER_CRL                                       "tls-server-crl"
 #define CFGOPT_TLS_SERVER_KEY                                       "tls-server-key"
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            136
+#define CFG_OPTION_TOTAL                                            138
 
 /***********************************************************************************************************************************
 Option value constants
@@ -473,7 +475,9 @@ typedef enum
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
+    cfgOptTlsServerCa,
     cfgOptTlsServerCert,
+    cfgOptTlsServerCrl,
     cfgOptTlsServerKey,
     cfgOptTlsServerPort,
     cfgOptType,

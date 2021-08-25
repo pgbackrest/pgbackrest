@@ -184,12 +184,16 @@ static const IoServerInterface tlsServerInterface =
 };
 
 IoServer *
-tlsServerNew(const String *const host, const String *const keyFile, const String *const certFile, const TimeMSec timeout)
+tlsServerNew(
+    const String *const host, const String *const caFile, const String *const keyFile, const String *const certFile,
+    const String *const crlFile, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, keyFile);
         FUNCTION_LOG_PARAM(STRING, certFile);
+        FUNCTION_LOG_PARAM(STRING, crlFile);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
@@ -210,18 +214,20 @@ tlsServerNew(const String *const host, const String *const keyFile, const String
             .timeout = timeout,
         };
 
-        // Initialize TLS
+        // Initialize TLS and create a context
         cryptoInit();
 
-        // Initialize ssl and create a context
         const SSL_METHOD *const method = SSLv23_method();
         cryptoError(method == NULL, "unable to load TLS method");
 
         driver->context = SSL_CTX_new(method);
         cryptoError(driver->context == NULL, "unable to create TLS context");
 
+        // Set callback to free context
+        memContextCallbackSet(driver->memContext, tlsServerFreeResource, driver);
+
         // Set options
-        SSL_CTX_set_options(driver->context, (long)(
+        SSL_CTX_set_options(driver->context,
             // Disable compression
             SSL_OP_NO_COMPRESSION |
             // Disable SSL and TLS v1/v1.1
@@ -234,23 +240,41 @@ tlsServerNew(const String *const host, const String *const keyFile, const String
 	        SSL_OP_NO_RENEGOTIATION |
 #endif
         	// Disable session tickets
-	        SSL_OP_NO_TICKET));
+	        SSL_OP_NO_TICKET);
 
-        // Disable SSL session caching
+        // Disable session caching
         SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
-
-        // Set callback to free context
-        memContextCallbackSet(driver->memContext, tlsServerFreeResource, driver);
 
         // Configure the context by setting key and cert
         cryptoError(
             SSL_CTX_use_certificate_file(driver->context, strZ(certFile), SSL_FILETYPE_PEM) != 1,
             "unable to load server certificate");
-        // !!! NEED TO CHECK PERMISSIONS OF KEY FILE
+        // !!! NEED TO CHECK PERMISSIONS OF KEY FILE? POSTGRES DOES NOT DO THIS
         cryptoError(
             SSL_CTX_use_PrivateKey_file(driver->context, strZ(keyFile), SSL_FILETYPE_PEM) != 1,
             "unable to load server private key");
         // !!! DO WE NEED TO VERIFY KEY HERE SINCE SSL_CTX_use_PrivateKey_file seems to do it?
+
+        // If a CA store is specified then client certificates will be verified
+        if (caFile != NULL)
+        {
+            // Load CA store
+            cryptoError(
+                SSL_CTX_load_verify_locations(driver->context, strZ(caFile), NULL) != 1,
+                strZ(strNewFmt("unable to load CA file '%s'", strZ(caFile))));
+
+            // Tell OpenSSL to send the list of root certs we trust to clients in CertificateRequests. This lets a client with a
+            // keystore select the appropriate client certificate to send to us. Also, this ensures that the SSL context will own
+            // the rootCertList and free it when no longer needed.
+    		STACK_OF(X509_NAME) *rootCertList = SSL_load_client_CA_file(strZ(caFile));
+            cryptoError(rootCertList == NULL, strZ(strNewFmt("unable to generate CA list from '%s'", strZ(caFile))));
+
+            SSL_CTX_set_client_CA_list(driver->context, rootCertList);
+
+            // Always ask for SSL client cert, but don't fail if it's not presented. In this case the client will still be able to
+            // send a noop to verify the server is alive.
+            SSL_CTX_set_verify(driver->context, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);
+        }
 
         statInc(TLS_STAT_SERVER_STR);
 

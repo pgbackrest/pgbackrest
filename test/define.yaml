@@ -316,6 +316,14 @@ unit:
           - common/io/fdRead
           - common/io/read
 
+        depend:
+          - storage/posix/read
+          - storage/posix/storage
+          - storage/posix/write
+          - storage/read
+          - storage/storage
+          - storage/write
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
         total: 6
@@ -343,14 +351,6 @@ unit:
 
         coverage:
           - common/ini
-
-        depend:
-          - storage/posix/read
-          - storage/posix/storage
-          - storage/posix/write
-          - storage/read
-          - storage/storage
-          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress

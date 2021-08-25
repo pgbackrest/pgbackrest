@@ -241,7 +241,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo());
         }
 
-        tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.key, param.certificate, 5000);
+        tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.ca, param.key, param.certificate, NULL, 5000);
         ioServerName(tlsServer); // !!! ADD COVERAGE
     }
 

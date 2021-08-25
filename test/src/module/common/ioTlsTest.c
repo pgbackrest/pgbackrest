@@ -6,9 +6,108 @@ Test Tls Client
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
+#include "common/harnessStorage.h"
+
+/***********************************************************************************************************************************
+Client key/cert signed by another CA used to generate invalid client cert error
+
+Run the following in a temp path:
+
+openssl genrsa -out bogus-ca.key 4096
+openssl req -new -x509 -sha256 -days 99999 -key bogus-ca.key -out bogus-ca.crt -subj "/CN=bogus"
+openssl req -nodes -new -newkey rsa:4096 -sha256 -keyout bogus-client.key -out bogus-client.csr -subj "/CN=bogus"
+openssl x509 -extensions usr_cert -req -days 99999 -CA bogus-ca.crt -CAkey bogus-ca.key -CAcreateserial -in bogus-client.csr \
+    -out bogus-client.crt
+
+Then copy bogus-client.crt/bogus-client.key into the variables below. Use variables instead of defines so we know when the variable
+is no longer used.
+***********************************************************************************************************************************/
+static const char *const testClientBogusCert =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIEqTCCApECFB9rIW8PSz2iH9LoV4DuNQf+e5s3MA0GCSqGSIb3DQEBCwUAMBAx\n"
+    "DjAMBgNVBAMMBWJvZ3VzMCAXDTIxMDgyNTE5MzgyNVoYDzIyOTUwNjA5MTkzODI1\n"
+    "WjAQMQ4wDAYDVQQDDAVib2d1czCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\n"
+    "ggIBANZuk8q8jOzDir2EFzvMCIECHDkL2DF+qXbcooPua+K6LKUJeskFIFiGVQBA\n"
+    "X5QgshIcKl7cUcM11KYylt62Nbkzj0MbupWhynVCM2P8ZAxy3zcqLyWy9D0DMoMe\n"
+    "YPJrx7MxhOkymUb3ogPmBzlhcVsZayh+b8ywM7q9NAi5EWCqIbeFXB9jJu2qpZXY\n"
+    "l8bHnBIbqmyh45l+ADY5gTW/qx4SU1QnEgctqmrMTN7bdCP9Jch/gCyqB17RTwL2\n"
+    "L1SpeIlDG5FUdjOfOUJf6GnX2kQh7niWYqsa9C/ByY0+YrjmIrHSDK51AaIGovnw\n"
+    "dn9GZvpwY6wWgBoyt/17VcEqPHl/Bey6K37QGgd2o8Ez3aBJp7sgnxszSn5Zddu5\n"
+    "XBBrdCNlhhF/qdqezevVDWQpr+fq0eebK7VxR4OMI2jwwc5yUd+ZdJoxNQevV1pC\n"
+    "JXRFbwZ2Um5ZBw1CoZxRep1cZDy1zvZhhn6Hen7aiqoFkD61JjfgCXyeWfdi6Ytg\n"
+    "e3cnJpo5I8PpHHjRABmWWyu/vF9M25QUAT+lVCIJ+/yvwRvrFnN3VHF/JN7uuu0R\n"
+    "hEf4rXBWpTc1z8JzUzFGyMmeLQFXCGlHWY0IBbsA952bk1kgMwKgdBa0RbJJrQpx\n"
+    "NMQqX1tfsDHJw86+uO8NTd/ekfs7j/HiHBDZF8g1su8J9Em3AgMBAAEwDQYJKoZI\n"
+    "hvcNAQELBQADggIBAL1/+/7zFcWhdOPtzvghuRMvcxUAKvWUNaELpkAmtV6cB9CP\n"
+    "9AlJwhCAuvjdRofdfigy94J9MXkvULMqHsSE56Ei6la+mXawenN2OyuwChvagFOl\n"
+    "tm+wEgutJ8c32g9QMxvC9OEZlXEgyWyo2rqV0KQ9GKEr2kBhvCOitEJhfQVMwCAR\n"
+    "mQyeyMRdFxfvI7IG/3AWrzNJlr8+w1WtWmkefcy5TG7HzLwIXmFde9W7HkOJnch4\n"
+    "m+5Cvw+KNgivWXp4vhr7uDRAr/feJ+GeoermQb/apM7PlJvHP9u8+H9OUu4WrB6v\n"
+    "4Y8z/g6qV/br60wxNnsM1ESm+k2LkiSKe6Hdpl9FNV9NwtTnEsvUC5wZNAbHwsch\n"
+    "BhFw354/ut/zLwSXaL70PD8jsOxClnJv3KEAc8+eL7bdgfPS9lJKY3Xy87XatnoX\n"
+    "DUbokGaJEOaheRFpEzbtin5b2RBqCtqsnPv6ftdO0kvL/GKoATeg0khwr///Ur2n\n"
+    "LmgFQGlIz5T5PzBXsQNjVzWlBSnoOQp6M4pRcC+R0cbInyG2YTDhYydpJSwAxc2L\n"
+    "EofZUlo7XE6Nzn/RZeaRDZ7Y4+5EIe42i/5A5ydXuPzKFc9MoNSl5ddNGWt/OjDJ\n"
+    "A+CAKwGi30m0Lv9yu4fb2yi+Al3+qmkCtIwa0XSMJj8SluReKmKGVVdh32Qb\n"
+    "-----END CERTIFICATE-----";
+
+static const char *const testClientBogusKey =
+    "-----BEGIN PRIVATE KEY-----\n"
+    "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\n"
+    "fSPKoHpKuloAXgj43pWZtJ3WrJUJcpk=\n"
+    "-----END PRIVATE KEY-----\n";
 
 /***********************************************************************************************************************************
 Test Run
@@ -17,6 +116,9 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Create default storage object for testing
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("Socket Common"))
@@ -384,6 +486,55 @@ testRun(void)
             HRN_FORK_PARENT_END();
         }
         HRN_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("client cert is invalid (signed by another CA)");
+
+        // Socket server to accept connections
+        IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
+
+        // Add host name
+        HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
+
+        // Put bogus cert and key
+        storagePutP(storageNewWriteP(storageTest, STRDEF("bogus-client.crt")), BUFSTRZ(testClientBogusCert));
+        storagePutP(storageNewWriteP(storageTest, STRDEF("bogus-client.key")), BUFSTRZ(testClientBogusKey));
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                IoServer *tlsServer = tlsServerNew(
+                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), NULL, 5000);
+                IoSession *socketSession = ioServerAccept(socketServer, NULL);
+
+                TEST_ERROR(
+                    ioServerAccept(tlsServer, socketSession), ServiceError, "TLS error [1:337100934] certificate verify failed");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "test client")
+            {
+                IoSession *clientSession = NULL;
+
+                TEST_ASSIGN(
+                    clientSession,
+                    ioClientOpen(
+                        tlsClientNew(
+                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 5000, true, NULL, NULL,
+                            STRDEF(TEST_PATH "/bogus-client.crt"), STRDEF(TEST_PATH "/bogus-client.key"))),
+                    "client open");
+
+                TEST_ERROR(
+                    ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
+                    "TLS error [1:336151576] tlsv1 alert unknown ca");
+                TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        ioServerFree(socketServer);
 #endif // TEST_CONTAINER_REQUIRED
     }
 

@@ -6709,9 +6709,37 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("tls-server-ca"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("tls-server-cert"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
         PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("tls-server-crl"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
@@ -11056,6 +11084,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveInterval,
     },
 
+    // tls-server-ca option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "tls-server-ca",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptTlsServerCa,
+    },
+    {
+        .name = "reset-tls-server-ca",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTlsServerCa,
+    },
+
     // tls-server-cert option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -11066,6 +11106,18 @@ static const struct option optionList[] =
     {
         .name = "reset-tls-server-cert",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTlsServerCert,
+    },
+
+    // tls-server-crl option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "tls-server-crl",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptTlsServerCrl,
+    },
+    {
+        .name = "reset-tls-server-crl",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTlsServerCrl,
     },
 
     // tls-server-key option
@@ -11192,7 +11244,9 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
+    cfgOptTlsServerCa,
     cfgOptTlsServerCert,
+    cfgOptTlsServerCrl,
     cfgOptTlsServerKey,
     cfgOptTlsServerPort,
     cfgOptType,

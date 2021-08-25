@@ -335,8 +335,26 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-ca" name="TLS Server Certificate Authorities">
+                        <summary>TLS server certificate authorities.</summary>
+
+                        <text>!!!</text>
+
+                        <example>/!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
                     <config-key id="tls-server-cert" name="TLS Server Certificate">
                         <summary>TLS server certificate file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>/!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-crl" name="TLS Server Revoked Certificates">
+                        <summary>TLS client certificates revoked by certificate authorities.</summary>
 
                         <text>!!!</text>
 

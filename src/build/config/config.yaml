@@ -909,6 +909,19 @@ option:
     command: buffer-size
     depend: tcp-keep-alive-count
 
+  tls-server-ca:
+    section: global
+    type: path
+    command:
+      server: {}
+
+  tls-server-crl:
+    section: global
+    required: false
+    type: path
+    command:
+      server: {}
+
   tls-server-cert:
     section: global
     type: path
