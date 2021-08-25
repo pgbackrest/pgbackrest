@@ -21,7 +21,8 @@ testRun(void)
 
     harnessLogLevelSet(logLevelDetail);
 
-    const char *const host = "localhost"; // !!! NEEDS TO BE GENERIC?
+    // Add host name !!! MAKE INTO A FUNCTION
+    HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
 
     // *****************************************************************************************************************************
     if (testBegin("cmdServer()"))
@@ -34,9 +35,11 @@ testRun(void)
             {
                 StringList *argList = strLstNew();
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/BOGUS");
-                hrnCfgArgRawZ(argList, cfgOptRepoHost, host);
+                hrnCfgArgRaw(argList, cfgOptRepoHost, hrnServerHost());
                 hrnCfgArgRawZ(argList, cfgOptRepoHostConfig, TEST_PATH "/pgbackrest.conf");
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
+                hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
+                hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
@@ -75,9 +78,11 @@ testRun(void)
             {
                 StringList *argList = strLstNew();
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/BOGUS");
-                hrnCfgArgRawZ(argList, cfgOptPgHost, host);
+                hrnCfgArgRaw(argList, cfgOptPgHost, hrnServerHost());
                 hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
                 hrnCfgArgRawZ(argList, cfgOptPgHostType, "tls");
+                hrnCfgArgRawZ(argList, cfgOptPgHostCertFile, HRN_SERVER_CLIENT_CERT);
+                hrnCfgArgRawZ(argList, cfgOptPgHostKeyFile, HRN_SERVER_CLIENT_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 hrnCfgArgRawZ(argList, cfgOptProcess, "1");
@@ -104,6 +109,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN(.prefix = "server")
             {
                 StringList *argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptTlsServerCa, HRN_SERVER_CA);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerCert, HRN_SERVER_CERT);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_SERVER_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
@@ -159,6 +165,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN(.prefix = "server")
             {
                 StringList *argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptTlsServerCa, HRN_SERVER_CA);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerCert, HRN_SERVER_CERT);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_SERVER_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));

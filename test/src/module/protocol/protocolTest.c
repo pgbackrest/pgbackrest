@@ -676,6 +676,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolRemoteExec() and protocolServer()"))
     {
+        // Add host name !!! MAKE INTO A FUNCTION
+        HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
+
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -685,8 +688,7 @@ testRun(void)
 
                 // Connect to server without any verification
                 IoClient *tlsClient = tlsClientNew(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("localhost"), 5000, false, NULL, NULL, NULL,
-                    NULL);
+                    sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 5000, false, NULL, NULL, NULL, NULL);
                 IoSession *tlsSession = ioClientOpen(tlsClient);
 
                 // Send ping
@@ -702,8 +704,10 @@ testRun(void)
 
                 StringList *argList = strLstNew();
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
-                hrnCfgArgRawZ(argList, cfgOptRepoHost, "localhost");
+                hrnCfgArgRaw(argList, cfgOptRepoHost, hrnServerHost());
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
+                hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
+                hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
@@ -718,9 +722,11 @@ testRun(void)
 
                 argList = strLstNew();
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-                hrnCfgArgRawZ(argList, cfgOptPgHost, "localhost");
+                hrnCfgArgRaw(argList, cfgOptPgHost, hrnServerHost());
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
                 hrnCfgArgRawZ(argList, cfgOptPgHostType, "tls");
+                hrnCfgArgRawZ(argList, cfgOptPgHostCertFile, HRN_SERVER_CLIENT_CERT);
+                hrnCfgArgRawZ(argList, cfgOptPgHostKeyFile, HRN_SERVER_CLIENT_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 hrnCfgArgRawZ(argList, cfgOptProcess, "1");

@@ -1319,6 +1319,27 @@ option:
       db-host: {index: 1, reset: false}
       db?-host: {reset: false}
 
+  pg-host-cert-file:
+    section: global
+    group: pg
+    type: string
+    command: pg-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-host-type
+      list:
+        - tls
+
+  pg-host-key-file:
+    inherit: pg-host-cert-file
+
+  pg-host-ca-file:
+    inherit: pg-host-cert-file
+    required: false
+
   pg-host-cmd:
     section: stanza
     group: pg
@@ -1790,6 +1811,27 @@ option:
     depend: repo-host-type
     deprecate:
       backup-host: {index: 1, reset: false}
+
+  repo-host-cert-file:
+    section: global
+    group: repo
+    type: string
+    command: repo-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: repo-host-type
+      list:
+        - tls
+
+  repo-host-key-file:
+    inherit: repo-host-cert-file
+
+  repo-host-ca-file:
+    inherit: repo-host-cert-file
+    required: false
 
   # !!! Needs to depend on repo-host being set and repo-host-type=ssh
   repo-host-cmd:

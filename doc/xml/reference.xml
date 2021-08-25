@@ -506,6 +506,33 @@
                         <example>repo1.domain.com</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-ca-file" name="Repository Host Certificate Authority File">
+                        <summary>Repository host certificate authority file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-cert-file" name="Repository Host Certificate File">
+                        <summary>Repository host certificate file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-key-file" name="Repository Host Key File">
+                        <summary>Repository host key file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-HOST-CMD KEY -->
                     <config-key id="repo-host-cmd" name="Repository Host Command">
                         <summary><backrest/> exe path on the repository host.</summary>
@@ -1178,6 +1205,33 @@
                         <text>Used for backups where the <postgres/> host is different from the repository host.</text>
 
                         <example>db.domain.com</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-ca-file" name="PostgreSQL Host Certificate Authority File">
+                        <summary><postgres/> host certificate authority file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-cert-file" name="PostgreSQL Host Certificate File">
+                        <summary><postgres/> host certificate file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-key-file" name="PostgreSQL Host Key File">
+                        <summary><postgres/> host key file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->

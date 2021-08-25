@@ -488,7 +488,7 @@ testRun(void)
         HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Add host name
+        // Add host name !!! MAKE INTO A FUNCTION
         HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
 
         // Put bogus cert and key

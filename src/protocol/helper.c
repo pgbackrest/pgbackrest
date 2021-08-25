@@ -340,11 +340,12 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
             ioSessionIoWrite(tlsSession));
 
-        // Get parameter list from the client and load it
-        const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
-
-        if (command.id == PROTOCOL_COMMAND_CONFIG)
+        // If session is authenticated get parameter list from the client and load it
+        if (ioSessionAuthenticated(tlsSession))
         {
+            const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
+            CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
+
             StringList *const paramList = pckReadStrLstP(pckReadNewBuf(command.param));
             strLstInsert(paramList, 0, cfgExe());
             cfgLoad(strLstSize(paramList), strLstPtr(paramList));
@@ -356,11 +357,14 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             ioSessionMove(tlsSession, memContextPrior());
             protocolServerMove(result, memContextPrior());
         }
-        // !!! THIS NEEDS TO BE MOVED UP TO RIGHT AFTER THE CLIENT PRESENTS A CERT
+        // Else the client can only detect that the server is alive
         else
         {
-            CHECK(command.id == PROTOCOL_COMMAND_NOOP);
+            // Send a data end message and return a NULL server. Do not waste time looking at what the client wrote.
             protocolServerDataEndPut(result);
+
+            // Set result to NULL so there is no server for the caller to use. The TLS session will be freed when the temp mem
+            // context ends.
             result = NULL;
         }
     }
@@ -610,7 +614,13 @@ protocolRemoteExec(
             // Negotiate TLS
             helper->ioClient = tlsClientNew(
                 sckClientNew(host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx), timeout),
-                host, timeout, false, NULL, NULL, NULL, NULL);
+                host, timeout, true,
+                NULL, // !!! NEED CA FILE
+                NULL, // !!! NEED CA PATH
+                cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
+                cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx)
+                // !!! NEED CRL FILE
+                );
             helper->ioSession = ioClientOpen(helper->ioClient);
 
             read = ioSessionIoRead(helper->ioSession);
