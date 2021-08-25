@@ -610,7 +610,7 @@ protocolRemoteExec(
             // Negotiate TLS
             helper->ioClient = tlsClientNew(
                 sckClientNew(host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx), timeout),
-                host, timeout, false, NULL, NULL);
+                host, timeout, false, NULL, NULL, NULL, NULL);
             helper->ioSession = ioClientOpen(helper->ioClient);
 
             read = ioSessionIoRead(helper->ioSession);

@@ -50,6 +50,20 @@ ioSessionNew(void *driver, const IoSessionInterface *interface)
 }
 
 /**********************************************************************************************************************************/
+void
+ioSessionAuthenticatedSet(IoSession *const this, const bool authenticated)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_SESSION, this);
+        FUNCTION_TEST_PARAM(BOOL, authenticated);
+    FUNCTION_TEST_END();
+
+    this->pub.authenticated = authenticated;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 int
 ioSessionFd(IoSession *this)
 {

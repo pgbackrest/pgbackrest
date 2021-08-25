@@ -36,7 +36,17 @@ typedef struct IoSessionPub
     MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     const IoSessionInterface *interface;                            // Driver interface
+    bool authenticated;                                             // Is the session authenticated?
 } IoSessionPub;
+
+// Is the session authenticated? The exact meaning of "authenticated" will vary by driver type
+__attribute__((always_inline)) static inline bool
+ioSessionAuthenticated(const IoSession *const this)
+{
+    return THIS_PUB(IoSession)->authenticated;
+}
+
+void ioSessionAuthenticatedSet(IoSession *this, bool authenticated);
 
 // Session file descriptor, -1 if none
 int ioSessionFd(IoSession *this);

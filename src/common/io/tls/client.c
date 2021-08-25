@@ -219,6 +219,15 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 /***********************************************************************************************************************************
 !!!INIT STEPS FOR CLIENT CERT PULLED FROM src/interfaces/libpq/fe-secure-openssl.c initialize_SSL()
 ***********************************************************************************************************************************/
+// static int
+// tlsClientPwd(char *buf, int size, int rwflag, void *userdata)
+// {
+//     (void)buf;
+//     (void)size;
+//     (void)rwflag;
+//     (void)userdata;
+// }
+
 static void
 tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
 {
@@ -318,7 +327,7 @@ tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
 
         // !!! 6------------------------------------------------------------
         // LOAD ENGINE (LINE 1117). DO WE NEED THIS? CAN WE ASSUME ALWAYS A FILENAME?
-        // DELAY THIS.
+        // DELAY THIS BUT CHECK IF THERE IS A COLON
 
         // !!! 7------------------------------------------------------------
         // ALREADY EXISTS Set server host name used for validation
@@ -402,13 +411,15 @@ tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
 /***********************************************************************************************************************************
 !!!AUTH STEPS FOR CLIENT CERT PULLED FROM src/interfaces/libpq/fe-secure-openssl.c open_client_SSL()
 ***********************************************************************************************************************************/
-static void
+static bool
 tlsClientAuth(const TlsClient *const this, SSL *const tlsSession)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
         FUNCTION_LOG_PARAM_P(VOID, tlsSession);
     FUNCTION_LOG_END();
+
+    bool result = false;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -442,10 +453,12 @@ tlsClientAuth(const TlsClient *const this, SSL *const tlsSession)
                     strZ(this->host));                                                                              // {vm_covered}
             }
         }
+
+        result = true;
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -531,7 +544,7 @@ tlsClientOpen(THIS_VOID)
         while (retry);
 
         // Authenticate TLS session
-        tlsClientAuth(this, tlsSession);
+        ioSessionAuthenticatedSet(result, tlsClientAuth(this, tlsSession));
 
         // Move session
         ioSessionMove(result, memContextPrior());
@@ -568,7 +581,9 @@ static const IoClientInterface tlsClientInterface =
 };
 
 IoClient *
-tlsClientNew(IoClient *ioClient, const String *host, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+tlsClientNew(
+    IoClient *const ioClient, const String *const host, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
+    const String *const caPath, const String *const cert, const String *const key)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
@@ -577,6 +592,8 @@ tlsClientNew(IoClient *ioClient, const String *host, TimeMSec timeout, bool veri
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
+        FUNCTION_LOG_PARAM(STRING, cert);
+        FUNCTION_LOG_PARAM(STRING, key);
     FUNCTION_LOG_END();
 
     ASSERT(ioClient != NULL);

@@ -90,6 +90,27 @@ tlsServerInit(const TlsServer *const this, SSL *const tlsSession)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+!!!AUTH STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_open_server()
+***********************************************************************************************************************************/
+static bool
+tlsServerAuth(const TlsServer *const this, SSL *const tlsSession)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace)
+        FUNCTION_LOG_PARAM(TLS_SERVER, this);
+        FUNCTION_LOG_PARAM_P(VOID, tlsSession);
+    FUNCTION_LOG_END();
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
 /**********************************************************************************************************************************/
 static IoSession *
 tlsServerAccept(THIS_VOID, IoSession *const ioSession)
@@ -126,7 +147,7 @@ tlsServerAccept(THIS_VOID, IoSession *const ioSession)
         result = tlsSessionNew(tlsSession, ioSession, 5000); // !!! FIX TIMEOUT
 
         // Authenticate TLS session
-        // !!!
+        ioSessionAuthenticatedSet(result, tlsServerAuth(this, tlsSession));
 
         // Move session
         ioSessionMove(result, memContextPrior());

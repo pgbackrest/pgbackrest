@@ -23,7 +23,7 @@ cmdServerPing(void)
         // Connect to server without any verification
         IoClient *tlsClient = tlsClientNew(
             sckClientNew(host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptIoTimeout)), host,
-            cfgOptionUInt64(cfgOptIoTimeout), false, NULL, NULL);
+            cfgOptionUInt64(cfgOptIoTimeout), false, NULL, NULL, NULL, NULL);
         IoSession *tlsSession = ioClientOpen(tlsClient);
 
         // Send ping

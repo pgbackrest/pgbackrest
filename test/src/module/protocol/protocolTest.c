@@ -685,7 +685,8 @@ testRun(void)
 
                 // Connect to server without any verification
                 IoClient *tlsClient = tlsClientNew(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("localhost"), 5000, false, NULL, NULL);
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("localhost"), 5000, false, NULL, NULL, NULL,
+                    NULL);
                 IoSession *tlsSession = ioClientOpen(tlsClient);
 
                 // Send ping

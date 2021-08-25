@@ -214,14 +214,15 @@ testRun(void)
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            client, tlsClientNew(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0), STRDEF("X"), 0, true, NULL, NULL),
+            client, tlsClientNew(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0), STRDEF("X"), 0, true, NULL, NULL, NULL, NULL),
             "new client");
         TEST_RESULT_STR_Z(ioClientName(client), "99.99.99.99.99:7777", " check name");
         TEST_ERROR(
             ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
 
         TEST_ASSIGN(
-            client, tlsClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100), STRDEF("X"), 100, true, NULL, NULL),
+            client,
+            tlsClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100), STRDEF("X"), 100, true, NULL, NULL, NULL, NULL),
             "new client");
         TEST_ERROR_FMT(
             ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
@@ -233,8 +234,8 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(
                 tlsClientNew(
-                    sckClientNew(
-                        STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, STRDEF("bogus.crt"), STRDEF("/bogus"))),
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, STRDEF("bogus.crt"),
+                    STRDEF("/bogus"), NULL, NULL)),
             CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
 
         // Certificate location and validation errors
@@ -272,8 +273,8 @@ testRun(void)
                 TEST_ERROR_FMT(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL,
-                            STRDEF("/bogus"))),
+                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, STRDEF("/bogus"),
+                            NULL, NULL)),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     hrnServerPort(0));
@@ -288,7 +289,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("test.pgbackrest.org"), hrnServerPort(0), 5000), STRDEF("test.pgbackrest.org"),
-                            0, true, STRDEF(HRN_SERVER_CA), NULL)),
+                            0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL)),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -301,7 +302,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("host.test2.pgbackrest.org"), hrnServerPort(0), 5000),
-                            STRDEF("host.test2.pgbackrest.org"), 0, true, STRDEF(HRN_SERVER_CA), NULL)),
+                            STRDEF("host.test2.pgbackrest.org"), 0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL)),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -314,7 +315,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("test3.pgbackrest.org"), hrnServerPort(0), 5000), STRDEF("test3.pgbackrest.org"),
-                            0, true, STRDEF(HRN_SERVER_CA), NULL)),
+                            0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL)),
                     CryptoError,
                     "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
 
@@ -328,8 +329,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true,
-                            STRDEF(HRN_SERVER_CERT),
-                        NULL)),
+                            STRDEF(HRN_SERVER_CERT), NULL, NULL, NULL)),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     hrnServerPort(0));
@@ -343,7 +343,8 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, false, NULL, NULL)),
+                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, false, NULL, NULL, NULL,
+                            NULL)),
                         "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -378,7 +379,7 @@ testRun(void)
                     client,
                     tlsClientNew(
                         sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 0, TEST_IN_CONTAINER, NULL,
-                        NULL),
+                        NULL, NULL, NULL),
                     "new client");
 
                 hrnServerScriptAccept(tls);
