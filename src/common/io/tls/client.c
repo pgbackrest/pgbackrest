@@ -335,63 +335,9 @@ tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
 
         // !!! 8------------------------------------------------------------
         /* read the client key from file */
-        // if (stat(fnbuf, &buf) != 0)
-        // {
-        //     appendPQExpBuffer(&conn->errorMessage,
-        //                       libpq_gettext("certificate present, but not private key file \"%s\"\n"),
-        //                       fnbuf);
-        //     return -1;
-        // }
-        // #ifndef WIN32
-        // if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
-        // {
-        //     appendPQExpBuffer(&conn->errorMessage,
-        //                       libpq_gettext("private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
-        //                       fnbuf);
-        //     return -1;
-        // }
-        // #endif
-
-        // if (SSL_use_PrivateKey_file(conn->ssl, fnbuf, SSL_FILETYPE_PEM) != 1)
-        // {
-        //     char       *err = SSLerrmessage(ERR_get_error());
-
-        //     /*
-        //      * We'll try to load the file in DER (binary ASN.1) format, and if
-        //      * that fails too, report the original error. This could mask
-        //      * issues where there's something wrong with a DER-format cert,
-        //      * but we'd have to duplicate openssl's format detection to be
-        //      * smarter than this. We can't just probe for a leading -----BEGIN
-        //      * because PEM can have leading non-matching lines and blanks.
-        //      * OpenSSL doesn't expose its get_name(...) and its PEM routines
-        //      * don't differentiate between failure modes in enough detail to
-        //      * let us tell the difference between "not PEM, try DER" and
-        //      * "wrong password".
-        //      */
-        //     if (SSL_use_PrivateKey_file(conn->ssl, fnbuf, SSL_FILETYPE_ASN1) != 1)
-        //     {
-        //         appendPQExpBuffer(&conn->errorMessage,
-        //                           libpq_gettext("could not load private key file \"%s\": %s\n"),
-        //                           fnbuf, err);
-        //         SSLerrfree(err);
-        //         return -1;
-        //     }
 
         //     SSLerrfree(err);
 
-        // }
-
-        /* verify that the cert and key go together */
-        // if (have_cert &&
-        //     SSL_check_private_key(conn->ssl) != 1)
-        // {
-        //     char       *err = SSLerrmessage(ERR_get_error());
-
-        //     appendPQExpBuffer(&conn->errorMessage,
-        //                     libpq_gettext("certificate does not match private key file \"%s\": %s\n"),
-        //                     fnbuf, err);
-        //     SSLerrfree(err);
-        //     return -1;
         // }
 
         // !!! 9------------------------------------------------------------
@@ -597,6 +543,7 @@ tlsClientNew(
     FUNCTION_LOG_END();
 
     ASSERT(ioClient != NULL);
+    ASSERT((cert == NULL && key == NULL) || (cert != NULL && key != NULL));
 
     IoClient *this = NULL;
 
@@ -651,6 +598,48 @@ tlsClientNew(
                 cryptoError(
                     SSL_CTX_set_default_verify_paths(driver->context) != 1, "unable to set default CA certificate location");
             }
+        }
+
+        // Load certificate and key if specified
+        // -------------------------------------------------------------------------------------------------------------------------
+        if (cert != NULL)
+        {
+            // Load certificate
+            cryptoError(
+                SSL_CTX_use_certificate_chain_file(driver->context, strZ(cert)) != 1,
+                strZ(strNewFmt("unable to load cert '%s'", strZ(cert))));
+
+            // !!! Key engines are not supported (yet)
+
+            // !!! Check that key has the correct permissions
+            // if (stat(fnbuf, &buf) != 0)
+            // {
+            //     appendPQExpBuffer(&conn->errorMessage,
+            //                       libpq_gettext("certificate present, but not private key file \"%s\"\n"),
+            //                       fnbuf);
+            //     return -1;
+            // }
+            // #ifndef WIN32
+            // if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
+            // {
+            //     appendPQExpBuffer(&conn->errorMessage,
+            //                       libpq_gettext("private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
+            //                       fnbuf);
+            //     return -1;
+            // }
+            // #endif
+
+            // Load key and verify that the key and cert go together
+            cryptoError(
+                SSL_CTX_use_PrivateKey_file(driver->context, strZ(key), SSL_FILETYPE_PEM) != 1,
+                strZ(strNewFmt("unable to load key '%s'", strZ(key))));
+
+            // Verify again that the cert and key go together. It is not clear why this is needed since the key has already been
+            // verified in SSL_CTX_use_PrivateKey_file(), but it may be that older versions of OpenSSL need it.
+            // !!! TRY ON POSTGRES AND SEE WHAT HAPPENS
+            cryptoError(
+                SSL_CTX_check_private_key(driver->context) != 1,
+                strZ(strNewFmt("cert '%s' and key '%s' do not match", strZ(cert), strZ(key))));
         }
 
         statInc(TLS_STAT_CLIENT_STR);

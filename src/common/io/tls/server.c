@@ -220,7 +220,24 @@ tlsServerNew(const String *const host, const String *const keyFile, const String
         driver->context = SSL_CTX_new(method);
         cryptoError(driver->context == NULL, "unable to create TLS context");
 
-        // !!! NEED TO LIMIT TLS VERSIONS
+        // Set options
+        SSL_CTX_set_options(driver->context, (long)(
+            // Disable compression
+            SSL_OP_NO_COMPRESSION |
+            // Disable SSL and TLS v1/v1.1
+            SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
+            // Let server set cipher order
+            SSL_OP_CIPHER_SERVER_PREFERENCE |
+#ifdef SSL_OP_NO_RENEGOTIATION
+	        // Disable renegotiation, available since 1.1.0h. This affects only TLSv1.2 and older protocol versions as TLSv1.3 has
+            // no support for renegotiation.
+	        SSL_OP_NO_RENEGOTIATION |
+#endif
+        	// Disable session tickets
+	        SSL_OP_NO_TICKET));
+
+        // Disable SSL session caching
+        SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
 
         // Set callback to free context
         memContextCallbackSet(driver->memContext, tlsServerFreeResource, driver);
@@ -232,6 +249,7 @@ tlsServerNew(const String *const host, const String *const keyFile, const String
         cryptoError(
             SSL_CTX_use_PrivateKey_file(driver->context, strZ(keyFile), SSL_FILETYPE_PEM) <= 0,
             "unable to load server private key");
+        // !!! DO WE NEED TO VERIFY KEY HERE SINCE SSL_CTX_use_PrivateKey_file seems to do it?
 
         statInc(TLS_STAT_SERVER_STR);
 

@@ -229,7 +229,7 @@ testRun(void)
             hrnServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("bogus client cert/path");
+        TEST_TITLE("missing ca cert/path");
 
         TEST_ERROR(
             ioClientOpen(
@@ -237,6 +237,37 @@ testRun(void)
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, STRDEF("bogus.crt"),
                     STRDEF("/bogus"), NULL, NULL)),
             CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("missing client cert");
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, NULL, STRDEF("/bogus"),
+                    STRDEF("/bogus"))),
+            CryptoError, "unable to load cert '/bogus': [33558530] No such file or directory");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("missing client key");
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF("/bogus"))),
+            CryptoError, "unable to load key '/bogus': [33558530] No such file or directory");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("client cert and key do not match");
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(HRN_SERVER_KEY))),
+            CryptoError,
+            "unable to load key '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': [185073780] key values mismatch");
 
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------

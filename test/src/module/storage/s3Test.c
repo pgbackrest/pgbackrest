@@ -353,13 +353,13 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
-            HRN_FORK_CHILD_BEGIN(.prefix = "s3 server", .timeout = 5000)
+            HRN_FORK_CHILD_BEGIN(.prefix = "s3 server", .timeout = 10000)
             {
                 TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = port), "s3 server run");
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 5000)
+            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = authPort), "auth server run");
