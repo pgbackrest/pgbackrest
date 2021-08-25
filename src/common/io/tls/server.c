@@ -144,7 +144,7 @@ tlsServerAccept(THIS_VOID, IoSession *const ioSession)
         TRY_END();
 
         // Open TLS session
-        result = tlsSessionNew(tlsSession, ioSession, 5000); // !!! FIX TIMEOUT
+        result = tlsSessionNew(tlsSession, ioSession, 60000); // !!! FIX TIMEOUT
 
         // Authenticate TLS session
         ioSessionAuthenticatedSet(result, tlsServerAuth(this, tlsSession));
@@ -244,10 +244,11 @@ tlsServerNew(const String *const host, const String *const keyFile, const String
 
         // Configure the context by setting key and cert
         cryptoError(
-            SSL_CTX_use_certificate_file(driver->context, strZ(certFile), SSL_FILETYPE_PEM) <= 0,
+            SSL_CTX_use_certificate_file(driver->context, strZ(certFile), SSL_FILETYPE_PEM) != 1,
             "unable to load server certificate");
+        // !!! NEED TO CHECK PERMISSIONS OF KEY FILE
         cryptoError(
-            SSL_CTX_use_PrivateKey_file(driver->context, strZ(keyFile), SSL_FILETYPE_PEM) <= 0,
+            SSL_CTX_use_PrivateKey_file(driver->context, strZ(keyFile), SSL_FILETYPE_PEM) != 1,
             "unable to load server private key");
         // !!! DO WE NEED TO VERIFY KEY HERE SINCE SSL_CTX_use_PrivateKey_file seems to do it?
 
