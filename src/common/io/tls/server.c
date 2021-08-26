@@ -14,6 +14,7 @@ TLS Server
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/io/server.h"
+#include "common/io/tls/common.h"
 #include "common/io/tls/server.h"
 #include "common/io/tls/session.h"
 #include "common/memContext.h"
@@ -106,15 +107,19 @@ tlsServerAuth(const TlsServer *const this, IoSession *const ioSession, SSL *cons
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If peer verification requested
-        if (this->verifyPeer)
+        if (this->verifyPeer)                                                                                       // {vm_covered}
         {
             // If the client cert was presented then the session is authenticated. An error will be thrown automatically if the
             // client cert is not valid.
-            X509 *const clientCert = SSL_get_peer_certificate(tlsSession);
-            ioSessionAuthenticatedSet(ioSession, clientCert != NULL);
-            X509_free(clientCert);
+            X509 *const clientCert = SSL_get_peer_certificate(tlsSession);                                          // {vm_covered}
+            ioSessionAuthenticatedSet(ioSession, clientCert != NULL);                                               // {vm_covered}
 
-            // !!! NEED TO EXTRACT AND SAVE THE COMMON NAME HERE
+            // Set the peer name to the client cert common name
+            if (clientCert != NULL)                                                                                 // {vm_covered}
+                ioSessionPeerNameSet(ioSession, tlsCertificateCommonName(clientCert));                              // {vm_covered}
+
+            // Free the cert
+            X509_free(clientCert);                                                                                  // {vm_covered}
         }
     }
     MEM_CONTEXT_TEMP_END();

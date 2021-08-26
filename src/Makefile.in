@@ -124,6 +124,7 @@ SRCS = \
 	common/io/socket/server.c \
 	common/io/socket/session.c \
 	common/io/tls/client.c \
+	common/io/tls/common.c \
 	common/io/tls/server.c \
 	common/io/tls/session.c \
 	common/lock.c \

@@ -305,6 +305,7 @@ unit:
           - common/io/server
           - common/io/session
           - common/io/tls/client
+          - common/io/tls/common
           - common/io/tls/server
           - common/io/tls/session
           - common/io/socket/client

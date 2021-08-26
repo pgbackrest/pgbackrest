@@ -3,10 +3,7 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <string.h>
 #include <strings.h>
-
-#include <openssl/x509v3.h>
 
 #include "common/crypto/common.h"
 #include "common/debug.h"
@@ -14,6 +11,7 @@ TLS Client
 #include "common/io/client.h"
 #include "common/io/io.h"
 #include "common/io/tls/client.h"
+#include "common/io/tls/common.h"
 #include "common/io/tls/session.h"
 #include "common/memContext.h"
 #include "common/stat.h"
@@ -80,30 +78,6 @@ tlsClientFreeResource(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Convert an ASN1 string used in certificates to a String
-***********************************************************************************************************************************/
-static String *
-asn1ToStr(ASN1_STRING *nameAsn1)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, nameAsn1);
-    FUNCTION_TEST_END();
-
-    // The name should not be null
-    if (nameAsn1 == NULL)                                                                                           // {vm_covered}
-        THROW(CryptoError, "TLS certificate name entry is missing");
-
-    FUNCTION_TEST_RETURN(                                                                                           // {vm_covered}
-        strNewN(
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            (const char *)ASN1_STRING_data(nameAsn1),
-#else
-            (const char *)ASN1_STRING_get0_data(nameAsn1),
-#endif
-            (size_t)ASN1_STRING_length(nameAsn1)));
-}
-
-/***********************************************************************************************************************************
 Check if a name from the server certificate matches the hostname
 
 Matching is always case-insensitive since DNS is case insensitive.
@@ -119,9 +93,8 @@ tlsClientHostVerifyName(const String *host, const String *name)
     ASSERT(host != NULL);
     ASSERT(name != NULL);
 
-    // Reject embedded nulls in certificate common or alternative name to prevent attacks like CVE-2009-4034
-    if (strlen(strZ(name)) != strSize(name))
-        THROW(CryptoError, "TLS certificate name contains embedded null");
+    // Check for NULLs in the name
+    tlsCertificateNameVerify(name);
 
     bool result = false;
 
@@ -187,7 +160,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
                 altNameFound = true;                                                                                // {vm_covered}
 
                 if (name->type == GEN_DNS)                                                                          // {vm_covered}
-                    result = tlsClientHostVerifyName(host, asn1ToStr(name->d.dNSName));                             // {vm_covered}
+                    result = tlsClientHostVerifyName(host, tlsAsn1ToStr(name->d.dNSName));                          // {vm_covered}
 
                 if (result != false)                                                                                // {vm_covered}
                     break;                                                                                          // {vm_covered}
@@ -199,17 +172,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
         // If no subject alternative name was found then check the common name. Per RFC 2818 and RFC 6125, if the subjectAltName
         // extension of type dNSName is present the CN must be ignored.
         if (!altNameFound)                                                                                          // {vm_covered}
-        {
-            X509_NAME *subjectName = X509_get_subject_name(certificate);                                            // {vm_covered}
-            CHECK(subjectName != NULL);                                                                             // {vm_covered}
-
-            int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);                      // {vm_covered}
-            CHECK(commonNameIndex >= 0);                                                                            // {vm_covered}
-
-            result = tlsClientHostVerifyName(                                                                       // {vm_covered}
-                host,                                                                                               // {vm_covered}
-                asn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex))));            // {vm_covered}
-        }
+            result = tlsClientHostVerifyName(host, tlsCertificateCommonName(certificate));                          // {vm_covered}
     }
     MEM_CONTEXT_TEMP_END();                                                                                         // {vm_covered}
 

@@ -106,8 +106,10 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+#ifdef CONTAINER_REQUIRED
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+#endif
 
     // *****************************************************************************************************************************
     if (testBegin("Socket Common"))
@@ -282,9 +284,9 @@ testRun(void)
 
     // Additional coverage not provided by testing with actual certificates
     // *****************************************************************************************************************************
-    if (testBegin("asn1ToStr(), tlsClientHostVerify(), and tlsClientHostVerifyName()"))
+    if (testBegin("tlsAsn1ToStr(), tlsClientHostVerify(), and tlsClientHostVerifyName()"))
     {
-        TEST_ERROR(asn1ToStr(NULL), CryptoError, "TLS certificate name entry is missing");
+        TEST_ERROR(tlsAsn1ToStr(NULL), CryptoError, "TLS certificate name entry is missing");
 
         TEST_ERROR(
             tlsClientHostVerifyName(
@@ -504,6 +506,7 @@ testRun(void)
                 TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
 
                 TEST_RESULT_BOOL(ioSessionAuthenticated(tlsSession), true, "server session authenticated");
+                TEST_RESULT_STR_Z(ioSessionPeerName(tlsSession), "pgbackrest-client", "check peer name");
                 TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message")), "server write");
                 TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
 

@@ -77,6 +77,24 @@ ioSessionFd(IoSession *this)
 }
 
 /**********************************************************************************************************************************/
+void
+ioSessionPeerNameSet(IoSession *const this, const String *const peerName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_SESSION, this);
+        FUNCTION_TEST_PARAM(STRING, peerName);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
+    {
+        this->pub.peerName = strDup(peerName);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 String *
 ioSessionToLog(const IoSession *this)
 {
