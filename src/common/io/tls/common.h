@@ -12,12 +12,12 @@ TLS Common
 Functions
 ***********************************************************************************************************************************/
 // Get common name from a certificate
-String *tlsCertificateCommonName(const X509 *certificate);
+String *tlsCertificateCommonName(X509 *certificate);
 
 // Reject embedded nulls in certificate common or alternative name to prevent attacks like CVE-2009-4034
 void tlsCertificateNameVerify(const String *name);
 
 // Convert an ASN1 string used in certificates to a String
-String *tlsAsn1ToStr(const ASN1_STRING *nameAsn1);
+String *tlsAsn1ToStr(ASN1_STRING *nameAsn1);
 
 #endif

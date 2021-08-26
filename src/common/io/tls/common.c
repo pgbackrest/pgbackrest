@@ -3,12 +3,14 @@ TLS Common
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "string.h"
+
 #include "common/debug.h"
 #include "common/io/tls/common.h"
 
 /**********************************************************************************************************************************/
 String *
-tlsAsn1ToStr(const ASN1_STRING *const nameAsn1)
+tlsAsn1ToStr(ASN1_STRING *const nameAsn1)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, nameAsn1);
@@ -45,7 +47,7 @@ tlsCertificateNameVerify(const String *const name)
 
 /**********************************************************************************************************************************/
 String *
-tlsCertificateCommonName(const X509 *const certificate)                                                             // {vm_covered}
+tlsCertificateCommonName(X509 *const certificate)                                                                   // {vm_covered}
 {
     FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
         FUNCTION_TEST_PARAM_P(VOID, certificate);                                                                   // {vm_covered}
