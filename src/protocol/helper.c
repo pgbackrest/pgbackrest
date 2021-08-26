@@ -615,7 +615,7 @@ protocolRemoteExec(
             helper->ioClient = tlsClientNew(
                 sckClientNew(host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx), timeout),
                 host, timeout, true,
-                NULL, // !!! NEED CA FILE
+                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaFile : cfgOptPgHostCaFile, hostIdx),
                 NULL, // !!! NEED CA PATH
                 cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
                 cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx)

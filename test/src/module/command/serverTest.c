@@ -22,7 +22,9 @@ testRun(void)
     harnessLogLevelSet(logLevelDetail);
 
     // Add host name !!! MAKE INTO A FUNCTION
+#if TEST_IN_CONTAINER
     HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
+#endif
 
     // *****************************************************************************************************************************
     if (testBegin("cmdServer()"))
@@ -38,6 +40,9 @@ testRun(void)
                 hrnCfgArgRaw(argList, cfgOptRepoHost, hrnServerHost());
                 hrnCfgArgRawZ(argList, cfgOptRepoHostConfig, TEST_PATH "/pgbackrest.conf");
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
+#if !TEST_IN_CONTAINER
+                hrnCfgArgRawZ(argList, cfgOptRepoHostCaFile, HRN_SERVER_CA);
+#endif
                 hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
@@ -81,6 +86,9 @@ testRun(void)
                 hrnCfgArgRaw(argList, cfgOptPgHost, hrnServerHost());
                 hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
                 hrnCfgArgRawZ(argList, cfgOptPgHostType, "tls");
+#if !TEST_IN_CONTAINER
+                hrnCfgArgRawZ(argList, cfgOptPgHostCaFile, HRN_SERVER_CA);
+#endif
                 hrnCfgArgRawZ(argList, cfgOptPgHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptPgHostKeyFile, HRN_SERVER_CLIENT_KEY);
                 hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));

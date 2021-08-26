@@ -107,7 +107,51 @@ static const char *const testClientBogusKey =
     "imcderkJABQ5nlXFkQqesluYSjVNFBVFEEnrbDMq3hxCj9O681aDyLMyVId5hTSh\n"
     "0sov2zy5gXVCUbhtdc+DjorqUXha4gs0uM+4xeaer7DYyt5Fgc9aAcmBguwu3FGp\n"
     "fSPKoHpKuloAXgj43pWZtJ3WrJUJcpk=\n"
-    "-----END PRIVATE KEY-----\n";
+    "-----END PRIVATE KEY-----";
+
+/***********************************************************************************************************************************
+Server cert with only a common name to test absence of alt names
+
+Run the following in a temp path:
+
+openssl req -nodes -new -newkey rsa:4096 -sha256 -key ~/pgbackrest/test/certificate/pgbackrest-test-server.key \
+    -out server-cn-only.csr -subj "/CN=127.0.0.1"
+openssl x509 -extensions usr_cert -req -days 99999 -CA ~/pgbackrest/test/certificate/pgbackrest-test-ca.crt \
+    -CAkey ~/pgbackrest/test/certificate/pgbackrest-test-ca.key -CAcreateserial -in server-cn-only.csr -out server-cn-only.crt
+
+Then copy server-cn-only.crt into the variable below. Use a variable instead of a define so we know when the variable
+is no longer used.
+***********************************************************************************************************************************/
+static const char *const testServerCnOnlyCert =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIE+TCCAuECFFtID1qGQ+Q6oyFiD9z5YmANCADjMA0GCSqGSIb3DQEBCwUAMFwx\n"
+    "CzAJBgNVBAYTAlVTMQwwCgYDVQQIDANBbGwxDDAKBgNVBAcMA0FsbDETMBEGA1UE\n"
+    "CgwKcGdCYWNrUmVzdDEcMBoGA1UEAwwTdGVzdC5wZ2JhY2tyZXN0Lm9yZzAgFw0y\n"
+    "MTA4MjYxMjIxNTNaGA8yMjk1MDYxMDEyMjE1M1owFDESMBAGA1UEAwwJMTI3LjAu\n"
+    "MC4xMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAwzNZDX/VhTA6lALX\n"
+    "DZ4AOHv4OQH5wTZipa97XdTrI2TIfMGEffLmv5wzN85pku5HXBuHGJUaUENXt1Ss\n"
+    "GwdfBx/gZZEA8oONqkrxOoJTrABWIAs5k6TTUd+f3Y39rlsyQj076f1sw6Mw9qoC\n"
+    "h+JKXDDqw8kGwQHifXdtCrxL9OfV4eq+gYKrqdlyFM08WfKxe0Js8bB5cZ4Bt/GC\n"
+    "2JhQzQ9bMjYJlxSXIXivP/FFunVT5hZ8gsUVAH+/sm8xlQ4sedW7mIBKkjT3tgL0\n"
+    "FvchB3XyoZ6Sr0JKVaMOcQjIsTzOqdgawgArO541ZwUWHdJH+DODr/gBWXSnnzhH\n"
+    "ED5DAvRMPdO/t353qS/ihpacTqQ91B4UKxK1pVNC84ch3spCLnQncl7kn7RhcdCc\n"
+    "b5g4ZfahRmq79QSoMDvN4+7MtyERLXtSttSWiBzQVVj/jcFNDeGeDjKp6Z55xoso\n"
+    "tMZ3yVajl4IbuQS1pfTLjp7WdJ58y5hQ+8O/ebjUYIxOo5kZhRZV/jxqoR7Ga9MG\n"
+    "bAQ7BPcTuItpfGqiWcdYU+ZdyyFwvpXov6qNoCYt58nj7s+FAbed7EzRHa2Z3RVG\n"
+    "kcqv2iX5EddydHmqKip+QUUR4cPLUXn+kvOHtJEOgAWDURh0DVfhrMD5dX1d+9de\n"
+    "BUwZ89gYvxkkErPL1o8OPRxyiucCAwEAATANBgkqhkiG9w0BAQsFAAOCAgEAlwMZ\n"
+    "tlqvggfXsJh/AQdl1XxqQKzwC+1OyPozqTUMaEiHLgswJw8eXaZB1/8g9ZODPO3N\n"
+    "tLh6JfE4gJJ6gs89YmaZLR0oH3RkoFXSi4+t+WdyF0t3QrBuVx4uO3BeEdD1aLXm\n"
+    "lxS7004mJAEMn9FTBBMwek/DGS1Ic/tHwFCRvvE73mFcPL2Qs03ZzRuYUEI1Ckef\n"
+    "ONFu6/pydIS5MK0QCP/MfUlKP1D3u2aFEbdNHy4GjzGpfg+1DD/ebSswQG1YpjnN\n"
+    "5XLEQZ9IKE2ULq9GnnhqPNUTdX6HFHxVvyZUe/iXasOCX7C9PBipj3tulLcPMbLn\n"
+    "4tToEuLkvsLU2Z6I9mcS88Z30VyYu4BzM6tim7XvsOEObILjs2Qa0dJ2hSF6QJ9L\n"
+    "NUrbWS591v/PvUdk68kC8UL7o7UVS3lsZoRIZD+X+xdEi+zy4DNIMKUBnWtKamUU\n"
+    "1VOosL6vDSZYGg0InGfaBm3Bz3elTrWUHCapNQ5Zsxk+Sq+IQ4hauczrOsd6jugR\n"
+    "m1JzWMUZROfSrcVfighZSencJwJEmyCQwnMUyovPs2v7S+1QQEY210ZZd5Fphoye\n"
+    "1oA2FndLfr8BOG88+TzwdFilOiZ28lIpMFas38uybJBwlxVYN4/aLyIQGp6AyzGR\n"
+    "XqmU0pBFqRYS8xENKxk7lPnxFKyEpb3NK3wk3mo=\n"
+    "-----END CERTIFICATE-----";
 
 /***********************************************************************************************************************************
 Test Run
@@ -387,7 +431,7 @@ testRun(void)
                 TEST_RESULT_VOID(
                     hrnServerRunP(
                         HRN_FORK_CHILD_READ(), hrnServerProtocolTls,
-                        .certificate = STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "alt-name.crt"),
+                        .certificate = STRDEF(HRN_SERVER_CERT),
                         .key = STRDEF(HRN_SERVER_KEY)),
                     "tls alt name server run");
             }
@@ -488,10 +532,10 @@ testRun(void)
         HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Add host name !!! MAKE INTO A FUNCTION
-        HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
+        // Put CN-only server cert
+        storagePutP(storageNewWriteP(storageTest, STRDEF("server-cn-only.crt")), BUFSTRZ(testServerCnOnlyCert));
 
-        // Put bogus cert and key
+        // Put bogus client cert and key
         storagePutP(storageNewWriteP(storageTest, STRDEF("bogus-client.crt")), BUFSTRZ(testClientBogusCert));
         storagePutP(storageNewWriteP(storageTest, STRDEF("bogus-client.key")), BUFSTRZ(testClientBogusKey));
 
@@ -502,7 +546,8 @@ testRun(void)
                 // TLS server to accept connections
                 IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
                 IoServer *tlsServer = tlsServerNew(
-                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), NULL, 5000);
+                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(TEST_PATH "/server-cn-only.crt"),
+                    NULL, 5000);
                 IoSession *socketSession = ioServerAccept(socketServer, NULL);
 
                 // Invalid client cert
@@ -545,7 +590,7 @@ testRun(void)
                     clientSession,
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 5000, true, NULL, NULL,
+                            sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000), STRDEF("127.0.0.1"), 5000, true, NULL, NULL,
                             STRDEF(TEST_PATH "/bogus-client.crt"), STRDEF(TEST_PATH "/bogus-client.key"))),
                     "client open");
 
@@ -561,7 +606,7 @@ testRun(void)
                     clientSession,
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 5000, true, NULL, NULL,
+                            sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000), STRDEF("127.0.0.1"), 5000, true, NULL, NULL,
                             STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(HRN_SERVER_CLIENT_KEY))),
                     "client open");
 
@@ -578,8 +623,8 @@ testRun(void)
                     clientSession,
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 5000, true, NULL, NULL, NULL,
-                            NULL)),
+                            sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000), STRDEF("127.0.0.1"), 5000, true, NULL, NULL,
+                            NULL, NULL)),
                     "client open");
 
                 buffer = bufNew(8);

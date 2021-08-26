@@ -23,18 +23,6 @@ cd [pgbackrest-root]/test/certificate
 openssl genrsa -out pgbackrest-test-server.key 4096
 ```
 
-## Generating the Server Alt Name Test Certificate (pgbackrest-test-alt-name.crt)
-
-This certificate will include alternate names and will only be used in unit tests to check alternate name verification functionality.
-
-```
-cd [pgbackrest-root]/test/certificate
-openssl req -new -sha256 -nodes -out pgbackrest-test-alt-name.csr -key pgbackrest-test-server.key -config pgbackrest-test-server-alt-name.cnf
-openssl x509 -req -in pgbackrest-test-alt-name.csr -CA pgbackrest-test-ca.crt -CAkey pgbackrest-test-ca.key -CAcreateserial \
-    -out pgbackrest-test-alt-name.crt -days 99999 -extensions v3_req -extfile pgbackrest-test-alt-name.cnf
-openssl x509 -in pgbackrest-test-alt-name.crt -text -noout
-```
-
 ## Generating the Server Test Certificate (pgbackrest-test-server.crt/key)
 
 This certificate will be used in unit and integration tests.  It is expected to pass verification but won't be subjected to extensive testing.
