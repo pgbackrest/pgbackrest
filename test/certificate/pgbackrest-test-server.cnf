@@ -11,8 +11,21 @@ ST=All
 L=All
 O=pgBackRest
 OU=Unit Testing Domain
-CN = *.test.pgbackrest.org
+CN = test.pgbackrest.org
 
 [ v3_req ]
 basicConstraints = CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName = @alt_names
+
+[ alt_names ]
+# Used in container unit tests
+DNS.1 = *.test.pgbackrest.org
+
+# Used in non-container unit tests
+IP.1 = 127.0.0.1
+
+# Used in integration tests
+DNS.2 = db-primary
+DNS.3 = db-standby
+DNS.4 = backup

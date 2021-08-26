@@ -45,6 +45,20 @@ use constant HOST_S3                                                => 's3-serve
     push @EXPORT, qw(HOST_S3);
 
 ####################################################################################################################################
+# CA/cert/key constants
+####################################################################################################################################
+use constant HOST_CERT_PATH                                         => '/test/certificate/';
+
+use constant HOST_CLIENT_CERT                                       => HOST_CERT_PATH . 'pgbackrest-test-client.crt';
+    push @EXPORT, qw(HOST_CLIENT_CERT);
+use constant HOST_CLIENT_KEY                                        => HOST_CERT_PATH . 'pgbackrest-test-client.key';
+    push @EXPORT, qw(HOST_CLIENT_KEY);
+
+use constant HOST_SERVER_CA                                         => HOST_CERT_PATH . 'pgbackrest-test-ca.crt';
+use constant HOST_SERVER_CERT                                       => HOST_CERT_PATH . 'pgbackrest-test-server.crt';
+use constant HOST_SERVER_KEY                                        => HOST_CERT_PATH . 'pgbackrest-test-server.key';
+
+####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -77,9 +91,9 @@ sub new
         $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, testRunGet()->vm(),
         ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}", "${strBinPath}:${strBinPath}:ro"], undef,
         $oParam->{bTls} ?
-            'server --log-level-console=debug --tls-server-cert=' . testRunGet()->basePath() .
-                '/test/certificate/pgbackrest-test-server.crt --tls-server-key=' . testRunGet()->basePath() .
-                '/test/certificate/pgbackrest-test-server.key' :
+            'server --log-level-console=debug --tls-server-ca=' . testRunGet()->basePath() . HOST_SERVER_CA .
+                ' --tls-server-cert=' . testRunGet()->basePath() . HOST_SERVER_CERT . ' --tls-server-key=' .
+                testRunGet()->basePath() . HOST_SERVER_KEY :
             undef,
         undef, $oParam->{bTls} ? testRunGet()->backrestExe() : undef);
     bless $self, $class;

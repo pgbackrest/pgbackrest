@@ -243,7 +243,7 @@ sub begin
     {
         $self->{oExpect} = new pgBackRestTest::Common::LogTest(
             $self->module(), $self->moduleTest(), $self->runCurrent(), $self->doLogForce(), $strDescription,
-            $self->{strBackRestExe}, $self->pgBinPath(), $self->testPath());
+            $self->{strBackRestExe}, $self->pgBinPath(), $self->testPath(), $self->basePath());
 
         &log(INFO, '          expect log: ' . $self->{oExpect}->{strFileName});
     }
