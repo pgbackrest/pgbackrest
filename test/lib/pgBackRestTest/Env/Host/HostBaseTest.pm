@@ -93,7 +93,7 @@ sub new
         $oParam->{bTls} ?
             'server --log-level-console=debug --tls-server-ca=' . testRunGet()->basePath() . HOST_SERVER_CA .
                 ' --tls-server-cert=' . testRunGet()->basePath() . HOST_SERVER_CERT . ' --tls-server-key=' .
-                testRunGet()->basePath() . HOST_SERVER_KEY :
+                testRunGet()->basePath() . HOST_SERVER_KEY . ' --tls-server-allow=pgbackrest-client=*' :
             undef,
         undef, $oParam->{bTls} ? testRunGet()->backrestExe() : undef);
     bless $self, $class;
