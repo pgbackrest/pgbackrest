@@ -679,6 +679,11 @@ testRun(void)
         // Add host name !!! MAKE INTO A FUNCTION
         HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid allow list");
+
+        TEST_ERROR(protocolServerAllow(STRDEF(" "), NULL), OptionInvalidValueError, "'tls-server-allow' option must have a value");
+
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -718,6 +723,35 @@ testRun(void)
                 TEST_RESULT_VOID(protocolClientFree(helper.client), "free remote protocol");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("access denied connecting to repo server (invalid stanza)");
+
+                TEST_ERROR_FMT(
+                    protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), ConfigError,
+                    "raised from remote-0 tls protocol on '%s': access denied", strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("access denied connecting to repo server (invalid client)");
+
+                TEST_ERROR_FMT(
+                    protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), ConfigError,
+                    "raised from remote-0 tls protocol on '%s': access denied", strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("access denied connecting to repo server without a stanza");
+
+                argList = strLstNew();
+                hrnCfgArgRaw(argList, cfgOptRepoHost, hrnServerHost());
+                hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
+                hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
+                hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
+                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
+                HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+                TEST_ERROR_FMT(
+                    protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), ConfigError,
+                    "raised from remote-0 tls protocol on '%s': access denied", strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("connect to pg server");
 
                 argList = strLstNew();
@@ -753,16 +787,59 @@ testRun(void)
                 TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");
                 TEST_RESULT_PTR(server, NULL, "server is null");
 
-                // Repo server
+                // Repo server (archive-get)
                 // -----------------------------------------------------------------------------------------------------------------
+                StringList *const argListBase = strLstNew();
+                hrnCfgArgRawZ(argListBase, cfgOptTlsServerCa, HRN_SERVER_CA);
+                hrnCfgArgRawZ(argListBase, cfgOptTlsServerCert, HRN_SERVER_CERT);
+                hrnCfgArgRawZ(argListBase, cfgOptTlsServerKey, HRN_SERVER_KEY);
+
+                StringList *argList = strLstDup(argListBase);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=db");
+                HRN_CFG_LOAD(cfgCmdServer, argList);
+
                 socketSession = ioServerAccept(socketServer, NULL);
 
                 TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");
                 TEST_RESULT_PTR_NE(server, NULL, "server is not null");
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
 
-                // Pg server
+                // Repo server access denied (archive-get) invalid stanza
                 // -----------------------------------------------------------------------------------------------------------------
+                argList = strLstDup(argListBase);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=bogus");
+                HRN_CFG_LOAD(cfgCmdServer, argList);
+
+                socketSession = ioServerAccept(socketServer, NULL);
+
+                TEST_ERROR(protocolServer(tlsServer, socketSession), ConfigError, "access denied");
+
+                // Repo server access denied (archive-get) invalid client
+                // -----------------------------------------------------------------------------------------------------------------
+                argList = strLstDup(argListBase);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "bogus=*");
+                HRN_CFG_LOAD(cfgCmdServer, argList);
+
+                socketSession = ioServerAccept(socketServer, NULL);
+
+                TEST_ERROR(protocolServer(tlsServer, socketSession), ConfigError, "access denied");
+
+                // Repo server access denied (info)
+                // -----------------------------------------------------------------------------------------------------------------
+                argList = strLstDup(argListBase);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=db");
+                HRN_CFG_LOAD(cfgCmdServer, argList);
+
+                socketSession = ioServerAccept(socketServer, NULL);
+
+                TEST_ERROR(protocolServer(tlsServer, socketSession), ConfigError, "access denied");
+
+                // Pg server (backup)
+                // -----------------------------------------------------------------------------------------------------------------
+                argList = strLstDup(argListBase);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=*");
+                HRN_CFG_LOAD(cfgCmdServer, argList);
+
                 socketSession = ioServerAccept(socketServer, NULL);
 
                 TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");

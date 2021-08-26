@@ -396,9 +396,13 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "host1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHostType, 1, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCertFile, 1, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostKeyFile, 1, "/not-used");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "host2");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHostType, 2, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCertFile, 2, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostKeyFile, 2, "/not-used");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHostPort, 2, "3333");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -412,8 +416,12 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "host1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHostType, 1, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostCertFile, 1, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostKeyFile, 1, "/not-used");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "host2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHostType, 2, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostCertFile, 2, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostKeyFile, 2, "/not-used");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHostPort, 2, "4444");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 

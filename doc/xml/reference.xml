@@ -335,6 +335,15 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-allow" name="TLS Server Allowed Clients">
+                        <summary>TLS server allowed clients.</summary>
+
+                        <text>!!!</text>
+
+                        <example>/!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
                     <config-key id="tls-server-ca" name="TLS Server Certificate Authorities">
                         <summary>TLS server certificate authorities.</summary>
 

@@ -321,6 +321,44 @@ protocolLocalFree(unsigned int processId)
 }
 
 /**********************************************************************************************************************************/
+// Helper to check if client is allowed
+static bool
+protocolServerAllow(const String *allowListStr, const String *const stanza)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, allowListStr);
+        FUNCTION_LOG_PARAM(STRING, stanza);
+    FUNCTION_TEST_END();
+
+    // If the allow list was found
+    if (allowListStr != NULL)
+    {
+        // Empty list is not allowed
+        allowListStr = strTrim(strDup(allowListStr));
+
+        if (strEmpty(allowListStr))
+            THROW(OptionInvalidValueError, "'" CFGOPT_TLS_SERVER_ALLOW "' option must have a value");
+
+        // If * then all stanzas are allowed
+        if (strEqZ(allowListStr, "*"))
+            FUNCTION_TEST_RETURN(true);
+
+        // Check the list of stanzas for a match with the specified stanza. Each entry will need to be trimmed before comparing.
+        if (stanza != NULL)
+        {
+            StringList *allowList = strLstNewSplitZ(allowListStr, COMMA_Z);
+
+            for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(allowList); allowListIdx++)
+            {
+                if (strEq(strTrim(strLstGet(allowList, allowListIdx)), stanza))
+                    FUNCTION_TEST_RETURN(true);
+            }
+        }
+    }
+
+    FUNCTION_TEST_RETURN(false);
+}
+
 ProtocolServer *
 protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 {
@@ -340,9 +378,15 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
             ioSessionIoWrite(tlsSession));
 
-        // If session is authenticated get parameter list from the client and load it
+        // If session is authenticated
         if (ioSessionAuthenticated(tlsSession))
         {
+            // Get list of allowed stanzas for this client
+            CHECK(cfgOptionTest(cfgOptTlsServerAllow));
+            const String *const clientAllowList = strDup(
+                varStr(kvGet(cfgOptionKv(cfgOptTlsServerAllow), VARSTR(ioSessionPeerName(tlsSession)))));
+
+            // Get parameter list from the client and load it
             const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
             CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
 
@@ -350,6 +394,23 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             strLstInsert(paramList, 0, cfgExe());
             cfgLoad(strLstSize(paramList), strLstPtr(paramList));
 
+            // Check that the client is allowed to access this server
+            if (!protocolServerAllow(clientAllowList, cfgOptionStrNull(cfgOptStanza)))
+            {
+                TRY_BEGIN()
+                {
+                    // !!! BETTER ERROR TYPE HERE?
+                    THROW(ConfigError, "access denied");
+                }
+                CATCH_ANY()
+                {
+                    protocolServerError(result, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
+                    RETHROW();
+                }
+                TRY_END();
+            }
+
+            // Ack the config command
             protocolServerDataEndPut(result);
 
             // !!! NEED TO SET READ TIMEOUT TO PROTOCOL-TIMEOUT HERE

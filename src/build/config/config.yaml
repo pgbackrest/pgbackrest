@@ -928,6 +928,12 @@ option:
     command:
       server: {}
 
+  tls-server-allow:
+    section: global
+    type: hash
+    command:
+      server: {}
+
   tls-server-port:
     section: global
     type: integer

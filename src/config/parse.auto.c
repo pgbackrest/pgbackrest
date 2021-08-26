@@ -7012,6 +7012,21 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("tls-server-allow"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_MULTI(true),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdServer)
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("tls-server-ca"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
         PARSE_RULE_OPTION_REQUIRED(true),
@@ -11729,6 +11744,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveInterval,
     },
 
+    // tls-server-allow option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "tls-server-allow",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptTlsServerAllow,
+    },
+    {
+        .name = "reset-tls-server-allow",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTlsServerAllow,
+    },
+
     // tls-server-ca option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -11889,6 +11916,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
+    cfgOptTlsServerAllow,
     cfgOptTlsServerCa,
     cfgOptTlsServerCert,
     cfgOptTlsServerCrl,

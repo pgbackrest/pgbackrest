@@ -106,7 +106,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-#ifdef CONTAINER_REQUIRED
+#ifdef TEST_CONTAINER_REQUIRED
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 #endif
