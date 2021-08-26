@@ -13,114 +13,16 @@ Test Tls Client
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
-Client key/cert signed by another CA used to generate invalid client cert error
-
-Run the following in a temp path:
-
-openssl genrsa -out bogus-ca.key 4096
-openssl req -new -x509 -sha256 -days 99999 -key bogus-ca.key -out bogus-ca.crt -subj "/CN=bogus"
-openssl req -nodes -new -newkey rsa:4096 -sha256 -keyout bogus-client.key -out bogus-client.csr -subj "/CN=bogus"
-openssl x509 -extensions usr_cert -req -days 99999 -CA bogus-ca.crt -CAkey bogus-ca.key -CAcreateserial -in bogus-client.csr \
-    -out bogus-client.crt
-
-Then copy bogus-client.crt/bogus-client.key into the variables below. Use variables instead of defines so we know when the variable
-is no longer used.
-***********************************************************************************************************************************/
-static const char *const testClientBogusCert =
-    "-----BEGIN CERTIFICATE-----\n"
-    "MIIEqTCCApECFB9rIW8PSz2iH9LoV4DuNQf+e5s3MA0GCSqGSIb3DQEBCwUAMBAx\n"
-    "DjAMBgNVBAMMBWJvZ3VzMCAXDTIxMDgyNTE5MzgyNVoYDzIyOTUwNjA5MTkzODI1\n"
-    "WjAQMQ4wDAYDVQQDDAVib2d1czCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\n"
-    "ggIBANZuk8q8jOzDir2EFzvMCIECHDkL2DF+qXbcooPua+K6LKUJeskFIFiGVQBA\n"
-    "X5QgshIcKl7cUcM11KYylt62Nbkzj0MbupWhynVCM2P8ZAxy3zcqLyWy9D0DMoMe\n"
-    "YPJrx7MxhOkymUb3ogPmBzlhcVsZayh+b8ywM7q9NAi5EWCqIbeFXB9jJu2qpZXY\n"
-    "l8bHnBIbqmyh45l+ADY5gTW/qx4SU1QnEgctqmrMTN7bdCP9Jch/gCyqB17RTwL2\n"
-    "L1SpeIlDG5FUdjOfOUJf6GnX2kQh7niWYqsa9C/ByY0+YrjmIrHSDK51AaIGovnw\n"
-    "dn9GZvpwY6wWgBoyt/17VcEqPHl/Bey6K37QGgd2o8Ez3aBJp7sgnxszSn5Zddu5\n"
-    "XBBrdCNlhhF/qdqezevVDWQpr+fq0eebK7VxR4OMI2jwwc5yUd+ZdJoxNQevV1pC\n"
-    "JXRFbwZ2Um5ZBw1CoZxRep1cZDy1zvZhhn6Hen7aiqoFkD61JjfgCXyeWfdi6Ytg\n"
-    "e3cnJpo5I8PpHHjRABmWWyu/vF9M25QUAT+lVCIJ+/yvwRvrFnN3VHF/JN7uuu0R\n"
-    "hEf4rXBWpTc1z8JzUzFGyMmeLQFXCGlHWY0IBbsA952bk1kgMwKgdBa0RbJJrQpx\n"
-    "NMQqX1tfsDHJw86+uO8NTd/ekfs7j/HiHBDZF8g1su8J9Em3AgMBAAEwDQYJKoZI\n"
-    "hvcNAQELBQADggIBAL1/+/7zFcWhdOPtzvghuRMvcxUAKvWUNaELpkAmtV6cB9CP\n"
-    "9AlJwhCAuvjdRofdfigy94J9MXkvULMqHsSE56Ei6la+mXawenN2OyuwChvagFOl\n"
-    "tm+wEgutJ8c32g9QMxvC9OEZlXEgyWyo2rqV0KQ9GKEr2kBhvCOitEJhfQVMwCAR\n"
-    "mQyeyMRdFxfvI7IG/3AWrzNJlr8+w1WtWmkefcy5TG7HzLwIXmFde9W7HkOJnch4\n"
-    "m+5Cvw+KNgivWXp4vhr7uDRAr/feJ+GeoermQb/apM7PlJvHP9u8+H9OUu4WrB6v\n"
-    "4Y8z/g6qV/br60wxNnsM1ESm+k2LkiSKe6Hdpl9FNV9NwtTnEsvUC5wZNAbHwsch\n"
-    "BhFw354/ut/zLwSXaL70PD8jsOxClnJv3KEAc8+eL7bdgfPS9lJKY3Xy87XatnoX\n"
-    "DUbokGaJEOaheRFpEzbtin5b2RBqCtqsnPv6ftdO0kvL/GKoATeg0khwr///Ur2n\n"
-    "LmgFQGlIz5T5PzBXsQNjVzWlBSnoOQp6M4pRcC+R0cbInyG2YTDhYydpJSwAxc2L\n"
-    "EofZUlo7XE6Nzn/RZeaRDZ7Y4+5EIe42i/5A5ydXuPzKFc9MoNSl5ddNGWt/OjDJ\n"
-    "A+CAKwGi30m0Lv9yu4fb2yi+Al3+qmkCtIwa0XSMJj8SluReKmKGVVdh32Qb\n"
-    "-----END CERTIFICATE-----";
-
-static const char *const testClientBogusKey =
-    "-----BEGIN PRIVATE KEY-----\n"
-    "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\n"
-    "fSPKoHpKuloAXgj43pWZtJ3WrJUJcpk=\n"
-    "-----END PRIVATE KEY-----";
-
-/***********************************************************************************************************************************
 Server cert with only a common name to test absence of alt names
 
-Run the following in a temp path:
+To regenerate, run the following in a temp path:
 
 openssl req -nodes -new -newkey rsa:4096 -sha256 -key ~/pgbackrest/test/certificate/pgbackrest-test-server.key \
     -out server-cn-only.csr -subj "/CN=127.0.0.1"
 openssl x509 -extensions usr_cert -req -days 99999 -CA ~/pgbackrest/test/certificate/pgbackrest-test-ca.crt \
     -CAkey ~/pgbackrest/test/certificate/pgbackrest-test-ca.key -CAcreateserial -in server-cn-only.csr -out server-cn-only.crt
 
-Then copy server-cn-only.crt into the variable below. Use a variable instead of a define so we know when the variable
-is no longer used.
+Then copy server-cn-only.crt into the variable below. Use a variable instead of a define so we know when the variable is not used.
 ***********************************************************************************************************************************/
 static const char *const testServerCnOnlyCert =
     "-----BEGIN CERTIFICATE-----\n"
@@ -151,6 +53,49 @@ static const char *const testServerCnOnlyCert =
     "m1JzWMUZROfSrcVfighZSencJwJEmyCQwnMUyovPs2v7S+1QQEY210ZZd5Fphoye\n"
     "1oA2FndLfr8BOG88+TzwdFilOiZ28lIpMFas38uybJBwlxVYN4/aLyIQGp6AyzGR\n"
     "XqmU0pBFqRYS8xENKxk7lPnxFKyEpb3NK3wk3mo=\n"
+    "-----END CERTIFICATE-----";
+
+/***********************************************************************************************************************************
+Client cert signed by another CA used to generate invalid client cert error
+
+To regenerate, run the following in a temp path:
+
+openssl genrsa -out bogus-ca.key 4096
+openssl req -new -x509 -sha256 -days 99999 -key bogus-ca.key -out bogus-ca.crt -subj "/CN=bogus"
+openssl req -nodes -new -newkey rsa:4096 -sha256 -key ~/pgbackrest/test/certificate/pgbackrest-test-client.key \
+    -out client-bad-ca.csr -subj "/CN=bogus"
+openssl x509 -extensions usr_cert -req -days 99999 -CA bogus-ca.crt -CAkey bogus-ca.key -CAcreateserial -in client-bad-ca.csr \
+    -out client-bad-ca.crt
+
+Then copy client-bad-ca.crt into the variable below. Use a variable instead of a define so we know when the variable is not used.
+***********************************************************************************************************************************/
+static const char *const testClientBadCa =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIEqTCCApECFAzHjCL/QJZZRmBhloX298J4V4HbMA0GCSqGSIb3DQEBCwUAMBAx\n"
+    "DjAMBgNVBAMMBWJvZ3VzMCAXDTIxMDgyNjE0MzYyMloYDzIyOTUwNjEwMTQzNjIy\n"
+    "WjAQMQ4wDAYDVQQDDAVib2d1czCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\n"
+    "ggIBALK5ahiXzFqvha28yqe3SGdezs4IREHUDgbn6Tem9k1GazE/IsdIQ9wj9KHd\n"
+    "lXwb/2fsdQk1hkPXa4qRBR/AyeBPRL3d0aZzU+pTjV6n9dJ+KIaivuAxoyyY59XM\n"
+    "36CqTZxe3VqXweRWPn40tzDcUxSVIfipJpFuK2vxpwEHdl/cFQ38/sRoHTjx61nx\n"
+    "obt4RFiEMAFCxxCk/qDyYISHJmH67dIUEw7ujB4vn/gpk5f1WBY5msZMgT3pJbFv\n"
+    "xD8dRgUvMpIM5poVFfhHgRq+L2dxQ2jHD5AnlpY6n8XrWy4QQa3AFsWgnD0w0Wn6\n"
+    "cyU0g5AkIlP+0mMNC9LIPVc9LGKUTrqciBgx8Rysy3mskg8pElEe1ouQOi/Zx8UA\n"
+    "G3RXqvjxXLkMp3S7PKgrr48uZHAso59+k33EkF/ceLsr3r3VY1WWsiszDfK+vbj6\n"
+    "Bbxvtv/S2ZYXMA7nM2Ysu20BpHm9LLo4y8HqDeixqw5enOwuDKSeKD1pJgJ5CUYq\n"
+    "RbA/cUYxHJ36NuPDxec+bhqiJq8RMR4pGGcJ7BvirJxYPJX0LqIfTHL1t2dVm//A\n"
+    "meMDNiM2quAzpBosjvaWaRUcankYE1dL59eVugoDKCNCPg72LjXBB7bPWZT2Xhkc\n"
+    "co0etruIYYJmQ3LO0vGe9pOYBu2FHx5FY72b8gpshm+umdL5AgMBAAEwDQYJKoZI\n"
+    "hvcNAQELBQADggIBAEN3778acjJ46yKzYoM+wiyyiMtmOrf+zvJsF0oK4KcWgec2\n"
+    "O2grmhxxDdF5c/P6XasDQFl8feQfGeDY76DaLrcmIiOYrtnqg11IZcPOHx5nbpu2\n"
+    "ZVV5LiMS8nHhQIyxMF/WYYKGzBQ5AY2+t6dozyDo3R4O7CCmsFKc8NaB4maC7Q16\n"
+    "7MxKXxtAH9I1PigjRMDpi1xQJbXJxFKhZrKBODtreL6cmv6yB4JJezI5ngIdODpI\n"
+    "MaIS0reRGN4QUpzDaXwYBTaOHaIDShPDOfiA5ai4xK/dEWG2rDu+yk7g5SEKMAxU\n"
+    "mfUCO1MGY6NwQupLUyfO2VjvfYeB+ipJq6F8tYMGrQJU/PCQT6nxaZdSoZZQF72y\n"
+    "OuYVfKjnj7MWapGKC3ea1oTUvkwDePe8xg3DBuXImp5mO4MG5K/oVv5SnNVmcUGq\n"
+    "L9WBrvypJK+3x3vbdyH02DR10TcMRSbDODmW59nx2PQEDUM7ddNZ60dRn8Hdgoz2\n"
+    "s/Sk3I1gXvZLQ/shS4Aa7XKz/TqhPNrBnMvSnp5/PtjjeBwxIBimuuM1ALFfwz91\n"
+    "KpzwqfTswuGIO8TWKJZzNTsdwScqmbZTtiVs6GaEZ3FQX5qnrbybX53S2R9fNKm+\n"
+    "qGj7FtRiSdjkZ7pmNpma6ycPR0RBZyL3aHnig+DDfRRt8TgrZzY3aXBReONb\n"
     "-----END CERTIFICATE-----";
 
 /***********************************************************************************************************************************
@@ -532,12 +477,11 @@ testRun(void)
         HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Put CN-only server cert
+        // Put CN only server cert
         storagePutP(storageNewWriteP(storageTest, STRDEF("server-cn-only.crt")), BUFSTRZ(testServerCnOnlyCert));
 
-        // Put bogus client cert and key
-        storagePutP(storageNewWriteP(storageTest, STRDEF("bogus-client.crt")), BUFSTRZ(testClientBogusCert));
-        storagePutP(storageNewWriteP(storageTest, STRDEF("bogus-client.key")), BUFSTRZ(testClientBogusKey));
+        // Put bad CA client cert
+        storagePutP(storageNewWriteP(storageTest, STRDEF("client-bad-ca.crt")), BUFSTRZ(testClientBadCa));
 
         HRN_FORK_BEGIN()
         {
@@ -591,7 +535,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000), STRDEF("127.0.0.1"), 5000, true, NULL, NULL,
-                            STRDEF(TEST_PATH "/bogus-client.crt"), STRDEF(TEST_PATH "/bogus-client.key"))),
+                            STRDEF(TEST_PATH "/client-bad-ca.crt"), STRDEF(HRN_SERVER_CLIENT_KEY))),
                     "client open");
 
                 TEST_ERROR(
