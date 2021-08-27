@@ -3,6 +3,9 @@ File Descriptor Functions
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#ifdef __sun__
+#include <sys/siginfo.h>
+#endif
 #include <poll.h>
 
 #include "common/debug.h"
