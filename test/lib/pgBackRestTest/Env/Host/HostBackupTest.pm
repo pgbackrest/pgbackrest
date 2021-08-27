@@ -1295,7 +1295,7 @@ sub configCreate
                 # !!! NOT SURE WHY THIS IS NEEDED FOR DEBIAN -- LOOKS LIKE CA IS NOT BEING CORRECTLY INSTALLED?
                 if (vmGet()->{testRunGet()->vm()}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                 {
-                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'pg1-host-ca-file'} = testRunGet()->basePath() . HOST_SERVER_CA;
+                    $oParamHash{$strStanza}{'pg1-host-ca-file'} = testRunGet()->basePath() . HOST_SERVER_CA;
                 }
             }
 
@@ -1340,7 +1340,7 @@ sub configCreate
                 # !!! NOT SURE WHY THIS IS NEEDED FOR DEBIAN -- LOOKS LIKE CA IS NOT BEING CORRECTLY INSTALLED?
                 if (vmGet()->{testRunGet()->vm()}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                 {
-                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'pg8-host-ca-file'} = testRunGet()->basePath() . HOST_SERVER_CA;
+                    $oParamHash{$strStanza}{'pg8-host-ca-file'} = testRunGet()->basePath() . HOST_SERVER_CA;
                 }
             }
 
@@ -1380,9 +1380,9 @@ sub configCreate
 
             if ($oParam->{bTls})
             {
-                $oParamHash{$strStanza}{'repo1-host-type'} = 'tls';
-                $oParamHash{$strStanza}{'repo1-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
-                $oParamHash{$strStanza}{'repo1-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-type'} = 'tls';
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
 
                 # !!! NOT SURE WHY THIS IS NEEDED FOR DEBIAN -- LOOKS LIKE CA IS NOT BEING CORRECTLY INSTALLED?
                 if (vmGet()->{testRunGet()->vm()}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
@@ -1401,9 +1401,9 @@ sub configCreate
 
                 if ($oParam->{bTls})
                 {
-                    $oParamHash{$strStanza}{'repo2-host-type'} = 'tls';
-                    $oParamHash{$strStanza}{'repo2-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
-                    $oParamHash{$strStanza}{'repo2-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-type'} = 'tls';
+                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
 
                     # !!! NOT SURE WHY THIS IS NEEDED FOR DEBIAN -- LOOKS LIKE CA IS NOT BEING CORRECTLY INSTALLED?
                     if (vmGet()->{testRunGet()->vm()}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
