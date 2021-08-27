@@ -482,38 +482,23 @@ tlsClientNew(
             }
         }
 
-        // Load certificate revocation list
+        // !!! Load certificate revocation list
         // -------------------------------------------------------------------------------------------------------------------------
         // if (crlFile != NULL)
-        // !!! 4------------------------------------------------------------
-        // LOAD CRL FILE
-        // if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
         // {
-        //     char       *fname = NULL;
-        //     char       *dname = NULL;
+        //     // Get cert store
+    	// 	X509_STORE *const certStore = SSL_CTX_get_cert_store(driver->context);
+        //     cryptoError(certStore == NULL, "unable to get cert store");
 
-        //     if (conn->sslcrl && strlen(conn->sslcrl) > 0)
-        //         fname = conn->sslcrl;
-        //     if (conn->sslcrldir && strlen(conn->sslcrldir) > 0)
-        //         dname = conn->sslcrldir;
+        //     // Load CRL file
+        //     cryptoError(
+        //         X509_STORE_load_locations(certStore, strZ(crlFile), NULL) != 1,
+        //         strZ(strNewFmt("unable to load crl file '%s'", strZ(crlFile))));
 
-        //     /* defaults to use the default CRL file */
-        //     if (!fname && !dname && have_homedir)
-        //     {
-        //         snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
-        //         fname = fnbuf;
-        //     }
-
-        //     /* Set the flags to check against the complete CRL chain */
-        //     if ((fname || dname) &&
-        //         X509_STORE_load_locations(cvstore, fname, dname) == 1)
-        //     {
-        //         X509_STORE_set_flags(cvstore,
-        //                              X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
-        //     }
-
-        //     /* if not found, silently ignore;  we do not require CRL */
-        //     ERR_clear_error();
+        //     // Set flags to reject certs in CRL
+        //     cryptoError(
+        //         X509_STORE_set_flags(certStore, X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL) != 1, "unable to set crl flags");
+        // }
 
         // Load certificate and key if specified
         // -------------------------------------------------------------------------------------------------------------------------
@@ -551,7 +536,7 @@ tlsClientNew(
 
             // Verify again that the cert and key go together. It is not clear why this is needed since the key has already been
             // verified in SSL_CTX_use_PrivateKey_file(), but it may be that older versions of OpenSSL need it.
-            // !!! TRY ON POSTGRES AND SEE WHAT HAPPENS
+            // !!! TRY ON POSTGRES AND SEE WHAT HAPPENS?
             cryptoError(
                 SSL_CTX_check_private_key(driver->context) != 1,
                 strZ(strNewFmt("cert '%s' and key '%s' do not match", strZ(cert), strZ(key))));

@@ -29,9 +29,11 @@ Path and prefix for test certificates
 ***********************************************************************************************************************************/
 #define HRN_SERVER_CERT_PREFIX                                     "test/certificate/pgbackrest-test-"
 #define HRN_SERVER_CERT                                            HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "server.crt"
+#define HRN_SERVER_CRL                                             HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "server.crl"
 #define HRN_SERVER_KEY                                             HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "server.key"
 #define HRN_SERVER_CA                                              HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "ca.crt"
 #define HRN_SERVER_CLIENT_CERT                                     HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "client.crt"
+#define HRN_SERVER_CLIENT_CRL                                      HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "client.crl"
 #define HRN_SERVER_CLIENT_KEY                                      HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "client.key"
 
 /***********************************************************************************************************************************

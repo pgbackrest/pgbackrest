@@ -35,6 +35,16 @@ openssl x509 -req -in pgbackrest-test-server.csr -CA pgbackrest-test-ca.crt -CAk
 openssl x509 -in pgbackrest-test-server.crt -text -noout
 ```
 
+## Generating the Server Test Certificate Revocation (pgbackrest-test-server.crl)
+
+```
+rm -f index.* && touch index.txt
+openssl ca -config pgbackrest-test-server.cnf -keyfile pgbackrest-test-ca.key -cert pgbackrest-test-ca.crt \
+    -revoke pgbackrest-test-server.crt
+openssl ca -config pgbackrest-test-server.cnf -keyfile pgbackrest-test-ca.key -cert pgbackrest-test-ca.crt \
+    -gencrl -out pgbackrest-test-server.crl
+```
+
 ## Generating the Client Test Key (pgbackrest-test-client.key)
 
 This key will be used for all client certificates to keep things simple.
@@ -54,4 +64,14 @@ openssl req -new -sha256 -nodes -out pgbackrest-test-client.csr -key pgbackrest-
 openssl x509 -req -in pgbackrest-test-client.csr -CA pgbackrest-test-ca.crt -CAkey pgbackrest-test-ca.key -CAcreateserial \
     -out pgbackrest-test-client.crt -days 99999 -extensions v3_req -extfile pgbackrest-test-client.cnf
 openssl x509 -in pgbackrest-test-client.crt -text -noout
+```
+
+## Generating the Client Test Certificate Revocation (pgbackrest-test-client.crl)
+
+```
+rm -f index.* && touch index.txt
+openssl ca -config pgbackrest-test-client.cnf -keyfile pgbackrest-test-ca.key -cert pgbackrest-test-ca.crt \
+    -revoke pgbackrest-test-client.crt
+openssl ca -config pgbackrest-test-client.cnf -keyfile pgbackrest-test-ca.key -cert pgbackrest-test-ca.crt \
+    -gencrl -out pgbackrest-test-client.crl
 ```

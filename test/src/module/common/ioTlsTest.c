@@ -524,6 +524,15 @@ testRun(void)
 
                 TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
 
+                // !!! Client crl rejects server
+                // socketSession = ioServerAccept(socketServer, NULL);
+                // TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
+
+                // TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message2")), "server write");
+                // TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
+
+                // TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
+
                 // Free socket
                 ioServerFree(socketServer);
             }
@@ -581,6 +590,22 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "message2", "check read");
 
                 TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                // !!! TEST_TITLE("crl reject");
+
+                // TEST_ASSIGN(
+                //     clientSession,
+                //     ioClientOpen(
+                //         tlsClientNew(
+                //             sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000), STRDEF("127.0.0.1"), 5000, true, STRDEF(HRN_SERVER_CA), NULL,
+                //             NULL, NULL, STRDEF(HRN_SERVER_CRL))),
+                //     "client open");
+
+                // TEST_ERROR(
+                //     ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
+                //     "TLS error [1:336151576] tlsv1 alert unknown ca");
+                // TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
             }
             HRN_FORK_PARENT_END();
         }
