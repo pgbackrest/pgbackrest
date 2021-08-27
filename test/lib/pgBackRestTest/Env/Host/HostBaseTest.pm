@@ -55,6 +55,7 @@ use constant HOST_CLIENT_KEY                                        => HOST_CERT
     push @EXPORT, qw(HOST_CLIENT_KEY);
 
 use constant HOST_SERVER_CA                                         => HOST_CERT_PATH . 'pgbackrest-test-ca.crt';
+    push @EXPORT, qw(HOST_SERVER_CA);
 use constant HOST_SERVER_CERT                                       => HOST_CERT_PATH . 'pgbackrest-test-server.crt';
 use constant HOST_SERVER_KEY                                        => HOST_CERT_PATH . 'pgbackrest-test-server.key';
 

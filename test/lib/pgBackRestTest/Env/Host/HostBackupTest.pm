@@ -38,6 +38,7 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # Error constants
@@ -1281,12 +1282,22 @@ sub configCreate
         if ($self->nameTest(HOST_BACKUP))
         {
             $oParamHash{$strStanza}{'pg1-host'} = $oHostDb1->nameGet();
-            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg1-host-type'} = 'tls' : undef;
-            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg1-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT : undef;
-            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg1-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY : undef;
             $oParamHash{$strStanza}{'pg1-host-user'} = $oHostDb1->userGet();
             $oParamHash{$strStanza}{'pg1-host-cmd'} = $oHostDb1->backrestExe();
             $oParamHash{$strStanza}{'pg1-host-config'} = $oHostDb1->backrestConfig();
+
+            if ($oParam->{bTls})
+            {
+                $oParamHash{$strStanza}{'pg1-host-type'} = 'tls';
+                $oParamHash{$strStanza}{'pg1-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                $oParamHash{$strStanza}{'pg1-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+
+                # !!! NOT SURE WHY THIS IS NEEDED FOR DEBIAN -- LOOKS LIKE CA IS NOT BEING CORRECTLY INSTALLED?
+                if (vmGet()->{testRunGet()->vm()}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+                {
+                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'pg1-host-ca-file'} = testRunGet()->basePath() . HOST_SERVER_CA;
+                }
+            }
 
             # Port can't be configured for a synthetic host
             if (!$self->synthetic())
@@ -1315,13 +1326,23 @@ sub configCreate
 
             # Set a valid replica to a higher index to ensure skipping indexes does not make a difference
             $oParamHash{$strStanza}{"pg8-host"} = $oHostDb2->nameGet();
-            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg8-host-type'} = 'tls' : undef;
-            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg8-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT : undef;
-            $oParam->{bTls} ? $oParamHash{$strStanza}{'pg8-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY : undef;
             $oParamHash{$strStanza}{"pg8-host-user"} = $oHostDb2->userGet();
             $oParamHash{$strStanza}{"pg8-host-cmd"} = $oHostDb2->backrestExe();
             $oParamHash{$strStanza}{"pg8-host-config"} = $oHostDb2->backrestConfig();
             $oParamHash{$strStanza}{"pg8-path"} = $oHostDb2->dbBasePath();
+
+            if ($oParam->{bTls})
+            {
+                $oParamHash{$strStanza}{'pg8-host-type'} = 'tls';
+                $oParamHash{$strStanza}{'pg8-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                $oParamHash{$strStanza}{'pg8-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+
+                # !!! NOT SURE WHY THIS IS NEEDED FOR DEBIAN -- LOOKS LIKE CA IS NOT BEING CORRECTLY INSTALLED?
+                if (vmGet()->{testRunGet()->vm()}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+                {
+                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'pg8-host-ca-file'} = testRunGet()->basePath() . HOST_SERVER_CA;
+                }
+            }
 
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
@@ -1353,26 +1374,43 @@ sub configCreate
         if (!$self->isHostBackup())
         {
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host'} = $oHostBackup->nameGet();
-            $oParam->{bTls} ? $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-type'} = 'tls' : undef;
-            $oParam->{bTls} ? $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cert-file'} =
-                testRunGet()->basePath() . HOST_CLIENT_CERT : undef;
-            $oParam->{bTls} ? $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-key-file'} =
-                testRunGet()->basePath() . HOST_CLIENT_KEY : undef;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-user'} = $oHostBackup->userGet();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
+
+            if ($oParam->{bTls})
+            {
+                $oParamHash{$strStanza}{'repo1-host-type'} = 'tls';
+                $oParamHash{$strStanza}{'repo1-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                $oParamHash{$strStanza}{'repo1-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+
+                # !!! NOT SURE WHY THIS IS NEEDED FOR DEBIAN -- LOOKS LIKE CA IS NOT BEING CORRECTLY INSTALLED?
+                if (vmGet()->{testRunGet()->vm()}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+                {
+                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-ca-file'} = testRunGet()->basePath() . HOST_SERVER_CA;
+                }
+            }
 
             if ($iRepoTotal == 2)
             {
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host'} = $oHostBackup->nameGet();
                 $oParam->{bTls} ? $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-type'} = 'tls' : undef;
-                $oParam->{bTls} ? $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-cert-file'} =
-                    testRunGet()->basePath() . HOST_CLIENT_CERT : undef;
-                $oParam->{bTls} ? $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-key-file'} =
-                    testRunGet()->basePath() . HOST_CLIENT_KEY : undef;
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-user'} = $oHostBackup->userGet();
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-cmd'} = $oHostBackup->backrestExe();
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-config'} = $oHostBackup->backrestConfig();
+
+                if ($oParam->{bTls})
+                {
+                    $oParamHash{$strStanza}{'repo2-host-type'} = 'tls';
+                    $oParamHash{$strStanza}{'repo2-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                    $oParamHash{$strStanza}{'repo2-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+
+                    # !!! NOT SURE WHY THIS IS NEEDED FOR DEBIAN -- LOOKS LIKE CA IS NOT BEING CORRECTLY INSTALLED?
+                    if (vmGet()->{testRunGet()->vm()}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+                    {
+                        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-ca-file'} = testRunGet()->basePath() . HOST_SERVER_CA;
+                    }
+                }
             }
 
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
