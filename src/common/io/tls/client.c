@@ -221,68 +221,8 @@ tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
         //     SSL_CTX_set_default_passwd_cb_userdata(SSL_context, conn);
         // }
 
-        // !!! 2------------------------------------------------------------
-        // ??? MIN-MAX TLS VERSION? RATHER HAVE SERVER DECIDE?
-        // ??? SKIP BUT SCAN STRING FOR : AND THROW ERROR
-
-        // !!! 3------------------------------------------------------------
-        // ??? IS THIS NEEDED IF THE USER WANTS TO USE THE DEFAULT CA STORE
-        // if (SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL) != 1)
-        // {
-        //     char       *err = SSLerrmessage(ERR_get_error());
-
-        //     appendPQExpBuffer(&conn->errorMessage,
-        //                       libpq_gettext("could not read root certificate file \"%s\": %s\n"),
-        //                       fnbuf, err);
-        //     SSLerrfree(err);
-        //     SSL_CTX_free(SSL_context);
-        //     return -1;
-        // }
-
-        // !!! 4------------------------------------------------------------
-        // LOAD CRL FILE
-        // if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
-        // {
-        //     char       *fname = NULL;
-        //     char       *dname = NULL;
-
-        //     if (conn->sslcrl && strlen(conn->sslcrl) > 0)
-        //         fname = conn->sslcrl;
-        //     if (conn->sslcrldir && strlen(conn->sslcrldir) > 0)
-        //         dname = conn->sslcrldir;
-
-        //     /* defaults to use the default CRL file */
-        //     if (!fname && !dname && have_homedir)
-        //     {
-        //         snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
-        //         fname = fnbuf;
-        //     }
-
-        //     /* Set the flags to check against the complete CRL chain */
-        //     if ((fname || dname) &&
-        //         X509_STORE_load_locations(cvstore, fname, dname) == 1)
-        //     {
-        //         X509_STORE_set_flags(cvstore,
-        //                              X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
-        //     }
-
-        //     /* if not found, silently ignore;  we do not require CRL */
-        //     ERR_clear_error();
-
-        // !!! 6------------------------------------------------------------
-        // LOAD ENGINE (LINE 1117). DO WE NEED THIS? CAN WE ASSUME ALWAYS A FILENAME?
-        // DELAY THIS BUT CHECK IF THERE IS A COLON
-
-        // !!! 7------------------------------------------------------------
-        // ALREADY EXISTS Set server host name used for validation
+        // Set server host name used for validation
         cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
-
-        // !!! 8------------------------------------------------------------
-        /* read the client key from file */
-
-        //     SSLerrfree(err);
-
-        // }
 
         // !!! 9------------------------------------------------------------
         // !!! NOT CLEAR IF THIS IS NEEDED SINCE IT JUST RETURNS OK IN PG CODE
@@ -313,10 +253,7 @@ tlsClientAuth(const TlsClient *const this, SSL *const tlsSession)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // !!! SERVER SIDE -- NEED SOME KIND OF CN VERIFICATION
-
-        // !!! 10------------------------------------------------------------
-        // ALREADY EXISTS Verify that the certificate presented by the server is valid
+        // Verify that the certificate presented by the server is valid
         if (this->verifyPeer)                                                                                       // {vm_covered}
         {
             // Verify that the chain of trust leads to a valid CA
@@ -473,7 +410,7 @@ static const IoClientInterface tlsClientInterface =
 IoClient *
 tlsClientNew(
     IoClient *const ioClient, const String *const host, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
-    const String *const caPath, const String *const cert, const String *const key)
+    const String *const caPath, const String *const cert, const String *const key, const String *const crlFile)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
@@ -484,6 +421,7 @@ tlsClientNew(
         FUNCTION_LOG_PARAM(STRING, caPath);
         FUNCTION_LOG_PARAM(STRING, cert);
         FUNCTION_LOG_PARAM(STRING, key);
+        FUNCTION_LOG_PARAM(STRING, crlFile);
     FUNCTION_LOG_END();
 
     ASSERT(ioClient != NULL);
@@ -543,6 +481,39 @@ tlsClientNew(
                     SSL_CTX_set_default_verify_paths(driver->context) != 1, "unable to set default CA certificate location");
             }
         }
+
+        // Load certificate revocation list
+        // -------------------------------------------------------------------------------------------------------------------------
+        // if (crlFile != NULL)
+        // !!! 4------------------------------------------------------------
+        // LOAD CRL FILE
+        // if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
+        // {
+        //     char       *fname = NULL;
+        //     char       *dname = NULL;
+
+        //     if (conn->sslcrl && strlen(conn->sslcrl) > 0)
+        //         fname = conn->sslcrl;
+        //     if (conn->sslcrldir && strlen(conn->sslcrldir) > 0)
+        //         dname = conn->sslcrldir;
+
+        //     /* defaults to use the default CRL file */
+        //     if (!fname && !dname && have_homedir)
+        //     {
+        //         snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
+        //         fname = fnbuf;
+        //     }
+
+        //     /* Set the flags to check against the complete CRL chain */
+        //     if ((fname || dname) &&
+        //         X509_STORE_load_locations(cvstore, fname, dname) == 1)
+        //     {
+        //         X509_STORE_set_flags(cvstore,
+        //                              X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+        //     }
+
+        //     /* if not found, silently ignore;  we do not require CRL */
+        //     ERR_clear_error();
 
         // Load certificate and key if specified
         // -------------------------------------------------------------------------------------------------------------------------

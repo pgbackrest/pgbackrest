@@ -125,7 +125,7 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            145
+#define CFG_OPTION_TOTAL                                            147
 
 /***********************************************************************************************************************************
 Option value constants
@@ -401,6 +401,7 @@ typedef enum
     cfgOptPgHostConfig,
     cfgOptPgHostConfigIncludePath,
     cfgOptPgHostConfigPath,
+    cfgOptPgHostCrlFile,
     cfgOptPgHostKeyFile,
     cfgOptPgHostPort,
     cfgOptPgHostType,
@@ -437,6 +438,7 @@ typedef enum
     cfgOptRepoHostConfig,
     cfgOptRepoHostConfigIncludePath,
     cfgOptRepoHostConfigPath,
+    cfgOptRepoHostCrlFile,
     cfgOptRepoHostKeyFile,
     cfgOptRepoHostPort,
     cfgOptRepoHostType,

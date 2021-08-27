@@ -679,8 +679,8 @@ protocolRemoteExec(
                 cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaFile : cfgOptPgHostCaFile, hostIdx),
                 NULL, // !!! NEED CA PATH
                 cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
-                cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx)
-                // !!! NEED CRL FILE
+                cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx),
+                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCrlFile : cfgOptPgHostCrlFile, hostIdx)
                 );
             helper->ioSession = ioClientOpen(helper->ioClient);
 

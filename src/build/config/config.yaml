@@ -1346,6 +1346,10 @@ option:
     inherit: pg-host-cert-file
     required: false
 
+  pg-host-crl-file:
+    inherit: pg-host-cert-file
+    required: false
+
   pg-host-cmd:
     section: stanza
     group: pg
@@ -1836,6 +1840,10 @@ option:
     inherit: repo-host-cert-file
 
   repo-host-ca-file:
+    inherit: repo-host-cert-file
+    required: false
+
+  repo-host-crl-file:
     inherit: repo-host-cert-file
     required: false
 

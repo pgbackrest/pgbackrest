@@ -307,7 +307,8 @@ testRun(void)
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            client, tlsClientNew(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0), STRDEF("X"), 0, true, NULL, NULL, NULL, NULL),
+            client,
+            tlsClientNew(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0), STRDEF("X"), 0, true, NULL, NULL, NULL, NULL, NULL),
             "new client");
         TEST_RESULT_STR_Z(ioClientName(client), "99.99.99.99.99:7777", " check name");
         TEST_ERROR(
@@ -315,7 +316,8 @@ testRun(void)
 
         TEST_ASSIGN(
             client,
-            tlsClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100), STRDEF("X"), 100, true, NULL, NULL, NULL, NULL),
+            tlsClientNew(
+                sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100), STRDEF("X"), 100, true, NULL, NULL, NULL, NULL, NULL),
             "new client");
         TEST_ERROR_FMT(
             ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
@@ -328,7 +330,7 @@ testRun(void)
             ioClientOpen(
                 tlsClientNew(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, STRDEF("bogus.crt"),
-                    STRDEF("/bogus"), NULL, NULL)),
+                    STRDEF("/bogus"), NULL, NULL, NULL)),
             CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -338,7 +340,7 @@ testRun(void)
             ioClientOpen(
                 tlsClientNew(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, NULL, STRDEF("/bogus"),
-                    STRDEF("/bogus"))),
+                    STRDEF("/bogus"), NULL)),
             CryptoError, "unable to load cert '/bogus': [33558530] No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -348,7 +350,7 @@ testRun(void)
             ioClientOpen(
                 tlsClientNew(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, NULL,
-                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF("/bogus"))),
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF("/bogus"), NULL)),
             CryptoError, "unable to load key '/bogus': [33558530] No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -358,7 +360,7 @@ testRun(void)
             ioClientOpen(
                 tlsClientNew(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, NULL,
-                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(HRN_SERVER_KEY))),
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(HRN_SERVER_KEY), NULL)),
             CryptoError,
             "unable to load key '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': [185073780] key values mismatch");
 
@@ -398,7 +400,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, STRDEF("/bogus"),
-                            NULL, NULL)),
+                            NULL, NULL, NULL)),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     hrnServerPort(0));
@@ -413,7 +415,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("test.pgbackrest.org"), hrnServerPort(0), 5000), STRDEF("test.pgbackrest.org"),
-                            0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL)),
+                            0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL, NULL)),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -426,7 +428,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("host.test2.pgbackrest.org"), hrnServerPort(0), 5000),
-                            STRDEF("host.test2.pgbackrest.org"), 0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL)),
+                            STRDEF("host.test2.pgbackrest.org"), 0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL, NULL)),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -439,7 +441,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("test3.pgbackrest.org"), hrnServerPort(0), 5000), STRDEF("test3.pgbackrest.org"),
-                            0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL)),
+                            0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL, NULL)),
                     CryptoError,
                     "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
 
@@ -453,7 +455,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true,
-                            STRDEF(HRN_SERVER_CERT), NULL, NULL, NULL)),
+                            STRDEF(HRN_SERVER_CERT), NULL, NULL, NULL, NULL)),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     hrnServerPort(0));
@@ -468,7 +470,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, false, NULL, NULL, NULL,
-                            NULL)),
+                            NULL, NULL)),
                         "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -538,7 +540,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000), STRDEF("127.0.0.1"), 5000, true, NULL, NULL,
-                            STRDEF(TEST_PATH "/client-bad-ca.crt"), STRDEF(HRN_SERVER_CLIENT_KEY))),
+                            STRDEF(TEST_PATH "/client-bad-ca.crt"), STRDEF(HRN_SERVER_CLIENT_KEY), NULL)),
                     "client open");
 
                 TEST_ERROR(
@@ -554,7 +556,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000), STRDEF("127.0.0.1"), 5000, true, NULL, NULL,
-                            STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(HRN_SERVER_CLIENT_KEY))),
+                            STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(HRN_SERVER_CLIENT_KEY), NULL)),
                     "client open");
 
                 Buffer *buffer = bufNew(7);
@@ -571,7 +573,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000), STRDEF("127.0.0.1"), 5000, true, NULL, NULL,
-                            NULL, NULL)),
+                            NULL, NULL, NULL)),
                     "client open");
 
                 buffer = bufNew(8);
@@ -609,7 +611,7 @@ testRun(void)
                     client,
                     tlsClientNew(
                         sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 0, TEST_IN_CONTAINER, NULL,
-                        NULL, NULL, NULL),
+                        NULL, NULL, NULL, NULL),
                     "new client");
 
                 hrnServerScriptAccept(tls);

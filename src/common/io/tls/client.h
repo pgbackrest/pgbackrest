@@ -32,7 +32,7 @@ Constructors
 ***********************************************************************************************************************************/
 IoClient *tlsClientNew(
     IoClient *ioClient, const String *host, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath,
-    const String *cert, const String *key);
+    const String *cert, const String *key, const String *crlFile);
 
 /***********************************************************************************************************************************
 Functions

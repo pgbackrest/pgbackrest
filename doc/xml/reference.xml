@@ -534,6 +534,15 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-crl-file" name="Repository Host Certificate Revocation File">
+                        <summary>Repository host certificate revocation file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
                     <config-key id="repo-host-key-file" name="Repository Host Key File">
                         <summary>Repository host key file.</summary>
 
@@ -1228,6 +1237,15 @@
                     <!-- ======================================================================================================= -->
                     <config-key id="pg-host-cert-file" name="PostgreSQL Host Certificate File">
                         <summary><postgres/> host certificate file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-crl-file" name="PostgreSQL Host Certificate Recovation File">
+                        <summary><postgres/> host certificate revocation file.</summary>
 
                         <text>!!!</text>
 

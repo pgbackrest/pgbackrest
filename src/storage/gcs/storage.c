@@ -974,7 +974,7 @@ storageGcsNew(
                 driver->authClient = httpClientNew(
                     tlsClientNew(
                         sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout),
-                        httpUrlHost(driver->authUrl), timeout, verifyPeer, caFile, caPath, NULL, NULL),
+                        httpUrlHost(driver->authUrl), timeout, verifyPeer, caFile, caPath, NULL, NULL, NULL),
                     timeout);
 
                 break;
@@ -994,7 +994,7 @@ storageGcsNew(
         driver->httpClient = httpClientNew(
             tlsClientNew(
                 sckClientNew(driver->endpoint, httpUrlPort(url), timeout), driver->endpoint, timeout, verifyPeer, caFile, caPath,
-                NULL, NULL),
+                NULL, NULL, NULL),
             timeout);
 
         // Create list of redacted headers
