@@ -74,12 +74,104 @@ tlsServerFreeResource(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
+Set DH parameters for generating ephemeral DH keys. The DH parameters can take a long time to compute, so they must be precomputed
+using parameters provided by the OpenSSL project.
+
+These values can be static since the OpenSSL library can efficiently generate random keys from the information provided.
+
+Cribbed from PostgreSQL initialize_dh() in src/backend/libpq/be-secure-openssl.c. Also see https://weakdh.org and
+https://en.wikipedia.org/wiki/Logjam_(computer_security).
+***********************************************************************************************************************************/
+// Hardcoded DH parameters, used in ephemeral DH keying. This is the 2048-bit DH parameter from RFC 3526.  The generation of the
+// prime is specified in RFC 2412 Appendix E, which also discusses the design choice of the generator.  Note that when loaded with
+// OpenSSL this causes DH_check() to fail on DH_NOT_SUITABLE_GENERATOR, where leaking a bit is preferred.
+#define DH_2048                                                                                                                    \
+    "-----BEGIN DH PARAMETERS-----\n"                                                                                              \
+    "MIIBCAKCAQEA///////////JD9qiIWjCNMTGYouA3BzRKQJOCIpnzHQCC76mOxOb\n"                                                           \
+    "IlFKCHmONATd75UZs806QxswKwpt8l8UN0/hNW1tUcJF5IW1dmJefsb0TELppjft\n"                                                           \
+    "awv/XLb0Brft7jhr+1qJn6WunyQRfEsf5kkoZlHs5Fs9wgB8uKFjvwWY2kg2HFXT\n"                                                           \
+    "mmkWP6j9JM9fg2VdI9yjrZYcYvNWIIVSu57VKQdwlpZtZww1Tkq8mATxdGwIyhgh\n"                                                           \
+    "fDKQXkYuNs474553LBgOhgObJ4Oi7Aeij7XFXfBvTFLJ3ivL9pVYFxg5lUl86pVq\n"                                                           \
+    "5RXSJhiY+gUQFXKOWoqsqmj//////////wIBAg==\n"                                                                                   \
+    "-----END DH PARAMETERS-----"
+
+static void
+tlsServerDh(SSL_CTX *const context)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, context);
+    FUNCTION_TEST_END();
+
+    SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
+
+	BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
+    cryptoError(bio == NULL, "unable create buffer for DH parameters");
+
+    TRY_BEGIN()
+    {
+    	DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+
+        TRY_BEGIN()
+        {
+            cryptoError(SSL_CTX_set_tmp_dh(context, dh) != 1, "unable to set temp dh parameters");
+        }
+        FINALLY()
+        {
+            DH_free(dh);
+        }
+        TRY_END();
+    }
+    FINALLY()
+    {
+        BIO_free(bio);
+    }
+    TRY_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Set ECDH parameters for generating ephemeral Elliptic Curve DH keys.
+
+Cribbed from PostgreSQL initialize_ecdh() in src/backend/libpq/be-secure-openssl.c.
+***********************************************************************************************************************************/
+#define ECHD_CURVE                                                  "prime256v1"
+
+static void
+tlsServerEcdh(SSL_CTX *const context)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, context);
+    FUNCTION_TEST_END();
+
+    const int nid = OBJ_sn2nid(ECHD_CURVE);
+    cryptoError(nid == NID_undef, "unrecognized ECDH curve " ECHD_CURVE);
+
+    EC_KEY *const ecdh = EC_KEY_new_by_curve_name(nid);
+    cryptoError(ecdh == NULL, "could not create ecdh key");
+
+    SSL_CTX_set_options(context, SSL_OP_SINGLE_ECDH_USE);
+
+    TRY_BEGIN()
+    {
+        cryptoError(SSL_CTX_set_tmp_ecdh(context, ecdh) != 1, "unable to set temp ecdh key");
+    }
+    FINALLY()
+    {
+        EC_KEY_free(ecdh);
+    }
+    TRY_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 !!!AUTH STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_open_server()
 ***********************************************************************************************************************************/
 static void
 tlsServerAuth(const TlsServer *const this, IoSession *const ioSession, SSL *const tlsSession)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SERVER, this);
         FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
         FUNCTION_LOG_PARAM_P(VOID, tlsSession);
@@ -174,7 +266,7 @@ tlsServerNew(
     const String *const host, const String *const caFile, const String *const keyFile, const String *const certFile,
     const String *const crlFile, const TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, keyFile);
@@ -221,11 +313,9 @@ tlsServerNew(
         // Disable session caching
         SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
 
-        // !!! SET UP ephemeral DH and ECDH keys (https://weakdh.org and https://en.wikipedia.org/wiki/Logjam_(computer_security))
-        // if (!initialize_dh(context, isServerStart))
-        //     goto error;
-        // if (!initialize_ecdh(context, isServerStart))
-        //     goto error;
+        // Setup ephemeral DH and ECDH keys
+        tlsServerDh(driver->context);
+        tlsServerEcdh(driver->context);
 
         // Load certificate and key
         tlsCertKeyLoad(driver->context, certFile, keyFile);

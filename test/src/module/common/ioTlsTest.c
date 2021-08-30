@@ -106,10 +106,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-#ifdef TEST_CONTAINER_REQUIRED
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-#endif
 
     // *****************************************************************************************************************************
     if (testBegin("Socket Common"))
@@ -365,6 +363,22 @@ testRun(void)
             "unable to load key file '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': [185073780] key values"
                 " mismatch");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key with bad permissions");
+
+        storagePutP(storageNewWriteP(storageTest, STRDEF("client-bad-perm.key")), BUFSTRDEF("bogus"));
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-bad-perm.key"), NULL)),
+            FileReadError,
+            "key file '" TEST_PATH "/client-bad-perm.key' must not have group or other permissions\n"
+            "HINT: key file permissions should be 0600 or 0400.");
+
+        storageRemoveP(storageTest, STRDEF("client-bad-perm.key"));
+
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------
         // Add test hosts
@@ -497,11 +511,33 @@ testRun(void)
                 IoServer *tlsServer = tlsServerNew(
                     STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(TEST_PATH "/server-cn-only.crt"),
                     NULL, 5000);
-                IoSession *socketSession = ioServerAccept(socketServer, NULL);
 
                 // Invalid client cert
+                IoSession *socketSession = ioServerAccept(socketServer, NULL);
+
                 TEST_ERROR(
                     ioServerAccept(tlsServer, socketSession), ServiceError, "TLS error [1:337100934] certificate verify failed");
+
+                // !!! NEEDED FOR U16 Invalid client cert error message varies based on the openssl version
+                // TRY_BEGIN()
+                // {
+                //     TEST_RESULT_VOID(ioServerAccept(tlsServer, socketSession), "open server session");
+                // }
+                // CATCH_ANY()
+                // {
+                //     const char *const errorMessageExpected1 = "TLS error [1:337100934] certificate verify failed";
+                //     const char *const errorMessageExpected2 = "TLS error [1:336105606] certificate verify failed";
+
+                //     if (errorType() != &ServiceError ||
+                //         (strcmp(errorMessage(), errorMessageExpected1) != 0 && strcmp(errorMessage(), errorMessageExpected2) != 0))
+                //     {
+                //         THROW_FMT(
+                //             TestError, "EXPECTED %s: %s (or %s)\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s",
+                //             errorTypeName(&ServiceError), errorMessageExpected1, errorMessageExpected2, errorName(), errorMessage(),
+                //             errorStackTrace());
+                //     }
+                // }
+                // TRY_END();
 
                 // Valid client cert
                 socketSession = ioServerAccept(socketServer, NULL);
@@ -556,6 +592,22 @@ testRun(void)
                 TEST_ERROR(
                     ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
                     "TLS error [1:336151576] tlsv1 alert unknown ca");
+
+                // !!! NEEDED FOR U16 Error message varies based on the openssl version
+                // TRY_BEGIN()
+                // {
+                //     TEST_ERROR(
+                //         ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
+                //         "TLS error [1:336151576] tlsv1 alert unknown ca");
+                // }
+                // CATCH(TestError)
+                // {
+                //     TEST_ERROR(
+                //         ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
+                //         "TLS error [1:336105606] tlsv1 alert unknown ca");
+                // }
+                // TRY_END();
+
                 TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
 
                 // -----------------------------------------------------------------------------------------------------------------

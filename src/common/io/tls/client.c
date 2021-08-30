@@ -194,7 +194,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 static void
 tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
         FUNCTION_LOG_PARAM_P(VOID, tlsSession);
     FUNCTION_LOG_END();
@@ -244,7 +244,7 @@ tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
 static bool
 tlsClientAuth(const TlsClient *const this, SSL *const tlsSession)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
         FUNCTION_LOG_PARAM_P(VOID, tlsSession);
     FUNCTION_LOG_END();
@@ -296,7 +296,7 @@ tlsClientOpen(THIS_VOID)
 {
     THIS(TlsClient);
 
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_CLIENT, this);
     FUNCTION_LOG_END();
 
@@ -412,7 +412,7 @@ tlsClientNew(
     IoClient *const ioClient, const String *const host, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
     const String *const caPath, const String *const certFile, const String *const keyFile, const String *const crlFile)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -446,7 +446,7 @@ tlsClientNew(
         memContextCallbackSet(driver->memContext, tlsClientFreeResource, driver);
 
         // Enable safe compatibility options
-        SSL_CTX_set_options(driver->context, SSL_OP_ALL);
+        SSL_CTX_set_options(driver->context, (long)SSL_OP_ALL);
 
         // Set location of CA certificates if the server certificate will be verified
         if (driver->verifyPeer)

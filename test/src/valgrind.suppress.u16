@@ -1,7 +1,36 @@
-# Newer versions do not have this leak
+# Newer versions do not have these issues
 {
-    ignore_libcrypto_leaks
+    ignore_libcrypto_memcheck_leak
     Memcheck:Leak
+    ...
+    obj:*/libcrypto.so*
+}
+
+{
+    ignore_libssl_memcheck_condition
+    Memcheck:Cond
+    ...
+    obj:*/libcrypto.so*
+}
+
+{
+    ignore_libcrypto_memcheck_condition
+    Memcheck:Cond
+    ...
+    obj:*/libssl.so*
+}
+
+{
+    ignore_libcrypto_memcheck_value4
+    Memcheck:Value4
+    ...
+    obj:*/libcrypto.so*
+}
+
+{
+    ignore_libcrypto_memcheck_param
+    Memcheck:Param
+    write(buf)
     ...
     obj:*/libcrypto.so*
 }
