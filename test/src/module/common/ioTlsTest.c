@@ -518,7 +518,8 @@ testRun(void)
                 TEST_ERROR(
                     ioServerAccept(tlsServer, socketSession), ServiceError, "TLS error [1:337100934] certificate verify failed");
 
-                // !!! NEEDED FOR U16 Invalid client cert error message varies based on the openssl version
+                // !!! NEEDED FOR U16 (BUT DOESN"T WORK) Invalid client cert error message varies based on the openssl version
+
                 // TRY_BEGIN()
                 // {
                 //     TEST_RESULT_VOID(ioServerAccept(tlsServer, socketSession), "open server session");
@@ -536,6 +537,8 @@ testRun(void)
                 //             errorTypeName(&ServiceError), errorMessageExpected1, errorMessageExpected2, errorName(), errorMessage(),
                 //             errorStackTrace());
                 //     }
+
+                //     hrnTestResultEnd();
                 // }
                 // TRY_END();
 
