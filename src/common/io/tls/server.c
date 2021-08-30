@@ -74,25 +74,6 @@ tlsServerFreeResource(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-!!!INIT STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_init()
-***********************************************************************************************************************************/
-static void
-tlsServerInit(const TlsServer *const this, SSL *const tlsSession)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace)
-        FUNCTION_LOG_PARAM(TLS_SERVER, this);
-        FUNCTION_LOG_PARAM_P(VOID, tlsSession);
-    FUNCTION_LOG_END();
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 !!!AUTH STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_open_server()
 ***********************************************************************************************************************************/
 static void
@@ -116,7 +97,7 @@ tlsServerAuth(const TlsServer *const this, IoSession *const ioSession, SSL *cons
 
             // Set the peer name to the client cert common name
             if (clientCert != NULL)                                                                                 // {vm_covered}
-                ioSessionPeerNameSet(ioSession, tlsCertificateCommonName(clientCert));                              // {vm_covered}
+                ioSessionPeerNameSet(ioSession, tlsCertCommonName(clientCert));                                     // {vm_covered}
 
             // Free the cert
             X509_free(clientCert);                                                                                  // {vm_covered}
@@ -145,21 +126,8 @@ tlsServerAccept(THIS_VOID, IoSession *const ioSession)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        SSL *tlsSession = SSL_new(this->context);
-
-        // Initialize TLS session
-        TRY_BEGIN()
-        {
-            tlsServerInit(this, tlsSession);
-        }
-        CATCH_ANY()
-        {
-            SSL_free(tlsSession);                                                   // {uncovered - !!! add test}
-            RETHROW();                                                              // {uncovered - !!! add test}
-        }
-        TRY_END();
-
         // Open TLS session
+        SSL *tlsSession = SSL_new(this->context);
         result = tlsSessionNew(tlsSession, ioSession, 60000); // !!! FIX TIMEOUT
 
         // Authenticate TLS session
@@ -190,7 +158,9 @@ tlsServerName(THIS_VOID)
     FUNCTION_TEST_RETURN(this->host);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+!!!INIT STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_init()
+***********************************************************************************************************************************/
 static const IoServerInterface tlsServerInterface =
 {
     .type = IO_SERVER_TLS_TYPE,
@@ -227,27 +197,17 @@ tlsServerNew(
         {
             .memContext = MEM_CONTEXT_NEW(),
             .host = strDup(host),
+            .context = tlsContext(),
             .timeout = timeout,
         };
-
-        // Initialize TLS and create a context
-        cryptoInit();
-
-        const SSL_METHOD *const method = SSLv23_method();
-        cryptoError(method == NULL, "unable to load TLS method");
-
-        driver->context = SSL_CTX_new(method);
-        cryptoError(driver->context == NULL, "unable to create TLS context");
 
         // Set callback to free context
         memContextCallbackSet(driver->memContext, tlsServerFreeResource, driver);
 
         // Set options
         SSL_CTX_set_options(driver->context,
-            // Disable compression
-            SSL_OP_NO_COMPRESSION |
             // Disable SSL and TLS v1/v1.1
-            SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
+            SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
             // Let server set cipher order
             SSL_OP_CIPHER_SERVER_PREFERENCE |
 #ifdef SSL_OP_NO_RENEGOTIATION
@@ -267,17 +227,11 @@ tlsServerNew(
         // if (!initialize_ecdh(context, isServerStart))
         //     goto error;
 
-        // Configure the context by setting key and cert
-        cryptoError(
-            SSL_CTX_use_certificate_file(driver->context, strZ(certFile), SSL_FILETYPE_PEM) != 1,
-            "unable to load server certificate");
-        // !!! NEED TO CHECK PERMISSIONS OF KEY FILE? POSTGRES DOES NOT DO THIS
-        cryptoError(
-            SSL_CTX_use_PrivateKey_file(driver->context, strZ(keyFile), SSL_FILETYPE_PEM) != 1,
-            "unable to load server private key");
-        // !!! DO WE NEED TO VERIFY KEY HERE SINCE SSL_CTX_use_PrivateKey_file seems to do it?
+        // Load certificate and key
+        tlsCertKeyLoad(driver->context, certFile, keyFile);
 
         // If a CA store is specified then client certificates will be verified
+        // -------------------------------------------------------------------------------------------------------------------------
         if (caFile != NULL)
         {
             // Load CA store
@@ -293,13 +247,17 @@ tlsServerNew(
 
             SSL_CTX_set_client_CA_list(driver->context, rootCertList);
 
-            // Always ask for SSL client cert, but don't fail if it's not presented. In this case the client will still be able to
-            // send a noop to verify the server is alive.
+            // Always ask for SSL client cert, but don't fail when not presented. In this case the server will disconnect after
+            // sending a data end message to the client. The client can use this to verify that the server is running without the
+            // need to authenticate.
             SSL_CTX_set_verify(driver->context, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);
 
             // Set a flag so the client cert will be checked later
             driver->verifyPeer = true;
         }
+
+        // Load certificate revocation list
+        tlsCrlLoad(driver->context, crlFile);
 
         statInc(TLS_STAT_SERVER_STR);
 

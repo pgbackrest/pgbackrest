@@ -94,7 +94,7 @@ tlsClientHostVerifyName(const String *host, const String *name)
     ASSERT(name != NULL);
 
     // Check for NULLs in the name
-    tlsCertificateNameVerify(name);
+    tlsCertNameVerify(name);
 
     bool result = false;
 
@@ -172,7 +172,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
         // If no subject alternative name was found then check the common name. Per RFC 2818 and RFC 6125, if the subjectAltName
         // extension of type dNSName is present the CN must be ignored.
         if (!altNameFound)                                                                                          // {vm_covered}
-            result = tlsClientHostVerifyName(host, tlsCertificateCommonName(certificate));                          // {vm_covered}
+            result = tlsClientHostVerifyName(host, tlsCertCommonName(certificate));                                 // {vm_covered}
     }
     MEM_CONTEXT_TEMP_END();                                                                                         // {vm_covered}
 
@@ -225,7 +225,7 @@ tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
         cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
 
         // !!! 9------------------------------------------------------------
-        // !!! NOT CLEAR IF THIS IS NEEDED SINCE IT JUST RETURNS OK IN PG CODE
+        // ??? NOT CLEAR IF THIS IS NEEDED SINCE IT JUST RETURNS OK IN PG CODE
         /*
         * If a root cert was loaded, also set our certificate verification
         * callback.
@@ -410,7 +410,7 @@ static const IoClientInterface tlsClientInterface =
 IoClient *
 tlsClientNew(
     IoClient *const ioClient, const String *const host, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
-    const String *const caPath, const String *const cert, const String *const key, const String *const crlFile)
+    const String *const caPath, const String *const certFile, const String *const keyFile, const String *const crlFile)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
@@ -419,13 +419,12 @@ tlsClientNew(
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
-        FUNCTION_LOG_PARAM(STRING, cert);
-        FUNCTION_LOG_PARAM(STRING, key);
+        FUNCTION_LOG_PARAM(STRING, certFile);
+        FUNCTION_LOG_PARAM(STRING, keyFile);
         FUNCTION_LOG_PARAM(STRING, crlFile);
     FUNCTION_LOG_END();
 
     ASSERT(ioClient != NULL);
-    ASSERT((cert == NULL && key == NULL) || (cert != NULL && key != NULL));
 
     IoClient *this = NULL;
 
@@ -440,31 +439,16 @@ tlsClientNew(
             .host = strDup(host),
             .timeout = timeout,
             .verifyPeer = verifyPeer,
+            .context = tlsContext(),
         };
 
-        // Setup TLS context
-        // -------------------------------------------------------------------------------------------------------------------------
-        cryptoInit();
-
-        // Select the TLS method to use.  To maintain compatibility with older versions of OpenSSL we need to use an SSL method,
-        // but SSL versions will be excluded in SSL_CTX_set_options().
-        const SSL_METHOD *method = SSLv23_method();
-        cryptoError(method == NULL, "unable to load TLS method");
-
-        // Create the TLS context
-        driver->context = SSL_CTX_new(method);
-        cryptoError(driver->context == NULL, "unable to create TLS context");
-
+        // Set callback to free context
         memContextCallbackSet(driver->memContext, tlsClientFreeResource, driver);
 
-        // Exclude SSL versions to only allow TLS and also disable compression
-        SSL_CTX_set_options(driver->context, (long)(SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION));
-
-        // Disable auto-retry to prevent SSL_read() from hanging
-        SSL_CTX_clear_mode(driver->context, SSL_MODE_AUTO_RETRY);
+        // Enable safe compatibility options
+        SSL_CTX_set_options(driver->context, SSL_OP_ALL);
 
         // Set location of CA certificates if the server certificate will be verified
-        // -------------------------------------------------------------------------------------------------------------------------
         if (driver->verifyPeer)
         {
             // If the user specified a location
@@ -482,66 +466,13 @@ tlsClientNew(
             }
         }
 
-        // !!! Load certificate revocation list
-        // -------------------------------------------------------------------------------------------------------------------------
-        // if (crlFile != NULL)
-        // {
-        //     // Get cert store
-    	// 	X509_STORE *const certStore = SSL_CTX_get_cert_store(driver->context);
-        //     cryptoError(certStore == NULL, "unable to get cert store");
+        // Load certificate and key, if specified
+        tlsCertKeyLoad(driver->context, certFile, keyFile);
 
-        //     // Load CRL file
-        //     cryptoError(
-        //         X509_STORE_load_locations(certStore, strZ(crlFile), NULL) != 1,
-        //         strZ(strNewFmt("unable to load crl file '%s'", strZ(crlFile))));
+        // Load certificate revocation list
+        tlsCrlLoad(driver->context, crlFile);
 
-        //     // Set flags to reject certs in CRL
-        //     cryptoError(
-        //         X509_STORE_set_flags(certStore, X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL) != 1, "unable to set crl flags");
-        // }
-
-        // Load certificate and key if specified
-        // -------------------------------------------------------------------------------------------------------------------------
-        if (cert != NULL)
-        {
-            // Load certificate
-            cryptoError(
-                SSL_CTX_use_certificate_chain_file(driver->context, strZ(cert)) != 1,
-                strZ(strNewFmt("unable to load cert '%s'", strZ(cert))));
-
-            // !!! Key engines are not supported (yet)
-
-            // !!! Check that key has the correct permissions
-            // if (stat(fnbuf, &buf) != 0)
-            // {
-            //     appendPQExpBuffer(&conn->errorMessage,
-            //                       libpq_gettext("certificate present, but not private key file \"%s\"\n"),
-            //                       fnbuf);
-            //     return -1;
-            // }
-            // #ifndef WIN32
-            // if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
-            // {
-            //     appendPQExpBuffer(&conn->errorMessage,
-            //                       libpq_gettext("private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
-            //                       fnbuf);
-            //     return -1;
-            // }
-            // #endif
-
-            // Load key and verify that the key and cert go together
-            cryptoError(
-                SSL_CTX_use_PrivateKey_file(driver->context, strZ(key), SSL_FILETYPE_PEM) != 1,
-                strZ(strNewFmt("unable to load key '%s'", strZ(key))));
-
-            // Verify again that the cert and key go together. It is not clear why this is needed since the key has already been
-            // verified in SSL_CTX_use_PrivateKey_file(), but it may be that older versions of OpenSSL need it.
-            // !!! TRY ON POSTGRES AND SEE WHAT HAPPENS?
-            cryptoError(
-                SSL_CTX_check_private_key(driver->context) != 1,
-                strZ(strNewFmt("cert '%s' and key '%s' do not match", strZ(cert), strZ(key))));
-        }
-
+        // Increment stat
         statInc(TLS_STAT_CLIENT_STR);
 
         // Create client interface

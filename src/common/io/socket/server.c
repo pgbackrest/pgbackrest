@@ -165,7 +165,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
             .timeout = timeout,
         };
 
-        // !!! COMMENTS
+        // Create socket for address and port
         struct sockaddr_in address;
 
         address.sin_family = AF_INET;
@@ -175,7 +175,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
         THROW_ON_SYS_ERROR((driver->socket = socket(AF_INET, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
 
-        // Set the address as reusable so we can bind again in the same process for testing
+        // Set the address as reusable so we can bind again in the same process for testing !!! REMOVE?
         int reuseAddr = 1;
         setsockopt(driver->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr));
 
