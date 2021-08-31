@@ -43,6 +43,7 @@ typedef struct CfgParseOptionParam
 {
     VAR_PARAM_HEADER;
     bool prefixMatch;                                               // Allow prefix matches, e.g. 'stanz' for 'stanza'
+    bool ignoreMissingIndex;                                        // Help requires the base option name to be searchable
 } CfgParseOptionParam;
 
 typedef struct CfgParseOptionResult
@@ -62,9 +63,6 @@ CfgParseOptionResult cfgParseOption(const String *const optionName, const CfgPar
 
 // Default value for the option
 const char *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);
-
-// Option id from name
-int cfgParseOptionId(const char *optionName);
 
 // Option name from id
 const char *cfgParseOptionName(ConfigOption optionId);

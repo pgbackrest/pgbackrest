@@ -99,12 +99,12 @@ pg2-host-cmd=[BACKREST-BIN]
 pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
 pg2-host-user=[USER-1]
 pg2-path=[TEST_PATH]/db-standby/db/base
-pg8-host=db-standby
-pg8-host-cmd=[BACKREST-BIN]
-pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
-pg8-host-user=[USER-1]
-pg8-path=[TEST_PATH]/db-standby/db/base
-pg8-port=6544
+pg256-host=db-standby
+pg256-host-cmd=[BACKREST-BIN]
+pg256-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg256-host-user=[USER-1]
+pg256-path=[TEST_PATH]/db-standby/db/base
+pg256-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -210,12 +210,12 @@ pg2-host-cmd=[BACKREST-BIN]
 pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
 pg2-host-user=[USER-1]
 pg2-path=[TEST_PATH]/db-standby/db/base
-pg8-host=db-standby
-pg8-host-cmd=[BACKREST-BIN]
-pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
-pg8-host-user=[USER-1]
-pg8-path=[TEST_PATH]/db-standby/db/base
-pg8-port=6544
+pg256-host=db-standby
+pg256-host-cmd=[BACKREST-BIN]
+pg256-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg256-host-user=[USER-1]
+pg256-path=[TEST_PATH]/db-standby/db/base
+pg256-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -321,12 +321,12 @@ pg2-host-cmd=[BACKREST-BIN]
 pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
 pg2-host-user=[USER-1]
 pg2-path=[TEST_PATH]/db-standby/db/base
-pg8-host=db-standby
-pg8-host-cmd=[BACKREST-BIN]
-pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
-pg8-host-user=[USER-1]
-pg8-path=[TEST_PATH]/db-standby/db/base
-pg8-port=6544
+pg256-host=db-standby
+pg256-host-cmd=[BACKREST-BIN]
+pg256-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg256-host-user=[USER-1]
+pg256-path=[TEST_PATH]/db-standby/db/base
+pg256-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
@@ -366,7 +366,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.con
 standby_mode = 'on'
 
 full backup - backup from standby, failure to access at least one standby (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --pg8-host=bogus --backup-standby --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --pg256-host=bogus --backup-standby --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - backup from standby (backup host)
@@ -453,12 +453,12 @@ pg2-host-cmd=[BACKREST-BIN]
 pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
 pg2-host-user=[USER-1]
 pg2-path=[TEST_PATH]/db-standby/db/base
-pg8-host=db-standby
-pg8-host-cmd=[BACKREST-BIN]
-pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
-pg8-host-user=[USER-1]
-pg8-path=[TEST_PATH]/db-standby/db/base
-pg8-port=6544
+pg256-host=db-standby
+pg256-host-cmd=[BACKREST-BIN]
+pg256-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg256-host-user=[USER-1]
+pg256-path=[TEST_PATH]/db-standby/db/base
+pg256-port=6544
 
 [global]
 archive-async=y
@@ -571,12 +571,12 @@ pg2-host-cmd=[BACKREST-BIN]
 pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
 pg2-host-user=[USER-1]
 pg2-path=[TEST_PATH]/db-standby/db/base
-pg8-host=db-standby
-pg8-host-cmd=[BACKREST-BIN]
-pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
-pg8-host-user=[USER-1]
-pg8-path=[TEST_PATH]/db-standby/db/base
-pg8-port=6544
+pg256-host=db-standby
+pg256-host-cmd=[BACKREST-BIN]
+pg256-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg256-host-user=[USER-1]
+pg256-path=[TEST_PATH]/db-standby/db/base
+pg256-port=6544
 
 [global]
 archive-async=y
@@ -705,12 +705,12 @@ pg2-host-cmd=[BACKREST-BIN]
 pg2-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
 pg2-host-user=[USER-1]
 pg2-path=[TEST_PATH]/db-standby/db/base
-pg8-host=db-standby
-pg8-host-cmd=[BACKREST-BIN]
-pg8-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
-pg8-host-user=[USER-1]
-pg8-path=[TEST_PATH]/db-standby/db/base
-pg8-port=6544
+pg256-host=db-standby
+pg256-host-cmd=[BACKREST-BIN]
+pg256-host-config=[TEST_PATH]/db-standby/pgbackrest.conf
+pg256-host-user=[USER-1]
+pg256-path=[TEST_PATH]/db-standby/db/base
+pg256-port=6544
 
 [global]
 archive-async=y

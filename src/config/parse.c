@@ -3,7 +3,8 @@ Command and Option Parse
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <getopt.h>
+#include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
@@ -12,6 +13,7 @@ Command and Option Parse
 #include "common/error.h"
 #include "common/ini.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "config/config.intern.h"
@@ -53,28 +55,6 @@ Option value constants
 ***********************************************************************************************************************************/
 VARIANT_STRDEF_STATIC(OPTION_VALUE_0,                               ZERO_Z);
 VARIANT_STRDEF_STATIC(OPTION_VALUE_1,                               ONE_Z);
-
-/***********************************************************************************************************************************
-Parse option flags
-***********************************************************************************************************************************/
-// Offset the option values so they don't conflict with getopt_long return codes
-#define PARSE_OPTION_FLAG                                           (1 << 30)
-
-// Add a flag for negation rather than checking "--no-"
-#define PARSE_NEGATE_FLAG                                           (1 << 29)
-
-// Add a flag for reset rather than checking "--reset-"
-#define PARSE_RESET_FLAG                                            (1 << 28)
-
-// Indicate that option name has been deprecated and will be removed in a future release
-#define PARSE_DEPRECATE_FLAG                                        (1 << 27)
-
-// Mask for option id (must be 0-255)
-#define PARSE_OPTION_MASK                                           0xFF
-
-// Shift and mask for option key index (must be 0-255)
-#define PARSE_KEY_IDX_SHIFT                                         8
-#define PARSE_KEY_IDX_MASK                                          0xFF
 
 /***********************************************************************************************************************************
 Define how a command is parsed
@@ -144,12 +124,15 @@ typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
     unsigned int type:3;                                            // e.g. string, int, boolean
+    bool negate:1;                                                  // Can the option be negated on the command line?
+    bool reset:1;                                                   // Can the option be reset on the command line?
     bool required:1;                                                // Is the option required?
     unsigned int section:2;                                         // e.g. global, stanza, cmd-line
     bool secure:1;                                                  // Needs to be redacted in logs and cmd-line?
     bool multi:1;                                                   // Can be specified multiple times?
     bool group:1;                                                   // In a group?
     unsigned int groupId:1;                                         // Id if in a group
+    bool deprecateMatch:1;                                          // Does a deprecated name exactly match the option name?
     uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
     const void **data;                                              // Optional data and command overrides
@@ -179,6 +162,12 @@ typedef enum
 #define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
     .type = typeParam
 
+#define PARSE_RULE_OPTION_NEGATE(negateParam)                                                                                      \
+    .negate = negateParam
+
+#define PARSE_RULE_OPTION_RESET(resetParam)                                                                                        \
+    .reset = resetParam
+
 #define PARSE_RULE_OPTION_REQUIRED(requiredParam)                                                                                  \
     .required = requiredParam
 
@@ -196,6 +185,9 @@ typedef enum
 
 #define PARSE_RULE_OPTION_GROUP_ID(groupIdParam)                                                                                   \
     .groupId = groupIdParam
+
+#define PARSE_RULE_OPTION_DEPRECATE_MATCH(deprecateMatchParam)                                                                     \
+    .deprecateMatch = deprecateMatchParam
 
 #define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST(...)                                                                        \
     .commandRoleValid[cfgCmdRoleMain] = 0 __VA_ARGS__
@@ -251,6 +243,17 @@ typedef enum
 
 #define PARSE_RULE_OPTION_OPTIONAL_REQUIRED(requiredParam)                                                                         \
     PARSE_RULE_OPTION_OPTIONAL_PUSH(parseRuleOptionDataTypeRequired, 0, requiredParam)
+
+/***********************************************************************************************************************************
+Define option deprecations
+***********************************************************************************************************************************/
+typedef struct ParseRuleOptionDeprecate
+{
+    const char *name;                                               // Deprecated name
+    ConfigOption id;                                                // Option Id
+    bool indexed;                                                   // Can the deprecation be indexed?
+    bool unindexed;                                                 // Can the deprecation be unindexed?
+} ParseRuleOptionDeprecate;
 
 /***********************************************************************************************************************************
 Include automatically generated parse data
@@ -523,67 +526,213 @@ cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole c
 /***********************************************************************************************************************************
 Find an option by name in the option list
 ***********************************************************************************************************************************/
-// Helper to parse the option info into a structure
-__attribute__((always_inline)) static inline CfgParseOptionResult
-cfgParseOptionInfo(const int info)
-{
-    return (CfgParseOptionResult)
-    {
-        .found = true,
-        .id = info & PARSE_OPTION_MASK,
-        .keyIdx = (info >> PARSE_KEY_IDX_SHIFT) & PARSE_KEY_IDX_MASK,
-        .negate = info & PARSE_NEGATE_FLAG,
-        .reset = info & PARSE_RESET_FLAG,
-        .deprecated = info & PARSE_DEPRECATE_FLAG,
-    };
-}
+#define OPTION_PREFIX_NEGATE                                        "no-"
+#define OPTION_PREFIX_RESET                                         "reset-"
+#define OPTION_NAME_SIZE_MAX                                        64
 
 CfgParseOptionResult
-cfgParseOption(const String *const optionName, const CfgParseOptionParam param)
+cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam param)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, optionName);
+        FUNCTION_TEST_PARAM(STRING, optionCandidate);
         FUNCTION_TEST_PARAM(BOOL, param.prefixMatch);
+        FUNCTION_TEST_PARAM(BOOL, param.ignoreMissingIndex);
     FUNCTION_TEST_END();
 
-    ASSERT(optionName != NULL);
+    ASSERT(optionCandidate != NULL);
 
-    // Search for an exact match
-    unsigned int findIdx = 0;
+    CfgParseOptionResult result = {0};
 
-    while (optionList[findIdx].name != NULL)
+    // Copy the option to a buffer so it can be efficiently manipulated
+    char optionName[OPTION_NAME_SIZE_MAX + 1];
+    size_t optionNameSize = strSize(optionCandidate);
+
+    if (optionNameSize > sizeof(optionName) - 1)
     {
-        if (strEqZ(optionName, optionList[findIdx].name))
-            break;
-
-        findIdx++;
+        THROW_FMT(
+            OptionInvalidError, "option '%s' exceeds maximum size of " STRINGIFY(OPTION_NAME_SIZE_MAX), strZ(optionCandidate));
     }
 
-    // If the option was found
-    if (optionList[findIdx].name != NULL)
-        FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findIdx].val));
+    strcpy(optionName, strZ(optionCandidate));
 
-    // Search for a single partial match if requested
-    if (param.prefixMatch)
+    // If this looks like negate
+    if (strncmp(optionName, OPTION_PREFIX_NEGATE, sizeof(OPTION_PREFIX_NEGATE) - 1) == 0)
     {
-        unsigned int findPartialIdx = 0;
-        unsigned int findPartialTotal = 0;
+        result.negate = true;
 
-        for (findIdx = 0; findIdx < sizeof(optionList) / sizeof(struct option) - 1; findIdx++)
+        // Strip the negate prefix
+        optionNameSize -= sizeof(OPTION_PREFIX_NEGATE) - 1;
+        memmove(optionName, optionName + (sizeof(OPTION_PREFIX_NEGATE) - 1), optionNameSize + 1);
+    }
+    // Else if looks like reset
+    else if (strncmp(optionName, OPTION_PREFIX_RESET, sizeof(OPTION_PREFIX_RESET) - 1) == 0)
+    {
+        result.reset = true;
+
+        // Strip the reset prefix
+        optionNameSize -= sizeof(OPTION_PREFIX_RESET) - 1;
+        memmove(optionName, optionName + (sizeof(OPTION_PREFIX_RESET) - 1), optionNameSize + 1);
+    }
+
+    // Indexed options must have at least one dash
+    char *const dashPtr = strchr(optionName, '-');
+    bool indexed = false;
+
+    if (dashPtr != NULL)
+    {
+        if (dashPtr == optionName)
+            THROW_FMT(OptionInvalidError, "option '%s' cannot begin with a dash", strZ(optionCandidate));
+
+        // Check if the first dash is preceeded by a numeric key and keep a tally of the key
+        char *numberPtr = dashPtr;
+        unsigned int multiplier = 1;
+
+        while (numberPtr > optionName && isdigit(*(numberPtr - 1)))
         {
-            if (strBeginsWith(STR(optionList[findIdx].name), optionName))
-            {
-                findPartialIdx = findIdx;
-                findPartialTotal++;
+            numberPtr--;
 
-                if (findPartialTotal > 1)
-                    break;
-            }
+            result.keyIdx += (unsigned int)(*numberPtr - '0') * multiplier;
+            multiplier *= 10;
         }
 
-        // If a single partial match was found
-        if (findPartialTotal == 1)
-            FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findPartialIdx].val));
+        if (numberPtr == optionName)
+            THROW_FMT(OptionInvalidError, "option '%s' cannot begin with a number", strZ(optionCandidate));
+
+        // If there was a number then the option is indexed
+        if (numberPtr != dashPtr)
+        {
+            indexed = true;
+
+            // Strip the key to get the base option name
+            optionNameSize -= (size_t)(dashPtr - numberPtr);
+            memmove(numberPtr, dashPtr, optionNameSize + 1);
+
+            // Check that the index does not exceed the maximum
+            if (result.keyIdx > CFG_OPTION_KEY_MAX)
+            {
+                THROW_FMT(
+                    OptionInvalidError, "option '%s' key exceeds maximum of " STRINGIFY(CFG_OPTION_KEY_MAX), strZ(optionCandidate));
+            }
+
+            // Subtract one to represent a key index
+            result.keyIdx--;
+        }
+    }
+
+    // Search for an exact match. A copy of the option name must be made because bsearch() requires a reference.
+    const char *const optionNamePtr = optionName;
+
+    const ParseRuleOption *optionFound = bsearch(
+        &optionNamePtr, parseRuleOption, CFG_OPTION_TOTAL, sizeof(ParseRuleOption), lstComparatorZ);
+
+    // If the option was not found
+    if (optionFound == NULL)
+    {
+        // Search for a single partial match (if requested)
+        if (param.prefixMatch)
+        {
+            unsigned int findPartialIdx = 0;
+            unsigned int findPartialTotal = 0;
+
+            for (unsigned int findIdx = 0; findIdx < CFG_OPTION_TOTAL; findIdx++)
+            {
+                if (strncmp(parseRuleOption[findIdx].name, optionName, optionNameSize) == 0)
+                {
+                    findPartialIdx = findIdx;
+                    findPartialTotal++;
+
+                    if (findPartialTotal > 1)
+                        break;
+                }
+            }
+
+            // If a single partial match was found
+            if (findPartialTotal == 1)
+                optionFound = &parseRuleOption[findPartialIdx];
+        }
+
+        // If the option was not found search deprecations
+        if (optionFound == NULL)
+        {
+            // Search deprecations for an exact match
+            const ParseRuleOptionDeprecate *deprecate = bsearch(
+                &optionNamePtr, parseRuleOptionDeprecate, CFG_OPTION_DEPRECATE_TOTAL, sizeof(ParseRuleOptionDeprecate),
+                lstComparatorZ);
+
+            // If the option was not found then search deprecations for a single partial match (if requested)
+            if (deprecate == NULL && param.prefixMatch)
+            {
+                unsigned int findPartialIdx = 0;
+                unsigned int findPartialTotal = 0;
+
+                for (unsigned int deprecateIdx = 0; deprecateIdx < CFG_OPTION_DEPRECATE_TOTAL; deprecateIdx++)
+                {
+                    if (strncmp(parseRuleOptionDeprecate[deprecateIdx].name, optionName, optionNameSize) == 0)
+                    {
+                        findPartialIdx = deprecateIdx;
+                        findPartialTotal++;
+
+                        if (findPartialTotal > 1)
+                            break;
+                    }
+                }
+
+                // If a single partial match was found
+                if (findPartialTotal == 1)
+                    deprecate = &parseRuleOptionDeprecate[findPartialIdx];
+            }
+
+            // Deprecation was found
+            if (deprecate != NULL)
+            {
+                // Error if the option is indexed but the deprecation is not
+                if (indexed && !deprecate->indexed)
+                    THROW_FMT(OptionInvalidError, "deprecated option '%s' cannot have an index", strZ(optionCandidate));
+
+                // Error if the option is unindexed but the deprecation is not
+                if (!indexed && !deprecate->unindexed && !param.ignoreMissingIndex)
+                    THROW_FMT(OptionInvalidError, "deprecated option '%s' must have an index", strZ(optionCandidate));
+
+                result.deprecated = true;
+                optionFound = &parseRuleOption[deprecate->id];
+            }
+        }
+    }
+
+    // Option was found
+    if (optionFound != NULL)
+    {
+        result.found = true;
+        result.id = (unsigned int)(optionFound - parseRuleOption);
+
+        // Error if negate is not allowed
+        if (result.negate && !optionFound->negate)
+            THROW_FMT(OptionInvalidError, "option '%s' cannot be negated", strZ(optionCandidate));
+
+        // Error if reset is not allowed
+        if (result.reset && !optionFound->reset)
+            THROW_FMT(OptionInvalidError, "option '%s' cannot be reset", strZ(optionCandidate));
+
+        // It is possible for an unindexed deprecation to match an indexed option name (without the index) exactly. For example, the
+        // deprecated repo-path option now maps to repo-path index 0, which will yield an exact match. In this case we still need to
+        // mark the option as deprecated.
+        if (indexed == false && optionFound->deprecateMatch)
+            result.deprecated = true;
+
+        // If not deprecated make sure indexing matches. Deprecation indexing has already been checked because the rules are per
+        // deprecation.
+        if (!result.deprecated)
+        {
+            // Error if the option is indexed but should not be
+            if (indexed && !optionFound->group)
+                THROW_FMT(OptionInvalidError, "option '%s' cannot have an index", strZ(optionCandidate));
+
+            // Error if the option is unindexed but the deprecation is not
+            if (!indexed && optionFound->group && !param.ignoreMissingIndex)
+                THROW_FMT(OptionInvalidError, "option '%s' must have an index", strZ(optionCandidate));
+        }
+
+        FUNCTION_TEST_RETURN(result);
     }
 
     FUNCTION_TEST_RETURN((CfgParseOptionResult){0});
@@ -607,25 +756,6 @@ cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_RETURN((const char *)data.list[0]);
 
     FUNCTION_TEST_RETURN(NULL);
-}
-
-/**********************************************************************************************************************************/
-int
-cfgParseOptionId(const char *optionName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, optionName);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionName != NULL);
-
-    int result = -1;
-
-    for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
-        if (strcmp(optionName, parseRuleOption[optionId].name) == 0)
-            result = (int)optionId;
-
-    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/

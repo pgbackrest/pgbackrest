@@ -217,7 +217,6 @@ Parse option group list
 typedef struct BldCfgOptionGroupRaw
 {
     const String *const name;                                       // See BldCfgOptionGroup for comments
-    const Variant *indexTotal;
 } BldCfgOptionGroupRaw;
 
 static List *
@@ -238,36 +237,11 @@ bldCfgParseOptionGroupList(Yaml *const yaml)
             BldCfgOptionGroupRaw optGrpRaw = {.name = optGrp.value};
 
             yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
-
-            YamlEvent optGrpDef = yamlEventNext(yaml);
-
-            do
-            {
-                yamlEventCheck(optGrpDef, yamlEventTypeScalar);
-                YamlEvent optGrpDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
-
-                if (strEqZ(optGrpDef.value, "indexTotal"))
-                {
-                    optGrpRaw.indexTotal = varNewUInt(cvtZToUInt(strZ(optGrpDefVal.value)));
-                }
-                else if (strEqZ(optGrpDef.value, "prefix"))
-                {
-                    // ??? This is the same as the name so should be removed
-                }
-                else
-                    THROW_FMT(FormatError, "unknown option group definition '%s'", strZ(optGrpDef.value));
-
-                optGrpDef = yamlEventNext(yaml);
-            }
-            while (optGrpDef.type != yamlEventTypeMapEnd);
-
-            // indexTotal is required
-            if (optGrpRaw.indexTotal == NULL)
-                THROW_FMT(FormatError, "option group '%s' requires 'indexTotal'", strZ(optGrpRaw.name));
+            yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
 
             MEM_CONTEXT_BEGIN(lstMemContext(result))
             {
-                lstAdd(result, &(BldCfgOptionGroup){.name = strDup(optGrpRaw.name), .indexTotal = varUInt(optGrpRaw.indexTotal)});
+                lstAdd(result, &(BldCfgOptionGroup){.name = strDup(optGrpRaw.name)});
             }
             MEM_CONTEXT_END();
 
@@ -294,8 +268,8 @@ typedef struct BldCfgOptionDependRaw
 typedef struct BldCfgOptionDeprecateRaw
 {
     const String *name;                                             // See BldCfgOptionDeprecate for comments
-    unsigned int index;
-    bool reset;
+    bool indexed;
+    bool unindexed;
 } BldCfgOptionDeprecateRaw;
 
 typedef struct BldCfgOptionCommandRaw
@@ -533,49 +507,41 @@ bldCfgParseOptionDeprecate(Yaml *const yaml)
         do
         {
             yamlEventCheck(optDeprecate, yamlEventTypeScalar);
-            BldCfgOptionDeprecateRaw optDeprecateRaw = {.name = optDeprecate.value, .reset = true};
+            const String *name = optDeprecate.value;
+            bool indexed = false;
 
             yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
+            yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
 
-            YamlEvent optDeprecateDef = yamlEventNext(yaml);
+            // Determine if this deprecation is indexed
+            const size_t questionPos = (size_t)strChr(name, '?');
 
-            if (optDeprecateDef.type == yamlEventTypeScalar)
+            if (questionPos != (size_t)-1)
             {
-                do
+                name = strNewFmt("%s%s", strZ(strSubN(name, 0, questionPos)), strZ(strSub(name, questionPos + 1)));
+                indexed = true;
+            }
+
+            // Create final deprecation if it does not aready exist
+            BldCfgOptionDeprecateRaw *deprecate = lstFind(result, &name);
+
+            if (deprecate == NULL)
+            {
+                MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    yamlEventCheck(optDeprecateDef, yamlEventTypeScalar);
-                    YamlEvent optDeprecateDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
-
-                    if (strEqZ(optDeprecateDef.value, "index"))
-                    {
-                        optDeprecateRaw.index = cvtZToUInt(strZ(optDeprecateDefVal.value));
-                    }
-                    else if (strEqZ(optDeprecateDef.value, "reset"))
-                    {
-                        optDeprecateRaw.reset = yamlBoolParse(optDeprecateDefVal);
-                    }
-                    else
-                        THROW_FMT(FormatError, "unknown deprecate definition '%s'", strZ(optDeprecateDef.value));
-
-                    optDeprecateDef = yamlEventNext(yaml);
+                    lstAdd(result, &(BldCfgOptionDeprecateRaw){.name = strDup(name)});
                 }
-                while (optDeprecateDef.type != yamlEventTypeMapEnd);
-            }
-            else
-                yamlEventCheck(optDeprecateDef, yamlEventTypeMapEnd);
+                MEM_CONTEXT_PRIOR_END();
 
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                lstAdd(
-                    result,
-                    &(BldCfgOptionDeprecate)
-                    {
-                        .name = strDup(optDeprecateRaw.name),
-                        .index = optDeprecateRaw.index,
-                        .reset = optDeprecateRaw.reset,
-                    });
+                deprecate = lstFind(result, &name);
+                CHECK(deprecate != NULL);
             }
-            MEM_CONTEXT_PRIOR_END();
+
+            // Set indexed/unindexed flags
+            if (indexed)
+                deprecate->indexed = true;
+            else
+                deprecate->unindexed = true;
 
             optDeprecate = yamlEventNext(yaml);
         }
@@ -607,8 +573,8 @@ bldCfgParseOptionDeprecateReconcile(const List *const optDeprecateRawList)
                 &(BldCfgOptionDeprecate)
                 {
                     .name = strDup(optDeprecateRaw->name),
-                    .index = optDeprecateRaw->index,
-                    .reset = optDeprecateRaw->reset,
+                    .indexed = optDeprecateRaw->indexed,
+                    .unindexed = optDeprecateRaw->unindexed,
                 });
         }
     }
