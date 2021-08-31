@@ -37,6 +37,62 @@ static struct
 } hrnProtocolStatic;
 
 /***********************************************************************************************************************************
+Cleanup all clients inherited from the parent process so they cannot be accidentally used to send messages to servers that do not
+belong to this process. We need to do this carefully so that exit commands are not sent and processes are not terminated, so clear
+the mem context callback on each object before freeing it.
+***********************************************************************************************************************************/
+static void
+hrnProtocolClientCleanup(void)
+{
+    FUNCTION_LOG_VOID(logLevelDebug);
+
+    if (protocolHelper.memContext != NULL)
+    {
+        // Cleanup remotes
+        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+        {
+            // Cleanup remote client
+            if (protocolHelper.clientRemote[clientIdx].client != NULL)
+            {
+                memContextCallbackClear(((ProtocolClientPub *)protocolHelper.clientRemote[clientIdx].client)->memContext);
+                protocolClientFree(protocolHelper.clientRemote[clientIdx].client);
+                protocolHelper.clientRemote[clientIdx].client = NULL;
+            }
+
+            // Cleanup remote exec
+            if (protocolHelper.clientRemote[clientIdx].exec != NULL)
+            {
+                memContextCallbackClear(((ExecPub *)protocolHelper.clientRemote[clientIdx].exec)->memContext);
+                execFree(protocolHelper.clientRemote[clientIdx].exec);
+                protocolHelper.clientRemote[clientIdx].exec = NULL;
+            }
+        }
+
+        // Cleanup locals
+        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientLocalSize; clientIdx++)
+        {
+            // Cleanup local client
+            if (protocolHelper.clientLocal[clientIdx].client != NULL)
+            {
+                memContextCallbackClear(((ProtocolClientPub *)protocolHelper.clientLocal[clientIdx].client)->memContext);
+                protocolClientFree(protocolHelper.clientLocal[clientIdx].client);
+                protocolHelper.clientLocal[clientIdx].client = NULL;
+            }
+
+            // Cleanup local exec
+            if (protocolHelper.clientLocal[clientIdx].exec != NULL)
+            {
+                memContextCallbackClear(((ExecPub *)protocolHelper.clientLocal[clientIdx].exec)->memContext);
+                execFree(protocolHelper.clientLocal[clientIdx].exec);
+                protocolHelper.clientLocal[clientIdx].exec = NULL;
+            }
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Shim protocolLocalExec() to provide coverage as detailed in the hrnProtocolLocalShimInstall() documentation.
 ***********************************************************************************************************************************/
 static void
@@ -64,6 +120,9 @@ protocolLocalExec(
         // Exec command in the child process
         if (forkSafe() == 0)
         {
+            // Cleanup inherited clients
+            hrnProtocolClientCleanup();
+
             // Load configuration
             StringList *const paramList = protocolLocalParam(protocolStorageType, hostIdx, processId);
             hrnCfgLoadP(cfgCmdNone, paramList, .noStd = true);
@@ -154,6 +213,9 @@ protocolRemoteExec(
         // Exec command in the child process
         if (forkSafe() == 0)
         {
+            // Cleanup inherited clients
+            hrnProtocolClientCleanup();
+
             // Load configuration
             StringList *const paramList = protocolRemoteParam(protocolStorageType, hostIdx);
             hrnCfgLoadP(cfgCmdNone, paramList, .noStd = true);

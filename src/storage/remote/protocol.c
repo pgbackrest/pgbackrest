@@ -115,7 +115,7 @@ storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -257,7 +257,7 @@ storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -319,7 +319,7 @@ storageRemoteInfoListProtocol(PackRead *const param, ProtocolServer *const serve
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -365,9 +365,13 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
 
                 if (!bufEmpty(buffer))
                 {
-                    PackWrite *write = protocolPackNew();
-                    pckWriteBinP(write, buffer);
-                    protocolServerDataPut(server, write);
+                    MEM_CONTEXT_TEMP_BEGIN()
+                    {
+                        PackWrite *write = pckWriteNewBuf(bufNew(ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE));
+                        pckWriteBinP(write, buffer);
+                        protocolServerDataPut(server, write);
+                    }
+                    MEM_CONTEXT_TEMP_END();
 
                     bufUsedZero(buffer);
                 }
@@ -385,7 +389,7 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -472,7 +476,7 @@ storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const serv
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -500,7 +504,7 @@ storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const ser
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -528,7 +532,7 @@ storageRemotePathRemoveProtocol(PackRead *const param, ProtocolServer *const ser
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -553,7 +557,7 @@ storageRemotePathSyncProtocol(PackRead *const param, ProtocolServer *const serve
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

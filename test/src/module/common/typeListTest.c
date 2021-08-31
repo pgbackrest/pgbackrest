@@ -188,8 +188,8 @@ testRun(void)
         const char *string2 = "def";
 
         TEST_RESULT_INT(lstComparatorZ(&string1, &string1), 0, "strings are equal");
-        TEST_RESULT_INT(lstComparatorZ(&string1, &string2), -1, "first string is less");
-        TEST_RESULT_INT(lstComparatorZ(&string2, &string1), 1, "first string is greater");
+        TEST_RESULT_BOOL(lstComparatorZ(&string1, &string2) < 0, true, "first string is less");
+        TEST_RESULT_BOOL(lstComparatorZ(&string2, &string1) > 0, true, "first string is greater");
     }
 
     // *****************************************************************************************************************************

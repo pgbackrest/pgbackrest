@@ -33,11 +33,14 @@ Dummy callback functions
 static void
 storageTestDummyInfoListCallback(void *data, const StorageInfo *info)
 {
-    (void)data;
     (void)info;
 
-    // Do some work in the mem context to blow up the total time if this is not efficient
+    // Do some work in the mem context to blow up the total time if this is not efficient, i.e. if the current mem context is not
+    // being freed regularly
     memResize(memNew(16), 32);
+
+    // Increment callback total
+    (*(uint64_t *)data)++;
 }
 
 /***********************************************************************************************************************************
@@ -143,6 +146,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageInfoList()"))
     {
+        TEST_TITLE_FMT("list %d million files", TEST_SCALE);
+
         // One million files represents a fairly large cluster
         CHECK(TEST_SCALE <= 2000);
         uint64_t fileTotal = (uint64_t)1000000 * TEST_SCALE;
@@ -167,9 +172,12 @@ testRun(void)
 
                 driver.interface.infoList = storageTestPerfInfoList;
 
-                storageHelper.storageRepo = memNew(sizeof(Storage *));
-                storageHelper.storageRepo[0] = storageNew(
+                Storage *storageTest = storageNew(
                     strIdFromZ(stringIdBit6, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
+                storageHelper.storageRepoWrite = memNew(sizeof(Storage *));
+                storageHelper.storageRepoWrite[0] = storageTest;
+
+                TEST_RESULT_PTR(storageRepoWrite(), storageTest, "check test storage is used");
 
                 // Setup handler for remote storage protocol
                 ProtocolServer *server = protocolServerNew(
@@ -177,7 +185,6 @@ testRun(void)
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
                 protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
-
             }
             HRN_FORK_CHILD_END();
 
@@ -194,8 +201,13 @@ testRun(void)
                 TimeMSec timeBegin = timeMSec();
 
                 // Storage info list
+                uint64_t fileCallbackTotal = 0;
+
                 TEST_RESULT_VOID(
-                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL), "list remote files");
+                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, &fileCallbackTotal),
+                    "list remote files");
+
+                TEST_RESULT_UINT(fileCallbackTotal, fileTotal, "check callback total");
 
                 TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 

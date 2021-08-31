@@ -74,6 +74,11 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("memContextNew() and memContextFree()"))
     {
+        TEST_TITLE("struct size");
+
+        TEST_RESULT_UINT(sizeof(MemContext), TEST_64BIT() ? 72 : 48, "MemContext size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         // Make sure top context was created
         TEST_RESULT_Z(memContextName(memContextTop()), "TOP", "top context should exist");
         TEST_RESULT_INT(memContextTop()->contextChildListSize, 0, "top context should init with zero children");
@@ -146,7 +151,7 @@ testRun(void)
             "context child list initial size");
 
         // This test will change if the contexts above change
-        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 960 : 544, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 896 : 544, "check size");
 
         TEST_ERROR(
             memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
@@ -169,6 +174,11 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
     {
+        TEST_TITLE("struct size");
+
+        TEST_RESULT_UINT(sizeof(MemContextAlloc), 8, "MemContextAlloc size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(sizeof(MemContextAlloc), 8, "check MemContextAlloc size (same for 32/64 bit)");
         TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER((void *)1), (void *)(sizeof(MemContextAlloc) + 1), "check buffer macro");
         TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_HEADER((void *)sizeof(MemContextAlloc)), (void *)0, "check header macro");
@@ -223,7 +233,7 @@ testRun(void)
         TEST_RESULT_UINT(memContextCurrent()->allocFreeIdx, MEM_CONTEXT_ALLOC_INITIAL_SIZE + 3, "check alloc free idx");
 
         // This test will change if the allocations above change
-        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 249 : 165, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 241 : 165, "check size");
 
         TEST_ERROR(
             memFree(NULL), AssertError,
@@ -390,7 +400,9 @@ testRun(void)
 
                 // Null out the mem context in the parent so the move will fail
                 memContextCurrent()->contextChildList[1] = NULL;
-                TEST_ERROR(memContextMove(memContext, memContextPrior()), AssertError, "unable to find mem context in old parent");
+                TEST_ERROR(
+                    memContextMove(memContext, memContextPrior()), AssertError,
+                    "assertion 'this->contextParent->contextChildList[this->contextParentIdx] == this' failed");
 
                 // Set it back so the move will succeed
                 memContextCurrent()->contextChildList[1] = memContext;

@@ -440,6 +440,7 @@ testRun(void)
         // Nothing left to read
         TEST_ERROR(ioReadLine(read), FileReadError, "unexpected eof while reading line");
         TEST_RESULT_UINT(ioRead(read, buffer), 0, "read buffer");
+        TEST_RESULT_UINT(ioReadSmall(read, bufNew(55)), 0, "read buffer");
 
         // Error if buffer is full and there is no linefeed
         ioBufferSizeSet(10);

@@ -50,11 +50,11 @@ Contains information about the memory context
 ***********************************************************************************************************************************/
 struct MemContext
 {
-    MemContextState state;                                          // Current state of the context
     const char *name;                                               // Indicates what the context is being used for
+    MemContextState state;                                          // Current state of the context
 
-    MemContext *contextParent;                                      // All contexts have a parent except top
     unsigned int contextParentIdx;                                  // Index in the parent context list
+    MemContext *contextParent;                                      // All contexts have a parent except top
 
     MemContext **contextChildList;                                  // List of contexts created in this context
     unsigned int contextChildListSize;                              // Size of child context list (not the actual count of contexts)
@@ -74,7 +74,7 @@ Top context
 The top context always exists and can never be freed.  All other contexts are children of the top context. The top context is
 generally used to allocate memory that exists for the life of the program.
 ***********************************************************************************************************************************/
-MemContext contextTop = {.state = memContextStateActive, .name = "TOP"};
+static MemContext contextTop = {.state = memContextStateActive, .name = "TOP"};
 
 /***********************************************************************************************************************************
 Memory context stack types
@@ -537,31 +537,16 @@ memContextMove(MemContext *this, MemContext *parentNew)
     // Only move if a valid mem context is provided and the old and new parents are not the same
     if (this != NULL && this->contextParent != parentNew)
     {
-        // Find context in the old parent and NULL it out
-        MemContext *parentOld = this->contextParent;
-        unsigned int contextIdx;
-
-        for (contextIdx = 0; contextIdx < parentOld->contextChildListSize; contextIdx++)
-        {
-            if (parentOld->contextChildList[contextIdx] == this)
-            {
-                parentOld->contextChildList[contextIdx] = NULL;
-                break;
-            }
-        }
-
-        // The memory must be found
-        if (contextIdx == parentOld->contextChildListSize)
-            THROW(AssertError, "unable to find mem context in old parent");
+        // Null out the context in the old parent
+        ASSERT(this->contextParent->contextChildList[this->contextParentIdx] == this);
+        this->contextParent->contextChildList[this->contextParentIdx] = NULL;
 
         // Find a place in the new parent context and assign it. The child list may be moved while finding a new index so store the
         // index and use it with (what might be) the new pointer.
-        contextIdx = memContextNewIndex(parentNew, false);
-        ASSERT(parentNew->contextChildList[contextIdx] == NULL);
-        parentNew->contextChildList[contextIdx] = this;
-
-        // Assign new parent
         this->contextParent = parentNew;
+        this->contextParentIdx = memContextNewIndex(parentNew, false);
+        ASSERT(parentNew->contextChildList[this->contextParentIdx] == NULL);
+        parentNew->contextChildList[this->contextParentIdx] = this;
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -688,7 +673,7 @@ memContextCurrent(void)
 
 /**********************************************************************************************************************************/
 bool
-memContextFreeing(MemContext *this)
+memContextFreeing(const MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -701,7 +686,7 @@ memContextFreeing(MemContext *this)
 
 /**********************************************************************************************************************************/
 const char *
-memContextName(MemContext *this)
+memContextName(const MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -817,10 +802,9 @@ memContextFree(MemContext *this)
             THROW(AssertError, "cannot free inactive context");
 
         // Free child contexts
-        if (this->contextChildListSize > 0)
-            for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
-                if (this->contextChildList[contextIdx] && this->contextChildList[contextIdx]->state == memContextStateActive)
-                    memContextFree(this->contextChildList[contextIdx]);
+        for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
+            if (this->contextChildList[contextIdx] && this->contextChildList[contextIdx]->state == memContextStateActive)
+                memContextFree(this->contextChildList[contextIdx]);
 
         // Set state to freeing now that there are no child contexts.  Child contexts might need to interact with their parent while
         // freeing so the parent needs to remain active until they are all gone.

@@ -65,11 +65,11 @@ testRun(void)
             {
                 // Set options
                 StringList *argList = strLstNew();
-                strLstAddZ(argList, "--stanza=test1");
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
                 hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
-                strLstAddZ(argList, "--pg1-database=testdb");
+                hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "testdb");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
-                strLstAddZ(argList, "--process=0");
+                hrnCfgArgRawZ(argList, cfgOptProcess, "0");
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleRemote);
 
                 // Set script
@@ -121,6 +121,7 @@ testRun(void)
 
                 TRY_BEGIN()
                 {
+                    // -------------------------------------------------------------------------------------------------------------
                     TEST_TITLE("open and free database");
 
                     TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
@@ -174,10 +175,10 @@ testRun(void)
     if (testBegin("dbBackupStart(), dbBackupStop(), dbTime(), dbList(), dbTablespaceList(), and dbReplayWait()"))
     {
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
-        strLstAddZ(argList, "--pg1-database=backupdb");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "backupdb");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -389,11 +390,11 @@ testRun(void)
         TEST_TITLE("PostgreSQL 9.5 start backup from standby");
 
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
-        strLstAddZ(argList, "--pg2-port=5433");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
@@ -527,14 +528,15 @@ testRun(void)
     {
         DbGetResult result = {0};
 
-        // Error connecting to primary
-        // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
-        strLstAddZ(argList, "--pg1-user=bob");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgUser, 1, "bob");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error connecting to primary");
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -550,8 +552,9 @@ testRun(void)
             "P00   WARN: unable to check pg-1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
                 " error");
 
-        // Only cluster is a standby
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("only available cluster is a standby");
+
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
@@ -583,8 +586,9 @@ testRun(void)
 
         TEST_ERROR(dbGet(false, false, true), DbConnectError, "unable to find standby cluster - cannot proceed");
 
-        // Primary cluster found
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("primary cluster found");
+
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_84, TEST_PATH "/pg1", NULL, NULL),
@@ -594,23 +598,24 @@ testRun(void)
 
         TEST_ASSIGN(result, dbGet(true, true, false), "get primary only");
 
-        TEST_RESULT_INT(result.primaryIdx, 0, "    check primary id");
-        TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
-        TEST_RESULT_INT(result.standbyIdx, 0, "    check standby id");
-        TEST_RESULT_BOOL(result.standby == NULL, true, "    check standby");
-        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_84, "    version set");
-        TEST_RESULT_STR_Z(dbPgDataPath(result.primary), TEST_PATH "/pg1", "    path set");
+        TEST_RESULT_INT(result.primaryIdx, 0, "check primary id");
+        TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
+        TEST_RESULT_INT(result.standbyIdx, 0, "check standby id");
+        TEST_RESULT_BOOL(result.standby == NULL, true, "check standby");
+        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_84, "version set");
+        TEST_RESULT_STR_Z(dbPgDataPath(result.primary), TEST_PATH "/pg1", "path set");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
 
-        // More than one primary found
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("more than one primary found");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
-        strLstAddZ(argList, "--pg8-port=5433");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
@@ -626,8 +631,9 @@ testRun(void)
 
         TEST_ERROR(dbGet(true, true, false), DbConnectError, "more than one primary cluster found");
 
-        // Two standbys found but no primary
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("two standbys found but no primary");
+
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg1", true, NULL, NULL),
@@ -641,8 +647,9 @@ testRun(void)
 
         TEST_ERROR(dbGet(false, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
 
-        // Two standbys and primary not required
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("two standbys and primary not required");
+
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg1", true, NULL, NULL),
@@ -656,26 +663,27 @@ testRun(void)
 
         TEST_ASSIGN(result, dbGet(false, false, false), "get standbys");
 
-        TEST_RESULT_INT(result.primaryIdx, 0, "    check primary id");
-        TEST_RESULT_BOOL(result.primary == NULL, true, "    check primary");
-        TEST_RESULT_INT(result.standbyIdx, 0, "    check standby id");
-        TEST_RESULT_BOOL(result.standby != NULL, true, "    check standby");
+        TEST_RESULT_INT(result.primaryIdx, 0, "check primary id");
+        TEST_RESULT_BOOL(result.primary == NULL, true, "check primary");
+        TEST_RESULT_INT(result.standbyIdx, 0, "check standby id");
+        TEST_RESULT_BOOL(result.standby != NULL, true, "check standby");
 
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
 
-        // Primary and standby found
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("primary and standby found");
+
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 4, TEST_PATH "/pg4");
-        strLstAddZ(argList, "--pg4-port=5433");
-        strLstAddZ(argList, "--pg5-host=localhost");
-        strLstAddZ(argList, "--pg5-host-user=" TEST_USER);
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 4, "5433");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 5, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 5, TEST_USER);
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 5, TEST_PATH "/pg5");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
-        strLstAddZ(argList, "--pg8-port=5434");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5434");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         harnessPqScriptSet((HarnessPq [])
@@ -707,13 +715,13 @@ testRun(void)
             "P00   WARN: unable to check pg-5: [DbConnectError] raised from remote-0 protocol on 'localhost':"
                 " unable to connect to 'dbname='postgres' port=5432': [PG ERROR]");
 
-        TEST_RESULT_INT(result.primaryIdx, 3, "    check primary idx");
-        TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
-        TEST_RESULT_STR_Z(dbArchiveMode(result.primary), "on", "    dbArchiveMode");
-        TEST_RESULT_STR_Z(dbArchiveCommand(result.primary), PROJECT_BIN, "    dbArchiveCommand");
-        TEST_RESULT_STR_Z(dbWalSwitch(result.primary), "000000010000000200000003", "    wal switch");
-        TEST_RESULT_INT(result.standbyIdx, 0, "    check standby id");
-        TEST_RESULT_BOOL(result.standby != NULL, true, "    check standby");
+        TEST_RESULT_INT(result.primaryIdx, 3, "check primary idx");
+        TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
+        TEST_RESULT_STR_Z(dbArchiveMode(result.primary), "on", "dbArchiveMode");
+        TEST_RESULT_STR_Z(dbArchiveCommand(result.primary), PROJECT_BIN, "dbArchiveCommand");
+        TEST_RESULT_STR_Z(dbWalSwitch(result.primary), "000000010000000200000003", "wal switch");
+        TEST_RESULT_INT(result.standbyIdx, 0, "check standby id");
+        TEST_RESULT_BOOL(result.standby != NULL, true, "check standby");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");

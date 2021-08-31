@@ -6,7 +6,7 @@ Harness for Loading Test Configurations
 #include "common/assert.h"
 #include "common/type/convert.h"
 #include "common/type/pack.h"
-#include "common/type/stringz.h"
+#include "common/type/stringZ.h"
 
 #include "common/harnessDebug.h"
 #include "common/harnessPack.h"
