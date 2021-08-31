@@ -13,6 +13,20 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.36dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1481"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Increase max index allowed for <id>pg</id>/<id>repo</id> options to 256.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
         </release>
 
         <release date="2021-08-23" version="2.35" title="Binary Protocol">
