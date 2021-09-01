@@ -1319,11 +1319,11 @@ sub configCreate
             $self->{bBogusHost} = true;
 
             # Set a valid replica to a higher index to ensure skipping indexes does not make a difference
-            $oParamHash{$strStanza}{"pg8-host"} = $oHostDb2->nameGet();
-            $oParamHash{$strStanza}{"pg8-host-user"} = $oHostDb2->userGet();
-            $oParamHash{$strStanza}{"pg8-host-cmd"} = $oHostDb2->backrestExe();
-            $oParamHash{$strStanza}{"pg8-host-config"} = $oHostDb2->backrestConfig();
-            $oParamHash{$strStanza}{"pg8-path"} = $oHostDb2->dbBasePath();
+            $oParamHash{$strStanza}{"pg256-host"} = $oHostDb2->nameGet();
+            $oParamHash{$strStanza}{"pg256-host-user"} = $oHostDb2->userGet();
+            $oParamHash{$strStanza}{"pg256-host-cmd"} = $oHostDb2->backrestExe();
+            $oParamHash{$strStanza}{"pg256-host-config"} = $oHostDb2->backrestConfig();
+            $oParamHash{$strStanza}{"pg256-path"} = $oHostDb2->dbBasePath();
 
             if ($oParam->{bTls})
             {
@@ -1335,7 +1335,7 @@ sub configCreate
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
             {
-                $oParamHash{$strStanza}{"pg8-port"} = $oHostDb2->pgPort();
+                $oParamHash{$strStanza}{"pg256-port"} = $oHostDb2->pgPort();
             }
         }
     }

@@ -48,7 +48,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 64, "/repo64");
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         TEST_ERROR(
@@ -86,14 +86,14 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptRepo, "3");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, "/repo4");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, "/repo3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 33, "/repo3");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "host2");
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdRestore, argList), OptionInvalidValueError,
-            "local repo3 and repo4 paths are both '/repo4' but must be different");
+            "local repo3 and repo33 paths are both '/repo3' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo can be specified for backup");
@@ -160,13 +160,13 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "pg2");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 2, "pg2-exe");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 99, "/pg99");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 99, "pg99");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 99, "pg99-exe");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 0), testProjectExe(), "check pg1-host-cmd");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 1), "pg2-exe", "check pg2-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 1), "pg99-exe", "check pg99-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("db-timeout set but not protocol timeout");
@@ -434,24 +434,24 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, "s3");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 2, "bogus.bucket");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 2, "region");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 2, "endpoint");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo");
-        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 2, "mykey");
-        hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 2, "mysecretkey");
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 111, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 111, "bogus.bucket");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 111, "region");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 111, "endpoint");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 111, "/repo");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 111, "mykey");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 111, "mysecretkey");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "111");
 
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdArchiveGet, argList), OptionInvalidValueError,
-            "'bogus.bucket' is not valid for option 'repo2-s3-bucket'"
+            "'bogus.bucket' is not valid for option 'repo111-s3-bucket'"
                 "\nHINT: RFC-2818 forbids dots in wildcard matches."
                 "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
                 "\nHINT: remove dots from the bucket name.");
 
-        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 2);
-        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 2);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 111);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 111);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid bucket name with verification disabled succeeds");

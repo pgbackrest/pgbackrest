@@ -149,8 +149,6 @@ use constant CFGDEF_GROUP                                           => 'group';
 
 use constant CFGDEF_INDEX                                           => 'index';
     push @EXPORT, qw(CFGDEF_INDEX);
-use constant CFGDEF_INDEX_TOTAL                                     => 'indexTotal';
-    push @EXPORT, qw(CFGDEF_INDEX_TOTAL);
 use constant CFGDEF_INHERIT                                         => 'inherit';
     push @EXPORT, qw(CFGDEF_INHERIT);
 use constant CFGDEF_INTERNAL                                        => 'internal';
@@ -159,8 +157,6 @@ use constant CFGDEF_DEPRECATE                                       => 'deprecat
     push @EXPORT, qw(CFGDEF_DEPRECATE);
 use constant CFGDEF_NEGATE                                          => 'negate';
     push @EXPORT, qw(CFGDEF_NEGATE);
-use constant CFGDEF_PREFIX                                          => 'prefix';
-    push @EXPORT, qw(CFGDEF_PREFIX);
 use constant CFGDEF_COMMAND                                         => 'command';
     push @EXPORT, qw(CFGDEF_COMMAND);
 use constant CFGDEF_COMMAND_ROLE                                    => 'command-role';
@@ -329,38 +325,11 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
 }
 
 ####################################################################################################################################
-# Process option group defaults
-####################################################################################################################################
-foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
-{
-    # Error if prefix and index total are not both defined
-    if ((defined($rhOptionGroupDefine->{$strGroup}{&CFGDEF_PREFIX}) &&
-            !defined($rhOptionGroupDefine->{$strGroup}{&CFGDEF_INDEX_TOTAL})) ||
-        (!defined($rhOptionGroupDefine->{$strGroup}{&CFGDEF_PREFIX}) &&
-            defined($rhOptionGroupDefine->{$strGroup}{&CFGDEF_INDEX_TOTAL})))
-    {
-        confess &log(
-            ASSERT, "CFGDEF_PREFIX and CFGDEF_INDEX_TOTAL must both be defined (or neither) for option group '${strGroup}'");
-    }
-}
-
-####################################################################################################################################
 # Process option define defaults
 ####################################################################################################################################
 foreach my $strKey (sort(keys(%{$rhConfigDefine})))
 {
     my $rhOption = $rhConfigDefine->{$strKey};
-
-    # Error on invalid configuration
-    if (defined($rhOption->{&CFGDEF_INDEX_TOTAL}))
-    {
-        confess &log(ASSERT, "CFGDEF_INDEX_TOTAL cannot be defined for option '${strKey}'");
-    }
-
-    if (defined($rhOption->{&CFGDEF_PREFIX}))
-    {
-        confess &log(ASSERT, "CFGDEF_PREFIX cannot be defined for option '${strKey}'");
-    }
 
     # If the define is a scalar then copy the entire define from the referenced option
     if (defined($rhConfigDefine->{$strKey}{&CFGDEF_INHERIT}))
@@ -385,15 +354,6 @@ foreach my $strKey (sort(keys(%{$rhConfigDefine})))
 
         # Update option variable with new hash reference
         $rhOption = $rhConfigDefine->{$strKey}
-    }
-
-    # If the option group is defined then copy configuration from the group to the option
-    if (defined($rhOption->{&CFGDEF_GROUP}))
-    {
-        my $rhGroup = $rhOptionGroupDefine->{$rhConfigDefine->{$strKey}{&CFGDEF_GROUP}};
-
-        $rhOption->{&CFGDEF_INDEX_TOTAL} = $rhGroup->{&CFGDEF_INDEX_TOTAL};
-        $rhOption->{&CFGDEF_PREFIX} = $rhGroup->{&CFGDEF_PREFIX};
     }
 
     # If command is not specified then the option is valid for all commands except version and help
@@ -438,12 +398,6 @@ foreach my $strKey (sort(keys(%{$rhConfigDefine})))
         $rhConfigDefine->{$strKey}{&CFGDEF_INTERNAL} = false;
     }
 
-    # Set index total for any option where it has not been explicitly defined
-    if (!defined($rhConfigDefine->{$strKey}{&CFGDEF_INDEX_TOTAL}))
-    {
-        $rhConfigDefine->{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
-    }
-
     # All boolean config options can be negated.  Boolean command-line options must be marked for negation individually.
     if ($rhConfigDefine->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_BOOLEAN && defined($rhConfigDefine->{$strKey}{&CFGDEF_SECTION}))
     {
@@ -470,12 +424,6 @@ foreach my $strKey (sort(keys(%{$rhConfigDefine})))
     if (!defined($rhConfigDefine->{$strKey}{&CFGDEF_SECURE}))
     {
         $rhConfigDefine->{$strKey}{&CFGDEF_SECURE} = false;
-    }
-
-    # Set all indices to 1 by default - this defines how many copies of any option there can be
-    if (!defined($rhConfigDefine->{$strKey}{&CFGDEF_INDEX_TOTAL}))
-    {
-        $rhConfigDefine->{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
     }
 
     # All int, size and time options must have an allow range

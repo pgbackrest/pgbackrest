@@ -287,19 +287,19 @@ sub run
 
             if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY && !$bTls)
             {
-                # If there is only a primary and a replica and the replica is the backup destination, then if pg2-host and pg8-host
-                # are BOGUS, confirm failure to reach the primary
+                # If there is only a primary and a replica and the replica is the backup destination, then if pg2-host and
+                # pg256-host are BOGUS, confirm failure to reach the primary
                 if (!$bHostBackup && $bHostStandby && $strBackupDestination eq HOST_DB_STANDBY)
                 {
                     my $strStandbyBackup = $oHostBackup->backup(
                         CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to reach primary',
-                        {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg8-host=' . BOGUS});
+                        {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg256-host=' . BOGUS});
                 }
                 else
                 {
                     my $strStandbyBackup = $oHostBackup->backup(
                         CFGOPTVAL_BACKUP_TYPE_FULL, 'backup from standby, failure to access at least one standby',
-                        {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg8-host=' . BOGUS});
+                        {bStandby => true, iExpectedExitStatus => ERROR_DB_CONNECT, strOptionalParam => '--pg256-host=' . BOGUS});
                 }
             }
 

@@ -855,7 +855,7 @@ sub helpOptionGet
     # Get the example
     my $strExample;
 
-    my $strOptionPrefix = $rhConfigDefine->{$strOption}{&CFGDEF_PREFIX};
+    my $strOptionPrefix = $rhConfigDefine->{$strOption}{&CFGDEF_GROUP};
     my $strOptionIndex = defined($strOptionPrefix) ?
         "${strOptionPrefix}1-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
 

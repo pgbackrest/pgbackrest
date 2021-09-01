@@ -74,7 +74,6 @@ typedef struct BldCfgCommand
 typedef struct BldCfgOptionGroup
 {
     const String *const name;                                       // Name
-    const unsigned int indexTotal;                                  // Total indexes for option
 } BldCfgOptionGroup;
 
 typedef struct BldCfgOption BldCfgOption;                           // Forward declaration
@@ -88,8 +87,8 @@ typedef struct BldCfgOptionDepend
 typedef struct BldCfgOptionDeprecate
 {
     const String *const name;                                       // Deprecated option name
-    const unsigned int index;                                       // Option index to deprecate
-    const bool reset;                                               // Does the deprecated option allow reset
+    bool indexed;                                                   // Can the deprecation be indexed?
+    bool unindexed;                                                 // Can the deprecation be unindexed?
 } BldCfgOptionDeprecate;
 
 typedef struct BldCfgOptionCommand
