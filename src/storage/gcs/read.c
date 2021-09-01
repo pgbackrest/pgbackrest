@@ -7,7 +7,6 @@ GCS Storage Read
 #include "common/io/http/client.h"
 #include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "storage/gcs/read.h"
 #include "storage/read.intern.h"
@@ -22,7 +21,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageReadGcs
 {
-    MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
     StorageGcs *storage;                                            // Storage that created this object
 
@@ -55,7 +53,7 @@ storageReadGcsOpen(THIS_VOID)
     bool result = false;
 
     // Request the file
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
         this->httpResponse = storageGcsRequestP(
             this->storage, HTTP_VERB_GET_STR, .object = this->interface.name, .allowMissing = true, .contentIo = true,
@@ -128,13 +126,12 @@ storageReadGcsNew(StorageGcs *storage, const String *name, bool ignoreMissing)
 
     StorageRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageReadGcs")
+    OBJ_NEW_BEGIN(StorageReadGcs)
     {
-        StorageReadGcs *driver = memNew(sizeof(StorageReadGcs));
+        StorageReadGcs *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageReadGcs)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
 
             .interface = (StorageReadInterface)
@@ -154,7 +151,7 @@ storageReadGcsNew(StorageGcs *storage, const String *name, bool ignoreMissing)
 
         this = storageReadNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }

@@ -14,7 +14,6 @@ Posix Storage
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/user.h"
 #include "storage/posix/read.h"
@@ -34,7 +33,6 @@ Object type
 struct StoragePosix
 {
     STORAGE_COMMON_MEMBER;
-    MemContext *memContext;                                         // Object memory context
 };
 
 /**********************************************************************************************************************************/
@@ -586,13 +584,12 @@ storagePosixNewInternal(
     // Create the object
     Storage *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StoragePosix")
+    OBJ_NEW_BEGIN(StoragePosix)
     {
-        StoragePosix *driver = memNew(sizeof(StoragePosix));
+        StoragePosix *driver = OBJ_NEW_ALLOC();
 
         *driver = (StoragePosix)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .interface = storageInterfacePosix,
         };
 
@@ -608,7 +605,7 @@ storagePosixNewInternal(
 
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }

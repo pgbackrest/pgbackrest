@@ -12,7 +12,6 @@ ZST Decompress
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -25,7 +24,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct ZstDecompress
 {
-    MemContext *memContext;                                         // Context to store data
     ZSTD_DStream *context;                                          // Decompression context
     IoFilter *filter;                                               // Filter interface
 
@@ -169,18 +167,17 @@ zstDecompressNew(void)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("ZstDecompress")
+    OBJ_NEW_BEGIN(ZstDecompress)
     {
-        ZstDecompress *driver = memNew(sizeof(ZstDecompress));
+        ZstDecompress *driver = OBJ_NEW_ALLOC();
 
         *driver = (ZstDecompress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .context = ZSTD_createDStream(),
         };
 
         // Set callback to ensure zst context is freed
-        memContextCallbackSet(driver->memContext, zstDecompressFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), zstDecompressFreeResource, driver);
 
         // Initialize context
         zstError(ZSTD_initDStream(driver->context));
@@ -190,7 +187,7 @@ zstDecompressNew(void)
             ZST_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = zstDecompressDone, .inOut = zstDecompressProcess,
             .inputSame = zstDecompressInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

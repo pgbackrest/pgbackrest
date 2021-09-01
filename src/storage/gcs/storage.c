@@ -18,7 +18,6 @@ GCS Storage
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
@@ -81,7 +80,6 @@ Object type
 struct StorageGcs
 {
     STORAGE_COMMON_MEMBER;
-    MemContext *memContext;
     HttpClient *httpClient;                                         // Http client to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
     StringList *queryRedactList;                                    // List of query keys to redact from logging
@@ -336,7 +334,7 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
                 StorageGcsAuthTokenResult tokenResult = this->keyType == storageGcsKeyTypeAuto ?
                     storageGcsAuthAuto(this, timeBegin) : storageGcsAuthService(this, timeBegin);
 
-                MEM_CONTEXT_BEGIN(this->memContext)
+                MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
                 {
                     strFree(this->token);
                     this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
@@ -934,13 +932,12 @@ storageGcsNew(
 
     Storage *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageGcs")
+    OBJ_NEW_BEGIN(StorageGcs)
     {
-        StorageGcs *driver = memNew(sizeof(StorageGcs));
+        StorageGcs *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageGcs)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .interface = storageInterfaceGcs,
             .write = write,
             .bucket = strDup(bucket),
@@ -1007,7 +1004,7 @@ storageGcsNew(
 
         this = storageNew(STORAGE_GCS_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }

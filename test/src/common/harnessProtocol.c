@@ -54,7 +54,7 @@ hrnProtocolClientCleanup(void)
             // Cleanup remote client
             if (protocolHelper.clientRemote[clientIdx].client != NULL)
             {
-                memContextCallbackClear(((ProtocolClientPub *)protocolHelper.clientRemote[clientIdx].client)->memContext);
+                memContextCallbackClear(objMemContext(protocolHelper.clientRemote[clientIdx].client));
                 protocolClientFree(protocolHelper.clientRemote[clientIdx].client);
                 protocolHelper.clientRemote[clientIdx].client = NULL;
             }
@@ -62,7 +62,7 @@ hrnProtocolClientCleanup(void)
             // Cleanup remote exec
             if (protocolHelper.clientRemote[clientIdx].exec != NULL)
             {
-                memContextCallbackClear(((ExecPub *)protocolHelper.clientRemote[clientIdx].exec)->memContext);
+                memContextCallbackClear(objMemContext(protocolHelper.clientRemote[clientIdx].exec));
                 execFree(protocolHelper.clientRemote[clientIdx].exec);
                 protocolHelper.clientRemote[clientIdx].exec = NULL;
             }
@@ -74,7 +74,7 @@ hrnProtocolClientCleanup(void)
             // Cleanup local client
             if (protocolHelper.clientLocal[clientIdx].client != NULL)
             {
-                memContextCallbackClear(((ProtocolClientPub *)protocolHelper.clientLocal[clientIdx].client)->memContext);
+                memContextCallbackClear(objMemContext(protocolHelper.clientLocal[clientIdx].client));
                 protocolClientFree(protocolHelper.clientLocal[clientIdx].client);
                 protocolHelper.clientLocal[clientIdx].client = NULL;
             }
@@ -82,7 +82,7 @@ hrnProtocolClientCleanup(void)
             // Cleanup local exec
             if (protocolHelper.clientLocal[clientIdx].exec != NULL)
             {
-                memContextCallbackClear(((ExecPub *)protocolHelper.clientLocal[clientIdx].exec)->memContext);
+                memContextCallbackClear(objMemContext(protocolHelper.clientLocal[clientIdx].exec));
                 execFree(protocolHelper.clientLocal[clientIdx].exec);
                 protocolHelper.clientLocal[clientIdx].exec = NULL;
             }

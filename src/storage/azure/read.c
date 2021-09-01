@@ -6,7 +6,6 @@ Azure Storage Read
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "storage/azure/read.h"
 #include "storage/read.intern.h"
@@ -16,7 +15,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageReadAzure
 {
-    MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
     StorageAzure *storage;                                          // Storage that created this object
 
@@ -49,7 +47,7 @@ storageReadAzureOpen(THIS_VOID)
     bool result = false;
 
     // Request the file
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
         this->httpResponse = storageAzureRequestP(
             this->storage, HTTP_VERB_GET_STR, .path = this->interface.name, .allowMissing = true, .contentIo = true);
@@ -121,13 +119,12 @@ storageReadAzureNew(StorageAzure *storage, const String *name, bool ignoreMissin
 
     StorageRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageReadAzure")
+    OBJ_NEW_BEGIN(StorageReadAzure)
     {
-        StorageReadAzure *driver = memNew(sizeof(StorageReadAzure));
+        StorageReadAzure *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageReadAzure)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
 
             .interface = (StorageReadInterface)
@@ -147,7 +144,7 @@ storageReadAzureNew(StorageAzure *storage, const String *name, bool ignoreMissin
 
         this = storageReadNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }

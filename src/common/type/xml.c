@@ -332,26 +332,22 @@ xmlDocumentNew(const String *rootName)
     // Create object
     XmlDocument *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("XmlDocument")
+    OBJ_NEW_BEGIN(XmlDocument)
     {
-        this = memNew(sizeof(XmlDocument));
+        this = OBJ_NEW_ALLOC();
 
         *this = (XmlDocument)
         {
-            .pub =
-            {
-                .memContext = MEM_CONTEXT_NEW(),
-            },
             .xml = xmlNewDoc(BAD_CAST "1.0"),
         };
 
         // Set callback to ensure xml document is freed
-        memContextCallbackSet(this->pub.memContext, xmlDocumentFreeResource, this);
+        memContextCallbackSet(objMemContext(this), xmlDocumentFreeResource, this);
 
         this->pub.root = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strZ(rootName)));
         xmlDocSetRootElement(this->xml, xmlDocumentRoot(this)->node);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -372,28 +368,21 @@ xmlDocumentNewBuf(const Buffer *buffer)
     // Create object
     XmlDocument *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("XmlDocument")
+    OBJ_NEW_BEGIN(XmlDocument)
     {
-        this = memNew(sizeof(XmlDocument));
-
-        *this = (XmlDocument)
-        {
-            .pub =
-            {
-                .memContext = MEM_CONTEXT_NEW(),
-            },
-        };
+        this = OBJ_NEW_ALLOC();
+        *this = (XmlDocument){{0}};                                 // Extra braces are required for older gcc versions
 
         if ((this->xml = xmlReadMemory((const char *)bufPtrConst(buffer), (int)bufUsed(buffer), "noname.xml", NULL, 0)) == NULL)
             THROW_FMT(FormatError, "invalid xml");
 
         // Set callback to ensure xml document is freed
-        memContextCallbackSet(this->pub.memContext, xmlDocumentFreeResource, this);
+        memContextCallbackSet(objMemContext(this), xmlDocumentFreeResource, this);
 
         // Get the root node
         this->pub.root = xmlNodeNew(xmlDocGetRootElement(this->xml));
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }

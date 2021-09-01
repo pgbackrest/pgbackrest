@@ -1170,9 +1170,9 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
         // Create the config struct
         Config *config;
 
-        MEM_CONTEXT_NEW_BEGIN("Config")
+        OBJ_NEW_BEGIN(Config)
         {
-            config = memNew(sizeof(Config));
+            config = OBJ_NEW_ALLOC();
 
             *config = (Config)
             {
@@ -1181,7 +1181,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 .exe = strNewZ(argList[0]),
             };
         }
-        MEM_CONTEXT_NEW_END();
+        OBJ_NEW_END();
 
         // Phase 1: parse command line parameters
         // -------------------------------------------------------------------------------------------------------------------------

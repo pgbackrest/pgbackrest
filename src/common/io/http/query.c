@@ -6,7 +6,6 @@ HTTP Query
 #include "common/debug.h"
 #include "common/io/http/common.h"
 #include "common/io/http/query.h"
-#include "common/memContext.h"
 #include "common/type/keyValue.h"
 
 /***********************************************************************************************************************************
@@ -14,7 +13,6 @@ Object type
 ***********************************************************************************************************************************/
 struct HttpQuery
 {
-    MemContext *memContext;                                         // Mem context
     KeyValue *kv;                                                   // KeyValue store
     const StringList *redactList;                                   // List of keys to redact values for
 };
@@ -29,19 +27,18 @@ httpQueryNew(HttpQueryNewParam param)
 
     HttpQuery *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("HttpQuery")
+    OBJ_NEW_BEGIN(HttpQuery)
     {
         // Allocate state and set context
-        this = memNew(sizeof(HttpQuery));
+        this = OBJ_NEW_ALLOC();
 
         *this = (HttpQuery)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .kv = kvNew(),
             .redactList = strLstDup(param.redactList),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -58,13 +55,12 @@ httpQueryNewStr(const String *query)
 
     HttpQuery *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("HttpQuery")
+    OBJ_NEW_BEGIN(HttpQuery)
     {
-        this = memNew(sizeof(HttpQuery));
+        this = OBJ_NEW_ALLOC();
 
         *this = (HttpQuery)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .kv = kvNew(),
         };
 
@@ -94,7 +90,7 @@ httpQueryNewStr(const String *query)
         }
         MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -112,19 +108,18 @@ httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
 
     if (query != NULL)
     {
-        MEM_CONTEXT_NEW_BEGIN("HttpQuery")
+        OBJ_NEW_BEGIN(HttpQuery)
         {
             // Allocate state and set context
-            this = memNew(sizeof(HttpQuery));
+            this = OBJ_NEW_ALLOC();
 
             *this = (HttpQuery)
             {
-                .memContext = MEM_CONTEXT_NEW(),
                 .kv = kvDup(query->kv),
                 .redactList = param.redactList != NULL ? strLstDup(param.redactList) : strLstDup(query->redactList),
             };
         }
-        MEM_CONTEXT_NEW_END();
+        OBJ_NEW_END();
     }
 
     FUNCTION_TEST_RETURN(this);

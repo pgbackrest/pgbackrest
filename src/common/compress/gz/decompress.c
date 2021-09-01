@@ -12,7 +12,6 @@ Gz Decompress
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/macro.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -25,7 +24,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct GzDecompress
 {
-    MemContext *memContext;                                         // Context to store data
     z_stream stream;                                                // Decompression stream state
 
     int result;                                                     // Result of last operation
@@ -157,14 +155,13 @@ gzDecompressNew(void)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("GzDecompress")
+    OBJ_NEW_BEGIN(GzDecompress)
     {
         // Allocate state and set context
-        GzDecompress *driver = memNew(sizeof(GzDecompress));
+        GzDecompress *driver = OBJ_NEW_ALLOC();
 
         *driver = (GzDecompress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .stream = {.zalloc = NULL},
         };
 
@@ -172,14 +169,14 @@ gzDecompressNew(void)
         gzError(driver->result = inflateInit2(&driver->stream, WANT_GZ | WINDOW_BITS));
 
         // Set free callback to ensure gz context is freed
-        memContextCallbackSet(driver->memContext, gzDecompressFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), gzDecompressFreeResource, driver);
 
         // Create filter interface
         this = ioFilterNewP(
             GZ_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = gzDecompressDone, .inOut = gzDecompressProcess,
             .inputSame = gzDecompressInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

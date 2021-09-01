@@ -7,7 +7,6 @@ Protocol Server
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/time.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
@@ -21,7 +20,6 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolServer
 {
-    MemContext *memContext;                                         // Mem context
     IoRead *read;                                                   // Read interface
     IoWrite *write;                                                 // Write interface
     const String *name;                                             // Name displayed in logging
@@ -44,13 +42,12 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
     ProtocolServer *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("ProtocolServer")
+    OBJ_NEW_BEGIN(ProtocolServer)
     {
-        this = memNew(sizeof(ProtocolServer));
+        this = OBJ_NEW_ALLOC();
 
         *this = (ProtocolServer)
         {
-            .memContext = memContextCurrent(),
             .read = read,
             .write = write,
             .name = strDup(name),
@@ -69,7 +66,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
         }
         MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(PROTOCOL_SERVER, this);
 }
@@ -184,7 +181,7 @@ protocolServerProcess(
                 {
                     // Send the command to the handler.  Run the handler in the server's memory context in case any persistent data
                     // needs to be stored by the handler.
-                    MEM_CONTEXT_BEGIN(this->memContext)
+                    MEM_CONTEXT_BEGIN(objMemContext(this))
                     {
                         // Initialize retries in case of command failure
                         bool retry = false;

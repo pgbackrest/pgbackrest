@@ -10,7 +10,6 @@ File Descriptor Io Read
 #include "common/io/fdRead.h"
 #include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -18,7 +17,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoFdRead
 {
-    MemContext *memContext;                                         // Object memory context
     const String *name;                                             // File descriptor name for error messages
     int fd;                                                         // File descriptor to read data from
     TimeMSec timeout;                                               // Timeout for read operation
@@ -158,13 +156,12 @@ ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 
     IoRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoFdRead")
+    OBJ_NEW_BEGIN(IoFdRead)
     {
-        IoFdRead *driver = memNew(sizeof(IoFdRead));
+        IoFdRead *driver = OBJ_NEW_ALLOC();
 
         *driver = (IoFdRead)
         {
-            .memContext = memContextCurrent(),
             .name = strDup(name),
             .fd = fd,
             .timeout = timeout,
@@ -172,7 +169,7 @@ ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 
         this = ioReadNewP(driver, .block = true, .eof = ioFdReadEof, .fd = ioFdReadFd, .read = ioFdRead, .ready = ioFdReadReady);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_READ, this);
 }

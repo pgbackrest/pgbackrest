@@ -5,7 +5,6 @@ Database Client
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/wait.h"
 #include "db/db.h"
@@ -69,9 +68,9 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationN
 
     Db *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Db")
+    OBJ_NEW_BEGIN(Db)
     {
-        this = memNew(sizeof(Db));
+        this = OBJ_NEW_ALLOC();
 
         *this = (Db)
         {
@@ -85,7 +84,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationN
 
         this->client = pgClientMove(client, this->pub.memContext);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(DB, this);
 }

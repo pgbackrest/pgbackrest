@@ -13,7 +13,6 @@ LZ4 Decompress
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -26,7 +25,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct Lz4Decompress
 {
-    MemContext *memContext;                                         // Context to store data
     LZ4F_decompressionContext_t context;                            // LZ4 decompression context
     IoFilter *filter;                                               // Filter interface
 
@@ -170,27 +168,23 @@ lz4DecompressNew(void)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Lz4Decompress")
+    OBJ_NEW_BEGIN(Lz4Decompress)
     {
-        Lz4Decompress *driver = memNew(sizeof(Lz4Decompress));
-
-        *driver = (Lz4Decompress)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-        };
+        Lz4Decompress *driver = OBJ_NEW_ALLOC();
+        *driver = (Lz4Decompress){0};
 
         // Create lz4 context
         lz4Error(LZ4F_createDecompressionContext(&driver->context, LZ4F_VERSION));
 
         // Set callback to ensure lz4 context is freed
-        memContextCallbackSet(driver->memContext, lz4DecompressFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), lz4DecompressFreeResource, driver);
 
         // Create filter interface
         this = ioFilterNewP(
             LZ4_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
             .inputSame = lz4DecompressInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

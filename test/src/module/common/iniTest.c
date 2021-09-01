@@ -118,7 +118,6 @@ testRun(void)
         Ini *ini = NULL;
 
         TEST_ASSIGN(ini, iniNew(), "new ini");
-        TEST_RESULT_PTR_NE(ini->memContext, NULL, "mem context is set");
         TEST_RESULT_PTR_NE(ini->store, NULL, "store is set");
         TEST_RESULT_VOID(iniFree(ini), "free ini");
     }

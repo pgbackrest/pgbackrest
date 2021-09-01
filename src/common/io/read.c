@@ -9,7 +9,6 @@ IO Read Interface
 #include "common/io/io.h"
 #include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -36,9 +35,9 @@ ioReadNew(void *driver, IoReadInterface interface)
 
     IoRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoRead")
+    OBJ_NEW_BEGIN(IoRead)
     {
-        this = memNew(sizeof(IoRead));
+        this = OBJ_NEW_ALLOC();
 
         *this = (IoRead)
         {
@@ -52,7 +51,7 @@ ioReadNew(void *driver, IoReadInterface interface)
             .input = bufNew(ioBufferSize()),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_READ, this);
 }

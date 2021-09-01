@@ -7,7 +7,6 @@ Buffer IO Read
 #include "common/io/bufferRead.h"
 #include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -15,7 +14,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoBufferRead
 {
-    MemContext *memContext;                                         // Object memory context
     const Buffer *read;                                             // Buffer to read data from
 
     size_t readPos;                                                 // Current position in the read buffer
@@ -96,19 +94,18 @@ ioBufferReadNew(const Buffer *buffer)
 
     IoRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoBufferRead")
+    OBJ_NEW_BEGIN(IoBufferRead)
     {
-        IoBufferRead *driver = memNew(sizeof(IoBufferRead));
+        IoBufferRead *driver = OBJ_NEW_ALLOC();
 
         *driver = (IoBufferRead)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .read = buffer,
         };
 
         this = ioReadNewP(driver, .eof = ioBufferReadEof, .read = ioBufferRead);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_READ, this);
 }

@@ -6,7 +6,6 @@ Io Client Interface
 #include "common/debug.h"
 #include "common/io/client.h"
 #include "common/log.h"
-#include "common/memContext.h"
 
 /***********************************************************************************************************************************
 Object type

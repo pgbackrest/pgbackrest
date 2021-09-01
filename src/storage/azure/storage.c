@@ -13,7 +13,6 @@ Azure Storage
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
@@ -58,7 +57,6 @@ Object type
 struct StorageAzure
 {
     STORAGE_COMMON_MEMBER;
-    MemContext *memContext;
     HttpClient *httpClient;                                         // Http client to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
     StringList *queryRedactList;                                    // List of query keys to redact from logging
@@ -714,13 +712,12 @@ storageAzureNew(
 
     Storage *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageAzure")
+    OBJ_NEW_BEGIN(StorageAzure)
     {
-        StorageAzure *driver = memNew(sizeof(StorageAzure));
+        StorageAzure *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageAzure)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .interface = storageInterfaceAzure,
             .container = strDup(container),
             .account = strDup(account),
@@ -753,7 +750,7 @@ storageAzureNew(
 
         this = storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }

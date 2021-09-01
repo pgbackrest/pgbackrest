@@ -1092,8 +1092,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("don't check for delta if already enabled and test online timestamp");
 
-        Manifest *manifest = manifestNewInternal();
-        manifest->pub.data.backupOptionOnline = true;
+        Manifest *manifest = NULL;
+
+        OBJ_NEW_BEGIN(Manifest)
+        {
+            manifest = manifestNewInternal();
+            manifest->pub.data.backupOptionOnline = true;
+        }
+        OBJ_NEW_END();
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, true, 1482182860, false), "validate manifest");
         TEST_RESULT_INT(manifest->pub.data.backupTimestampCopyStart, 1482182861, "check copy start");
@@ -1171,54 +1177,67 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("delta disabled and not enabled during validation");
 
-        Manifest *manifest = manifestNewInternal();
-        manifest->pub.info = infoNew(NULL);
-        manifest->pub.data.pgVersion = PG_VERSION_96;
-        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_96);
-        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
+        Manifest *manifest = NULL;
 
-        manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
-        manifestPathAdd(
-            manifest,
-            &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = STRDEF("test"), .user = STRDEF("test")});
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        OBJ_NEW_BEGIN(Manifest)
+        {
+            manifest = manifestNewInternal();
+            manifest->pub.info = infoNew(NULL);
+            manifest->pub.data.pgVersion = PG_VERSION_96;
+            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_96);
+            manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
 
-        Manifest *manifestPrior = manifestNewInternal();
-        manifestPrior->pub.data.backupLabel = STRDEF("20190101-010101F");
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
-               .checksumSha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709"});
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182860,
-               .checksumSha1 = "ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd"});
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
+            manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
+            manifestPathAdd(
+                manifest,
+                &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = STRDEF("test"), .user = STRDEF("test")});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        }
+        OBJ_NEW_END();
+
+        Manifest *manifestPrior = NULL;
+
+        OBJ_NEW_BEGIN(Manifest)
+        {
+            manifestPrior = manifestNewInternal();
+            manifestPrior->pub.data.backupLabel = STRDEF("20190101-010101F");
+
+            manifestFileAdd(
+                manifestPrior,
+                &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .checksumSha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709"});
+            manifestFileAdd(
+                manifestPrior,
+                &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182860,
+                .checksumSha1 = "ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd"});
+            manifestFileAdd(
+                manifestPrior,
+                &(ManifestFile){
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
+        }
+        OBJ_NEW_END();
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 

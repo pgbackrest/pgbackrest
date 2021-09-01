@@ -5,7 +5,6 @@ S3 Storage File Write
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/s3/write.h"
@@ -32,7 +31,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageWriteS3
 {
-    MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
@@ -67,7 +65,7 @@ storageWriteS3Open(THIS_VOID)
     ASSERT(this->partBuffer == NULL);
 
     // Allocate the part buffer
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
         this->partBuffer = bufNew(this->partSize);
     }
@@ -130,7 +128,7 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR)))));
 
             // Store the upload id
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
             {
                 this->uploadId = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_UPLOAD_ID_STR, true));
                 this->uploadPartList = strLstNew();
@@ -143,7 +141,7 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
         httpQueryAdd(query, S3_QUERY_UPLOAD_ID_STR, this->uploadId);
         httpQueryAdd(query, S3_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
 
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
         {
             this->request = storageS3RequestAsyncP(
                 this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer);
@@ -275,13 +273,12 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
     StorageWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageWriteS3")
+    OBJ_NEW_BEGIN(StorageWriteS3)
     {
-        StorageWriteS3 *driver = memNew(sizeof(StorageWriteS3));
+        StorageWriteS3 *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageWriteS3)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .partSize = partSize,
 
@@ -305,7 +302,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
         this = storageWriteNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
 }

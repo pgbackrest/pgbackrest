@@ -110,7 +110,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 
     Manifest *result = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Manifest")
+    OBJ_NEW_BEGIN(Manifest)
     {
         result = manifestNewInternal();
         result->pub.info = infoNew(NULL);
@@ -133,7 +133,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
             .name = STRDEF("pg_data/" PG_FILE_PGVERSION), .mode = 0600, .group = groupName(), .user = userName()};
         manifestFileAdd(result, &fileVersion);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_HARNESS_RETURN(MANIFEST, result);
 }
@@ -1204,7 +1204,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        MEM_CONTEXT_NEW_BEGIN("Manifest")
+        OBJ_NEW_BEGIN(Manifest)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.pgVersion = PG_VERSION_84;
@@ -1212,7 +1212,7 @@ testRun(void)
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
             manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION)});
         }
-        MEM_CONTEXT_NEW_END();
+        OBJ_NEW_END();
 
         TEST_ERROR(
             restoreSelectiveExpression(manifest), FormatError,
@@ -1920,7 +1920,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        MEM_CONTEXT_NEW_BEGIN("Manifest")
+        OBJ_NEW_BEGIN(Manifest)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -1987,7 +1987,7 @@ testRun(void)
             lstSort(manifest->pub.linkList, sortOrderAsc);
             lstSort(manifest->pub.pathList, sortOrderAsc);
         }
-        MEM_CONTEXT_NEW_END();
+        OBJ_NEW_END();
 
         manifestSave(
             manifest,
@@ -2259,7 +2259,7 @@ testRun(void)
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
         #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
 
-        MEM_CONTEXT_NEW_BEGIN("Manifest")
+        OBJ_NEW_BEGIN(Manifest)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2491,7 +2491,7 @@ testRun(void)
             lstSort(manifest->pub.linkList, sortOrderAsc);
             lstSort(manifest->pub.pathList, sortOrderAsc);
         }
-        MEM_CONTEXT_NEW_END();
+        OBJ_NEW_END();
 
         manifestSave(
             manifest,

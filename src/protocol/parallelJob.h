@@ -36,7 +36,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ProtocolParallelJobPub
 {
-    MemContext *memContext;                                         // Mem context
     const Variant *key;                                             // Unique key used to identify the job
     ProtocolCommand *command;                                       // Command to be executed
     unsigned int processId;                                         // Process that executed this job

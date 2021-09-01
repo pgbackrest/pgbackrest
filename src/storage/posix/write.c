@@ -11,7 +11,6 @@ Posix Storage File write
 #include "common/debug.h"
 #include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/user.h"
 #include "storage/posix/storage.intern.h"
@@ -23,7 +22,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageWritePosix
 {
-    MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
     StoragePosix *storage;                                          // Storage that created this object
 
@@ -105,7 +103,7 @@ storageWritePosixOpen(THIS_VOID)
     }
 
     // Set free callback to ensure the file descriptor is freed
-    memContextCallbackSet(this->memContext, storageWritePosixFreeResource, this);
+    memContextCallbackSet(THIS_MEM_CONTEXT(), storageWritePosixFreeResource, this);
 
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
@@ -174,7 +172,7 @@ storageWritePosixClose(THIS_VOID)
             THROW_ON_SYS_ERROR_FMT(fsync(this->fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
 
         // Close the file
-        memContextCallbackClear(this->memContext);
+        memContextCallbackClear(THIS_MEM_CONTEXT());
         THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
         this->fd = -1;
 
@@ -247,13 +245,12 @@ storageWritePosixNew(
 
     StorageWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageWritePosix")
+    OBJ_NEW_BEGIN(StorageWritePosix)
     {
-        StorageWritePosix *driver = memNew(sizeof(StorageWritePosix));
+        StorageWritePosix *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageWritePosix)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .path = strPath(name),
             .fd = -1,
@@ -287,7 +284,7 @@ storageWritePosixNew(
 
         this = storageWriteNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
 }

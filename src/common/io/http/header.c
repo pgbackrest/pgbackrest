@@ -5,7 +5,6 @@ HTTP Header
 
 #include "common/debug.h"
 #include "common/io/http/header.h"
-#include "common/memContext.h"
 #include "common/type/keyValue.h"
 
 /***********************************************************************************************************************************
@@ -13,7 +12,6 @@ Object type
 ***********************************************************************************************************************************/
 struct HttpHeader
 {
-    MemContext *memContext;                                         // Mem context
     const StringList *redactList;                                   // List of headers to redact during logging
     KeyValue *kv;                                                   // KeyValue store
 };
@@ -26,19 +24,18 @@ httpHeaderNew(const StringList *redactList)
 
     HttpHeader *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("HttpHeader")
+    OBJ_NEW_BEGIN(HttpHeader)
     {
         // Allocate state and set context
-        this = memNew(sizeof(HttpHeader));
+        this = OBJ_NEW_ALLOC();
 
         *this = (HttpHeader)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .redactList = strLstDup(redactList),
             .kv = kvNew(),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -56,19 +53,18 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 
     if (header != NULL)
     {
-        MEM_CONTEXT_NEW_BEGIN("HttpHeader")
+        OBJ_NEW_BEGIN(HttpHeader)
         {
             // Allocate state and set context
-            this = memNew(sizeof(HttpHeader));
+            this = OBJ_NEW_ALLOC();
 
             *this = (HttpHeader)
             {
-                .memContext = MEM_CONTEXT_NEW(),
                 .redactList = redactList == NULL ? strLstDup(header->redactList) : strLstDup(redactList),
                 .kv = kvDup(header->kv),
             };
         }
-        MEM_CONTEXT_NEW_END();
+        OBJ_NEW_END();
     }
 
     FUNCTION_TEST_RETURN(this);

@@ -68,7 +68,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ProtocolClientPub
 {
-    MemContext *memContext;                                         // Mem context
     IoRead *read;                                                   // Read interface
 } ProtocolClientPub;
 

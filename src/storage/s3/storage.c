@@ -12,7 +12,6 @@ S3 Storage
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/type/object.h"
 #include "common/type/json.h"
@@ -100,7 +99,6 @@ Object type
 struct StorageS3
 {
     STORAGE_COMMON_MEMBER;
-    MemContext *memContext;
     HttpClient *httpClient;                                         // HTTP client to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
 
@@ -232,7 +230,7 @@ storageS3Auth(
             const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, S3_BUF);
 
             // Switch to the object context so signing key and date are not lost
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
             {
                 this->signingKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, serviceKey, AWS4_REQUEST_BUF);
                 this->signingKeyDate = strDup(date);
@@ -339,7 +337,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
                     httpRequestError(request, response);
 
                 // Get role from the text response
-                MEM_CONTEXT_BEGIN(this->memContext)
+                MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
                 {
                     this->credRole = strNewBuf(httpResponseContent(response));
                 }
@@ -373,7 +371,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             // Get credentials from the JSON response
             KeyValue *credential = jsonToKv(strNewBuf(httpResponseContent(response)));
 
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
             {
                 // Check the code field for errors
                 const Variant *code = kvGetDefault(credential, S3_JSON_TAG_CODE_VAR, VARSTRDEF("code field is missing"));
@@ -969,13 +967,12 @@ storageS3New(
 
     Storage *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageS3")
+    OBJ_NEW_BEGIN(StorageS3)
     {
-        StorageS3 *driver = memNew(sizeof(StorageS3));
+        StorageS3 *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageS3)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .interface = storageInterfaceS3,
             .bucket = strDup(bucket),
             .region = strDup(region),
@@ -1014,7 +1011,7 @@ storageS3New(
 
         this = storageNew(STORAGE_S3_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }

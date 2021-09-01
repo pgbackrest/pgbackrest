@@ -127,16 +127,12 @@ execNew(const String *command, const StringList *param, const String *name, Time
 
     Exec *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Exec")
+    OBJ_NEW_BEGIN(Exec)
     {
-        this = memNew(sizeof(Exec));
+        this = OBJ_NEW_ALLOC();
 
         *this = (Exec)
         {
-            .pub =
-            {
-                .memContext = MEM_CONTEXT_NEW(),
-            },
             .command = strDup(command),
             .name = strDup(name),
             .timeout = timeout,
@@ -148,7 +144,7 @@ execNew(const String *command, const StringList *param, const String *name, Time
         // The first parameter must be the command
         strLstInsert(this->param, 0, this->command);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(EXEC, this);
 }
@@ -369,7 +365,7 @@ execOpen(Exec *this)
     ioWriteOpen(execIoWrite(this));
 
     // Set a callback so the file descriptors will get freed
-    memContextCallbackSet(execMemContext(this), execFreeResource, this);
+    memContextCallbackSet(objMemContext(this), execFreeResource, this);
 
     FUNCTION_LOG_RETURN_VOID();
 }

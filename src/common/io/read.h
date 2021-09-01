@@ -91,7 +91,7 @@ Destructor
 __attribute__((always_inline)) static inline void
 ioReadFree(IoRead *const this)
 {
-    objFree(this);
+    objFreeContext(this);
 }
 
 /***********************************************************************************************************************************

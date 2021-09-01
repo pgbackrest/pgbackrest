@@ -80,7 +80,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct HttpRequestPub
 {
-    MemContext *memContext;                                         // Mem context
     const String *verb;                                             // HTTP verb (GET, POST, etc.)
     const String *path;                                             // HTTP path
     const HttpQuery *query;                                         // HTTP query

@@ -34,7 +34,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct HttpResponsePub
 {
-    MemContext *memContext;                                         // Mem context
     IoRead *contentRead;                                            // Read interface for response content
     unsigned int code;                                              // Response code (e.g. 200, 404)
     HttpHeader *header;                                             // Response headers

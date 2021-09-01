@@ -44,7 +44,6 @@ Getters/setters
 ***********************************************************************************************************************************/
 typedef struct HttpUrlPub
 {
-    MemContext *memContext;                                         // Mem context
     const String *url;                                              // Original URL
     HttpProtocolType type;                                          // Protocol type, e.g. http
     const String *host;                                             // Host

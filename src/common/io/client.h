@@ -40,7 +40,7 @@ Functions
 __attribute__((always_inline)) static inline IoClient *
 ioClientMove(IoClient *const this, MemContext *const parentNew)
 {
-    return objMove(this, parentNew);
+    return objMoveContext(this, parentNew);
 }
 
 // Open session
@@ -56,7 +56,7 @@ Destructor
 __attribute__((always_inline)) static inline void
 ioClientFree(IoClient *const this)
 {
-    objFree(this);
+    objFreeContext(this);
 }
 
 /***********************************************************************************************************************************

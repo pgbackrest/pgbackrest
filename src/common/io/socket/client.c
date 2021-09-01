@@ -14,7 +14,6 @@ Socket Client
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
-#include "common/memContext.h"
 #include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -31,7 +30,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct SocketClient
 {
-    MemContext *memContext;                                         // Mem context
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
     String *name;                                                   // Socket name (host:port)
@@ -190,13 +188,12 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
 
     IoClient *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("SocketClient")
+    OBJ_NEW_BEGIN(SocketClient)
     {
-        SocketClient *driver = memNew(sizeof(SocketClient));
+        SocketClient *driver = OBJ_NEW_ALLOC();
 
         *driver = (SocketClient)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .host = strDup(host),
             .port = port,
             .name = strNewFmt("%s:%u", strZ(host), port),
@@ -207,7 +204,7 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
 
         this = ioClientNew(driver, &sckClientInterface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_CLIENT, this);
 }

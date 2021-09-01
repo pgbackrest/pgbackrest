@@ -34,7 +34,6 @@ Document Getters
 ***********************************************************************************************************************************/
 typedef struct XmlDocumentPub
 {
-    MemContext *memContext;                                         // Mem context
     XmlNode *root;                                                  // Root node
 } XmlDocumentPub;
 

@@ -9,7 +9,6 @@ Posix Storage Read
 #include "common/debug.h"
 #include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "storage/posix/read.h"
 #include "storage/posix/storage.intern.h"
@@ -20,7 +19,6 @@ Object types
 ***********************************************************************************************************************************/
 typedef struct StorageReadPosix
 {
-    MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
     StoragePosix *storage;                                          // Storage that created this object
 
@@ -93,7 +91,7 @@ storageReadPosixOpen(THIS_VOID)
     // On success set free callback to ensure the file descriptor is freed
     if (this->fd != -1)
     {
-        memContextCallbackSet(this->memContext, storageReadPosixFreeResource, this);
+        memContextCallbackSet(THIS_MEM_CONTEXT(), storageReadPosixFreeResource, this);
         result = true;
     }
 
@@ -162,7 +160,7 @@ storageReadPosixClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    memContextCallbackClear(this->memContext);
+    memContextCallbackClear(THIS_MEM_CONTEXT());
     storageReadPosixFreeResource(this);
     this->fd = -1;
 
@@ -217,13 +215,12 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
 
     StorageRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageReadPosix")
+    OBJ_NEW_BEGIN(StorageReadPosix)
     {
-        StorageReadPosix *driver = memNew(sizeof(StorageReadPosix));
+        StorageReadPosix *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageReadPosix)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .fd = -1,
 
@@ -252,7 +249,7 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
 
         this = storageReadNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }

@@ -28,7 +28,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct KeyValuePub
 {
-    MemContext *memContext;                                         // Mem context
     VariantList *keyList;                                           // List of keys
 } KeyValuePub;
 

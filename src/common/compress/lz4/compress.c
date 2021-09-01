@@ -16,7 +16,6 @@ Developed against version r131 using the documentation in https://github.com/lz4
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -36,7 +35,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct Lz4Compress
 {
-    MemContext *memContext;                                         // Context to store data
     LZ4F_compressionContext_t context;                              // LZ4 compression context
     LZ4F_preferences_t prefs;                                       // Preferences -- just compress level set
     IoFilter *filter;                                               // Filter interface
@@ -259,13 +257,12 @@ lz4CompressNew(int level)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Lz4Compress")
+    OBJ_NEW_BEGIN(Lz4Compress)
     {
-        Lz4Compress *driver = memNew(sizeof(Lz4Compress));
+        Lz4Compress *driver = OBJ_NEW_ALLOC();
 
         *driver = (Lz4Compress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .prefs = {.compressionLevel = level, .frameInfo = {.contentChecksumFlag = LZ4F_contentChecksumEnabled}},
             .first = true,
             .buffer = bufNew(0),
@@ -275,7 +272,7 @@ lz4CompressNew(int level)
         lz4Error(LZ4F_createCompressionContext(&driver->context, LZ4F_VERSION));
 
         // Set callback to ensure lz4 context is freed
-        memContextCallbackSet(driver->memContext, lz4CompressFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), lz4CompressFreeResource, driver);
 
         // Create param list
         VariantList *paramList = varLstNew();
@@ -286,7 +283,7 @@ lz4CompressNew(int level)
             LZ4_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = lz4CompressDone, .inOut = lz4CompressProcess,
             .inputSame = lz4CompressInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

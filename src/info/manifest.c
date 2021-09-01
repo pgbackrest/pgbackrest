@@ -361,7 +361,7 @@ manifestNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    Manifest *this = memNew(sizeof(Manifest));
+    Manifest *this = OBJ_NEW_ALLOC();
 
     *this = (Manifest)
     {
@@ -1065,7 +1065,7 @@ manifestNewBuild(
 
     Manifest *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Manifest")
+    OBJ_NEW_BEGIN(Manifest)
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(NULL);
@@ -1251,7 +1251,7 @@ manifestNewBuild(
         }
         MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(MANIFEST, this);
 }
@@ -1942,14 +1942,14 @@ manifestNewLoad(IoRead *read)
 
     Manifest *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Manifest")
+    OBJ_NEW_BEGIN(Manifest)
     {
         this = manifestNewInternal();
 
         // Load the manifest
         ManifestLoadData loadData =
         {
-            .memContext = memContextNew("load"),
+            .memContext = memContextNewP("load"),
             .manifest = this,
         };
 
@@ -2029,7 +2029,7 @@ manifestNewLoad(IoRead *read)
         // Discard the context holding temporary load data
         memContextDiscard();
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(MANIFEST, this);
 }

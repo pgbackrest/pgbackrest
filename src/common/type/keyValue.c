@@ -6,7 +6,6 @@ Key Value Handler
 #include <limits.h>
 
 #include "common/debug.h"
-#include "common/memContext.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
 #include "common/type/variantList.h"
@@ -37,22 +36,21 @@ kvNew(void)
 
     KeyValue *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("KeyValue")
+    OBJ_NEW_BEGIN(KeyValue)
     {
         // Allocate state and set context
-        this = memNew(sizeof(KeyValue));
+        this = OBJ_NEW_ALLOC();
 
         *this = (KeyValue)
         {
             .pub =
             {
-                .memContext = MEM_CONTEXT_NEW(),
                 .keyList = varLstNew(),
             },
             .list = lstNewP(sizeof(KeyValuePair)),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -179,7 +177,7 @@ kvPut(KeyValue *this, const Variant *key, const Variant *value)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    MEM_CONTEXT_BEGIN(this->pub.memContext)
+    MEM_CONTEXT_BEGIN(objMemContext(this))
     {
         kvPutInternal(this, key, varDup(value));
     }
@@ -201,7 +199,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    MEM_CONTEXT_BEGIN(this->pub.memContext)
+    MEM_CONTEXT_BEGIN(objMemContext(this))
     {
         // Find the key
         unsigned int listIdx = kvGetIdx(this, key);
@@ -248,7 +246,7 @@ kvPutKv(KeyValue *this, const Variant *key)
 
     KeyValue *result = NULL;
 
-    MEM_CONTEXT_BEGIN(this->pub.memContext)
+    MEM_CONTEXT_BEGIN(objMemContext(this))
     {
         result = kvNew();
         kvPutInternal(this, key, varNewKv(result));

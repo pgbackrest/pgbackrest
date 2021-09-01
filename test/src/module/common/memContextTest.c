@@ -88,9 +88,9 @@ testRun(void)
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "top context == current context");
 
         // Context name length errors
-        TEST_ERROR(memContextNew(""), AssertError, "assertion 'name[0] != '\\0'' failed");
+        TEST_ERROR(memContextNewP(""), AssertError, "assertion 'name[0] != '\\0'' failed");
 
-        MemContext *memContext = memContextNew("test1");
+        MemContext *memContext = memContextNewP("test1");
         memContextKeep();
         TEST_RESULT_Z(memContextName(memContext), "test1", "test1 context name");
         TEST_RESULT_PTR(memContext->contextParent, memContextTop(), "test1 context parent is top");
@@ -106,7 +106,7 @@ testRun(void)
         for (int contextIdx = 1; contextIdx < MEM_CONTEXT_INITIAL_SIZE; contextIdx++)
         {
             memContextSwitch(memContextTop());
-            memContextNew("test-filler");
+            memContextNewP("test-filler");
             memContextKeep();
             TEST_RESULT_BOOL(
                 memContextTop()->contextChildList[contextIdx]->state == memContextStateActive, true, "new context is active");
@@ -114,20 +114,22 @@ testRun(void)
         }
 
         // This forces the child context array to grow
-        memContextNew("test5");
+        memContext = memContextNewP("test5", .allocExtra = 16);
+        TEST_RESULT_PTR(memContextAllocExtra(memContext), memContext + 1, "mem context alloc extra");
+        TEST_RESULT_PTR(memContextFromAllocExtra(memContext + 1), memContext, "mem context from alloc extra");
+        TEST_RESULT_PTR(memContextConstFromAllocExtra(memContext + 1), memContext, "const mem context from alloc extra");
         memContextKeep();
         TEST_RESULT_INT(memContextTop()->contextChildListSize, MEM_CONTEXT_INITIAL_SIZE * 2, "increased child context list size");
         TEST_RESULT_UINT(memContextTop()->contextChildFreeIdx, MEM_CONTEXT_INITIAL_SIZE + 1, "check context free idx");
 
         // Free a context
         memContextFree(memContextTop()->contextChildList[1]);
-        TEST_RESULT_BOOL(
-            memContextTop()->contextChildList[1]->state == memContextStateActive, false, "child context inactive after free");
+        TEST_RESULT_PTR(memContextTop()->contextChildList[1], NULL, "child context NULL after free");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "current context is top");
         TEST_RESULT_UINT(memContextTop()->contextChildFreeIdx, 1, "check context free idx");
 
         // Create a new context and it should end up in the same spot
-        memContextNew("test-reuse");
+        memContextNewP("test-reuse");
         memContextKeep();
         TEST_RESULT_BOOL(
             memContextTop()->contextChildList[1]->state == memContextStateActive,
@@ -136,13 +138,13 @@ testRun(void)
         TEST_RESULT_UINT(memContextTop()->contextChildFreeIdx, 2, "check context free idx");
 
         // Next context will be at the end
-        memContextNew("test-at-end");
+        memContextNewP("test-at-end");
         memContextKeep();
         TEST_RESULT_UINT(memContextTop()->contextChildFreeIdx, MEM_CONTEXT_INITIAL_SIZE + 2, "check context free idx");
 
         // Create a child context to test recursive free
         memContextSwitch(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
-        memContextNew("test-reuse");
+        memContextNewP("test-reuse");
         memContextKeep();
         TEST_RESULT_PTR_NE(
             memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]->contextChildList, NULL, "context child list is allocated");
@@ -151,20 +153,17 @@ testRun(void)
             "context child list initial size");
 
         // This test will change if the contexts above change
-        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 896 : 544, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 688 : 448, "check size");
 
         TEST_ERROR(
             memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
             AssertError, "cannot free current context 'test5'");
 
         memContextSwitch(memContextTop());
-        memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
+        // memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
+        memContextFree(memContextTop());
 
-        TEST_ERROR(
-            memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
-            AssertError, "cannot free inactive context");
-
-        MemContext *noAllocation = memContextNew("empty");
+        MemContext *noAllocation = memContextNewP("empty");
         memContextKeep();
         noAllocation->allocListSize = 0;
         free(noAllocation->allocList);
@@ -172,7 +171,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
+    if (testBegin("memContextAlloc*(), memNew*(), memGrow(), and memFree()"))
     {
         TEST_TITLE("struct size");
 
@@ -186,7 +185,7 @@ testRun(void)
         memContextSwitch(memContextTop());
         memNewPtrArray(1);
 
-        MemContext *memContext = memContextNew("test-alloc");
+        MemContext *memContext = memContextNewP("test-alloc");
         TEST_ERROR(memContextSwitchBack(), AssertError, "current context expected but new context 'test-alloc' found");
         memContextKeep();
         memContextSwitch(memContext);
@@ -255,7 +254,7 @@ testRun(void)
         TEST_ERROR(
             memContextCallbackSet(memContextTop(), testFree, NULL), AssertError, "top context may not have a callback");
 
-        MemContext *memContext = memContextNew("test-callback");
+        MemContext *memContext = memContextNewP("test-callback");
         memContextKeep();
         memContextCallbackSet(memContext, testFree, memContext);
         TEST_ERROR(
@@ -271,19 +270,18 @@ testRun(void)
 
         // Now test with an error
         // -------------------------------------------------------------------------------------------------------------------------
-        memContext = memContextNew("test-callback-error");
+        memContext = memContextNewP("test-callback-error");
         TEST_RESULT_VOID(memContextKeep(), "keep mem context");
         testFreeThrow = true;
         TEST_RESULT_VOID(memContextCallbackSet(memContext, testFree, memContext), "    set callback");
         TEST_ERROR(memContextFree(memContext), AssertError, "error in callback");
-        TEST_RESULT_UINT(memContext->state, memContextStateFree, "    check that mem context was completely freed");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("MEM_CONTEXT_BEGIN() and MEM_CONTEXT_END()"))
     {
         memContextSwitch(memContextTop());
-        MemContext *memContext = memContextNew("test-block");
+        MemContext *memContext = memContextNewP("test-block");
         memContextKeep();
 
         // Check normal block
@@ -311,12 +309,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            TEST_RESULT_PTR(MEM_CONTEXT_TEMP()->allocList[0], NULL, "nothing allocated");
+            TEST_RESULT_PTR(MEM_CONTEXT_TEMP()->allocList, NULL, "nothing allocated");
             memNew(99);
             TEST_RESULT_PTR_NE(MEM_CONTEXT_TEMP()->allocList[0], NULL, "1 allocation");
 
             MEM_CONTEXT_TEMP_RESET(1);
-            TEST_RESULT_PTR(MEM_CONTEXT_TEMP()->allocList[0], NULL, "nothing allocated");
+            TEST_RESULT_PTR(MEM_CONTEXT_TEMP()->allocList, NULL, "nothing allocated");
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -367,7 +365,6 @@ testRun(void)
 
         TEST_RESULT_BOOL(bCatch, true, "new context error was caught");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
-        TEST_RESULT_UINT(memContext->state == memContextStateFree, true, "new mem context is not active");
     }
 
     // *****************************************************************************************************************************
@@ -385,7 +382,7 @@ testRun(void)
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                memContextNew("not-to-be-moved");
+                memContextNewP("not-to-be-moved");
                 memContextKeep();
 
                 MEM_CONTEXT_NEW_BEGIN("inner")

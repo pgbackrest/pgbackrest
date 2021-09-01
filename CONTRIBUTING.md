@@ -59,7 +59,7 @@ The following sections provide information on some important concepts needed for
 
 ### Memory Contexts
 
-Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use `MEM_CONTEXT_NEW_BEGIN("SomeName")` for objects and `MEM_CONTEXT_TEMP_BEGIN()` for functions. See [memContext.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/memContext.h) for more details and the [Coding Example](#coding-example) below.
+Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use `OBJ_NEW_BEGIN(MyObj)` for objects and `MEM_CONTEXT_TEMP_BEGIN()` for functions. See [memContext.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/memContext.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Logging
 
@@ -86,7 +86,6 @@ MyObj *myObjNew(unsigned int myData, const String *secretName);
 // Declare the publicly accessible variables in a structure with Pub appended to the name
 typedef struct MyObjPub         // First letter upper case
 {
-    MemContext *memContext;     // Pointer to memContext in which this object resides
     unsigned int myData;        // Contents of the myData variable
 } MyObjPub;
 
@@ -135,21 +134,20 @@ myObjNew(unsigned int myData, const String *secretName)
 
     MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
 
-    MEM_CONTEXT_NEW_BEGIN("MyObj")      // Create a long lasting memory context with the name of the object
+    OBJ_NEW_BEGIN(MyObj)                // Create a long lasting memory context with the name of the object
     {
-        this = memNew(sizeof(MyObj));   // Allocate the memory required by the object
+        this = OBJ_NEW_ALLOC();         // Allocate the memory required by the object
 
         *this = (MyObj)                 // Initialize the object
         {
             .pub =
             {
-                .memContext = memContextCurrent(),      // Set the memory context to the current MyObj memory context
                 .myData = myData,                       // Copy the simple data type to this object
             },
             .name = strDup(secretName),     // Duplicate the String data type to the this object's memory context
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(MyObj, this);
 }

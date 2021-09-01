@@ -7,7 +7,6 @@ GCS Storage File Write
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/object.h"
@@ -26,7 +25,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageWriteGcs
 {
-    MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
     StorageGcs *storage;                                            // Storage that created this object
 
@@ -62,7 +60,7 @@ storageWriteGcsOpen(THIS_VOID)
     ASSERT(this->chunkBuffer == NULL);
 
     // Allocate the chunk buffer
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
         this->chunkBuffer = bufNew(this->chunkSize);
         this->md5hash = cryptoHashNew(HASH_TYPE_MD5_STR);
@@ -174,7 +172,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         {
             HttpResponse *response = storageGcsRequestP(this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query);
 
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
             {
                 this->uploadId = strDup(httpHeaderGet(httpResponseHeader(response), GCS_HEADER_UPLOAD_ID_STR));
                 CHECK(this->uploadId != NULL);
@@ -200,7 +198,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         if (done)
             httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
 
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
         {
             this->request = storageGcsRequestAsyncP(
                 this->storage, HTTP_VERB_PUT_STR, .upload = true, .noAuth = true, .header = header, .query = query,
@@ -330,13 +328,12 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 
     StorageWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageWriteGcs")
+    OBJ_NEW_BEGIN(StorageWriteGcs)
     {
-        StorageWriteGcs *driver = memNew(sizeof(StorageWriteGcs));
+        StorageWriteGcs *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageWriteGcs)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .chunkSize = chunkSize,
 
@@ -360,7 +357,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 
         this = storageWriteNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
 }

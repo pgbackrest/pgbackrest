@@ -5,7 +5,6 @@ CIFS Storage
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/regExp.h"
 #include "storage/cifs/storage.h"
 #include "storage/posix/storage.intern.h"

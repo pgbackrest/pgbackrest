@@ -15,7 +15,6 @@ Backup Info Handler
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
@@ -71,7 +70,7 @@ infoBackupNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    InfoBackup *this = memNew(sizeof(InfoBackup));
+    InfoBackup *this = OBJ_NEW_ALLOC();
 
     *this = (InfoBackup)
     {
@@ -100,7 +99,7 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalo
 
     InfoBackup *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("InfoBackup")
+    OBJ_NEW_BEGIN(InfoBackup)
     {
         this = infoBackupNewInternal();
 
@@ -108,7 +107,7 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalo
         this->pub.infoPg = infoPgNew(infoPgBackup, cipherPassSub);
         infoBackupPgSet(this, pgVersion, pgSystemId, pgCatalogVersion);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
@@ -199,12 +198,12 @@ infoBackupNewLoad(IoRead *read)
 
     InfoBackup *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("InfoBackup")
+    OBJ_NEW_BEGIN(InfoBackup)
     {
         this = infoBackupNewInternal();
         this->pub.infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }

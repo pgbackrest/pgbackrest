@@ -1194,11 +1194,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when pgBackRest version has changed");
 
-        Manifest *manifestResume = manifestNewInternal();
-        manifestResume->pub.info = infoNew(NULL);
-        manifestResume->pub.data.backupType = backupTypeFull;
-        manifestResume->pub.data.backupLabel = STRDEF("20191003-105320F");
-        manifestResume->pub.data.pgVersion = PG_VERSION_12;
+        Manifest *manifestResume = NULL;
+
+        OBJ_NEW_BEGIN(Manifest)
+        {
+            manifestResume = manifestNewInternal();
+            manifestResume->pub.info = infoNew(NULL);
+            manifestResume->pub.data.backupType = backupTypeFull;
+            manifestResume->pub.data.backupLabel = STRDEF("20191003-105320F");
+            manifestResume->pub.data.pgVersion = PG_VERSION_12;
+        }
+        OBJ_NEW_END();
 
         manifestTargetAdd(manifestResume, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
         manifestPathAdd(manifestResume, &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR});
@@ -1210,9 +1216,15 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        Manifest *manifest = manifestNewInternal();
-        manifest->pub.data.backupType = backupTypeFull;
-        manifest->pub.data.backrestVersion = STRDEF("BOGUS");
+        Manifest *manifest = NULL;
+
+        OBJ_NEW_BEGIN(Manifest)
+        {
+            manifest = manifestNewInternal();
+            manifest->pub.data.backupType = backupTypeFull;
+            manifest->pub.data.backrestVersion = STRDEF("BOGUS");
+        }
+        OBJ_NEW_END();
 
         TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
 
@@ -1321,8 +1333,14 @@ testRun(void)
         protocolParallelJobResultSet(job, pckReadNewBuf(pckWriteBuf(resultPack)));
 
         // Create manifest with file
-        Manifest *manifest = manifestNewInternal();
-        manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
+        Manifest *manifest = NULL;
+
+        OBJ_NEW_BEGIN(Manifest)
+        {
+            manifest = manifestNewInternal();
+            manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
+        }
+        OBJ_NEW_END();
 
         TEST_RESULT_UINT(
             backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, 0), 0, "log noop result");

@@ -7,7 +7,6 @@ Yaml Handler
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 
 #include "build/common/yaml.h"
 
@@ -16,7 +15,6 @@ Object type
 ***********************************************************************************************************************************/
 struct Yaml
 {
-    MemContext *memContext;                                         // Mem context
     yaml_parser_t parser;                                           // Parse context
 };
 
@@ -49,19 +47,15 @@ yamlNew(const Buffer *const buffer)
 
     Yaml *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Yaml")
+    OBJ_NEW_BEGIN(Yaml)
     {
         // Create object
-        this = memNew(sizeof(Yaml));
-
-        *this = (Yaml)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-        };
+        this = OBJ_NEW_ALLOC();
+        *this = (Yaml){0};
 
         // Initialize parser context
         CHECK(yaml_parser_initialize(&this->parser));
-        memContextCallbackSet(this->memContext, yamlFreeResource, this);
+        memContextCallbackSet(objMemContext(this), yamlFreeResource, this);
 
         // Set yaml string
         yaml_parser_set_input_string(&this->parser, bufPtrConst(buffer), bufUsed(buffer));
@@ -70,7 +64,7 @@ yamlNew(const Buffer *const buffer)
         CHECK(yamlEventNext(this).type == yamlEventTypeStreamBegin);
         CHECK(yamlEventNext(this).type == yamlEventTypeDocBegin);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }

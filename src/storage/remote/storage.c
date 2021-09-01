@@ -20,7 +20,6 @@ Object type
 struct StorageRemote
 {
     STORAGE_COMMON_MEMBER;
-    MemContext *memContext;
     ProtocolClient *client;                                         // Protocol client
     unsigned int compressLevel;                                     // Protocol compression level
 };
@@ -452,13 +451,12 @@ storageRemoteNew(
 
     Storage *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageRemote")
+    OBJ_NEW_BEGIN(StorageRemote)
     {
-        StorageRemote *driver = memNew(sizeof(StorageRemote));
+        StorageRemote *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageRemote)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .client = client,
             .compressLevel = compressLevel,
             .interface = storageInterfaceRemote,
@@ -485,7 +483,7 @@ storageRemoteNew(
 
         this = storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }

@@ -8,7 +8,6 @@ Remote Storage File write
 #include "common/io/io.h"
 #include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/remote/protocol.h"
@@ -20,7 +19,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageWriteRemote
 {
-    MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
     StorageRemote *storage;                                         // Storage that created this object
     StorageWrite *write;                                            // Storage write interface
@@ -110,7 +108,7 @@ storageWriteRemoteOpen(THIS_VOID)
         }
 
         // Set free callback to ensure remote file is freed
-        memContextCallbackSet(this->memContext, storageWriteRemoteFreeResource, this);
+        memContextCallbackSet(THIS_MEM_CONTEXT(), storageWriteRemoteFreeResource, this);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -174,7 +172,7 @@ storageWriteRemoteClose(THIS_VOID)
         MEM_CONTEXT_TEMP_END();
 
         this->client = NULL;
-        memContextCallbackClear(this->memContext);
+        memContextCallbackClear(THIS_MEM_CONTEXT());
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -211,13 +209,12 @@ storageWriteRemoteNew(
 
     StorageWriteRemote *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageWriteRemote")
+    OBJ_NEW_BEGIN(StorageWriteRemote)
     {
-        this = memNew(sizeof(StorageWriteRemote));
+        this = OBJ_NEW_ALLOC();
 
         *this = (StorageWriteRemote)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .client = client,
 
@@ -248,7 +245,7 @@ storageWriteRemoteNew(
 
         this->write = storageWriteNew(this, &this->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     ASSERT(this != NULL);
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this->write);

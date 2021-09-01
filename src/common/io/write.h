@@ -79,7 +79,7 @@ Destructor
 __attribute__((always_inline)) static inline void
 ioWriteFree(IoWrite *const this)
 {
-    objFree(this);
+    objFreeContext(this);
 }
 
 /***********************************************************************************************************************************

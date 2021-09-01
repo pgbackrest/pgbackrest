@@ -40,7 +40,7 @@ Destructor
 __attribute__((always_inline)) static inline void
 ioFilterFree(IoFilter *const this)
 {
-    objFree(this);
+    objFreeContext(this);
 }
 
 /***********************************************************************************************************************************

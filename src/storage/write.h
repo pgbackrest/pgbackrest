@@ -23,7 +23,7 @@ Functions
 __attribute__((always_inline)) static inline StorageWrite *
 storageWriteMove(StorageWrite *const this, MemContext *const parentNew)
 {
-    return objMove(this, parentNew);
+    return objMoveContext(this, parentNew);
 }
 
 /***********************************************************************************************************************************
@@ -106,7 +106,7 @@ Destructor
 __attribute__((always_inline)) static inline void
 storageWriteFree(StorageWrite *const this)
 {
-    objFree(this);
+    objFreeContext(this);
 }
 
 /***********************************************************************************************************************************

@@ -13,7 +13,6 @@ Object type
 ***********************************************************************************************************************************/
 struct MostCommonValue
 {
-    MemContext *memContext;                                         // Mem context
     List *list;                                                     // List of unique values
 };
 
@@ -31,17 +30,16 @@ mcvNew(void)
 
     MostCommonValue *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("MostCommonValue")
+    OBJ_NEW_BEGIN(MostCommonValue)
     {
-        this = memNew(sizeof(MostCommonValue));
+        this = OBJ_NEW_ALLOC();
 
         *this = (MostCommonValue)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .list = lstNewP(sizeof(MostCommonValueEntry)),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -75,7 +73,7 @@ mcvUpdate(MostCommonValue *this, const Variant *value)
     // Add the value if it doesn't
     if (!found)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(objMemContext(this))
         {
             MostCommonValueEntry entry = {.value = varDup(value), .total = 1};
             lstAdd(this->list, &entry);

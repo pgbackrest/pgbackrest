@@ -7,14 +7,12 @@ HTTP Session
 #include "common/io/http/session.h"
 #include "common/io/io.h"
 #include "common/log.h"
-#include "common/memContext.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct HttpSession
 {
-    MemContext *memContext;                                         // Mem context
     HttpClient *httpClient;                                         // HTTP client
     IoSession *ioSession;                                           // IO session
 };
@@ -33,18 +31,17 @@ httpSessionNew(HttpClient *httpClient, IoSession *ioSession)
 
     HttpSession *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("HttpSession")
+    OBJ_NEW_BEGIN(HttpSession)
     {
-        this = memNew(sizeof(HttpSession));
+        this = OBJ_NEW_ALLOC();
 
         *this = (HttpSession)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .httpClient = httpClient,
             .ioSession = ioSessionMove(ioSession, memContextCurrent()),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(HTTP_SESSION, this);
 }
