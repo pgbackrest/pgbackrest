@@ -83,6 +83,12 @@ sub new
     my $strTestPath = testRunGet()->testPath() . ($strName eq HOST_BASE ? '' : "/${strName}");
     storageTest()->pathCreate($strTestPath, {strMode => '0770'});
 
+    # Make sure keys have the correct permissions
+    if (chmod(0600, testRunGet()->basePath() . HOST_SERVER_KEY, testRunGet()->basePath() . HOST_CLIENT_KEY) != 2)
+    {
+        confess "unable to set mode on keys";
+    }
+
     # Create the host
     my $strProjectPath = dirname(dirname(abs_path($0)));
     my $strBinPath = dirname(dirname($strTestPath)) . '/bin/' . testRunGet()->vm() . '/' . PROJECT_EXE;

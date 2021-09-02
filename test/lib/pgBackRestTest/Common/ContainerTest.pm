@@ -234,7 +234,7 @@ sub fileCopy
 
     foreach my $strLine (split("\n", ${$oStorage->get($strSourceFile)}))
     {
-        $strScript .= "    echo '${strLine}' " . (defined($strScript) ? '>' : '>>') . " ${strDestFile} && \\\n";
+        $strScript .= "    echo '${strLine}' " . (defined($strScript) ? '>>' : '>') . " ${strDestFile} && \\\n";
     }
 
     return $strScript;

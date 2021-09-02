@@ -519,34 +519,34 @@ testRun(void)
                 // Invalid client cert
                 IoSession *socketSession = ioServerAccept(socketServer, NULL);
 
-                TEST_ERROR(
-                    ioServerAccept(tlsServer, socketSession), ServiceError, "TLS error [1:337100934] certificate verify failed");
-
-                HRN_FORK_CHILD_NOTIFY_GET();
+                // TEST_ERROR(
+                //     ioServerAccept(tlsServer, socketSession), ServiceError, "TLS error [1:337100934] certificate verify failed");
 
                 // !!! NEEDED FOR U16 (BUT DOESN"T WORK) Invalid client cert error message varies based on the openssl version
 
-                // TRY_BEGIN()
-                // {
-                //     TEST_RESULT_VOID(ioServerAccept(tlsServer, socketSession), "open server session");
-                // }
-                // CATCH_ANY()
-                // {
-                //     const char *const errorMessageExpected1 = "TLS error [1:337100934] certificate verify failed";
-                //     const char *const errorMessageExpected2 = "TLS error [1:336105606] certificate verify failed";
+                TRY_BEGIN()
+                {
+                    TEST_RESULT_VOID(ioServerAccept(tlsServer, socketSession), "open server session");
+                }
+                CATCH_ANY()
+                {
+                    const char *const errorMessageExpected1 = "TLS error [1:337100934] certificate verify failed";
+                    const char *const errorMessageExpected2 = "TLS error [1:336105606] certificate verify failed";
 
-                //     if (errorType() != &ServiceError ||
-                //         (strcmp(errorMessage(), errorMessageExpected1) != 0 && strcmp(errorMessage(), errorMessageExpected2) != 0))
-                //     {
-                //         THROW_FMT(
-                //             TestError, "EXPECTED %s: %s (or %s)\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s",
-                //             errorTypeName(&ServiceError), errorMessageExpected1, errorMessageExpected2, errorName(), errorMessage(),
-                //             errorStackTrace());
-                //     }
+                    if (errorType() != &ServiceError ||
+                        (strcmp(errorMessage(), errorMessageExpected1) != 0 && strcmp(errorMessage(), errorMessageExpected2) != 0))
+                    {
+                        THROW_FMT(
+                            TestError, "EXPECTED %s: %s (or %s)\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s",
+                            errorTypeName(&ServiceError), errorMessageExpected1, errorMessageExpected2, errorName(), errorMessage(),
+                            errorStackTrace());
+                    }
 
-                //     hrnTestResultEnd();
-                // }
-                // TRY_END();
+                    hrnTestResultEnd();
+                }
+                TRY_END();
+
+                HRN_FORK_CHILD_NOTIFY_GET();
 
                 // TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
 
@@ -569,24 +569,24 @@ testRun(void)
                             STRDEF(TEST_PATH "/client-bad-ca.crt"), STRDEF(HRN_SERVER_CLIENT_KEY), NULL)),
                     "client open");
 
-                TEST_ERROR(
-                    ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
-                    "TLS error [1:336151576] tlsv1 alert unknown ca");
+                // TEST_ERROR(
+                //     ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
+                //     "TLS error [1:336151576] tlsv1 alert unknown ca");
 
                 // !!! NEEDED FOR U16 Error message varies based on the openssl version
-                // TRY_BEGIN()
-                // {
-                //     TEST_ERROR(
-                //         ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
-                //         "TLS error [1:336151576] tlsv1 alert unknown ca");
-                // }
-                // CATCH(TestError)
-                // {
-                //     TEST_ERROR(
-                //         ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
-                //         "TLS error [1:336105606] tlsv1 alert unknown ca");
-                // }
-                // TRY_END();
+                TRY_BEGIN()
+                {
+                    TEST_ERROR(
+                        ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
+                        "TLS error [1:336151576] tlsv1 alert unknown ca");
+                }
+                CATCH(TestError)
+                {
+                    TEST_ERROR(
+                        ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
+                        "TLS error [1:336105606] tlsv1 alert unknown ca");
+                }
+                TRY_END();
 
                 TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
 
