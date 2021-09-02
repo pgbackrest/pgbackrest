@@ -222,44 +222,70 @@ sub sshSetup
 }
 
 ####################################################################################################################################
-# Cert Setup
+# Copy text file into container. Note that this will not work if the file contains single quotes.
 ####################################################################################################################################
-sub certSetup
+sub fileCopy
+{
+    my $oStorage = shift;
+    my $strSourceFile = shift;
+    my $strDestFile = shift;
+
+    my $strScript;
+
+    foreach my $strLine (split("\n", ${$oStorage->get($strSourceFile)}))
+    {
+        $strScript .= "    echo '${strLine}' " . (defined($strScript) ? '>>' : '>') . " ${strDestFile} && \\\n";
+    }
+
+    return $strScript;
+}
+
+####################################################################################################################################
+# CA Setup
+####################################################################################################################################
+sub caSetup
 {
     my $strOS = shift;
+    my $oStorage = shift;
+    my $strCaFile = shift;
 
-    my $strScript =
-        sectionHeader() .
-        "# Generate fake certs\n" .
-        "    mkdir -p -m 755 /etc/fake-cert && \\\n" .
-        "    cd /etc/fake-cert && \\\n" .
-        "    openssl genrsa -out ca.key 2048 && \\\n" .
-        "    openssl req -new -x509 -extensions v3_ca -key ca.key -out ca.crt -days 99999 \\\n" .
-        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=pgbackrest.org\" && \\\n" .
-        "    openssl genrsa -out server.key 2048 && \\\n" .
-        "    openssl req -new -key server.key -out server.csr \\\n" .
-        "        -subj \"/C=US/ST=Country/L=City/O=Organization/CN=*.pgbackrest.org\" && \\\n" .
-        "    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 99999 \\\n" .
-        "        -sha256 && \\\n" .
-        "    chmod 644 /etc/fake-cert/* && \\\n";
+    my $strOsBase = vmGet()->{$strOS}{&VM_OS_BASE};
 
-    my $rhVm = vmGet();
+    # Determine CA location
+    my $strCertFile = undef;
 
-    if ($rhVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+    if ($strOsBase eq VM_OS_BASE_RHEL)
     {
-        $strScript .=
-            "    cp /etc/fake-cert/pgbackrest-test-ca.crt /etc/pki/ca-trust/source/anchors && \\\n" .
-            "    update-ca-trust extract";
+        $strCertFile = '/etc/pki/ca-trust/source/anchors';
     }
-    elsif ($rhVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+    elsif ($strOsBase eq VM_OS_BASE_DEBIAN)
     {
-        $strScript .=
-            "    cp /etc/fake-cert/pgbackrest-test-ca.crt /usr/local/share/ca-certificates && \\\n" .
-            "    update-ca-certificates";
+        $strCertFile = '/usr/local/share/ca-certificates';
     }
     else
     {
-        confess &log(ERROR, "unable to install certificate for $rhVm->{$strOS}{&VM_OS_BASE}");
+        confess &log(ERROR, "unable to install CA for ${strOsBase}");
+    }
+
+    $strCertFile .= '/pgbackrest-test-ca.crt';
+
+    # Write CA
+    my $strScript =
+        sectionHeader() .
+        "# Install CA\n" .
+        fileCopy($oStorage, $strCaFile, $strCertFile) .
+        "    chmod 644 ${strCertFile} && \\\n";
+
+    # Install CA
+    if ($strOsBase eq VM_OS_BASE_RHEL)
+    {
+        $strScript .=
+            "    update-ca-trust extract";
+    }
+    elsif ($strOsBase  eq VM_OS_BASE_DEBIAN)
+    {
+        $strScript .=
+            "    update-ca-certificates";
     }
 
     return $strScript;
@@ -370,6 +396,12 @@ sub containerBuild
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg";
+
+            # This package is required to build valgrind on 32-bit
+            if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
+            {
+                $strScript .= " g++-multilib";
+            }
         }
 
         # Add zst command-line tool and development libs when available
@@ -409,18 +441,15 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strCertPath = 'test/certificate';
-        my $strCertName = 'pgbackrest-test';
+        my $strValgrind = 'valgrind-3.17.0';
 
-        $strCopy = '# Copy Test Certificates';
-
-        foreach my $strFile ('-ca.crt', '.crt', '.key')
-        {
-            $oStorageDocker->copy("${strCertPath}/${strCertName}${strFile}", "${strTempPath}/${strCertName}${strFile}");
-            $strCopy .= "\nCOPY ${strCertName}${strFile} " . CERT_FAKE_PATH . "/${strCertName}${strFile}";
-        }
-
-        $strScript .= certSetup($strOS);
+        $strScript .= sectionHeader() .
+            "# Build valgrind\n" .
+            "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
+            "    cd /root/${strValgrind} && \\\n" .
+            "    ./configure --silent && \\\n" .
+            "    make -s -j8 install && \\\n" .
+            "    rm -rf /root/${strValgrind}";
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
@@ -547,7 +576,10 @@ sub containerBuild
             $strCopy = undef;
             $strScript = '';
 
-            #---------------------------------------------------------------------------------------------------------------------------
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strScript .= caSetup($strOS, $oStorageDocker, "test/certificate/pgbackrest-test-ca.crt");
+
+            #-----------------------------------------------------------------------------------------------------------------------
             $strScript .= sectionHeader() .
                 "# Create banner to make sure pgBackRest ignores it\n" .
                 "    echo '***********************************************' >  /etc/issue.net && \\\n" .
