@@ -26,7 +26,7 @@ testRun(void)
     {
         TEST_TITLE("server");
 
-        HRN_FORK_BEGIN()
+        HRN_FORK_BEGIN(.timeout = 5000)
         {
             HRN_FORK_CHILD_BEGIN(.prefix = "client repo")
             {
