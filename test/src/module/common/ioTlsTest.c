@@ -109,6 +109,10 @@ testRun(void)
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
+    THROW_ON_SYS_ERROR_FMT(chmod(HRN_SERVER_KEY, 0600) == -1, FileModeError, "unable to set mode on " HRN_SERVER_KEY);
+    THROW_ON_SYS_ERROR_FMT(
+        chmod(HRN_SERVER_CLIENT_KEY, 0600) == -1, FileModeError, "unable to set mode on " HRN_SERVER_CLIENT_KEY);
+
     // *****************************************************************************************************************************
     if (testBegin("Socket Common"))
     {
@@ -502,9 +506,9 @@ testRun(void)
         // Put bad CA client cert
         storagePutP(storageNewWriteP(storageTest, STRDEF("client-bad-ca.crt")), BUFSTRZ(testClientBadCa));
 
-        HRN_FORK_BEGIN()
+        HRN_FORK_BEGIN(.timeout = 5000)
         {
-            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server")
             {
                 // TLS server to accept connections
                 IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
@@ -517,6 +521,8 @@ testRun(void)
 
                 TEST_ERROR(
                     ioServerAccept(tlsServer, socketSession), ServiceError, "TLS error [1:337100934] certificate verify failed");
+
+                HRN_FORK_CHILD_NOTIFY_GET();
 
                 // !!! NEEDED FOR U16 (BUT DOESN"T WORK) Invalid client cert error message varies based on the openssl version
 
@@ -542,36 +548,7 @@ testRun(void)
                 // }
                 // TRY_END();
 
-                // Valid client cert
-                socketSession = ioServerAccept(socketServer, NULL);
-                IoSession *tlsSession = NULL;
-                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
-
-                TEST_RESULT_BOOL(ioSessionAuthenticated(tlsSession), true, "server session authenticated");
-                TEST_RESULT_STR_Z(ioSessionPeerName(tlsSession), "pgbackrest-client", "check peer name");
-                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message")), "server write");
-                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
-
-                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
-
-                // No client cert
-                socketSession = ioServerAccept(socketServer, NULL);
-                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
-
-                TEST_RESULT_BOOL(ioSessionAuthenticated(tlsSession), false, "server session not authenticated");
-                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message2")), "server write");
-                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
-
-                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
-
-                // Client crl rejects server !!! NOT WORKING
-                socketSession = ioServerAccept(socketServer, NULL);
-                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
-
-                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message3")), "server write");
-                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
-
-                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
+                // TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
 
                 // Free socket
                 ioServerFree(socketServer);
@@ -613,8 +590,63 @@ testRun(void)
 
                 TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
 
-                // -----------------------------------------------------------------------------------------------------------------
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                // TLS server to accept connections
+                IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
+                IoServer *tlsServer = tlsServerNew(
+                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(TEST_PATH "/server-cn-only.crt"),
+                    NULL, 5000);
+
+                // Valid client cert
+                IoSession *socketSession = ioServerAccept(socketServer, NULL);
+                IoSession *tlsSession = NULL;
+                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
+
+                TEST_RESULT_BOOL(ioSessionAuthenticated(tlsSession), true, "server session authenticated");
+                TEST_RESULT_STR_Z(ioSessionPeerName(tlsSession), "pgbackrest-client", "check peer name");
+                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message")), "server write");
+                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
+
+                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
+
+                // No client cert
+                socketSession = ioServerAccept(socketServer, NULL);
+                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
+
+                TEST_RESULT_BOOL(ioSessionAuthenticated(tlsSession), false, "server session not authenticated");
+                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message2")), "server write");
+                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
+
+                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
+
+                // Client crl rejects server !!! NOT WORKING
+                socketSession = ioServerAccept(socketServer, NULL);
+                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
+
+                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message3")), "server write");
+                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
+
+                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
+
+                // Free socket
+                ioServerFree(socketServer);
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "test client")
+            {
                 TEST_TITLE("client cert is valid");
+
+                IoSession *clientSession = NULL;
 
                 TEST_ASSIGN(
                     clientSession,
