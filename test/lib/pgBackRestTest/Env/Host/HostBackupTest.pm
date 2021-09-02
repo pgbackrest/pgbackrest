@@ -1327,9 +1327,9 @@ sub configCreate
 
             if ($oParam->{bTls})
             {
-                $oParamHash{$strStanza}{'pg8-host-type'} = 'tls';
-                $oParamHash{$strStanza}{'pg8-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
-                $oParamHash{$strStanza}{'pg8-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+                $oParamHash{$strStanza}{'pg256-host-type'} = 'tls';
+                $oParamHash{$strStanza}{'pg256-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                $oParamHash{$strStanza}{'pg256-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
             }
 
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.

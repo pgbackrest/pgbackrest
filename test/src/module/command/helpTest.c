@@ -281,6 +281,7 @@ testRun(void)
             "                                   include path [default=/etc/pgbackrest/conf.d]\n"
             "  --repo-host-config-path          pgBackRest repository host configuration\n"
             "                                   path [default=/etc/pgbackrest]\n"
+            "  --repo-host-crl-file             repository host certificate revocation file\n"
             "  --repo-host-key-file             repository host key file\n"
             "  --repo-host-port                 repository host port when repo-host is set\n"
             "  --repo-host-type                 repository host protocol type [default=ssh]\n"
