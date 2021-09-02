@@ -222,11 +222,32 @@ sub sshSetup
 }
 
 ####################################################################################################################################
+# Copy text file into container. Note that this will not work if the file contains single quotes.
+####################################################################################################################################
+sub fileCopy
+{
+    my $oStorage = shift;
+    my $strSourceFile = shift;
+    my $strDestFile = shift;
+
+    my $strScript;
+
+    foreach my $strLine (split("\n", ${$oStorage->get($strSourceFile)}))
+    {
+        $strScript .= "    echo '${strLine}' " . (defined($strScript) ? '>' : '>>') . " ${strDestFile} && \\\n";
+    }
+
+    return $strScript;
+}
+
+####################################################################################################################################
 # CA Setup
 ####################################################################################################################################
 sub caSetup
 {
     my $strOS = shift;
+    my $oStorage = shift;
+    my $strCaFile = shift;
 
     my $strOsBase = vmGet()->{$strOS}{&VM_OS_BASE};
 
@@ -252,38 +273,7 @@ sub caSetup
     my $strScript =
         sectionHeader() .
         "# Install CA\n" .
-        "    echo '-----BEGIN CERTIFICATE-----' > ${strCertFile} && \\\n" .
-        "    echo 'MIIFkDCCA3igAwIBAgIJAKfL57w5QrmFMA0GCSqGSIb3DQEBCwUAMFwxCzAJBgNV' >> ${strCertFile} && \\\n" .
-        "    echo 'BAYTAlVTMQwwCgYDVQQIDANBbGwxDDAKBgNVBAcMA0FsbDETMBEGA1UECgwKcGdC' >> ${strCertFile} && \\\n" .
-        "    echo 'YWNrUmVzdDEcMBoGA1UEAwwTdGVzdC5wZ2JhY2tyZXN0Lm9yZzAgFw0xODExMTky' >> ${strCertFile} && \\\n" .
-        "    echo 'MjI2MjNaGA8yMjkyMDkwMjIyMjYyM1owXDELMAkGA1UEBhMCVVMxDDAKBgNVBAgM' >> ${strCertFile} && \\\n" .
-        "    echo 'A0FsbDEMMAoGA1UEBwwDQWxsMRMwEQYDVQQKDApwZ0JhY2tSZXN0MRwwGgYDVQQD' >> ${strCertFile} && \\\n" .
-        "    echo 'DBN0ZXN0LnBnYmFja3Jlc3Qub3JnMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIIC' >> ${strCertFile} && \\\n" .
-        "    echo 'CgKCAgEA363DCLQblcgOjA3qZAJfxameJrRZFvs2xxGNX6IhpLv1uWSr5V6t47lG' >> ${strCertFile} && \\\n" .
-        "    echo 'IUORf/Jol/lj/Y8jN3BuW3eSnsAjeMTVC1t9kE3fmZ5Rvnyugkl+t1hV2Vgxhuc5' >> ${strCertFile} && \\\n" .
-        "    echo 'wrn3W2YTjW06miWkuSgyfFC1zxfcCa13Lj/WVfVh/VM17z/TgPCsH+UbAzheRVK7' >> ${strCertFile} && \\\n" .
-        "    echo 'CLE5P4SdSVmmEeUB6CQaFuKxQ4tuEgR2YBsaI9LblgTsr28nIJLmJugxMcy7KVQm' >> ${strCertFile} && \\\n" .
-        "    echo 'dVhMPb8oX4VgWxUDHUn2oCQakBOgOXio3gcVyUrcz1oA8S6QxOJO5s2R0ArGZRSW' >> ${strCertFile} && \\\n" .
-        "    echo 'BPN5c9rAY5+gE6CJwH5oTU8GgtykQn34F4EpXS6CR+tlFMVNPdYmocV7ybn5zJ3b' >> ${strCertFile} && \\\n" .
-        "    echo '6k1DpUF2prEbycImPwsDmvGjSoaO6UfELZuGQt9dh8B/zgzbdWMM6MSyaPSKV4VN' >> ${strCertFile} && \\\n" .
-        "    echo 'yUeM6OI1KwJrTqGK8mJ+fOxgwY2yjsjPE3ZJQ3m2V38I8BdiudfFrFFOQc2en3Na' >> ${strCertFile} && \\\n" .
-        "    echo 'cI2B7VRiC0ldjQG8y6YfikcCeJCRXa7pKdNqRX8OkcfT83NXUn2HvdjGpQyHI0c3' >> ${strCertFile} && \\\n" .
-        "    echo 'VgV3cm5exULatz6liUjskBbTAzer/39j8xjNkTctNzel7X6eHdFLWgR1qWjx9vAi' >> ${strCertFile} && \\\n" .
-        "    echo 'gYFXErzDO9aQ0MTLHGH81rIzpch8fO5rB5sCM9F2lw352+8CgKsCAwEAAaNTMFEw' >> ${strCertFile} && \\\n" .
-        "    echo 'HQYDVR0OBBYEFGo+OwmNN1QFNDAOYpuySZSYdNZ2MB8GA1UdIwQYMBaAFGo+OwmN' >> ${strCertFile} && \\\n" .
-        "    echo 'N1QFNDAOYpuySZSYdNZ2MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQAD' >> ${strCertFile} && \\\n" .
-        "    echo 'ggIBAL/q0d9FFFWRD6ldCVUcarcZX/mWcchtGGO1xHIesvdAZHd7dZx2ZlJ2OmpN' >> ${strCertFile} && \\\n" .
-        "    echo 'KwC+9+jXv7h6EqeVuxqPYFlXUdHSXNqrZecFmmXwqa8hqn08ZCZqYJ5CVFjhw+jE' >> ${strCertFile} && \\\n" .
-        "    echo 'IMvclt5NpessLVKn6Xs75OogbtN69pJdxYnh28l/yoG1gu+41DtDXZjVeIFXCPo3' >> ${strCertFile} && \\\n" .
-        "    echo 'oLm+ARwG33z1QD66YBnpRmW57M8j+fHiPFtONqCMSk2dt/PEOYDCPhimA5G1lJzw' >> ${strCertFile} && \\\n" .
-        "    echo 'qyrEiMX9+oyYkfpxmQrGjOVswQvvN/XhSgaMrIoa/cZZwUTe+EtY+jQMXWqk7/F2' >> ${strCertFile} && \\\n" .
-        "    echo 'ufalTU9x1uZElh94YOsOREq34Ef4lJC/9K0ayfoQY+2qyBPKwGISUUJUY/dPGVd+' >> ${strCertFile} && \\\n" .
-        "    echo 'cz91fCmy12X3jsw1vmyJ9UU/hC2Nr4LGxDlcRq88/ev7eGAvsOHwgRYJzLfwaJF6' >> ${strCertFile} && \\\n" .
-        "    echo 'XMeKZfxq1uvFlJyAyYszu9BL5n26eDunBsQbH9R2avE7deVOwxWMUkX2nX7QEENp' >> ${strCertFile} && \\\n" .
-        "    echo 'dGL3q/3ar/uaMFrAkk5JGUpfozsiXs4BLYKcXRKGy9oBoRuR3lGk+t163qBHh/Rw' >> ${strCertFile} && \\\n" .
-        "    echo 'M8+tsCo6j4ReSgq2ew+sHfxj4rQ4Bly+965RRPjZPu20QMlbWzD6kEB+F2II537e' >> ${strCertFile} && \\\n" .
-        "    echo 'R1KzQRet3Mqf+IY98aAWRfRW9sefkeYrD9BP9jhbSaoh7E0n' >> ${strCertFile} && \\\n" .
-        "    echo '-----END CERTIFICATE-----' >> ${strCertFile} && \\\n" .
+        fileCopy($oStorage, $strCaFile, $strCertFile) .
         "    chmod 644 ${strCertFile} && \\\n";
 
     # Install CA
@@ -406,6 +396,12 @@ sub containerBuild
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg";
+
+            # This package is required to build valgrind on 32-bit
+            if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
+            {
+                $strScript .= " g++-multilib";
+            }
         }
 
         # Add zst command-line tool and development libs when available
@@ -445,7 +441,15 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        $strScript .= caSetup($strOS);
+        my $strValgrind = 'valgrind-3.17.0';
+
+        $strScript .= sectionHeader() .
+            "# Build valgrind\n" .
+            "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
+            "    cd /root/${strValgrind} && \\\n" .
+            "    ./configure --silent && \\\n" .
+            "    make -s -j8 install && \\\n" .
+            "    rm -rf /root/${strValgrind}";
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
@@ -572,7 +576,10 @@ sub containerBuild
             $strCopy = undef;
             $strScript = '';
 
-            #---------------------------------------------------------------------------------------------------------------------------
+            #-----------------------------------------------------------------------------------------------------------------------
+            $strScript .= caSetup($strOS, $oStorageDocker, "test/certificate/pgbackrest-test-ca.crt");
+
+            #-----------------------------------------------------------------------------------------------------------------------
             $strScript .= sectionHeader() .
                 "# Create banner to make sure pgBackRest ignores it\n" .
                 "    echo '***********************************************' >  /etc/issue.net && \\\n" .
