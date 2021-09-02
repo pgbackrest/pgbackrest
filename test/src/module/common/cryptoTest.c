@@ -81,7 +81,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(
             cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ(TEST_PASS), NULL));
-        TEST_RESULT_Z(memContextName(cipherBlock->memContext), "CipherBlock", "mem context name is valid");
         TEST_RESULT_INT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
         TEST_RESULT_UINT(cipherBlock->passSize, strlen(TEST_PASS), "passphrase size is valid");
         TEST_RESULT_BOOL(memcmp(cipherBlock->pass, TEST_PASS, strlen(TEST_PASS)) == 0, true, "passphrase is valid");

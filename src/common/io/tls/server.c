@@ -17,7 +17,6 @@ TLS Server
 #include "common/io/tls/common.h"
 #include "common/io/tls/server.h"
 #include "common/io/tls/session.h"
-#include "common/memContext.h"
 #include "common/stat.h"
 #include "common/type/object.h"
 
@@ -31,7 +30,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct TlsServer
 {
-    MemContext *memContext;                                         // Mem context
     String *host;                                                   // Host
     SSL_CTX *context;                                               // TLS context
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
@@ -281,20 +279,19 @@ tlsServerNew(
 
     IoServer *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("TlsServer")
+    OBJ_NEW_BEGIN(TlsServer)
     {
-        TlsServer *const driver = memNew(sizeof(TlsServer));
+        TlsServer *const driver =  OBJ_NEW_ALLOC();
 
         *driver = (TlsServer)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .host = strDup(host),
             .context = tlsContext(),
             .timeout = timeout,
         };
 
         // Set callback to free context
-        memContextCallbackSet(driver->memContext, tlsServerFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), tlsServerFreeResource, driver);
 
         // Set options
         SSL_CTX_set_options(driver->context,
@@ -353,7 +350,7 @@ tlsServerNew(
 
         this = ioServerNew(driver, &tlsServerInterface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_SERVER, this);
 }

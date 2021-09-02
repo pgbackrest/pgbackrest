@@ -13,7 +13,6 @@ Cryptographic Hash
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/crypto/common.h"
 
@@ -45,7 +44,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct CryptoHash
 {
-    MemContext *memContext;                                         // Context to store data
     const EVP_MD *hashType;                                         // Hash type (sha1, md5, etc.)
     EVP_MD_CTX *hashContext;                                        // Message hash context
     MD5_CTX *md5Context;                                            // MD5 context (used to bypass FIPS restrictions)
@@ -122,7 +120,7 @@ cryptoHash(CryptoHash *this)
 
     if (this->hash == NULL)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(objMemContext(this))
         {
             // Standard OpenSSL implementation
             if (this->hashContext != NULL)
@@ -178,14 +176,10 @@ cryptoHashNew(const String *type)
     // Allocate memory to hold process state
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("CryptoHash")
+    OBJ_NEW_BEGIN(CryptoHash)
     {
-        CryptoHash *driver = memNew(sizeof(CryptoHash));
-
-        *driver = (CryptoHash)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-        };
+        CryptoHash *driver = OBJ_NEW_ALLOC();
+        *driver = (CryptoHash){0};
 
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid
         // cases for using MD5 which do not involve, for example, password hashes. Since popular object stores, e.g. S3, require
@@ -207,7 +201,7 @@ cryptoHashNew(const String *type)
             cryptoError((driver->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
 
             // Set free callback to ensure hash context is freed
-            memContextCallbackSet(driver->memContext, cryptoHashFreeResource, driver);
+            memContextCallbackSet(objMemContext(driver), cryptoHashFreeResource, driver);
 
             // Initialize context
             cryptoError(!EVP_DigestInit_ex(driver->hashContext, driver->hashType, NULL), "unable to initialize hash context");
@@ -220,7 +214,7 @@ cryptoHashNew(const String *type)
         // Create filter interface
         this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, paramList, .in = cryptoHashProcess, .result = cryptoHashResult);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

@@ -73,7 +73,6 @@ Test filter that counts total bytes
 ***********************************************************************************************************************************/
 typedef struct IoTestFilterSize
 {
-    MemContext *memContext;
     size_t size;
 } IoTestFilterSize;
 
@@ -109,18 +108,14 @@ ioTestFilterSizeNew(const char *type)
 {
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoTestFilterSize")
+    OBJ_NEW_BEGIN(IoTestFilterSize)
     {
-        IoTestFilterSize *driver = memNew(sizeof(IoTestFilterSize));
-
-        *driver = (IoTestFilterSize)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-        };
+        IoTestFilterSize *driver = OBJ_NEW_ALLOC();
+        *driver = (IoTestFilterSize){0};
 
         this = ioFilterNewP(strNewZ(type), driver, NULL, .in = ioTestFilterSizeProcess, .result = ioTestFilterSizeResult);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     return this;
 }
@@ -130,7 +125,6 @@ Test filter to multiply input to the output.  It can also flush out a variable n
 ***********************************************************************************************************************************/
 typedef struct IoTestFilterMultiply
 {
-    MemContext *memContext;
     unsigned int flushTotal;
     bool writeZero;
     char flushChar;
@@ -214,13 +208,12 @@ ioTestFilterMultiplyNew(const char *type, unsigned int multiplier, unsigned int 
 {
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoTestFilterMultiply")
+    OBJ_NEW_BEGIN(IoTestFilterMultiply)
     {
-        IoTestFilterMultiply *driver = memNew(sizeof(IoTestFilterMultiply));
+        IoTestFilterMultiply *driver = OBJ_NEW_ALLOC();
 
         *driver = (IoTestFilterMultiply)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .bufferFilter = ioBufferNew(),
             .multiplier = multiplier,
             .flushTotal = flushTotal,
@@ -236,7 +229,7 @@ ioTestFilterMultiplyNew(const char *type, unsigned int multiplier, unsigned int 
             strNewZ(type), driver, paramList, .done = ioTestFilterMultiplyDone, .inOut = ioTestFilterMultiplyProcess,
             .inputSame = ioTestFilterMultiplyInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     return this;
 }

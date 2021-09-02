@@ -126,7 +126,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 
                         // If not waiting for the response then move the session to the object context
                         if (!waitForResponse)
-                            this->session = httpSessionMove(session, this->pub.memContext);
+                            this->session = httpSessionMove(session, objMemContext(this));
                     }
 
                     // Wait for response
@@ -189,15 +189,14 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
 
     HttpRequest *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("HttpRequest")
+    OBJ_NEW_BEGIN(HttpRequest)
     {
-        this = memNew(sizeof(HttpRequest));
+        this = OBJ_NEW_ALLOC();
 
         *this = (HttpRequest)
         {
             .pub =
             {
-                .memContext = MEM_CONTEXT_NEW(),
                 .verb = strDup(verb),
                 .path = strDup(path),
                 .query = httpQueryDupP(param.query),
@@ -211,7 +210,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
         httpRequestProcess(this, false, false);
         statInc(HTTP_STAT_REQUEST_STR);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(HTTP_REQUEST, this);
 }

@@ -10,7 +10,6 @@ Remote Storage Read
 #include "common/debug.h"
 #include "common/io/read.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
@@ -23,7 +22,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageReadRemote
 {
-    MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
     StorageRemote *storage;                                         // Storage that created this object
     StorageRead *read;                                              // Storage read interface
@@ -137,7 +135,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     // If binary then read the next block
                     if (pckReadType(read) == pckTypeBin)
                     {
-                        MEM_CONTEXT_BEGIN(this->memContext)
+                        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
                         {
                             this->block = pckReadBinP(read);
                             this->remaining = bufUsed(this->block);
@@ -228,13 +226,12 @@ storageReadRemoteNew(
 
     StorageReadRemote *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageReadRemote")
+    OBJ_NEW_BEGIN(StorageReadRemote)
     {
-        this = memNew(sizeof(StorageReadRemote));
+        this = OBJ_NEW_ALLOC();
 
         *this = (StorageReadRemote)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .client = client,
 
@@ -258,7 +255,7 @@ storageReadRemoteNew(
 
         this->read = storageReadNew(this, &this->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     ASSERT(this != NULL);
     FUNCTION_LOG_RETURN(STORAGE_READ, this->read);

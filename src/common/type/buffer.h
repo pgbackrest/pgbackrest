@@ -32,7 +32,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct BufferPub
 {
-    MemContext *memContext;                                         // Mem context
     size_t sizeAlloc;                                               // Allocated size of the buffer
     size_t size;                                                    // Reported size of the buffer
     bool sizeLimit;                                                 // Is the size limited to make the buffer appear smaller?

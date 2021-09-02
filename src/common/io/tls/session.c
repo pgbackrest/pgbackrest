@@ -14,7 +14,6 @@ TLS Session
 #include "common/io/tls/session.h"
 #include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -22,7 +21,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct TlsSession
 {
-    MemContext *memContext;                                         // Mem context
     IoSession *ioSession;                                           // Io session
     SSL *session;                                                   // TLS session on the file descriptor
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
@@ -42,7 +40,7 @@ tlsSessionToLog(const THIS_VOID)
 
     return strNewFmt(
         "{ioSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}",
-        memContextFreeing(this->memContext) ? NULL_Z : strZ(ioSessionToLog(this->ioSession)), this->timeout,
+        objMemContextFreeing(this) ? NULL_Z : strZ(ioSessionToLog(this->ioSession)), this->timeout,
         cvtBoolToConstZ(this->shutdownOnClose));
 }
 
@@ -93,7 +91,7 @@ tlsSessionClose(THIS_VOID)
         ioSessionClose(this->ioSession);
 
         // Free the TLS session
-        memContextCallbackClear(this->memContext);
+        memContextCallbackClear(objMemContext(this));
         tlsSessionFreeResource(this);
         this->session = NULL;
     }
@@ -363,13 +361,12 @@ tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
 
     IoSession *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("TlsSession")
+    OBJ_NEW_BEGIN(TlsSession)
     {
-        TlsSession *driver = memNew(sizeof(TlsSession));
+        TlsSession *driver = OBJ_NEW_ALLOC();
 
         *driver = (TlsSession)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .session = session,
             .ioSession = ioSessionMove(ioSession, MEM_CONTEXT_NEW()),
             .timeout = timeout,
@@ -377,7 +374,7 @@ tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
         };
 
         // Ensure session is freed
-        memContextCallbackSet(driver->memContext, tlsSessionFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), tlsSessionFreeResource, driver);
 
         // Assign file descriptor to TLS session
         cryptoError(SSL_set_fd(driver->session, ioSessionFd(driver->ioSession)) != 1, "unable to add fd to TLS session");
@@ -404,7 +401,7 @@ tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
         // Create session interface
         this = ioSessionNew(driver, &tlsSessionInterface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_SESSION, this);
 }

@@ -40,7 +40,7 @@ Functions
 __attribute__((always_inline)) static inline IoServer *
 ioServerMove(IoServer *const this, MemContext *const parentNew)
 {
-    return objMove(this, parentNew);
+    return objMoveContext(this, parentNew);
 }
 
 // Open session
@@ -56,7 +56,7 @@ Destructor
 __attribute__((always_inline)) static inline void
 ioServerFree(IoServer *const this)
 {
-    objFree(this);
+    objFreeContext(this);
 }
 
 /***********************************************************************************************************************************

@@ -12,7 +12,6 @@ BZ2 Decompress
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/macro.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -25,7 +24,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct Bz2Decompress
 {
-    MemContext *memContext;                                         // Context to store data
     bz_stream stream;                                               // Decompression stream state
 
     int result;                                                     // Result of last operation
@@ -157,14 +155,13 @@ bz2DecompressNew(void)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Bz2Decompress")
+    OBJ_NEW_BEGIN(Bz2Decompress)
     {
         // Allocate state and set context
-        Bz2Decompress *driver = memNew(sizeof(Bz2Decompress));
+        Bz2Decompress *driver = OBJ_NEW_ALLOC();
 
         *driver = (Bz2Decompress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .stream = {.bzalloc = NULL},
         };
 
@@ -172,14 +169,14 @@ bz2DecompressNew(void)
         bz2Error(driver->result = BZ2_bzDecompressInit(&driver->stream, 0, 0));
 
         // Set free callback to ensure bz2 context is freed
-        memContextCallbackSet(driver->memContext, bz2DecompressFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), bz2DecompressFreeResource, driver);
 
         // Create filter interface
         this = ioFilterNewP(
             BZ2_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
             .inputSame = bz2DecompressInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

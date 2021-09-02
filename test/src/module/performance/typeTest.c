@@ -258,7 +258,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build manifest");
 
-        MemContext *testContext = memContextNew("test");
+        MemContext *testContext = memContextNewP("test");
         memContextKeep();
         Manifest *manifest = NULL;
         TimeMSec timeBegin = timeMSec();
@@ -289,7 +289,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("load manifest");
 
-        testContext = memContextNew("test");
+        testContext = memContextNewP("test");
         memContextKeep();
         timeBegin = timeMSec();
 

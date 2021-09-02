@@ -7,7 +7,6 @@ Postgres Client
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/list.h"
 #include "common/wait.h"
 #include "postgres/client.h"
@@ -17,7 +16,6 @@ Object type
 ***********************************************************************************************************************************/
 struct PgClient
 {
-    MemContext *memContext;
     const String *host;
     unsigned int port;
     const String *database;
@@ -63,13 +61,12 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
 
     PgClient *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("PgClient")
+    OBJ_NEW_BEGIN(PgClient)
     {
-        this = memNew(sizeof(PgClient));
+        this = OBJ_NEW_ALLOC();
 
         *this = (PgClient)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .host = strDup(host),
             .port = port,
             .database = strDup(database),
@@ -77,7 +74,7 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
             .queryTimeout = queryTimeout,
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(PG_CLIENT, this);
 }
@@ -151,7 +148,7 @@ pgClientOpen(PgClient *this)
         this->connection = PQconnectdb(strZ(connInfo));
 
         // Set a callback to shutdown the connection
-        memContextCallbackSet(this->memContext, pgClientFreeResource, this);
+        memContextCallbackSet(objMemContext(this), pgClientFreeResource, this);
 
         // Handle errors
         if (PQstatus(this->connection) != CONNECTION_OK)
@@ -347,7 +344,7 @@ pgClientClose(PgClient *this)
 
     if (this->connection != NULL)
     {
-        memContextCallbackClear(this->memContext);
+        memContextCallbackClear(objMemContext(this));
         PQfinish(this->connection);
         this->connection = NULL;
     }

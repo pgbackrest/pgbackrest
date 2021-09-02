@@ -13,6 +13,7 @@ See the sections on memory context management and memory allocations below for m
 #define COMMON_MEMCONTEXT_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 /***********************************************************************************************************************************
 Memory context object
@@ -20,6 +21,7 @@ Memory context object
 typedef struct MemContext MemContext;
 
 #include "common/error.h"
+#include "common/type/param.h"
 
 /***********************************************************************************************************************************
 Define initial number of memory contexts
@@ -97,13 +99,10 @@ MEM_CONTEXT_PRIOR_END();
 /***********************************************************************************************************************************
 Create a new context and make sure it is freed on error and prior context is restored in all cases
 
-MEM_CONTEXT_NEW_BEGIN(memContextName)
+MEM_CONTEXT_NEW_BEGIN(memContextName, ...)
 {
     <The mem context created is now the current context and can be accessed with the MEM_CONTEXT_NEW() macro>
-
-    ObjectType *object = memNew(sizeof(ObjectType));
-    object->memContext = MEM_CONTEXT_NEW();
-
+    <If extra memory was allocation with the context if can be accessed with the MEM_CONTEXT_NEW_ALLOC() macro>
     <Prior context can be accessed with the memContextPrior() function>
     <On error the newly created context will be freed and the error rethrown>
 }
@@ -116,11 +115,14 @@ Note that memory context names are expected to live for the lifetime of the cont
 #define MEM_CONTEXT_NEW()                                                                                                          \
     MEM_CONTEXT_NEW_memContext
 
-#define MEM_CONTEXT_NEW_BEGIN(memContextName)                                                                                      \
+#define MEM_CONTEXT_NEW_BEGIN(memContextName, ...)                                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
-        MemContext *MEM_CONTEXT_NEW() = memContextNew(memContextName);                                                             \
+        MemContext *MEM_CONTEXT_NEW() = memContextNewP(memContextName, __VA_ARGS__);                                               \
         memContextSwitch(MEM_CONTEXT_NEW());
+
+#define MEM_CONTEXT_NEW_ALLOC()                                                                                                    \
+    memContextAllocExtra(MEM_CONTEXT_NEW())
 
 #define MEM_CONTEXT_NEW_END()                                                                                                      \
         memContextSwitchBack();                                                                                                    \
@@ -148,7 +150,7 @@ MEM_CONTEXT_TEMP_END();
 #define MEM_CONTEXT_TEMP_BEGIN()                                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
-        MemContext *MEM_CONTEXT_TEMP() = memContextNew("temporary");                                                               \
+        MemContext *MEM_CONTEXT_TEMP() = memContextNewP("temporary");                                                              \
         memContextSwitch(MEM_CONTEXT_TEMP());
 
 #define MEM_CONTEXT_TEMP_RESET_BEGIN()                                                                                             \
@@ -164,7 +166,7 @@ MEM_CONTEXT_TEMP_END();
         {                                                                                                                          \
             memContextSwitchBack();                                                                                                \
             memContextDiscard();                                                                                                   \
-            MEM_CONTEXT_TEMP() = memContextNew("temporary");                                                                       \
+            MEM_CONTEXT_TEMP() = memContextNewP("temporary");                                                                      \
             memContextSwitch(MEM_CONTEXT_TEMP());                                                                                  \
             MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                        \
         }                                                                                                                          \
@@ -180,7 +182,7 @@ MEM_CONTEXT_TEMP_END();
 /***********************************************************************************************************************************
 Memory context management functions
 
-memContextSwitch(memContextNew());
+memContextSwitch(memContextNewP());
 
 <Do something with the memory context, e.g. allocation memory with memNew()>
 <Current memory context can be accessed with memContextCurrent()>
@@ -199,22 +201,31 @@ Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerpl
 ***********************************************************************************************************************************/
 // Create a new mem context in the current mem context. The new context must be either kept with memContextKeep() or discarded with
 // memContextDisard() before switching back from the parent context.
-MemContext *memContextNew(const char *name);
+typedef struct MemContextNewParam
+{
+    VAR_PARAM_HEADER;
+    uint16_t allocExtra;                                            // Extra memory to allocate with the context
+} MemContextNewParam;
+
+#define memContextNewP(name, ...)                                                                                                  \
+    memContextNew(name, (MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+MemContext *memContextNew(const char *name, MemContextNewParam param);
 
 // Switch to a context making it the current mem context
 void memContextSwitch(MemContext *this);
 
-// Switch back to the context that was current before the last switch. If the last function called was memContextNew(), then
+// Switch back to the context that was current before the last switch. If the last function called was memContextNewP(), then
 // memContextKeep()/memContextDiscard() must be called before calling memContextSwitchBack(), otherwise an error will occur in
 // debug builds and the behavior is undefined in production builds.
 void memContextSwitchBack(void);
 
-// Keep a context created by memContextNew() so that it will not be automatically freed if an error occurs. If the context was
-// switched after the call to memContextNew(), then it must be switched back before calling memContextKeep() or an error will occur
+// Keep a context created by memContextNewP() so that it will not be automatically freed if an error occurs. If the context was
+// switched after the call to memContextNewP(), then it must be switched back before calling memContextKeep() or an error will occur
 // in debug builds and the behavior is undefined in production builds.
 void memContextKeep(void);
 
-// Discard a context created by memContextNew(). If the context was switched after the call to memContextNew(), then it must be
+// Discard a context created by memContextNewP(). If the context was switched after the call to memContextNewP(), then it must be
 // switched back before calling memContextDiscard() or an error will occur in debug builds and the behavior is undefined in
 // production builds.
 void memContextDiscard(void);
@@ -237,6 +248,13 @@ void memContextFree(MemContext *this);
 /***********************************************************************************************************************************
 Memory context getters
 ***********************************************************************************************************************************/
+// Pointer to the extra memory allocated with the mem context
+void *memContextAllocExtra(MemContext *this);
+
+// Get mem context using pointer to the memory allocated with the mem context
+MemContext *memContextFromAllocExtra(void *allocExtra);
+const MemContext *memContextConstFromAllocExtra(const void *allocExtra);
+
 // Current memory context
 MemContext *memContextCurrent(void);
 

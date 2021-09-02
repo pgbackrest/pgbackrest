@@ -5,7 +5,6 @@ Wait Handler
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -33,16 +32,15 @@ waitNew(TimeMSec waitTime)
     // Allocate wait object
     Wait *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("wait")
+    OBJ_NEW_BEGIN(Wait)
     {
         // Create object
-        this = memNew(sizeof(Wait));
+        this = OBJ_NEW_ALLOC();
 
         *this = (Wait)
         {
             .pub =
             {
-                .memContext = MEM_CONTEXT_NEW(),
                 .remainTime = waitTime,
             },
             .waitTime = waitTime,
@@ -58,7 +56,7 @@ waitNew(TimeMSec waitTime)
         // Get beginning time
         this->beginTime = timeMSec();
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(WAIT, this);
 }

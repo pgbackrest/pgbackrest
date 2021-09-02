@@ -10,7 +10,6 @@ File Descriptor Io Write
 #include "common/io/fdWrite.h"
 #include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -18,7 +17,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoFdWrite
 {
-    MemContext *memContext;                                         // Object memory context
     const String *name;                                             // File descriptor name for error messages
     int fd;                                                         // File descriptor to write to
     TimeMSec timeout;                                               // Timeout for write operation
@@ -114,13 +112,12 @@ ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 
     IoWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoFdWrite")
+    OBJ_NEW_BEGIN(IoFdWrite)
     {
-        IoFdWrite *driver = memNew(sizeof(IoFdWrite));
+        IoFdWrite *driver = OBJ_NEW_ALLOC();
 
         *driver = (IoFdWrite)
         {
-            .memContext = memContextCurrent(),
             .name = strDup(name),
             .fd = fd,
             .timeout = timeout,
@@ -128,7 +125,7 @@ ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 
         this = ioWriteNewP(driver, .fd = ioFdWriteFd, .ready = ioFdWriteReady, .write = ioFdWrite);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_WRITE, this);
 }

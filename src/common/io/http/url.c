@@ -5,7 +5,6 @@ HTTP URL
 
 #include "common/debug.h"
 #include "common/io/http/url.h"
-#include "common/memContext.h"
 #include "common/type/stringList.h"
 #include "common/regExp.h"
 
@@ -63,16 +62,15 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 
     HttpUrl *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("HttpUrl")
+    OBJ_NEW_BEGIN(HttpUrl)
     {
         // Allocate state and set context
-        this = memNew(sizeof(HttpUrl));
+        this = OBJ_NEW_ALLOC();
 
         *this = (HttpUrl)
         {
             .pub =
             {
-                .memContext = MEM_CONTEXT_NEW(),
                 .url = strDup(url),
             },
         };
@@ -191,7 +189,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
         }
         MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }

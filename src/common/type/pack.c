@@ -229,7 +229,6 @@ typedef struct PackTagStack
 
 struct PackRead
 {
-    MemContext *memContext;                                         // Mem context
     IoRead *read;                                                   // Read pack from
     Buffer *buffer;                                                 // Buffer containing read data
     const uint8_t *bufferPtr;                                       // Pointer to buffer
@@ -246,7 +245,6 @@ struct PackRead
 
 struct PackWrite
 {
-    MemContext *memContext;                                         // Mem context
     IoWrite *write;                                                 // Write pack to
     Buffer *buffer;                                                 // Buffer to contain write data
 
@@ -263,19 +261,18 @@ pckReadNewInternal(void)
 
     PackRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("PackRead")
+    OBJ_NEW_BEGIN(PackRead)
     {
-        this = memNew(sizeof(PackRead));
+        this = OBJ_NEW_ALLOC();
 
         *this = (PackRead)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .tagStack = lstNewP(sizeof(PackTagStack)),
         };
 
         this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -291,7 +288,7 @@ pckReadNew(IoRead *read)
 
     PackRead *this = pckReadNewInternal();
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(objMemContext(this))
     {
         this->read = read;
         this->buffer = bufNew(ioBufferSize());
@@ -887,7 +884,7 @@ pckReadPack(PackRead *this, PckReadPackParam param)
     PackRead *const result = pckReadNewBuf(buffer);
 
     if (result != NULL)
-        bufMove(buffer, result->memContext);
+        bufMove(buffer, objMemContext(result));
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -1121,19 +1118,18 @@ pckWriteNewInternal(void)
 
     PackWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("PackWrite")
+    OBJ_NEW_BEGIN(PackWrite)
     {
-        this = memNew(sizeof(PackWrite));
+        this = OBJ_NEW_ALLOC();
 
         *this = (PackWrite)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .tagStack = lstNewP(sizeof(PackTagStack)),
         };
 
         this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1149,7 +1145,7 @@ pckWriteNew(IoWrite *write)
 
     PackWrite *this = pckWriteNewInternal();
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(objMemContext(this))
     {
         this->write = write;
         this->buffer = bufNew(ioBufferSize());

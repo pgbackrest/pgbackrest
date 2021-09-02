@@ -12,7 +12,6 @@ Remote Storage Protocol Handler
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/type/pack.h"
 #include "common/type/json.h"

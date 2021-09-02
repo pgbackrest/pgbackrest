@@ -5,7 +5,6 @@ Protocol Client
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/time.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
@@ -73,15 +72,14 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 
     ProtocolClient *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("ProtocolClient")
+    OBJ_NEW_BEGIN(ProtocolClient)
     {
-        this = memNew(sizeof(ProtocolClient));
+        this = OBJ_NEW_ALLOC();
 
         *this = (ProtocolClient)
         {
             .pub =
             {
-                .memContext = memContextCurrent(),
                 .read = read,
             },
             .write = write,
@@ -129,9 +127,9 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         MEM_CONTEXT_TEMP_END();
 
         // Set a callback to shutdown the protocol
-        memContextCallbackSet(this->pub.memContext, protocolClientFreeResource, this);
+        memContextCallbackSet(objMemContext(this), protocolClientFreeResource, this);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, this);
 }

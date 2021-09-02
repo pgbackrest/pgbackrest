@@ -29,7 +29,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ExecPub
 {
-    MemContext *memContext;                                         // Mem context
     IoRead *ioReadExec;                                             // Wrapper for file descriptor read interface
     IoWrite *ioWriteExec;                                           // Wrapper for file descriptor write interface
 } ExecPub;
@@ -52,7 +51,7 @@ execIoWrite(Exec *const this)
 __attribute__((always_inline)) static inline MemContext *
 execMemContext(Exec *const this)
 {
-    return THIS_PUB(Exec)->memContext;
+    return objMemContext(this);
 }
 
 /***********************************************************************************************************************************

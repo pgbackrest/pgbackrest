@@ -273,20 +273,30 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free with errors output as warnings");
 
-        // Create and free a mem context to give us an error to use
-        MemContext *memContext = memContextNew("test");
-        memContextFree(memContext);
+        // Create bogus client and exec to generate errors
+        ProtocolHelperClient protocolHelperClient = {0};
 
-        // Create bogus client and exec with the freed memcontext to generate errors
-        ProtocolClient client = {.pub = {.memContext = memContext}, .name = STRDEF("test")};
-        Exec exec = {.pub = {.memContext = memContext}, .name = STRDEF("test"), .command = strNewZ("test")};
-        ProtocolHelperClient protocolHelperClient = {.client = &client, .exec = &exec};
+        OBJ_NEW_BEGIN(ProtocolClient)
+        {
+            protocolHelperClient.client = OBJ_NEW_ALLOC();
+            *protocolHelperClient.client = (ProtocolClient){.name = STRDEF("test")};
+            memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
+        }
+        OBJ_NEW_END();
+
+        OBJ_NEW_BEGIN(Exec)
+        {
+            protocolHelperClient.exec = OBJ_NEW_ALLOC();
+            *protocolHelperClient.exec = (Exec){.name = STRDEF("test"), .command = strNewZ("test"), .processId = INT_MAX};
+            memContextCallbackSet(memContextCurrent(), execFreeResource, protocolHelperClient.exec);
+        }
+        OBJ_NEW_END();
 
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
 
         TEST_RESULT_LOG(
-            "P00   WARN: cannot free inactive context\n"
-            "P00   WARN: cannot free inactive context");
+            "P00   WARN: assertion 'write != NULL' failed\n"
+            "P00   WARN: unable to wait on child process: [10] No child processes");
     }
 
     // *****************************************************************************************************************************

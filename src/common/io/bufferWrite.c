@@ -7,7 +7,6 @@ Buffer IO Write
 #include "common/io/bufferWrite.h"
 #include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -15,7 +14,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoBufferWrite
 {
-    MemContext *memContext;                                         // Object memory context
     Buffer *write;                                                  // Buffer to write into
 } IoBufferWrite;
 
@@ -60,19 +58,18 @@ ioBufferWriteNew(Buffer *buffer)
 
     IoWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoBufferWrite")
+    OBJ_NEW_BEGIN(IoBufferWrite)
     {
-        IoBufferWrite *driver = memNew(sizeof(IoBufferWrite));
+        IoBufferWrite *driver = OBJ_NEW_ALLOC();
 
         *driver = (IoBufferWrite)
         {
-            .memContext = memContextCurrent(),
             .write = buffer,
         };
 
         this = ioWriteNewP(driver, .write = ioBufferWrite);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_WRITE, this);
 }

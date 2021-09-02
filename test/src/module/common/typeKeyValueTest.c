@@ -16,7 +16,6 @@ testRun(void)
         KeyValue *store = NULL;
 
         TEST_ASSIGN(store, kvNew(), "new store");
-        TEST_RESULT_PTR_NE(store->pub.memContext, NULL, "mem context set");
         TEST_RESULT_PTR_NE(store->list, NULL, "list set");
         TEST_RESULT_INT(lstSize(store->list), 0, "list empty");
 

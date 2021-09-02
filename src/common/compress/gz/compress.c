@@ -12,7 +12,6 @@ Gz Compress
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/macro.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -25,7 +24,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct GzCompress
 {
-    MemContext *memContext;                                         // Context to store data
     z_stream stream;                                                // Compression stream state
 
     bool inputSame;                                                 // Is the same input required on the next process call?
@@ -178,13 +176,12 @@ gzCompressNew(int level)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("GzCompress")
+    OBJ_NEW_BEGIN(GzCompress)
     {
-        GzCompress *driver = memNew(sizeof(GzCompress));
+        GzCompress *driver = OBJ_NEW_ALLOC();
 
         *driver = (GzCompress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .stream = {.zalloc = NULL},
         };
 
@@ -192,7 +189,7 @@ gzCompressNew(int level)
         gzError(deflateInit2(&driver->stream, level, Z_DEFLATED, WANT_GZ | WINDOW_BITS, MEM_LEVEL, Z_DEFAULT_STRATEGY));
 
         // Set free callback to ensure gz context is freed
-        memContextCallbackSet(driver->memContext, gzCompressFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), gzCompressFreeResource, driver);
 
         // Create param list
         VariantList *paramList = varLstNew();
@@ -203,7 +200,7 @@ gzCompressNew(int level)
             GZ_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = gzCompressDone, .inOut = gzCompressProcess,
             .inputSame = gzCompressInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

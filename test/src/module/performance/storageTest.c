@@ -118,9 +118,9 @@ testIoRateNew(uint64_t bytesPerSec)
 {
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("TestIoRate")
+    OBJ_NEW_BEGIN(TestIoRate)
     {
-        TestIoRate *driver = memNew(sizeof(TestIoRate));
+        TestIoRate *driver = OBJ_NEW_ALLOC();
 
         *driver = (TestIoRate)
         {
@@ -130,7 +130,7 @@ testIoRateNew(uint64_t bytesPerSec)
 
         this = ioFilterNewP(STRDEF("TestIoRate"), driver, NULL, .in = testIoRateProcess);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     return this;
 }

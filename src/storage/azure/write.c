@@ -7,7 +7,6 @@ Azure Storage File Write
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/azure/write.h"
@@ -38,7 +37,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageWriteAzure
 {
-    MemContext *memContext;                                         // Object mem context
     StorageWriteInterface interface;                                // Interface
     StorageAzure *storage;                                          // Storage that created this object
 
@@ -73,7 +71,7 @@ storageWriteAzureOpen(THIS_VOID)
     ASSERT(this->blockBuffer == NULL);
 
     // Allocate the block buffer
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
         this->blockBuffer = bufNew(this->blockSize);
     }
@@ -125,7 +123,7 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         // Create the block id list
         if (this->blockIdList == NULL)
         {
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
             {
                 this->blockIdList = strLstNew();
             }
@@ -143,7 +141,7 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, blockId);
 
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
         {
             this->request = storageAzureRequestAsyncP(
                 this->storage, HTTP_VERB_PUT_STR, .path = this->interface.name, .query = query, .content = this->blockBuffer);
@@ -276,13 +274,12 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId,
 
     StorageWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageWriteAzure")
+    OBJ_NEW_BEGIN(StorageWriteAzure)
     {
-        StorageWriteAzure *driver = memNew(sizeof(StorageWriteAzure));
+        StorageWriteAzure *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageWriteAzure)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
             .fileId = fileId,
             .blockSize = blockSize,
@@ -307,7 +304,7 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId,
 
         this = storageWriteNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
 }

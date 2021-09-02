@@ -9,7 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         sudo vim htop jq rsync sysstat curl \
         libdbd-pg-perl libxml-checker-perl libyaml-perl \
         devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev libxml2-dev liblz4-dev \
-        liblz4-tool libpq-dev valgrind lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev pkg-config libyaml-dev
+        liblz4-tool libpq-dev lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev pkg-config libyaml-dev wget
 
 # Install Docker
 RUN groupadd -g5000 docker
@@ -17,6 +17,14 @@ RUN curl -fsSL https://get.docker.com | sh
 
 # Create docker user
 RUN adduser --ingroup=docker -uid=5000 --disabled-password --gecos \"\" docker
+
+# Build valgrind
+RUN export VALGRIND=valgrind-3.17.0 && \
+    wget -q -O - https://sourceware.org/pub/valgrind/${VALGRIND?}.tar.bz2 | tar jx -C /root && \
+    cd /root/${VALGRIND?} && \
+    ./configure --silent && \
+    make -s -j8 install && \
+    rm -rf /root/${VALGRIND?}
 
 # Configure sudo
 RUN echo '%docker ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers

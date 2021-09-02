@@ -8,7 +8,6 @@ Ini Handler
 #include <string.h>
 
 #include "common/debug.h"
-#include "common/memContext.h"
 #include "common/log.h"
 #include "common/ini.h"
 #include "common/type/json.h"
@@ -19,7 +18,6 @@ Object type
 ***********************************************************************************************************************************/
 struct Ini
 {
-    MemContext *memContext;                                         // Context that contains the ini
     KeyValue *store;                                                // Key value store that contains the ini data
 };
 
@@ -31,17 +29,16 @@ iniNew(void)
 
     Ini *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Ini")
+    OBJ_NEW_BEGIN(Ini)
     {
-        this = memNew(sizeof(Ini));
+        this = OBJ_NEW_ALLOC();
 
         *this = (Ini)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .store = kvNew(),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -228,7 +225,7 @@ iniParse(Ini *this, const String *content)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(objMemContext(this))
     {
         kvFree(this->store);
         this->store = kvNew();

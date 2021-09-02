@@ -29,7 +29,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct IoFilterGroupPub
 {
-    MemContext *memContext;                                         // Mem context
     List *filterList;                                               // List of filters to apply
     bool inputSame;                                                 // Same input required again?
     bool done;                                                      // Is processing done?

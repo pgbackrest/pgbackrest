@@ -69,7 +69,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ListPub
 {
-    MemContext *memContext;                                         // Mem context
     unsigned int listSize;                                          // List size
 } ListPub;
 
@@ -78,9 +77,9 @@ List *lstComparatorSet(List *this, ListComparator *comparator);
 
 // Memory context for this list
 __attribute__((always_inline)) static inline MemContext *
-lstMemContext(const List *const this)
+lstMemContext(List *const this)
 {
-    return THIS_PUB(List)->memContext;
+    return objMemContext(this);
 }
 
 // List size

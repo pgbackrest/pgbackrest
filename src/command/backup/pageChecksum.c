@@ -8,7 +8,6 @@ Page Checksum Filter
 #include "command/backup/pageChecksum.h"
 #include "common/log.h"
 #include "common/macro.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "postgres/interface.h"
 #include "postgres/interface/static.vendor.h"
@@ -229,9 +228,9 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t 
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("PageChecksum")
+    OBJ_NEW_BEGIN(PageChecksum)
     {
-        PageChecksum *driver = memNew(sizeof(PageChecksum));
+        PageChecksum *driver = OBJ_NEW_ALLOC();
 
         *driver = (PageChecksum)
         {
@@ -251,7 +250,7 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t 
         this = ioFilterNewP(
             PAGE_CHECKSUM_FILTER_TYPE_STR, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

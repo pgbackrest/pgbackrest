@@ -11,7 +11,6 @@ IO Filter Group
 #include "common/io/filter/group.h"
 #include "common/io/io.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/list.h"
 
 /***********************************************************************************************************************************
@@ -55,21 +54,20 @@ ioFilterGroupNew(void)
 
     IoFilterGroup *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoFilterGroup")
+    OBJ_NEW_BEGIN(IoFilterGroup)
     {
-        this = memNew(sizeof(IoFilterGroup));
+        this = OBJ_NEW_ALLOC();
 
         *this = (IoFilterGroup)
         {
             .pub =
             {
-                .memContext = memContextCurrent(),
                 .done = false,
                 .filterList = lstNewP(sizeof(IoFilterData)),
             },
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER_GROUP, this);
 }
@@ -88,7 +86,7 @@ ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter)
     ASSERT(filter != NULL);
 
     // Move the filter to this object's mem context
-    ioFilterMove(filter, this->pub.memContext);
+    ioFilterMove(filter, objMemContext(this));
 
     // Add the filter
     IoFilterData filterData = {.filter = filter};
@@ -111,7 +109,7 @@ ioFilterGroupInsert(IoFilterGroup *this, unsigned int listIdx, IoFilter *filter)
     ASSERT(filter != NULL);
 
     // Move the filter to this object's mem context
-    ioFilterMove(filter, this->pub.memContext);
+    ioFilterMove(filter, objMemContext(this));
 
     // Add the filter
     IoFilterData filterData = {.filter = filter};
@@ -167,7 +165,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_BEGIN(this->pub.memContext)
+    MEM_CONTEXT_BEGIN(objMemContext(this))
     {
         // If the last filter is not an output filter then add a filter to buffer/copy data.  Input filters won't copy to an output
         // buffer so we need some way to get the data to the output buffer.
@@ -362,7 +360,7 @@ ioFilterGroupClose(IoFilterGroup *this)
 
         if (this->filterResult == NULL)
         {
-            MEM_CONTEXT_BEGIN(this->pub.memContext)
+            MEM_CONTEXT_BEGIN(objMemContext(this))
             {
                 this->filterResult = kvNew();
             }
@@ -461,7 +459,7 @@ ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult)
 
     if (filterResult != NULL)
     {
-        MEM_CONTEXT_BEGIN(this->pub.memContext)
+        MEM_CONTEXT_BEGIN(objMemContext(this))
         {
             this->filterResult = kvDup(varKv(filterResult));
         }

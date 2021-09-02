@@ -20,7 +20,7 @@ Functions
 __attribute__((always_inline)) static inline StorageRead *
 storageReadMove(StorageRead *const this, MemContext *const parentNew)
 {
-    return objMove(this, parentNew);
+    return objMoveContext(this, parentNew);
 }
 
 /***********************************************************************************************************************************
@@ -74,7 +74,7 @@ Destructor
 __attribute__((always_inline)) static inline void
 storageReadFree(StorageRead *const this)
 {
-    objFree(this);
+    objFreeContext(this);
 }
 
 /***********************************************************************************************************************************

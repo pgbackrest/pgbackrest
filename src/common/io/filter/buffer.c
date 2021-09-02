@@ -9,7 +9,6 @@ IO Buffer Filter
 #include "common/io/filter/buffer.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -23,8 +22,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoBuffer
 {
-    MemContext *memContext;                                         // Mem context of filter
-
     size_t inputPos;                                                // Position in input buffer
     bool inputSame;                                                 // Is the same input required again?
 } IoBuffer;
@@ -114,18 +111,14 @@ ioBufferNew(void)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoBuffer")
+    OBJ_NEW_BEGIN(IoBuffer)
     {
-        IoBuffer *driver = memNew(sizeof(IoBuffer));
-
-        *driver = (IoBuffer)
-        {
-            .memContext = memContextCurrent(),
-        };
+        IoBuffer *driver = OBJ_NEW_ALLOC();
+        *driver = (IoBuffer){0};
 
         this = ioFilterNewP(BUFFER_FILTER_TYPE_STR, driver, NULL, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

@@ -6,7 +6,6 @@ S3 Storage Read
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 #include "storage/s3/read.h"
 #include "storage/read.intern.h"
@@ -19,7 +18,6 @@ Object type
 
 typedef struct StorageReadS3
 {
-    MemContext *memContext;                                         // Object mem context
     StorageReadInterface interface;                                 // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
@@ -52,7 +50,7 @@ storageReadS3Open(THIS_VOID)
     bool result = false;
 
     // Request the file
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
         this->httpResponse = storageS3RequestP(
             this->storage, HTTP_VERB_GET_STR, this->interface.name, .allowMissing = true, .contentIo = true);
@@ -124,13 +122,12 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
 
     StorageRead *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("StorageReadS3")
+    OBJ_NEW_BEGIN(StorageReadS3)
     {
-        StorageReadS3 *driver = memNew(sizeof(StorageReadS3));
+        StorageReadS3 *driver = OBJ_NEW_ALLOC();
 
         *driver = (StorageReadS3)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
 
             .interface = (StorageReadInterface)
@@ -150,7 +147,7 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
 
         this = storageReadNew(driver, &driver->interface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }

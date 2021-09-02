@@ -202,15 +202,14 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
     HttpResponse *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("HttpResponse")
+    OBJ_NEW_BEGIN(HttpResponse)
     {
-        this = memNew(sizeof(HttpResponse));
+        this = OBJ_NEW_ALLOC();
 
         *this = (HttpResponse)
         {
             .pub =
             {
-                .memContext = MEM_CONTEXT_NEW(),
                 .header = httpHeaderNew(NULL),
             },
             .session = httpSessionMove(session, memContextCurrent()),
@@ -251,7 +250,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             this->pub.code = cvtZToUInt(strZ(strSubN(status, 0, (size_t)spacePos)));
 
             // Read reason phrase. A missing reason phrase will be represented as an empty string.
-            MEM_CONTEXT_BEGIN(this->pub.memContext)
+            MEM_CONTEXT_BEGIN(objMemContext(this))
             {
                 this->pub.reason = strSub(status, (size_t)spacePos + 1);
             }
@@ -321,7 +320,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
             // Create an io object, even if there is no content.  This makes the logic for readers easier -- they can just check eof
             // rather than also checking if the io object exists.
-            MEM_CONTEXT_BEGIN(this->pub.memContext)
+            MEM_CONTEXT_BEGIN(objMemContext(this))
             {
                 this->pub.contentRead = ioReadNewP(this, .eof = httpResponseEof, .read = httpResponseRead);
                 ioReadOpen(httpResponseIoRead(this));
@@ -336,7 +335,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             // Else cache content when requested or on error
             else if (contentCache || !httpResponseCodeOk(this))
             {
-                MEM_CONTEXT_BEGIN(this->pub.memContext)
+                MEM_CONTEXT_BEGIN(objMemContext(this))
                 {
                     httpResponseContent(this);
                 }
@@ -345,7 +344,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
         }
         MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, this);
 }

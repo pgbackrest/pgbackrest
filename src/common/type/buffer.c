@@ -41,16 +41,15 @@ bufNew(size_t size)
 
     Buffer *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Buffer")
+    OBJ_NEW_BEGIN(Buffer)
     {
         // Create object
-        this = memNew(sizeof(Buffer));
+        this = OBJ_NEW_ALLOC();
 
         *this = (Buffer)
         {
             .pub =
             {
-                .memContext = MEM_CONTEXT_NEW(),
                 .sizeAlloc = size,
                 .size = size,
             },
@@ -60,7 +59,7 @@ bufNew(size_t size)
         if (size > 0)
             this->pub.buffer = memNew(this->pub.sizeAlloc);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -245,7 +244,7 @@ bufResize(Buffer *this, size_t size)
             // When setting size down to 0 the buffer should always be allocated
             ASSERT(bufPtrConst(this) != NULL);
 
-            MEM_CONTEXT_BEGIN(this->pub.memContext)
+            MEM_CONTEXT_BEGIN(objMemContext(this))
             {
                 memFree(bufPtr(this));
             }
@@ -257,7 +256,7 @@ bufResize(Buffer *this, size_t size)
         // Else allocate or resize
         else
         {
-            MEM_CONTEXT_BEGIN(this->pub.memContext)
+            MEM_CONTEXT_BEGIN(objMemContext(this))
             {
                 if (bufPtrConst(this) == NULL)
                     this->pub.buffer = memNew(size);

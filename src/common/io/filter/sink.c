@@ -7,7 +7,6 @@ IO Sink Filter
 #include "common/io/filter/filter.h"
 #include "common/io/filter/sink.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -20,7 +19,7 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoSink
 {
-    MemContext *memContext;                                         // Mem context of filter
+    bool dummy;                                                     // Struct requires one member
 } IoSink;
 
 /***********************************************************************************************************************************
@@ -60,18 +59,12 @@ ioSinkNew(void)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoSink")
+    OBJ_NEW_BEGIN(IoSink)
     {
-        IoSink *driver = memNew(sizeof(IoSink));
-
-        *driver = (IoSink)
-        {
-            .memContext = memContextCurrent(),
-        };
-
+        IoSink *driver = OBJ_NEW_ALLOC();
         this = ioFilterNewP(SINK_FILTER_TYPE_STR, driver, NULL, .inOut = ioSinkProcess);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

@@ -22,7 +22,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct WaitPub
 {
-    MemContext *memContext;                                         // Mem context
     TimeMSec remainTime;                                            // Wait time remaining (in usec)
 } WaitPub;
 

@@ -13,7 +13,6 @@ PostgreSQL Info Handler
 #include "common/debug.h"
 #include "common/ini.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
@@ -57,7 +56,7 @@ infoPgNewInternal(InfoPgType type)
         FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
-    InfoPg *this = memNew(sizeof(InfoPg));
+    InfoPg *this = OBJ_NEW_ALLOC();
 
     *this = (InfoPg)
     {
@@ -83,12 +82,12 @@ infoPgNew(InfoPgType type, const String *cipherPassSub)
 
     InfoPg *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("InfoPg")
+    OBJ_NEW_BEGIN(InfoPg)
     {
         this = infoPgNewInternal(type);
         this->pub.info = infoNew(cipherPassSub);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_PG, this);
 }
@@ -169,7 +168,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
 
     InfoPg *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("InfoPg")
+    OBJ_NEW_BEGIN(InfoPg)
     {
         this = infoPgNewInternal(type);
 
@@ -202,7 +201,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
         // If the current id did not match the history list then the file is corrupt
         CHECK(this->historyCurrent != UINT_MAX);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_PG, this);
 }

@@ -113,7 +113,7 @@ void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
 __attribute__((always_inline)) static inline IoFilter *
 ioFilterMove(IoFilter *this, MemContext *parentNew)
 {
-    return objMove(this, parentNew);
+    return objMoveContext(this, parentNew);
 }
 
 /***********************************************************************************************************************************

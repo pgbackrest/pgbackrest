@@ -7,7 +7,6 @@ Regular Expression Handler
 #include <sys/types.h>
 
 #include "common/debug.h"
-#include "common/memContext.h"
 #include "common/regExp.h"
 
 /***********************************************************************************************************************************
@@ -15,7 +14,6 @@ Contains information about the regular expression handler
 ***********************************************************************************************************************************/
 struct RegExp
 {
-    MemContext *memContext;
     regex_t regExp;
     const char *matchPtr;
     size_t matchSize;
@@ -76,14 +74,10 @@ regExpNew(const String *expression)
 
     RegExp *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("RegExp")
+    OBJ_NEW_BEGIN(RegExp)
     {
-        this = memNew(sizeof(RegExp));
-
-        *this = (RegExp)
-        {
-            .memContext = MEM_CONTEXT_NEW(),
-        };
+        this = OBJ_NEW_ALLOC();
+        *this = (RegExp){{0}};                                      // Extra braces are required for older gcc versions
 
         // Compile the regexp and process errors
         int result = 0;
@@ -92,9 +86,9 @@ regExpNew(const String *expression)
             regExpError(result);
 
         // Set free callback to ensure cipher context is freed
-        memContextCallbackSet(this->memContext, regExpFreeResource, this);
+        memContextCallbackSet(objMemContext(this), regExpFreeResource, this);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }

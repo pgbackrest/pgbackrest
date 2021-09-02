@@ -25,7 +25,6 @@ Object type
 struct HttpClient
 {
     HttpClientPub pub;                                              // Publicly accessible variables
-    MemContext *memContext;                                         // Mem context
     IoClient *ioClient;                                             // Io client (e.g. TLS or socket client)
 
     List *sessionReuseList;                                         // List of HTTP sessions that can be reused
@@ -44,9 +43,9 @@ httpClientNew(IoClient *ioClient, TimeMSec timeout)
 
     HttpClient *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("HttpClient")
+    OBJ_NEW_BEGIN(HttpClient)
     {
-        this = memNew(sizeof(HttpClient));
+        this = OBJ_NEW_ALLOC();
 
         *this = (HttpClient)
         {
@@ -54,14 +53,13 @@ httpClientNew(IoClient *ioClient, TimeMSec timeout)
             {
                 .timeout = timeout,
             },
-            .memContext = MEM_CONTEXT_NEW(),
             .ioClient = ioClient,
             .sessionReuseList = lstNewP(sizeof(HttpSession *)),
         };
 
         statInc(HTTP_STAT_CLIENT_STR);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(HTTP_CLIENT, this);
 }

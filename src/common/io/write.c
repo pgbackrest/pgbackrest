@@ -9,7 +9,6 @@ IO Write Interface
 #include "common/io/io.h"
 #include "common/io/write.h"
 #include "common/log.h"
-#include "common/memContext.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -42,9 +41,9 @@ ioWriteNew(void *driver, IoWriteInterface interface)
 
     IoWrite *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoWrite")
+    OBJ_NEW_BEGIN(IoWrite)
     {
-        this = memNew(sizeof(IoWrite));
+        this = OBJ_NEW_ALLOC();
 
         *this = (IoWrite)
         {
@@ -58,7 +57,7 @@ ioWriteNew(void *driver, IoWriteInterface interface)
             .output = bufNew(ioBufferSize()),
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_WRITE, this);
 }

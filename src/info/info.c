@@ -13,7 +13,6 @@ Info Handler
 #include "common/io/filter/filter.h"
 #include "common/ini.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "info/info.h"
@@ -115,7 +114,7 @@ infoNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    Info *this = memNew(sizeof(Info));
+    Info *this = OBJ_NEW_ALLOC();
 
     *this = (Info)
     {
@@ -135,7 +134,7 @@ infoNew(const String *cipherPass)
 
     Info *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Info")
+    OBJ_NEW_BEGIN(Info)
     {
         this = infoNewInternal();
 
@@ -143,7 +142,7 @@ infoNew(const String *cipherPass)
         infoCipherPassSet(this, cipherPass);
         this->pub.backrestVersion = STRDEF(PROJECT_VERSION);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO, this);
 }
@@ -270,7 +269,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
 
     Info *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Info")
+    OBJ_NEW_BEGIN(Info)
     {
         this = infoNewInternal();
 
@@ -314,7 +313,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
         }
         MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO, this);
 }

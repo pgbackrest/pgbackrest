@@ -5,7 +5,6 @@ Protocol Parallel Job
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "protocol/command.h"
 #include "protocol/parallelJob.h"
 
@@ -28,23 +27,22 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 
     ProtocolParallelJob *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("ProtocolParallelJob")
+    OBJ_NEW_BEGIN(ProtocolParallelJob)
     {
-        this = memNew(sizeof(ProtocolParallelJob));
+        this = OBJ_NEW_ALLOC();
 
         *this = (ProtocolParallelJob)
         {
             .pub =
             {
-                .memContext = memContextCurrent(),
                 .state = protocolParallelJobStatePending,
                 .key = varDup(key),
             },
         };
 
-        this->pub.command = protocolCommandMove(command, this->pub.memContext);
+        this->pub.command = protocolCommandMove(command, objMemContext(this));
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(PROTOCOL_PARALLEL_JOB, this);
 }
@@ -63,7 +61,7 @@ protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *m
     ASSERT(code != 0);
     ASSERT(message != NULL);
 
-    MEM_CONTEXT_BEGIN(this->pub.memContext)
+    MEM_CONTEXT_BEGIN(objMemContext(this))
     {
         this->pub.code = code;
         this->pub.message = strDup(message);
@@ -102,7 +100,7 @@ protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const re
     ASSERT(this != NULL);
     ASSERT(protocolParallelJobErrorCode(this) == 0);
 
-    this->pub.result = pckReadMove(result, this->pub.memContext);
+    this->pub.result = pckReadMove(result, objMemContext(this));
 
     FUNCTION_LOG_RETURN_VOID();
 }

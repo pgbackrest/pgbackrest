@@ -9,7 +9,6 @@ Protocol Parallel Executor
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/macro.h"
-#include "common/memContext.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
 #include "protocol/command.h"
@@ -21,7 +20,6 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolParallel
 {
-    MemContext *memContext;
     TimeMSec timeout;                                               // Max time to wait for jobs before returning
     ParallelJobCallback *callbackFunction;                          // Function to get new jobs
     void *callbackData;                                             // Data to pass to callback function
@@ -49,13 +47,12 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
 
     ProtocolParallel *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("ProtocolParallel")
+    OBJ_NEW_BEGIN(ProtocolParallel)
     {
-        this = memNew(sizeof(ProtocolParallel));
+        this = OBJ_NEW_ALLOC();
 
         *this = (ProtocolParallel)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .timeout = timeout,
             .callbackFunction = callbackFunction,
             .callbackData = callbackData,
@@ -64,7 +61,7 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
             .state = protocolParallelJobStatePending,
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(PROTOCOL_PARALLEL, this);
 }
@@ -108,7 +105,7 @@ protocolParallelProcess(ProtocolParallel *this)
         // If called for the first time, initialize processing
         if (this->state == protocolParallelJobStatePending)
         {
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(objMemContext(this))
             {
                 this->clientJobList = memNewPtrArray(lstSize(this->clientList));
             }

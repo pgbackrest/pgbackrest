@@ -14,7 +14,6 @@ Archive Info Handler
 #include "common/ini.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
-#include "common/memContext.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -43,7 +42,7 @@ infoArchiveNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
-    InfoArchive *this = memNew(sizeof(InfoArchive));
+    InfoArchive *this = OBJ_NEW_ALLOC();
 
     *this = (InfoArchive)
     {
@@ -70,7 +69,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
 
     InfoArchive *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("InfoArchive")
+    OBJ_NEW_BEGIN(InfoArchive)
     {
         this = infoArchiveNewInternal();
 
@@ -78,7 +77,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
         this->pub.infoPg = infoPgNew(infoPgArchive, cipherPassSub);
         infoArchivePgSet(this, pgVersion, pgSystemId);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
@@ -95,12 +94,12 @@ infoArchiveNewLoad(IoRead *read)
 
     InfoArchive *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("InfoArchive")
+    OBJ_NEW_BEGIN(InfoArchive)
     {
         this = infoArchiveNewInternal();
         this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }

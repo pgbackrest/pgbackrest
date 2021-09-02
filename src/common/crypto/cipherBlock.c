@@ -13,7 +13,6 @@ Block Cipher
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -37,7 +36,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct CipherBlock
 {
-    MemContext *memContext;                                         // Context to store data
     CipherMode mode;                                                // Mode encrypt/decrypt
     bool saltDone;                                                  // Has the salt been read/generated?
     bool processDone;                                               // Has any data been processed?
@@ -194,7 +192,7 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
             cryptoError(!(this->cipherContext = EVP_CIPHER_CTX_new()), "unable to create context");
 
             // Set free callback to ensure cipher context is freed
-            memContextCallbackSet(this->memContext, cipherBlockFreeResource, this);
+            memContextCallbackSet(objMemContext(this), cipherBlockFreeResource, this);
 
             // Initialize cipher
             cryptoError(
@@ -306,7 +304,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
         if (destinationSize > bufRemains(destination))
         {
             // Allocate the buffer if needed
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(objMemContext(this))
             {
                 if (this->buffer == NULL)
                 {
@@ -425,13 +423,12 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
     // Allocate memory to hold process state
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("CipherBlock")
+    OBJ_NEW_BEGIN(CipherBlock)
     {
-        CipherBlock *driver = memNew(sizeof(CipherBlock));
+        CipherBlock *driver = OBJ_NEW_ALLOC();
 
         *driver = (CipherBlock)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .mode = mode,
             .cipher = cipher,
             .digest = digest,
@@ -456,7 +453,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
             CIPHER_BLOCK_FILTER_TYPE_STR, driver, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
             .inputSame = cipherBlockInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

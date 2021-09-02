@@ -12,7 +12,6 @@ BZ2 Compress
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/macro.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -25,7 +24,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct Bz2Compress
 {
-    MemContext *memContext;                                         // Context to store data
     bz_stream stream;                                               // Compression stream
 
     bool inputSame;                                                 // Is the same input required on the next process call?
@@ -173,13 +171,12 @@ bz2CompressNew(int level)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("Bz2Compress")
+    OBJ_NEW_BEGIN(Bz2Compress)
     {
-        Bz2Compress *driver = memNew(sizeof(Bz2Compress));
+        Bz2Compress *driver = OBJ_NEW_ALLOC();
 
         *driver = (Bz2Compress)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .stream = {.bzalloc = NULL},
         };
 
@@ -187,7 +184,7 @@ bz2CompressNew(int level)
         bz2Error(BZ2_bzCompressInit(&driver->stream, level, 0, 0));
 
         // Set callback to ensure bz2 stream is freed
-        memContextCallbackSet(driver->memContext, bz2CompressFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), bz2CompressFreeResource, driver);
 
         // Create param list
         VariantList *paramList = varLstNew();
@@ -198,7 +195,7 @@ bz2CompressNew(int level)
             BZ2_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = bz2CompressDone, .inOut = bz2CompressProcess,
             .inputSame = bz2CompressInputSame);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

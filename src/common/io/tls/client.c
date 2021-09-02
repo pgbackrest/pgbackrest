@@ -13,7 +13,6 @@ TLS Client
 #include "common/io/tls/client.h"
 #include "common/io/tls/common.h"
 #include "common/io/tls/session.h"
-#include "common/memContext.h"
 #include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -30,7 +29,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct TlsClient
 {
-    MemContext *memContext;                                         // Mem context
     const String *host;                                             // Host to use for peer verification
     TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
     bool verifyPeer;                                                // Should the peer (server) certificate be verified?
@@ -49,7 +47,7 @@ tlsClientToLog(const THIS_VOID)
 
     return strNewFmt(
         "{ioClient: %s, timeout: %" PRIu64", verifyPeer: %s}",
-        memContextFreeing(this->memContext) ? NULL_Z : strZ(ioClientToLog(this->ioClient)), this->timeout,
+        objMemContextFreeing(this) ? NULL_Z : strZ(ioClientToLog(this->ioClient)), this->timeout,
         cvtBoolToConstZ(this->verifyPeer));
 }
 
@@ -428,13 +426,12 @@ tlsClientNew(
 
     IoClient *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("TlsClient")
+    OBJ_NEW_BEGIN(TlsClient)
     {
-        TlsClient *driver = memNew(sizeof(TlsClient));
+        TlsClient *driver = OBJ_NEW_ALLOC();
 
         *driver = (TlsClient)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .ioClient = ioClientMove(ioClient, MEM_CONTEXT_NEW()),
             .host = strDup(host),
             .timeout = timeout,
@@ -443,7 +440,7 @@ tlsClientNew(
         };
 
         // Set callback to free context
-        memContextCallbackSet(driver->memContext, tlsClientFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), tlsClientFreeResource, driver);
 
         // Enable safe compatibility options
         SSL_CTX_set_options(driver->context, (long)SSL_OP_ALL);
@@ -478,7 +475,7 @@ tlsClientNew(
         // Create client interface
         this = ioClientNew(driver, &tlsClientInterface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_CLIENT, this);
 }

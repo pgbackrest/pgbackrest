@@ -36,23 +36,19 @@ lstNew(size_t itemSize, ListParam param)
 
     List *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("List")
+    OBJ_NEW_BEGIN(List)
     {
         // Create object
-        this = memNew(sizeof(List));
+        this = OBJ_NEW_ALLOC();
 
         *this = (List)
         {
-            .pub =
-            {
-                .memContext = MEM_CONTEXT_NEW(),
-            },
             .itemSize = itemSize,
             .sortOrder = param.sortOrder,
             .comparator = param.comparator,
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }

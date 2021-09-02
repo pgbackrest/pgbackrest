@@ -9,7 +9,6 @@ IO Size Filter
 #include "common/io/filter/filter.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -22,8 +21,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoSize
 {
-    MemContext *memContext;                                         // Mem context of filter
-
     uint64_t size;                                                  // Total size of al input
 } IoSize;
 
@@ -87,18 +84,14 @@ ioSizeNew(void)
 
     IoFilter *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("IoSize")
+    OBJ_NEW_BEGIN(IoSize)
     {
-        IoSize *driver = memNew(sizeof(IoSize));
-
-        *driver = (IoSize)
-        {
-            .memContext = memContextCurrent(),
-        };
+        IoSize *driver = OBJ_NEW_ALLOC();
+        *driver = (IoSize){0};
 
         this = ioFilterNewP(SIZE_FILTER_TYPE_STR, driver, NULL, .in = ioSizeProcess, .result = ioSizeResult);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }

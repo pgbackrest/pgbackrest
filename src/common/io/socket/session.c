@@ -11,7 +11,6 @@ Socket Session
 #include "common/io/fdWrite.h"
 #include "common/io/socket/client.h"
 #include "common/io/session.h"
-#include "common/memContext.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
@@ -19,7 +18,6 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct SocketSession
 {
-    MemContext *memContext;                                         // Mem context
     IoSessionRole role;                                             // Role (server or client)
     int fd;                                                         // File descriptor
     String *host;                                                   // Hostname or IP address
@@ -81,7 +79,7 @@ sckSessionClose(THIS_VOID)
     if (this->fd != -1)
     {
         // Clear the callback to close the socket
-        memContextCallbackClear(this->memContext);
+        memContextCallbackClear(objMemContext(this));
 
         // Close the socket
         close(this->fd);
@@ -179,15 +177,14 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
 
     IoSession *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("SocketSession")
+    OBJ_NEW_BEGIN(SocketSession)
     {
-        SocketSession *driver = memNew(sizeof(SocketSession));
+        SocketSession *driver = OBJ_NEW_ALLOC();
 
         String *name = strNewFmt("%s:%u", strZ(host), port);
 
         *driver = (SocketSession)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .role = role,
             .fd = fd,
             .host = strDup(host),
@@ -200,11 +197,11 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
         strFree(name);
 
         // Ensure file descriptor is closed
-        memContextCallbackSet(driver->memContext, sckSessionFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), sckSessionFreeResource, driver);
 
         this = ioSessionNew(driver, &sckSessionInterface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_SESSION, this);
 }

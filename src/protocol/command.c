@@ -5,7 +5,6 @@ Protocol Command
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/memContext.h"
 #include "common/type/keyValue.h"
 #include "protocol/command.h"
 #include "protocol/client.h"
@@ -15,7 +14,6 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolCommand
 {
-    MemContext *memContext;
     StringId command;
     PackWrite *pack;
 };
@@ -32,17 +30,16 @@ protocolCommandNew(const StringId command)
 
     ProtocolCommand *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("ProtocolCommand")
+    OBJ_NEW_BEGIN(ProtocolCommand)
     {
-        this = memNew(sizeof(ProtocolCommand));
+        this = OBJ_NEW_ALLOC();
 
         *this = (ProtocolCommand)
         {
-            .memContext = memContextCurrent(),
             .command = command,
         };
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -94,7 +91,7 @@ protocolCommandParam(ProtocolCommand *this)
 
     if (this->pack == NULL)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(objMemContext(this))
         {
             this->pack = protocolPackNew();
         }
