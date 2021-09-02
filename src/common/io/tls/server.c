@@ -93,40 +93,40 @@ https://en.wikipedia.org/wiki/Logjam_(computer_security).
     "5RXSJhiY+gUQFXKOWoqsqmj//////////wIBAg==\n"                                                                                   \
     "-----END DH PARAMETERS-----"
 
-static void
-tlsServerDh(SSL_CTX *const context)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, context);
-    FUNCTION_TEST_END();
+// static void
+// tlsServerDh(SSL_CTX *const context)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM_P(VOID, context);
+//     FUNCTION_TEST_END();
 
-    SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
+//     SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
 
-	BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
-    cryptoError(bio == NULL, "unable create buffer for DH parameters");
+// 	BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
+//     cryptoError(bio == NULL, "unable create buffer for DH parameters");
 
-    TRY_BEGIN()
-    {
-    	DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+//     TRY_BEGIN()
+//     {
+//     	DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
 
-        TRY_BEGIN()
-        {
-            cryptoError(SSL_CTX_set_tmp_dh(context, dh) != 1, "unable to set temp dh parameters");
-        }
-        FINALLY()
-        {
-            DH_free(dh);
-        }
-        TRY_END();
-    }
-    FINALLY()
-    {
-        BIO_free(bio);
-    }
-    TRY_END();
+//         TRY_BEGIN()
+//         {
+//             cryptoError(SSL_CTX_set_tmp_dh(context, dh) != 1, "unable to set temp dh parameters");
+//         }
+//         FINALLY()
+//         {
+//             DH_free(dh);
+//         }
+//         TRY_END();
+//     }
+//     FINALLY()
+//     {
+//         BIO_free(bio);
+//     }
+//     TRY_END();
 
-    FUNCTION_TEST_RETURN_VOID();
-}
+//     FUNCTION_TEST_RETURN_VOID();
+// }
 
 /***********************************************************************************************************************************
 Set ECDH parameters for generating ephemeral Elliptic Curve DH keys.
@@ -135,33 +135,33 @@ Cribbed from PostgreSQL initialize_ecdh() in src/backend/libpq/be-secure-openssl
 ***********************************************************************************************************************************/
 #define ECHD_CURVE                                                  "prime256v1"
 
-static void
-tlsServerEcdh(SSL_CTX *const context)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, context);
-    FUNCTION_TEST_END();
+// static void
+// tlsServerEcdh(SSL_CTX *const context)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM_P(VOID, context);
+//     FUNCTION_TEST_END();
 
-    const int nid = OBJ_sn2nid(ECHD_CURVE);
-    cryptoError(nid == NID_undef, "unrecognized ECDH curve " ECHD_CURVE);
+//     const int nid = OBJ_sn2nid(ECHD_CURVE);
+//     cryptoError(nid == NID_undef, "unrecognized ECDH curve " ECHD_CURVE);
 
-    EC_KEY *const ecdh = EC_KEY_new_by_curve_name(nid);
-    cryptoError(ecdh == NULL, "could not create ecdh key");
+//     EC_KEY *const ecdh = EC_KEY_new_by_curve_name(nid);
+//     cryptoError(ecdh == NULL, "could not create ecdh key");
 
-    SSL_CTX_set_options(context, SSL_OP_SINGLE_ECDH_USE);
+//     SSL_CTX_set_options(context, SSL_OP_SINGLE_ECDH_USE);
 
-    TRY_BEGIN()
-    {
-        cryptoError(SSL_CTX_set_tmp_ecdh(context, ecdh) != 1, "unable to set temp ecdh key");
-    }
-    FINALLY()
-    {
-        EC_KEY_free(ecdh);
-    }
-    TRY_END();
+//     TRY_BEGIN()
+//     {
+//         cryptoError(SSL_CTX_set_tmp_ecdh(context, ecdh) != 1, "unable to set temp ecdh key");
+//     }
+//     FINALLY()
+//     {
+//         EC_KEY_free(ecdh);
+//     }
+//     TRY_END();
 
-    FUNCTION_TEST_RETURN_VOID();
-}
+//     FUNCTION_TEST_RETURN_VOID();
+// }
 
 /***********************************************************************************************************************************
 !!!AUTH STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_open_server()
@@ -311,8 +311,8 @@ tlsServerNew(
         SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
 
         // Setup ephemeral DH and ECDH keys
-        tlsServerDh(driver->context);
-        tlsServerEcdh(driver->context);
+        // tlsServerDh(driver->context);
+        // tlsServerEcdh(driver->context);
 
         // Load certificate and key
         tlsCertKeyLoad(driver->context, certFile, keyFile);
