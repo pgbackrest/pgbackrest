@@ -306,8 +306,8 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'bionic',
-        &VM_IMAGE => 'i386/ubuntu:18.04',
-        &VM_ARCH => VM_ARCH_I386,
+        &VM_IMAGE => 'ubuntu:18.04',
+        &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
