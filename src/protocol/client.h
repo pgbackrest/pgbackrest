@@ -96,7 +96,7 @@ protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 __attribute__((always_inline)) static inline void
 protocolClientNoExit(ProtocolClient *const this)
 {
-    memContextCallbackClear(THIS_PUB(ProtocolClient)->memContext);
+    memContextCallbackClear(objMemContext(this));
 }
 
 // Send noop to test connection or keep it alive
