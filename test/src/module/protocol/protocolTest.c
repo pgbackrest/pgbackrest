@@ -676,9 +676,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolRemoteExec() and protocolServer()"))
     {
-        // Add host name !!! MAKE INTO A FUNCTION
-        HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid allow list");
 

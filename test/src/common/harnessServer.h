@@ -7,6 +7,8 @@ client using the hrnServerScript() functions.
 #ifndef TEST_COMMON_HARNESS_SERVER_H
 #define TEST_COMMON_HARNESS_SERVER_H
 
+#include <sys/stat.h>
+
 #include "common/io/read.h"
 #include "common/io/write.h"
 
@@ -39,6 +41,9 @@ Path and prefix for test certificates
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Initialize the server
+void hrnServerInit(void);
+
 // Run server
 typedef struct HrnServerRunParam
 {

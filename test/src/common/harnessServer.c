@@ -45,6 +45,29 @@ Constants
 ***********************************************************************************************************************************/
 #define HRN_SERVER_HOST                                             "tls.test.pgbackrest.org"
 
+/**********************************************************************************************************************************/
+void hrnServerInit(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    // Set correct permissions on private keys
+    THROW_ON_SYS_ERROR(
+        chmod(strZ(strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo())), 0600) == -1, FileModeError,
+        "unable to set mode on server key");
+    THROW_ON_SYS_ERROR(
+        chmod(strZ(strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "client.key", hrnPathRepo())), 0600) == -1, FileModeError,
+        "unable to set mode on client key");
+
+    // Add hostname when running in a container
+    if (testContainer())
+    {
+        if (system("echo \"127.0.0.1 " HRN_SERVER_HOST "\" | sudo tee -a /etc/hosts > /dev/null") != 0)
+            THROW(AssertError, "unable to add test host to /etc/hosts");
+    }
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Send commands to the server
 ***********************************************************************************************************************************/
@@ -219,13 +242,6 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
     // Set port to index 0 if not specified
     if (param.port == 0)
         param.port = hrnServerPort(0);
-
-    // Add test hosts
-    if (testContainer())
-    {
-        if (system("echo \"127.0.0.1 " HRN_SERVER_HOST "\" | sudo tee -a /etc/hosts > /dev/null") != 0)
-            THROW(AssertError, "unable to add test host to /etc/hosts");
-    }
 
     // Initialize ssl and create a context
     IoServer *tlsServer = NULL;

@@ -21,11 +21,6 @@ testRun(void)
 
     harnessLogLevelSet(logLevelDetail);
 
-    // Add host name !!! MAKE INTO A FUNCTION
-#if TEST_IN_CONTAINER
-    HRN_SYSTEM_FMT("echo \"127.0.0.1 %s\" | sudo tee -a /etc/hosts > /dev/null", strZ(hrnServerHost()));
-#endif
-
     // *****************************************************************************************************************************
     if (testBegin("cmdServer()"))
     {
