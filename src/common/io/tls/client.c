@@ -182,15 +182,6 @@ Initialize TLS session with all required security features
 
 Adapted from PostgreSQL initialize_SSL() in src/interfaces/libpq/fe-secure-openssl.c.
 ***********************************************************************************************************************************/
-// static int
-// tlsClientPwd(char *buf, int size, int rwflag, void *userdata)
-// {
-//     (void)buf;
-//     (void)size;
-//     (void)rwflag;
-//     (void)userdata;
-// }
-
 static void
 tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
 {
@@ -201,26 +192,6 @@ tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // !!! 1------------------------------------------------------------
-        /* THIS WILL GENERATE AN ERROR
-        * Delegate the client cert password prompt to the libpq wrapper callback
-        * if any is defined.
-        *
-        * If the application hasn't installed its own and the sslpassword
-        * parameter is non-null, we install ours now to make sure we supply
-        * PGconn->sslpassword to OpenSSL instead of letting it prompt on stdin.
-        *
-        * This will replace OpenSSL's default PEM_def_callback (which prompts on
-        * stdin), but we're only setting it for this SSL context so it's
-        * harmless.
-        */
-        // if (PQsslKeyPassHook
-        //     || (conn->sslpassword && strlen(conn->sslpassword) > 0))
-        // {
-        //     SSL_CTX_set_default_passwd_cb(SSL_context, PQssl_passwd_cb);
-        //     SSL_CTX_set_default_passwd_cb_userdata(SSL_context, conn);
-        // }
-
         // Set server host name used for validation
         cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
 

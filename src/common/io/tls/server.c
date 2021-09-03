@@ -315,10 +315,11 @@ tlsServerNew(
         SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
 
         // Setup ephemeral DH and ECDH keys
-        tlsServerDh(driver->context);
-
         if (sizeof(size_t) == 8)                                    // !!! ONLY RUN ON 64-BIT
+        {
+            tlsServerDh(driver->context);
             tlsServerEcdh(driver->context);
+        }
 
         // Load certificate and key
         tlsCertKeyLoad(driver->context, certFile, keyFile);

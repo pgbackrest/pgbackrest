@@ -73,6 +73,19 @@ tlsCertCommonName(X509 *const certificate)                                      
 }
 
 /**********************************************************************************************************************************/
+// Callback to process cert passwords
+static int
+tlsCertPwd(char *buffer, const int size, const int rwFlag, void *const userData)
+{
+    CHECK(size > 0);
+    (void)rwFlag; (void)userData;
+
+    // No password is currently supplied
+    buffer[0] = '\0';
+
+    return 0;
+}
+
 void
 tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const String *const keyFile)
 {
@@ -89,6 +102,9 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
+            // Set cert password callback
+            SSL_CTX_set_default_passwd_cb(context, tlsCertPwd);
+
             // Load certificate
             cryptoError(
                 SSL_CTX_use_certificate_chain_file(context, strZ(certFile)) != 1,

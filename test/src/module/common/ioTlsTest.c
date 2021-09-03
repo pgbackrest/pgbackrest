@@ -56,6 +56,35 @@ static const char *const testServerCnOnlyCert =
     "-----END CERTIFICATE-----";
 
 /***********************************************************************************************************************************
+Client key with a password
+
+To regenerate, run the following in a temp path:
+
+openssl genrsa -aes256 -passout pass:xxxx -out client-pwd.key 1024
+
+Then copy server-pwd.key into the variable below. Use a variable instead of a define so we know when the variable is not used.
+***********************************************************************************************************************************/
+static const char *const testClientPwdKey =
+    "-----BEGIN RSA PRIVATE KEY-----\n"
+    "Proc-Type: 4,ENCRYPTED\n"
+    "DEK-Info: AES-256-CBC,86BD081993E54559E92BFF24921DCD00\n"
+    "\n"
+    "MglGBz4qfnUUs7IuueInkDrn5GRp6V7ZOs/S8rkrOp0i7MTfFJk1cYByu0FCcLqo\n"
+    "O3UX1dLPOzu74hJGOmOUHEJzrzA09wFIshTZo96z60+gQGcPEWkkkG9eRadJG5EN\n"
+    "TiAq1xopmAYK+srSBsPD7Xf9KeYpFM4Fa98pWbEhzMBiozgh2fH8+6OK8izDFJ57\n"
+    "aW8p/9lwZtkO2nd6G4meU+vyVDsL4GpdHcryi+MGGXfhkrr6mFAQ3PLpHTwr6xNI\n"
+    "wp6IjuLpNwlkNadq8Wgi8qy4YhpdqmSVt/oFJ25HMH+0UT+EAk0f/WMqOgkSmi3y\n"
+    "HgmG7YYAHel5tVeY59/ovxMvc290KQkthVgYBIT/Sy3O4pTRgu+xBkB5VfxjI9gj\n"
+    "yVVHsvJHwWdNyUf093Qvroul6Ulob7DOXmPvRWuu6YIBASYIGrmtI2cZ0SQBoySp\n"
+    "V65yTAwoi7bqsmwCo4sEjKE6FSeVINY/EvwYLbfyGUOmaunWkWkNPsg9fvwTZNOc\n"
+    "3G1IAypM4++02wVVeLdc0+n9FdE6QX3MWpUeZ5YaOzjBjCisk+jJ46L79bi6Z/Xc\n"
+    "H1XXBsMnmFhkhd3lraMQ8QYpWus890OmCnimB59SM1W2LgROwv/fXt/8rwgJY1v5\n"
+    "6VP5KAZkXpCq20gG6C7GW3jL5/prnPoe+uXku4m4iAReUmTewqht8WUyQaiAWy+e\n"
+    "nH5HoTaB3+9ZLu2RivU9l6y1YwYSAbSWBPbnN4HmjP4rmLG5t1ky9igYfJ3NL3LV\n"
+    "gJPetwzWuiONyshwMzcg0bE/NjzTXcCaFVKSJ/M++Kd+abDcixUQ3u6htVFHW/L/\n"
+    "-----END RSA PRIVATE KEY-----";
+
+/***********************************************************************************************************************************
 Client cert signed by another CA used to generate invalid client cert error
 
 To regenerate, run the following in a temp path:
@@ -366,6 +395,31 @@ testRun(void)
             CryptoError,
             "unable to load key file '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': [185073780] key values"
                 " mismatch");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("client cert with passphrase");
+
+        storagePutP(storageNewWriteP(storageTest, STRDEF("client-pwd.key"), .modeFile = 0600), BUFSTRZ(testClientPwdKey));
+
+        TRY_BEGIN()
+        {
+            TEST_ERROR(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-pwd.key"), NULL),
+                CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': [101077092] bad decrypt");
+        }
+        CATCH(TestError)
+        {
+            TEST_ERROR(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-pwd.key"), NULL),
+                CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': [151429224] bad password read");
+        }
+        TRY_END();
+
+        storageRemoveP(storageTest, STRDEF("client-pwd.key"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("key with bad permissions");
