@@ -27,8 +27,8 @@ cmdServer(uint64_t connectionMax)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         IoServer *const tlsServer = tlsServerNew(
-           host, cfgOptionStr(cfgOptTlsServerCa), cfgOptionStr(cfgOptTlsServerKey), cfgOptionStr(cfgOptTlsServerCert),
-           cfgOptionStrNull(cfgOptTlsServerCrl), cfgOptionUInt64(cfgOptIoTimeout));
+           host, cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile), cfgOptionStr(cfgOptTlsServerCertFile),
+           cfgOptionStrNull(cfgOptTlsServerCrlFile), cfgOptionUInt64(cfgOptIoTimeout));
         IoServer *const socketServer = sckServerNew(host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptIoTimeout));
 
         // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE

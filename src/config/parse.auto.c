@@ -7279,7 +7279,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
-        PARSE_RULE_OPTION_NAME("tls-server-ca"),
+        PARSE_RULE_OPTION_NAME("tls-server-ca-file"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
@@ -7294,7 +7294,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
-        PARSE_RULE_OPTION_NAME("tls-server-cert"),
+        PARSE_RULE_OPTION_NAME("tls-server-cert-file"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
@@ -7309,7 +7309,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
-        PARSE_RULE_OPTION_NAME("tls-server-crl"),
+        PARSE_RULE_OPTION_NAME("tls-server-crl-file"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(false),
@@ -7324,7 +7324,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
-        PARSE_RULE_OPTION_NAME("tls-server-key"),
+        PARSE_RULE_OPTION_NAME("tls-server-key-file"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
@@ -7792,10 +7792,10 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
     cfgOptTlsServerAllow,
-    cfgOptTlsServerCa,
-    cfgOptTlsServerCert,
-    cfgOptTlsServerCrl,
-    cfgOptTlsServerKey,
+    cfgOptTlsServerCaFile,
+    cfgOptTlsServerCertFile,
+    cfgOptTlsServerCrlFile,
+    cfgOptTlsServerKeyFile,
     cfgOptTlsServerPort,
     cfgOptType,
     cfgOptArchiveCheck,

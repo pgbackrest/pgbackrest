@@ -118,10 +118,10 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_IDLE                                  "tcp-keep-alive-idle"
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
 #define CFGOPT_TLS_SERVER_ALLOW                                     "tls-server-allow"
-#define CFGOPT_TLS_SERVER_CA                                        "tls-server-ca"
-#define CFGOPT_TLS_SERVER_CERT                                      "tls-server-cert"
-#define CFGOPT_TLS_SERVER_CRL                                       "tls-server-crl"
-#define CFGOPT_TLS_SERVER_KEY                                       "tls-server-key"
+#define CFGOPT_TLS_SERVER_CA_FILE                                   "tls-server-ca-file"
+#define CFGOPT_TLS_SERVER_CERT_FILE                                 "tls-server-cert-file"
+#define CFGOPT_TLS_SERVER_CRL_FILE                                  "tls-server-crl-file"
+#define CFGOPT_TLS_SERVER_KEY_FILE                                  "tls-server-key-file"
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
@@ -485,10 +485,10 @@ typedef enum
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
     cfgOptTlsServerAllow,
-    cfgOptTlsServerCa,
-    cfgOptTlsServerCert,
-    cfgOptTlsServerCrl,
-    cfgOptTlsServerKey,
+    cfgOptTlsServerCaFile,
+    cfgOptTlsServerCertFile,
+    cfgOptTlsServerCrlFile,
+    cfgOptTlsServerKeyFile,
     cfgOptTlsServerPort,
     cfgOptType,
 } ConfigOption;

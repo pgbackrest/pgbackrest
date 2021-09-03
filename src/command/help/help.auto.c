@@ -4691,7 +4691,7 @@ static const unsigned char helpDataPack[] =
         0x78, 0x03, // Description
             0x21, 0x21, 0x21,
 
-        // tls-server-ca option
+        // tls-server-ca-file option
         // -------------------------------------------------------------------------------------------------------------------------
         0x7B, 0x07, // Section
             0x67, 0x65, 0x6E, 0x65, 0x72, 0x61, 0x6C,
@@ -4701,7 +4701,7 @@ static const unsigned char helpDataPack[] =
         0x78, 0x03, // Description
             0x21, 0x21, 0x21,
 
-        // tls-server-cert option
+        // tls-server-cert-file option
         // -------------------------------------------------------------------------------------------------------------------------
         0x7B, 0x07, // Section
             0x67, 0x65, 0x6E, 0x65, 0x72, 0x61, 0x6C,
@@ -4711,7 +4711,7 @@ static const unsigned char helpDataPack[] =
         0x78, 0x03, // Description
             0x21, 0x21, 0x21,
 
-        // tls-server-crl option
+        // tls-server-crl-file option
         // -------------------------------------------------------------------------------------------------------------------------
         0x7B, 0x07, // Section
             0x67, 0x65, 0x6E, 0x65, 0x72, 0x61, 0x6C,
@@ -4722,7 +4722,7 @@ static const unsigned char helpDataPack[] =
         0x78, 0x03, // Description
             0x21, 0x21, 0x21,
 
-        // tls-server-key option
+        // tls-server-key-file option
         // -------------------------------------------------------------------------------------------------------------------------
         0x7B, 0x07, // Section
             0x67, 0x65, 0x6E, 0x65, 0x72, 0x61, 0x6C,

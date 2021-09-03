@@ -112,9 +112,9 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN(.prefix = "server")
             {
                 StringList *argList = strLstNew();
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCa, HRN_SERVER_CA);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCert, HRN_SERVER_CERT);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_SERVER_KEY);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerCaFile, HRN_SERVER_CA);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerCertFile, HRN_SERVER_CERT);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=db");
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
                 HRN_CFG_LOAD(cfgCmdServer, argList);
@@ -169,9 +169,9 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN(.prefix = "server")
             {
                 StringList *argList = strLstNew();
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCa, HRN_SERVER_CA);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCert, HRN_SERVER_CERT);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerKey, HRN_SERVER_KEY);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerCaFile, HRN_SERVER_CA);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerCertFile, HRN_SERVER_CERT);
+                hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "bogus=*");
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
                 HRN_CFG_LOAD(cfgCmdServer, argList);

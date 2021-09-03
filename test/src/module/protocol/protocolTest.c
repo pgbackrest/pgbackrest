@@ -798,9 +798,9 @@ testRun(void)
                 // Repo server (archive-get)
                 // -----------------------------------------------------------------------------------------------------------------
                 StringList *const argListBase = strLstNew();
-                hrnCfgArgRawZ(argListBase, cfgOptTlsServerCa, HRN_SERVER_CA);
-                hrnCfgArgRawZ(argListBase, cfgOptTlsServerCert, HRN_SERVER_CERT);
-                hrnCfgArgRawZ(argListBase, cfgOptTlsServerKey, HRN_SERVER_KEY);
+                hrnCfgArgRawZ(argListBase, cfgOptTlsServerCaFile, HRN_SERVER_CA);
+                hrnCfgArgRawZ(argListBase, cfgOptTlsServerCertFile, HRN_SERVER_CERT);
+                hrnCfgArgRawZ(argListBase, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
 
                 StringList *argList = strLstDup(argListBase);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=db");

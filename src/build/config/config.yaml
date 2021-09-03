@@ -905,20 +905,26 @@ option:
     command: buffer-size
     depend: tcp-keep-alive-count
 
-  tls-server-ca:
+  tls-server-ca-file:
     section: global
     type: path
     command:
       server: {}
 
-  tls-server-crl:
+  tls-server-crl-file:
     section: global
     required: false
     type: path
     command:
       server: {}
 
-  tls-server-cert:
+  tls-server-cert-file:
+    section: global
+    type: path
+    command:
+      server: {}
+
+  tls-server-key-file:
     section: global
     type: path
     command:
@@ -938,12 +944,6 @@ option:
     command:
       server: {}
       server-ping: {}
-
-  tls-server-key:
-    section: global
-    type: path
-    command:
-      server: {}
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
