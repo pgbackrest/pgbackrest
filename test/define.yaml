@@ -299,9 +299,6 @@ unit:
         total: 5
         feature: SOCKET
         harness: server
-        vm:
-          - f33
-          - u20
 
         coverage:
           - common/io/client
