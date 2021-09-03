@@ -271,6 +271,7 @@ testRun(void)
             "  --repo-host                      repository host when operating remotely via\n"
             "                                   SSH [current=backup.example.net]\n"
             "  --repo-host-ca-file              repository host certificate authority file\n"
+            "  --repo-host-ca-path              repository host certificate authority path\n"
             "  --repo-host-cert-file            repository host certificate file\n"
             "  --repo-host-cmd                  pgBackRest exe path on the repository host\n"
             "                                   [default=/path/to/pgbackrest]\n"
