@@ -3,8 +3,8 @@ TLS Common
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <fcntl.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <openssl/ssl.h>
 
