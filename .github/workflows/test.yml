@@ -28,8 +28,8 @@ jobs:
       # tackle the slowest tests first.
       matrix:
         include:
-          # All integration tests for 32-bit
-          - param: test --vm=u16 --param=no-performance --param=module=mock --param=module=real
+          # All unit (without coverage) and integration tests for 32-bit
+          - param: test --vm=u16 --param=no-performance
 
           # Debian/Ubuntu documentation
           - param: doc --vm=u18
