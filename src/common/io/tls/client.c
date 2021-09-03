@@ -178,7 +178,9 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
-!!!INIT STEPS FOR CLIENT CERT PULLED FROM src/interfaces/libpq/fe-secure-openssl.c initialize_SSL()
+Initialize TLS session with all required security features
+
+Adapted from PostgreSQL initialize_SSL() in src/interfaces/libpq/fe-secure-openssl.c.
 ***********************************************************************************************************************************/
 // static int
 // tlsClientPwd(char *buf, int size, int rwflag, void *userdata)
@@ -237,7 +239,9 @@ tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
 }
 
 /***********************************************************************************************************************************
-!!!AUTH STEPS FOR CLIENT CERT PULLED FROM src/interfaces/libpq/fe-secure-openssl.c open_client_SSL()
+Authenticate server
+
+Adapted from PostgreSQL open_client_SSL() in src/interfaces/libpq/fe-secure-openssl.c.
 ***********************************************************************************************************************************/
 static bool
 tlsClientAuth(const TlsClient *const this, SSL *const tlsSession)
@@ -396,7 +400,11 @@ tlsClientName(THIS_VOID)
     FUNCTION_TEST_RETURN(ioClientName(this->ioClient));
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Initialize TLS session with all required security features
+
+Adapted from PostgreSQL initialize_SSL() in src/interfaces/libpq/fe-secure-openssl.c.
+***********************************************************************************************************************************/
 static const IoClientInterface tlsClientInterface =
 {
     .type = IO_CLIENT_TLS_TYPE,

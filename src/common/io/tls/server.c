@@ -164,7 +164,9 @@ tlsServerEcdh(SSL_CTX *const context)
 }
 
 /***********************************************************************************************************************************
-!!!AUTH STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_open_server()
+Authenticate client
+
+Adapted from PostgreSQL be_tls_open_server() in src/backend/libpq/be-secure-openssl.c.
 ***********************************************************************************************************************************/
 static void
 tlsServerAuth(const TlsServer *const this, IoSession *const ioSession, SSL *const tlsSession)
@@ -218,7 +220,7 @@ tlsServerAccept(THIS_VOID, IoSession *const ioSession)
     {
         // Open TLS session
         SSL *tlsSession = SSL_new(this->context);
-        result = tlsSessionNew(tlsSession, ioSession, 60000); // !!! FIX TIMEOUT
+        result = tlsSessionNew(tlsSession, ioSession, 60000); // !!! FIX TIMEOUT -- NEEDS TO BE IO-TIMEOUT DURING ACCEPT AND PROTOCOL-TIMEOUT AFTER
 
         // Authenticate TLS session
         tlsServerAuth(this, result, tlsSession);
@@ -249,7 +251,9 @@ tlsServerName(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-!!!INIT STEPS FOR SERVER CERT PULLED FROM src/backend/libpq/be-secure-openssl.c be_tls_init()
+Initialize TLS context with all required security features
+
+Adapted from PostgreSQL be_tls_init() in src/backend/libpq/be-secure-openssl.c.
 ***********************************************************************************************************************************/
 static const IoServerInterface tlsServerInterface =
 {
@@ -311,11 +315,10 @@ tlsServerNew(
         SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
 
         // Setup ephemeral DH and ECDH keys
+        tlsServerDh(driver->context);
+
         if (sizeof(size_t) == 8)                                    // !!! ONLY RUN ON 64-BIT
-        {
-            tlsServerDh(driver->context);
             tlsServerEcdh(driver->context);
-        }
 
         // Load certificate and key
         tlsCertKeyLoad(driver->context, certFile, keyFile);
