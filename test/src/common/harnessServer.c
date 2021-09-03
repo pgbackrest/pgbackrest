@@ -258,11 +258,9 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
         }
 
         tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.ca, param.key, param.certificate, NULL, 5000);
-        ioServerName(tlsServer); // !!! ADD COVERAGE
     }
 
     IoServer *socketServer = sckServerNew(STRDEF("localhost"), param.port, 5000);
-    ioServerName(socketServer); // !!! ADD COVERAGE
 
     // Loop until no more commands
     IoSession *serverSession = NULL;

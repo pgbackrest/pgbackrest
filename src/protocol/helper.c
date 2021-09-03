@@ -677,7 +677,7 @@ protocolRemoteExec(
                 sckClientNew(host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx), timeout),
                 host, timeout, true,
                 cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaFile : cfgOptPgHostCaFile, hostIdx),
-                NULL, // !!! NEED CA PATH
+                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaPath : cfgOptPgHostCaPath, hostIdx),
                 cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
                 cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx),
                 cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCrlFile : cfgOptPgHostCrlFile, hostIdx)

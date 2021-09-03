@@ -1342,6 +1342,10 @@ option:
     inherit: pg-host-cert-file
     required: false
 
+  pg-host-ca-path:
+    inherit: pg-host-cert-file
+    required: false
+
   pg-host-crl-file:
     inherit: pg-host-cert-file
     required: false
@@ -1836,6 +1840,10 @@ option:
     inherit: repo-host-cert-file
 
   repo-host-ca-file:
+    inherit: repo-host-cert-file
+    required: false
+
+  repo-host-ca-path:
     inherit: repo-host-cert-file
     required: false
 

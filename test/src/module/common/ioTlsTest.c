@@ -571,6 +571,9 @@ testRun(void)
                     NULL, 5000);
                 IoSession *socketSession = NULL;
 
+                TEST_RESULT_STR(ioServerName(socketServer), strNewFmt("localhost:%u", hrnServerPort(0)), "socket server name");
+                TEST_RESULT_STR_Z(ioServerName(tlsServer), "localhost", "tls server name");
+
                 // Invalid client cert
                 if (TEST_64BIT())                                   // !!! ONLY RUN ON 64-BIT
                 {

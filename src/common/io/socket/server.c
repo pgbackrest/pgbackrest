@@ -175,7 +175,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
         THROW_ON_SYS_ERROR((driver->socket = socket(AF_INET, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
 
-        // Set the address as reusable so we can bind again in the same process for testing !!! REMOVE?
+        // Set the address as reusable so we can bind again in the same process for testing !!! REMOVE OR MAKE OPTIONAL???
         int reuseAddr = 1;
         setsockopt(driver->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr));
 

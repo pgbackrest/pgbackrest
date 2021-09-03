@@ -525,6 +525,15 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-ca-path" name="Repository Host Certificate Authority Path">
+                        <summary>Repository host certificate authority path.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
                     <config-key id="repo-host-cert-file" name="Repository Host Certificate File">
                         <summary>Repository host certificate file.</summary>
 
@@ -1228,6 +1237,15 @@
                     <!-- ======================================================================================================= -->
                     <config-key id="pg-host-ca-file" name="PostgreSQL Host Certificate Authority File">
                         <summary><postgres/> host certificate authority file.</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-ca-path" name="PostgreSQL Host Certificate Authority Path">
+                        <summary><postgres/> host certificate authority path.</summary>
 
                         <text>!!!</text>
 

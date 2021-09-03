@@ -178,38 +178,6 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 }
 
 /***********************************************************************************************************************************
-Initialize TLS session with all required security features
-
-Adapted from PostgreSQL initialize_SSL() in src/interfaces/libpq/fe-secure-openssl.c.
-***********************************************************************************************************************************/
-static void
-tlsClientInit(const TlsClient *const this, SSL *const tlsSession)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(TLS_CLIENT, this);
-        FUNCTION_LOG_PARAM_P(VOID, tlsSession);
-    FUNCTION_LOG_END();
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Set server host name used for validation
-        cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
-
-        // !!! 9------------------------------------------------------------
-        // ??? NOT CLEAR IF THIS IS NEEDED SINCE IT JUST RETURNS OK IN PG CODE
-        /*
-        * If a root cert was loaded, also set our certificate verification
-        * callback.
-        */
-        // if (have_rootcert)
-        //     SSL_set_verify(conn->ssl, SSL_VERIFY_PEER, verify_cb);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Authenticate server
 
 Adapted from PostgreSQL open_client_SSL() in src/interfaces/libpq/fe-secure-openssl.c.
@@ -292,17 +260,8 @@ tlsClientOpen(THIS_VOID)
             tlsSession = SSL_new(this->context);
             cryptoError(tlsSession == NULL, "unable to create TLS session");
 
-            // Initialize TLS session
-            TRY_BEGIN()
-            {
-                tlsClientInit(this, tlsSession);
-            }
-            CATCH_ANY()
-            {
-                SSL_free(tlsSession);                                                   // {uncovered - !!! add test}
-                RETHROW();                                                              // {uncovered - !!! add test}
-            }
-            TRY_END();
+            // Set server host name used for validation
+            cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
 
             // Open TLS session
             TRY_BEGIN()
