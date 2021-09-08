@@ -155,9 +155,9 @@
     <!ATTLIST release version CDATA #REQUIRED>
     <!ATTLIST release title CDATA #REQUIRED>
 
-<!ELEMENT release-core-list (p?, release-bug-list?, release-feature-list?, release-improvement-list?, release-development-list?)>
-<!ELEMENT release-test-list (p?, release-feature-list?, release-improvement-list?, release-development-list?)>
-<!ELEMENT release-doc-list (p?, release-bug-list?, release-feature-list?, release-improvement-list?, release-development-list?)>
+<!ELEMENT release-core-list (text?, release-bug-list?, release-feature-list?, release-improvement-list?, release-development-list?)>
+<!ELEMENT release-test-list (text?, release-feature-list?, release-improvement-list?, release-development-list?)>
+<!ELEMENT release-doc-list (text?, release-bug-list?, release-feature-list?, release-improvement-list?, release-development-list?)>
 
 <!ELEMENT release-bug-list (release-item+)>
 <!ELEMENT release-feature-list (release-item+)>
@@ -237,12 +237,9 @@
                    br-setting|pg-option|pg-setting|link|user|proper)*>
 <!ELEMENT p ANY>
     <!ATTLIST p if CDATA "">
-<!ELEMENT text ANY>
+<!ELEMENT text (p|list|admonition)*>
 <!ELEMENT i ANY>
 <!ELEMENT b ANY>
-<!ELEMENT ul (li+)>
-<!ELEMENT ol (li+)>
-<!ELEMENT li ANY>
 <!ELEMENT list (list-item+)>
     <!ATTLIST list if CDATA "">
 <!ELEMENT list-item ANY>

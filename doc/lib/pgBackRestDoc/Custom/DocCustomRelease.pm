@@ -552,9 +552,9 @@ sub docGet
                         }
 
                         # Add release note if present
-                        if (!$bReleaseNote && $oRelease->nodeGet($strSectionType)->nodeTest('p'))
+                        if (!$bReleaseNote && defined($oRelease->nodeGet($strSectionType)->textGet(false)))
                         {
-                            $oReleaseSection->nodeAdd('p')->textSet($oRelease->nodeGet($strSectionType)->nodeGet('p')->textGet());
+                            $oReleaseSection->nodeAdd('p')->textSet($oRelease->nodeGet($strSectionType)->textGet());
                             $bReleaseNote = true;
                         }
 

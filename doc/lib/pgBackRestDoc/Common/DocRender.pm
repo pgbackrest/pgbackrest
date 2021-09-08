@@ -35,9 +35,8 @@ my $oRenderTag =
         'b' => ['**', '**'],
         'i' => ['_', '_'],
         # 'bi' => ['_**', '**_'],
-        'ul' => ["\n", ""],
-        'ol' => ["\n", "\n"],
-        'li' => ['- ', "\n"],
+        'list-item' => ["\n", ""],
+        'list-item' => ['- ', "\n"],
         'id' => ['`', '`'],
         'file' => ['`', '`'],
         'path' => ['`', '`'],
@@ -57,12 +56,12 @@ my $oRenderTag =
     'text' =>
     {
         'quote' => ['"', '"'],
+        'p' => ['', "\n\n"],
         'b' => ['', ''],
         'i' => ['', ''],
         # 'bi' => ['', ''],
-        'ul' => ["\n", "\n"],
-        'ol' => ["\n", "\n"],
-        'li' => ['* ', "\n"],
+        'list' => ["", "\n"],
+        'list-item' => ['* ', "\n"],
         'id' => ['', ''],
         'host' => ['', ''],
         'file' => ['', ''],
@@ -78,18 +77,18 @@ my $oRenderTag =
         'backrest' => [undef, ''],
         'proper' => ['', ''],
         'postgres' => ['PostgreSQL', ''],
-        'admonition' => ["\n", "\n\n"],
+        'admonition' => ['', "\n\n"],
     },
 
     'latex' =>
     {
         'quote' => ['``', '"'],
+        'p' => ["\n\\begin{sloppypar}", "\\end{sloppypar}\n"],
         'b' => ['\textbf{', '}'],
         'i' => ['\textit{', '}'],
         # 'bi' => ['', ''],
-        'ul' => ["\\begin{itemize}\n", "\\end{itemize}\n"],
-        # 'ol' => ["\n", "\n"],
-        'li' => ['\item ', "\n"],
+        'list' => ["\\begin{itemize}\n", "\\end{itemize}\n"],
+        'list-item' => ['\item ', "\n"],
         'id' => ['\textnormal{\texttt{', '}}'],
         'host' => ['\textnormal{\textbf{', '}}'],
         'file' => ['\textnormal{\texttt{', '}}'],
@@ -119,10 +118,10 @@ my $oRenderTag =
         'quote' => ['<q>', '</q>'],
         'b' => ['<b>', '</b>'],
         'i' => ['<i>', '</i>'],
+        'p' => ['<div class="section-body-text">', '</div>'],
         # 'bi' => ['<i><b>', '</b></i>'],
-        'ul' => ['<ul>', '</ul>'],
-        'ol' => ['<ol>', '</ol>'],
-        'li' => ['<li>', '</li>'],
+        'list' => ['<ul class="list-unordered">', '</ul>'],
+        'list-item' => ['<li class="list-unordered">', '</li>'],
         'id' => ['<span class="id">', '</span>'],
         'host' => ['<span class="host">', '</span>'],
         'file' => ['<span class="file">', '</span>'],
@@ -851,7 +850,7 @@ sub processTag
             $strBuffer .= $self->processAdmonitionStart($oTag);
         }
 
-        if ($strTag eq 'p' || $strTag eq 'title' || $strTag eq 'li' || $strTag eq 'code-block' || $strTag eq 'summary'
+        if ($strTag eq 'p' || $strTag eq 'title' || $strTag eq 'list-item' || $strTag eq 'code-block' || $strTag eq 'summary'
             || $strTag eq 'admonition')
         {
             $strBuffer .= $self->processText($oTag);
@@ -997,7 +996,11 @@ sub processText
                 confess &log(ERROR, "unable to process quotes in string (use <quote> instead):\n${oNode}");
             }
 
-            $strBuffer .= $oNode;
+            # Skip text nodes with linefeeds since they happen between tags
+            if (index($oNode, "\n") == -1)
+            {
+                $strBuffer .= $oNode;
+            }
         }
         else
         {
