@@ -317,7 +317,7 @@ eval
             my $oRender = new pgBackRestDoc::Common::DocRender('text', $oManifest, !$bNoExe);
             my $oDocConfig =
                 new pgBackRestDoc::Common::DocConfig(
-                    new pgBackRestDoc::Common::Doc("${strBasePath}/xml/reference.xml"), $oRender);
+                    new pgBackRestDoc::Common::Doc("${strBasePath}/../src/build/help/help.xml"), $oRender);
 
             $oStorageDoc->pathCreate(
                 "${strBasePath}/output/man", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});

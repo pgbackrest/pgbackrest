@@ -631,7 +631,7 @@ run 8/1 ------------- L2285 no current backups
         <p>To add an option, two files need be to be modified:</p>
         <list>
             <list-item><file>src/build/config/config.yaml</file></list-item>
-            <list-item><file>doc/xml/reference.xml</file></list-item>
+            <list-item><file>src/build/help/help.xml</file></list-item>
         </list>
 
         <p>These files are discussed in the following sections along with how to verify the <code>help</code> command output.</p>
@@ -720,8 +720,8 @@ run 8/1 ------------- L2285 no current backups
             <p>At compile time, the <file>config.auto.h</file> file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
         </section>
 
-        <section id="reference-file">
-            <title>reference.xml</title>
+        <section id="help-file">
+            <title>help.xml</title>
 
             <p>All options must be documented or the system will error during the build. To add an option, find the command section identified by <code>command id="COMMAND"</code> section where <id>COMMAND</id> is the name of the command (e.g. <cmd>expire</cmd>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>operation-general title="General Options"</code> section.</p>
 

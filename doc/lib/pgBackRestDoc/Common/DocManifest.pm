@@ -119,7 +119,16 @@ sub new
             next;
         }
 
-        $$oSourceHash{doc} = new pgBackRestDoc::Common::Doc("$self->{strDocPath}/xml/${strKey}.xml");
+        # Help is in src/build/help
+        if ($strKey eq 'help')
+        {
+            $oSourceHash->{doc} = new pgBackRestDoc::Common::Doc("$self->{strDocPath}/../src/build/help/${strKey}.xml");
+        }
+        # Else should be in doc/xml
+        else
+        {
+            $$oSourceHash{doc} = new pgBackRestDoc::Common::Doc("$self->{strDocPath}/xml/${strKey}.xml");
+        }
 
         # Read variables from source
         $self->variableListParse($$oSourceHash{doc}->nodeGet('variable-list', false), $rhVariableOverride);

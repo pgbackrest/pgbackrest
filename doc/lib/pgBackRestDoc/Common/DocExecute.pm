@@ -15,8 +15,6 @@ use Exporter qw(import);
 use File::Basename qw(dirname);
 use Storable qw(dclone);
 
-use pgBackRestBuild::Config::Data;
-
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostTest;
 use pgBackRestTest::Common::HostGroupTest;
@@ -26,6 +24,7 @@ use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Ini;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Custom::DocConfigData;
 use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################

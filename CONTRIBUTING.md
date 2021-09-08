@@ -570,7 +570,7 @@ To add an option, two files need be to be modified:
 
 - `src/build/config/config.yaml`
 
-- `doc/xml/reference.xml`
+- `src/build/config/help.xml`
 
 These files are discussed in the following sections along with how to verify the `help` command output.
 
@@ -657,7 +657,7 @@ repo-test-type:
 
 At compile time, the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
-### reference.xml
+### help.xml
 
 All options must be documented or the system will error during the build. To add an option, find the command section identified by `command id="COMMAND"` section where `COMMAND` is the name of the command (e.g. `expire`) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the `operation-general title="General Options"` section.
 
