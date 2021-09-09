@@ -1008,71 +1008,6 @@
                         <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
-                    <config-key id="tls-server-auth" name="TLS Server Authorized Clients">
-                        <summary>TLS server authorized clients.</summary>
-
-                        <text>
-                            <p>!!!</p>
-                        </text>
-
-                        <example>!!!</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="tls-server-ca-file" name="TLS Server Certificate Authorities">
-                        <summary>TLS server certificate authorities.</summary>
-
-                        <text>
-                            <p>!!!</p>
-                        </text>
-
-                        <example>!!!</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="tls-server-cert-file" name="TLS Server Certificate">
-                        <summary>TLS server certificate file.</summary>
-
-                        <text>
-                            <p>!!!</p>
-                        </text>
-
-                        <example>!!!</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="tls-server-crl-file" name="TLS Server Revoked Certificates">
-                        <summary>TLS client certificates revoked by certificate authorities.</summary>
-
-                        <text>
-                            <p>!!!</p>
-                        </text>
-
-                        <example>!!!</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="tls-server-key-file" name="TLS Server Key">
-                        <summary>TLS server key file.</summary>
-
-                        <text>
-                            <p>!!!</p>
-                        </text>
-
-                        <example>!!!</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="tls-server-port" name="TLS Server Port">
-                        <summary>TLS server port.</summary>
-
-                        <text>
-                            <p>!!!</p>
-                        </text>
-
-                        <example>!!!</example>
-                    </config-key>
                 </config-key-list>
             </config-section>
 
@@ -1441,6 +1376,81 @@
                         </text>
 
                         <example>/data/tablespace</example>
+                    </config-key>
+                </config-key-list>
+            </config-section>
+
+            <!-- =============================================================================================================== -->
+            <config-section id="server" name="Server">
+                <text>
+                    <p>!!!</p>
+                </text>
+
+                <config-key-list>
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-auth" name="TLS Server Authorized Clients">
+                        <summary>TLS server authorized clients.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-ca-file" name="TLS Server Certificate Authorities">
+                        <summary>TLS server certificate authorities.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-cert-file" name="TLS Server Certificate">
+                        <summary>TLS server certificate file.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-crl-file" name="TLS Server Revoked Certificates">
+                        <summary>TLS client certificates revoked by certificate authorities.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-key-file" name="TLS Server Key">
+                        <summary>TLS server key file.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-port" name="TLS Server Port">
+                        <summary>TLS server port.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>!!!</example>
                     </config-key>
                 </config-key-list>
             </config-section>
@@ -2252,7 +2262,7 @@
                 <summary>Start <backrest/> server.</summary>
 
                 <text>
-                    <p>!!!</p>
+                    <p>The <backrest/> server allows access to remote hosts without using the <proper>SSH</proper> protocol. !!!</p>
                 </text>
             </command>
 
@@ -2261,7 +2271,7 @@
                 <summary>Ping <backrest/> server.</summary>
 
                 <text>
-                    <p>!!!</p>
+                    <p>This serves as an aliveness check only since no authentication is attempted. !!!</p>
                 </text>
             </command>
 

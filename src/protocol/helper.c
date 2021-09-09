@@ -400,7 +400,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 
                 // Error if the client is authorized for the requested stanza
                 if (!protocolServerAuthorize(clientAuthList, cfgOptionStrNull(cfgOptStanza)))
-                        THROW(AccessError, "access denied");
+                    THROW(AccessError, "access denied");
             }
             CATCH_ANY()
             {

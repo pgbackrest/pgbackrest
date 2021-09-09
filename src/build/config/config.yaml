@@ -837,7 +837,6 @@ option:
       repo-rm: {}
       restore: {}
       server: {}
-      server-ping: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}

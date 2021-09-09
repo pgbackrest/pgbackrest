@@ -80,8 +80,8 @@ These values can be static since the OpenSSL library can efficiently generate ra
 Adapted from PostgreSQL initialize_dh() in src/backend/libpq/be-secure-openssl.c. Also see https://weakdh.org and
 https://en.wikipedia.org/wiki/Logjam_(computer_security).
 ***********************************************************************************************************************************/
-// Hardcoded DH parameters, used in ephemeral DH keying. This is the 2048-bit DH parameter from RFC 3526.  The generation of the
-// prime is specified in RFC 2412 Appendix E, which also discusses the design choice of the generator.  Note that when loaded with
+// Hardcoded DH parameters, used in ephemeral DH keying. This is the 2048-bit DH parameter from RFC 3526. The generation of the
+// prime is specified in RFC 2412 Appendix E, which also discusses the design choice of the generator. Note that when loaded with
 // OpenSSL this causes DH_check() to fail on DH_NOT_SUITABLE_GENERATOR, where leaking a bit is preferred.
 #define DH_2048                                                                                                                    \
     "-----BEGIN DH PARAMETERS-----\n"                                                                                              \
