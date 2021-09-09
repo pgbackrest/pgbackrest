@@ -1016,7 +1016,7 @@
                             <p>!!!</p>
                         </text>
 
-                        <example>/!!!</example>
+                        <example>!!!</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1027,7 +1027,7 @@
                             <p>!!!</p>
                         </text>
 
-                        <example>/!!!</example>
+                        <example>!!!</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1038,7 +1038,7 @@
                             <p>!!!</p>
                         </text>
 
-                        <example>/!!!</example>
+                        <example>!!!</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1049,7 +1049,7 @@
                             <p>!!!</p>
                         </text>
 
-                        <example>/!!!</example>
+                        <example>!!!</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1060,7 +1060,7 @@
                             <p>!!!</p>
                         </text>
 
-                        <example>/!!!</example>
+                        <example>!!!</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1071,7 +1071,7 @@
                             <p>!!!</p>
                         </text>
 
-                        <example>/!!!</example>
+                        <example>!!!</example>
                     </config-key>
                 </config-key-list>
             </config-section>
@@ -1514,7 +1514,9 @@
                     <config-key id="pg-host-ca-file" name="PostgreSQL Host Certificate Authority File">
                         <summary><postgres/> host certificate authority file.</summary>
 
-                        <text>!!!</text>
+                        <text>
+                            <p>!!!</p>
+                        </text>
 
                         <example>!!!</example>
                     </config-key>
@@ -1523,7 +1525,9 @@
                     <config-key id="pg-host-ca-path" name="PostgreSQL Host Certificate Authority Path">
                         <summary><postgres/> host certificate authority path.</summary>
 
-                        <text>!!!</text>
+                        <text>
+                            <p>!!!</p>
+                        </text>
 
                         <example>!!!</example>
                     </config-key>
@@ -1532,7 +1536,9 @@
                     <config-key id="pg-host-cert-file" name="PostgreSQL Host Certificate File">
                         <summary><postgres/> host certificate file.</summary>
 
-                        <text>!!!</text>
+                        <text>
+                            <p>!!!</p>
+                        </text>
 
                         <example>!!!</example>
                     </config-key>
@@ -1541,7 +1547,9 @@
                     <config-key id="pg-host-crl-file" name="PostgreSQL Host Certificate Recovation File">
                         <summary><postgres/> host certificate revocation file.</summary>
 
-                        <text>!!!</text>
+                        <text>
+                            <p>!!!</p>
+                        </text>
 
                         <example>!!!</example>
                     </config-key>
@@ -1550,7 +1558,9 @@
                     <config-key id="pg-host-key-file" name="PostgreSQL Host Key File">
                         <summary><postgres/> host key file.</summary>
 
-                        <text>!!!</text>
+                        <text>
+                            <p>!!!</p>
+                        </text>
 
                         <example>!!!</example>
                     </config-key>
@@ -1559,7 +1569,9 @@
                     <config-key id="pg-host-type" name="PostgreSQL Host Protocol Type">
                         <summary><postgres/> host protocol type.</summary>
 
-                        <text>!!!</text>
+                        <text>
+                            <p>!!!</p>
+                        </text>
 
                         <example>tls</example>
                     </config-key>
