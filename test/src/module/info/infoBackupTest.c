@@ -121,6 +121,7 @@ testRun(void)
             "[backup:current]\n"
             "20161219-212741F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
             "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","
+            "\"backup-checksum-page-error\":false,"
             "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159776,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,"
             "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"
@@ -128,13 +129,14 @@ testRun(void)
             "\"option-online\":true}\n"
             "20161219-212741F_20161219-212803D={\"backrest-format\":5,\"backrest-version\":\"2.04\","
             "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","
+            "\"backup-checksum-page-error\":false,"
             "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\"],"
             "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"diff\",\"db-id\":1,"
             "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","
-            "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
+            "\"backup-archive-start\":null,\"backup-archive-stop\":null,\"backup-checksum-page-error\":false,"
             "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","
             "\"20161219-212741F_20161219-212803D\"],"
@@ -199,6 +201,7 @@ testRun(void)
             (strLstSize(backupData.backupReference) == 2 && strLstExists(backupData.backupReference, STRDEF("20161219-212741F")) &&
                 strLstExists(backupData.backupReference, STRDEF("20161219-212741F_20161219-212803D"))),
             true, "backup reference exists");
+        TEST_RESULT_BOOL(backupData.checksumPageError, false, "page checkup error report");
         TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "option archive check");
         TEST_RESULT_BOOL(backupData.optionArchiveCopy, false, "option archive copy");
         TEST_RESULT_BOOL(backupData.optionBackupStandby, false, "option backup standby");

@@ -1370,7 +1370,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
     FUNCTION_LOG_RETURN(UINT64, result);
 }
 
-// Helper to caculate the next queue to scan based on the client index
+// Helper to calculate the next queue to scan based on the client index
 static int
 backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal)
 {

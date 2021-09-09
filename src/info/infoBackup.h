@@ -58,6 +58,7 @@ typedef struct InfoBackupData
     time_t backupTimestampStart;
     time_t backupTimestampStop;
     BackupType backupType;
+    bool checksumPageError:1;                                       // Does this backup have page checksum error(s)?
     bool optionArchiveCheck;
     bool optionArchiveCopy;
     bool optionBackupStandby;
