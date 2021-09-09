@@ -1,15 +1,16 @@
 /***********************************************************************************************************************************
-Help Command
+Render Help
 ***********************************************************************************************************************************/
-#ifndef COMMAND_HELP_HELP_H
-#define COMMAND_HELP_HELP_H
+#ifndef BUILD_HELP_RENDER_H
+#define BUILD_HELP_RENDER_H
 
-#include "common/type/buffer.h"
+#include "build/config/parse.h"
+#include "build/help/parse.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Render help and output to stdout
-void cmdHelp(const Buffer *const helpData);
+// Render help
+void bldHlpRender(const Storage *const storageRepo, const BldCfg bldCfg, const BldHlp bldHlp);
 
 #endif

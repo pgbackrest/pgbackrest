@@ -53,6 +53,7 @@ Parse command list
 typedef struct BldCfgCommandRaw
 {
     const String *const name;                                       // See BldCfgCommand for comments
+    bool internal;
     bool logFile;
     const String *logLevelDefault;
     bool lockRequired;
@@ -138,6 +139,7 @@ bldCfgParseCommandList(Yaml *const yaml)
 
                         if (strEqZ(cmdDef.value, "internal"))
                         {
+                            cmdRaw.internal = yamlBoolParse(cmdDefVal);
                         }
                         else if (strEqZ(cmdDef.value, "lock-type"))
                         {
@@ -189,6 +191,7 @@ bldCfgParseCommandList(Yaml *const yaml)
                     &(BldCfgCommand)
                     {
                         .name = strDup(cmdRaw.name),
+                        .internal = cmdRaw.internal,
                         .logFile = cmdRaw.logFile,
                         .logLevelDefault = strDup(cmdRaw.logLevelDefault),
                         .lockRequired = cmdRaw.lockRequired,
@@ -275,6 +278,7 @@ typedef struct BldCfgOptionDeprecateRaw
 typedef struct BldCfgOptionCommandRaw
 {
     const String *name;                                             // See BldCfgOptionCommand for comments
+    const Variant *internal;
     const Variant *required;
     const String *defaultValue;
     const BldCfgOptionDependRaw *depend;
@@ -287,6 +291,7 @@ typedef struct BldCfgOptionRaw
     const String *name;                                             // See BldCfgOption for comments
     const String *type;
     const String *section;
+    bool internal;
     const Variant *required;
     const Variant *negate;
     bool reset;
@@ -646,6 +651,7 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const optList)
                             }
                             else if (strEqZ(optCmdDef.value, "internal"))
                             {
+                                optCmdRaw.internal = varNewBool(yamlBoolParse(optCmdDefVal));
                             }
                             else if (strEqZ(optCmdDef.value, "required"))
                             {
@@ -669,6 +675,7 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const optList)
                         &(BldCfgOptionCommandRaw)
                         {
                             .name = strDup(optCmdRaw.name),
+                            .internal = varDup(optCmdRaw.internal),
                             .required = varDup(optCmdRaw.required),
                             .defaultValue = strDup(optCmdRaw.defaultValue),
                             .depend = optCmdRaw.depend,
@@ -798,6 +805,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     }
                     else if (strEqZ(optDef.value, "internal"))
                     {
+                        optRaw.internal = yamlBoolParse(optDefVal);
                     }
                     else if (strEqZ(optDef.value, "negate"))
                     {
@@ -889,6 +897,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                         .name = strDup(optRaw->name),
                         .type = strDup(optRaw->type),
                         .section = strDup(optRaw->section),
+                        .internal = optRaw->internal,
                         .required = varBool(optRaw->required),
                         .negate = varBool(optRaw->negate),
                         .reset = optRaw->reset,
@@ -931,6 +940,10 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                 if (optCmd.required == NULL)
                     optCmd.required = optRaw->required;
 
+                // Default internal to option internal if not defined
+                if (optCmd.internal == NULL)
+                    optCmd.internal = varNewBool(optRaw->internal);
+
                 // Default command role list if not defined
                 if (optCmd.roleList == NULL)
                 {
@@ -963,6 +976,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                         &(BldCfgOptionCommand)
                         {
                             .name = strDup(optCmd.name),
+                            .internal = varBool(optCmd.internal),
                             .required = varBool(optCmd.required),
                             .defaultValue = strDup(optCmd.defaultValue),
                             .depend = bldCfgParseDependReconcile(optCmd.depend, result),

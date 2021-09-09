@@ -171,21 +171,21 @@
     <section id="support">
         <title>Support</title>
 
-        <p><backrest/> is completely free and open source under the <link url="{[github-url-license]}">MIT</link> license.  You may use it for personal or commercial purposes without any restrictions whatsoever.  Bug reports are taken very seriously and will be addressed as quickly as possible.
+        <p><backrest/> is completely free and open source under the <link url="{[github-url-license]}">MIT</link> license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible.</p>
 
-        Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task.  You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.
+        <p>Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.</p>
 
-        <link url="{[crunchy-url-base]}">Crunchy Data</link> provides packaged versions of <backrest/> for major operating systems and expert full life-cycle commercial support for <backrest/> and all things <postgres/>.  <link url="{[crunchy-url-base]}">Crunchy Data</link> is committed to providing open source solutions with no vendor lock-in, ensuring that cross-compatibility with the community version of <backrest/> is always strictly maintained.
+        <p><link url="{[crunchy-url-base]}">Crunchy Data</link> provides packaged versions of <backrest/> for major operating systems and expert full life-cycle commercial support for <backrest/> and all things <postgres/>. <link url="{[crunchy-url-base]}">Crunchy Data</link> is committed to providing open source solutions with no vendor lock-in, ensuring that cross-compatibility with the community version of <backrest/> is always strictly maintained.</p>
 
-        Please visit <link url="{[crunchy-url-base]}">Crunchy Data</link> for more information.</p>
+        <p>Please visit <link url="{[crunchy-url-base]}">Crunchy Data</link> for more information.</p>
     </section>
 
     <section id="recognition">
         <title>Recognition</title>
 
-        <p>Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of <backrest/>.
+        <p>Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of <backrest/>.</p>
 
-        <link url="{[crunchy-url-base]}">Crunchy Data</link> has contributed significant time and resources to <backrest/> and continues to actively support development. <link url="{[resonate-url-base]}">Resonate</link> also contributed to the development of <backrest/> and allowed early (but well tested) versions to be installed as their primary <postgres/> backup solution.</p>
+        <p><link url="{[crunchy-url-base]}">Crunchy Data</link> has contributed significant time and resources to <backrest/> and continues to actively support development. <link url="{[resonate-url-base]}">Resonate</link> also contributed to the development of <backrest/> and allowed early (but well tested) versions to be installed as their primary <postgres/> backup solution.</p>
 
         <p><link url="https://thenounproject.com/search/?q=lounge+chair&amp;i=129971">Armchair</link> graphic by <link url="https://thenounproject.com/sandorsz">Sandor Szabo</link>.</p>
     </section>

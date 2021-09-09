@@ -62,6 +62,7 @@ Types
 typedef struct BldCfgCommand
 {
     const String *const name;                                       // Name
+    const bool internal;                                            // Is the command internal?
     const bool logFile;                                             // Does the command write automatically to a log file?
     const String *const logLevelDefault;                            // Default log level
     const bool lockRequired;                                        // Is a lock required
@@ -94,6 +95,7 @@ typedef struct BldCfgOptionDeprecate
 typedef struct BldCfgOptionCommand
 {
     const String *const name;                                       // Name
+    const bool internal;                                            // Is the option internal?
     const bool required;                                            // Is the option required?
     const String *const defaultValue;                               // Default value, if any
     const BldCfgOptionDepend *const depend;                         // Dependency, if any
@@ -106,6 +108,7 @@ struct BldCfgOption
     const String *const name;                                       // Name
     const String *const type;                                       // Option type, e.g. integer
     const String *const section;                                    // Option section, i.e. stanza or global
+    const bool internal;                                            // Is the option internal?
     const bool required;                                            // Is the option required?
     const bool negate;                                              // Can the option be negated?
     const bool reset;                                               // Can the option be reset?

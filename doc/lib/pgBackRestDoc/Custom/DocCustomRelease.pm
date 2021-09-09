@@ -12,11 +12,10 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRestBuild::Config::Data;
-
 use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Custom::DocConfigData;
 use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
@@ -552,9 +551,9 @@ sub docGet
                         }
 
                         # Add release note if present
-                        if (!$bReleaseNote && $oRelease->nodeGet($strSectionType)->nodeTest('p'))
+                        if (!$bReleaseNote && defined($oRelease->nodeGet($strSectionType)->textGet(false)))
                         {
-                            $oReleaseSection->nodeAdd('p')->textSet($oRelease->nodeGet($strSectionType)->nodeGet('p')->textGet());
+                            $oReleaseSection->nodeAdd('p')->textSet($oRelease->nodeGet($strSectionType)->textGet());
                             $bReleaseNote = true;
                         }
 
