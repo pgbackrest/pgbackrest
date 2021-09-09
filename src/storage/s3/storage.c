@@ -997,11 +997,13 @@ storageS3New(
             host = driver->bucketEndpoint;
 
         driver->httpClient = httpClientNew(
-            tlsClientNew(sckClientNew(host, port, timeout), host, timeout, verifyPeer, caFile, caPath, NULL, NULL, NULL), timeout);
+            tlsClientNew(
+                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, caFile, caPath, NULL, NULL, NULL),
+            timeout);
 
         // Create the HTTP client used to retreive temporary security credentials
         if (driver->keyType == storageS3KeyTypeAuto)
-            driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout), timeout);
+            driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout, timeout), timeout);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();

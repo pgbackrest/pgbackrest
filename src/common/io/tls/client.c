@@ -30,7 +30,8 @@ Object type
 typedef struct TlsClient
 {
     const String *host;                                             // Host to use for peer verification
-    TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
+    TimeMSec timeoutConnect;                                        // Timeout for connection
+    TimeMSec timeoutSession;                                        // Timeout passed to session
     bool verifyPeer;                                                // Should the peer (server) certificate be verified?
     IoClient *ioClient;                                             // Underlying client (usually a SocketClient)
 
@@ -46,8 +47,8 @@ tlsClientToLog(const THIS_VOID)
     THIS(const TlsClient);
 
     return strNewFmt(
-        "{ioClient: %s, timeout: %" PRIu64", verifyPeer: %s}",
-        objMemContextFreeing(this) ? NULL_Z : strZ(ioClientToLog(this->ioClient)), this->timeout,
+        "{ioClient: %s, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 ", verifyPeer: %s}",
+        objMemContextFreeing(this) ? NULL_Z : strZ(ioClientToLog(this->ioClient)), this->timeoutConnect, this->timeoutSession,
         cvtBoolToConstZ(this->verifyPeer));
 }
 
@@ -248,7 +249,7 @@ tlsClientOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         bool retry;
-        Wait *wait = waitNew(this->timeout);
+        Wait *wait = waitNew(this->timeoutConnect);
         SSL *tlsSession = NULL;
 
         do
@@ -281,7 +282,7 @@ tlsClientOpen(THIS_VOID)
                 TRY_END();
 
                 // Open session
-                result = tlsSessionNew(tlsSession, ioSession, this->timeout);
+                result = tlsSessionNew(tlsSession, ioSession, this->timeoutSession);
             }
             CATCH_ANY()
             {
@@ -345,13 +346,15 @@ static const IoClientInterface tlsClientInterface =
 
 IoClient *
 tlsClientNew(
-    IoClient *const ioClient, const String *const host, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
-    const String *const caPath, const String *const certFile, const String *const keyFile, const String *const crlFile)
+    IoClient *const ioClient, const String *const host, const TimeMSec timeoutConnect, const TimeMSec timeoutSession,
+    const bool verifyPeer, const String *const caFile, const String *const caPath, const String *const certFile,
+    const String *const keyFile, const String *const crlFile)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
         FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
@@ -372,7 +375,8 @@ tlsClientNew(
         {
             .ioClient = ioClientMove(ioClient, MEM_CONTEXT_NEW()),
             .host = strDup(host),
-            .timeout = timeout,
+            .timeoutConnect = timeoutConnect,
+            .timeoutSession = timeoutSession,
             .verifyPeer = verifyPeer,
             .context = tlsContext(),
         };

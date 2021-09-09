@@ -220,8 +220,7 @@ tlsServerAccept(THIS_VOID, IoSession *const ioSession)
     {
         // Open TLS session
         SSL *tlsSession = SSL_new(this->context);
-        // !!! FIX TIMEOUT -- NEEDS TO BE IO-TIMEOUT DURING ACCEPT AND PROTOCOL-TIMEOUT AFTER
-        result = tlsSessionNew(tlsSession, ioSession, 60000);
+        result = tlsSessionNew(tlsSession, ioSession, this->timeout);
 
         // Authenticate TLS session
         tlsServerAuth(this, result, tlsSession);

@@ -33,7 +33,8 @@ typedef struct SocketClient
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
     String *name;                                                   // Socket name (host:port)
-    TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
+    TimeMSec timeoutConnect;                                        // Timeout for connection
+    TimeMSec timeoutSession;                                        // Timeout passed to session
 } SocketClient;
 
 /***********************************************************************************************************************************
@@ -44,7 +45,9 @@ sckClientToLog(const THIS_VOID)
 {
     THIS(const SocketClient);
 
-    return strNewFmt("{host: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->host), this->port, this->timeout);
+    return strNewFmt(
+        "{host: %s, port: %u, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 "}", strZ(this->host), this->port,
+        this->timeoutConnect, this->timeoutSession);
 }
 
 #define FUNCTION_LOG_SOCKET_CLIENT_TYPE                                                                                            \
@@ -69,7 +72,7 @@ sckClientOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         bool retry;
-        Wait *wait = waitNew(this->timeout);
+        Wait *wait = waitNew(this->timeoutConnect);
 
         do
         {
@@ -120,7 +123,7 @@ sckClientOpen(THIS_VOID)
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = sckSessionNew(ioSessionRoleClient, fd, this->host, this->port, this->timeout);
+                    result = sckSessionNew(ioSessionRoleClient, fd, this->host, this->port, this->timeoutSession);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
@@ -176,12 +179,13 @@ static const IoClientInterface sckClientInterface =
 };
 
 IoClient *
-sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
+sckClientNew(const String *const host, const unsigned int port, const TimeMSec timeoutConnect, const TimeMSec timeoutSession)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
     FUNCTION_LOG_END();
 
     ASSERT(host != NULL);
@@ -197,7 +201,8 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
             .host = strDup(host),
             .port = port,
             .name = strNewFmt("%s:%u", strZ(host), port),
-            .timeout = timeout,
+            .timeoutConnect = timeoutConnect,
+            .timeoutSession = timeoutSession,
         };
 
         statInc(SOCKET_STAT_CLIENT_STR);

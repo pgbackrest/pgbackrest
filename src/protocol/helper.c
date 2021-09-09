@@ -400,10 +400,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 
                 // Error if the client is authorized for the requested stanza
                 if (!protocolServerAuthorize(clientAuthList, cfgOptionStrNull(cfgOptStanza)))
-                {
-                        // !!! BETTER ERROR TYPE HERE?
                         THROW(AccessError, "access denied");
-                }
             }
             CATCH_ANY()
             {
@@ -414,8 +411,6 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 
             // Ack the config command
             protocolServerDataEndPut(result);
-
-            // !!! NEED TO SET READ TIMEOUT TO PROTOCOL-TIMEOUT HERE
 
             ioSessionMove(tlsSession, memContextPrior());
             protocolServerMove(result, memContextPrior());
@@ -645,7 +640,6 @@ protocolRemoteExec(
     const bool isRepo = protocolStorageType == protocolStorageTypeRepo;
     const StringId remoteType = cfgOptionIdxStrId(isRepo ? cfgOptRepoHostType : cfgOptPgHostType, hostIdx);
     const String *const host = cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx);
-    const TimeMSec timeout = cfgOptionUInt64(cfgOptProtocolTimeout);
 
     // Handle remote types
     IoRead *read;
@@ -676,14 +670,15 @@ protocolRemoteExec(
 
             // Negotiate TLS
             helper->ioClient = tlsClientNew(
-                sckClientNew(host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx), timeout),
-                host, timeout, true,
+                sckClientNew(
+                    host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx),
+                    cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptProtocolTimeout)),
+                host, cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptProtocolTimeout), true,
                 cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaFile : cfgOptPgHostCaFile, hostIdx),
                 cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaPath : cfgOptPgHostCaPath, hostIdx),
                 cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
                 cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx),
-                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCrlFile : cfgOptPgHostCrlFile, hostIdx)
-                );
+                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCrlFile : cfgOptPgHostCrlFile, hostIdx));
             helper->ioSession = ioClientOpen(helper->ioClient);
 
             read = ioSessionIoRead(helper->ioSession);

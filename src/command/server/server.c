@@ -28,8 +28,9 @@ cmdServer(uint64_t connectionMax)
     {
         IoServer *const tlsServer = tlsServerNew(
            host, cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile), cfgOptionStr(cfgOptTlsServerCertFile),
-           cfgOptionStrNull(cfgOptTlsServerCrlFile), cfgOptionUInt64(cfgOptIoTimeout));
-        IoServer *const socketServer = sckServerNew(host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptIoTimeout));
+           cfgOptionStrNull(cfgOptTlsServerCrlFile), cfgOptionUInt64(cfgOptProtocolTimeout));
+        IoServer *const socketServer = sckServerNew(
+            host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
 
         // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE
         // REPLACED WITH A STOP REQUEST FROM AN AUTHENTICATED CLIENT OR SIGQUIT.

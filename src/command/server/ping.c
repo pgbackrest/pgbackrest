@@ -18,16 +18,17 @@ cmdServerPing(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const host = STRDEF("localhost");
-
         // Connect to server without any verification
-        IoClient *tlsClient = tlsClientNew(
-            sckClientNew(host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptIoTimeout)), host,
-            cfgOptionUInt64(cfgOptIoTimeout), false, NULL, NULL, NULL, NULL, NULL);
-        IoSession *tlsSession = ioClientOpen(tlsClient);
+        const String *const host = STRDEF("localhost");
+        const TimeMSec timeout = cfgOptionUInt64(cfgOptIoTimeout);
+
+        IoClient *const tlsClient = tlsClientNew(
+            sckClientNew(host, cfgOptionUInt(cfgOptTlsServerPort), timeout, timeout), host, timeout, timeout, false, NULL, NULL,
+            NULL, NULL, NULL);
+        IoSession *const tlsSession = ioClientOpen(tlsClient);
 
         // Send ping
-        ProtocolClient *protocolClient = protocolClientNew(
+        ProtocolClient *const protocolClient = protocolClientNew(
             strNewFmt(PROTOCOL_SERVICE_REMOTE " socket protocol on '%s'", strZ(host)), PROTOCOL_SERVICE_REMOTE_STR,
             ioSessionIoRead(tlsSession), ioSessionIoWrite(tlsSession));
         protocolClientNoExit(protocolClient);

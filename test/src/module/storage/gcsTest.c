@@ -423,7 +423,7 @@ testRun(void)
                 // Replace the default authClient with one that points locally. The default host and url will still be used so they
                 // can be verified when testing auth.
                 ((StorageGcs *)storageDriver(storage))->authClient = httpClientNew(
-                    sckClientNew(hrnServerHost(), testPortMeta, 2000), 2000);
+                    sckClientNew(hrnServerHost(), testPortMeta, 2000, 2000), 2000);
 
                 // Tests need the chunk size to be 16
                 ((StorageGcs *)storageDriver(storage))->chunkSize = 16;

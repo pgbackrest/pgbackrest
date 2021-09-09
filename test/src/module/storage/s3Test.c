@@ -264,7 +264,8 @@ testRun(void)
             httpClientToLog(driver->httpClient),
             strNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
-                    ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                    ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
+                    ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
@@ -330,7 +331,8 @@ testRun(void)
             httpClientToLog(driver->httpClient),
             strNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
-                    ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                    ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
+                    ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
@@ -454,7 +456,7 @@ testRun(void)
 
                 // Testing requires the auth http client to be redirected
                 driver->credHost = hrnServerHost();
-                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000), 5000);
+                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000, 5000), 5000);
 
                 // Now that we have checked the role when set explicitly, null it out to make sure it is retrieved automatically
                 driver->credRole = NULL;

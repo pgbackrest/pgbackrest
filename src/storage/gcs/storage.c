@@ -955,7 +955,7 @@ storageGcsNew(
                     STRDEF("metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"),
                     .type = httpProtocolTypeHttp);
                 driver->authClient = httpClientNew(
-                    sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout), timeout);
+                    sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout, timeout), timeout);
 
                 break;
             }
@@ -970,8 +970,8 @@ storageGcsNew(
 
                 driver->authClient = httpClientNew(
                     tlsClientNew(
-                        sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout),
-                        httpUrlHost(driver->authUrl), timeout, verifyPeer, caFile, caPath, NULL, NULL, NULL),
+                        sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout, timeout),
+                        httpUrlHost(driver->authUrl), timeout, timeout, verifyPeer, caFile, caPath, NULL, NULL, NULL),
                     timeout);
 
                 break;
@@ -990,8 +990,8 @@ storageGcsNew(
         // Create the http client used to service requests
         driver->httpClient = httpClientNew(
             tlsClientNew(
-                sckClientNew(driver->endpoint, httpUrlPort(url), timeout), driver->endpoint, timeout, verifyPeer, caFile, caPath,
-                NULL, NULL, NULL),
+                sckClientNew(driver->endpoint, httpUrlPort(url), timeout, timeout), driver->endpoint, timeout, timeout, verifyPeer,
+                caFile, caPath, NULL, NULL, NULL),
             timeout);
 
         // Create list of redacted headers
