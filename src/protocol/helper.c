@@ -321,38 +321,36 @@ protocolLocalFree(unsigned int processId)
 }
 
 /**********************************************************************************************************************************/
-// Helper to check if client is allowed
+// Helper to check if client is authorized for a stanza
 static bool
-protocolServerAllow(const String *allowListStr, const String *const stanza)
+protocolServerAuthorize(const String *authListStr, const String *const stanza)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, allowListStr);
+        FUNCTION_TEST_PARAM(STRING, authListStr);
         FUNCTION_LOG_PARAM(STRING, stanza);
     FUNCTION_TEST_END();
 
-    // If the allow list was found
-    if (allowListStr != NULL)
+    ASSERT(authListStr != NULL);
+
+    // Empty list is not valid. ??? It would be better if this were done during config parsing.
+    authListStr = strTrim(strDup(authListStr));
+
+    if (strEmpty(authListStr))
+        THROW(OptionInvalidValueError, "'" CFGOPT_TLS_SERVER_AUTH "' option must have a value");
+
+    // If * then all stanzas are authorized
+    if (strEqZ(authListStr, "*"))
+        FUNCTION_TEST_RETURN(true);
+
+    // Check the list of stanzas for a match with the specified stanza. Each entry will need to be trimmed before comparing.
+    if (stanza != NULL)
     {
-        // Empty list is not allowed
-        allowListStr = strTrim(strDup(allowListStr));
+        StringList *authList = strLstNewSplitZ(authListStr, COMMA_Z);
 
-        if (strEmpty(allowListStr))
-            THROW(OptionInvalidValueError, "'" CFGOPT_TLS_SERVER_ALLOW "' option must have a value");
-
-        // If * then all stanzas are allowed
-        if (strEqZ(allowListStr, "*"))
-            FUNCTION_TEST_RETURN(true);
-
-        // Check the list of stanzas for a match with the specified stanza. Each entry will need to be trimmed before comparing.
-        if (stanza != NULL)
+        for (unsigned int authListIdx = 0; authListIdx < strLstSize(authList); authListIdx++)
         {
-            StringList *allowList = strLstNewSplitZ(allowListStr, COMMA_Z);
-
-            for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(allowList); allowListIdx++)
-            {
-                if (strEq(strTrim(strLstGet(allowList, allowListIdx)), stanza))
-                    FUNCTION_TEST_RETURN(true);
-            }
+            if (strEq(strTrim(strLstGet(authList, authListIdx)), stanza))
+                FUNCTION_TEST_RETURN(true);
         }
     }
 
@@ -381,34 +379,38 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         // If session is authenticated
         if (ioSessionAuthenticated(tlsSession))
         {
-            // Get list of allowed stanzas for this client
-            CHECK(cfgOptionTest(cfgOptTlsServerAllow));
-            const String *const clientAllowList = strDup(
-                varStr(kvGet(cfgOptionKv(cfgOptTlsServerAllow), VARSTR(ioSessionPeerName(tlsSession)))));
-
-            // Get parameter list from the client and load it
-            const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
-            CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
-
-            StringList *const paramList = pckReadStrLstP(pckReadNewBuf(command.param));
-            strLstInsert(paramList, 0, cfgExe());
-            cfgLoad(strLstSize(paramList), strLstPtr(paramList));
-
-            // Check that the client is allowed to access this server
-            if (!protocolServerAllow(clientAllowList, cfgOptionStrNull(cfgOptStanza)))
+            TRY_BEGIN()
             {
-                TRY_BEGIN()
+                // Get list of authorized stanzas for this client
+                CHECK(cfgOptionTest(cfgOptTlsServerAuth));
+                const String *const clientAuthList = strDup(
+                    varStr(kvGet(cfgOptionKv(cfgOptTlsServerAuth), VARSTR(ioSessionPeerName(tlsSession)))));
+
+                // Error if the client is not authorized for anything
+                if (clientAuthList == NULL)
+                    THROW(AccessError, "access denied");
+
+                // Get parameter list from the client and load it
+                const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
+                CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
+
+                StringList *const paramList = pckReadStrLstP(pckReadNewBuf(command.param));
+                strLstInsert(paramList, 0, cfgExe());
+                cfgLoad(strLstSize(paramList), strLstPtr(paramList));
+
+                // Error if the client is authorized for the requested stanza
+                if (!protocolServerAuthorize(clientAuthList, cfgOptionStrNull(cfgOptStanza)))
                 {
-                    // !!! BETTER ERROR TYPE HERE?
-                    THROW(ConfigError, "access denied");
+                        // !!! BETTER ERROR TYPE HERE?
+                        THROW(AccessError, "access denied");
                 }
-                CATCH_ANY()
-                {
-                    protocolServerError(result, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
-                    RETHROW();
-                }
-                TRY_END();
             }
+            CATCH_ANY()
+            {
+                protocolServerError(result, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
+                RETHROW();
+            }
+            TRY_END();
 
             // Ack the config command
             protocolServerDataEndPut(result);

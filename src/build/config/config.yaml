@@ -930,7 +930,7 @@ option:
     command:
       server: {}
 
-  tls-server-allow:
+  tls-server-auth:
     section: global
     type: hash
     command:

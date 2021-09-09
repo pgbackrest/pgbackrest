@@ -7366,7 +7366,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
-        PARSE_RULE_OPTION_NAME("tls-server-allow"),
+        PARSE_RULE_OPTION_NAME("tls-server-auth"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
@@ -7894,7 +7894,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
-    cfgOptTlsServerAllow,
+    cfgOptTlsServerAuth,
     cfgOptTlsServerCaFile,
     cfgOptTlsServerCertFile,
     cfgOptTlsServerCrlFile,

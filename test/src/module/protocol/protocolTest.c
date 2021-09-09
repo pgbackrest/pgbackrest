@@ -689,7 +689,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid allow list");
 
-        TEST_ERROR(protocolServerAllow(STRDEF(" "), NULL), OptionInvalidValueError, "'tls-server-allow' option must have a value");
+        TEST_ERROR(
+            protocolServerAuthorize(STRDEF(" "), NULL), OptionInvalidValueError, "'tls-server-auth' option must have a value");
 
         HRN_FORK_BEGIN()
         {
@@ -734,14 +735,14 @@ testRun(void)
                 TEST_TITLE("access denied connecting to repo server (invalid stanza)");
 
                 TEST_ERROR_FMT(
-                    protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), ConfigError,
+                    protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), AccessError,
                     "raised from remote-0 tls protocol on '%s': access denied", strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("access denied connecting to repo server (invalid client)");
 
                 TEST_ERROR_FMT(
-                    protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), ConfigError,
+                    protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), AccessError,
                     "raised from remote-0 tls protocol on '%s': access denied", strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -756,7 +757,7 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
 
                 TEST_ERROR_FMT(
-                    protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), ConfigError,
+                    protocolRemoteExec(&helper, protocolStorageTypeRepo, 0, 0), AccessError,
                     "raised from remote-0 tls protocol on '%s': access denied", strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -803,7 +804,7 @@ testRun(void)
                 hrnCfgArgRawZ(argListBase, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
 
                 StringList *argList = strLstDup(argListBase);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=db");
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=db");
                 HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);
@@ -815,37 +816,37 @@ testRun(void)
                 // Repo server access denied (archive-get) invalid stanza
                 // -----------------------------------------------------------------------------------------------------------------
                 argList = strLstDup(argListBase);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=bogus");
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=bogus");
                 HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);
 
-                TEST_ERROR(protocolServer(tlsServer, socketSession), ConfigError, "access denied");
+                TEST_ERROR(protocolServer(tlsServer, socketSession), AccessError, "access denied");
 
                 // Repo server access denied (archive-get) invalid client
                 // -----------------------------------------------------------------------------------------------------------------
                 argList = strLstDup(argListBase);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "bogus=*");
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "bogus=*");
                 HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);
 
-                TEST_ERROR(protocolServer(tlsServer, socketSession), ConfigError, "access denied");
+                TEST_ERROR(protocolServer(tlsServer, socketSession), AccessError, "access denied");
 
                 // Repo server access denied (info)
                 // -----------------------------------------------------------------------------------------------------------------
                 argList = strLstDup(argListBase);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=db");
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=db");
                 HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);
 
-                TEST_ERROR(protocolServer(tlsServer, socketSession), ConfigError, "access denied");
+                TEST_ERROR(protocolServer(tlsServer, socketSession), AccessError, "access denied");
 
                 // Pg server (backup)
                 // -----------------------------------------------------------------------------------------------------------------
                 argList = strLstDup(argListBase);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerAllow, "pgbackrest-client=*");
+                hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=*");
                 HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);

@@ -1009,8 +1009,8 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="tls-server-allow" name="TLS Server Allowed Clients">
-                        <summary>TLS server allowed clients.</summary>
+                    <config-key id="tls-server-auth" name="TLS Server Authorized Clients">
+                        <summary>TLS server authorized clients.</summary>
 
                         <text>
                             <p>!!!</p>
