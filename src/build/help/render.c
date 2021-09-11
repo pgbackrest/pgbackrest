@@ -88,7 +88,7 @@ bldHlpRenderXmlNode(const xmlNodePtr xml)
             else
                 THROW_FMT(FormatError, "unknown tag '%s'", strZ(name));
         }
-        else
+        else if (currentNode->type == XML_TEXT_NODE)
         {
             xmlChar *content = xmlNodeGetContent(currentNode);
             String *text = strNewZ((char *)content);

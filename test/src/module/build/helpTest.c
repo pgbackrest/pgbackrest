@@ -39,6 +39,7 @@ testRun(void)
                 "<doc>"
                 "<p><backrest/> <postgres/> {[dash]} "
                     "<b><br-option><cmd><code><exe><file><host><i><id><link><path><pg-setting><proper><setting>"
+                    "<!-- COMMENT -->"
                     "info"
                     "</setting></proper></pg-setting></path></link></id></i></host></file></exe></code></cmd></br-option></b></p>\n"
                 "\n"
