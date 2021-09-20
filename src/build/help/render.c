@@ -288,14 +288,15 @@ Output buffer to a file as a byte array
 static void
 bldHlpRenderHelpAutoC(const Storage *const storageRepo, const BldCfg bldCfg, const BldHlp bldHlp)
 {
-    // Convert pack to bytes
+    // Convert buffer to bytes
+    const Buffer *const buffer = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlp);
+
     String *const help = strNewFmt(
         "%s"
-        "static const unsigned char helpData[] =\n"
+        "static const unsigned char helpData[%zu] =\n"
         "{\n",
-        strZ(bldHeader("help", "Help Data")));
+        strZ(bldHeader("help", "Help Data")), bufUsed(buffer));
 
-    const Buffer *const buffer = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlp);
     bool first = true;
     size_t lineSize = 0;
     char byteZ[4];
