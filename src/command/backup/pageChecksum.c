@@ -27,6 +27,8 @@ typedef struct PageChecksum
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
     uint64_t lsnLimit;                                              // Lower limit of pages that could be torn
 
+    unsigned char *pageBuffer;                                      // Buffer to hold a page while verifying the checksum
+
     bool valid;                                                     // Is the relation structure valid?
     bool align;                                                     // Is the relation alignment valid?
     VariantList *error;                                             // List of checksum errors
@@ -95,14 +97,12 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
     {
         for (unsigned int pageIdx = 0; pageIdx < pageTotal; pageIdx++)
         {
-            // Get a non-const pointer which is required by pgPageChecksumTest() below. ??? This is not entirely kosher since we are
-            // being passed a const buffer and we should deinitely not be modifying the contents.  When pgPageChecksumTest() returns
-            // the data should be the same, but there's no question that some munging occurs.  Should we make a copy of the page
-            // before passing it into pgPageChecksumTest()?
-            unsigned char *pagePtr = UNCONSTIFY(unsigned char *, bufPtrConst(input)) + (pageIdx * PG_PAGE_SIZE_DEFAULT);
+            // Get a pointer to the page header
+            const PageHeaderData *const pageHeader = (const PageHeaderData *)(bufPtrConst(input) + pageIdx * PG_PAGE_SIZE_DEFAULT);
 
-            // Get a pointer to the page header at the beginning of the page
-            const PageHeaderData *pageHeader = (const PageHeaderData *)pagePtr;
+            // Skip new pages ??? Improved to exactly match what PostgreSQL does in PageIsVerifiedExtended()
+            if (pageHeader->pd_upper == 0)
+                continue;
 
             // Get the page lsn
             uint64_t pageLsn = PageXLogRecPtrGet(pageHeader->pd_lsn);
@@ -110,27 +110,35 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Block number relative to all segments in the relation
             unsigned int blockNo = this->pageNoOffset + pageIdx;
 
-            if (// This is a new page so don't test checksum
-                !(pageHeader->pd_upper == 0 ||
-                // LSN is after the backup started so checksum is not tested because pages may be torn
-                pageLsn >= this->lsnLimit ||
-                // Checksum is valid if a full page
-                ((this->align || pageIdx < pageTotal - 1) && pageHeader->pd_checksum == pgPageChecksum(pagePtr, blockNo))))
-            {
-                MEM_CONTEXT_BEGIN(this->memContext)
-                {
-                    // Create the error list if it does not exist yet
-                    if (this->error == NULL)
-                        this->error = varLstNew();
+            // Skip pages after the backup start LSN since they may be torn
+            if (pageLsn >= this->lsnLimit)
+                continue;
 
-                    // Add page number and lsn to the error list
-                    VariantList *pair = varLstNew();
-                    varLstAdd(pair, varNewUInt(blockNo));
-                    varLstAdd(pair, varNewUInt64(pageLsn));
-                    varLstAdd(this->error, varNewVarLst(pair));
-                }
-                MEM_CONTEXT_END();
+            // Only validate page checksum if the page is complete
+            if (this->align || pageIdx < pageTotal - 1)
+            {
+                // Make a copy of the page since it will be modified by the page checksum function
+                memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
+
+                // Continue if the checksum matches
+                if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
+                    continue;
             }
+
+            // Add the page error
+            MEM_CONTEXT_BEGIN(this->memContext)
+            {
+                // Create the error list if it does not exist yet
+                if (this->error == NULL)
+                    this->error = varLstNew();
+
+                // Add page number and lsn to the error list
+                VariantList *pair = varLstNew();
+                varLstAdd(pair, varNewUInt(blockNo));
+                varLstAdd(pair, varNewUInt64(pageLsn));
+                varLstAdd(this->error, varNewVarLst(pair));
+            }
+            MEM_CONTEXT_END();
         }
 
         this->pageNoOffset += pageTotal;
@@ -237,6 +245,7 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t 
             .memContext = memContextCurrent(),
             .pageNoOffset = segmentNo * segmentPageTotal,
             .lsnLimit = lsnLimit,
+            .pageBuffer = memNew(PG_PAGE_SIZE_DEFAULT),
             .valid = true,
             .align = true,
         };
