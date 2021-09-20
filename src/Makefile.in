@@ -142,20 +142,6 @@ SRCS = \
 	postgres/client.c \
 	postgres/interface.c \
 	postgres/interface/page.c \
-	postgres/interface/v083.c \
-	postgres/interface/v084.c \
-	postgres/interface/v090.c \
-	postgres/interface/v091.c \
-	postgres/interface/v092.c \
-	postgres/interface/v093.c \
-	postgres/interface/v094.c \
-	postgres/interface/v095.c \
-	postgres/interface/v096.c \
-	postgres/interface/v100.c \
-	postgres/interface/v110.c \
-	postgres/interface/v120.c \
-	postgres/interface/v130.c \
-	postgres/interface/v140.c \
 	protocol/client.c \
 	protocol/command.c \
 	protocol/helper.c \
@@ -200,7 +186,8 @@ BUILDDIR=.build
 ####################################################################################################################################
 # Compile and link pgbackrest
 ####################################################################################################################################
-OBJS_PGBACKREST = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS) main.c)
+SRCS_PGBACKREST := $(wildcard postgres/interface/v*.c $(VPATH)/postgres/interface/v*.c)
+OBJS_PGBACKREST = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_PGBACKREST) $(SRCS) main.c)
 
 pgbackrest: $(OBJS_PGBACKREST)
 	$(CC) -o pgbackrest $(OBJS_PGBACKREST) $(LDFLAGS) $(LIBS)
