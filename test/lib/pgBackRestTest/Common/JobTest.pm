@@ -725,7 +725,7 @@ sub run
                     ($self->{bValgrindUnit} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
                         'valgrind -q --gen-suppressions=all' .
                         ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
-                        " --leak-check=full --leak-resolution=high --error-exitcode=25" . ' ' : '') .
+                        " --exit-on-first-error=yes --leak-check=full --leak-resolution=high --error-exitcode=25" . ' ' : '') .
                         "./test.bin 2>&1" .
                     ($self->{oTest}->{&TEST_VM} ne VM_NONE ? "'" : '');
             }
