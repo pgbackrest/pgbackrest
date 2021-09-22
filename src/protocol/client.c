@@ -152,7 +152,7 @@ protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
             pckWriteEndP(data);
 
         // Write the data
-        PackWrite *dataMessage = pckWriteNew(this->write);
+        PackWrite *dataMessage = pckWriteNewIo(this->write);
         pckWriteU32P(dataMessage, protocolMessageTypeData, .defaultWrite = true);
         pckWritePackP(dataMessage, data);
         pckWriteEndP(dataMessage);
@@ -217,7 +217,7 @@ protocolClientDataGet(ProtocolClient *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *response = pckReadNew(this->pub.read);
+        PackRead *response = pckReadNewIo(this->pub.read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
 
         protocolClientError(this, type, response);
@@ -247,7 +247,7 @@ protocolClientDataEndGet(ProtocolClient *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *response = pckReadNew(this->pub.read);
+        PackRead *response = pckReadNewIo(this->pub.read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
 
         protocolClientError(this, type, response);

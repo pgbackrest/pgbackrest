@@ -35,7 +35,7 @@ containers. Fields contain data to be stored, e.g. integers, strings, etc.
 
 Here is a simple example of a pack:
 
-PackWrite *write = pckWriteNew(buffer);
+PackWrite *write = pckWriteNewBuf(buffer);
 pckWriteU64P(write, 77);
 pckWriteBoolP(write, false, .defaultWrite = true);
 pckWriteI32P(write, -1, .defaultValue = -1);
@@ -48,7 +48,7 @@ default. Note that there is a gap in the ID stream, which represents the NULL/de
 
 This pack can be read with:
 
-PackRead *read = pckReadNew(buffer);
+PackRead *read = pckReadNewBuf(buffer);
 pckReadU64P(read);
 pckReadBoolP(read);
 pckReadI32P(read, .defaultValue = -1);
@@ -60,7 +60,7 @@ applied again when reading by setting .defaultValue if the default value is not 
 
 If we don't care about the NULL/default, another way to read is:
 
-PackRead *read = pckReadNew(buffer);
+PackRead *read = pckReadNewBuf(buffer);
 pckReadU64P(read);
 pckReadBoolP(read);
 pckReadStringP(read, .id = 4);
@@ -132,7 +132,7 @@ typedef enum
 /***********************************************************************************************************************************
 Read Constructors
 ***********************************************************************************************************************************/
-PackRead *pckReadNew(IoRead *read);
+PackRead *pckReadNewIo(IoRead *read);
 
 // Note that the buffer is not moved into the PackRead mem context and must be moved explicitly if the PackRead object is moved.
 PackRead *pckReadNewBuf(const Buffer *buffer);
@@ -381,7 +381,7 @@ pckReadFree(PackRead *const this)
 /***********************************************************************************************************************************
 Write Constructors
 ***********************************************************************************************************************************/
-PackWrite *pckWriteNew(IoWrite *write);
+PackWrite *pckWriteNewIo(IoWrite *write);
 
 // Note that the buffer is not moved into the PackWrite mem context and must be moved explicitly if the PackWrite object is moved.
 PackWrite *pckWriteNewBuf(Buffer *buffer);

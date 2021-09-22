@@ -90,7 +90,7 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write the error and flush to be sure it gets sent immediately
-        PackWrite *error = pckWriteNew(this->write);
+        PackWrite *error = pckWriteNewIo(this->write);
         pckWriteU32P(error, protocolMessageTypeError);
         pckWriteI32P(error, code);
         pckWriteStrP(error, message);
@@ -116,7 +116,7 @@ protocolServerCommandGet(ProtocolServer *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *const command = pckReadNew(this->read);
+        PackRead *const command = pckReadNewIo(this->read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(command);
 
         CHECK(type == protocolMessageTypeCommand);
@@ -284,7 +284,7 @@ protocolServerDataGet(ProtocolServer *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *data = pckReadNew(this->read);
+        PackRead *data = pckReadNewIo(this->read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(data);
 
         CHECK(type == protocolMessageTypeData);
@@ -318,7 +318,7 @@ protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
             pckWriteEndP(data);
 
         // Write the result
-        PackWrite *resultMessage = pckWriteNew(this->write);
+        PackWrite *resultMessage = pckWriteNewIo(this->write);
         pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
         pckWritePackP(resultMessage, data);
         pckWriteEndP(resultMessage);
@@ -343,7 +343,7 @@ protocolServerDataEndPut(ProtocolServer *const this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write the response and flush to be sure it gets sent immediately
-        PackWrite *response = pckWriteNew(this->write);
+        PackWrite *response = pckWriteNewIo(this->write);
         pckWriteU32P(response, protocolMessageTypeDataEnd, .defaultWrite = true);
         pckWriteEndP(response);
     }

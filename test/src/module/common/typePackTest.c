@@ -36,7 +36,7 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(packWrite, pckWriteMove(pckWriteNew(write), memContextPrior()), "move new write");
+            TEST_ASSIGN(packWrite, pckWriteMove(pckWriteNewIo(write), memContextPrior()), "move new write");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -234,7 +234,7 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(packRead, pckReadMove(pckReadNew(read), memContextPrior()), "move new read");
+            TEST_ASSIGN(packRead, pckReadMove(pckReadNewIo(read), memContextPrior()), "move new read");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -358,7 +358,7 @@ testRun(void)
         // Make internal buffer small enough that it will never be used
         ioBufferSizeSet(0);
 
-        TEST_ASSIGN(packWrite, pckWriteNew(write), "new write");
+        TEST_ASSIGN(packWrite, pckWriteNewIo(write), "new write");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("test")), "write string longer than internal buffer");
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "end with internal buffer empty");
 

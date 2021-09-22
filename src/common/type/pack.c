@@ -278,7 +278,7 @@ pckReadNewInternal(void)
 }
 
 PackRead *
-pckReadNew(IoRead *read)
+pckReadNewIo(IoRead *read)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_READ, read);
@@ -1135,7 +1135,7 @@ pckWriteNewInternal(void)
 }
 
 PackWrite *
-pckWriteNew(IoWrite *write)
+pckWriteNewIo(IoWrite *write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_WRITE, write);
