@@ -944,12 +944,12 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 .user = basePath->user,
                 .group = basePath->group,
                 .size = strSize(content),
-                .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
+                .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                 .timestamp = timestamp,
             };
 
             memcpy(
-                file.checksumSha1, strZ(varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))),
+                file.checksumSha1, strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))),
                 HASH_TYPE_SHA1_SIZE_HEX + 1);
 
             manifestFileAdd(manifest, &file);
@@ -1799,7 +1799,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                             .user = basePath->user,
                             .group = basePath->group,
                             .size = walSegmentSize,
-                            .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
+                            .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                             .timestamp = manifestData(manifest)->backupTimestampStop,
                         };
 

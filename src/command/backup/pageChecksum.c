@@ -8,14 +8,10 @@ Page Checksum Filter
 #include "command/backup/pageChecksum.h"
 #include "common/log.h"
 #include "common/macro.h"
+#include "common/type/json.h"
 #include "common/type/object.h"
 #include "postgres/interface.h"
 #include "postgres/interface/static.vendor.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(PAGE_CHECKSUM_FILTER_TYPE_STR,                        PAGE_CHECKSUM_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -150,7 +146,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
 /***********************************************************************************************************************************
 Return filter result
 ***********************************************************************************************************************************/
-static Variant *
+static Buffer *
 pageChecksumResult(THIS_VOID)
 {
     THIS(PageChecksum);
@@ -161,67 +157,81 @@ pageChecksumResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    KeyValue *result = kvNew();
+    Buffer *result = NULL;
 
-    if (this->error != NULL)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        VariantList *errorList = varLstNew();
-        unsigned int errorIdx = 0;
+        KeyValue *error = kvNew();
 
-        // Convert the full list to an abbreviated list.  In the future we want to return the entire list so pages can be verified
-        // in the WAL.
-        do
+        if (this->error != NULL)
         {
-            unsigned int pageId = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx)), 0));
+            VariantList *errorList = varLstNew();
+            unsigned int errorIdx = 0;
 
-            if (errorIdx == varLstSize(this->error) - 1)
+            // Convert the full list to an abbreviated list. In the future we want to return the entire list so pages can be verified
+            // in the WAL.
+            do
             {
-                varLstAdd(errorList, varNewUInt(pageId));
-                errorIdx++;
-            }
-            else
-            {
-                unsigned int pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
+                unsigned int pageId = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx)), 0));
 
-                if (pageIdNext > pageId + 1)
+                if (errorIdx == varLstSize(this->error) - 1)
                 {
                     varLstAdd(errorList, varNewUInt(pageId));
                     errorIdx++;
                 }
                 else
                 {
-                    unsigned int pageIdLast = pageIdNext;
-                    errorIdx++;
+                    unsigned int pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
 
-                    while (errorIdx < varLstSize(this->error) - 1)
+                    if (pageIdNext > pageId + 1)
                     {
-                        pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
-
-                        if (pageIdNext > pageIdLast + 1)
-                            break;
-
-                        pageIdLast = pageIdNext;
+                        varLstAdd(errorList, varNewUInt(pageId));
                         errorIdx++;
                     }
+                    else
+                    {
+                        unsigned int pageIdLast = pageIdNext;
+                        errorIdx++;
 
-                    VariantList *errorListSub = varLstNew();
-                    varLstAdd(errorListSub, varNewUInt(pageId));
-                    varLstAdd(errorListSub, varNewUInt(pageIdLast));
-                    varLstAdd(errorList, varNewVarLst(errorListSub));
-                    errorIdx++;
+                        while (errorIdx < varLstSize(this->error) - 1)
+                        {
+                            pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
+
+                            if (pageIdNext > pageIdLast + 1)
+                                break;
+
+                            pageIdLast = pageIdNext;
+                            errorIdx++;
+                        }
+
+                        VariantList *errorListSub = varLstNew();
+                        varLstAdd(errorListSub, varNewUInt(pageId));
+                        varLstAdd(errorListSub, varNewUInt(pageIdLast));
+                        varLstAdd(errorList, varNewVarLst(errorListSub));
+                        errorIdx++;
+                    }
                 }
             }
+            while (errorIdx < varLstSize(this->error));
+
+            this->valid = false;
+            kvPut(error, varNewStrZ("error"), varNewVarLst(errorList));
         }
-        while (errorIdx < varLstSize(this->error));
 
-        this->valid = false;
-        kvPut(result, varNewStrZ("error"), varNewVarLst(errorList));
+        kvPut(error, VARSTRDEF("valid"), VARBOOL(this->valid));
+        kvPut(error, VARSTRDEF("align"), VARBOOL(this->align));
+
+        result = bufNew(PACK_EXTRA_MIN);
+        PackWrite *const write = pckWriteNewBuf(result);
+
+        pckWriteStrP(write, jsonFromKv(error));
+        pckWriteEndP(write);
+
+        bufMove(result, memContextPrior());
     }
+    MEM_CONTEXT_TEMP_END();
 
-    kvPut(result, VARSTRDEF("valid"), VARBOOL(this->valid));
-    kvPut(result, VARSTRDEF("align"), VARBOOL(this->align));
-
-    FUNCTION_LOG_RETURN(VARIANT, varNewKv(result));
+    FUNCTION_LOG_RETURN(BUFFER, result);
 }
 
 /**********************************************************************************************************************************/
@@ -251,13 +261,21 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t 
         };
 
         // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewUInt(segmentNo));
-        varLstAdd(paramList, varNewUInt(segmentPageTotal));
-        varLstAdd(paramList, varNewUInt64(lsnLimit));
+        Buffer *const paramList = bufNew(PACK_EXTRA_MIN);
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const packWrite = pckWriteNewBuf(paramList);
+
+            pckWriteU32P(packWrite, segmentNo);
+            pckWriteU32P(packWrite, segmentPageTotal);
+            pckWriteU64P(packWrite, lsnLimit);
+            pckWriteEndP(packWrite);
+        }
+        MEM_CONTEXT_TEMP_END();
 
         this = ioFilterNewP(
-            PAGE_CHECKSUM_FILTER_TYPE_STR, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
+            PAGE_CHECKSUM_FILTER_TYPE, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
     }
     OBJ_NEW_END();
 
@@ -265,8 +283,20 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t 
 }
 
 IoFilter *
-pageChecksumNewVar(const VariantList *paramList)
+pageChecksumNewPack(const Buffer *const paramList)
 {
-    return pageChecksumNew(
-        varUIntForce(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)));
+    IoFilter *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *const paramListPack = pckReadNewBuf(paramList);
+        const unsigned int segmentNo = pckReadU32P(paramListPack);
+        const unsigned int segmentPageTotal = pckReadU32P(paramListPack);
+        const uint64_t lsnLimit = pckReadU64P(paramListPack);
+
+        result = objMoveContext(pageChecksumNew(segmentNo, segmentPageTotal, lsnLimit), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
 }

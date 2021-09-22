@@ -34,38 +34,55 @@ static struct
 Set filter group based on passed filters
 ***********************************************************************************************************************************/
 static void
-storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Variant *filterList)
+storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Buffer *const filterPack)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER_GROUP, filterGroup);
-        FUNCTION_TEST_PARAM(VARIANT, filterList);
+        FUNCTION_TEST_PARAM(BUFFER, filterPack);
     FUNCTION_TEST_END();
 
     ASSERT(filterGroup != NULL);
-    ASSERT(filterList != NULL);
+    ASSERT(filterPack != NULL);
 
-    for (unsigned int filterIdx = 0; filterIdx < varLstSize(varVarLst(filterList)); filterIdx++)
+    PackRead *const filterList = pckReadNewBuf(filterPack);
+
+    while (!pckReadNullP(filterList))
     {
-        const KeyValue *filterKv = varKv(varLstGet(varVarLst(filterList), filterIdx));
-        const String *filterKey = varStr(varLstGet(kvKeyList(filterKv), 0));
-        const VariantList *filterParam = varVarLst(kvGet(filterKv, VARSTR(filterKey)));
+        const StringId filterKey = pckReadStrIdP(filterList);
+        const Buffer *const filterParam = pckReadPackBufP(filterList);
 
-        IoFilter *filter = compressFilterVar(filterKey, filterParam);
+        IoFilter *filter = compressFilterPack(filterKey, filterParam);
 
         if (filter != NULL)
             ioFilterGroupAdd(filterGroup, filter);
-        else if (strEq(filterKey, CIPHER_BLOCK_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, cipherBlockNewVar(filterParam));
-        else if (strEq(filterKey, CRYPTO_HASH_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, cryptoHashNewVar(filterParam));
-        else if (strEq(filterKey, PAGE_CHECKSUM_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, pageChecksumNewVar(filterParam));
-        else if (strEq(filterKey, SINK_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, ioSinkNew());
-        else if (strEq(filterKey, SIZE_FILTER_TYPE_STR))
-            ioFilterGroupAdd(filterGroup, ioSizeNew());
         else
-            THROW_FMT(AssertError, "unable to add filter '%s'", strZ(filterKey));
+        {
+            switch (filterKey)
+            {
+                case CIPHER_BLOCK_FILTER_TYPE:
+                    ioFilterGroupAdd(filterGroup, cipherBlockNewPack(filterParam));
+                    break;
+
+                case CRYPTO_HASH_FILTER_TYPE:
+                    ioFilterGroupAdd(filterGroup, cryptoHashNewPack(filterParam));
+                    break;
+
+                case PAGE_CHECKSUM_FILTER_TYPE:
+                    ioFilterGroupAdd(filterGroup, pageChecksumNewPack(filterParam));
+                    break;
+
+                case SINK_FILTER_TYPE:
+                    ioFilterGroupAdd(filterGroup, ioSinkNew());
+                    break;
+
+                case SIZE_FILTER_TYPE:
+                    ioFilterGroupAdd(filterGroup, ioSizeNew());
+                    break;
+
+                default:
+                    THROW_FMT(AssertError, "unable to add filter '%s'", strZ(strIdToStr(filterKey)));
+            }
+        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -339,7 +356,7 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
         const String *file = pckReadStrP(param);
         bool ignoreMissing = pckReadBoolP(param);
         const Variant *limit = jsonToVar(pckReadStrP(param));
-        const Variant *filter = jsonToVar(pckReadStrP(param));
+        const Buffer *const filter = pckReadPackBufP(param);
 
         // Create the read object
         IoRead *fileRead = storageReadIo(
@@ -380,8 +397,7 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
             ioReadClose(fileRead);
 
             // Write filter results
-            protocolServerDataPut(
-                server, pckWriteStrP(protocolPackNew(), jsonFromVar(ioFilterGroupResultAll(ioReadFilterGroup(fileRead)))));
+            protocolServerDataPut(server, pckWritePackP(protocolPackNew(), ioFilterGroupResultAll(ioReadFilterGroup(fileRead))));
         }
 
         protocolServerDataEndPut(server);
@@ -417,7 +433,7 @@ storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const serv
         bool syncFile = pckReadBoolP(param);
         bool syncPath = pckReadBoolP(param);
         bool atomic = pckReadBoolP(param);
-        const Variant *filter = jsonToVar(pckReadStrP(param));
+        const Buffer *const filter = pckReadPackBufP(param);
 
         IoWrite *fileWrite = storageWriteIo(
             storageInterfaceNewWriteP(
@@ -444,7 +460,7 @@ storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const serv
 
                 // Push filter results
                 protocolServerDataPut(
-                    server, pckWriteStrP(protocolPackNew(), jsonFromVar(ioFilterGroupResultAll(ioWriteFilterGroup(fileWrite)))));
+                    server, pckWritePackP(protocolPackNew(), ioFilterGroupResultAll(ioWriteFilterGroup(fileWrite))));
                 break;
             }
             // Else more data to write

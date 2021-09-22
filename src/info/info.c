@@ -300,7 +300,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
             INFO_CHECKSUM_END(data.checksumActual);
 
             // Verify the checksum
-            const String *checksumActual = varStr(ioFilterResult(data.checksumActual));
+            const String *checksumActual = pckReadStrP(pckReadNewBuf(ioFilterResult(data.checksumActual)));
 
             if (data.checksumExpected == NULL)
                 THROW_FMT(ChecksumError, "invalid checksum, actual '%s' but no checksum found", strZ(checksumActual));
@@ -435,7 +435,7 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
         INFO_CHECKSUM_END(data.checksum);
 
         ioWrite(data.write, BUFSTRDEF("\n[" INFO_SECTION_BACKREST "]\n" INFO_KEY_CHECKSUM "="));
-        ioWriteLine(data.write, BUFSTR(jsonFromVar(ioFilterResult(data.checksum))));
+        ioWriteLine(data.write, BUFSTR(jsonFromStr(pckReadStrP(pckReadNewBuf(ioFilterResult(data.checksum))))));
 
         // Close the file
         ioWriteClose(data.write);

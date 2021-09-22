@@ -16,11 +16,6 @@ Block Cipher
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(CIPHER_BLOCK_FILTER_TYPE_STR,                         CIPHER_BLOCK_FILTER_TYPE);
-
-/***********************************************************************************************************************************
 Header constants and sizes
 ***********************************************************************************************************************************/
 // Magic constant for salted encrypt.  Only salted encrypt is done here, but this constant is required for compatibility with the
@@ -440,17 +435,23 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
         memcpy(driver->pass, bufPtrConst(pass), driver->passSize);
 
         // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewUInt64(mode));
-        varLstAdd(paramList, varNewUInt64(cipherType));
-        // ??? Using a string here is not correct since the passphrase is being passed as a buffer so may contain null characters.
-        // However, since strings are used to hold the passphrase in the rest of the code this is currently valid.
-        varLstAdd(paramList, varNewStr(strNewBuf(pass)));
-        varLstAdd(paramList, digestName ? varNewStr(digestName) : NULL);
+        Buffer *const paramList = bufNew(PACK_EXTRA_MIN);
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const packWrite = pckWriteNewBuf(paramList);
+
+            pckWriteU64P(packWrite, mode);
+            pckWriteU64P(packWrite, cipherType);
+            pckWriteBinP(packWrite, pass);
+            pckWriteStrP(packWrite, digestName);
+            pckWriteEndP(packWrite);
+        }
+        MEM_CONTEXT_TEMP_END();
 
         // Create filter interface
         this = ioFilterNewP(
-            CIPHER_BLOCK_FILTER_TYPE_STR, driver, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
+            CIPHER_BLOCK_FILTER_TYPE, driver, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
             .inputSame = cipherBlockInputSame);
     }
     OBJ_NEW_END();
@@ -459,11 +460,23 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 }
 
 IoFilter *
-cipherBlockNewVar(const VariantList *paramList)
+cipherBlockNewPack(const Buffer *const paramList)
 {
-    return cipherBlockNew(
-        (CipherMode)varUInt64(varLstGet(paramList, 0)), (CipherType)varUInt64(varLstGet(paramList, 1)),
-        BUFSTR(varStr(varLstGet(paramList, 2))), varLstGet(paramList, 3) == NULL ? NULL : varStr(varLstGet(paramList, 3)));
+    IoFilter *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *const paramListPack = pckReadNewBuf(paramList);
+        const CipherMode cipherMode = (CipherMode)pckReadU64P(paramListPack);
+        const CipherType cipherType = (CipherType)pckReadU64P(paramListPack);
+        const Buffer *const pass = pckReadBinP(paramListPack);
+        const String *const digestName = pckReadStrP(paramListPack);
+
+        result = objMoveContext(cipherBlockNew(cipherMode, cipherType, pass, digestName), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
 }
 
 /**********************************************************************************************************************************/

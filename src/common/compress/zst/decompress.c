@@ -15,11 +15,6 @@ ZST Decompress
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(ZST_DECOMPRESS_FILTER_TYPE_STR,                       ZST_DECOMPRESS_FILTER_TYPE);
-
-/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct ZstDecompress
@@ -184,7 +179,7 @@ zstDecompressNew(void)
 
         // Create filter interface
         this = ioFilterNewP(
-            ZST_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = zstDecompressDone, .inOut = zstDecompressProcess,
+            ZST_DECOMPRESS_FILTER_TYPE, driver, NULL, .done = zstDecompressDone, .inOut = zstDecompressProcess,
             .inputSame = zstDecompressInputSame);
     }
     OBJ_NEW_END();

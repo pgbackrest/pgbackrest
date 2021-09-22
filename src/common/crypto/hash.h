@@ -12,8 +12,7 @@ Generate a hash (sha1, md5, etc.) from a string, Buffer, or using an IoFilter.
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define CRYPTO_HASH_FILTER_TYPE                                     "hash"
-    STRING_DECLARE(CRYPTO_HASH_FILTER_TYPE_STR);
+#define CRYPTO_HASH_FILTER_TYPE                                     STRID5("hash", 0x44c280)
 
 /***********************************************************************************************************************************
 Hash types
@@ -51,7 +50,7 @@ Hash type sizes
 Constructors
 ***********************************************************************************************************************************/
 IoFilter *cryptoHashNew(const String *type);
-IoFilter *cryptoHashNewVar(const VariantList *paramList);
+IoFilter *cryptoHashNewPack(const Buffer *paramList);
 
 /***********************************************************************************************************************************
 Helper functions

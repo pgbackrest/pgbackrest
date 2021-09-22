@@ -1620,18 +1620,31 @@ pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param)
 
     ASSERT(this != NULL);
 
+    pckWritePackBuf(this, value != NULL ? pckWriteBuf(value) : NULL, param);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
+pckWritePackBuf(PackWrite *this, const Buffer *value, PckWritePackParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(BUFFER, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
     if (!pckWriteDefaultNull(this, false, value == NULL))
     {
         ASSERT(value != NULL);
 
-        // Write pack size
+        // Write pack buffer
         pckWriteTag(this, pckTypeMapPack, param.id, 0);
-
-        // Write pack data
-        const Buffer *packBuffer = pckWriteBuf(value);
-
-        pckWriteU64Internal(this, bufUsed(packBuffer));
-        pckWriteBuffer(this, packBuffer);
+        pckWriteU64Internal(this, bufUsed(value));
+        pckWriteBuffer(this, value);
     }
 
     FUNCTION_TEST_RETURN(this);

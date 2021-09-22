@@ -128,7 +128,7 @@ testIoRateNew(uint64_t bytesPerSec)
             .bytesPerSec = bytesPerSec,
         };
 
-        this = ioFilterNewP(STRDEF("TestIoRate"), driver, NULL, .in = testIoRateProcess);
+        this = ioFilterNewP(STRID5("test-io-rate", 0x2d032dbd3ba4cb40), driver, NULL, .in = testIoRateProcess);
     }
     OBJ_NEW_END();
 

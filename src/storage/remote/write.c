@@ -91,7 +91,7 @@ storageWriteRemoteOpen(THIS_VOID)
         pckWriteBoolP(param, this->interface.syncFile);
         pckWriteBoolP(param, this->interface.syncPath);
         pckWriteBoolP(param, this->interface.atomic);
-        pckWriteStrP(param, jsonFromVar(ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write)))));
+        pckWritePackBufP(param, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
 
         protocolClientCommandPut(this->client, command);
         protocolClientDataGet(this->client);
@@ -166,7 +166,7 @@ storageWriteRemoteClose(THIS_VOID)
         {
             protocolClientDataPut(this->client, NULL);
             ioFilterGroupResultAllSet(
-                ioWriteFilterGroup(storageWriteIo(this->write)), jsonToVar(pckReadStrP(protocolClientDataGet(this->client))));
+                ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientDataGet(this->client)));
             protocolClientDataEndGet(this->client);
         }
         MEM_CONTEXT_TEMP_END();

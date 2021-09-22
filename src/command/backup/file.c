@@ -16,6 +16,7 @@ Backup File
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/type/convert.h"
+#include "common/type/json.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
 
@@ -97,9 +98,9 @@ backupFile(
                 // If the pg file exists check the checksum/size
                 if (ioReadDrain(read))
                 {
-                    const String *pgTestChecksum = varStr(
-                        ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
-                    uint64_t pgTestSize = varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR));
+                    const String *pgTestChecksum = pckReadStrP(
+                        ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
+                    uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                     // Does the pg file match?
                     if (pgFileSize == pgTestSize && strEq(pgFileChecksum, pgTestChecksum))
@@ -160,9 +161,9 @@ backupFile(
                         ioReadDrain(read);
 
                         // Test checksum/size
-                        const String *pgTestChecksum = varStr(
-                            ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
-                        uint64_t pgTestSize = varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR));
+                        const String *pgTestChecksum = pckReadStrP(
+                            ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
+                        uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                         // No need to recopy if checksum/size match
                         if (pgFileSize == pgTestSize && strEq(pgFileChecksum, pgTestChecksum))
@@ -240,18 +241,19 @@ backupFile(
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
                     // Get sizes and checksum
-                    result.copySize = varUInt64Force(
-                        ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE_STR));
+                    result.copySize = pckReadU64P(
+                        ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE));
                     result.copyChecksum = strDup(
-                        varStr(ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE_STR)));
+                        pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
                     result.repoSize =
-                        varUInt64Force(ioFilterGroupResult(ioWriteFilterGroup(storageWriteIo(write)), SIZE_FILTER_TYPE_STR));
+                        pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(storageWriteIo(write)), SIZE_FILTER_TYPE));
 
                     // Get results of page checksum validation
                     if (pgFileChecksumPage)
                     {
-                        result.pageChecksumResult = kvDup(
-                            varKv(ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE_STR)));
+                        result.pageChecksumResult = jsonToKv(
+                            pckReadStrP(
+                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE)));
                     }
                 }
                 MEM_CONTEXT_PRIOR_END();

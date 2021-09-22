@@ -140,7 +140,7 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
+            pckReadStrP(ioFilterGroupResultP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
             "{\"align\":true,\"valid\":true}", "all zero pages");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -168,14 +168,13 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewVar(varVarLst(jsonToVar(
-                strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, (uint64_t)0xFACEFACE00000000)))));
+            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
+            pckReadStrP(ioFilterGroupResultP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
             "{\"align\":true,\"valid\":true}", "single valid page");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -200,14 +199,13 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewVar(varVarLst(jsonToVar(
-                strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, (uint64_t)0xFACEFACE00000000)))));
+            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
+            pckReadStrP(ioFilterGroupResultP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
             "{\"align\":true,\"error\":[0],\"valid\":false}", "single checksum error");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -299,7 +297,7 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
+            pckReadStrP(ioFilterGroupResultP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
             "{\"align\":false,\"error\":[0,[2,4],[6,7]],\"valid\":false}", "various checksum errors");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -318,7 +316,7 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
+            pckReadStrP(ioFilterGroupResultP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
             "{\"align\":false,\"valid\":false}", "misalignment");
 
         // -------------------------------------------------------------------------------------------------------------------------

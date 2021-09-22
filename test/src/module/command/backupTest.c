@@ -68,8 +68,8 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
 
             uint64_t size = bufUsed(storageGetP(read));
-            const String *checksum = varStr(
-                ioFilterGroupResult(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE_STR));
+            const String *checksum = pckReadStrP(
+                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
 
             strCatFmt(data->content, ", s=%" PRIu64, size);
 

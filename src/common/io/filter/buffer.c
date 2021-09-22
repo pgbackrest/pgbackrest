@@ -14,8 +14,7 @@ IO Buffer Filter
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define BUFFER_FILTER_TYPE                                          "buffer"
-    STRING_STATIC(BUFFER_FILTER_TYPE_STR,                           BUFFER_FILTER_TYPE);
+#define BUFFER_FILTER_TYPE                                          STRID5("buffer", 0x24531aa20)
 
 /***********************************************************************************************************************************
 Object type
@@ -116,7 +115,7 @@ ioBufferNew(void)
         IoBuffer *driver = OBJ_NEW_ALLOC();
         *driver = (IoBuffer){0};
 
-        this = ioFilterNewP(BUFFER_FILTER_TYPE_STR, driver, NULL, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame);
+        this = ioFilterNewP(BUFFER_FILTER_TYPE, driver, NULL, .inOut = ioBufferProcess, .inputSame = ioBufferInputSame);
     }
     OBJ_NEW_END();
 

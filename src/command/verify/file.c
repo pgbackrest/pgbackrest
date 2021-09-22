@@ -59,12 +59,12 @@ verifyFile(
         if (ioReadDrain(read))
         {
             // Validate checksum
-            if (!strEq(fileChecksum, varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))))
+            if (!strEq(fileChecksum, pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))))
             {
                 result = verifyChecksumMismatch;
             }
             // If the size can be checked, do so
-            else if (fileSize != varUInt64Force(ioFilterGroupResult(ioReadFilterGroup(read), SIZE_FILTER_TYPE_STR)))
+            else if (fileSize != pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE)))
                 result = verifySizeInvalid;
         }
         else

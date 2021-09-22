@@ -505,6 +505,12 @@ typedef struct PckWritePackParam
 
 PackWrite *pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param);
 
+// Write pack buffer
+#define pckWritePackBufP(this, value, ...)                                                                                         \
+    pckWritePackBuf(this, value, (PckWritePackParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWritePackBuf(PackWrite *this, const Buffer *value, PckWritePackParam param);
+
 // Write pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 typedef struct PckWritePtrParam
 {

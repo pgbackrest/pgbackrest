@@ -13,11 +13,7 @@ BZ2 Compress
 #include "common/log.h"
 #include "common/macro.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(BZ2_COMPRESS_FILTER_TYPE_STR,                         BZ2_COMPRESS_FILTER_TYPE);
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -187,12 +183,20 @@ bz2CompressNew(int level)
         memContextCallbackSet(objMemContext(driver), bz2CompressFreeResource, driver);
 
         // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewInt(level));
+        Buffer *const paramList = bufNew(PACK_EXTRA_MIN);
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const packWrite = pckWriteNewBuf(paramList);
+
+            pckWriteI32P(packWrite, level);
+            pckWriteEndP(packWrite);
+        }
+        MEM_CONTEXT_TEMP_END();
 
         // Create filter interface
         this = ioFilterNewP(
-            BZ2_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = bz2CompressDone, .inOut = bz2CompressProcess,
+            BZ2_COMPRESS_FILTER_TYPE, driver, paramList, .done = bz2CompressDone, .inOut = bz2CompressProcess,
             .inputSame = bz2CompressInputSame);
     }
     OBJ_NEW_END();
