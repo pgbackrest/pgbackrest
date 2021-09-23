@@ -40,9 +40,9 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 1, idLast: 0}", "log");
+        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 0, idLast: 0}", "log");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0750), "write mode");
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 1, idLast: 1}", "log");
+        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 0, idLast: 1}", "log");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 1911246845), "write timestamp");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0xFFFFFFFFFFFFFFFF, .id = 7), "write max u64");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 1, .id = 10), "write 1");
@@ -252,7 +252,7 @@ testRun(void)
         TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 15), true, "read true");
         TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 20), false, "read false");
 
-        TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in object");
+        TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in obj");
         TEST_RESULT_VOID(pckReadObjBeginP(packRead, .id = 28), "read object begin");
         TEST_ERROR(pckReadArrayEndP(packRead), FormatError, "not in array");
         TEST_RESULT_BOOL(pckReadBoolP(packRead), true, "read true");
@@ -271,7 +271,7 @@ testRun(void)
         TEST_RESULT_UINT(pckReadId(packRead), 37, "check array id");
         TEST_RESULT_VOID(pckReadArrayBeginP(packRead, .id = pckReadId(packRead)), "read array begin");
 
-        TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in object");
+        TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in obj");
 
         unsigned int value = 0;
 
