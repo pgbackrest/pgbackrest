@@ -271,14 +271,16 @@ lz4CompressNew(int level)
         memContextCallbackSet(objMemContext(driver), lz4CompressFreeResource, driver);
 
         // Create param list
-        Buffer *const paramList = bufNew(PACK_EXTRA_MIN);
+        Pack *paramList = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            PackWrite *const packWrite = pckWriteNewBuf(paramList);
+            PackWrite *const packWrite = pckWriteNewP();
 
             pckWriteI32P(packWrite, level);
             pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
 

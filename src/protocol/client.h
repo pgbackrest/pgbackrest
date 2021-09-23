@@ -55,7 +55,7 @@ be added to the expected binary size to account for overhead.
 __attribute__((always_inline)) static inline PackWrite *
 protocolPackNew(void)
 {
-    return pckWriteNewBuf(bufNew(PROTOCOL_PACK_DEFAULT_SIZE));
+    return pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE);
 }
 
 /***********************************************************************************************************************************

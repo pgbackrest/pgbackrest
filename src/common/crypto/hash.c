@@ -142,7 +142,7 @@ cryptoHash(CryptoHash *this)
 /***********************************************************************************************************************************
 Get string representation of the hash as a filter result
 ***********************************************************************************************************************************/
-static Buffer *
+static Pack *
 cryptoHashResult(THIS_VOID)
 {
     THIS(CryptoHash);
@@ -153,18 +153,20 @@ cryptoHashResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    Buffer *const result = bufNew(PACK_EXTRA_MIN);
+    Pack *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackWrite *const pack = pckWriteNewBuf(result);
+        PackWrite *const packWrite = pckWriteNewP();
 
-        pckWriteStrP(pack, bufHex(cryptoHash(this)));
-        pckWriteEndP(pack);
+        pckWriteStrP(packWrite, bufHex(cryptoHash(this)));
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BUFFER, result);
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
@@ -215,14 +217,16 @@ cryptoHashNew(const String *type)
         }
 
         // Create param list
-        Buffer *const paramList = bufNew(PACK_EXTRA_MIN);
+        Pack *paramList = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            PackWrite *const packWrite = pckWriteNewBuf(paramList);
+            PackWrite *const packWrite = pckWriteNewP();
 
             pckWriteStrP(packWrite, type);
             pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -235,13 +239,13 @@ cryptoHashNew(const String *type)
 }
 
 IoFilter *
-cryptoHashNewPack(const Buffer *const paramList)
+cryptoHashNewPack(const Pack *const paramList)
 {
     IoFilter *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = objMoveContext(cryptoHashNew(pckReadStrP(pckReadNewBuf(paramList))), memContextPrior());
+        result = ioFilterMove(cryptoHashNew(pckReadStrP(pckReadNew(paramList))), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

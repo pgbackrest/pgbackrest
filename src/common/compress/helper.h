@@ -57,7 +57,7 @@ IoFilter *compressFilter(CompressType type, int level);
 
 // Compression/decompression filter based on string type and a parameter list.  This is useful when a filter must be created on a
 // remote system since the filter type and parameters can be passed through a protocol.
-IoFilter *compressFilterPack(StringId filterType, const Buffer *filterParamList);
+IoFilter *compressFilterPack(StringId filterType, const Pack *filterParam);
 
 // Decompression filter for the specified type.  Error when compress type is none or invalid.
 IoFilter *decompressFilter(CompressType type);

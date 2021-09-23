@@ -97,7 +97,7 @@ harnessInfoChecksum(const String *info)
 
         // Append checksum to buffer
         bufCat(result, BUFSTRDEF("\n[backrest]\nbackrest-checksum="));
-        bufCat(result, BUFSTR(jsonFromStr(pckReadStrP(pckReadNewBuf(ioFilterResult(data.checksum))))));
+        bufCat(result, BUFSTR(jsonFromStr(pckReadStrP(pckReadNew(ioFilterResult(data.checksum))))));
         bufCat(result, BUFSTRDEF("\n"));
 
         bufMove(result, memContextPrior());

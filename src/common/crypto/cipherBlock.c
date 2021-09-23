@@ -435,17 +435,19 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
         memcpy(driver->pass, bufPtrConst(pass), driver->passSize);
 
         // Create param list
-        Buffer *const paramList = bufNew(PACK_EXTRA_MIN);
+        Pack *paramList = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            PackWrite *const packWrite = pckWriteNewBuf(paramList);
+            PackWrite *const packWrite = pckWriteNewP();
 
             pckWriteU64P(packWrite, mode);
             pckWriteU64P(packWrite, cipherType);
             pckWriteBinP(packWrite, pass);
             pckWriteStrP(packWrite, digestName);
             pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -460,19 +462,19 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 }
 
 IoFilter *
-cipherBlockNewPack(const Buffer *const paramList)
+cipherBlockNewPack(const Pack *const paramList)
 {
     IoFilter *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *const paramListPack = pckReadNewBuf(paramList);
+        PackRead *const paramListPack = pckReadNew(paramList);
         const CipherMode cipherMode = (CipherMode)pckReadU64P(paramListPack);
         const CipherType cipherType = (CipherType)pckReadU64P(paramListPack);
         const Buffer *const pass = pckReadBinP(paramListPack);
         const String *const digestName = pckReadStrP(paramListPack);
 
-        result = objMoveContext(cipherBlockNew(cipherMode, cipherType, pass, digestName), memContextPrior());
+        result = ioFilterMove(cipherBlockNew(cipherMode, cipherType, pass, digestName), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

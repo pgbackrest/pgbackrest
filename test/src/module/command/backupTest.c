@@ -1330,7 +1330,7 @@ testRun(void)
         pckWriteStrP(resultPack, NULL);
         pckWriteEndP(resultPack);
 
-        protocolParallelJobResultSet(job, pckReadNewBuf(pckWriteBuf(resultPack)));
+        protocolParallelJobResultSet(job, pckReadNew(pckWriteResult(resultPack)));
 
         // Create manifest with file
         Manifest *manifest = NULL;

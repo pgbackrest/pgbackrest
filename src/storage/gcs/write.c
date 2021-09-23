@@ -88,7 +88,7 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
     CHECK(md5base64 != NULL);
 
     const String *md5actual = bufHex(bufNewDecode(encodeBase64, md5base64));
-    const String *md5expected = pckReadStrP(pckReadNewBuf(ioFilterResult(this->md5hash)));
+    const String *md5expected = pckReadStrP(pckReadNew(ioFilterResult(this->md5hash)));
 
     if (!strEq(md5actual, md5expected))
     {

@@ -338,7 +338,7 @@ testRun(void)
             "</doc>\n");
 
         TEST_RESULT_STR_Z(
-            hrnPackToStr(pckReadNewBuf(pckWriteBuf(bldHlpRenderHelpAutoCPack(bldCfg, bldHlpParse(storageTest, bldCfg))))),
+            hrnPackReadToStr(pckReadNew(pckWriteResult(bldHlpRenderHelpAutoCPack(bldCfg, bldHlpParse(storageTest, bldCfg))))),
             "1:array:"
             "["
                 // backup command

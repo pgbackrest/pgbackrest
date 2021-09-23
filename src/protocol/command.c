@@ -66,7 +66,7 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
         if (this->pack != NULL)
         {
             pckWriteEndP(this->pack);
-            pckWritePackP(commandPack, this->pack);
+            pckWritePackP(commandPack, pckWriteResult(this->pack));
         }
 
         pckWriteEndP(commandPack);

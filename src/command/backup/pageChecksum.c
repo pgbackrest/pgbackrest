@@ -146,7 +146,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
 /***********************************************************************************************************************************
 Return filter result
 ***********************************************************************************************************************************/
-static Buffer *
+static Pack *
 pageChecksumResult(THIS_VOID)
 {
     THIS(PageChecksum);
@@ -157,7 +157,7 @@ pageChecksumResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    Buffer *result = NULL;
+    Pack *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -221,17 +221,16 @@ pageChecksumResult(THIS_VOID)
         kvPut(error, VARSTRDEF("valid"), VARBOOL(this->valid));
         kvPut(error, VARSTRDEF("align"), VARBOOL(this->align));
 
-        result = bufNew(PACK_EXTRA_MIN);
-        PackWrite *const write = pckWriteNewBuf(result);
+        PackWrite *const packWrite = pckWriteNewP();
 
-        pckWriteStrP(write, jsonFromKv(error));
-        pckWriteEndP(write);
+        pckWriteStrP(packWrite, jsonFromKv(error));
+        pckWriteEndP(packWrite);
 
-        bufMove(result, memContextPrior());
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BUFFER, result);
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
@@ -261,21 +260,22 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t 
         };
 
         // Create param list
-        Buffer *const paramList = bufNew(PACK_EXTRA_MIN);
+        Pack *paramList = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            PackWrite *const packWrite = pckWriteNewBuf(paramList);
+            PackWrite *const packWrite = pckWriteNewP();
 
             pckWriteU32P(packWrite, segmentNo);
             pckWriteU32P(packWrite, segmentPageTotal);
             pckWriteU64P(packWrite, lsnLimit);
             pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
 
-        this = ioFilterNewP(
-            PAGE_CHECKSUM_FILTER_TYPE, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
+        this = ioFilterNewP(PAGE_CHECKSUM_FILTER_TYPE, driver, paramList, .in = pageChecksumProcess, .result = pageChecksumResult);
     }
     OBJ_NEW_END();
 
@@ -283,18 +283,18 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t 
 }
 
 IoFilter *
-pageChecksumNewPack(const Buffer *const paramList)
+pageChecksumNewPack(const Pack *const paramList)
 {
     IoFilter *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *const paramListPack = pckReadNewBuf(paramList);
+        PackRead *const paramListPack = pckReadNew(paramList);
         const unsigned int segmentNo = pckReadU32P(paramListPack);
         const unsigned int segmentPageTotal = pckReadU32P(paramListPack);
         const uint64_t lsnLimit = pckReadU64P(paramListPack);
 
-        result = objMoveContext(pageChecksumNew(segmentNo, segmentPageTotal, lsnLimit), memContextPrior());
+        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, lsnLimit), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -21,12 +21,12 @@ struct IoFilter
 Allocations will be in the memory context of the caller.
 ***********************************************************************************************************************************/
 IoFilter *
-ioFilterNew(const StringId type, void *const driver, Buffer *const paramList, const IoFilterInterface interface)
+ioFilterNew(const StringId type, void *const driver, Pack *const paramList, const IoFilterInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM_P(VOID, driver);
-        FUNCTION_LOG_PARAM(BUFFER, paramList);
+        FUNCTION_LOG_PARAM(PACK, paramList);
         FUNCTION_LOG_PARAM(IO_FILTER_INTERFACE, interface);
     FUNCTION_LOG_END();
 
@@ -139,7 +139,7 @@ ioFilterInputSame(const IoFilter *this)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+Pack *
 ioFilterResult(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();

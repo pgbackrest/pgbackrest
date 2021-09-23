@@ -16,9 +16,10 @@ Object type
 typedef struct IoFilterGroup IoFilterGroup;
 
 #include "common/io/filter/filter.h"
+#include "common/type/list.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
-#include "common/type/string.h"
+#include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
 Constructors
@@ -58,7 +59,7 @@ ioFilterGroupInputSame(const IoFilterGroup *const this)
 }
 
 // Get all filters and their parameters so they can be passed to a remote
-Buffer *ioFilterGroupParamAll(const IoFilterGroup *this);
+Pack *ioFilterGroupParamAll(const IoFilterGroup *this);
 
 // Get filter results. If the same filter was used more than once then idx can be used to specify which one to get.
 typedef struct IoFilterGroupResultParam
@@ -73,8 +74,8 @@ typedef struct IoFilterGroupResultParam
 PackRead *ioFilterGroupResult(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
 
 // Get/set all filter results
-PackWrite *ioFilterGroupResultAll(const IoFilterGroup *this);
-void ioFilterGroupResultAllSet(IoFilterGroup *this, PackRead *filterResult);
+Pack *ioFilterGroupResultAll(const IoFilterGroup *this);
+void ioFilterGroupResultAllSet(IoFilterGroup *this, const Pack *filterResult);
 
 // Return total number of filters
 __attribute__((always_inline)) static inline unsigned int

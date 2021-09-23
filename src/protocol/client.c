@@ -154,7 +154,7 @@ protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
         // Write the data
         PackWrite *dataMessage = pckWriteNewIo(this->write);
         pckWriteU32P(dataMessage, protocolMessageTypeData, .defaultWrite = true);
-        pckWritePackP(dataMessage, data);
+        pckWritePackP(dataMessage, pckWriteResult(data));
         pckWriteEndP(dataMessage);
 
         // Flush when there is no more data to put
@@ -226,7 +226,7 @@ protocolClientDataGet(ProtocolClient *const this)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = pckReadPackP(response);
+            result = pckReadPackReadP(response);
         }
         MEM_CONTEXT_PRIOR_END();
 

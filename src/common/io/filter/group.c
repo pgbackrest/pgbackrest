@@ -38,7 +38,7 @@ Filter results
 typedef struct IoFilterResult
 {
     StringId type;                                                  // Filter type
-    Buffer *result;                                                 // Filter result
+    Pack *result;                                                   // Filter result
 } IoFilterResult;
 
 /***********************************************************************************************************************************
@@ -385,7 +385,7 @@ ioFilterGroupClose(IoFilterGroup *this)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+Pack *
 ioFilterGroupParamAll(const IoFilterGroup *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -396,27 +396,27 @@ ioFilterGroupParamAll(const IoFilterGroup *this)
     ASSERT(!this->pub.opened);
     ASSERT(this->pub.filterList != NULL);
 
-    Buffer *result = NULL;
+    Pack *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = bufNew(PACK_EXTRA_MIN);
-        PackWrite *const pack = pckWriteNewBuf(result);
+        PackWrite *const packWrite = pckWriteNewP();
 
         for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
         {
             IoFilter *filter = ioFilterGroupGet(this, filterIdx)->filter;
 
-            pckWriteStrIdP(pack, ioFilterType(filter));
-            pckWritePackBufP(pack, ioFilterParamList(filter));
+            pckWriteStrIdP(packWrite, ioFilterType(filter));
+            pckWritePackP(packWrite, ioFilterParamList(filter));
         }
 
-        pckWriteEndP(pack);
-        bufMove(result, memContextPrior());
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BUFFER, result);
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
@@ -447,7 +447,7 @@ ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, 
             // If the index matches return the result
             if (foundIdx == param.idx)
             {
-                result = pckReadNewBuf(filterResult->result);
+                result = pckReadNew(filterResult->result);
                 break;
             }
 
@@ -460,7 +460,7 @@ ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, 
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+Pack *
 ioFilterGroupResultAll(const IoFilterGroup *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -470,57 +470,61 @@ ioFilterGroupResultAll(const IoFilterGroup *const this)
     ASSERT(this != NULL);
     ASSERT(this->pub.closed);
 
-    PackWrite *result = NULL;
+    Pack *result = NULL;
 
     // Pack the result list
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Buffer *const buffer = bufNew(0);
-        result = pckWriteNewBuf(buffer);
+        PackWrite *const packWrite = pckWriteNewP();
 
         for (unsigned int filterResultIdx = 0; filterResultIdx < lstSize(this->filterResult); filterResultIdx++)
         {
             const IoFilterResult *const filterResult = lstGet(this->filterResult, filterResultIdx);
 
-            pckWriteStrIdP(result, filterResult->type);
-            pckWritePackBufP(result, filterResult->result);
+            pckWriteStrIdP(packWrite, filterResult->type);
+            pckWritePackP(packWrite, filterResult->result);
         }
 
-        pckWriteEndP(result);
+        pckWriteEndP(packWrite);
 
-        pckWriteMove(result, memContextPrior());
-        bufMove(buffer, memContextPrior());
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(PACK_WRITE, result);
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
 void
-ioFilterGroupResultAllSet(IoFilterGroup *const this, PackRead *const filterResultPack)
+ioFilterGroupResultAllSet(IoFilterGroup *const this, const Pack *const filterResultPack)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
-        FUNCTION_LOG_PARAM(PACK_READ, filterResultPack);
+        FUNCTION_LOG_PARAM(PACK, filterResultPack);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
     if (filterResultPack != NULL)
     {
-        // Unpack the results into a list
-        MEM_CONTEXT_BEGIN(lstMemContext(this->filterResult))
-        {
-            while (!pckReadNullP(filterResultPack))
-            {
-                const StringId type = pckReadStrIdP(filterResultPack);
-                Buffer *const result = pckReadPackBufP(filterResultPack);
+        PackRead *const packRead = pckReadNew(filterResultPack);
 
-                lstAdd(this->filterResult, &(IoFilterResult){.type = type, .result = result});
+        // Unpack the results into a list
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            MEM_CONTEXT_BEGIN(lstMemContext(this->filterResult))
+            {
+                while (!pckReadNullP(packRead))
+                {
+                    const StringId type = pckReadStrIdP(packRead);
+                    Pack *const result = pckReadPackP(packRead);
+
+                    lstAdd(this->filterResult, &(IoFilterResult){.type = type, .result = result});
+                }
             }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN_VOID();

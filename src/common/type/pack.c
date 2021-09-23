@@ -300,18 +300,18 @@ pckReadNewIo(IoRead *read)
 }
 
 PackRead *
-pckReadNewBuf(const Buffer *buffer)
+pckReadNew(const Pack *const pack)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, buffer);
+        FUNCTION_TEST_PARAM(PACK, pack);
     FUNCTION_TEST_END();
 
-    if (buffer == NULL)
+    if (pack == NULL)
         FUNCTION_TEST_RETURN(NULL);
 
     PackRead *this = pckReadNewInternal();
-    this->bufferPtr = bufPtrConst(buffer);
-    this->bufferUsed = bufUsed(buffer);
+    this->bufferPtr = bufPtrConst((const Buffer *)pack);
+    this->bufferUsed = bufUsed((const Buffer *)pack);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -873,24 +873,24 @@ pckReadObjEnd(PackRead *this)
 
 /**********************************************************************************************************************************/
 PackRead *
-pckReadPack(PackRead *this, PckReadPackParam param)
+pckReadPackRead(PackRead *this, PckReadPackParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
         FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
-    Buffer *const buffer = pckReadPackBuf(this, param);
-    PackRead *const result = pckReadNewBuf(buffer);
+    Pack *const pack = pckReadPack(this, param);
+    PackRead *const result = pckReadNew(pack);
 
     if (result != NULL)
-        bufMove(buffer, objMemContext(result));
+        pckMove(pack, objMemContext(result));
 
     FUNCTION_TEST_RETURN(result);
 }
 
-Buffer *
-pckReadPackBuf(PackRead *this, PckReadPackParam param)
+Pack *
+pckReadPack(PackRead *const this, PckReadPackParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
@@ -916,7 +916,7 @@ pckReadPackBuf(PackRead *this, PckReadPackParam param)
         this->bufferPos += size;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN((Pack *)result);
 }
 
 /**********************************************************************************************************************************/
@@ -1135,6 +1135,24 @@ pckWriteNewInternal(void)
 }
 
 PackWrite *
+pckWriteNew(const PckWriteNewParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, param.size);
+    FUNCTION_TEST_END();
+
+    PackWrite *this = pckWriteNewInternal();
+
+    MEM_CONTEXT_BEGIN(objMemContext(this))
+    {
+        this->buffer = bufNew(param.size == 0 ? PACK_EXTRA_MIN : param.size);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+PackWrite *
 pckWriteNewIo(IoWrite *write)
 {
     FUNCTION_TEST_BEGIN();
@@ -1151,21 +1169,6 @@ pckWriteNewIo(IoWrite *write)
         this->buffer = bufNew(ioBufferSize());
     }
     MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-PackWrite *
-pckWriteNewBuf(Buffer *buffer)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, buffer);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-
-    PackWrite *this = pckWriteNewInternal();
-    this->buffer = buffer;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1609,25 +1612,7 @@ pckWriteObjEnd(PackWrite *this)
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(PACK_WRITE, value);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    pckWritePackBuf(this, value != NULL ? pckWriteBuf(value) : NULL, param);
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-PackWrite *
-pckWritePackBuf(PackWrite *this, const Buffer *value, PckWritePackParam param)
+pckWritePack(PackWrite *const this, const Pack *const value, const PckWritePackParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
@@ -1641,10 +1626,9 @@ pckWritePackBuf(PackWrite *this, const Buffer *value, PckWritePackParam param)
     {
         ASSERT(value != NULL);
 
-        // Write pack buffer
         pckWriteTag(this, pckTypeMapPack, param.id, 0);
-        pckWriteU64Internal(this, bufUsed(value));
-        pckWriteBuffer(this, value);
+        pckWriteU64Internal(this, bufUsed((Buffer *)value));
+        pckWriteBuffer(this, (Buffer *)value);
     }
 
     FUNCTION_TEST_RETURN(this);
@@ -1834,17 +1818,23 @@ pckWriteEnd(PackWrite *this)
 }
 
 /**********************************************************************************************************************************/
-const Buffer *
-pckWriteBuf(const PackWrite *this)
+Pack *
+pckWriteResult(PackWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(this->tagStackTop == NULL);
+    Pack *result = NULL;
 
-    FUNCTION_TEST_RETURN(this->buffer);
+    if (this != NULL)
+    {
+        ASSERT(this->tagStackTop == NULL);
+
+        result = (Pack *)this->buffer;
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/

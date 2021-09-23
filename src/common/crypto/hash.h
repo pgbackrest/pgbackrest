@@ -50,7 +50,7 @@ Hash type sizes
 Constructors
 ***********************************************************************************************************************************/
 IoFilter *cryptoHashNew(const String *type);
-IoFilter *cryptoHashNewPack(const Buffer *paramList);
+IoFilter *cryptoHashNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
 Helper functions

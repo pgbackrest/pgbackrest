@@ -45,7 +45,7 @@ Functions
 typedef struct ProtocolServerCommandGetResult
 {
     StringId id;                                                    // Command identifier
-    Buffer *param;                                                  // Parameter pack
+    Pack *param;                                                    // Parameter pack
 } ProtocolServerCommandGetResult;
 
 ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);

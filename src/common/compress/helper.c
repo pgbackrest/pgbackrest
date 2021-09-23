@@ -208,11 +208,11 @@ compressFilter(CompressType type, int level)
 
 /**********************************************************************************************************************************/
 IoFilter *
-compressFilterPack(const StringId filterType, const Buffer *const filterParamList)
+compressFilterPack(const StringId filterType, const Pack *const filterParam)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, filterType);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, filterParamList);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, filterParam);
     FUNCTION_LOG_END();
 
     ASSERT(filterType != 0);
@@ -227,14 +227,14 @@ compressFilterPack(const StringId filterType, const Buffer *const filterParamLis
 
             if (filterType == compress->compressType)
             {
-                ASSERT(filterParamList != NULL);
+                ASSERT(filterParam != NULL);
 
-                result = objMoveContext(compress->compressNew(pckReadI32P(pckReadNewBuf(filterParamList))), memContextPrior());
+                result = ioFilterMove(compress->compressNew(pckReadI32P(pckReadNew(filterParam))), memContextPrior());
                 break;
             }
             else if (filterType == compress->decompressType)
             {
-                result = objMoveContext(compress->decompressNew(), memContextPrior());
+                result = ioFilterMove(compress->decompressNew(), memContextPrior());
                 break;
             }
         }

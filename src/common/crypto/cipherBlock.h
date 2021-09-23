@@ -16,7 +16,7 @@ Filter type constant
 Constructors
 ***********************************************************************************************************************************/
 IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName);
-IoFilter *cipherBlockNewPack(const Buffer *paramList);
+IoFilter *cipherBlockNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
 Helper functions

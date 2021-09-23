@@ -34,22 +34,22 @@ static struct
 Set filter group based on passed filters
 ***********************************************************************************************************************************/
 static void
-storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Buffer *const filterPack)
+storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Pack *const filterPack)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER_GROUP, filterGroup);
-        FUNCTION_TEST_PARAM(BUFFER, filterPack);
+        FUNCTION_TEST_PARAM(PACK, filterPack);
     FUNCTION_TEST_END();
 
     ASSERT(filterGroup != NULL);
     ASSERT(filterPack != NULL);
 
-    PackRead *const filterList = pckReadNewBuf(filterPack);
+    PackRead *const filterList = pckReadNew(filterPack);
 
     while (!pckReadNullP(filterList))
     {
         const StringId filterKey = pckReadStrIdP(filterList);
-        const Buffer *const filterParam = pckReadPackBufP(filterList);
+        const Pack *const filterParam = pckReadPackP(filterList);
 
         IoFilter *filter = compressFilterPack(filterKey, filterParam);
 
@@ -356,7 +356,7 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
         const String *file = pckReadStrP(param);
         bool ignoreMissing = pckReadBoolP(param);
         const Variant *limit = jsonToVar(pckReadStrP(param));
-        const Buffer *const filter = pckReadPackBufP(param);
+        const Pack *const filter = pckReadPackP(param);
 
         // Create the read object
         IoRead *fileRead = storageReadIo(
@@ -383,7 +383,7 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
                 {
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
-                        PackWrite *write = pckWriteNewBuf(bufNew(ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE));
+                        PackWrite *write = pckWriteNewP(.size = ioBufferSize() + PROTOCOL_PACK_DEFAULT_SIZE);
                         pckWriteBinP(write, buffer);
                         protocolServerDataPut(server, write);
                     }
@@ -433,7 +433,7 @@ storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const serv
         bool syncFile = pckReadBoolP(param);
         bool syncPath = pckReadBoolP(param);
         bool atomic = pckReadBoolP(param);
-        const Buffer *const filter = pckReadPackBufP(param);
+        const Pack *const filter = pckReadPackP(param);
 
         IoWrite *fileWrite = storageWriteIo(
             storageInterfaceNewWriteP(

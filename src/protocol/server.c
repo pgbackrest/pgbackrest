@@ -124,7 +124,7 @@ protocolServerCommandGet(ProtocolServer *const this)
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result.id = pckReadStrIdP(command);
-            result.param = pckReadPackBufP(command);
+            result.param = pckReadPackP(command);
         }
         MEM_CONTEXT_PRIOR_END();
 
@@ -194,7 +194,7 @@ protocolServerProcess(
 
                             TRY_BEGIN()
                             {
-                                handler(pckReadNewBuf(command.param), this);
+                                handler(pckReadNew(command.param), this);
                             }
                             CATCH_ANY()
                             {
@@ -291,7 +291,7 @@ protocolServerDataGet(ProtocolServer *const this)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = pckReadPackP(data);
+            result = pckReadPackReadP(data);
         }
         MEM_CONTEXT_PRIOR_END();
 
@@ -320,7 +320,7 @@ protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
         // Write the result
         PackWrite *resultMessage = pckWriteNewIo(this->write);
         pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
-        pckWritePackP(resultMessage, data);
+        pckWritePackP(resultMessage, pckWriteResult(data));
         pckWriteEndP(resultMessage);
 
         // Flush on NULL result since it might be used to synchronize

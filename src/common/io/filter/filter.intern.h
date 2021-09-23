@@ -18,6 +18,8 @@ Each filter has a type that allows it to be identified in the filter list.
 #ifndef COMMON_IO_FILTER_FILTER_INTERN_H
 #define COMMON_IO_FILTER_FILTER_INTERN_H
 
+#include "common/type/buffer.h"
+#include "common/type/pack.h"
 #include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
@@ -46,13 +48,13 @@ typedef struct IoFilterInterface
     // If the filter produces a result then this function must be implemented to return the result. A result can be anything that
     // is not processed output, e.g. a count of total bytes or a cryptographic hash. The returned buffer must be a pack containing
     // the result.
-    Buffer *(*result)(void *driver);
+    Pack *(*result)(void *driver);
 } IoFilterInterface;
 
 #define ioFilterNewP(type, driver, paramList, ...)                                                                                 \
     ioFilterNew(type, driver, paramList, (IoFilterInterface){__VA_ARGS__})
 
-IoFilter *ioFilterNew(StringId type, void *driver, Buffer *paramList, IoFilterInterface);
+IoFilter *ioFilterNew(StringId type, void *driver, Pack *paramList, IoFilterInterface);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -63,7 +65,7 @@ typedef struct IoFilterPub
     StringId type;                                                  // Filter type
     IoFilterInterface interface;                                    // Filter interface
     void *driver;                                                   // Filter driver
-    const Buffer *paramList;                                        // Filter parameters
+    const Pack *paramList;                                          // Filter parameters
 } IoFilterPub;
 
 // Is the filter done?
@@ -95,7 +97,7 @@ ioFilterOutput(const IoFilter *const this)
 }
 
 // List of filter parameters
-__attribute__((always_inline)) static inline const Buffer *
+__attribute__((always_inline)) static inline const Pack *
 ioFilterParamList(const IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->paramList;

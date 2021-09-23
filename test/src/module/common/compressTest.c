@@ -79,7 +79,7 @@ testSuite(CompressType type, const char *decompressCmd)
     Buffer *compressed = NULL;
     Buffer *decompressed = bufNewC(simpleData, strlen(simpleData));
 
-    PackWrite *packWrite = pckWriteNewBuf(bufNew(PACK_EXTRA_MIN));
+    PackWrite *packWrite = pckWriteNewP();
     pckWriteI32P(packWrite, 1);
     pckWriteEndP(packWrite);
 
@@ -91,7 +91,7 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_ASSIGN(
         compressed,
         testCompress(
-            compressFilterPack(compressHelperLocal[type].compressType, pckWriteBuf(packWrite)), decompressed, 1024,
+            compressFilterPack(compressHelperLocal[type].compressType, pckWriteResult(packWrite)), decompressed, 1024,
             256 * 1024 * 1024),
         "simple data - compress large in/large out buffer");
 

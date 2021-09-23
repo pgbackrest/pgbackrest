@@ -96,18 +96,17 @@ ioTestFilterSizeProcess(THIS_VOID, const Buffer *buffer)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-static Buffer *
+static Pack *
 ioTestFilterSizeResult(THIS_VOID)
 {
     THIS(IoTestFilterSize);
 
-    Buffer *const result = bufNew(16);
-    PackWrite *const pack = pckWriteNewBuf(result);
+    PackWrite *const packWrite = pckWriteNewP();
 
-    pckWriteU64P(pack, this->size);
-    pckWriteEndP(pack);
+    pckWriteU64P(packWrite, this->size);
+    pckWriteEndP(packWrite);
 
-    return result;
+    return pckWriteResult(packWrite);
 }
 
 static IoFilter *
@@ -227,21 +226,14 @@ ioTestFilterMultiplyNew(const StringId type, unsigned int multiplier, unsigned i
             .flushChar = flushChar,
         };
 
-        Buffer *const paramList = bufNew(PACK_EXTRA_MIN);
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewBuf(paramList);
-
-            pckWriteStrIdP(packWrite, type);
-            pckWriteU32P(packWrite, multiplier);
-            pckWriteU32P(packWrite, flushTotal);
-            pckWriteEndP(packWrite);
-        }
-        MEM_CONTEXT_TEMP_END();
+        PackWrite *const packWrite = pckWriteNewP();
+        pckWriteStrIdP(packWrite, type);
+        pckWriteU32P(packWrite, multiplier);
+        pckWriteU32P(packWrite, flushTotal);
+        pckWriteEndP(packWrite);
 
         this = ioFilterNewP(
-            type, driver, paramList, .done = ioTestFilterMultiplyDone, .inOut = ioTestFilterMultiplyProcess,
+            type, driver, pckWriteResult(packWrite), .done = ioTestFilterMultiplyDone, .inOut = ioTestFilterMultiplyProcess,
             .inputSame = ioTestFilterMultiplyInputSame);
     }
     OBJ_NEW_END();
@@ -331,7 +323,7 @@ testRun(void)
         TEST_RESULT_VOID(ioFilterGroupAdd(ioReadFilterGroup(bufferRead), bufferFilter), "    add filter to filter group");
         TEST_RESULT_PTR(ioFilterMove(NULL, memContextTop()), NULL, "    move NULL filter to top context");
         TEST_RESULT_STR_Z(
-            hrnPackBufToStr(ioFilterGroupParamAll(ioReadFilterGroup(bufferRead))),
+            hrnPackToStr(ioFilterGroupParamAll(ioReadFilterGroup(bufferRead))),
             "1:strid:size, 3:strid:double, 4:pack:<1:strid:double, 2:u32:2, 3:u32:3>, 5:strid:size, 7:strid:buffer",
             "    check filter params");
 
@@ -360,7 +352,7 @@ testRun(void)
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
         TEST_RESULT_VOID(ioReadClose(bufferRead), " close buffer read object");
         TEST_RESULT_STR_Z(
-            hrnPackBufToStr(pckWriteBuf(ioFilterGroupResultAll(ioReadFilterGroup(bufferRead)))),
+            hrnPackToStr(ioFilterGroupResultAll(ioReadFilterGroup(bufferRead))),
             "1:strid:size, 2:pack:<1:u64:3>, 3:strid:double, 5:strid:size, 6:pack:<1:u64:9>, 7:strid:buffer",
             "    check filter result all");
 
@@ -390,16 +382,16 @@ testRun(void)
         filterGroup->pub.opened = true;
         TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, NULL), "null result");
 
-        PackWrite *filterResult = pckWriteNewBuf(bufNew(256));
+        PackWrite *filterResult = pckWriteNewP(.size = 256);
         pckWriteU64P(filterResult, 777);
         pckWriteEndP(filterResult);
 
-        PackWrite *filterResultAll = pckWriteNewBuf(bufNew(256));
+        PackWrite *filterResultAll = pckWriteNewP(.size = 256);
         pckWriteStrIdP(filterResultAll, STRID5("test", 0xa4cb40));
-        pckWritePackP(filterResultAll, filterResult);
+        pckWritePackP(filterResultAll, pckWriteResult(filterResult));
         pckWriteEndP(filterResultAll);
 
-        TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, pckReadNewBuf(pckWriteBuf(filterResultAll))), "add result");
+        TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, pckWriteResult(filterResultAll)), "add result");
         filterGroup->pub.closed = true;
         TEST_RESULT_UINT(pckReadU64P(ioFilterGroupResultP(filterGroup, STRID5("test", 0xa4cb40))), 777, "    check filter result");
 

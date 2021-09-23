@@ -58,7 +58,7 @@ ioSizeProcess(THIS_VOID, const Buffer *input)
 /***********************************************************************************************************************************
 Return filter result
 ***********************************************************************************************************************************/
-static Buffer *
+static Pack *
 ioSizeResult(THIS_VOID)
 {
     THIS(IoSize);
@@ -69,18 +69,20 @@ ioSizeResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    Buffer *const result = bufNew(PACK_EXTRA_MIN);
+    Pack *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackWrite *const pack = pckWriteNewBuf(result);
+        PackWrite *const packWrite = pckWriteNewP();
 
-        pckWriteU64P(pack, this->size);
-        pckWriteEndP(pack);
+        pckWriteU64P(packWrite, this->size);
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BUFFER, result);
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/

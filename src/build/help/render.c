@@ -123,7 +123,7 @@ Render help to a pack
 static PackWrite *
 bldHlpRenderHelpAutoCPack(const BldCfg bldCfg, const BldHlp bldHlp)
 {
-    PackWrite *const pack = pckWriteNewBuf(bufNew(65 * 1024));
+    PackWrite *const pack = pckWriteNewP(.size = 65 * 1024);
 
     // Command help
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ static Buffer *
 bldHlpRenderHelpAutoCCmp(const BldCfg bldCfg, const BldHlp bldHlp)
 {
     // Get pack buffer
-    const Buffer *const packBuf = pckWriteBuf(bldHlpRenderHelpAutoCPack(bldCfg, bldHlp));
+    const Buffer *const packBuf = pckToBuf(pckWriteResult(bldHlpRenderHelpAutoCPack(bldCfg, bldHlp)));
     Buffer *const result = bufNew(bufSize(packBuf));
 
     // Open source/destination

@@ -75,7 +75,7 @@ storageReadRemoteOpen(THIS_VOID)
         pckWriteStrP(param, this->interface.name);
         pckWriteBoolP(param, this->interface.ignoreMissing);
         pckWriteStrP(param, jsonFromVar(this->interface.limit));
-        pckWritePackBufP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
+        pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
         protocolClientCommandPut(this->client, command);
 

@@ -305,7 +305,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "TESTDATA", "check contents");
 
         TEST_RESULT_STR_Z(
-            hrnPackBufToStr(pckWriteBuf(ioFilterGroupResultAll(filterGroup))),
+            hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
             "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:str:bbbcf2c59433f68f22376cd2439d6cd309378df6>,"
             " 5:strid:pg-chksum, 6:pack:<1:str:{\"align\":false,\"valid\":false}>, 7:strid:cipher-blk, 9:strid:cipher-blk,"
             " 11:strid:gz-cmp, 13:strid:gz-dcmp, 15:strid:buffer",
@@ -328,7 +328,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "", "no content");
 
         TEST_RESULT_STR_Z(
-            hrnPackBufToStr(pckWriteBuf(ioFilterGroupResultAll(filterGroup))),
+            hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
             "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:str:bbbcf2c59433f68f22376cd2439d6cd309378df6>, 5:strid:sink,"
                 " 7:strid:buffer",
             "filter results");
@@ -336,12 +336,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid filter");
 
-        Buffer *filterPack = bufNew(PACK_EXTRA_MIN);
-        PackWrite *filterWrite = pckWriteNewBuf(filterPack);
+        PackWrite *filterWrite = pckWriteNewP();
         pckWriteStrIdP(filterWrite, STRID5("bogus", 0x13a9de20));
         pckWriteEndP(filterWrite);
 
-        TEST_ERROR(storageRemoteFilterGroup(ioFilterGroupNew(), filterPack), AssertError, "unable to add filter 'bogus'");
+        TEST_ERROR(
+            storageRemoteFilterGroup(ioFilterGroupNew(), pckWriteResult(filterWrite)), AssertError, "unable to add filter 'bogus'");
     }
 
     // *****************************************************************************************************************************
