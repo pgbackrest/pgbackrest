@@ -27,10 +27,7 @@ typedef struct PageChecksum
 
     bool valid;                                                     // Is the relation structure valid?
     bool align;                                                     // Is the relation alignment valid?
-    VariantList *error;                                             // List of checksum errors
-
-    unsigned int errorMin;                                          // Current min error page
-    unsigned int errorMax;                                          // Current max error page
+    PackWrite *error;                                               // List of checksum errors
 } PageChecksum;
 
 /***********************************************************************************************************************************
@@ -121,20 +118,21 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                     continue;
             }
 
-            // Add the page error
-            MEM_CONTEXT_BEGIN(this->memContext)
+            // Create the error list if it does not exist yet
+            if (this->error == NULL)
             {
-                // Create the error list if it does not exist yet
-                if (this->error == NULL)
-                    this->error = varLstNew();
-
-                // Add page number and lsn to the error list
-                VariantList *pair = varLstNew();
-                varLstAdd(pair, varNewUInt(blockNo));
-                varLstAdd(pair, varNewUInt64(pageLsn));
-                varLstAdd(this->error, varNewVarLst(pair));
+                MEM_CONTEXT_BEGIN(this->memContext)
+                {
+                    this->error = pckWriteNewP();
+                    pckWriteArrayBeginP(this->error);
+                }
+                MEM_CONTEXT_END();
             }
-            MEM_CONTEXT_END();
+
+            // Add page number and lsn to the error list
+            pckWriteObjBeginP(this->error, .id = blockNo + 1);
+            pckWriteU64P(this->error, pageLsn);
+            pckWriteObjEndP(this->error);
         }
 
         this->pageNoOffset += pageTotal;
@@ -159,76 +157,31 @@ pageChecksumResult(THIS_VOID)
 
     Pack *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    MEM_CONTEXT_BEGIN(this->memContext)
     {
-        KeyValue *error = kvNew();
-
+        // End the error array
         if (this->error != NULL)
         {
-            VariantList *errorList = varLstNew();
-            unsigned int errorIdx = 0;
-
-            // Convert the full list to an abbreviated list. In the future we want to return the entire list so pages can be verified
-            // in the WAL.
-            do
-            {
-                unsigned int pageId = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx)), 0));
-
-                if (errorIdx == varLstSize(this->error) - 1)
-                {
-                    varLstAdd(errorList, varNewUInt(pageId));
-                    errorIdx++;
-                }
-                else
-                {
-                    unsigned int pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
-
-                    if (pageIdNext > pageId + 1)
-                    {
-                        varLstAdd(errorList, varNewUInt(pageId));
-                        errorIdx++;
-                    }
-                    else
-                    {
-                        unsigned int pageIdLast = pageIdNext;
-                        errorIdx++;
-
-                        while (errorIdx < varLstSize(this->error) - 1)
-                        {
-                            pageIdNext = varUInt(varLstGet(varVarLst(varLstGet(this->error, errorIdx + 1)), 0));
-
-                            if (pageIdNext > pageIdLast + 1)
-                                break;
-
-                            pageIdLast = pageIdNext;
-                            errorIdx++;
-                        }
-
-                        VariantList *errorListSub = varLstNew();
-                        varLstAdd(errorListSub, varNewUInt(pageId));
-                        varLstAdd(errorListSub, varNewUInt(pageIdLast));
-                        varLstAdd(errorList, varNewVarLst(errorListSub));
-                        errorIdx++;
-                    }
-                }
-            }
-            while (errorIdx < varLstSize(this->error));
-
+            pckWriteArrayEndP(this->error);
             this->valid = false;
-            kvPut(error, varNewStrZ("error"), varNewVarLst(errorList));
+        }
+        // Else create a pack to hold the flags
+        else
+        {
+            this->error = pckWriteNewP();
+            pckWriteNullP(this->error);
         }
 
-        kvPut(error, VARSTRDEF("valid"), VARBOOL(this->valid));
-        kvPut(error, VARSTRDEF("align"), VARBOOL(this->align));
+        // Valid and align flags
+        pckWriteBoolP(this->error, this->valid, .defaultWrite = true);
+        pckWriteBoolP(this->error, this->align, .defaultWrite = true);
 
-        PackWrite *const packWrite = pckWriteNewP();
+        // End pack
+        pckWriteEndP(this->error);
 
-        pckWriteStrP(packWrite, jsonFromKv(error));
-        pckWriteEndP(packWrite);
-
-        result = pckMove(pckWriteResult(packWrite), memContextPrior());
+        result = pckMove(pckWriteResult(this->error), memContextPrior());
     }
-    MEM_CONTEXT_TEMP_END();
+    MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN(PACK, result);
 }

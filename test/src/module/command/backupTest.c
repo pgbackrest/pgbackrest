@@ -12,6 +12,7 @@ Test Backup Command
 #include "common/harnessConfig.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
+#include "common/harnessPack.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
 
@@ -545,8 +546,7 @@ testRun(void)
         TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
-        TEST_RESULT_PTR_NE(result.pageChecksumResult, NULL, "pageChecksumResult is set");
-        TEST_RESULT_BOOL(varBool(kvGet(result.pageChecksumResult, VARSTRDEF("valid"))), false, "pageChecksumResult valid=false");
+        TEST_RESULT_STR_Z(hrnPackToStr(result.pageChecksumResult), "2:bool:false, 3:bool:false", "pageChecksumResult");
         TEST_STORAGE_EXISTS(storageRepoWrite(), strZ(backupPathFile), .remove = true, .comment = "check exists in repo, remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -579,7 +579,7 @@ testRun(void)
         TEST_RESULT_UINT(result.repoSize, 12, "repo size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
         TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "checksum");
-        TEST_RESULT_STR_Z(jsonFromKv(result.pageChecksumResult), "{\"align\":false,\"valid\":false}", "page checksum");
+        TEST_RESULT_STR_Z(hrnPackToStr(result.pageChecksumResult), "2:bool:false, 3:bool:false", "page checksum");
         TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile###");
 
         // -------------------------------------------------------------------------------------------------------------------------

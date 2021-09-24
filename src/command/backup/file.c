@@ -251,9 +251,8 @@ backupFile(
                     // Get results of page checksum validation
                     if (pgFileChecksumPage)
                     {
-                        result.pageChecksumResult = jsonToKv(
-                            pckReadStrP(
-                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE)));
+                        result.pageChecksumResult = pckDup(
+                            ioFilterGroupResultPackP(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE));
                     }
                 }
                 MEM_CONTEXT_PRIOR_END();

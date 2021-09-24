@@ -134,6 +134,13 @@ typedef enum
 /***********************************************************************************************************************************
 Pack Functions
 ***********************************************************************************************************************************/
+// Duplicate pack
+__attribute__((always_inline)) static inline Pack *
+pckDup(const Pack *const this)
+{
+    return (Pack *)bufDup((const Buffer *)this);
+}
+
 // Cast Buffer to Pack
 __attribute__((always_inline)) static inline const Pack *
 pckFromBuf(const Buffer *const buffer)

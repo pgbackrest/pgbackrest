@@ -344,7 +344,7 @@ testRun(void)
         TEST_RESULT_VOID(pckWritePtrP(packWrite, "sample"), "write pointer");
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "write end");
 
-        TEST_ASSIGN(packRead, pckReadNew(pckWriteResult(packWrite)), "new read");
+        TEST_ASSIGN(packRead, pckReadNew(pckDup(pckWriteResult(packWrite))), "new read");
         TEST_RESULT_Z(pckReadPtrP(packRead), NULL, "read default pointer");
         TEST_RESULT_Z(pckReadPtrP(packRead, .id = 2), "sample", "read pointer");
 

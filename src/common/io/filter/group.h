@@ -73,6 +73,11 @@ typedef struct IoFilterGroupResultParam
 
 PackRead *ioFilterGroupResult(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
 
+#define ioFilterGroupResultPackP(this, filterType, ...)                                                                            \
+    ioFilterGroupResultPack(this, filterType, (IoFilterGroupResultParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+const Pack *ioFilterGroupResultPack(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
+
 // Get/set all filter results
 Pack *ioFilterGroupResultAll(const IoFilterGroup *this);
 void ioFilterGroupResultAllSet(IoFilterGroup *this, const Pack *filterResult);

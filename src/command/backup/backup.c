@@ -1014,6 +1014,101 @@ backupStop(BackupData *backupData, Manifest *manifest)
 }
 
 /***********************************************************************************************************************************
+Convert page checksum error pack to a VariantList
+***********************************************************************************************************************************/
+// Helper to output pages and page ranges
+static void
+backupJobResultPageChecksumOut(VariantList *const result, const unsigned int pageBegin, const unsigned int pageEnd)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT_LIST, result);
+        FUNCTION_TEST_PARAM(UINT, pageBegin);
+        FUNCTION_TEST_PARAM(UINT, pageEnd);
+    FUNCTION_TEST_END();
+
+    // Output a single page
+    if (pageBegin == pageEnd)
+    {
+        varLstAdd(result, varNewUInt64(pageBegin));
+    }
+    // Else output a page range
+    else
+    {
+        VariantList *errorListSub = varLstNew();
+        varLstAdd(errorListSub, varNewUInt64(pageBegin));
+        varLstAdd(errorListSub, varNewUInt64(pageEnd));
+        varLstAdd(result, varNewVarLst(errorListSub));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static VariantList *
+backupJobResultPageChecksum(PackRead *const checksumPageResult)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, checksumPageResult);
+    FUNCTION_LOG_END();
+
+    VariantList *result = NULL;
+
+    // If there is an error result array
+    if (!pckReadNullP(checksumPageResult))
+    {
+        result = varLstNew();
+        pckReadArrayBeginP(checksumPageResult);
+
+        bool first = false;
+        unsigned int pageBegin = 0;
+        unsigned int pageEnd = 0;
+
+        // Combine results into a more compact form
+        while (pckReadNext(checksumPageResult))
+        {
+            unsigned int pageId = pckReadId(checksumPageResult) - 1;
+            pckReadObjBeginP(checksumPageResult, .id = pageId + 1);
+
+            // ??? Discarded for now but will eventually be used for filtering
+            pckReadU64P(checksumPageResult);
+
+            // If first error then just store page
+            if (!first)
+            {
+                pageBegin = pageId;
+                pageEnd = pageId;
+                first = true;
+            }
+            // Expand list when the page is in sequence
+            else if (pageId == pageEnd + 1)
+            {
+                pageEnd = pageId;
+            }
+            // Else output the page or page range
+            else
+            {
+                backupJobResultPageChecksumOut(result, pageBegin, pageEnd);
+
+                // Start again with a single page range
+                pageBegin = pageId;
+                pageEnd = pageId;
+            }
+
+            pckReadObjEndP(checksumPageResult);
+        }
+
+        // Check that the array was not empty
+        CHECK(first);
+
+        // Output last page or page range
+        backupJobResultPageChecksumOut(result, pageBegin, pageEnd);
+
+        pckReadArrayEndP(checksumPageResult);
+    }
+
+    FUNCTION_LOG_RETURN(VARIANT_LIST, result);
+}
+
+/***********************************************************************************************************************************
 Log the results of a job and throw errors
 ***********************************************************************************************************************************/
 static uint64_t
@@ -1049,7 +1144,7 @@ backupJobResult(
             const uint64_t copySize = pckReadU64P(jobResult);
             const uint64_t repoSize = pckReadU64P(jobResult);
             const String *const copyChecksum = pckReadStrP(jobResult);
-            const KeyValue *const checksumPageResult = varKv(jsonToVar(pckReadStrP(jobResult, .defaultValue = NULL_STR)));
+            PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
 
             // Increment backup copy progress
             sizeCopied += copySize;
@@ -1109,12 +1204,14 @@ backupJobResult(
 
                 if (checksumPageResult != NULL)
                 {
+                    checksumPageErrorList = backupJobResultPageChecksum(checksumPageResult);
+
                     // If the checksum was valid
-                    if (!varBool(kvGet(checksumPageResult, VARSTRDEF("valid"))))
+                    if (!pckReadBoolP(checksumPageResult))
                     {
                         checksumPageError = true;
 
-                        if (!varBool(kvGet(checksumPageResult, VARSTRDEF("align"))))
+                        if (!pckReadBoolP(checksumPageResult))
                         {
                             checksumPageErrorList = NULL;
 
@@ -1126,8 +1223,8 @@ backupJobResult(
                         else
                         {
                             // Format the page checksum errors
-                            checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
-                            ASSERT(!varLstEmpty(checksumPageErrorList));
+                            CHECK(checksumPageErrorList != NULL);
+                            CHECK(!varLstEmpty(checksumPageErrorList));
 
                             String *error = strNew();
                             unsigned int errorTotalMin = 0;

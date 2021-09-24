@@ -420,8 +420,8 @@ ioFilterGroupParamAll(const IoFilterGroup *this)
 }
 
 /**********************************************************************************************************************************/
-PackRead *
-ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, const IoFilterGroupResultParam param)
+const Pack *
+ioFilterGroupResultPack(const IoFilterGroup *const this, const StringId filterType, const IoFilterGroupResultParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
@@ -432,7 +432,7 @@ ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, 
     ASSERT(this->pub.opened);
     ASSERT(filterType != 0);
 
-    PackRead *result = NULL;
+    const Pack *result = NULL;
 
     // Search for the result
     unsigned int foundIdx = 0;
@@ -447,7 +447,7 @@ ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, 
             // If the index matches return the result
             if (foundIdx == param.idx)
             {
-                result = pckReadNew(filterResult->result);
+                result = filterResult->result;
                 break;
             }
 
@@ -456,7 +456,20 @@ ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, 
         }
     }
 
-    FUNCTION_LOG_RETURN(PACK_READ, result);
+    FUNCTION_LOG_RETURN_CONST(PACK, result);
+}
+
+/**********************************************************************************************************************************/
+PackRead *
+ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, const IoFilterGroupResultParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_LOG_PARAM(STRING_ID, filterType);
+        FUNCTION_LOG_PARAM(UINT, param.idx);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(PACK_READ, pckReadNew(ioFilterGroupResultPack(this, filterType, param)));
 }
 
 /**********************************************************************************************************************************/
