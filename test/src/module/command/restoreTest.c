@@ -2627,10 +2627,20 @@ testRun(void)
         // Write recovery.conf so we don't get a preserve warning
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_RECOVERYCONF, "Some Settings");
 
+        // Update the manifest with online = true to test recovery start time logging
+        manifest->pub.data.backupOptionOnline = true;
+        manifest->pub.data.backupTimestampStart = 1482182958;
+
+        manifestSave(
+            manifest,
+            storageWriteIo(
+                storageNewWriteP(storageRepoWrite(),
+                STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
+
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            "P00   INFO: repo2: restore backup set 20161219-212741F_20161219-212918I\n"
+            "P00   INFO: repo2: restore backup set 20161219-212741F_20161219-212918I, recovery will start at 2016-12-19 21:29:18\n"
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
