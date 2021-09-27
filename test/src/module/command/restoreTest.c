@@ -153,9 +153,6 @@ testRun(void)
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    // The tests expect the timezone to be UTC
-    setenv("TZ", "UTC", true);
-
     // *****************************************************************************************************************************
     if (testBegin("restoreFile()"))
     {
@@ -2634,6 +2631,8 @@ testRun(void)
         manifest->pub.data.backupOptionOnline = true;
         manifest->pub.data.backupTimestampStart = 1482182958;
 
+        hrnLogReplaceAdd("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "TIME", false);
+
         manifestSave(
             manifest,
             storageWriteIo(
@@ -2643,7 +2642,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            "P00   INFO: repo2: restore backup set 20161219-212741F_20161219-212918I, recovery will start at 2016-12-19 21:29:18\n"
+            "P00   INFO: repo2: restore backup set 20161219-212741F_20161219-212918I, recovery will start at [TIME]\n"
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
