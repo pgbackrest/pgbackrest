@@ -197,6 +197,17 @@ testRun(void)
         TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "check block size");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "check compress feature");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with host but force host-style uri");
+
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host");
+        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStyleHost);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".test-host", "check host");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "check path prefix");
     }
 
     // *****************************************************************************************************************************
@@ -211,7 +222,8 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
-                    TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), 443, 1000, true, NULL, NULL)),
+                    TEST_KEY_SHARED_STR, 16, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000, true, NULL,
+                    NULL)),
             "new azure storage - shared key");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -250,7 +262,7 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
-                    16, NULL, STRDEF("blob.core.usgovcloudapi.net"), 443, 1000, true, NULL, NULL)),
+                    16, STRDEF("blob.core.usgovcloudapi.net"), storageAzureUriStyleHost, 443, 1000, true, NULL, NULL)),
             "new azure storage - sas key");
 
         query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
@@ -278,7 +290,7 @@ testRun(void)
                 IoWrite *service = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("test against local host");
+                TEST_TITLE("test against local host with path-style URIs");
 
                 StringList *argList = strLstNew();
                 hrnCfgArgRawZ(argList, cfgOptStanza, "test");

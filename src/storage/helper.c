@@ -359,16 +359,33 @@ storageRepoGet(unsigned int repoIdx, bool write)
         {
             // Use Azure storage
             case STORAGE_AZURE_TYPE:
+            {
+                const String *endpoint = cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx);
+                const String *const host = cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx);
+                StorageAzureUriStyle uriStyle = (StorageAzureUriStyle)cfgOptionIdxStrId(cfgOptRepoAzureUriStyle, repoIdx);
+
+                // If the host is set then set it as the endpoint. The host option is used to set path-style URIs when working with
+                // Azurite. This was ill-advised, so the uri-style option was added to allow the user to select the URI style used
+                // by the server. Preserve the old behavior when uri-style is defaulted.
+                if (host != NULL)
+                {
+                    endpoint = host;
+
+                    if (cfgOptionIdxSource(cfgOptRepoAzureUriStyle, repoIdx) == cfgSourceDefault)
+                        uriStyle = storageAzureUriStylePath;
+                }
+
                 result = storageAzureNew(
                     cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
                     cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx),
                     (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx),
                     cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
-                    cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
-                    cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx), ioTimeoutMs(),
+                    endpoint, uriStyle, cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx), ioTimeoutMs(),
                     cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+
                 break;
+            }
 
             // Use CIFS storage
             case STORAGE_CIFS_TYPE:

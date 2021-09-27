@@ -21,6 +21,15 @@ typedef enum
 } StorageAzureKeyType;
 
 /***********************************************************************************************************************************
+URI style
+***********************************************************************************************************************************/
+typedef enum
+{
+    storageAzureUriStyleHost = STRID5("host", 0xa4de80),
+    storageAzureUriStylePath = STRID5("path", 0x450300),
+} StorageAzureUriStyle;
+
+/***********************************************************************************************************************************
 Defaults
 ***********************************************************************************************************************************/
 #define STORAGE_AZURE_BLOCKSIZE_MIN                                 ((size_t)4 * 1024 * 1024)
@@ -30,7 +39,8 @@ Constructors
 ***********************************************************************************************************************************/
 Storage *storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host,
-    const String *endpoint, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *endpoint,
+    StorageAzureUriStyle uriStyle, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile,
+    const String *caPath);
 
 #endif

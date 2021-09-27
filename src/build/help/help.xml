@@ -483,6 +483,22 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-uri-style" name="Azure Repository URI Style">
+                        <summary>Azure URI Style.</summary>
+
+                        <text>
+                            <p>The following URI styles are supported:</p>
+
+                            <list>
+                                <list-item><id>host</id> - Connect to <id>account.endpoint</id> host.</list-item>
+                                <list-item><id>path</id> - Connect to <id>endpoint</id> host and prepend account to URIs.</list-item>
+                            </list>
+                        </text>
+
+                        <example>path</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
                     <config-key id="repo-gcs-bucket" name="GCS Repository Bucket">
                         <summary>GCS repository bucket.</summary>
 
