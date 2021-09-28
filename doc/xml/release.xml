@@ -27,6 +27,19 @@
 
                         <p>Increase max index allowed for <id>pg</id>/<id>repo</id> options to 256.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1434"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="leigh.downs"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hints to standby replay timeout message.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-core-list>
         </release>
@@ -10382,6 +10395,11 @@
         <contributor id="laurenz.albe">
             <contributor-name-display>Laurenz Albe</contributor-name-display>
             <contributor-id type="github">laurenz</contributor-id>
+        </contributor>
+
+        <contributor id="leigh.downs">
+            <contributor-name-display>Leigh Downs</contributor-name-display>
+            <contributor-id type="github">leigh-downs</contributor-id>
         </contributor>
 
         <contributor id="leo.khomenko">

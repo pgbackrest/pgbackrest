@@ -508,7 +508,9 @@ testRun(void)
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), 200), ArchiveTimeoutError,
-            "timeout before standby replayed to 5/5 - only reached 5/3");
+            "timeout before standby replayed to 5/5 - only reached 5/3\n"
+            "HINT: is replication running and current on the standby?\n"
+            "HINT: disable the 'backup-standby' option to backup directly from the primary.");
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), 200), ArchiveTimeoutError,
