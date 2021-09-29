@@ -906,7 +906,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         if (kvGet(backupInfo, BACKUP_KEY_ERROR_VAR) != NULL &&
             varBool(kvGet(backupInfo, BACKUP_KEY_ERROR_VAR)))
         {
-            strCatZ(resultStr, "            page checksum error(s) detected\n");
+            strCatZ(resultStr, "            file(s) error(s) detected\n");
         }
 
         if (kvGet(backupInfo, BACKUP_KEY_ERROR_LIST_VAR) != NULL)
