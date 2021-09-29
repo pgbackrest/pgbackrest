@@ -160,7 +160,8 @@ archivePushFile(
             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
             ioReadDrain(read);
 
-            const String *walSegmentChecksum = varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
+            const String *walSegmentChecksum = pckReadStrP(
+                ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
 
             // Check each repo for the WAL segment
             for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)

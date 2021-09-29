@@ -150,7 +150,6 @@ sub htmlRender
     {
         if (!defined($oElement->{bPre}) || !$oElement->{bPre})
         {
-            $oElement->{strContent} =~ s/\n/\<br\/>\n/g;
             $oElement->{strContent} = trim($oElement->{strContent});
 
             # Add a linefeed before the content if not pre. This makes the output more diffable.

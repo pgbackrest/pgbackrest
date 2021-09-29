@@ -91,7 +91,8 @@ restoreFile(
                         // If size and checksum are equal then no need to copy the file
                         if (pgFileSize == 0 ||
                             strEq(
-                                pgFileChecksum, varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR))))
+                                pgFileChecksum,
+                                pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
                         {
                             // Even if hash/size are the same set the time back to backup time.  This helps with unit testing, but
                             // also presents a pristine version of the database after restore.
@@ -173,12 +174,12 @@ restoreFile(
                     pgFileWrite);
 
                 // Validate checksum
-                if (!strEq(pgFileChecksum, varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))))
+                if (!strEq(pgFileChecksum, pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))))
                 {
                     THROW_FMT(
                         ChecksumError,
                         "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(pgFile),
-                        strZ(varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))), strZ(pgFileChecksum));
+                        strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))), strZ(pgFileChecksum));
                 }
             }
         }

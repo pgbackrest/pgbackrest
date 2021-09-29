@@ -17,6 +17,7 @@ Developed against version r131 using the documentation in https://github.com/lz4
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/type/object.h"
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Older versions of lz4 do not define the max header size.  This seems to be the max for any version.
@@ -24,11 +25,6 @@ Older versions of lz4 do not define the max header size.  This seems to be the m
 #ifndef LZ4F_HEADER_SIZE_MAX
     #define LZ4F_HEADER_SIZE_MAX                                    19
 #endif
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(LZ4_COMPRESS_FILTER_TYPE_STR,                         LZ4_COMPRESS_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Object type
@@ -275,12 +271,22 @@ lz4CompressNew(int level)
         memContextCallbackSet(objMemContext(driver), lz4CompressFreeResource, driver);
 
         // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewInt(level));
+        Pack *paramList = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const packWrite = pckWriteNewP();
+
+            pckWriteI32P(packWrite, level);
+            pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+        }
+        MEM_CONTEXT_TEMP_END();
 
         // Create filter interface
         this = ioFilterNewP(
-            LZ4_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = lz4CompressDone, .inOut = lz4CompressProcess,
+            LZ4_COMPRESS_FILTER_TYPE, driver, paramList, .done = lz4CompressDone, .inOut = lz4CompressProcess,
             .inputSame = lz4CompressInputSame);
     }
     OBJ_NEW_END();

@@ -11,10 +11,9 @@ use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
 
-use pgBackRestBuild::Config::Data;
-
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Custom::DocConfigData;
 use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################

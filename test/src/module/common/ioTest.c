@@ -7,6 +7,7 @@ Test IO
 #include "common/type/json.h"
 
 #include "common/harnessFork.h"
+#include "common/harnessPack.h"
 
 /***********************************************************************************************************************************
 Test functions for IoRead that are not covered by testing the IoBufferRead object
@@ -95,16 +96,21 @@ ioTestFilterSizeProcess(THIS_VOID, const Buffer *buffer)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-static Variant *
+static Pack *
 ioTestFilterSizeResult(THIS_VOID)
 {
     THIS(IoTestFilterSize);
 
-    return varNewUInt64(this->size);
+    PackWrite *const packWrite = pckWriteNewP();
+
+    pckWriteU64P(packWrite, this->size);
+    pckWriteEndP(packWrite);
+
+    return pckWriteResult(packWrite);
 }
 
 static IoFilter *
-ioTestFilterSizeNew(const char *type)
+ioTestFilterSizeNew(const StringId type)
 {
     IoFilter *this = NULL;
 
@@ -113,7 +119,7 @@ ioTestFilterSizeNew(const char *type)
         IoTestFilterSize *driver = OBJ_NEW_ALLOC();
         *driver = (IoTestFilterSize){0};
 
-        this = ioFilterNewP(strNewZ(type), driver, NULL, .in = ioTestFilterSizeProcess, .result = ioTestFilterSizeResult);
+        this = ioFilterNewP(type, driver, NULL, .in = ioTestFilterSizeProcess, .result = ioTestFilterSizeResult);
     }
     OBJ_NEW_END();
 
@@ -204,7 +210,7 @@ ioTestFilterMultiplyInputSame(const THIS_VOID)
 }
 
 static IoFilter *
-ioTestFilterMultiplyNew(const char *type, unsigned int multiplier, unsigned int flushTotal, char flushChar)
+ioTestFilterMultiplyNew(const StringId type, unsigned int multiplier, unsigned int flushTotal, char flushChar)
 {
     IoFilter *this = NULL;
 
@@ -220,13 +226,14 @@ ioTestFilterMultiplyNew(const char *type, unsigned int multiplier, unsigned int 
             .flushChar = flushChar,
         };
 
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStrZ(type));
-        varLstAdd(paramList, varNewUInt(multiplier));
-        varLstAdd(paramList, varNewUInt(flushTotal));
+        PackWrite *const packWrite = pckWriteNewP();
+        pckWriteStrIdP(packWrite, type);
+        pckWriteU32P(packWrite, multiplier);
+        pckWriteU32P(packWrite, flushTotal);
+        pckWriteEndP(packWrite);
 
         this = ioFilterNewP(
-            strNewZ(type), driver, paramList, .done = ioTestFilterMultiplyDone, .inOut = ioTestFilterMultiplyProcess,
+            type, driver, pckWriteResult(packWrite), .done = ioTestFilterMultiplyDone, .inOut = ioTestFilterMultiplyProcess,
             .inputSame = ioTestFilterMultiplyInputSame);
     }
     OBJ_NEW_END();
@@ -306,7 +313,7 @@ testRun(void)
 
         IoFilter *sizeFilter = ioSizeNew();
         TEST_RESULT_VOID(
-            ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioTestFilterMultiplyNew("double", 2, 3, 'X')),
+            ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioTestFilterMultiplyNew(STRID5("double", 0xac155e40), 2, 3, 'X')),
             "    add filter to filter group");
         TEST_RESULT_PTR(
             ioFilterGroupInsert(ioReadFilterGroup(bufferRead), 0, sizeFilter), bufferRead->pub.filterGroup,
@@ -316,8 +323,9 @@ testRun(void)
         TEST_RESULT_VOID(ioFilterGroupAdd(ioReadFilterGroup(bufferRead), bufferFilter), "    add filter to filter group");
         TEST_RESULT_PTR(ioFilterMove(NULL, memContextTop()), NULL, "    move NULL filter to top context");
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(bufferRead))),
-            "[{\"size\":null},{\"double\":[\"double\",2,3]},{\"size\":null},{\"buffer\":null}]", "    check filter params");
+            hrnPackToStr(ioFilterGroupParamAll(ioReadFilterGroup(bufferRead))),
+            "1:strid:size, 3:strid:double, 4:pack:<1:strid:double, 2:u32:2, 3:u32:3>, 5:strid:size, 7:strid:buffer",
+            "    check filter params");
 
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
         TEST_RESULT_INT(ioReadFd(bufferRead), -1, "    fd invalid");
@@ -325,7 +333,7 @@ testRun(void)
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes (full buffer)");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "11", "    check read");
-        TEST_RESULT_STR_Z(ioFilterType(sizeFilter), "size", "check filter type");
+        TEST_RESULT_STR_Z(strIdToStr(ioFilterType(sizeFilter)), "size", "check filter type");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
 
         TEST_RESULT_VOID(bufUsedZero(buffer), "    zero buffer");
@@ -344,19 +352,23 @@ testRun(void)
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
         TEST_RESULT_VOID(ioReadClose(bufferRead), " close buffer read object");
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResultAll(ioReadFilterGroup(bufferRead))),
-            "{\"buffer\":null,\"double\":null,\"size\":[3,9]}",
+            hrnPackToStr(ioFilterGroupResultAll(ioReadFilterGroup(bufferRead))),
+            "1:strid:size, 2:pack:<1:u64:3>, 3:strid:double, 5:strid:size, 6:pack:<1:u64:9>, 7:strid:buffer",
             "    check filter result all");
 
         TEST_RESULT_PTR(ioReadFilterGroup(bufferRead), ioReadFilterGroup(bufferRead), "    check filter group");
         TEST_RESULT_UINT(
-            varUInt64(varLstGet(varVarLst(ioFilterGroupResult(ioReadFilterGroup(bufferRead), ioFilterType(sizeFilter))), 0)), 3,
+            pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(bufferRead), ioFilterType(sizeFilter))), 3,
             "    check filter result");
         TEST_RESULT_PTR(
-            ioFilterGroupResult(ioReadFilterGroup(bufferRead), STRDEF("double")), NULL, "    check filter result is NULL");
+            ioFilterGroupResultP(ioReadFilterGroup(bufferRead), STRID5("double", 0xac155e40)), NULL,
+            "    check filter result is NULL");
         TEST_RESULT_UINT(
-            varUInt64(varLstGet(varVarLst(ioFilterGroupResult(ioReadFilterGroup(bufferRead), ioFilterType(sizeFilter))), 1)), 9,
+            pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(bufferRead), ioFilterType(sizeFilter), .idx = 1)), 9,
             "    check filter result");
+        TEST_RESULT_PTR(
+            ioFilterGroupResultP(ioReadFilterGroup(bufferRead), STRID5("bogus", 0x13a9de20)), NULL,
+            "    check missing filter result");
 
         TEST_RESULT_PTR(ioFilterDriver(bufferFilter), bufferFilter->pub.driver, "    check filter driver");
         TEST_RESULT_PTR(ioFilterInterface(bufferFilter), &bufferFilter->pub.interface, "    check filter interface");
@@ -369,9 +381,19 @@ testRun(void)
         IoFilterGroup *filterGroup = ioFilterGroupNew();
         filterGroup->pub.opened = true;
         TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, NULL), "null result");
-        TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, jsonToVar(STRDEF("{\"test\":777}"))), "add result");
+
+        PackWrite *filterResult = pckWriteNewP(.size = 256);
+        pckWriteU64P(filterResult, 777);
+        pckWriteEndP(filterResult);
+
+        PackWrite *filterResultAll = pckWriteNewP(.size = 256);
+        pckWriteStrIdP(filterResultAll, STRID5("test", 0xa4cb40));
+        pckWritePackP(filterResultAll, pckWriteResult(filterResult));
+        pckWriteEndP(filterResultAll);
+
+        TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, pckWriteResult(filterResultAll)), "add result");
         filterGroup->pub.closed = true;
-        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, STRDEF("test"))), 777, "    check filter result");
+        TEST_RESULT_UINT(pckReadU64P(ioFilterGroupResultP(filterGroup, STRID5("test", 0xa4cb40))), 777, "    check filter result");
 
         // Read a zero-size buffer to ensure filters are still processed even when there is no input.  Some filters (e.g. encryption
         // and compression) will produce output even if there is no input.
@@ -382,7 +404,7 @@ testRun(void)
 
         TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create buffer read object");
         TEST_RESULT_VOID(
-            ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioTestFilterMultiplyNew("double", 2, 5, 'Y')),
+            ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioTestFilterMultiplyNew(STRID5("double", 0xac155e40), 2, 5, 'Y')),
             "    add filter that produces output with no input");
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open read");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 5, "    read 5 chars");
@@ -461,7 +483,8 @@ testRun(void)
         ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioSizeNew());
 
         TEST_RESULT_BOOL(ioReadDrain(bufferRead), true, "drain read io");
-        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(ioReadFilterGroup(bufferRead), SIZE_FILTER_TYPE_STR)), 20, "check length");
+        TEST_RESULT_UINT(
+            pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(bufferRead), SIZE_FILTER_TYPE)), 20, "check length");
 
         // Cannot open file
         TEST_ASSIGN(
@@ -499,11 +522,13 @@ testRun(void)
         IoFilter *sizeFilter = ioSizeNew();
         TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, sizeFilter), "    add filter to filter group");
         TEST_RESULT_VOID(
-            ioFilterGroupAdd(filterGroup, ioTestFilterMultiplyNew("double", 2, 3, 'X')), "    add filter to filter group");
-        TEST_RESULT_VOID(
-            ioFilterGroupAdd(filterGroup, ioTestFilterMultiplyNew("single", 1, 1, 'Y')),
+            ioFilterGroupAdd(filterGroup, ioTestFilterMultiplyNew(STRID5("double", 0xac155e40), 2, 3, 'X')),
             "    add filter to filter group");
-        TEST_RESULT_VOID(ioFilterGroupAdd(filterGroup, ioTestFilterSizeNew("size2")), "    add filter to filter group");
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(filterGroup, ioTestFilterMultiplyNew(STRID5("single", 0xac3b9330), 1, 1, 'Y')),
+            "    add filter to filter group");
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(filterGroup, ioTestFilterSizeNew(STRID5("size2", 0x1c2e9330))), "    add filter to filter group");
 
         TEST_RESULT_VOID(ioWriteOpen(bufferWrite), "    open buffer write object");
         TEST_RESULT_INT(ioWriteFd(bufferWrite), -1, "    fd invalid");
@@ -522,8 +547,9 @@ testRun(void)
 
         TEST_RESULT_PTR(ioWriteFilterGroup(bufferWrite), filterGroup, "    check filter group");
         TEST_RESULT_UINT(
-            varUInt64(ioFilterGroupResult(filterGroup, ioFilterType(sizeFilter))), 9, "    check filter result");
-        TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, STRDEF("size2"))), 22, "    check filter result");
+            pckReadU64P(ioFilterGroupResultP(filterGroup, ioFilterType(sizeFilter))), 9, "    check filter result");
+        TEST_RESULT_UINT(
+            pckReadU64P(ioFilterGroupResultP(filterGroup, STRID5("size2", 0x1c2e9330))), 22, "    check filter result");
     }
 
     // *****************************************************************************************************************************

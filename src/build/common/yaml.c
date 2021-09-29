@@ -51,7 +51,7 @@ yamlNew(const Buffer *const buffer)
     {
         // Create object
         this = OBJ_NEW_ALLOC();
-        *this = (Yaml){0};
+        *this = (Yaml){{0}};                                        // Extra braces are required for older gcc versions
 
         // Initialize parser context
         CHECK(yaml_parser_initialize(&this->parser));

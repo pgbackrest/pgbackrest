@@ -9,6 +9,7 @@ Test Remote Storage
 #include "postgres/interface.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessPack.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
 
@@ -304,10 +305,10 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "TESTDATA", "check contents");
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResultAll(filterGroup)),
-            "{\"buffer\":null,\"cipherBlock\":null,\"gzCompress\":null,\"gzDecompress\":null"
-                ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"pageChecksum\":{\"align\":false,\"valid\":false}"
-                ",\"size\":8}",
+            hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
+            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:str:bbbcf2c59433f68f22376cd2439d6cd309378df6>,"
+                " 5:strid:pg-chksum, 6:pack:<2:bool:false, 3:bool:false>, 7:strid:cipher-blk, 9:strid:cipher-blk, 11:strid:gz-cmp,"
+                " 13:strid:gz-dcmp, 15:strid:buffer",
             "filter results");
 
         // Check protocol function directly (file exists but all data goes to sink)
@@ -327,16 +328,20 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "", "no content");
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResultAll(filterGroup)),
-            "{\"buffer\":null,\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"sink\":null,\"size\":8}", "filter results");
+            hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
+            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:str:bbbcf2c59433f68f22376cd2439d6cd309378df6>, 5:strid:sink,"
+                " 7:strid:buffer",
+            "filter results");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid filter");
 
+        PackWrite *filterWrite = pckWriteNewP();
+        pckWriteStrIdP(filterWrite, STRID5("bogus", 0x13a9de20));
+        pckWriteEndP(filterWrite);
+
         TEST_ERROR(
-            storageRemoteFilterGroup(
-                ioFilterGroupNew(), varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvPut(kvNew(), VARSTRDEF("bogus"), NULL))))),
-            AssertError, "unable to add filter 'bogus'");
+            storageRemoteFilterGroup(ioFilterGroupNew(), pckWriteResult(filterWrite)), AssertError, "unable to add filter 'bogus'");
     }
 
     // *****************************************************************************************************************************

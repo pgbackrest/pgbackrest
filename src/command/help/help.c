@@ -8,18 +8,16 @@ Help Command
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "common/compress/bz2/decompress.h"
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/io.h"
 #include "common/memContext.h"
 #include "common/type/pack.h"
 #include "config/config.intern.h"
 #include "config/parse.h"
 #include "version.h"
-
-/***********************************************************************************************************************************
-Include automatically generated help data pack
-***********************************************************************************************************************************/
-#include "command/help/help.auto.c"
 
 /***********************************************************************************************************************************
 Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
@@ -234,16 +232,27 @@ typedef struct HelpOptionData
 } HelpOptionData;
 
 static String *
-helpRender(void)
+helpRender(const Buffer *const helpData)
 {
-    FUNCTION_LOG_VOID(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BUFFER, helpData);
+    FUNCTION_LOG_END();
 
     String *result = strNewZ(PROJECT_NAME " " PROJECT_VERSION);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Set a small buffer size to minimize memory usage
+        ioBufferSizeSet(8192);
+
+        // Read pack from compressed buffer
+        IoRead *const helpRead = ioBufferReadNew(helpData);
+        ioFilterGroupAdd(ioReadFilterGroup(helpRead), bz2DecompressNew());
+        ioReadOpen(helpRead);
+
+        PackRead *pckHelp = pckReadNewIo(helpRead);
+
         // Unpack command data
-        PackRead *pckHelp = pckReadNewBuf(BUF(helpDataPack, sizeof(helpDataPack)));
         HelpCommandData *commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL);
 
         pckReadArrayBeginP(pckHelp);
@@ -544,13 +553,15 @@ helpRender(void)
 
 /**********************************************************************************************************************************/
 void
-cmdHelp(void)
+cmdHelp(const Buffer *const helpData)
 {
-    FUNCTION_LOG_VOID(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BUFFER, helpData);
+    FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ioFdWriteOneStr(STDOUT_FILENO, helpRender());
+        ioFdWriteOneStr(STDOUT_FILENO, helpRender(helpData));
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -116,7 +116,7 @@ sub parse
 
     my %oOut;
     my $iIndex = 0;
-    my $bText = $strName eq 'text' || $strName eq 'li' || $strName eq 'p' || $strName eq 'title' ||
+    my $bText = $strName eq 'text' || $strName eq 'p' || $strName eq 'title' ||
                 $strName eq 'summary' || $strName eq 'table-cell' || $strName eq 'table-column' || $strName eq 'list-item' ||
                 $strName eq 'admonition';
 

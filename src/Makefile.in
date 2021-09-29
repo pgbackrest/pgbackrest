@@ -6,6 +6,8 @@
 # List of required source files.  main.c should always be listed last and the rest in alpha order.
 ####################################################################################################################################
 SRCS_BUILD = \
+	common/compress/bz2/common.c \
+	common/compress/bz2/compress.c \
 	common/debug.c \
 	common/encode.c \
 	common/error.c \
@@ -13,6 +15,8 @@ SRCS_BUILD = \
 	common/io/filter/filter.c \
 	common/io/filter/group.c \
 	common/io/filter/sink.c \
+	common/io/bufferRead.c \
+	common/io/bufferWrite.c \
 	common/io/io.c \
 	common/io/read.c \
 	common/io/write.c \
@@ -32,6 +36,7 @@ SRCS_BUILD = \
 	common/type/stringList.c \
 	common/type/variant.c \
 	common/type/variantList.c \
+	common/type/xml.c \
 	common/user.c \
 	common/wait.c \
 	storage/posix/read.c \
@@ -81,8 +86,6 @@ SRCS = \
 	command/verify/protocol.c \
 	command/verify/verify.c \
 	common/compress/helper.c \
-	common/compress/bz2/common.c \
-	common/compress/bz2/compress.c \
 	common/compress/bz2/decompress.c \
 	common/compress/gz/common.c \
 	common/compress/gz/compress.c \
@@ -100,8 +103,6 @@ SRCS = \
 	common/exit.c \
 	common/fork.c \
 	common/ini.c \
-	common/io/bufferRead.c \
-	common/io/bufferWrite.c \
 	common/io/client.c \
 	common/io/fd.c \
 	common/io/fdRead.c \
@@ -125,7 +126,6 @@ SRCS = \
 	common/stat.c \
 	common/type/json.c \
 	common/type/mcv.c \
-	common/type/xml.c \
 	config/config.c \
 	config/exec.c \
 	config/load.c \
@@ -142,20 +142,6 @@ SRCS = \
 	postgres/client.c \
 	postgres/interface.c \
 	postgres/interface/page.c \
-	postgres/interface/v083.c \
-	postgres/interface/v084.c \
-	postgres/interface/v090.c \
-	postgres/interface/v091.c \
-	postgres/interface/v092.c \
-	postgres/interface/v093.c \
-	postgres/interface/v094.c \
-	postgres/interface/v095.c \
-	postgres/interface/v096.c \
-	postgres/interface/v100.c \
-	postgres/interface/v110.c \
-	postgres/interface/v120.c \
-	postgres/interface/v130.c \
-	postgres/interface/v140.c \
 	protocol/client.c \
 	protocol/command.c \
 	protocol/helper.c \
@@ -183,7 +169,7 @@ SRCS = \
 ####################################################################################################################################
 CC = @CC@
 CFLAGS = $(CFLAGS_EXTRA) @CFLAGS@
-CPPFLAGS = @CPPFLAGS@ -I@srcdir@
+CPPFLAGS = @CPPFLAGS@ -I. -I@srcdir@
 LDFLAGS = $(LDFLAGS_EXTRA) @LDFLAGS@
 LIBS = @LIBS@
 LIBS_BUILD = @LIBS_BUILD@
@@ -200,7 +186,8 @@ BUILDDIR=.build
 ####################################################################################################################################
 # Compile and link pgbackrest
 ####################################################################################################################################
-OBJS_PGBACKREST = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS) main.c)
+SRCS_PGBACKREST := $(wildcard postgres/interface/v*.c $(VPATH)/postgres/interface/v*.c)
+OBJS_PGBACKREST = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_PGBACKREST) $(SRCS) main.c)
 
 pgbackrest: $(OBJS_PGBACKREST)
 	$(CC) -o pgbackrest $(OBJS_PGBACKREST) $(LDFLAGS) $(LIBS)
@@ -238,6 +225,23 @@ build-error: $(OBJS_BUILD_ERROR) build/error/error.yaml
 	./build-error $(VPATH)
 
 ####################################################################################################################################
+# Compile and link help generator
+####################################################################################################################################
+SRCS_BUILD_HELP = \
+	build/common/render.c \
+	build/common/yaml.c \
+	build/config/parse.c \
+	build/help/parse.c \
+	build/help/render.c \
+	build/help/main.c
+
+OBJS_BUILD_HELP = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_HELP))
+
+build-help: $(OBJS_BUILD_HELP) build/config/config.yaml build/help/help.xml
+	$(CC) -o build-help $(OBJS_BUILD_HELP) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
+	./build-help $(VPATH)
+
+####################################################################################################################################
 # Installation.  DESTDIR can be used to modify the install location.
 ####################################################################################################################################
 install: pgbackrest
@@ -258,7 +262,7 @@ uninstall:
 # Clean build files and executable created by make
 clean:
 	rm -rf $(BUILDDIR)
-	rm -f pgbackrest build-config
+	rm -f pgbackrest build-config build-error build-help command/help/help.auto.c
 
 .PHONY = clean-all
 
@@ -270,6 +274,7 @@ clean-all: clean
 # Special per-object flags
 ####################################################################################################################################
 $(BUILDDIR)/postgres/interface/page.o: CFLAGS += @CFLAGS_PAGE_CHECKSUM@
+$(BUILDDIR)/main.o: build-help
 
 ####################################################################################################################################
 # Compile and generate dependencies

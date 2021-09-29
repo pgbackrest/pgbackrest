@@ -15,11 +15,6 @@ BZ2 Decompress
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(BZ2_DECOMPRESS_FILTER_TYPE_STR,                        BZ2_DECOMPRESS_FILTER_TYPE);
-
-/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct Bz2Decompress
@@ -173,7 +168,7 @@ bz2DecompressNew(void)
 
         // Create filter interface
         this = ioFilterNewP(
-            BZ2_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
+            BZ2_DECOMPRESS_FILTER_TYPE, driver, NULL, .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
             .inputSame = bz2DecompressInputSame);
     }
     OBJ_NEW_END();

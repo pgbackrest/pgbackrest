@@ -16,8 +16,10 @@ Object type
 typedef struct IoFilterGroup IoFilterGroup;
 
 #include "common/io/filter/filter.h"
+#include "common/type/list.h"
 #include "common/type/object.h"
-#include "common/type/string.h"
+#include "common/type/pack.h"
+#include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
 Constructors
@@ -57,14 +59,28 @@ ioFilterGroupInputSame(const IoFilterGroup *const this)
 }
 
 // Get all filters and their parameters so they can be passed to a remote
-Variant *ioFilterGroupParamAll(const IoFilterGroup *this);
+Pack *ioFilterGroupParamAll(const IoFilterGroup *this);
 
-// Get filter results
-const Variant *ioFilterGroupResult(const IoFilterGroup *this, const String *filterType);
+// Get filter results. If the same filter was used more than once then idx can be used to specify which one to get.
+typedef struct IoFilterGroupResultParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int idx;
+} IoFilterGroupResultParam;
+
+#define ioFilterGroupResultP(this, filterType, ...)                                                                                \
+    ioFilterGroupResult(this, filterType, (IoFilterGroupResultParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackRead *ioFilterGroupResult(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
+
+#define ioFilterGroupResultPackP(this, filterType, ...)                                                                            \
+    ioFilterGroupResultPack(this, filterType, (IoFilterGroupResultParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+const Pack *ioFilterGroupResultPack(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
 
 // Get/set all filter results
-const Variant *ioFilterGroupResultAll(const IoFilterGroup *this);
-void ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult);
+Pack *ioFilterGroupResultAll(const IoFilterGroup *this);
+void ioFilterGroupResultAllSet(IoFilterGroup *this, const Pack *filterResult);
 
 // Return total number of filters
 __attribute__((always_inline)) static inline unsigned int

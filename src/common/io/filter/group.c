@@ -33,13 +33,22 @@ typedef struct IoFilterData
     objToLog(value, "IoFilterData", buffer, bufferSize)
 
 /***********************************************************************************************************************************
+Filter results
+***********************************************************************************************************************************/
+typedef struct IoFilterResult
+{
+    StringId type;                                                  // Filter type
+    Pack *result;                                                   // Filter result
+} IoFilterResult;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct IoFilterGroup
 {
     IoFilterGroupPub pub;                                           // Publicly accessible variables
     const Buffer *input;                                            // Input buffer passed in for processing
-    KeyValue *filterResult;                                         // Filter results (if any)
+    List *filterResult;                                             // Filter results (if any)
 
 #ifdef DEBUG
     bool flushing;                                                  // Is output being flushed?
@@ -65,6 +74,8 @@ ioFilterGroupNew(void)
                 .done = false,
                 .filterList = lstNewP(sizeof(IoFilterData)),
             },
+
+            .filterResult = lstNewP(sizeof(IoFilterResult)),
         };
     }
     OBJ_NEW_END();
@@ -353,25 +364,16 @@ ioFilterGroupClose(IoFilterGroup *this)
     ASSERT(this != NULL);
     ASSERT(this->pub.opened && !this->pub.closed);
 
+    // Gather results from the filters
     for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
     {
-        IoFilterData *filterData = ioFilterGroupGet(this, filterIdx);
-        const Variant *filterResult = ioFilterResult(filterData->filter);
+        IoFilter *const filter = ioFilterGroupGet(this, filterIdx)->filter;
 
-        if (this->filterResult == NULL)
+        MEM_CONTEXT_BEGIN(lstMemContext(this->filterResult))
         {
-            MEM_CONTEXT_BEGIN(objMemContext(this))
-            {
-                this->filterResult = kvNew();
-            }
-            MEM_CONTEXT_END();
+            lstAdd(this->filterResult, &(IoFilterResult){.type = ioFilterType(filter), .result = ioFilterResult(filter)});
         }
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            kvAdd(this->filterResult, VARSTR(ioFilterType(filterData->filter)), filterResult);
-        }
-        MEM_CONTEXT_TEMP_END();
+        MEM_CONTEXT_END();
     }
 
     // Filter group is open
@@ -383,7 +385,7 @@ ioFilterGroupClose(IoFilterGroup *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+Pack *
 ioFilterGroupParamAll(const IoFilterGroup *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -394,48 +396,85 @@ ioFilterGroupParamAll(const IoFilterGroup *this)
     ASSERT(!this->pub.opened);
     ASSERT(this->pub.filterList != NULL);
 
-    VariantList *result = varLstNew();
-
-    for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
-    {
-        IoFilter *filter = ioFilterGroupGet(this, filterIdx)->filter;
-        const VariantList *paramList = ioFilterParamList(filter);
-
-        KeyValue *filterParam = kvNew();
-        kvPut(filterParam, VARSTR(ioFilterType(filter)), paramList ? varNewVarLst(paramList) : NULL);
-
-        varLstAdd(result, varNewKv(filterParam));
-    }
-
-    FUNCTION_LOG_RETURN(VARIANT, varNewVarLst(result));
-}
-
-/**********************************************************************************************************************************/
-const Variant *
-ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
-        FUNCTION_LOG_PARAM(STRING, filterType);
-    FUNCTION_LOG_END();
-
-    ASSERT(this->pub.opened);
-    ASSERT(filterType != NULL);
-
-    const Variant *result = NULL;
+    Pack *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = kvGet(this->filterResult, VARSTR(filterType));
+        PackWrite *const packWrite = pckWriteNewP();
+
+        for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
+        {
+            IoFilter *filter = ioFilterGroupGet(this, filterIdx)->filter;
+
+            pckWriteStrIdP(packWrite, ioFilterType(filter));
+            pckWritePackP(packWrite, ioFilterParamList(filter));
+        }
+
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_CONST(VARIANT, result);
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
-const Variant *
-ioFilterGroupResultAll(const IoFilterGroup *this)
+const Pack *
+ioFilterGroupResultPack(const IoFilterGroup *const this, const StringId filterType, const IoFilterGroupResultParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_LOG_PARAM(STRING_ID, filterType);
+        FUNCTION_LOG_PARAM(UINT, param.idx);
+    FUNCTION_LOG_END();
+
+    ASSERT(this->pub.opened);
+    ASSERT(filterType != 0);
+
+    const Pack *result = NULL;
+
+    // Search for the result
+    unsigned int foundIdx = 0;
+
+    for (unsigned int filterResultIdx = 0; filterResultIdx < lstSize(this->filterResult); filterResultIdx++)
+    {
+        const IoFilterResult *const filterResult = lstGet(this->filterResult, filterResultIdx);
+
+        // If the filter matches check the index
+        if (filterResult->type == filterType)
+        {
+            // If the index matches return the result
+            if (foundIdx == param.idx)
+            {
+                result = filterResult->result;
+                break;
+            }
+
+            // Increment the index and keep searching
+            foundIdx++;
+        }
+    }
+
+    FUNCTION_LOG_RETURN_CONST(PACK, result);
+}
+
+/**********************************************************************************************************************************/
+PackRead *
+ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, const IoFilterGroupResultParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_LOG_PARAM(STRING_ID, filterType);
+        FUNCTION_LOG_PARAM(UINT, param.idx);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(PACK_READ, pckReadNew(ioFilterGroupResultPack(this, filterType, param)));
+}
+
+/**********************************************************************************************************************************/
+Pack *
+ioFilterGroupResultAll(const IoFilterGroup *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
@@ -444,26 +483,61 @@ ioFilterGroupResultAll(const IoFilterGroup *this)
     ASSERT(this != NULL);
     ASSERT(this->pub.closed);
 
-    FUNCTION_LOG_RETURN_CONST(VARIANT, varNewKv(this->filterResult));
+    Pack *result = NULL;
+
+    // Pack the result list
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        for (unsigned int filterResultIdx = 0; filterResultIdx < lstSize(this->filterResult); filterResultIdx++)
+        {
+            const IoFilterResult *const filterResult = lstGet(this->filterResult, filterResultIdx);
+
+            pckWriteStrIdP(packWrite, filterResult->type);
+            pckWritePackP(packWrite, filterResult->result);
+        }
+
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
 void
-ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult)
+ioFilterGroupResultAllSet(IoFilterGroup *const this, const Pack *const filterResultPack)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, this);
+        FUNCTION_LOG_PARAM(PACK, filterResultPack);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    if (filterResult != NULL)
+    if (filterResultPack != NULL)
     {
-        MEM_CONTEXT_BEGIN(objMemContext(this))
+        PackRead *const packRead = pckReadNew(filterResultPack);
+
+        // Unpack the results into a list
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            this->filterResult = kvDup(varKv(filterResult));
+            MEM_CONTEXT_BEGIN(lstMemContext(this->filterResult))
+            {
+                while (!pckReadNullP(packRead))
+                {
+                    const StringId type = pckReadStrIdP(packRead);
+                    Pack *const result = pckReadPackP(packRead);
+
+                    lstAdd(this->filterResult, &(IoFilterResult){.type = type, .result = result});
+                }
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN_VOID();

@@ -1,5 +1,6 @@
 /.build
 autom4te.cache
+/command/help/help.auto.c
 /config.log
 /config.status
 /Makefile

@@ -21,16 +21,16 @@ struct IoFilter
 Allocations will be in the memory context of the caller.
 ***********************************************************************************************************************************/
 IoFilter *
-ioFilterNew(const String *type, void *driver, VariantList *paramList, IoFilterInterface interface)
+ioFilterNew(const StringId type, void *const driver, Pack *const paramList, const IoFilterInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM_P(VOID, driver);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK, paramList);
         FUNCTION_LOG_PARAM(IO_FILTER_INTERFACE, interface);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
     ASSERT(driver != NULL);
     // One of processIn or processInOut must be set
     ASSERT(interface.in != NULL || interface.inOut != NULL);
@@ -139,7 +139,7 @@ ioFilterInputSame(const IoFilter *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+Pack *
 ioFilterResult(const IoFilter *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -155,5 +155,5 @@ ioFilterResult(const IoFilter *this)
 String *
 ioFilterToLog(const IoFilter *this)
 {
-    return strNewFmt("{type: %s}", strZ(ioFilterType(this)));
+    return strNewFmt("{type: %s}", strZ(strIdToStr(ioFilterType(this))));
 }

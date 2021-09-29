@@ -117,7 +117,7 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            131
+#define CFG_OPTION_TOTAL                                            132
 
 /***********************************************************************************************************************************
 Option value constants
@@ -197,6 +197,11 @@ Option value constants
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS_Z                         "sas"
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED                        STRID5("shared", 0x85905130)
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED_Z                      "shared"
+
+#define CFGOPTVAL_REPO_AZURE_URI_STYLE_HOST                         STRID5("host", 0xa4de80)
+#define CFGOPTVAL_REPO_AZURE_URI_STYLE_HOST_Z                       "host"
+#define CFGOPTVAL_REPO_AZURE_URI_STYLE_PATH                         STRID5("path", 0x450300)
+#define CFGOPTVAL_REPO_AZURE_URI_STYLE_PATH_Z                       "path"
 
 #define CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                      STRID5("aes-256-cbc", 0xc43dfbbcdcca10)
 #define CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC_Z                    "aes-256-cbc"
@@ -399,6 +404,7 @@ typedef enum
     cfgOptRepoAzureEndpoint,
     cfgOptRepoAzureKey,
     cfgOptRepoAzureKeyType,
+    cfgOptRepoAzureUriStyle,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
     cfgOptRepoGcsBucket,

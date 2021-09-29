@@ -30,7 +30,7 @@ typedef struct BackupFileResult
     uint64_t copySize;
     String *copyChecksum;
     uint64_t repoSize;
-    KeyValue *pageChecksumResult;
+    Pack *pageChecksumResult;
 } BackupFileResult;
 
 BackupFileResult backupFile(

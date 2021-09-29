@@ -8,6 +8,8 @@ Test Common Functions and Definitions for Backup and Expire Commands
 #include "postgres/interface/static.vendor.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessPack.h"
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -140,8 +142,8 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
-            "{\"align\":true,\"valid\":true}", "all zero pages");
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "2:bool:true, 3:bool:true", "all zero pages");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("single valid page");
@@ -168,15 +170,14 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewVar(varVarLst(jsonToVar(
-                strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, (uint64_t)0xFACEFACE00000000)))));
+            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
-            "{\"align\":true,\"valid\":true}", "single valid page");
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "2:bool:true, 3:bool:true", "single valid page");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("single checksum error");
@@ -200,15 +201,14 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewVar(varVarLst(jsonToVar(
-                strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, (uint64_t)0xFACEFACE00000000)))));
+            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
-            "{\"align\":true,\"error\":[0],\"valid\":false}", "single checksum error");
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "1:array:[1:obj:{1:u64:17361641481138401520}], 2:bool:false, 3:bool:true", "single checksum error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("various checksum errors some of which will be skipped because of the LSN");
@@ -299,8 +299,10 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
-            "{\"align\":false,\"error\":[0,[2,4],[6,7]],\"valid\":false}", "various checksum errors");
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "1:array:[1:obj:{1:u64:17361641481138401520}, 3:obj:{1:u64:2}, 4:obj:{1:u64:3}, 5:obj:{1:u64:4}, 7:obj:{1:u64:6},"
+                " 8:obj:{1:u64:7}], 2:bool:false, 3:bool:false",
+            "various checksum errors");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("impossibly misaligned page");
@@ -318,8 +320,8 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(ioFilterGroupResult(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE_STR)),
-            "{\"align\":false,\"valid\":false}", "misalignment");
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "2:bool:false, 3:bool:false", "misalignment");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("two misaligned buffers in a row");

@@ -13,11 +13,7 @@ Gz Compress
 #include "common/log.h"
 #include "common/macro.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(GZ_COMPRESS_FILTER_TYPE_STR,                          GZ_COMPRESS_FILTER_TYPE);
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -192,12 +188,22 @@ gzCompressNew(int level)
         memContextCallbackSet(objMemContext(driver), gzCompressFreeResource, driver);
 
         // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewInt(level));
+        Pack *paramList = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const packWrite = pckWriteNewP();
+
+            pckWriteI32P(packWrite, level);
+            pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+        }
+        MEM_CONTEXT_TEMP_END();
 
         // Create filter interface
         this = ioFilterNewP(
-            GZ_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = gzCompressDone, .inOut = gzCompressProcess,
+            GZ_COMPRESS_FILTER_TYPE, driver, paramList, .done = gzCompressDone, .inOut = gzCompressProcess,
             .inputSame = gzCompressInputSame);
     }
     OBJ_NEW_END();

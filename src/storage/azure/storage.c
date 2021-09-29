@@ -682,9 +682,10 @@ static const StorageInterface storageInterfaceAzure =
 
 Storage *
 storageAzureNew(
-    const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host,
-    const String *endpoint, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+    const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const container,
+    const String *const account, const StorageAzureKeyType keyType, const String *const key, const size_t blockSize,
+    const String *const endpoint, const StorageAzureUriStyle uriStyle, const unsigned int port, const TimeMSec timeout,
+    const bool verifyPeer, const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -695,8 +696,8 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
-        FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(STRING, endpoint);
+        FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
@@ -707,6 +708,7 @@ storageAzureNew(
     ASSERT(path != NULL);
     ASSERT(container != NULL);
     ASSERT(account != NULL);
+    ASSERT(endpoint != NULL);
     ASSERT(key != NULL);
     ASSERT(blockSize != 0);
 
@@ -722,8 +724,9 @@ storageAzureNew(
             .container = strDup(container),
             .account = strDup(account),
             .blockSize = blockSize,
-            .host = host == NULL ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : host,
-            .pathPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
+            .host = uriStyle == storageAzureUriStyleHost ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : endpoint,
+            .pathPrefix = uriStyle == storageAzureUriStyleHost ?
+                strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 
         // Store shared key or parse sas query

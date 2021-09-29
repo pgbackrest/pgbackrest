@@ -3,7 +3,7 @@
 #
 # The configuration is defined in src/build/config/config.yaml, which also contains the documentation.
 ####################################################################################################################################
-package pgBackRestBuild::Config::Data;
+package pgBackRestDoc::Custom::DocConfigData;
 
 use strict;
 use warnings FATAL => qw(all);

@@ -36,13 +36,13 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(packWrite, pckWriteMove(pckWriteNew(write), memContextPrior()), "move new write");
+            TEST_ASSIGN(packWrite, pckWriteMove(pckWriteNewIo(write), memContextPrior()), "move new write");
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 1, idLast: 0}", "log");
+        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 0, idLast: 0}", "log");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0750), "write mode");
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 1, idLast: 1}", "log");
+        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 0, idLast: 1}", "log");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 1911246845), "write timestamp");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0xFFFFFFFFFFFFFFFF, .id = 7), "write max u64");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 1, .id = 10), "write 1");
@@ -101,12 +101,12 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteBinP(packWrite, bufNew(0)), "write bin zero length");
 
         // Write pack
-        PackWrite *packSub = pckWriteNewBuf(bufNew(128));
+        PackWrite *packSub = pckWriteNewP();
         pckWriteU64P(packSub, 345);
         pckWriteStrP(packSub, STRDEF("sub"), .id = 3);
         pckWriteEndP(packSub);
 
-        TEST_RESULT_VOID(pckWritePackP(packWrite, packSub), "write pack");
+        TEST_RESULT_VOID(pckWritePackP(packWrite, pckWriteResult(packSub)), "write pack");
         TEST_RESULT_VOID(pckWritePackP(packWrite, NULL), "write null pack");
 
         // Write string list
@@ -124,7 +124,7 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            hrnPackBufToStr(pack),
+            hrnPackToStr(pckFromBuf(pack)),
                "1:u64:488"
              ", 2:u64:1911246845"
              ", 7:u64:18446744073709551615"
@@ -234,7 +234,7 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(packRead, pckReadMove(pckReadNew(read), memContextPrior()), "move new read");
+            TEST_ASSIGN(packRead, pckReadMove(pckReadNewIo(read), memContextPrior()), "move new read");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -252,7 +252,7 @@ testRun(void)
         TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 15), true, "read true");
         TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 20), false, "read false");
 
-        TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in object");
+        TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in obj");
         TEST_RESULT_VOID(pckReadObjBeginP(packRead, .id = 28), "read object begin");
         TEST_ERROR(pckReadArrayEndP(packRead), FormatError, "not in array");
         TEST_RESULT_BOOL(pckReadBoolP(packRead), true, "read true");
@@ -271,7 +271,7 @@ testRun(void)
         TEST_RESULT_UINT(pckReadId(packRead), 37, "check array id");
         TEST_RESULT_VOID(pckReadArrayBeginP(packRead, .id = pckReadId(packRead)), "read array begin");
 
-        TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in object");
+        TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in obj");
 
         unsigned int value = 0;
 
@@ -312,8 +312,8 @@ testRun(void)
         TEST_RESULT_PTR(pckReadBinP(packRead), NULL, "read bin null");
         TEST_RESULT_UINT(bufSize(pckReadBinP(packRead)), 0, "read bin zero length");
 
-        TEST_RESULT_STR_Z(hrnPackToStr(pckReadPackP(packRead)), "1:u64:345, 3:str:sub", "read pack");
-        TEST_RESULT_PTR(pckReadPackP(packRead), NULL, "read null pack");
+        TEST_RESULT_STR_Z(hrnPackReadToStr(pckReadPackReadP(packRead)), "1:u64:345, 3:str:sub", "read pack");
+        TEST_RESULT_PTR(pckReadPackReadP(packRead), NULL, "read null pack");
 
         TEST_RESULT_STRLST_Z(pckReadStrLstP(packRead), "a\nbcd\n", "read string list");
         TEST_RESULT_PTR(pckReadStrLstP(packRead), NULL, "read null string list");
@@ -327,26 +327,28 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("EOF on short buffer");
 
-        TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255")), "new read");
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\255"))), "new read");
         TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unexpected EOF");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid uint64");
 
-        TEST_ASSIGN(packRead, pckReadNewBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255\255")), "new read");
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255\255"))), "new read");
         TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unterminated base-128 integer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pack/unpack pointer");
 
-        TEST_ASSIGN(packWrite, pckWriteNewBuf(bufNew(0)), "new write");
+        TEST_ASSIGN(packWrite, pckWriteNewP(.size = 1), "new write");
         TEST_RESULT_VOID(pckWritePtrP(packWrite, NULL), "write default pointer");
         TEST_RESULT_VOID(pckWritePtrP(packWrite, "sample"), "write pointer");
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "write end");
 
-        TEST_ASSIGN(packRead, pckReadNewBuf(pckWriteBuf(packWrite)), "new read");
+        TEST_ASSIGN(packRead, pckReadNew(pckDup(pckWriteResult(packWrite))), "new read");
         TEST_RESULT_Z(pckReadPtrP(packRead), NULL, "read default pointer");
         TEST_RESULT_Z(pckReadPtrP(packRead, .id = 2), "sample", "read pointer");
+
+        TEST_RESULT_PTR(pckWriteResult(NULL), NULL, "null pack result");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pack/unpack write internal buffer empty");
@@ -358,11 +360,11 @@ testRun(void)
         // Make internal buffer small enough that it will never be used
         ioBufferSizeSet(0);
 
-        TEST_ASSIGN(packWrite, pckWriteNew(write), "new write");
+        TEST_ASSIGN(packWrite, pckWriteNewIo(write), "new write");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("test")), "write string longer than internal buffer");
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "end with internal buffer empty");
 
-        TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(pack)), "new read");
         TEST_RESULT_STR_Z(pckReadStrP(packRead), "test", "read string");
     }
 

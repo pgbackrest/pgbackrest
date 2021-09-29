@@ -1604,7 +1604,7 @@ testRun(void)
             "            tablespaces:\n"
             "                ts1 (1) => /tblspc/ts1\n"
             "                ts12 (12) => /tblspc/ts12\n"
-            "            page checksum error: base/16384/17000\n",
+            "            error list: base/16384/17000\n",
             "text - backup set requested");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1638,7 +1638,7 @@ testRun(void)
             "            tablespaces:\n"
             "                ts1 (1) => /tblspc/ts1\n"
             "                ts12 (12) => /tblspc/ts12\n"
-            "            page checksum error: base/16384/17000\n",
+            "            error list: base/16384/17000\n",
             "text - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1711,7 +1711,7 @@ testRun(void)
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: mail (16456), postgres (12173)\n"
-            "            page checksum error: base/16384/17000, base/32768/33000\n",
+            "            error list: base/16384/17000, base/32768/33000\n",
             "text - backup set requested, no links");
 
         //--------------------------------------------------------------------------------------------------------------------------

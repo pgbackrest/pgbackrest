@@ -1,20 +1,4 @@
 # File types for source files in the project
-build/lib/pgBackRestBuild/Build.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Build/Common.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Config/BuildHelp.pm:
-  class: build
-  type: perl
-
-build/lib/pgBackRestBuild/Config/Data.pm:
-  class: build
-  type: perl
-
 doc/doc.pl:
   class: doc/core
   type: perl
@@ -52,6 +36,10 @@ doc/lib/pgBackRestDoc/Common/Log.pm:
   type: perl
 
 doc/lib/pgBackRestDoc/Common/String.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/pgBackRestDoc/Custom/DocConfigData.pm:
   class: doc/core
   type: perl
 
@@ -144,10 +132,6 @@ doc/xml/index.xml:
   type: xml
 
 doc/xml/metric.xml:
-  class: doc/source
-  type: xml
-
-doc/xml/reference.xml:
   class: doc/source
   type: xml
 
@@ -248,6 +232,30 @@ src/build/error/render.c:
   type: c
 
 src/build/error/render.h:
+  class: build
+  type: c/h
+
+src/build/help/help.xml:
+  class: build
+  type: make
+
+src/build/help/main.c:
+  class: build
+  type: c
+
+src/build/help/parse.c:
+  class: build
+  type: c
+
+src/build/help/parse.h:
+  class: build
+  type: c/h
+
+src/build/help/render.c:
+  class: build
+  type: c
+
+src/build/help/render.h:
   class: build
   type: c/h
 
@@ -406,10 +414,6 @@ src/command/expire/expire.c:
 src/command/expire/expire.h:
   class: core
   type: c/h
-
-src/command/help/help.auto.c:
-  class: core/auto
-  type: c
 
 src/command/help/help.c:
   class: core
@@ -2064,6 +2068,10 @@ test/src/module/build/configTest.c:
   type: c
 
 test/src/module/build/errorTest.c:
+  class: test/module
+  type: c
+
+test/src/module/build/helpTest.c:
   class: test/module
   type: c
 

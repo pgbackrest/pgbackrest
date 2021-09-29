@@ -613,7 +613,6 @@
             <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo{[azure-setup-repo-id]}-azure-key-type">{[azure-key-type]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-key">{[azure-key]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-container">{[azure-container]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo{[azure-setup-repo-id]}-storage-host">blob.core.windows.net</backrest-config-option>
             <backrest-config-option if="'{[azure-all]}' ne 'y'" section="global" key="repo{[azure-setup-repo-id]}-retention-full">4</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
@@ -624,7 +623,7 @@
 
             <!-- Set host entries to redirect to local azure server -->
             <execute user="root" user-force="y" show="n">
-                <exe-cmd>echo "{[host-azure-ip]} blob.core.windows.net" | tee -a /etc/hosts</exe-cmd>
+                <exe-cmd>echo "{[host-azure-ip]} pgbackrest.blob.core.windows.net" | tee -a /etc/hosts</exe-cmd>
             </execute>
 
             <execute user="{[azure-setup-user]}" if="'{[azure-setup-create-container]}' eq 'y'" show='n'>
@@ -669,7 +668,6 @@
             <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-region">{[s3-region]}</backrest-config-option>
             <backrest-config-option if="'{[s3-all]}' ne 'y'" section="global" key="repo{[s3-setup-repo-id]}-retention-full">4</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-storage-host" remove="y"/>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>

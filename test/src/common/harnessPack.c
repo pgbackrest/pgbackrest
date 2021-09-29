@@ -12,17 +12,17 @@ Harness for Loading Test Configurations
 #include "common/harnessPack.h"
 
 /**********************************************************************************************************************************/
-String *hrnPackBufToStr(const Buffer *buffer)
+String *hrnPackToStr(const Pack *const pack)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(BUFFER, buffer);
+        FUNCTION_HARNESS_PARAM(PACK, pack);
     FUNCTION_HARNESS_END();
 
-    FUNCTION_HARNESS_RETURN(STRING, hrnPackToStr(pckReadNewBuf(buffer)));
+    FUNCTION_HARNESS_RETURN(STRING, hrnPackReadToStr(pckReadNew(pack)));
 }
 
 /**********************************************************************************************************************************/
-String *hrnPackToStr(PackRead *read)
+String *hrnPackReadToStr(PackRead *read)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, read);
@@ -45,7 +45,7 @@ String *hrnPackToStr(PackRead *read)
         {
             case pckTypeArray:
                 pckReadArrayBeginP(read, .id = id);
-                strCatFmt(result, "[%s]", strZ(hrnPackToStr(read)));
+                strCatFmt(result, "[%s]", strZ(hrnPackReadToStr(read)));
                 pckReadArrayEndP(read);
                 break;
 
@@ -71,13 +71,13 @@ String *hrnPackToStr(PackRead *read)
 
             case pckTypeObj:
                 pckReadObjBeginP(read, .id = id);
-                strCatFmt(result, "{%s}", strZ(hrnPackToStr(read)));
+                strCatFmt(result, "{%s}", strZ(hrnPackReadToStr(read)));
                 pckReadObjEndP(read);
                 break;
 
             case pckTypePack:
             {
-                strCatFmt(result, "<%s>", strZ(hrnPackToStr(pckReadPackP(read))));
+                strCatFmt(result, "<%s>", strZ(hrnPackReadToStr(pckReadPackReadP(read))));
                 break;
             }
 

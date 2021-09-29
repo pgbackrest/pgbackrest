@@ -260,6 +260,7 @@ unit:
       - name: io
         total: 4
         feature: IO
+        harness: pack
 
         coverage:
           - common/io/bufferRead
@@ -276,10 +277,12 @@ unit:
           - common/io/read
           - common/io/write
 
+        depend:
+          - common/type/pack
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-pack
         total: 1
-        harness: pack
 
         coverage:
           - common/type/pack
@@ -631,6 +634,14 @@ unit:
           - build/error/parse
           - build/error/render
 
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: help
+        total: 2
+
+        coverage:
+          - build/help/parse
+          - build/help/render
+
   # ********************************************************************************************************************************
   - name: info
 
@@ -777,6 +788,9 @@ unit:
         coverage:
           - command/help/help
           - command/help/help.auto: noCode
+
+        include:
+          - build/help/render
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info

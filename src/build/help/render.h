@@ -1,13 +1,16 @@
 /***********************************************************************************************************************************
-Harness for Testing Packs
+Render Help
 ***********************************************************************************************************************************/
-#include "common/type/buffer.h"
+#ifndef BUILD_HELP_RENDER_H
+#define BUILD_HELP_RENDER_H
+
+#include "build/config/parse.h"
+#include "build/help/parse.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Convert Pack to String
-String *hrnPackToStr(const Pack *pack);
+// Render help
+void bldHlpRender(const Storage *const storageRepo, const BldCfg bldCfg, const BldHlp bldHlp);
 
-// Convert PackRead to String
-String *hrnPackReadToStr(PackRead *read);
+#endif

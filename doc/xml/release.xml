@@ -4,11 +4,13 @@
     <description>The {[project]} Releases detail each version of the software and lists the changes made in each version.</description>
 
     <intro>
-        <text><backrest/> release numbers consist of two parts, major and minor.  A major release <i>may</i> break compatibility with the prior major release, but <proper>v2</proper> releases are fully compatible with <proper>v1</proper> repositories and will accept all <proper>v1</proper> options.  Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.
+        <text>
+            <p><backrest/> release numbers consist of two parts, major and minor.  A major release <i>may</i> break compatibility with the prior major release, but <proper>v2</proper> releases are fully compatible with <proper>v1</proper> repositories and will accept all <proper>v1</proper> options.  Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.</p>
 
-        Documentation for the <proper>v1</proper> release can be found <link url="{[backrest-url-base]}/1">here</link>.
+            <p>Documentation for the <proper>v1</proper> release can be found <link url="{[backrest-url-base]}/1">here</link>.</p>
 
-        The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact on the <backrest/> codebase.</text>
+            <p>The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact on the <backrest/> codebase.</p>
+        </text>
     </intro>
 
     <release-list>
@@ -25,13 +27,40 @@
 
                         <p>Increase max index allowed for <id>pg</id>/<id>repo</id> options to 256.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1519"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Rename page checksum error to error list in info text output.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1434"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="leigh.downs"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hints to standby replay timeout message.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-core-list>
         </release>
 
         <release date="2021-08-23" version="2.35" title="Binary Protocol">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: The log level for copied files in the <cmd>backup</cmd>/<cmd>restore</cmd> commands has been changed to <id>detail</id>. This makes the <id>info</id> log level less noisy but if these messages are required then set the log level for the <cmd>backup</cmd>/<cmd>restore</cmd> commands to <id>detail</id>.</p>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: The log level for copied files in the <cmd>backup</cmd>/<cmd>restore</cmd> commands has been changed to <id>detail</id>. This makes the <id>info</id> log level less noisy but if these messages are required then set the log level for the <cmd>backup</cmd>/<cmd>restore</cmd> commands to <id>detail</id>.
+                    </p>
+                </text>
 
                 <release-bug-list>
                     <release-item>
@@ -3266,7 +3295,9 @@
 
         <release date="2019-04-11" version="2.12" title="C Implementation of Archive Push">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: The new <proper>TLS</proper>/<proper>SSL</proper> implementation forbids dots in <proper>S3</proper> bucket names per RFC-2818.  This security fix is required for compliant hostname verification.</p>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: The new <proper>TLS</proper>/<proper>SSL</proper> implementation forbids dots in <proper>S3</proper> bucket names per RFC-2818.  This security fix is required for compliant hostname verification.</p>
+                </text>
 
                 <release-bug-list>
                     <release-item>
@@ -5020,7 +5051,9 @@
 
         <release date="2018-07-05" version="2.04" title="Critical Bug Fix for Backup Resume">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: This release fixes a critical bug in the backup resume feature. All resumed backups prior to this release should be considered inconsistent. A backup will be resumed after a prior backup fails, unless <br-option>resume=n</br-option> has been specified. A resumed backup can be identified by checking the backup log for the message <quote>aborted backup of same type exists, will be cleaned to remove invalid files and resumed</quote>. If the message exists, do not use this backup or any backup in the same set for a restore and check the restore logs to see if a resumed backup was restored. If so, there may be inconsistent data in the cluster.</p>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: This release fixes a critical bug in the backup resume feature. All resumed backups prior to this release should be considered inconsistent. A backup will be resumed after a prior backup fails, unless <br-option>resume=n</br-option> has been specified. A resumed backup can be identified by checking the backup log for the message <quote>aborted backup of same type exists, will be cleaned to remove invalid files and resumed</quote>. If the message exists, do not use this backup or any backup in the same set for a restore and check the restore logs to see if a resumed backup was restored. If so, there may be inconsistent data in the cluster.</p>
+                </text>
 
                 <release-bug-list>
                     <release-item>
@@ -5948,7 +5981,9 @@
 
         <release date="2018-07-05" version="1.29" title="Critical Bug Fix for Backup Resume">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: This release fixes a critical bug in the backup resume feature. All resumed backups prior to this release should be considered inconsistent. A backup will be resumed after a prior backup fails, unless <br-option>resume=n</br-option> has been specified. A resumed backup can be identified by checking the backup log for the message <quote>aborted backup of same type exists, will be cleaned to remove invalid files and resumed</quote>. If the message exists, do not use this backup or any backup in the same set for a restore and check the restore logs to see if a resumed backup was restored. If so, there may be inconsistent data in the cluster.</p>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: This release fixes a critical bug in the backup resume feature. All resumed backups prior to this release should be considered inconsistent. A backup will be resumed after a prior backup fails, unless <br-option>resume=n</br-option> has been specified. A resumed backup can be identified by checking the backup log for the message <quote>aborted backup of same type exists, will be cleaned to remove invalid files and resumed</quote>. If the message exists, do not use this backup or any backup in the same set for a restore and check the restore logs to see if a resumed backup was restored. If so, there may be inconsistent data in the cluster.</p>
+                </text>
 
                 <release-bug-list>
                     <release-item>
@@ -6928,7 +6963,10 @@
 
         <release date="2017-06-27" version="1.20" title="Critical 8.3/8.4 Bug Fix">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <proper>v1</proper> release and run a full backup.  A bug prevented tablespaces from being backed up on these versions only.  <postgres/> &amp;ge; <proper>9.0</proper> is not affected.</p>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: <postgres/> <proper>8.3</proper> and <proper>8.4</proper> installations utilizing tablespaces should upgrade immediately from any <proper>v1</proper> release and run a full backup.  A bug prevented tablespaces from being backed up on these versions only.  <postgres/> &amp;ge; <proper>9.0</proper>
+                    is not affected.</p>
+                </text>
 
                 <release-bug-list>
                     <release-item>
@@ -7522,11 +7560,13 @@
 
         <release date="2017-02-05" version="1.13" title="Parallel Archiving, Stanza Create, Improved Info and Check">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: The new implementation of asynchronous archiving no longer copies WAL to a separate queue. If there is any WAL left over in the old queue after upgrading to <id>1.13</id>, it will be abandoned and <b>not</b> pushed to the repository.
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: The new implementation of asynchronous archiving no longer copies WAL to a separate queue. If there is any WAL left over in the old queue after upgrading to <id>1.13</id>, it will be abandoned and <b>not</b> pushed to the repository.</p>
 
-                To prevent this outcome, stop archiving by setting <setting>archive_command = false</setting>. Next, drain the async queue by running <code>pgbackrest --stanza=[stanza-name] archive-push</code> and wait for the process to complete.  Check that the queue in <path>[spool-path]/archive/[stanza-name]/out</path> is empty. Finally, install <code>1.13</code> and restore the original <setting>archive_command</setting>.
+                    <p>To prevent this outcome, stop archiving by setting <setting>archive_command = false</setting>. Next, drain the async queue by running <code>pgbackrest --stanza=[stanza-name] archive-push</code> and wait for the process to complete.  Check that the queue in <path>[spool-path]/archive/[stanza-name]/out</path> is empty. Finally, install <code>1.13</code> and restore the original <setting>archive_command</setting>.</p>
 
-                <b>IMPORTANT NOTE</b>: The <cmd>stanza-create</cmd> command is not longer optional and must be executed before backup or archiving can be performed on a <b>new</b> stanza.  Pre-existing stanzas do not require <cmd>stanza-create</cmd> to be executed.</p>
+                    <p><b>IMPORTANT NOTE</b>: The <cmd>stanza-create</cmd> command is not longer optional and must be executed before backup or archiving can be performed on a <b>new</b> stanza.  Pre-existing stanzas do not require <cmd>stanza-create</cmd> to be executed.</p>
+                </text>
 
                 <release-bug-list>
                     <release-item>
@@ -7762,7 +7802,9 @@
 
         <release date="2016-12-12" version="1.12" title="Page Checksums, Configuration, and Bug Fixes">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error.  An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: In prior releases it was possible to specify options on the command-line that were invalid for the current command without getting an error.  An error will now be generated for invalid options so it is important to carefully check command-line options in your environment to prevent disruption.</p>
+                </text>
 
                 <release-bug-list>
                     <release-item>
@@ -8919,7 +8961,9 @@
 
         <release date="2016-04-14" version="1.00" title="New Repository Format and Configuration Scheme, Link Support">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  Restores from the prior repository will require the prior version of <backrest/> but because of name changes it is possible to have <id>1.00</id> and a prior version of <backrest/> installed at the same time.  See the notes below for more detailed information on what has changed.</p>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, configuration scheme, and the exe/path names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  Restores from the prior repository will require the prior version of <backrest/> but because of name changes it is possible to have <id>1.00</id> and a prior version of <backrest/> installed at the same time.  See the notes below for more detailed information on what has changed.</p>
+                </text>
 
                 <release-feature-list>
                     <release-item>
@@ -9013,7 +9057,9 @@
 
         <release date="2016-03-22" version="0.91" title="Tablespace Bug Fix and Minor Enhancements">
             <release-core-list>
-                <p><b>IMPORTANT BUG FIX FOR TABLESPACES</b>: A change to the repository format was accidentally introduced in 0.90 which means the on-disk backup was no longer a valid <postgres/> cluster when the backup contained tablespaces.  This only affected users who directly copied the backups to restore <postgres/> clusters rather than using the restore command.  However, the fix breaks compatibility with older backups that contain tablespaces no matter how they are being restored (<backrest/> will throw errors and refuse to restore).  New full backups should be taken immediately after installing version 0.91 for any clusters that contain tablespaces.  If older backups need to be restored then use a version of <backrest/> that matches the backup version.</p>
+                <text>
+                    <p><b>IMPORTANT BUG FIX FOR TABLESPACES</b>: A change to the repository format was accidentally introduced in 0.90 which means the on-disk backup was no longer a valid <postgres/> cluster when the backup contained tablespaces.  This only affected users who directly copied the backups to restore <postgres/> clusters rather than using the restore command.  However, the fix breaks compatibility with older backups that contain tablespaces no matter how they are being restored (<backrest/> will throw errors and refuse to restore).  New full backups should be taken immediately after installing version 0.91 for any clusters that contain tablespaces.  If older backups need to be restored then use a version of <backrest/> that matches the backup version.</p>
+                </text>
 
                 <release-bug-list>
                     <release-item>
@@ -9511,7 +9557,9 @@
 
         <release date="2015-06-14" version="0.75" title="New Repository Format, Info Command and Experimental 9.5 Support">
             <release-core-list>
-                <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, and the binary names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  The <file>pg_backrest.conf</file> file has not changed but you'll need to change any references to <file>pg_backrest.pl</file> in cron (or elsewhere) to <file>pg_backrest</file> (without the <file>.pl</file> extension).</p>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: This flag day release breaks compatibility with older versions of <backrest/>.  The manifest format, on-disk structure, and the binary names have all changed.  You must create a new repository to hold backups for this version of <backrest/> and keep your older repository for a time in case you need to do a restore.  The <file>pg_backrest.conf</file> file has not changed but you'll need to change any references to <file>pg_backrest.pl</file> in cron (or elsewhere) to <file>pg_backrest</file> (without the <file>.pl</file> extension).</p>
+                </text>
 
                 <release-feature-list>
                     <release-item>
@@ -10358,6 +10406,11 @@
         <contributor id="laurenz.albe">
             <contributor-name-display>Laurenz Albe</contributor-name-display>
             <contributor-id type="github">laurenz</contributor-id>
+        </contributor>
+
+        <contributor id="leigh.downs">
+            <contributor-name-display>Leigh Downs</contributor-name-display>
+            <contributor-id type="github">leigh-downs</contributor-id>
         </contributor>
 
         <contributor id="leo.khomenko">

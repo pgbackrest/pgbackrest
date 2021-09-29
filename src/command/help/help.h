@@ -4,10 +4,12 @@ Help Command
 #ifndef COMMAND_HELP_HELP_H
 #define COMMAND_HELP_HELP_H
 
+#include "common/type/buffer.h"
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Render help and output to stdout
-void cmdHelp(void);
+void cmdHelp(const Buffer *const helpData);
 
 #endif

@@ -1611,6 +1611,17 @@ option:
       - shared
       - sas
 
+  repo-azure-uri-style:
+    section: global
+    group: repo
+    type: string
+    default: host
+    allow-list:
+      - host
+      - path
+    command: repo-type
+    depend: repo-azure-account
+
   repo-cipher-pass:
     section: global
     type: string

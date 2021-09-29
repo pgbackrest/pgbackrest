@@ -14,12 +14,8 @@ Cryptographic Hash
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/type/object.h"
+#include "common/type/pack.h"
 #include "common/crypto/common.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(CRYPTO_HASH_FILTER_TYPE_STR,                          CRYPTO_HASH_FILTER_TYPE);
 
 /***********************************************************************************************************************************
 Hash types
@@ -146,7 +142,7 @@ cryptoHash(CryptoHash *this)
 /***********************************************************************************************************************************
 Get string representation of the hash as a filter result
 ***********************************************************************************************************************************/
-static Variant *
+static Pack *
 cryptoHashResult(THIS_VOID)
 {
     THIS(CryptoHash);
@@ -157,7 +153,20 @@ cryptoHashResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(VARIANT, varNewStr(bufHex(cryptoHash(this))));
+    Pack *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteStrP(packWrite, bufHex(cryptoHash(this)));
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
@@ -208,11 +217,21 @@ cryptoHashNew(const String *type)
         }
 
         // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(type));
+        Pack *paramList = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const packWrite = pckWriteNewP();
+
+            pckWriteStrP(packWrite, type);
+            pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+        }
+        MEM_CONTEXT_TEMP_END();
 
         // Create filter interface
-        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE_STR, driver, paramList, .in = cryptoHashProcess, .result = cryptoHashResult);
+        this = ioFilterNewP(CRYPTO_HASH_FILTER_TYPE, driver, paramList, .in = cryptoHashProcess, .result = cryptoHashResult);
     }
     OBJ_NEW_END();
 
@@ -220,9 +239,17 @@ cryptoHashNew(const String *type)
 }
 
 IoFilter *
-cryptoHashNewVar(const VariantList *paramList)
+cryptoHashNewPack(const Pack *const paramList)
 {
-    return cryptoHashNew(varStr(varLstGet(paramList, 0)));
+    IoFilter *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = ioFilterMove(cryptoHashNew(pckReadStrP(pckReadNew(paramList))), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
 }
 
 /**********************************************************************************************************************************/

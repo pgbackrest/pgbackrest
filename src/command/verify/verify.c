@@ -219,7 +219,8 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result.checksum = strDup(varStr(ioFilterGroupResult(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE_STR)));
+                result.checksum = strDup(
+                    pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE)));
             }
             MEM_CONTEXT_PRIOR_END();
         }

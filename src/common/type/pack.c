@@ -220,11 +220,19 @@ static const PackTypeMapData packTypeMapData[] =
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
-typedef struct PackTagStack
+typedef struct PackTagStackItem
 {
     PackTypeMap typeMap;                                            // Tag type map
     unsigned int idLast;                                            // Last id in the container
     unsigned int nullTotal;                                         // Total nulls since last tag written
+} PackTagStackItem;
+
+typedef struct PackTagStack
+{
+    List *stack;                                                    // Stack of object/array tags
+    PackTagStackItem bottom;                                        // Static bottom of the stack
+    PackTagStackItem *top;                                          // Top tag on the stack
+    unsigned int depth;                                             // Stack depth
 } PackTagStack;
 
 struct PackRead
@@ -239,8 +247,7 @@ struct PackRead
     PackTypeMap tagNextTypeMap;                                     // Next tag type map
     uint64_t tagNextValue;                                          // Next tag value
 
-    List *tagStack;                                                 // Stack of object/array tags
-    PackTagStack *tagStackTop;                                      // Top tag on the stack
+    PackTagStack tagStack;                                          // Stack of object/array tags
 };
 
 struct PackWrite
@@ -248,9 +255,83 @@ struct PackWrite
     IoWrite *write;                                                 // Write pack to
     Buffer *buffer;                                                 // Buffer to contain write data
 
-    List *tagStack;                                                 // Stack of object/array tags
-    PackTagStack *tagStackTop;                                      // Top tag on the stack
+    PackTagStack tagStack;                                          // Stack of object/array tags
 };
+
+/***********************************************************************************************************************************
+Push a container onto the tag stack
+***********************************************************************************************************************************/
+static void
+pckTagStackPush(MemContext *const memContext, PackTagStack *const tagStack, const PackTypeMap typeMap)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, memContext);
+        FUNCTION_TEST_PARAM_P(VOID, tagStack);
+        FUNCTION_TEST_PARAM(ENUM, typeMap);
+    FUNCTION_TEST_END();
+
+    ASSERT(tagStack != NULL);
+    ASSERT(typeMap == pckTypeMapArray || typeMap == pckTypeMapObj);
+
+    if (tagStack->stack == NULL)
+    {
+        MEM_CONTEXT_BEGIN(memContext)
+        {
+            tagStack->stack = lstNewP(sizeof(PackTagStackItem));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    tagStack->top = lstAdd(tagStack->stack, &(PackTagStackItem){.typeMap = typeMap});
+    tagStack->depth++;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Check that a container can be popped off the stack
+***********************************************************************************************************************************/
+static void
+pckTagStackPopCheck(PackTagStack *const tagStack, const PackTypeMap typeMap)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, tagStack);
+        FUNCTION_TEST_PARAM(ENUM, typeMap);
+    FUNCTION_TEST_END();
+
+    ASSERT(tagStack != NULL);
+    ASSERT(typeMap == pckTypeMapArray || typeMap == pckTypeMapObj);
+
+    if (tagStack->depth == 0 || tagStack->top->typeMap != typeMap)
+        THROW_FMT(FormatError, "not in %s", strZ(strIdToStr(packTypeMapData[typeMap].type)));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Pop a container off the tag stack
+***********************************************************************************************************************************/
+static void
+pckTagStackPop(PackTagStack *const tagStack)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, tagStack);
+    FUNCTION_TEST_END();
+
+    ASSERT(tagStack != NULL);
+    ASSERT(tagStack->depth != 0);
+    ASSERT(tagStack->stack != NULL);
+
+    lstRemoveLast(tagStack->stack);
+    tagStack->depth--;
+
+    if (tagStack->depth == 0)
+        tagStack->top = &tagStack->bottom;
+    else
+        tagStack->top = lstGetLast(tagStack->stack);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /**********************************************************************************************************************************/
 // Helper to create common data
@@ -267,10 +348,10 @@ pckReadNewInternal(void)
 
         *this = (PackRead)
         {
-            .tagStack = lstNewP(sizeof(PackTagStack)),
+            .tagStack = {.bottom = {.typeMap = pckTypeMapObj}},
         };
 
-        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
+        this->tagStack.top = &this->tagStack.bottom;
     }
     OBJ_NEW_END();
 
@@ -278,7 +359,7 @@ pckReadNewInternal(void)
 }
 
 PackRead *
-pckReadNew(IoRead *read)
+pckReadNewIo(IoRead *read)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_READ, read);
@@ -300,18 +381,18 @@ pckReadNew(IoRead *read)
 }
 
 PackRead *
-pckReadNewBuf(const Buffer *buffer)
+pckReadNew(const Pack *const pack)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, buffer);
+        FUNCTION_TEST_PARAM(PACK, pack);
     FUNCTION_TEST_END();
 
-    if (buffer == NULL)
+    if (pack == NULL)
         FUNCTION_TEST_RETURN(NULL);
 
     PackRead *this = pckReadNewInternal();
-    this->bufferPtr = bufPtrConst(buffer);
-    this->bufferUsed = bufUsed(buffer);
+    this->bufferPtr = bufPtrConst((const Buffer *)pack);
+    this->bufferUsed = bufUsed((const Buffer *)pack);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -496,7 +577,7 @@ pckReadTagNext(PackRead *this)
         }
 
         // Increment the next tag id
-        this->tagNextId += this->tagStackTop->idLast + 1;
+        this->tagNextId += this->tagStack.top->idLast + 1;
 
         // Tag was found
         result = true;
@@ -527,10 +608,10 @@ pckReadTag(PackRead *this, unsigned int *id, PackTypeMap typeMap, bool peek)
     // Increment the id by one if no id was specified
     if (*id == 0)
     {
-        *id = this->tagStackTop->idLast + 1;
+        *id = this->tagStack.top->idLast + 1;
     }
     // Else check that the id has been incremented
-    else if (*id <= this->tagStackTop->idLast)
+    else if (*id <= this->tagStack.top->idLast)
         THROW_FMT(FormatError, "field %u was already read", *id);
 
     // Search for the requested id
@@ -559,7 +640,7 @@ pckReadTag(PackRead *this, unsigned int *id, PackTypeMap typeMap, bool peek)
                         strZ(strIdToStr(packTypeMapData[typeMap].type)));
                 }
 
-                this->tagStackTop->idLast = this->tagNextId;
+                this->tagStack.top->idLast = this->tagNextId;
                 this->tagNextId = 0;
             }
 
@@ -580,7 +661,7 @@ pckReadTag(PackRead *this, unsigned int *id, PackTypeMap typeMap, bool peek)
         }
 
         // Increment the last id to the id just read
-        this->tagStackTop->idLast = this->tagNextId;
+        this->tagStack.top->idLast = this->tagNextId;
 
         // Read tag on the next iteration
         this->tagNextId = 0;
@@ -636,7 +717,7 @@ pckReadNullInternal(PackRead *this, unsigned int *id)
     // If the field is NULL then set idLast (to avoid rechecking the same id on the next call) and return true
     if (*id < this->tagNextId)
     {
-        this->tagStackTop->idLast = *id;
+        this->tagStack.top->idLast = *id;
         FUNCTION_TEST_RETURN(true);
     }
 
@@ -685,7 +766,7 @@ pckReadArrayBegin(PackRead *this, PackIdParam param)
     pckReadTag(this, &param.id, pckTypeMapArray, false);
 
     // Add array to the tag stack so IDs can be tracked separately from the parent container
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapArray});
+    pckTagStackPush(objMemContext(this), &this->tagStack, pckTypeMapArray);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -699,16 +780,15 @@ pckReadArrayEnd(PackRead *this)
 
     ASSERT(this != NULL);
 
-    if (lstSize(this->tagStack) == 1 || this->tagStackTop->typeMap != pckTypeMapArray)
-        THROW(FormatError, "not in array");
+    // Check tag stack pop
+    pckTagStackPopCheck(&this->tagStack, pckTypeMapArray);
 
     // Make sure we are at the end of the array
     unsigned int id = UINT_MAX - 1;
     pckReadTag(this, &id, pckTypeMapUnknown, true);
 
     // Pop array off the stack
-    lstRemoveLast(this->tagStack);
-    this->tagStackTop = lstGetLast(this->tagStack);
+    pckTagStackPop(&this->tagStack);
 
     // Reset tagNextId to keep reading
     this->tagNextId = 0;
@@ -840,7 +920,7 @@ pckReadObjBegin(PackRead *this, PackIdParam param)
     pckReadTag(this, &param.id, pckTypeMapObj, false);
 
     // Add object to the tag stack so IDs can be tracked separately from the parent container
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
+    pckTagStackPush(objMemContext(this), &this->tagStack, pckTypeMapObj);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -854,16 +934,15 @@ pckReadObjEnd(PackRead *this)
 
     ASSERT(this != NULL);
 
-    if (lstSize(this->tagStack) == 1 || ((PackTagStack *)lstGetLast(this->tagStack))->typeMap != pckTypeMapObj)
-        THROW(FormatError, "not in object");
+    // Check tag stack pop
+    pckTagStackPopCheck(&this->tagStack, pckTypeMapObj);
 
     // Make sure we are at the end of the object
     unsigned id = UINT_MAX - 1;
     pckReadTag(this, &id, pckTypeMapUnknown, true);
 
     // Pop object off the stack
-    lstRemoveLast(this->tagStack);
-    this->tagStackTop = lstGetLast(this->tagStack);
+    pckTagStackPop(&this->tagStack);
 
     // Reset tagNextId to keep reading
     this->tagNextId = 0;
@@ -873,24 +952,24 @@ pckReadObjEnd(PackRead *this)
 
 /**********************************************************************************************************************************/
 PackRead *
-pckReadPack(PackRead *this, PckReadPackParam param)
+pckReadPackRead(PackRead *this, PckReadPackParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
         FUNCTION_TEST_PARAM(UINT, param.id);
     FUNCTION_TEST_END();
 
-    Buffer *const buffer = pckReadPackBuf(this, param);
-    PackRead *const result = pckReadNewBuf(buffer);
+    Pack *const pack = pckReadPack(this, param);
+    PackRead *const result = pckReadNew(pack);
 
     if (result != NULL)
-        bufMove(buffer, objMemContext(result));
+        pckMove(pack, objMemContext(result));
 
     FUNCTION_TEST_RETURN(result);
 }
 
-Buffer *
-pckReadPackBuf(PackRead *this, PckReadPackParam param)
+Pack *
+pckReadPack(PackRead *const this, PckReadPackParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
@@ -916,7 +995,7 @@ pckReadPackBuf(PackRead *this, PckReadPackParam param)
         this->bufferPos += size;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN((Pack *)result);
 }
 
 /**********************************************************************************************************************************/
@@ -1083,19 +1162,13 @@ pckReadEnd(PackRead *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    CHECK(this->tagStack.depth == 0);
 
-    // Read object end markers
-    while (!lstEmpty(this->tagStack))
-    {
-        // Make sure we are at the end of the container
-        unsigned int id = UINT_MAX - 1;
-        pckReadTag(this, &id, pckTypeMapUnknown, true);
+    // Make sure we are at the end of the pack
+    unsigned int id = UINT_MAX - 1;
+    pckReadTag(this, &id, pckTypeMapUnknown, true);
 
-        // Remove from stack
-        lstRemoveLast(this->tagStack);
-    }
-
-    this->tagStackTop = NULL;
+    this->tagStack.top = NULL;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1105,8 +1178,8 @@ String *
 pckReadToLog(const PackRead *this)
 {
     return strNewFmt(
-        "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", lstSize(this->tagStack),
-        this->tagStackTop->idLast, this->tagNextId, this->tagNextTypeMap, this->tagNextValue);
+        "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", this->tagStack.depth,
+        this->tagStack.top->idLast, this->tagNextId, this->tagNextTypeMap, this->tagNextValue);
 }
 
 /**********************************************************************************************************************************/
@@ -1124,10 +1197,10 @@ pckWriteNewInternal(void)
 
         *this = (PackWrite)
         {
-            .tagStack = lstNewP(sizeof(PackTagStack)),
+            .tagStack = {.bottom = {.typeMap = pckTypeMapObj}},
         };
 
-        this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
+        this->tagStack.top = &this->tagStack.bottom;
     }
     OBJ_NEW_END();
 
@@ -1135,7 +1208,25 @@ pckWriteNewInternal(void)
 }
 
 PackWrite *
-pckWriteNew(IoWrite *write)
+pckWriteNew(const PckWriteNewParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, param.size);
+    FUNCTION_TEST_END();
+
+    PackWrite *this = pckWriteNewInternal();
+
+    MEM_CONTEXT_BEGIN(objMemContext(this))
+    {
+        this->buffer = bufNew(param.size == 0 ? PACK_EXTRA_MIN : param.size);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+PackWrite *
+pckWriteNewIo(IoWrite *write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_WRITE, write);
@@ -1151,21 +1242,6 @@ pckWriteNew(IoWrite *write)
         this->buffer = bufNew(ioBufferSize());
     }
     MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-PackWrite *
-pckWriteNewBuf(Buffer *buffer)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, buffer);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-
-    PackWrite *this = pckWriteNewInternal();
-    this->buffer = buffer;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1278,17 +1354,17 @@ pckWriteTag(PackWrite *this, PackTypeMap typeMap, unsigned int id, uint64_t valu
     // If id is not specified then add one to previous tag (and include all NULLs)
     if (id == 0)
     {
-        id = this->tagStackTop->idLast + this->tagStackTop->nullTotal + 1;
+        id = this->tagStack.top->idLast + this->tagStack.top->nullTotal + 1;
     }
     // Else the id must be greater than the last one
     else
-        CHECK(id > this->tagStackTop->idLast);
+        CHECK(id > this->tagStack.top->idLast);
 
     // Clear NULLs now that field id has been calculated
-    this->tagStackTop->nullTotal = 0;
+    this->tagStack.top->nullTotal = 0;
 
     // Calculate field ID delta
-    unsigned int tagId = id - this->tagStackTop->idLast - 1;
+    unsigned int tagId = id - this->tagStack.top->idLast - 1;
 
     // Write field type map (e.g. int64, string)
     uint64_t tag = typeMap >= 0xF ? 0xF0 : typeMap << 4;
@@ -1372,7 +1448,7 @@ pckWriteTag(PackWrite *this, PackTypeMap typeMap, unsigned int id, uint64_t valu
         pckWriteU64Internal(this, value);
 
     // Set last field id
-    this->tagStackTop->idLast = id;
+    this->tagStack.top->idLast = id;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1394,7 +1470,7 @@ pckWriteDefaultNull(PackWrite *this, bool defaultWrite, bool defaultEqual)
     // Write a NULL if not forcing the default to be written and the value passed equals the default
     if (!defaultWrite && defaultEqual)
     {
-        this->tagStackTop->nullTotal++;
+        this->tagStack.top->nullTotal++;
         FUNCTION_TEST_RETURN(true);
     }
 
@@ -1410,7 +1486,7 @@ pckWriteNull(PackWrite *this)
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
     FUNCTION_TEST_END();
 
-    this->tagStackTop->nullTotal++;
+    this->tagStack.top->nullTotal++;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1430,7 +1506,7 @@ pckWriteArrayBegin(PackWrite *this, PackIdParam param)
     pckWriteTag(this, pckTypeMapArray, param.id, 0);
 
     // Add array to the tag stack so IDs can be tracked separately from the parent container
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapArray});
+    pckTagStackPush(objMemContext(this), &this->tagStack, pckTypeMapArray);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1443,15 +1519,15 @@ pckWriteArrayEnd(PackWrite *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(lstSize(this->tagStack) != 1);
-    ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->typeMap == pckTypeMapArray);
+
+    // Check tag stack pop
+    pckTagStackPopCheck(&this->tagStack, pckTypeMapArray);
 
     // Write end of array tag
     pckWriteU64Internal(this, 0);
 
     // Pop array off the stack to revert to ID tracking for the prior container
-    lstRemoveLast(this->tagStack);
-    this->tagStackTop = lstGetLast(this->tagStack);
+    pckTagStackPop(&this->tagStack);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1581,7 +1657,7 @@ pckWriteObjBegin(PackWrite *this, PackIdParam param)
     pckWriteTag(this, pckTypeMapObj, param.id, 0);
 
     // Add object to the tag stack so IDs can be tracked separately from the parent container
-    this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.typeMap = pckTypeMapObj});
+    pckTagStackPush(objMemContext(this), &this->tagStack, pckTypeMapObj);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1594,28 +1670,27 @@ pckWriteObjEnd(PackWrite *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(lstSize(this->tagStack) != 1);
-    ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->typeMap == pckTypeMapObj);
+
+    // Check tag stack pop
+    pckTagStackPopCheck(&this->tagStack, pckTypeMapObj);
 
     // Write end of object tag
     pckWriteU64Internal(this, 0);
 
     // Pop object off the stack to revert to ID tracking for the prior container
-    lstRemoveLast(this->tagStack);
-    this->tagStackTop = lstGetLast(this->tagStack);
+    pckTagStackPop(&this->tagStack);
 
     FUNCTION_TEST_RETURN(this);
 }
 
 /**********************************************************************************************************************************/
 PackWrite *
-pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param)
+pckWritePack(PackWrite *const this, const Pack *const value, const PckWritePackParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM(PACK_WRITE, value);
+        FUNCTION_TEST_PARAM(BUFFER, value);
         FUNCTION_TEST_PARAM(UINT, param.id);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -1624,14 +1699,9 @@ pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param)
     {
         ASSERT(value != NULL);
 
-        // Write pack size
         pckWriteTag(this, pckTypeMapPack, param.id, 0);
-
-        // Write pack data
-        const Buffer *packBuffer = pckWriteBuf(value);
-
-        pckWriteU64Internal(this, bufUsed(packBuffer));
-        pckWriteBuffer(this, packBuffer);
+        pckWriteU64Internal(this, bufUsed((Buffer *)value));
+        pckWriteBuffer(this, (Buffer *)value);
     }
 
     FUNCTION_TEST_RETURN(this);
@@ -1802,10 +1872,10 @@ pckWriteEnd(PackWrite *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(lstSize(this->tagStack) == 1);
+    ASSERT(this->tagStack.depth == 0);
 
     pckWriteU64Internal(this, 0);
-    this->tagStackTop = NULL;
+    this->tagStack.top = NULL;
 
     // If writing to io flush the internal buffer
     if (this->write != NULL)
@@ -1821,22 +1891,28 @@ pckWriteEnd(PackWrite *this)
 }
 
 /**********************************************************************************************************************************/
-const Buffer *
-pckWriteBuf(const PackWrite *this)
+Pack *
+pckWriteResult(PackWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(this->tagStackTop == NULL);
+    Pack *result = NULL;
 
-    FUNCTION_TEST_RETURN(this->buffer);
+    if (this != NULL)
+    {
+        ASSERT(this->tagStack.top == NULL);
+
+        result = (Pack *)this->buffer;
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
 String *
 pckWriteToLog(const PackWrite *this)
 {
-    return strNewFmt("{depth: %u, idLast: %u}", lstSize(this->tagStack), this->tagStackTop == NULL ? 0 : this->tagStackTop->idLast);
+    return strNewFmt("{depth: %u, idLast: %u}", this->tagStack.depth, this->tagStack.top == NULL ? 0 : this->tagStack.top->idLast);
 }
