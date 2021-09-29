@@ -1744,7 +1744,7 @@ testRun(void)
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
             TEST_MANIFEST_PATH_DEFAULT,
-            .comment = " rewrite same manifest withut checksum errors");
+            .comment = " rewrite same manifest without checksum errors");
 
         TEST_RESULT_STR_Z(
             infoRender(),

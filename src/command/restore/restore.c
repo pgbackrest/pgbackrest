@@ -2085,7 +2085,7 @@ typedef struct RestoreJobData
     const String *cipherSubPass;                                    // Passphrase used to decrypt files in the backup
 } RestoreJobData;
 
-// Helper to caculate the next queue to scan based on the client index
+// Helper to calculate the next queue to scan based on the client index
 static int
 restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal)
 {
