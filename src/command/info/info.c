@@ -448,7 +448,7 @@ backupListAdd(
 
     // Report errors only if a specific backup set isn't requested
     if (backupLabel == NULL)
-        kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, VARBOOL(backupData->checksumPageError));
+        kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, VARBOOL(backupData->backupError));
 
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
     if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
@@ -903,15 +903,13 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             strCat(resultStr, LF_STR);
         }
 
-        if (kvGet(backupInfo, BACKUP_KEY_ERROR_VAR) != NULL &&
-            varBool(kvGet(backupInfo, BACKUP_KEY_ERROR_VAR)))
-        {
-            strCatZ(resultStr, "            file(s) error(s) detected\n");
-        }
+        if (kvGet(backupInfo, BACKUP_KEY_ERROR_VAR) != NULL && varBool(kvGet(backupInfo, BACKUP_KEY_ERROR_VAR)))
+            strCatZ(resultStr, "            error(s) detected during backup\n");
 
         if (kvGet(backupInfo, BACKUP_KEY_ERROR_LIST_VAR) != NULL)
         {
             StringList *checksumPageErrorList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_ERROR_LIST_VAR)));
+
             strCatFmt(resultStr, "            error list: %s\n", strZ(strLstJoin(checksumPageErrorList, ", ")));
         }
     }

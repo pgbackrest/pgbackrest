@@ -43,7 +43,7 @@ VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR,         "backup-refe
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR,   "backup-timestamp-start");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR,    "backup-timestamp-stop");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TYPE_VAR,              "backup-type");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_CHECKSUM_PAGE_ERROR_VAR, "backup-checksum-page-error");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ERROR_VAR,             "backup-error");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR,        "option-archive-check");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR,         "option-archive-copy");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR,       "option-backup-standby");
@@ -164,10 +164,10 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
                     kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR) != NULL ?
                         strLstNewVarLst(varVarLst(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR))) : NULL,
 
-                // Report page checksum errors, the key might not be existing in older releases
-                .checksumPageError =
-                    kvKeyExists(backupKv, INFO_BACKUP_KEY_BACKUP_CHECKSUM_PAGE_ERROR_VAR) ?
-                        varBool(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_CHECKSUM_PAGE_ERROR_VAR)) : false,
+                // Report errors detected during the backup. The key might not be existing in older releases.
+                .backupError =
+                    kvKeyExists(backupKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR) ?
+                        varBool(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR)) : false,
 
                 // Options
                 .optionArchiveCheck = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR)),
@@ -266,7 +266,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARINT64(backupData.backupTimestampStop));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR, VARSTR(strIdToStr(backupData.backupType)));
 
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_CHECKSUM_PAGE_ERROR_VAR, VARBOOL(backupData.checksumPageError));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR, VARBOOL(backupData.backupError));
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR, VARBOOL(backupData.optionBackupStandby));
@@ -349,13 +349,13 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
     {
         const ManifestData *manData = manifestData(manifest);
 
-        // Calculate backup sizes, references and report checksum page errors
+        // Calculate backup sizes, references and report errors
         uint64_t backupSize = 0;
         uint64_t backupSizeDelta = 0;
         uint64_t backupRepoSize = 0;
         uint64_t backupRepoSizeDelta = 0;
         StringList *referenceList = strLstNew();
-        bool checksumPageError = false;
+        bool backupError = false;
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
@@ -375,7 +375,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
             // Is there an error in the page checksum?
             if (file->checksumPageError)
-                checksumPageError = true;
+                backupError = true;
         }
 
         MEM_CONTEXT_BEGIN(lstMemContext(this->pub.backup))
@@ -393,7 +393,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .backupTimestampStart = manData->backupTimestampStart,
                 .backupTimestampStop= manData->backupTimestampStop,
                 .backupType = manData->backupType,
-                .checksumPageError = checksumPageError,
+                .backupError = backupError,
 
                 .backupArchiveStart = strDup(manData->archiveStart),
                 .backupArchiveStop = strDup(manData->archiveStop),
