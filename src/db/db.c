@@ -559,8 +559,11 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
         if (!targetReached)
         {
             THROW_FMT(
-                ArchiveTimeoutError, "timeout before standby replayed to %s - only reached %s", strZ(targetLsn),
-                strZ(replayLsn));
+                ArchiveTimeoutError,
+                "timeout before standby replayed to %s - only reached %s\n"
+                "HINT: is replication running and current on the standby?\n"
+                "HINT: disable the 'backup-standby' option to backup directly from the primary.",
+                strZ(targetLsn), strZ(replayLsn));
         }
 
         // Perform a checkpoint
