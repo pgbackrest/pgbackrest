@@ -530,77 +530,78 @@ restoreManifestMap(Manifest *manifest)
         KeyValue *linkMap = varKv(cfgOption(cfgOptLinkMap));
         bool linkAll = cfgOptionBool(cfgOptLinkAll);
 
-        StringList *linkRemapped = strLstNew();
-
-        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        // Remap links
+        if (linkMap != NULL)
         {
-            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+            const StringList *const linkMapList = strLstSort(strLstNewVarLst(kvKeyList(linkMap)), sortOrderAsc);
 
-            // Is this a link?
-            if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
+            for (unsigned int linkMapIdx = 0; linkMapIdx < strLstSize(linkMapList); linkMapIdx++)
             {
-                const String *link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
-                const String *linkPath = linkMap == NULL ? NULL : varStr(kvGet(linkMap, VARSTR(link)));
+                const String *const link = strLstGet(linkMapList, linkMapIdx);
+                const String *linkPath = varStr(kvGet(linkMap, VARSTR(link)));
+                const ManifestTarget *const target = manifestTargetFindDefault(
+                    manifest, strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(link)), NULL);
 
-                // Remap link if a mapping was found
-                if (linkPath != NULL)
+                // The target must be a link since pg_data/ was prepended and pgdata is the only allowed path
+                CHECK(target == NULL || target->type == manifestTargetTypeLink);
+
+                // Error if the target was not found or is a tablespace
+                if (target == NULL || target->tablespaceId != 0)
+                    THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
+
+                LOG_INFO_FMT("map link '%s' to '%s'", strZ(link), strZ(linkPath));
+                manifestLinkUpdate(manifest, target->name, linkPath);
+
+                // If the link is a file separate the file name from the path to update the target
+                const String *linkFile = NULL;
+
+                if (target->file != NULL)
                 {
-                    LOG_INFO_FMT("map link '%s' to '%s'", strZ(link), strZ(linkPath));
-                    manifestLinkUpdate(manifest, target->name, linkPath);
-
-                    // If the link is a file separate the file name from the path to update the target
-                    const String *linkFile = NULL;
-
-                    if (target->file != NULL)
+                    // The link destination must have at least one path component in addition to the file part. So '..' would
+                    // not be a valid destination but '../file' or '/file' is.
+                    if (strSize(strPath(linkPath)) == 0)
                     {
-                        // The link destination must have at least one path component in addition to the file part. So '..' would
-                        // not be a valid destination but '../file' or '/file' is.
-                        if (strSize(strPath(linkPath)) == 0)
-                        {
-                            THROW_FMT(
-                                LinkMapError, "'%s' is not long enough to be the destination for file link '%s'", strZ(linkPath),
-                                strZ(link));
-                        }
-
-                        linkFile = strBase(linkPath);
-                        linkPath = strPath(linkPath);
+                        THROW_FMT(
+                            LinkMapError, "'%s' is not long enough to be the destination for file link '%s'", strZ(linkPath),
+                            strZ(link));
                     }
 
-                    manifestTargetUpdate(manifest, target->name, linkPath, linkFile);
-
-                    // Add to remapped list for later validation that all links were valid
-                    strLstAdd(linkRemapped, link);
+                    linkFile = strBase(linkPath);
+                    linkPath = strPath(linkPath);
                 }
-                // If all links are not being restored then remove the target and link
-                else if (!linkAll)
-                {
-                    if (target->file != NULL)
-                        LOG_WARN_FMT("file link '%s' will be restored as a file at the same location", strZ(link));
-                    else
-                    {
-                        LOG_WARN_FMT(
-                            "contents of directory link '%s' will be restored in a directory at the same location", strZ(link));
-                    }
 
-                    manifestLinkRemove(manifest, target->name);
-                    manifestTargetRemove(manifest, target->name);
-                    targetIdx--;
-                }
+                manifestTargetUpdate(manifest, target->name, linkPath, linkFile);
             }
         }
 
-        // Error on invalid links
-        if (linkMap != NULL)
+        // If all links are not being restored then check for links that were not remapped and remove them
+        if (!linkAll)
         {
-            const VariantList *linkMapList = kvKeyList(linkMap);
-            strLstSort(linkRemapped, sortOrderAsc);
-
-            for (unsigned int linkMapIdx = 0; linkMapIdx < varLstSize(linkMapList); linkMapIdx++)
+            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
-                const String *link = varStr(varLstGet(linkMapList, linkMapIdx));
+                const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
-                if (!strLstExists(linkRemapped, link))
-                    THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
+                // Is this a link?
+                if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
+                {
+                    const String *link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
+
+                    // If the link was not remapped then remove it
+                    if (linkMap == NULL || kvGet(linkMap, VARSTR(link)) == NULL)
+                    {
+                        if (target->file != NULL)
+                            LOG_WARN_FMT("file link '%s' will be restored as a file at the same location", strZ(link));
+                        else
+                        {
+                            LOG_WARN_FMT(
+                                "contents of directory link '%s' will be restored in a directory at the same location", strZ(link));
+                        }
+
+                        manifestLinkRemove(manifest, target->name);
+                        manifestTargetRemove(manifest, target->name);
+                        targetIdx--;
+                    }
+                }
             }
         }
     }
