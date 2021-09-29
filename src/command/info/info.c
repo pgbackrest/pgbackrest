@@ -35,7 +35,7 @@ VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
-VARIANT_STRDEF_STATIC(BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR,           "checksum-page-error");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_LIST_VAR,                    "error-list");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_DATABASE_REF_VAR,                  "database-ref");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_INFO_VAR,                          "info");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LABEL_VAR,                         "label");
@@ -510,7 +510,7 @@ backupListAdd(
             varKv(backupInfo), BACKUP_KEY_TABLESPACE_VAR,
             (!varLstEmpty(tablespaceSection) ? varNewVarLst(tablespaceSection) : NULL));
 
-        // Get the list of files with an error in the page checksum
+        // Get the list of files with an error
         VariantList *checksumPageErrorList = varLstNew();
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(repoData->manifest); fileIdx++)
@@ -522,7 +522,7 @@ backupListAdd(
         }
 
         kvPut(
-            varKv(backupInfo), BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR,
+            varKv(backupInfo), BACKUP_KEY_ERROR_LIST_VAR,
             (!varLstEmpty(checksumPageErrorList) ? varNewVarLst(checksumPageErrorList) : NULL));
 
         manifestFree(repoData->manifest);
@@ -898,14 +898,11 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             strCat(resultStr, LF_STR);
         }
 
-        if (kvGet(backupInfo, BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR) != NULL)
+        if (kvGet(backupInfo, BACKUP_KEY_ERROR_LIST_VAR) != NULL)
         {
-            StringList *checksumPageErrorList = strLstNewVarLst(
-                varVarLst(kvGet(backupInfo, BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR)));
+            StringList *checksumPageErrorList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_ERROR_LIST_VAR)));
 
-            strCatFmt(
-                resultStr, "            page checksum error: %s\n",
-                strZ(strLstJoin(checksumPageErrorList, ", ")));
+            strCatFmt(resultStr, "            error list: %s\n", strZ(strLstJoin(checksumPageErrorList, ", ")));
         }
     }
 
