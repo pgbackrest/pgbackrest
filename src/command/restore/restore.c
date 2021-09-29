@@ -2225,9 +2225,21 @@ cmdRestore(void)
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupData.backupSet);
 
-        // Log the backup set to restore
-        LOG_INFO_FMT(
+        // Log the backup set to restore. If the backup was online then append the time recovery will start from.
+        String *const message = strNewFmt(
             "repo%u: restore backup set %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, backupData.repoIdx), strZ(backupData.backupSet));
+
+        if (manifestData(jobData.manifest)->backupOptionOnline)
+        {
+            struct tm timePart;
+            char timeBuffer[20];
+            time_t backupTimestampStart = manifestData(jobData.manifest)->backupTimestampStart;
+
+            strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&backupTimestampStart, &timePart));
+            strCatFmt(message, ", recovery will start at %s", timeBuffer);
+        }
+
+        LOG_INFO(strZ(message));
 
         // Map manifest
         restoreManifestMap(jobData.manifest);
