@@ -29,6 +29,20 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1507"/>
+                        <github-pull-request id="1518"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="tom.swartz"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="tom.swartz"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add recovery start time to online backup restore log.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1519"/>
 
                         <release-item-contributor-list>
