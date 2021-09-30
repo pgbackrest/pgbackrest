@@ -634,7 +634,7 @@ restoreManifestMap(Manifest *manifest)
             {
                 const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
 
-                // Is this a link?
+                // Is this a non-tablespace link?
                 if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
                 {
                     const String *const link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
