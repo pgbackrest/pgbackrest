@@ -527,10 +527,8 @@ restoreManifestMap(Manifest *manifest)
 
         // Remap links
         // -------------------------------------------------------------------------------------------------------------------------
-        KeyValue *linkMap = varKv(cfgOption(cfgOptLinkMap));
-        bool linkAll = cfgOptionBool(cfgOptLinkAll);
+        const KeyValue *const linkMap = varKv(cfgOption(cfgOptLinkMap));
 
-        // Remap links
         if (linkMap != NULL)
         {
             const StringList *const linkMapList = strLstSort(strLstNewVarLst(kvKeyList(linkMap)), sortOrderAsc);
@@ -585,16 +583,16 @@ restoreManifestMap(Manifest *manifest)
         }
 
         // If all links are not being restored then check for links that were not remapped and remove them
-        if (!linkAll)
+        if (!cfgOptionBool(cfgOptLinkAll))
         {
             for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
-                const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+                const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
 
                 // Is this a link?
                 if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
                 {
-                    const String *link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
+                    const String *const link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
 
                     // If the link was not remapped then remove it
                     if (linkMap == NULL || kvGet(linkMap, VARSTR(link)) == NULL)
