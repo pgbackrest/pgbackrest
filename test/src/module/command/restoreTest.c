@@ -812,15 +812,30 @@ testRun(void)
             "HINT: use 'tablespace-map' option to remap tablespaces.");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on invalid file link path");
+        TEST_TITLE("add file link");
 
-        // Add file link
-        manifestTargetAdd(
-            manifest, &(ManifestTarget){
-                .name = STRDEF("pg_data/pg_hba.conf"), .path = STRDEF("../conf"), .file = STRDEF("pg_hba.conf"),
-                .type = manifestTargetTypeLink});
-        manifestLinkAdd(
-            manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_hba.conf"), .destination = STRDEF("../conf/pg_hba.conf")});
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=../conf/pg_hba.conf");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_hba.conf"), .size = 4, .timestamp = 1482182860});
+
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remap links");
+
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->path, "../conf", "check link path");
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba.conf", "check link file");
+        TEST_RESULT_STR_Z(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf/pg_hba.conf", "check link dest");
+
+        TEST_RESULT_LOG("P00   INFO: link 'pg_hba.conf' to '../conf/pg_hba.conf'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid file link path");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -836,13 +851,28 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: map link 'pg_hba.conf' to 'bogus'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remap file and path links");
+        TEST_TITLE("add path link");
 
-        // Add path link to be remapped
-        manifestTargetAdd(
-            manifest, &(ManifestTarget){.name = STRDEF("pg_data/pg_wal"), .path = STRDEF("/wal"),  .type = manifestTargetTypeLink});
-        manifestLinkAdd(
-            manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_wal"), .destination = STRDEF("/wal")});
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_wal=/wal");
+        hrnCfgArgRawBool(argList, cfgOptLinkAll, true);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        manifestPathAdd(manifest, &(ManifestPath){.name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_wal"), .mode = 0700});
+
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remap links");
+
+        TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal", "check link path");
+        TEST_RESULT_PTR(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->file, NULL, "check link file");
+        TEST_RESULT_STR_Z(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal", "check link dest");
+
+        TEST_RESULT_LOG("P00   INFO: link 'pg_wal' to '/wal'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remap file and path links");
 
         // Add path link that will not be remapped
         manifestTargetAdd(
