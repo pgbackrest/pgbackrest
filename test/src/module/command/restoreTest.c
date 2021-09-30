@@ -806,7 +806,10 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_tblspc/1=/ignored");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(restoreManifestMap(manifest), LinkMapError, "unable to remap invalid link 'pg_tblspc/1'");
+        TEST_ERROR(
+            restoreManifestMap(manifest), LinkMapError,
+            "unable to remap tablespace 'pg_tblspc/1'\n"
+            "HINT: use 'tablespace-map' option to remap tablespaces.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid file link path");
