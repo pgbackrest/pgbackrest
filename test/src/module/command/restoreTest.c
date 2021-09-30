@@ -788,7 +788,10 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "bogus=bogus");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(restoreManifestMap(manifest), LinkMapError, "unable to remap invalid link 'bogus'");
+        TEST_ERROR(
+            restoreManifestMap(manifest), LinkMapError,
+            "unable to map link 'bogus'\n"
+            "HINT: Does the link reference a valid backup path or file?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on tablespace remap");

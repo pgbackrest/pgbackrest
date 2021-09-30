@@ -550,7 +550,7 @@ restoreManifestMap(Manifest *manifest)
 
                 if (target.name == NULL)
                 {
-                    // Is the specified link a file or a path?
+                    // Is the specified link a file or a path? Error if they both match.
                     const ManifestPath *const path = manifestPathFindDefault(manifest, manifestName, NULL);
                     const ManifestFile *const file = manifestFileFindDefault(manifest, manifestName, NULL);
 
@@ -567,7 +567,13 @@ restoreManifestMap(Manifest *manifest)
                     }
                     // Else error if not a path
                     else if (path == NULL)
-                        THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
+                    {
+                        THROW_FMT(
+                            LinkMapError,
+                            "unable to map link '%s'\n"
+                            "HINT: Does the link reference a valid backup path or file?",
+                            strZ(link));
+                    }
 
                     // Add the link. Copy user/group from the base data directory.
                     const ManifestPath *const pathBase = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
@@ -577,7 +583,6 @@ restoreManifestMap(Manifest *manifest)
                         &(ManifestLink){
                             .name = manifestName, .destination = linkPath, .group = pathBase->group, .user = pathBase->user});
 
-                    // The link is being created
                     create = true;
                 }
                 // Else update target to new path
