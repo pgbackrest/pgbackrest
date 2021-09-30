@@ -569,8 +569,13 @@ restoreManifestMap(Manifest *manifest)
                     else if (path == NULL)
                         THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
 
-                    // Add the link
-                    manifestLinkAdd(manifest, &(ManifestLink){.name = manifestName, .destination = linkPath});
+                    // Add the link. Copy user/group from the base data directory.
+                    const ManifestPath *const pathBase = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+
+                    manifestLinkAdd(
+                        manifest,
+                        &(ManifestLink){
+                            .name = manifestName, .destination = linkPath, .group = pathBase->group, .user = pathBase->user});
 
                     // The link is being created
                     create = true;

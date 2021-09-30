@@ -831,6 +831,8 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf"))->file, "pg_hba.conf", "check link file");
         TEST_RESULT_STR_Z(
             manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf/pg_hba.conf", "check link dest");
+        TEST_RESULT_STR(manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->user, groupName(), "check link group");
+        TEST_RESULT_STR(manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->user, userName(), "check link user");
 
         TEST_RESULT_LOG("P00   INFO: link 'pg_hba.conf' to '../conf/pg_hba.conf'");
 
@@ -868,6 +870,8 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal", "check link path");
         TEST_RESULT_PTR(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->file, NULL, "check link file");
         TEST_RESULT_STR_Z(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal", "check link dest");
+        TEST_RESULT_STR(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->user, groupName(), "check link group");
+        TEST_RESULT_STR(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->user, userName(), "check link user");
 
         TEST_RESULT_LOG("P00   INFO: link 'pg_wal' to '/wal'");
 
@@ -2323,6 +2327,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_wal=../wal");
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "postgresql.conf=../config/postgresql.conf");
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_hba.conf=../config/pg_hba.conf");
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_xact=../xact");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         #define TEST_LABEL                                          "20161219-212741F_20161219-212918I"
@@ -2531,6 +2536,11 @@ testRun(void)
                 symlink("../wal", strZ(strNewFmt("%s/pg_wal", strZ(pgPath)))) == -1, FileOpenError,
                 "unable to create symlink");
 
+            // pg_xact path
+            manifestPathAdd(
+                manifest, &(ManifestPath){.name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_xact"), .mode = 0700, .group = groupName(),
+                .user = userName()});
+
             // pg_tblspc/1
             manifestTargetAdd(
                 manifest, &(ManifestTarget){
@@ -2584,11 +2594,13 @@ testRun(void)
             "P00   INFO: repo1: restore backup set 20161219-212741F_20161219-212918I\n"
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
+            "P00   INFO: link 'pg_xact' to '../xact'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/config' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/wal' exists\n"
             "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_10_201707211' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/xact' exists\n"
             "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
             "P00 DETAIL: remove invalid path '" TEST_PATH "/pg/bogus1'\n"
@@ -2599,6 +2611,7 @@ testRun(void)
             "P00 DETAIL: create path '" TEST_PATH "/pg/base/1'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/base/16384'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/base/32768'\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_xact' to '../xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%) checksum"
@@ -2628,6 +2641,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base/32768'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_wal'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
@@ -2655,6 +2669,7 @@ testRun(void)
             "pg_tblspc {path}\n"
             "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
             "pg_wal {link, d=../wal}\n"
+            "pg_xact {link, d=../xact}\n"
             "postgresql.conf {link, d=../config/postgresql.conf}\n");
 
         testRestoreCompare(
@@ -2725,8 +2740,10 @@ testRun(void)
             "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
             "P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: remove invalid link '" TEST_PATH "/pg/pg_xact'\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/wal'\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_10_201707211'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
             "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, 74%)"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
@@ -2755,6 +2772,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base/32768'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_wal'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
