@@ -542,12 +542,22 @@ restoreManifestMap(Manifest *manifest)
                 const ManifestTarget *const target = manifestTargetFindDefault(
                     manifest, strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(link)), NULL);
 
-                // The target must be a link since pg_data/ was prepended and pgdata is the only allowed path
-                CHECK(target == NULL || target->type == manifestTargetTypeLink);
-
-                // Error if the target was not found or is a tablespace
-                if (target == NULL || target->tablespaceId != 0)
+                // Error if the target was not found
+                if (target == NULL)
                     THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
+
+                // The target must be a link since pg_data/ was prepended and pgdata is the only allowed path
+                CHECK(target->type == manifestTargetTypeLink);
+
+                // Error if the target is a tablespace
+                if (target->tablespaceId != 0)
+                {
+                    THROW_FMT(
+                        LinkMapError,
+                        "unable to remap tablespace '%s'\n"
+                        "HINT: use '" CFGOPT_TABLESPACE_MAP "' option to remap tablespaces.",
+                        strZ(link));
+                }
 
                 LOG_INFO_FMT("map link '%s' to '%s'", strZ(link), strZ(linkPath));
                 manifestLinkUpdate(manifest, target->name, linkPath);
