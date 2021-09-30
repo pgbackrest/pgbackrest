@@ -580,6 +580,7 @@ restoreManifestMap(Manifest *manifest)
                     // The link is being created
                     create = true;
                 }
+                // Else update target to new path
                 else
                     target.path = linkPath;
 
@@ -598,11 +599,11 @@ restoreManifestMap(Manifest *manifest)
 
                 LOG_INFO_FMT("%slink '%s' to '%s'", create ? "" : "map ", strZ(link), strZ(target.path));
 
-                // If the link was not created update it to the new destination
+                // If the link was not created update to the new destination
                 if (!create)
                     manifestLinkUpdate(manifest, target.name, target.path);
 
-                // If the link is a file separate the file name from the path to create/update the target
+                // If the link is a file separate the file name from the path
                 if (target.file != NULL)
                 {
                     // The link destination must have at least one path component in addition to the file part. So '..' would
@@ -618,7 +619,7 @@ restoreManifestMap(Manifest *manifest)
                     target.path = strPath(target.path);
                 }
 
-                // Create a new target or update the existing target
+                // Create a new target or update the existing target file/path
                 if (create)
                     manifestTargetAdd(manifest, &target);
                 else
