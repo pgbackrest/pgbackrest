@@ -974,6 +974,16 @@ option:
       async: {}
       main: {}
 
+  archive-header-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      archive-push: {}
+    command-role:
+      main: {}
+      async: {}
+
   archive-push-queue-max:
     section: global
     type: size
@@ -1015,16 +1025,6 @@ option:
             - true
     command-role:
       main: {}
-
-  archive-header-check:
-    section: global
-    type: boolean
-    default: true
-    command:
-      archive-push: {}
-    command-role:
-      main: {}
-      async: {}
 
   archive-mode-check:
     section: global
