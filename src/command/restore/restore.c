@@ -536,19 +536,27 @@ restoreManifestMap(Manifest *manifest)
             for (unsigned int linkMapIdx = 0; linkMapIdx < strLstSize(linkMapList); linkMapIdx++)
             {
                 const String *const link = strLstGet(linkMapList, linkMapIdx);
-                const String *linkPath = varStr(kvGet(linkMap, VARSTR(link)));
-                const ManifestTarget *const target = manifestTargetFindDefault(
-                    manifest, strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(link)), NULL);
+                const String *const linkPath = varStr(kvGet(linkMap, VARSTR(link)));
+                const String *const manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(link));
+
+                // Attempt to find the link target
+                ManifestTarget target = {0};
+
+                if (manifestTargetFindDefault(manifest, manifestName, NULL) != NULL)
+                    target = *manifestTargetFind(manifest, manifestName);
 
                 // Error if the target was not found
-                if (target == NULL)
+                if (target.name == NULL)
                     THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
 
+                // Update target to new path
+                target.path = linkPath;
+
                 // The target must be a link since pg_data/ was prepended and pgdata is the only allowed path
-                CHECK(target->type == manifestTargetTypeLink);
+                CHECK(target.type == manifestTargetTypeLink);
 
                 // Error if the target is a tablespace
-                if (target->tablespaceId != 0)
+                if (target.tablespaceId != 0)
                 {
                     THROW_FMT(
                         LinkMapError,
@@ -557,28 +565,29 @@ restoreManifestMap(Manifest *manifest)
                         strZ(link));
                 }
 
-                LOG_INFO_FMT("map link '%s' to '%s'", strZ(link), strZ(linkPath));
-                manifestLinkUpdate(manifest, target->name, linkPath);
+                LOG_INFO_FMT("map link '%s' to '%s'", strZ(link), strZ(target.path));
 
-                // If the link is a file separate the file name from the path to update the target
-                const String *linkFile = NULL;
+                // Update link with new destination
+                manifestLinkUpdate(manifest, target.name, target.path);
 
-                if (target->file != NULL)
+                // If the link is a file separate the file name from the path
+                if (target.file != NULL)
                 {
                     // The link destination must have at least one path component in addition to the file part. So '..' would
                     // not be a valid destination but '../file' or '/file' is.
-                    if (strSize(strPath(linkPath)) == 0)
+                    if (strSize(strPath(target.path)) == 0)
                     {
                         THROW_FMT(
-                            LinkMapError, "'%s' is not long enough to be the destination for file link '%s'", strZ(linkPath),
+                            LinkMapError, "'%s' is not long enough to be the destination for file link '%s'", strZ(target.path),
                             strZ(link));
                     }
 
-                    linkFile = strBase(linkPath);
-                    linkPath = strPath(linkPath);
+                    target.file = strBase(target.path);
+                    target.path = strPath(target.path);
                 }
 
-                manifestTargetUpdate(manifest, target->name, linkPath, linkFile);
+                // Update target with new path/file
+                manifestTargetUpdate(manifest, target.name, target.path, target.file);
             }
         }
 
