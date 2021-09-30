@@ -27,7 +27,7 @@ should be created.  See the CheckPoint type difference between 9.5 and 9.6 as an
 Types from src/include/c.h
 ***********************************************************************************************************************************/
 
-// int64 type
+// int64 type. The definition in c.h is more complicated but here we can rely on stdint.h for the correct type.
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
