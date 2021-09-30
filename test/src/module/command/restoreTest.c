@@ -901,18 +901,12 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remove all links");
-        TEST_ERROR(
-            manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
-            "unable to find 'pg_data/pg_hba.conf' in manifest target list");
-        TEST_ERROR(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
-            "unable to find 'pg_data/pg_hba.conf' in manifest link list");
-        TEST_ERROR(
-            manifestTargetFind(manifest, STRDEF("pg_data/pg_wal")), AssertError,
-            "unable to find 'pg_data/pg_wal' in manifest target list");
-        TEST_ERROR(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_wal")), AssertError,
-            "unable to find 'pg_data/pg_wal' in manifest link list");
+
+        TEST_RESULT_PTR(
+            manifestTargetFindDefault(manifest, STRDEF("pg_data/pg_hba.conf"), NULL), NULL, "pg_hba.conf target missing");
+        TEST_RESULT_PTR(manifestLinkFindDefault(manifest, STRDEF("pg_data/pg_hba.conf"), NULL), NULL, "pg_hba.conf link missing");
+        TEST_RESULT_PTR(manifestTargetFindDefault(manifest, STRDEF("pg_data/pg_wal"), NULL), NULL, "pg_wal target missing");
+        TEST_RESULT_PTR(manifestLinkFindDefault(manifest, STRDEF("pg_data/pg_wal"), NULL), NULL, "pg_wal link missing");
 
         TEST_RESULT_LOG(
             "P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location\n"
