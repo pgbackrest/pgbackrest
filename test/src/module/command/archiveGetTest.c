@@ -517,6 +517,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error with warnings");
 
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync, .jobRetry = 1);
+
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(1),
             STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
