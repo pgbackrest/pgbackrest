@@ -181,23 +181,14 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
     {
         if (type == protocolMessageTypeError)
         {
-            const ErrorType *type = errorTypeFromCode(pckReadI32P(error));
-            String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
+            const ErrorType *const type = errorTypeFromCode(pckReadI32P(error));
+            const String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
             const String *const stack = pckReadStrP(error);
             pckReadEndP(error);
 
-            CHECK(message != NULL);
+            CHECK(message != NULL && stack != NULL);
 
-            // Add stack trace if the error is an assertion or debug-level logging is enabled
-            if (type == &AssertError || logAny(logLevelDebug))
-            {
-                CHECK(stack != NULL);
-
-                strCat(message, LF_STR);
-                strCat(message, stack);
-            }
-
-            THROWP(type, strZ(message));
+            errorInternalThrow(type, __FILE__, __func__, __LINE__, strZ(message), strZ(stack));
         }
     }
     MEM_CONTEXT_TEMP_END();

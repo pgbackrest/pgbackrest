@@ -108,6 +108,22 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("errorInternalThrow()"))
+    {
+        TEST_TITLE("specify all parameters");
+
+        TRY_BEGIN()
+        {
+            errorInternalThrow(&FormatError, "file77", "function88", 99, "message100", "stacktrace200");
+        }
+        CATCH_ANY()
+        {
+            assert(errorType() == &FormatError);
+        }
+        TRY_END();
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("TRY with multiple catches"))
     {
         volatile bool tryDone = false;

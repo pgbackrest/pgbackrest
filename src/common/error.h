@@ -167,16 +167,16 @@ error information to stderr.
 The seldom used "THROWP" variants allow an error to be thrown with a pointer to the error type.
 ***********************************************************************************************************************************/
 #define THROW(errorType, message)                                                                                                  \
-    errorInternalThrow(&errorType, __FILE__, __func__, __LINE__, message)
+    errorInternalThrow(&errorType, __FILE__, __func__, __LINE__, message, NULL)
 #define THROW_FMT(errorType, ...)                                                                                                  \
     errorInternalThrowFmt(&errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 #define THROWP(errorType, message)                                                                                                 \
-    errorInternalThrow(errorType, __FILE__, __func__, __LINE__, message)
+    errorInternalThrow(errorType, __FILE__, __func__, __LINE__, message, NULL)
 #define THROWP_FMT(errorType, ...)                                                                                                 \
     errorInternalThrowFmt(errorType, __FILE__, __func__, __LINE__, __VA_ARGS__)
 
 #define THROW_CODE(errorCode, message)                                                                                             \
-    errorInternalThrow(errorTypeFromCode(errorCode), __FILE__, __func__, __LINE__, message)
+    errorInternalThrow(errorTypeFromCode(errorCode), __FILE__, __func__, __LINE__, message, NULL)
 #define THROW_CODE_FMT(errorCode, ...)                                                                                             \
     errorInternalThrowFmt(errorTypeFromCode(errorCode), __FILE__, __func__, __LINE__, __VA_ARGS__)
 
@@ -301,8 +301,8 @@ void errorInternalPropagate(void) __attribute__((__noreturn__));
 
 // Throw an error
 void errorInternalThrow(
-    const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
-    __attribute__((__noreturn__));
+    const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message,
+    const char *stackTrace) __attribute__((__noreturn__));
 void errorInternalThrowFmt(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
     __attribute__((format(printf, 5, 6))) __attribute__((__noreturn__));
