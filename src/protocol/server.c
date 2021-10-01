@@ -104,20 +104,6 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     FUNCTION_LOG_RETURN_VOID();
 }
 
-void
-protocolServerErrorCurrent(ProtocolServer *const this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
 /**********************************************************************************************************************************/
 ProtocolServerCommandGetResult
 protocolServerCommandGet(ProtocolServer *const this)
@@ -218,16 +204,20 @@ protocolServerProcess(
                             }
                             CATCH_ANY()
                             {
+                                // On first error record the error details. Only the first error will contain a stack trace since
+                                // the first error is most likely to contain valuable information.
                                 if (errType == NULL)
                                 {
                                     errType = errorType();
                                     errMessage = strNewZ(errorMessage());
                                     errStackTrace = strNewZ(errorStackTrace());
                                 }
+                                // Else on a retry error only record the error type and message. Retry errors are less likely to
+                                // contain valuable information but may be helpful for debugging.
                                 else
                                 {
                                     strCatFmt(
-                                        errMessage, "\n%s on retry after %" PRIu64 "ms: %s", errorTypeName(errorType()),
+                                        errMessage, "\n[%s] on retry after %" PRIu64 "ms: %s", errorTypeName(errorType()),
                                         retrySleepMs, errorMessage());
                                 }
 
@@ -292,7 +282,7 @@ protocolServerProcess(
         CATCH_ANY()
         {
             // Report error to the client
-            protocolServerErrorCurrent(this);
+            protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
 
             // Rethrow so the process exits with an error
             RETHROW();

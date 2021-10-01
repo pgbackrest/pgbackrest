@@ -808,7 +808,7 @@ testRun(void)
 
         // Add repo3
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync, .jobRetry = 1);
 
         HRN_INFO_PUT(
             storageTest, "repo3/archive/test/archive.info",
@@ -835,8 +835,9 @@ testRun(void)
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
             "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
-                "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING,
-            TEST_PATH "/pg/pg_xlog/000000010000000100000002");
+                "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
+            "            [FileMissingError] on retry after 0ms: " STORAGE_ERROR_READ_MISSING,
+            TEST_PATH "/pg/pg_xlog/000000010000000100000002", TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_STORAGE_EXISTS(
             storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),

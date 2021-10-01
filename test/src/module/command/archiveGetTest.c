@@ -517,6 +517,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error with warnings");
 
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync, .jobRetry = 1);
+
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(1),
             STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
@@ -531,6 +533,11 @@ testRun(void)
             "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
                 " [FormatError] unexpected eof in compressed data\n"
             "            repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
+                " [FormatError] unexpected eof in compressed data\n"
+            "            [FileReadError] on retry after 0ms: unable to get 000000010000000200000000:\n"
+            "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
+                " [FormatError] unexpected eof in compressed data\n"
+            "            repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
                 " [FormatError] unexpected eof in compressed data");
 
         TEST_STORAGE_GET(
@@ -541,6 +548,11 @@ testRun(void)
                 " [FormatError] unexpected eof in compressed data\n"
             "repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
                 " [FormatError] unexpected eof in compressed data\n"
+            "[FileReadError] on retry after 0ms: unable to get 000000010000000200000000:\n"
+            "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz [FormatError]"
+                " unexpected eof in compressed data\n"
+            "repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz [FormatError]"
+                " unexpected eof in compressed data\n"
             "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
                 " '18072658121562454734'",
             .remove = true);

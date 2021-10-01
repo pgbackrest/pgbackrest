@@ -1042,7 +1042,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        HRN_CFG_LOAD(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList, .jobRetry = 1);
 
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
@@ -1174,6 +1174,9 @@ testRun(void)
                     "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db/"
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
                     " [13] Permission denied\n"
+                "            [FileOpenError] on retry after 0ms: unable to open file '" TEST_PATH
+                    "/repo/archive/db/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for"
+                    " read: [13] Permission denied\n"
                 "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest' for read\n"
                 "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest.copy'"
                     " for read\n"
@@ -1188,6 +1191,8 @@ testRun(void)
                 "P01  ERROR: [039]: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
                     " unable to open file '" TEST_PATH "/repo/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13]"
                     " Permission denied\n"
+                "            [FileOpenError] on retry after 0ms: unable to open file '" TEST_PATH
+                    "/repo/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13] Permission denied\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001\n"

@@ -33,6 +33,7 @@ typedef struct HrnCfgLoadParam
     bool exeBogus;                                                  // Use pgbackrest-bogus as exe parameter
     bool noStd;                                                     // Do not add standard options, e.g. lock-path
     bool log;                                                       // Log parameters? (used internally by HRN_CFG_LOAD())
+    unsigned int jobRetry;                                          // !!!
     const char *comment;                                            // Comment
 } HrnCfgLoadParam;
 

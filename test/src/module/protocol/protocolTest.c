@@ -676,8 +676,8 @@ testRun(void)
                 TEST_ERROR(
                     protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false), AssertError,
                     "raised from test client: ERR_MESSAGE\n"
-                    "AssertError on retry after 0ms: ERR_MESSAGE_RETRY\n"
-                    "AssertError on retry after 500ms: ERR_MESSAGE_RETRY");
+                    "[AssertError] on retry after 0ms: ERR_MESSAGE_RETRY\n"
+                    "[AssertError] on retry after 500ms: ERR_MESSAGE_RETRY");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");
@@ -766,7 +766,7 @@ testRun(void)
 
                 // Command with error
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-three"), "c-three command get");
-                TEST_RESULT_VOID(protocolServerError(server, 39, STR("very serious error"), STR("stack")), "error put");
+                TEST_RESULT_VOID(protocolServerError(server, 39, STRDEF("very serious error"), STRDEF("stack")), "error put");
 
                 // Wait for exit
                 CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_EXIT);

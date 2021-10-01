@@ -2735,13 +2735,17 @@ testRun(void)
         HRN_STORAGE_REMOVE(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
 
+        HRN_CFG_LOAD(cfgCmdRestore, argList, .jobRetry = 1);
+
         // Set log level to warn
         harnessLogLevelSet(logLevelWarn);
 
         TEST_ERROR(
             cmdRestore(), FileMissingError,
             "raised from local-1 shim protocol: unable to open missing file"
-                " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read");
+                " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read\n"
+            "[FileMissingError] on retry after 0ms: unable to open missing file '" TEST_PATH
+                "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read");
 
         // Free local processes that were not freed because of the error
         protocolFree();
