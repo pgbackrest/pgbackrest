@@ -1042,7 +1042,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        HRN_CFG_LOAD(cfgCmdVerify, argList);
+        HRN_CFG_LOAD(cfgCmdVerify, argList, .jobRetry = 1);
 
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),

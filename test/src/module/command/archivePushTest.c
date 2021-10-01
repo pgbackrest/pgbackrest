@@ -808,7 +808,7 @@ testRun(void)
 
         // Add repo3
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync, .jobRetry = 1);
 
         HRN_INFO_PUT(
             storageTest, "repo3/archive/test/archive.info",

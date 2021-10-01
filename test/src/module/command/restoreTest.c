@@ -2735,6 +2735,8 @@ testRun(void)
         HRN_STORAGE_REMOVE(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
 
+        HRN_CFG_LOAD(cfgCmdRestore, argList, .jobRetry = 1);
+
         // Set log level to warn
         harnessLogLevelSet(logLevelWarn);
 
