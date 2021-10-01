@@ -59,8 +59,9 @@ void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
 // Put data end to the client. This ends command processing and no more data should be sent.
 void protocolServerDataEndPut(ProtocolServer *this);
 
-// Return the current error
-void protocolServerError(ProtocolServer *this);
+// Return current error or specified error
+void protocolServerErrorCurrent(ProtocolServer *this);
+void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
 
 // Process requests
 void protocolServerProcess(

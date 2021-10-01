@@ -73,30 +73,47 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
 /**********************************************************************************************************************************/
 void
-protocolServerError(ProtocolServer *const this)
+protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_LOG_PARAM(INT, code);
+        FUNCTION_LOG_PARAM(STRING, message);
+        FUNCTION_LOG_PARAM(STRING, stack);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(errorCode() != 0);
-    ASSERT(errorMessage() != NULL);
-    ASSERT(errorStackTrace() != NULL);
+    ASSERT(code != 0);
+    ASSERT(message != NULL);
+    ASSERT(stack != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write the error and flush to be sure it gets sent immediately
         PackWrite *error = pckWriteNewIo(this->write);
         pckWriteU32P(error, protocolMessageTypeError);
-        pckWriteI32P(error, errorCode());
-        pckWriteStrP(error, STR(errorMessage()));
-        pckWriteStrP(error, STR(errorStackTrace()));
+        pckWriteI32P(error, code);
+        pckWriteStrP(error, message);
+        pckWriteStrP(error, stack);
         pckWriteEndP(error);
 
         ioWriteFlush(this->write);
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+protocolServerErrorCurrent(ProtocolServer *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -180,9 +197,15 @@ protocolServerProcess(
                     // needs to be stored by the handler.
                     MEM_CONTEXT_BEGIN(objMemContext(this))
                     {
+                        // Variables to store original error message and retry messages
+                        const ErrorType *errType = NULL;
+                        String *errMessage = NULL;
+                        const String *errStackTrace = NULL;
+
                         // Initialize retries in case of command failure
                         bool retry = false;
                         unsigned int retryRemaining = retryInterval != NULL ? varLstSize(retryInterval) : 0;
+                        TimeMSec retrySleepMs = 0;
 
                         // Handler retry loop
                         do
@@ -195,12 +218,24 @@ protocolServerProcess(
                             }
                             CATCH_ANY()
                             {
+                                if (errType == NULL)
+                                {
+                                    errType = errorType();
+                                    errMessage = strNewZ(errorMessage());
+                                    errStackTrace = strNewZ(errorStackTrace());
+                                }
+                                else
+                                {
+                                    strCatFmt(
+                                        errMessage, "\n%s on retry after %" PRIu64 "ms: %s", errorTypeName(errorType()),
+                                        retrySleepMs, errorMessage());
+                                }
+
                                 // Are there retries remaining?
                                 if (retryRemaining > 0)
                                 {
                                     // Get the sleep interval for this retry
-                                    TimeMSec retrySleepMs = varUInt64(
-                                        varLstGet(retryInterval, varLstSize(retryInterval) - retryRemaining));
+                                    retrySleepMs = varUInt64(varLstGet(retryInterval, varLstSize(retryInterval) - retryRemaining));
 
                                     // Log the retry
                                     LOG_DEBUG_FMT(
@@ -220,7 +255,7 @@ protocolServerProcess(
                                 }
                                 // Else report error to the client
                                 else
-                                    protocolServerError(this);
+                                    protocolServerError(this, errorTypeCode(errType), errMessage, errStackTrace);
                             }
                             TRY_END();
                         }
@@ -257,7 +292,7 @@ protocolServerProcess(
         CATCH_ANY()
         {
             // Report error to the client
-            protocolServerError(this);
+            protocolServerErrorCurrent(this);
 
             // Rethrow so the process exits with an error
             RETHROW();

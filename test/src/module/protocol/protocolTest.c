@@ -20,6 +20,8 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
+static unsigned int testCommandAssertProtocolTotal = 0;
+
 __attribute__((__noreturn__)) static void
 testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
 {
@@ -31,7 +33,8 @@ testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
     ASSERT(param == NULL);
     ASSERT(server != NULL);
 
-    hrnErrorThrowP();
+    testCommandAssertProtocolTotal++;
+    hrnErrorThrowP(.message = testCommandAssertProtocolTotal <= 2 ? NULL : "ERR_MESSAGE_RETRY");
 
     // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
 }
@@ -525,6 +528,7 @@ testRun(void)
 
                 VariantList *retryList = varLstNew();
                 varLstAdd(retryList, varNewUInt64(0));
+                varLstAdd(retryList, varNewUInt64(500));
 
                 TEST_ASSIGN(
                     server, protocolServerNew(STRDEF("test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
@@ -667,6 +671,15 @@ testRun(void)
                     "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("command throws assert with retry messages");
+
+                TEST_ERROR(
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false), AssertError,
+                    "raised from test client: ERR_MESSAGE\n"
+                    "AssertError on retry after 0ms: ERR_MESSAGE_RETRY\n"
+                    "AssertError on retry after 500ms: ERR_MESSAGE_RETRY");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");
 
                 TEST_RESULT_VOID(protocolClientFree(client), "free");
@@ -753,16 +766,7 @@ testRun(void)
 
                 // Command with error
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-three"), "c-three command get");
-
-                TRY_BEGIN()
-                {
-                    hrnErrorThrowP(.errorType = &ProtocolError, .message = "very serious error");
-                }
-                CATCH_ANY()
-                {
-                    TEST_RESULT_VOID(protocolServerError(server), "error put");
-                }
-                TRY_END();
+                TEST_RESULT_VOID(protocolServerError(server, 39, STR("very serious error"), STR("stack")), "error put");
 
                 // Wait for exit
                 CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_EXIT);
