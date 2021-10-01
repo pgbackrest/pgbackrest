@@ -179,9 +179,8 @@ protocolServerProcess(
                 // If handler was found then process
                 if (handler != NULL)
                 {
-                    // Send the command to the handler.  Run the handler in the server's memory context in case any persistent data
-                    // needs to be stored by the handler.
-                    MEM_CONTEXT_BEGIN(objMemContext(this))
+                    // Send the command to the handler
+                    MEM_CONTEXT_TEMP_BEGIN()
                     {
                         // Initialize retries in case of command failure
                         bool retry = false;
@@ -229,7 +228,7 @@ protocolServerProcess(
                         }
                         while (retry);
                     }
-                    MEM_CONTEXT_END();
+                    MEM_CONTEXT_TEMP_END();
                 }
                 // Else check built-in commands
                 else
