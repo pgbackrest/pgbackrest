@@ -73,28 +73,25 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
 /**********************************************************************************************************************************/
 void
-protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
+protocolServerError(ProtocolServer *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_LOG_PARAM(INT, code);
-        FUNCTION_LOG_PARAM(STRING, message);
-        FUNCTION_LOG_PARAM(STRING, stack);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(code != 0);
-    ASSERT(message != NULL);
-    ASSERT(stack != NULL);
+    ASSERT(errorCode() != 0);
+    ASSERT(errorMessage() != NULL);
+    ASSERT(errorStackTrace() != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write the error and flush to be sure it gets sent immediately
         PackWrite *error = pckWriteNewIo(this->write);
         pckWriteU32P(error, protocolMessageTypeError);
-        pckWriteI32P(error, code);
-        pckWriteStrP(error, message);
-        pckWriteStrP(error, stack);
+        pckWriteI32P(error, errorCode());
+        pckWriteStrP(error, STR(errorMessage()));
+        pckWriteStrP(error, STR(errorStackTrace()));
         pckWriteEndP(error);
 
         ioWriteFlush(this->write);
@@ -223,7 +220,7 @@ protocolServerProcess(
                                 }
                                 // Else report error to the client
                                 else
-                                    protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
+                                    protocolServerError(this);
                             }
                             TRY_END();
                         }
@@ -260,7 +257,7 @@ protocolServerProcess(
         CATCH_ANY()
         {
             // Report error to the client
-            protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
+            protocolServerError(this);
 
             // Rethrow so the process exits with an error
             RETHROW();

@@ -65,7 +65,7 @@ cmdRemote(ProtocolServer *const server)
         }
         CATCH_ANY()
         {
-            protocolServerError(server, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
+            protocolServerError(server);
         }
         TRY_END();
 

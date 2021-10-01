@@ -595,27 +595,21 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command throws assert");
 
-                TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false), AssertError,
-                    "raised from test client: ERR_MESSAGE\nERR_STACK_TRACE");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("command throws error");
-
-                TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
-                    "raised from test client: ERR_MESSAGE");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("command throws error in debug log level");
-
-                harnessLogLevelSet(logLevelDebug);
-
-                TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
-                    "raised from test client: ERR_MESSAGE\nERR_STACK_TRACE");
-
-                harnessLogLevelReset();
+                TRY_BEGIN()
+                {
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false);
+                    THROW(TestError, "error was expected");
+                }
+                CATCH_ANY()
+                {
+                    TEST_RESULT_PTR(errorType(), &AssertError, "check type");
+                    TEST_RESULT_Z(errorFileName(), TEST_PGB_PATH "/src/protocol/client.c", "check file");
+                    TEST_RESULT_Z(errorFunctionName(), "protocolClientError", "check function");
+                    TEST_RESULT_BOOL(errorFileLine() > 0, true, "check file line > 0");
+                    TEST_RESULT_Z(errorMessage(), "raised from test client: ERR_MESSAGE", "check message");
+                    TEST_RESULT_Z(errorStackTrace(), "ERR_STACK_TRACE", "check stack trace");
+                }
+                TRY_END();
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("noop command");
@@ -759,7 +753,16 @@ testRun(void)
 
                 // Command with error
                 TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-three"), "c-three command get");
-                TEST_RESULT_VOID(protocolServerError(server, 39, STRDEF("very serious error"), STRDEF("stack")), "error put");
+
+                TRY_BEGIN()
+                {
+                    hrnErrorThrowP(.errorType = &ProtocolError, .message = "very serious error");
+                }
+                CATCH_ANY()
+                {
+                    TEST_RESULT_VOID(protocolServerError(server), "error put");
+                }
+                TRY_END();
 
                 // Wait for exit
                 CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_EXIT);
