@@ -47,6 +47,7 @@ test.pl [options] doc|test
    --vm                 docker container to build/test
    --param              parameters to pass to test.pl
    --sudo               test requires sudo
+   --no-tempfs          do not create tempfs mount
 
  General Options:
    --help               display usage and exit
@@ -57,11 +58,13 @@ test.pl [options] doc|test
 ####################################################################################################################################
 my $strVm;
 my @stryParam;
+my $bNoTempFs;
 my $bSudo;
 my $bHelp;
 
 GetOptions ('help' => \$bHelp,
             'param=s@' => \@stryParam,
+            'no-tempfs' => \$bNoTempFs,
             'sudo' => \$bSudo,
             'vm=s' => \$strVm)
     or pod2usage(2);
@@ -133,14 +136,18 @@ eval
 
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
-    processExec('sudo apt-get install -y libxml-checker-perl libyaml-perl', {bSuppressStdErr => true});
+    processExec(
+        'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libxml-checker-perl libyaml-perl', {bSuppressStdErr => true});
     processEnd();
 
-    processBegin('mount tmpfs');
-    processExec('mkdir -p -m 770 test');
-    processExec('sudo mount -t tmpfs -o size=2048m tmpfs test');
-    processExec('df -h test', {bShowOutputAsync => true});
-    processEnd();
+    if (!$bNoTempFs)
+    {
+        processBegin('mount tmpfs');
+        processExec('mkdir -p -m 770 test');
+        processExec('sudo mount -t tmpfs -o size=2048m tmpfs test');
+        processExec('df -h test', {bShowOutputAsync => true});
+        processEnd();
+    }
 
     ################################################################################################################################
     # Build documentation
@@ -153,9 +160,12 @@ eval
         {
             processBegin('LaTeX install');
             processExec(
-                'sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended',
+                'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends texlive-latex-base' .
+                    ' texlive-latex-extra texlive-fonts-recommended',
                 {bSuppressStdErr => true});
-            processExec('sudo apt-get install -y texlive-font-utils texlive-latex-recommended', {bSuppressStdErr => true});
+            processExec(
+                'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y texlive-font-utils texlive-latex-recommended',
+                {bSuppressStdErr => true});
         }
 
         processBegin('remove sudo');
@@ -177,7 +187,7 @@ eval
     elsif ($ARGV[0] eq 'test')
     {
         # Build list of packages that need to be installed
-        my $strPackage = "rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
+        my $strPackage = "make gcc git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))
@@ -201,7 +211,9 @@ eval
         processEnd();
 
         processBegin('install test packages');
-        processExec("sudo apt-get install -y ${strPackage}", {bSuppressStdErr => true});
+        processExec(
+            "sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${strPackage}",
+            {bSuppressStdErr => true});
         processEnd();
 
         if (!$bSudo)
