@@ -18,7 +18,10 @@
             <release-core-list>
                 <release-improvement-list>
                     <release-item>
-                        <github-pull-request id="1481"/>
+                        <commit subject="Increase max index allowed for pg/repo options to 256.">
+                            <github-pull-request id="1481"/>
+                        </commit>
+                        <commit subject="Use strncpy() to limit characters copied to optionName."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
