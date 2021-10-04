@@ -34,7 +34,7 @@ testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
     ASSERT(server != NULL);
 
     testCommandAssertProtocolTotal++;
-    hrnErrorThrowP(.message = testCommandAssertProtocolTotal <= 2 ? NULL : "ERR_MESSAGE_RETRY");
+    hrnErrorThrowP(.message = testCommandAssertProtocolTotal <= 3 ? NULL : "ERR_MESSAGE_RETRY");
 
     // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
 }
@@ -676,7 +676,7 @@ testRun(void)
                 TEST_ERROR(
                     protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false), AssertError,
                     "raised from test client: ERR_MESSAGE\n"
-                    "[AssertError] on retry after 0ms: ERR_MESSAGE_RETRY\n"
+                    "[AssertError] on retry after 0ms\n"
                     "[AssertError] on retry after 500ms: ERR_MESSAGE_RETRY");
 
                 // -----------------------------------------------------------------------------------------------------------------

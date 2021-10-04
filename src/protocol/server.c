@@ -182,9 +182,10 @@ protocolServerProcess(
                     // Send the command to the handler
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
-                        // Variables to store original error message and retry messages
+                        // Variables to store first error message and retry messages
                         const ErrorType *errType = NULL;
                         String *errMessage = NULL;
+                        const String *errMessageFirst = NULL;
                         const String *errStackTrace = NULL;
 
                         // Initialize retries in case of command failure
@@ -209,6 +210,7 @@ protocolServerProcess(
                                 {
                                     errType = errorType();
                                     errMessage = strNewZ(errorMessage());
+                                    errMessageFirst = strNewZ(errorMessage());
                                     errStackTrace = strNewZ(errorStackTrace());
                                 }
                                 // Else on a retry error only record the error type and message. Retry errors are less likely to
@@ -216,8 +218,12 @@ protocolServerProcess(
                                 else
                                 {
                                     strCatFmt(
-                                        errMessage, "\n[%s] on retry after %" PRIu64 "ms: %s", errorTypeName(errorType()),
-                                        retrySleepMs, errorMessage());
+                                        errMessage, "\n[%s] on retry after %" PRIu64 "ms", errorTypeName(errorType()),
+                                        retrySleepMs);
+
+                                    // Only append the message if it differs from the first message
+                                    if (!strEqZ(errMessageFirst, errorMessage()))
+                                        strCatFmt(errMessage, ": %s", errorMessage());
                                 }
 
                                 // Are there retries remaining?
