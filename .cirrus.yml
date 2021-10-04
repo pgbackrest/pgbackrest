@@ -7,6 +7,26 @@ only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_PR != '' || $CIRRUS_BRANCH =
 # No auto-cancel on integration
 auto_cancellation: $CIRRUS_BRANCH != 'integration'
 
+# Arm64
+# ----------------------------------------------------------------------------------------------------------------------------------
+arm64_task:
+  arm_container:
+    image: ubuntu:20.04
+    cpu: 4
+    memory: 2G
+
+  install_script:
+    - apt-get update && apt-get install -y perl sudo locales
+    - sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+    - dpkg-reconfigure --frontend=noninteractive locales
+    - update-locale LANG=en_US.UTF-8
+    - adduser --disabled-password --gecos "" testuser
+    - echo '%testuser ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+    - chown -R testuser ${CIRRUS_WORKING_DIR?}
+
+  script:
+    - su - testuser -c "${CIRRUS_WORKING_DIR?}/test/ci.pl test --vm=none --sudo --no-tempfs --param=c-only --param=no-coverage"
+
 # FreeBSD 12
 # ----------------------------------------------------------------------------------------------------------------------------------
 freebsd_12_task:
