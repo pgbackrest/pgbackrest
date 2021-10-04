@@ -58,7 +58,7 @@ typedef struct InfoBackupData
     time_t backupTimestampStart;
     time_t backupTimestampStop;
     BackupType backupType;
-    bool backupError;                                               // Were errors detected during the backup?
+    const Variant *backupError;                                     // Were errors detected during the backup?
     bool optionArchiveCheck;
     bool optionArchiveCopy;
     bool optionBackupStandby;

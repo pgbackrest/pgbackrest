@@ -164,10 +164,8 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
                     kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR) != NULL ?
                         strLstNewVarLst(varVarLst(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR))) : NULL,
 
-                // Report errors detected during the backup. The key might not be existing in older releases.
-                .backupError =
-                    kvKeyExists(backupKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR) ?
-                        varBool(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR)) : false,
+                // Report errors detected during the backup. The key may not exist in older versions.
+                .backupError = varDup(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR)),
 
                 // Options
                 .optionArchiveCheck = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR)),
@@ -266,7 +264,11 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARINT64(backupData.backupTimestampStop));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR, VARSTR(strIdToStr(backupData.backupType)));
 
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR, VARBOOL(backupData.backupError));
+            // Do not save backup-error if it was not loaded. This prevents backups that were added before the backup-error flag
+            // was introduced from being saved with an incorrect value.
+            if (backupData.backupError != NULL)
+                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR, backupData.backupError);
+
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR, VARBOOL(backupData.optionBackupStandby));
@@ -373,7 +375,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 backupRepoSizeDelta += file->sizeRepo > 0 ? file->sizeRepo : file->size;
             }
 
-            // Is there an error in the page checksum?
+            // Is there an error in the file?
             if (file->checksumPageError)
                 backupError = true;
         }
@@ -393,7 +395,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .backupTimestampStart = manData->backupTimestampStart,
                 .backupTimestampStop= manData->backupTimestampStop,
                 .backupType = manData->backupType,
-                .backupError = backupError,
+                .backupError = varNewBool(backupError),
 
                 .backupArchiveStart = strDup(manData->archiveStart),
                 .backupArchiveStop = strDup(manData->archiveStop),

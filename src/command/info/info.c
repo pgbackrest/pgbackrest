@@ -446,9 +446,9 @@ backupListAdd(
     kvPut(timeInfo, KEY_START_VAR, VARUINT64((uint64_t)backupData->backupTimestampStart));
     kvPut(timeInfo, KEY_STOP_VAR, VARUINT64((uint64_t)backupData->backupTimestampStop));
 
-    // Report errors only if a specific backup set isn't requested
-    if (backupLabel == NULL)
-        kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, VARBOOL(backupData->backupError));
+    // Report errors only if the error status is known
+    if (backupData->backupError != NULL)
+        kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, backupData->backupError);
 
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
     if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
@@ -526,9 +526,17 @@ backupListAdd(
                 varLstAdd(checksumPageErrorList, varNewStr(manifestPathPg(file->name)));
         }
 
-        kvPut(
-            varKv(backupInfo), BACKUP_KEY_ERROR_LIST_VAR,
-            (!varLstEmpty(checksumPageErrorList) ? varNewVarLst(checksumPageErrorList) : NULL));
+        if (!varLstEmpty(checksumPageErrorList))
+        {
+            kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_LIST_VAR, varNewVarLst(checksumPageErrorList));
+
+            // It is possible that backup-error is not set in backup.info but there are errors in manifest because backup-error was
+            // added in a later version than manifest errors. However, it should not be possible for backup-error to be present but
+            // false if there are errors in the manifest. In production this condition will be ignored and error set to true.
+            ASSERT(
+                kvGet(varKv(backupInfo), BACKUP_KEY_ERROR_VAR) == NULL || varBool(kvGet(varKv(backupInfo), BACKUP_KEY_ERROR_VAR)));
+            kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, BOOL_TRUE_VAR);
+        }
 
         manifestFree(repoData->manifest);
         repoData->manifest = NULL;
@@ -903,14 +911,19 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             strCat(resultStr, LF_STR);
         }
 
+        // If errors were detected during the backup
         if (kvGet(backupInfo, BACKUP_KEY_ERROR_VAR) != NULL && varBool(kvGet(backupInfo, BACKUP_KEY_ERROR_VAR)))
-            strCatZ(resultStr, "            error(s) detected during backup\n");
-
-        if (kvGet(backupInfo, BACKUP_KEY_ERROR_LIST_VAR) != NULL)
         {
-            StringList *checksumPageErrorList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_ERROR_LIST_VAR)));
+            // Output error list if present
+            if (kvGet(backupInfo, BACKUP_KEY_ERROR_LIST_VAR) != NULL)
+            {
+                StringList *checksumPageErrorList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_ERROR_LIST_VAR)));
 
-            strCatFmt(resultStr, "            error list: %s\n", strZ(strLstJoin(checksumPageErrorList, ", ")));
+                strCatFmt(resultStr, "            error list: %s\n", strZ(strLstJoin(checksumPageErrorList, ", ")));
+            }
+            // Else output a general message
+            else
+                strCatZ(resultStr, "            error(s) detected during backup\n");
         }
     }
 
