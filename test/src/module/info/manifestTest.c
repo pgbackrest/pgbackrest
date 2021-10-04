@@ -157,7 +157,7 @@ testRun(void)
             "[target:file:default]\n"                                                                                              \
             "group=\"" TEST_GROUP "\"\n"                                                                                           \
             "master=false\n"                                                                                                       \
-            "mode=\"0400\"\n"                                                                                                      \
+            "mode=\"0600\"\n"                                                                                                      \
             "user=\"" TEST_USER "\"\n"
 
         #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE                                                                            \
@@ -165,7 +165,7 @@ testRun(void)
             "[target:file:default]\n"                                                                                              \
             "group=\"" TEST_GROUP "\"\n"                                                                                           \
             "master=true\n"                                                                                                        \
-            "mode=\"0400\"\n"                                                                                                      \
+            "mode=\"0600\"\n"                                                                                                      \
             "user=\"" TEST_USER "\"\n"
 
         #define TEST_MANIFEST_LINK_DEFAULT                                                                                         \
@@ -190,17 +190,17 @@ testRun(void)
         TEST_TITLE("8.3 with custom exclusions and special file");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "8.3\n", .modeFile = 0400, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "8.3\n", .modeFile = 0600, .timeModified = 1565282100);
 
         // Create special file
         HRN_SYSTEM_FMT("mkfifo -m 666 %s", TEST_PATH "/pg/testpipe");
 
         // Files that will always be ignored
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_BACKUPLABELOLD, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTEROPTS, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTERPID, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYCONF, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYDONE, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_BACKUPLABELOLD, .modeFile = 0600, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTEROPTS, .modeFile = 0600, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTERPID, .modeFile = 0600, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYCONF, .modeFile = 0600, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYDONE, .modeFile = 0600, .timeModified = 1565282101);
 
         // Directories that will always be ignored
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PREFIX_PGSQLTMP, .mode = 0700);
@@ -208,32 +208,32 @@ testRun(void)
 
         // Directories under which files will be ignored (some depending on the version)
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGDYNSHMEM, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGDYNSHMEM "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGDYNSHMEM "/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282101);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGNOTIFY, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGNOTIFY "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282102);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGNOTIFY "/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282102);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGREPLSLOT, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGREPLSLOT "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282103);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGREPLSLOT "/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282103);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGSERIAL, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSERIAL "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282104);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSERIAL "/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282104);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGSNAPSHOTS, .mode = 0700);
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_PATH_PGSNAPSHOTS "/" BOGUS_STR, "test", .modeFile = 0400, .timeModified = 1565282105);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_PATH_PGSNAPSHOTS "/" BOGUS_STR, "test", .modeFile = 0600, .timeModified = 1565282105);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSTATTMP "/" BOGUS_STR, .modeFile = 0640, .timeModified = 1565282106);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGSUBTRANS, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSUBTRANS "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282107);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGSUBTRANS "/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282107);
 
         // WAL directory not ignored when offline
         HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_xlog", .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_xlog/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282108);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_xlog/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282108);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_xlog/archive_status", .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_xlog/archive_status/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282108);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_xlog/archive_status/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282108);
 
         // global directory
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_GLOBAL, .mode = 0700);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".1");
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow", .modeFile = 0400, .timeModified = 1565282114);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/t1_1", .modeFile = 0400, .timeModified = 1565282114);
+            storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGINTERNALINIT ".allow", .modeFile = 0600, .timeModified = 1565282114);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/t1_1", .modeFile = 0600, .timeModified = 1565282114);
 
         // base/1 directory
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_BASE, .mode = 0700);
@@ -304,55 +304,55 @@ testRun(void)
         // Set up for manifestNewBuild tests
         // -------------------------------------------------------------------------------------------------------------------------
         // Temp relations to ignore
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/t1_1", .modeFile = 0400, .timeModified = 1565282113);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/t1_1.1", .modeFile = 0400, .timeModified = 1565282113);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/t8888888_8888888_vm", .modeFile = 0400, .timeModified = 1565282113);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/t1_1", .modeFile = 0600, .timeModified = 1565282113);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/t1_1.1", .modeFile = 0600, .timeModified = 1565282113);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/t8888888_8888888_vm", .modeFile = 0600, .timeModified = 1565282113);
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/t8888888_8888888_vm.999999", .modeFile = 0400, .timeModified = 1565282113);
+            storagePgWrite, PG_PATH_BASE "/1/t8888888_8888888_vm.999999", .modeFile = 0600, .timeModified = 1565282113);
 
         // Unlogged relations (pgVersion > 9.1)
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555", .modeFile = 0400, .timeModified = 1565282114,
+            storagePgWrite, PG_PATH_BASE "/1/555", .modeFile = 0600, .timeModified = 1565282114,
             .comment = "skip file because there is an _init");
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_fsm", .modeFile = 0400, .timeModified = 1565282114,
+            storagePgWrite, PG_PATH_BASE "/1/555_fsm", .modeFile = 0600, .timeModified = 1565282114,
             .comment = "skip file because there is an _init");
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_vm.1", .modeFile = 0400, .timeModified = 1565282114,
+            storagePgWrite, PG_PATH_BASE "/1/555_vm.1", .modeFile = 0600, .timeModified = 1565282114,
             .comment = "skip file because there is an _init");
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_init", .modeFile = 0400, .timeModified = 1565282114,
+            storagePgWrite, PG_PATH_BASE "/1/555_init", .modeFile = 0600, .timeModified = 1565282114,
             .comment = "do not skip _init");
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_init.1", .modeFile = 0400, .timeModified = 1565282114,
+            storagePgWrite, PG_PATH_BASE "/1/555_init.1", .modeFile = 0600, .timeModified = 1565282114,
             .comment = "do not skip _init with segment");
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/555_vm.1_vm", .modeFile = 0400, .timeModified = 1565282114,
+            storagePgWrite, PG_PATH_BASE "/1/555_vm.1_vm", .modeFile = 0600, .timeModified = 1565282114,
             .comment = "do not skip files that do not have valid endings as we are not sure what they are");
 
         // Config directory and file links
         HRN_STORAGE_PATH_CREATE(storageTest, "config", .mode = 0700);
         THROW_ON_SYS_ERROR(
             symlink("../config/postgresql.conf", TEST_PATH "/pg/postgresql.conf") == -1, FileOpenError, "unable to create symlink");
-        HRN_STORAGE_PUT_Z(storageTest, "config/postgresql.conf", "POSTGRESQLCONF", .modeFile = 0400, .timeModified = 1565282116);
+        HRN_STORAGE_PUT_Z(storageTest, "config/postgresql.conf", "POSTGRESQLCONF", .modeFile = 0600, .timeModified = 1565282116);
         THROW_ON_SYS_ERROR(
             symlink("../config/pg_hba.conf", TEST_PATH "/pg/pg_hba.conf") == -1, FileOpenError, "unable to create symlink");
-        HRN_STORAGE_PUT_Z(storageTest, "config/pg_hba.conf", "PGHBACONF", .modeFile = 0400, .timeModified = 1565282117);
+        HRN_STORAGE_PUT_Z(storageTest, "config/pg_hba.conf", "PGHBACONF", .modeFile = 0600, .timeModified = 1565282117);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest with all features - 8.4, online");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "8.4\n", .modeFile = 0400, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "8.4\n", .modeFile = 0600, .timeModified = 1565282100);
 
         // Tablespace 1 (old tablespace dir format)
         HRN_STORAGE_PATH_CREATE(storageTest, "ts/1", .mode = 0777);
         HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/1", .mode = 0700);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC, .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/1", TEST_PATH "/pg/pg_tblspc/1") == -1, FileOpenError, "unable to create symlink");
-        HRN_STORAGE_PUT_Z(storagePgWrite, "pg_tblspc/1/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
+        HRN_STORAGE_PUT_Z(storagePgWrite, "pg_tblspc/1/1/16384", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
         HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/1/1/t123_123_fsm", "TEMP_RELATION", .modeFile = 0400, .timeModified = 1565282115);
+            storagePgWrite, "pg_tblspc/1/1/t123_123_fsm", "TEMP_RELATION", .modeFile = 0600, .timeModified = 1565282115);
 
         // Test manifest - mode stored for shared cluster tablespace dir, pg_xlog contents ignored because online
         TEST_ASSIGN(
@@ -435,7 +435,7 @@ testRun(void)
         TEST_TITLE("manifest with all features - 9.0");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.0\n", .modeFile = 0400, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.0\n", .modeFile = 0600, .timeModified = 1565282100);
 
         // Make 'pg_xlog/archive_status' a link (if other links in the pg_xlog dir (should not be), they will be followed and added
         // when online but archive_status (and pg_xlog), whether a link of not, will will only be followed if offline)
@@ -445,14 +445,14 @@ testRun(void)
             symlink("../../archivestatus", TEST_PATH "/pg/pg_xlog/archive_status") == -1, FileOpenError,
             "unable to create symlink");
         HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_xlog/archive_status/" BOGUS_STR, "TESTDATA", .modeFile = 0400, .timeModified = 1565282120);
+            storagePgWrite, "pg_xlog/archive_status/" BOGUS_STR, "TESTDATA", .modeFile = 0600, .timeModified = 1565282120);
 
         // Tablespace 1
         HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.0_201008051/1", .mode = 0700);
         HRN_STORAGE_PUT_Z(
-            storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
+            storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/16384", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
         HRN_STORAGE_PUT_Z(
-            storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0400,
+            storagePgWrite,"pg_tblspc/1/PG_9.0_201008051/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0600,
             .timeModified = 1565282115);
 
         // Add tablespaceList with error (no name)
@@ -554,7 +554,7 @@ testRun(void)
         TEST_TITLE("manifest with all features - 9.1, online");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.1\n", .modeFile = 0400, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.1\n", .modeFile = 0600, .timeModified = 1565282100);
 
         // Create a path other than archive_status under pg_xlog for code coverage
         HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_xlog/somepath", .mode = 0700);
@@ -562,7 +562,7 @@ testRun(void)
         // Add data to pg_wal to ensure it is not ignored (online or offline) until >= pgVersion 10 (file in pg_xlog log is ignored)
         HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_wal", .mode = 0700);
         HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_wal/000000010000000000000001", "WALDATA", .modeFile = 0400, .timeModified = 1565282120);
+            storagePgWrite, "pg_wal/000000010000000000000001", "WALDATA", .modeFile = 0600, .timeModified = 1565282120);
 
         // Test manifest - temp tables, unlogged tables, pg_serial and pg_xlog files ignored
         TEST_ASSIGN(
@@ -634,14 +634,14 @@ testRun(void)
         TEST_TITLE("manifest with all features - 9.2");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.2\n", .modeFile = 0400, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.2\n", .modeFile = 0600, .timeModified = 1565282100);
 
         // create pg_xlog/wal as a link
         HRN_STORAGE_PATH_CREATE(storageTest, "wal", .mode = 0700);
         THROW_ON_SYS_ERROR(symlink(TEST_PATH "/wal", TEST_PATH "/pg/pg_xlog") == -1, FileOpenError, "unable to create symlink");
 
         // Files to conditionally ignore before 9.4
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTGRESQLAUTOCONFTMP, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTGRESQLAUTOCONFTMP, .modeFile = 0600, .timeModified = 1565282101);
 
         // Test manifest - pg_snapshots files ignored
         TEST_ASSIGN(
@@ -717,47 +717,47 @@ testRun(void)
         TEST_TITLE("manifest with all features - 9.4, checksum-page");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.4\n", .modeFile = 0400, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.4\n", .modeFile = 0600, .timeModified = 1565282100);
 
         // Put a pgcontrol (always master:true)
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .modeFile = 0600, .timeModified = 1565282101);
 
         // pg_clog pgVersion < 10 master:false (pg_xact pgVersion < 10 master:true), pg_multixact always master:false
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGMULTIXACT, .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGMULTIXACT "/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGMULTIXACT "/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282101);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_clog", .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_clog/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282121);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_clog/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282121);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_xact", .mode = 0700);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_xact/" BOGUS_STR, .modeFile = 0400, .timeModified = 1565282122);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, "pg_xact/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282122);
 
         // Files to capture in version < 12 but ignore >= 12 (code coverage)
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYSIGNAL, .modeFile = 0400, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_STANDBYSIGNAL, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYSIGNAL, .modeFile = 0600, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_STANDBYSIGNAL, .modeFile = 0600, .timeModified = 1565282101);
 
         // Files to capture in version < 9.6 but ignore >= 9.6 (code coverage)
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_BACKUPLABEL, .modeFile = 0400, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_BACKUPLABEL, .modeFile = 0600, .timeModified = 1565282101);
 
         // Tablespace 1
         HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.4_201409291/1", .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/1", TEST_PATH "/pg/pg_tblspc/1") == -1, FileOpenError, "unable to create symlink");
         HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/16384", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
+            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/16384", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
         HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0400,
+            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0600,
             .timeModified = 1565282115);
 
         // Add checksum-page files to exclude from checksum-page validation in database relation directories
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/" PG_FILE_PGVERSION, .modeFile = 0400, .timeModified = 1565282120);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_BASE "/1/" PG_FILE_PGVERSION, .modeFile = 0600, .timeModified = 1565282120);
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, PG_PATH_BASE "/1/" PG_FILE_PGFILENODEMAP, .modeFile = 0400, .timeModified = 1565282120);
+            storagePgWrite, PG_PATH_BASE "/1/" PG_FILE_PGFILENODEMAP, .modeFile = 0600, .timeModified = 1565282120);
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/" PG_FILE_PGVERSION, .modeFile = 0400, .timeModified = 1565282120);
+            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/" PG_FILE_PGVERSION, .modeFile = 0600, .timeModified = 1565282120);
 
         // Tablespace 2
         HRN_STORAGE_PATH_CREATE(storageTest, "ts/2/PG_9.4_201409291/1", .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/2", TEST_PATH "/pg/pg_tblspc/2") == -1, FileOpenError, "unable to create symlink");
         HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/2/PG_9.4_201409291/1/16385", "TESTDATA", .modeFile = 0400, .timeModified = 1565282115);
+            storagePgWrite, "pg_tblspc/2/PG_9.4_201409291/1/16385", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
 
         // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
         TEST_ASSIGN(
@@ -850,7 +850,7 @@ testRun(void)
         TEST_TITLE("manifest with all features - 12, online");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "12\n", .modeFile = 0400, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "12\n", .modeFile = 0600, .timeModified = 1565282100);
 
         // Tablespace link errors when correct verion not found
         TEST_ERROR(
@@ -863,7 +863,7 @@ testRun(void)
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
 
         // Write a file into the directory pointed to by pg_xlog - contents will not be ignored online or offline
-        HRN_STORAGE_PUT_Z(storageTest, "wal/000000020000000000000002", "OLDWAL", .modeFile = 0400, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storageTest, "wal/000000020000000000000002", "OLDWAL", .modeFile = 0600, .timeModified = 1565282100);
 
         // Create backup_manifest and backup_manifest.tmp that will show up for PG12 but will be ignored in PG13
         HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_BACKUPMANIFEST, "MANIFEST", .modeFile = 0600, .timeModified = 1565282198);
@@ -895,8 +895,8 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
-                "pg_data/backup_manifest={\"mode\":\"0600\",\"size\":8,\"timestamp\":1565282198}\n"
-                "pg_data/backup_manifest.tmp={\"mode\":\"0600\",\"size\":8,\"timestamp\":1565282199}\n"
+                "pg_data/backup_manifest={\"size\":8,\"timestamp\":1565282198}\n"
+                "pg_data/backup_manifest.tmp={\"size\":8,\"timestamp\":1565282199}\n"
                 "pg_data/base/1/555_init={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_init.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_vm.1_vm={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"

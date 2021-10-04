@@ -779,7 +779,7 @@ testRun(void)
             "P00   WARN: update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= 9.2");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remap links");
+        TEST_TITLE("error on invalid link");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -790,19 +790,38 @@ testRun(void)
 
         TEST_ERROR(restoreManifestMap(manifest), LinkMapError, "unable to remap invalid link 'bogus'");
 
-        // Add some links
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on tablespace remap");
+
+        // Add tablespace link which will be ignored unless specified with link-map
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){.name = STRDEF("pg_data/pg_tblspc/1"), .path = STRDEF("/tblspc1"),
+            .type = manifestTargetTypeLink, .tablespaceId = 1});
+        manifestLinkAdd(manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_tblspc/1"), .destination = STRDEF("/tblspc1")});
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_tblspc/1=/ignored");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            restoreManifestMap(manifest), LinkMapError,
+            "unable to remap tablespace 'pg_tblspc/1'\n"
+            "HINT: use 'tablespace-map' option to remap tablespaces.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid file link path");
+
+        // Add file link
         manifestTargetAdd(
             manifest, &(ManifestTarget){
                 .name = STRDEF("pg_data/pg_hba.conf"), .path = STRDEF("../conf"), .file = STRDEF("pg_hba.conf"),
                 .type = manifestTargetTypeLink});
         manifestLinkAdd(
             manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_hba.conf"), .destination = STRDEF("../conf/pg_hba.conf")});
-        manifestTargetAdd(
-            manifest, &(ManifestTarget){.name = STRDEF("pg_data/pg_wal"), .path = STRDEF("/wal"),  .type = manifestTargetTypeLink});
-        manifestLinkAdd(
-            manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_wal"), .destination = STRDEF("/wal")});
 
-        // Error on invalid file link path
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
@@ -816,7 +835,21 @@ testRun(void)
 
         TEST_RESULT_LOG("P00   INFO: map link 'pg_hba.conf' to 'bogus'");
 
-        // Remap both links
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remap file and path links");
+
+        // Add path link to be remapped
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){.name = STRDEF("pg_data/pg_wal"), .path = STRDEF("/wal"),  .type = manifestTargetTypeLink});
+        manifestLinkAdd(
+            manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_wal"), .destination = STRDEF("/wal")});
+
+        // Add path link that will not be remapped
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){.name = STRDEF("pg_data/pg_xact"), .path = STRDEF("/pg_xact"),
+            .type = manifestTargetTypeLink});
+        manifestLinkAdd(manifest, &(ManifestLink){.name = STRDEF("pg_data/pg_xact"), .destination = STRDEF("/pg_xact")});
+
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
@@ -832,12 +865,17 @@ testRun(void)
             manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf"))->destination, "../conf2/pg_hba2.conf", "check link dest");
         TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "check link path");
         TEST_RESULT_STR_Z(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "check link dest");
+        TEST_RESULT_PTR(manifestTargetFindDefault(manifest, STRDEF("pg_data/pg_xact"), NULL), NULL, "pg_xact target missing");
+        TEST_RESULT_PTR(manifestLinkFindDefault(manifest, STRDEF("pg_data/pg_xact"), NULL), NULL, "pg_xact link missing");
 
         TEST_RESULT_LOG(
             "P00   INFO: map link 'pg_hba.conf' to '../conf2/pg_hba2.conf'\n"
-            "P00   INFO: map link 'pg_wal' to '/wal2'");
+            "P00   INFO: map link 'pg_wal' to '/wal2'\n"
+            "P00   WARN: contents of directory link 'pg_xact' will be restored in a directory at the same location");
 
-        // Leave all links as they are
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("preserve all links");
+
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
@@ -853,7 +891,9 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestTargetFind(manifest, STRDEF("pg_data/pg_wal"))->path, "/wal2", "check link path");
         TEST_RESULT_STR_Z(manifestLinkFind(manifest, STRDEF("pg_data/pg_wal"))->destination, "/wal2", "check link dest");
 
-        // Remove all links
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove all links");
+
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
@@ -861,18 +901,12 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remove all links");
-        TEST_ERROR(
-            manifestTargetFind(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
-            "unable to find 'pg_data/pg_hba.conf' in manifest target list");
-        TEST_ERROR(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_hba.conf")), AssertError,
-            "unable to find 'pg_data/pg_hba.conf' in manifest link list");
-        TEST_ERROR(
-            manifestTargetFind(manifest, STRDEF("pg_data/pg_wal")), AssertError,
-            "unable to find 'pg_data/pg_wal' in manifest target list");
-        TEST_ERROR(
-            manifestLinkFind(manifest, STRDEF("pg_data/pg_wal")), AssertError,
-            "unable to find 'pg_data/pg_wal' in manifest link list");
+
+        TEST_RESULT_PTR(
+            manifestTargetFindDefault(manifest, STRDEF("pg_data/pg_hba.conf"), NULL), NULL, "pg_hba.conf target missing");
+        TEST_RESULT_PTR(manifestLinkFindDefault(manifest, STRDEF("pg_data/pg_hba.conf"), NULL), NULL, "pg_hba.conf link missing");
+        TEST_RESULT_PTR(manifestTargetFindDefault(manifest, STRDEF("pg_data/pg_wal"), NULL), NULL, "pg_wal target missing");
+        TEST_RESULT_PTR(manifestLinkFindDefault(manifest, STRDEF("pg_data/pg_wal"), NULL), NULL, "pg_wal link missing");
 
         TEST_RESULT_LOG(
             "P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location\n"
@@ -2700,6 +2734,8 @@ testRun(void)
 
         HRN_STORAGE_REMOVE(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .errorOnMissing = true);
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList, .jobRetry = 1);
 
         // Set log level to warn
         harnessLogLevelSet(logLevelWarn);

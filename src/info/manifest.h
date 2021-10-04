@@ -357,6 +357,14 @@ manifestTarget(const Manifest *const this, const unsigned int targetIdx)
 
 const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
 
+// If the target requested is not found in the list, return the default passed rather than throw an error
+__attribute__((always_inline)) static inline const ManifestTarget *
+manifestTargetFindDefault(const Manifest *const this, const String *const name, const ManifestTarget *const targetDefault)
+{
+    ASSERT_INLINE(name != NULL);
+    return lstFindDefault(THIS_PUB(Manifest)->targetList, &name, (void *)targetDefault);
+}
+
 // Base target, i.e. the target that is the data directory
 __attribute__((always_inline)) static inline const ManifestTarget *
 manifestTargetBase(const Manifest *const this)
