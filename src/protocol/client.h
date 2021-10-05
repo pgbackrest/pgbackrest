@@ -99,7 +99,7 @@ PackRead *protocolClientDataGet(ProtocolClient *this);
 void protocolClientDataEndGet(ProtocolClient *this);
 
 // Put command to the server
-void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
+void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command, const bool dataPut);
 
 // Put data to the server
 void protocolClientDataPut(ProtocolClient *this, PackWrite *data);

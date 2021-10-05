@@ -281,7 +281,7 @@ testRun(void)
         OBJ_NEW_BEGIN(ProtocolClient)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
-            *protocolHelperClient.client = (ProtocolClient){.name = STRDEF("test")};
+            *protocolHelperClient.client = (ProtocolClient){.name = STRDEF("test"), .state = protocolClientStateIdle};
             memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
         }
         OBJ_NEW_END();
@@ -635,7 +635,11 @@ testRun(void)
                 TEST_ASSIGN(command, protocolCommandNew(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
                 TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
                 TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
-                TEST_RESULT_VOID(protocolClientCommandPut(client, command), "command put");
+                TEST_RESULT_VOID(protocolClientCommandPut(client, command, true), "command put");
+
+                TEST_ERROR(
+                    protocolClientStateExpect(client, protocolClientStateIdle), ProtocolError,
+                    "client state is 'cmd-data-get' but expected 'idle'");
 
                 // Read null data to indicate that the server has started the command and is read to receive data
                 TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "command started and ready for data");
@@ -799,7 +803,12 @@ testRun(void)
                 TEST_TITLE("error on add without an fd");
 
                 // Fake a client without a read fd
-                ProtocolClient clientError = {.pub = {.read = ioBufferReadNew(bufNew(0))}, .name = STRDEF("test")};
+                ProtocolClient clientError =
+                {
+                    .pub = {.read = ioBufferReadNew(bufNew(0))},
+                    .name = STRDEF("test"),
+                    .state = protocolClientStateIdle,
+                };
 
                 TEST_ERROR(protocolParallelClientAdd(parallel, &clientError), AssertError, "client with read fd is required");
 

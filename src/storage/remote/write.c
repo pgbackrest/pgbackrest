@@ -93,7 +93,7 @@ storageWriteRemoteOpen(THIS_VOID)
         pckWriteBoolP(param, this->interface.atomic);
         pckWritePackP(param, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
 
-        protocolClientCommandPut(this->client, command);
+        protocolClientCommandPut(this->client, command, true);
         protocolClientDataGet(this->client);
 
         // Clear filters since they will be run on the remote side
