@@ -18,6 +18,25 @@
             <release-core-list>
                 <release-improvement-list>
                     <release-item>
+                        <commit subject="Refactor restoreManifestMap() tests in the command/restore unit."/>
+                        <commit subject="Refactor restoreManifestMap() to be driven by link-map."/>
+                        <commit subject="Allow link-map option to create new links.">
+                            <github-issue id="1409"/>
+                            <github-pull-request id="1520"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="don.seiler"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="don.seiler"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="chris.bandy"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <br-option>link-map</br-option> option to create new links.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Increase max index allowed for pg/repo options to 256.">
                             <github-pull-request id="1481"/>
                         </commit>
