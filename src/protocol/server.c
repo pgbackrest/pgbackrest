@@ -182,9 +182,16 @@ protocolServerProcess(
                     // Send the command to the handler
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
+                        // Variables to store first error message and retry messages
+                        const ErrorType *errType = NULL;
+                        String *errMessage = NULL;
+                        const String *errMessageFirst = NULL;
+                        const String *errStackTrace = NULL;
+
                         // Initialize retries in case of command failure
                         bool retry = false;
                         unsigned int retryRemaining = retryInterval != NULL ? varLstSize(retryInterval) : 0;
+                        TimeMSec retrySleepMs = 0;
 
                         // Handler retry loop
                         do
@@ -197,12 +204,33 @@ protocolServerProcess(
                             }
                             CATCH_ANY()
                             {
+                                // On first error record the error details. Only the first error will contain a stack trace since
+                                // the first error is most likely to contain valuable information.
+                                if (errType == NULL)
+                                {
+                                    errType = errorType();
+                                    errMessage = strNewZ(errorMessage());
+                                    errMessageFirst = strNewZ(errorMessage());
+                                    errStackTrace = strNewZ(errorStackTrace());
+                                }
+                                // Else on a retry error only record the error type and message. Retry errors are less likely to
+                                // contain valuable information but may be helpful for debugging.
+                                else
+                                {
+                                    strCatFmt(
+                                        errMessage, "\n[%s] on retry after %" PRIu64 "ms", errorTypeName(errorType()),
+                                        retrySleepMs);
+
+                                    // Only append the message if it differs from the first message
+                                    if (!strEqZ(errMessageFirst, errorMessage()))
+                                        strCatFmt(errMessage, ": %s", errorMessage());
+                                }
+
                                 // Are there retries remaining?
                                 if (retryRemaining > 0)
                                 {
                                     // Get the sleep interval for this retry
-                                    TimeMSec retrySleepMs = varUInt64(
-                                        varLstGet(retryInterval, varLstSize(retryInterval) - retryRemaining));
+                                    retrySleepMs = varUInt64(varLstGet(retryInterval, varLstSize(retryInterval) - retryRemaining));
 
                                     // Log the retry
                                     LOG_DEBUG_FMT(
@@ -222,7 +250,7 @@ protocolServerProcess(
                                 }
                                 // Else report error to the client
                                 else
-                                    protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
+                                    protocolServerError(this, errorTypeCode(errType), errMessage, errStackTrace);
                             }
                             TRY_END();
                         }

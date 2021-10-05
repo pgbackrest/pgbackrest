@@ -20,6 +20,8 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
+static unsigned int testCommandAssertProtocolTotal = 0;
+
 __attribute__((__noreturn__)) static void
 testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
 {
@@ -31,7 +33,8 @@ testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
     ASSERT(param == NULL);
     ASSERT(server != NULL);
 
-    hrnErrorThrowP();
+    testCommandAssertProtocolTotal++;
+    hrnErrorThrowP(.message = testCommandAssertProtocolTotal <= 3 ? NULL : "ERR_MESSAGE_RETRY");
 
     // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
 }
@@ -525,6 +528,7 @@ testRun(void)
 
                 VariantList *retryList = varLstNew();
                 varLstAdd(retryList, varNewUInt64(0));
+                varLstAdd(retryList, varNewUInt64(500));
 
                 TEST_ASSIGN(
                     server, protocolServerNew(STRDEF("test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
@@ -665,6 +669,15 @@ testRun(void)
                 TEST_RESULT_BOOL(
                     pckReadBoolP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_RETRY), true)), true,
                     "execute");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("command throws assert with retry messages");
+
+                TEST_ERROR(
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false), AssertError,
+                    "raised from test client: ERR_MESSAGE\n"
+                    "[AssertError] on retry after 0ms\n"
+                    "[AssertError] on retry after 500ms: ERR_MESSAGE_RETRY");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");

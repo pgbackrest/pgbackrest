@@ -2743,7 +2743,8 @@ testRun(void)
         TEST_ERROR(
             cmdRestore(), FileMissingError,
             "raised from local-1 shim protocol: unable to open missing file"
-                " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read");
+                " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read\n"
+            "[FileMissingError] on retry after 0ms");
 
         // Free local processes that were not freed because of the error
         protocolFree();
