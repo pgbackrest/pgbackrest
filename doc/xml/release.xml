@@ -18,7 +18,10 @@
             <release-core-list>
                 <release-improvement-list>
                     <release-item>
-                        <github-pull-request id="1481"/>
+                        <commit subject="Increase max index allowed for pg/repo options to 256.">
+                            <github-pull-request id="1481"/>
+                        </commit>
+                        <commit subject="Use strncpy() to limit characters copied to optionName."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -26,6 +29,18 @@
                         </release-item-contributor-list>
 
                         <p>Increase max index allowed for <id>pg</id>/<id>repo</id> options to 256.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1484"/>
+                        <github-pull-request id="1508"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Report backup file validation errors in <file>backup.info</file>.</p>
                     </release-item>
 
                     <release-item>
@@ -40,6 +55,21 @@
                         </release-item-contributor-list>
 
                         <p>Add recovery start time to online backup restore log.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Allow stack trace to be specified for errorInternalThrow()."/>
+                        <commit subject="Add jobRetry parameter to HRN_CFG_LOAD()."/>
+                        <commit subject="Report original error and retries on local job failure.">
+                            <github-pull-request id="1521"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Report original error and retries on local job failure.</p>
                     </release-item>
 
                     <release-item>

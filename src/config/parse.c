@@ -553,7 +553,8 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
             OptionInvalidError, "option '%s' exceeds maximum size of " STRINGIFY(OPTION_NAME_SIZE_MAX), strZ(optionCandidate));
     }
 
-    strcpy(optionName, strZ(optionCandidate));
+    strncpy(optionName, strZ(optionCandidate), sizeof(optionName) - 1);
+    optionName[OPTION_NAME_SIZE_MAX] = '\0';
 
     // If this looks like negate
     if (strncmp(optionName, OPTION_PREFIX_NEGATE, sizeof(OPTION_PREFIX_NEGATE) - 1) == 0)

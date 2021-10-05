@@ -123,7 +123,7 @@ archiveGetFind(
         const String *path = isSegment ? strSubN(archiveFileRequest, 0, 16) : NULL;
 
         // List to hold matches for the requested file
-        List *matchList = lstNewP(sizeof(ArchiveGetFile));
+        List *matchList = lstNewP(sizeof(ArchiveGetFile), .comparator = lstComparatorStr);
 
         // List of file level warnings
         StringList *fileWarnList = strLstDup(warnList);
@@ -287,6 +287,9 @@ archiveGetFind(
                     unsigned int repoKeyLast = 0;
                     String *message = strNew();
                     bool first = true;
+
+                    // Sort the matches so they are logged in a consistent order
+                    lstSort(matchList, sortOrderAsc);
 
                     for (unsigned int matchIdx = 0; matchIdx < lstSize(matchList); matchIdx++)
                     {

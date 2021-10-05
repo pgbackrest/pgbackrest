@@ -27,6 +27,11 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
         FUNCTION_HARNESS_PARAM(ENUM, commandId);
         FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
         FUNCTION_HARNESS_PARAM(ENUM, param.role);
+        FUNCTION_HARNESS_PARAM(BOOL, param.exeBogus);
+        FUNCTION_HARNESS_PARAM(BOOL, param.noStd);
+        FUNCTION_HARNESS_PARAM(BOOL, param.log);
+        FUNCTION_HARNESS_PARAM(UINT, param.jobRetry);
+        FUNCTION_HARNESS_PARAM(STRINGZ, param.comment);
     FUNCTION_HARNESS_END();
 
     // Make a copy of the arg list that we can modify
@@ -37,7 +42,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     {
         // Set job retry to 0 if it is valid
         if (cfgParseOptionValid(commandId, param.role, cfgOptJobRetry))
-            strLstInsert(argList, 0, STRDEF("--" CFGOPT_JOB_RETRY "=0"));
+            strLstInsert(argList, 0, strNewFmt("--" CFGOPT_JOB_RETRY "=%u", param.jobRetry));
 
         // Set log path if valid
         if (cfgParseOptionValid(commandId, param.role, cfgOptLogPath))

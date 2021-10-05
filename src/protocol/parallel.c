@@ -209,7 +209,7 @@ protocolParallelProcess(ProtocolParallel *this)
 
                     // Put command
                     protocolClientCommandPut(
-                        *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job));
+                        *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job), false);
 
                     // Set client id and running state
                     protocolParallelJobProcessIdSet(job, clientIdx + 1);

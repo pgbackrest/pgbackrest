@@ -379,7 +379,9 @@ errorInternalProcess(bool catch)
 
 /**********************************************************************************************************************************/
 void
-errorInternalThrow(const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
+errorInternalThrow(
+    const ErrorType *const errorType, const char *const fileName, const char *const functionName, const int fileLine,
+    const char *const message, const char *const stackTrace)
 {
     // Setup error data
     errorContext.error.errorType = errorType;
@@ -393,8 +395,15 @@ errorInternalThrow(const ErrorType *errorType, const char *fileName, const char 
 
     errorContext.error.message = (const char *)messageBuffer;
 
-    // Generate the stack trace for the error
-    if (stackTraceToZ(
+    // If a stack trace was provided
+    if (stackTrace != NULL)
+    {
+        strncpy(stackTraceBuffer, stackTrace, sizeof(stackTraceBuffer) - 1);
+        messageBuffer[sizeof(stackTraceBuffer) - 1] = '\0';
+    }
+    // Else generate the stack trace for the error
+    else if (
+        stackTraceToZ(
             stackTraceBuffer, sizeof(stackTraceBuffer), fileName, functionName, (unsigned int)fileLine) >= sizeof(stackTraceBuffer))
     {
         // Indicate that the stack trace was truncated
@@ -416,7 +425,7 @@ errorInternalThrowFmt(
     vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
     va_end(argument);
 
-    errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp);
+    errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp, NULL);
 }
 
 /**********************************************************************************************************************************/
@@ -433,7 +442,7 @@ errorInternalThrowSys(
     else
         snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, "%s: [%d] %s", message, errNo, strerror(errNo));
 
-    errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp);
+    errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp, NULL);
 }
 
 #ifdef DEBUG_COVERAGE
@@ -461,7 +470,7 @@ errorInternalThrowSysFmt(
     if (errNo != 0)
         snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
 
-    errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp);
+    errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp, NULL);
 }
 
 #ifdef DEBUG_COVERAGE
@@ -485,7 +494,7 @@ errorInternalThrowOnSysFmt(
                 messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
         }
 
-        errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp);
+        errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp, NULL);
     }
 }
 #endif
