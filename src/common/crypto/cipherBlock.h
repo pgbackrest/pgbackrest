@@ -10,14 +10,13 @@ Block Cipher Header
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define CIPHER_BLOCK_FILTER_TYPE                                   "cipherBlock"
-    STRING_DECLARE(CIPHER_BLOCK_FILTER_TYPE_STR);
+#define CIPHER_BLOCK_FILTER_TYPE                                   STRID5("cipher-blk", 0x16c16e45441230)
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName);
-IoFilter *cipherBlockNewVar(const VariantList *paramList);
+IoFilter *cipherBlockNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
 Helper functions

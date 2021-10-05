@@ -79,8 +79,9 @@ testSuite(CompressType type, const char *decompressCmd)
     Buffer *compressed = NULL;
     Buffer *decompressed = bufNewC(simpleData, strlen(simpleData));
 
-    VariantList *compressParamList = varLstNew();
-    varLstAdd(compressParamList, varNewUInt(1));
+    PackWrite *packWrite = pckWriteNewP();
+    pckWriteI32P(packWrite, 1);
+    pckWriteEndP(packWrite);
 
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
@@ -90,7 +91,7 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_ASSIGN(
         compressed,
         testCompress(
-            compressFilterVar(strNewFmt("%sCompress", strZ(compressTypeStr(type))), compressParamList), decompressed, 1024,
+            compressFilterPack(compressHelperLocal[type].compressType, pckWriteResult(packWrite)), decompressed, 1024,
             256 * 1024 * 1024),
         "simple data - compress large in/large out buffer");
 
@@ -116,8 +117,7 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_RESULT_BOOL(
         bufEq(
             decompressed,
-            testDecompress(
-                compressFilterVar(strNewFmt("%sDecompress", strZ(compressTypeStr(type))), NULL), compressed, 1024, 1024)),
+            testDecompress(compressFilterPack(compressHelperLocal[type].decompressType, NULL), compressed, 1024, 1024)),
         true, "simple data - decompress large in/large out buffer");
 
     TEST_RESULT_BOOL(
@@ -340,6 +340,11 @@ testRun(void)
         TEST_ERROR(compressTypeEnum(STRDEF(BOGUS_STR)), AssertError, "invalid compression type 'BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("compressTypeStr()");
+
+        TEST_RESULT_STR_Z(compressTypeStr(compressTypeGz), "gz", "gz str");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypePresent()");
 
         TEST_RESULT_VOID(compressTypePresent(compressTypeNone), "type none always present");
@@ -352,9 +357,9 @@ testRun(void)
         TEST_RESULT_UINT(compressTypeFromName(STRDEF("file.gz")), compressTypeGz, "type from name");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressFilterVar()");
+        TEST_TITLE("compressFilterPack()");
 
-        TEST_RESULT_PTR(compressFilterVar(STRDEF("BOGUS"), 0), NULL, "no filter match");
+        TEST_RESULT_PTR(compressFilterPack(STRID5("bogus", 0x13a9de20), NULL), NULL, "no filter match");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressExtStr()");

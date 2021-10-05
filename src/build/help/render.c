@@ -88,7 +88,7 @@ bldHlpRenderXmlNode(const xmlNodePtr xml)
             else
                 THROW_FMT(FormatError, "unknown tag '%s'", strZ(name));
         }
-        else
+        else if (currentNode->type == XML_TEXT_NODE)
         {
             xmlChar *content = xmlNodeGetContent(currentNode);
             String *text = strNewZ((char *)content);
@@ -123,7 +123,7 @@ Render help to a pack
 static PackWrite *
 bldHlpRenderHelpAutoCPack(const BldCfg bldCfg, const BldHlp bldHlp)
 {
-    PackWrite *const pack = pckWriteNewBuf(bufNew(65 * 1024));
+    PackWrite *const pack = pckWriteNewP(.size = 65 * 1024);
 
     // Command help
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ static Buffer *
 bldHlpRenderHelpAutoCCmp(const BldCfg bldCfg, const BldHlp bldHlp)
 {
     // Get pack buffer
-    const Buffer *const packBuf = pckWriteBuf(bldHlpRenderHelpAutoCPack(bldCfg, bldHlp));
+    const Buffer *const packBuf = pckToBuf(pckWriteResult(bldHlpRenderHelpAutoCPack(bldCfg, bldHlp)));
     Buffer *const result = bufNew(bufSize(packBuf));
 
     // Open source/destination
@@ -288,14 +288,15 @@ Output buffer to a file as a byte array
 static void
 bldHlpRenderHelpAutoC(const Storage *const storageRepo, const BldCfg bldCfg, const BldHlp bldHlp)
 {
-    // Convert pack to bytes
+    // Convert buffer to bytes
+    const Buffer *const buffer = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlp);
+
     String *const help = strNewFmt(
         "%s"
-        "static const unsigned char helpData[] =\n"
+        "static const unsigned char helpData[%zu] =\n"
         "{\n",
-        strZ(bldHeader("help", "Help Data")));
+        strZ(bldHeader("help", "Help Data")), bufUsed(buffer));
 
-    const Buffer *const buffer = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlp);
     bool first = true;
     size_t lineSize = 0;
     char byteZ[4];

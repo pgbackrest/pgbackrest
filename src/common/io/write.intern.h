@@ -5,6 +5,7 @@ IO Write Interface Internal
 #define COMMON_IO_WRITE_INTERN_H
 
 #include "common/io/write.h"
+#include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
 Constructors

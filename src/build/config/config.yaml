@@ -1024,6 +1024,16 @@ option:
       async: {}
       main: {}
 
+  archive-header-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      archive-push: {}
+    command-role:
+      main: {}
+      async: {}
+
   archive-push-queue-max:
     section: global
     type: size
@@ -1065,16 +1075,6 @@ option:
             - true
     command-role:
       main: {}
-
-  archive-header-check:
-    section: global
-    type: boolean
-    default: true
-    command:
-      archive-push: {}
-    command-role:
-      main: {}
-      async: {}
 
   archive-mode-check:
     section: global
@@ -1708,6 +1708,17 @@ option:
     allow-list:
       - shared
       - sas
+
+  repo-azure-uri-style:
+    section: global
+    group: repo
+    type: string
+    default: host
+    allow-list:
+      - host
+      - path
+    command: repo-type
+    depend: repo-azure-account
 
   repo-cipher-pass:
     section: global

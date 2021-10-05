@@ -37,9 +37,9 @@ static const struct CompressHelperLocal
 {
     const String *const type;                                       // Compress type -- must be extension without period prefixed
     const String *const ext;                                        // File extension with period prefixed
-    const char *compressType;                                       // Type of the compression filter
+    StringId compressType;                                          // Type of the compression filter
     IoFilter *(*compressNew)(int);                                  // Function to create new compression filter
-    const char *decompressType;                                     // Type of the decompression filter
+    StringId decompressType;                                        // Type of the decompression filter
     IoFilter *(*decompressNew)(void);                               // Function to create new decompression filter
     int levelDefault;                                               // Default compression level
 } compressHelperLocal[] =
@@ -208,32 +208,38 @@ compressFilter(CompressType type, int level)
 
 /**********************************************************************************************************************************/
 IoFilter *
-compressFilterVar(const String *filterType, const VariantList *filterParamList)
+compressFilterPack(const StringId filterType, const Pack *const filterParam)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, filterType);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, filterParamList);
+        FUNCTION_LOG_PARAM(STRING_ID, filterType);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, filterParam);
     FUNCTION_LOG_END();
 
-    ASSERT(filterType != NULL);
+    ASSERT(filterType != 0);
 
     IoFilter *result = NULL;
 
-    for (CompressType compressIdx = compressTypeNone + 1; compressIdx < COMPRESS_LIST_SIZE; compressIdx++)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const struct CompressHelperLocal *compress = &compressHelperLocal[compressIdx];
+        for (CompressType compressIdx = compressTypeNone + 1; compressIdx < COMPRESS_LIST_SIZE; compressIdx++)
+        {
+            const struct CompressHelperLocal *compress = &compressHelperLocal[compressIdx];
 
-        if (compress->compressType != NULL && strEqZ(filterType, compress->compressType))
-        {
-            result = compress->compressNew(varIntForce(varLstGet(filterParamList, 0)));
-            break;
-        }
-        else if (compress->decompressType != NULL && strEqZ(filterType, compress->decompressType))
-        {
-            result = compress->decompressNew();
-            break;
+            if (filterType == compress->compressType)
+            {
+                ASSERT(filterParam != NULL);
+
+                result = ioFilterMove(compress->compressNew(pckReadI32P(pckReadNew(filterParam))), memContextPrior());
+                break;
+            }
+            else if (filterType == compress->decompressType)
+            {
+                result = ioFilterMove(compress->decompressNew(), memContextPrior());
+                break;
+            }
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(IO_FILTER, result);
 }

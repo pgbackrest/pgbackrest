@@ -46,7 +46,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: error
-        total: 8
+        total: 9
         feature: error
         harness:
           name: error
@@ -260,6 +260,7 @@ unit:
       - name: io
         total: 4
         feature: IO
+        harness: pack
 
         coverage:
           - common/io/bufferRead
@@ -276,10 +277,12 @@ unit:
           - common/io/read
           - common/io/write
 
+        depend:
+          - common/type/pack
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-pack
         total: 1
-        harness: pack
 
         coverage:
           - common/type/pack

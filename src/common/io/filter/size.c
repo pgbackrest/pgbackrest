@@ -10,11 +10,7 @@ IO Size Filter
 #include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(SIZE_FILTER_TYPE_STR,                                 SIZE_FILTER_TYPE);
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -62,7 +58,7 @@ ioSizeProcess(THIS_VOID, const Buffer *input)
 /***********************************************************************************************************************************
 Return filter result
 ***********************************************************************************************************************************/
-static Variant *
+static Pack *
 ioSizeResult(THIS_VOID)
 {
     THIS(IoSize);
@@ -73,7 +69,20 @@ ioSizeResult(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(VARIANT, varNewUInt64(this->size));
+    Pack *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU64P(packWrite, this->size);
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
@@ -89,7 +98,7 @@ ioSizeNew(void)
         IoSize *driver = OBJ_NEW_ALLOC();
         *driver = (IoSize){0};
 
-        this = ioFilterNewP(SIZE_FILTER_TYPE_STR, driver, NULL, .in = ioSizeProcess, .result = ioSizeResult);
+        this = ioFilterNewP(SIZE_FILTER_TYPE, driver, NULL, .in = ioSizeProcess, .result = ioSizeResult);
     }
     OBJ_NEW_END();
 

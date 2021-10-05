@@ -39,11 +39,11 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
         // If the db list does not exist then create it in the prior context (which should be persistent)
         if (dbProtocolLocal.pgClientList == NULL)
         {
-            MEM_CONTEXT_PRIOR_BEGIN()
+            MEM_CONTEXT_BEGIN(memContextTop())
             {
                 dbProtocolLocal.pgClientList = lstNewP(sizeof(PgClient *));
             }
-            MEM_CONTEXT_PRIOR_END();
+            MEM_CONTEXT_END();
         }
 
         // Add db to the list

@@ -15,11 +15,6 @@ Gz Decompress
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(GZ_DECOMPRESS_FILTER_TYPE_STR,                        GZ_DECOMPRESS_FILTER_TYPE);
-
-/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct GzDecompress
@@ -173,7 +168,7 @@ gzDecompressNew(void)
 
         // Create filter interface
         this = ioFilterNewP(
-            GZ_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = gzDecompressDone, .inOut = gzDecompressProcess,
+            GZ_DECOMPRESS_FILTER_TYPE, driver, NULL, .done = gzDecompressDone, .inOut = gzDecompressProcess,
             .inputSame = gzDecompressInputSame);
     }
     OBJ_NEW_END();

@@ -10,11 +10,6 @@ IO Sink Filter
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(SINK_FILTER_TYPE_STR,                                 SINK_FILTER_TYPE);
-
-/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct IoSink
@@ -62,7 +57,7 @@ ioSinkNew(void)
     OBJ_NEW_BEGIN(IoSink)
     {
         IoSink *driver = OBJ_NEW_ALLOC();
-        this = ioFilterNewP(SINK_FILTER_TYPE_STR, driver, NULL, .inOut = ioSinkProcess);
+        this = ioFilterNewP(SINK_FILTER_TYPE, driver, NULL, .inOut = ioSinkProcess);
     }
     OBJ_NEW_END();
 

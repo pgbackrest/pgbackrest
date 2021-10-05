@@ -55,7 +55,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         pckWriteU64P(resultPack, result.copySize);
         pckWriteU64P(resultPack, result.repoSize);
         pckWriteStrP(resultPack, result.copyChecksum);
-        pckWriteStrP(resultPack, result.pageChecksumResult != NULL ? jsonFromKv(result.pageChecksumResult) : NULL);
+        pckWritePackP(resultPack, result.pageChecksumResult);
 
         protocolServerDataPut(server, resultPack);
         protocolServerDataEndPut(server);

@@ -613,7 +613,6 @@
             <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo{[azure-setup-repo-id]}-azure-key-type">{[azure-key-type]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-key">{[azure-key]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-container">{[azure-container]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo{[azure-setup-repo-id]}-storage-host">blob.core.windows.net</backrest-config-option>
             <backrest-config-option if="'{[azure-all]}' ne 'y'" section="global" key="repo{[azure-setup-repo-id]}-retention-full">4</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
@@ -624,7 +623,7 @@
 
             <!-- Set host entries to redirect to local azure server -->
             <execute user="root" user-force="y" show="n">
-                <exe-cmd>echo "{[host-azure-ip]} blob.core.windows.net" | tee -a /etc/hosts</exe-cmd>
+                <exe-cmd>echo "{[host-azure-ip]} pgbackrest.blob.core.windows.net" | tee -a /etc/hosts</exe-cmd>
             </execute>
 
             <execute user="{[azure-setup-user]}" if="'{[azure-setup-create-container]}' eq 'y'" show='n'>
@@ -669,7 +668,6 @@
             <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-region">{[s3-region]}</backrest-config-option>
             <backrest-config-option if="'{[s3-all]}' ne 'y'" section="global" key="repo{[s3-setup-repo-id]}-retention-full">4</backrest-config-option>
-            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-storage-host" remove="y"/>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -695,7 +693,7 @@
         <title>Introduction</title>
 
         <!-- Create Azure server first to allow it time to boot before being used -->
-        <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="mcr.microsoft.com/azure-storage/azurite:3.14.0" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
+        <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="mcr.microsoft.com/azure-storage/azurite" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
         <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>

@@ -13,11 +13,7 @@ ZST Compress
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(ZST_COMPRESS_FILTER_TYPE_STR,                         ZST_COMPRESS_FILTER_TYPE);
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -195,12 +191,22 @@ zstCompressNew(int level)
         zstError(ZSTD_initCStream(driver->context, driver->level));
 
         // Create param list
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewInt(level));
+        Pack *paramList = NULL;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            PackWrite *const packWrite = pckWriteNewP();
+
+            pckWriteI32P(packWrite, level);
+            pckWriteEndP(packWrite);
+
+            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+        }
+        MEM_CONTEXT_TEMP_END();
 
         // Create filter interface
         this = ioFilterNewP(
-            ZST_COMPRESS_FILTER_TYPE_STR, driver, paramList, .done = zstCompressDone, .inOut = zstCompressProcess,
+            ZST_COMPRESS_FILTER_TYPE, driver, paramList, .done = zstCompressDone, .inOut = zstCompressProcess,
             .inputSame = zstCompressInputSame);
     }
     OBJ_NEW_END();

@@ -63,7 +63,7 @@ sub new
     my $strFakeCertPath = "${strProjectPath}/doc/resource/fake-cert";
 
     my $self = $class->SUPER::new(
-        HOST_AZURE, 'test-' . testRunGet()->vmId() . '-' . HOST_AZURE, 'mcr.microsoft.com/azure-storage/azurite:3.14.0', 'root',
+        HOST_AZURE, 'test-' . testRunGet()->vmId() . '-' . HOST_AZURE, 'mcr.microsoft.com/azure-storage/azurite', 'root',
         'u18', ["${strFakeCertPath}/s3-server.crt:/root/public.crt:ro", "${strFakeCertPath}/s3-server.key:/root/private.key:ro"],
         '-e AZURITE_ACCOUNTS="' . HOST_AZURE_ACCOUNT . ':' . HOST_AZURE_KEY . '"',
         'azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key -d debug.log', false);

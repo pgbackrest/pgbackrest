@@ -35,7 +35,7 @@ containers. Fields contain data to be stored, e.g. integers, strings, etc.
 
 Here is a simple example of a pack:
 
-PackWrite *write = pckWriteNew(buffer);
+PackWrite *write = pckWriteNewP();
 pckWriteU64P(write, 77);
 pckWriteBoolP(write, false, .defaultWrite = true);
 pckWriteI32P(write, -1, .defaultValue = -1);
@@ -48,7 +48,7 @@ default. Note that there is a gap in the ID stream, which represents the NULL/de
 
 This pack can be read with:
 
-PackRead *read = pckReadNew(buffer);
+PackRead *read = pckReadNew(pack);
 pckReadU64P(read);
 pckReadBoolP(read);
 pckReadI32P(read, .defaultValue = -1);
@@ -60,7 +60,7 @@ applied again when reading by setting .defaultValue if the default value is not 
 
 If we don't care about the NULL/default, another way to read is:
 
-PackRead *read = pckReadNew(buffer);
+PackRead *read = pckReadNew(pack);
 pckReadU64P(read);
 pckReadBoolP(read);
 pckReadStringP(read, .id = 4);
@@ -100,6 +100,7 @@ Minimum number of extra bytes to allocate for packs that are growing or are like
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
+typedef struct Pack Pack;
 typedef struct PackRead PackRead;
 typedef struct PackWrite PackWrite;
 
@@ -107,6 +108,7 @@ typedef struct PackWrite PackWrite;
 #include "common/io/write.h"
 #include "common/type/object.h"
 #include "common/type/stringId.h"
+#include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
 Pack data type
@@ -130,12 +132,43 @@ typedef enum
 } PackType;
 
 /***********************************************************************************************************************************
+Pack Functions
+***********************************************************************************************************************************/
+// Duplicate pack
+__attribute__((always_inline)) static inline Pack *
+pckDup(const Pack *const this)
+{
+    return (Pack *)bufDup((const Buffer *)this);
+}
+
+// Cast Buffer to Pack
+__attribute__((always_inline)) static inline const Pack *
+pckFromBuf(const Buffer *const buffer)
+{
+    return (const Pack *)buffer;
+}
+
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline Pack *
+pckMove(Pack *const this, MemContext *const parentNew)
+{
+    return (Pack *)bufMove((Buffer *)this, parentNew);
+}
+
+// Cast Pack to Buffer
+__attribute__((always_inline)) static inline const Buffer *
+pckToBuf(const Pack *const pack)
+{
+    return (const Buffer *)pack;
+}
+
+/***********************************************************************************************************************************
 Read Constructors
 ***********************************************************************************************************************************/
-PackRead *pckReadNew(IoRead *read);
+// Note that the pack is not moved into the PackRead mem context and must be moved explicitly if the PackRead object is moved.
+PackRead *pckReadNew(const Pack *pack);
 
-// Note that the buffer is not moved into the PackRead mem context and must be moved explicitly if the PackRead object is moved.
-PackRead *pckReadNewBuf(const Buffer *buffer);
+PackRead *pckReadNewIo(IoRead *read);
 
 /***********************************************************************************************************************************
 Read Functions
@@ -263,16 +296,16 @@ typedef struct PckReadPackParam
     unsigned int id;
 } PckReadPackParam;
 
-#define pckReadPackP(this, ...)                                                                                                    \
-    pckReadPack(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckReadPackReadP(this, ...)                                                                                                    \
+    pckReadPackRead(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackRead *pckReadPack(PackRead *this, PckReadPackParam param);
+PackRead *pckReadPackRead(PackRead *this, PckReadPackParam param);
 
 // Read pack buffer
-#define pckReadPackBufP(this, ...)                                                                                                 \
-    pckReadPackBuf(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define pckReadPackP(this, ...)                                                                                                 \
+    pckReadPack(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-Buffer *pckReadPackBuf(PackRead *this, PckReadPackParam param);
+Pack *pckReadPack(PackRead *this, PckReadPackParam param);
 
 // Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 typedef struct PckReadPtrParam
@@ -381,10 +414,18 @@ pckReadFree(PackRead *const this)
 /***********************************************************************************************************************************
 Write Constructors
 ***********************************************************************************************************************************/
-PackWrite *pckWriteNew(IoWrite *write);
+typedef struct PckWriteNewParam
+{
+    VAR_PARAM_HEADER;
+    size_t size;
+} PckWriteNewParam;
 
-// Note that the buffer is not moved into the PackWrite mem context and must be moved explicitly if the PackWrite object is moved.
-PackWrite *pckWriteNewBuf(Buffer *buffer);
+#define pckWriteNewP(...)                                                                                                          \
+    pckWriteNew((PckWriteNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWriteNew(PckWriteNewParam param);
+
+PackWrite *pckWriteNewIo(IoWrite *write);
 
 /***********************************************************************************************************************************
 Write Functions
@@ -503,7 +544,7 @@ typedef struct PckWritePackParam
 #define pckWritePackP(this, value, ...)                                                                                            \
     pckWritePack(this, value, (PckWritePackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-PackWrite *pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param);
+PackWrite *pckWritePack(PackWrite *this, const Pack *value, PckWritePackParam param);
 
 // Write pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 typedef struct PckWritePtrParam
@@ -609,9 +650,9 @@ PackWrite *pckWriteEnd(PackWrite *this);
 /***********************************************************************************************************************************
 Write Getters/Setters
 ***********************************************************************************************************************************/
-// Get buffer the pack is writing to (returns NULL if pckWriteNewBuf() was not used to construct the object). This function is only
+// Get Pack the PackWrite was writing to (returns NULL if pckWriteNew() was not used to construct the object). This function is only
 // valid after pckWriteEndP() has been called.
-const Buffer *pckWriteBuf(const PackWrite *this);
+Pack *pckWriteResult(PackWrite *this);
 
 /***********************************************************************************************************************************
 Write Destructor
@@ -625,6 +666,11 @@ pckWriteFree(PackWrite *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+#define FUNCTION_LOG_PACK_TYPE                                                                                                     \
+    Pack *
+#define FUNCTION_LOG_PACK_FORMAT(value, buffer, bufferSize)                                                                        \
+    objToLog(value, "Pack", buffer, bufferSize)
+
 String *pckReadToLog(const PackRead *this);
 
 #define FUNCTION_LOG_PACK_READ_TYPE                                                                                                \

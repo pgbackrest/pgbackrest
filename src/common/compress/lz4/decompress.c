@@ -16,11 +16,6 @@ LZ4 Decompress
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
-Filter type constant
-***********************************************************************************************************************************/
-STRING_EXTERN(LZ4_DECOMPRESS_FILTER_TYPE_STR,                       LZ4_DECOMPRESS_FILTER_TYPE);
-
-/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct Lz4Decompress
@@ -181,7 +176,7 @@ lz4DecompressNew(void)
 
         // Create filter interface
         this = ioFilterNewP(
-            LZ4_DECOMPRESS_FILTER_TYPE_STR, driver, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
+            LZ4_DECOMPRESS_FILTER_TYPE, driver, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
             .inputSame = lz4DecompressInputSame);
     }
     OBJ_NEW_END();

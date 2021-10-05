@@ -394,7 +394,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
                 const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
                 CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
 
-                StringList *const paramList = pckReadStrLstP(pckReadNewBuf(command.param));
+                StringList *const paramList = pckReadStrLstP(pckReadNew(command.param));
                 strLstInsert(paramList, 0, cfgExe());
                 cfgLoad(strLstSize(paramList), strLstPtr(paramList));
 

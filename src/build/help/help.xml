@@ -483,6 +483,22 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-uri-style" name="Azure Repository URI Style">
+                        <summary>Azure URI Style.</summary>
+
+                        <text>
+                            <p>The following URI styles are supported:</p>
+
+                            <list>
+                                <list-item><id>host</id> - Connect to <id>account.endpoint</id> host.</list-item>
+                                <list-item><id>path</id> - Connect to <id>endpoint</id> host and prepend account to URIs.</list-item>
+                            </list>
+                        </text>
+
+                        <example>path</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
                     <config-key id="repo-gcs-bucket" name="GCS Repository Bucket">
                         <summary>GCS repository bucket.</summary>
 
@@ -1049,19 +1065,6 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="archive-header-check" name="Check WAL Headers">
-                        <summary>Check PostgreSQL version/id in WAL headers.</summary>
-
-                        <text>
-                            <p>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.</p>
-
-                            <p>Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</p>
-                        </text>
-
-                        <example>n</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
                     <config-key id="archive-mode-check" name="Check Archive Mode">
                         <summary>Check the <postgres/> <setting>archive_mode</setting> setting.</summary>
 
@@ -1219,6 +1222,19 @@
                         </text>
 
                         <example>1073741824</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-header-check" name="Check WAL Headers">
+                        <summary>Check PostgreSQL version/id in WAL headers.</summary>
+
+                        <text>
+                            <p>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.</p>
+
+                            <p>Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</p>
+                        </text>
+
+                        <example>n</example>
                     </config-key>
 
                     <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-QUEUE-MAX KEY -->

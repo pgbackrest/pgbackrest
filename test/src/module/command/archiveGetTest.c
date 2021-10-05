@@ -399,8 +399,8 @@ testRun(void)
             "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1: 10-1 archive\n"
             "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
-            "            repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-                ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                ", 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", .remove = true);
@@ -421,8 +421,8 @@ testRun(void)
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
             "45\n"
             "duplicates found for WAL segment 000000010000000200000000:\n"
-            "repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 10-1/0000000100000002"
-                "/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, 10-1/0000000100000002"
+                "/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "HINT: are multiple primaries archiving to this stanza?\n"
             "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test2/10-1"                     \
                 "/0000000100000002': [13] Permission denied",
@@ -443,16 +443,16 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
             "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
-            "            repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-                ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                ", 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
             "45\n"
             "duplicates found for WAL segment 000000010000000200000000:\n"
-            "repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 10-1/0000000100000002"
-                "/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, 10-1/0000000100000002"
+                "/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "HINT: are multiple primaries archiving to this stanza?",
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
@@ -517,6 +517,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error with warnings");
 
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync, .jobRetry = 1);
+
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(1),
             STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
@@ -531,7 +533,8 @@ testRun(void)
             "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
                 " [FormatError] unexpected eof in compressed data\n"
             "            repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
-                " [FormatError] unexpected eof in compressed data");
+                " [FormatError] unexpected eof in compressed data\n"
+            "            [FileReadError] on retry after 0ms");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
@@ -541,6 +544,7 @@ testRun(void)
                 " [FormatError] unexpected eof in compressed data\n"
             "repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
                 " [FormatError] unexpected eof in compressed data\n"
+            "[FileReadError] on retry after 0ms\n"
             "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
                 " '18072658121562454734'",
             .remove = true);
@@ -859,8 +863,8 @@ testRun(void)
         TEST_ERROR(
             cmdArchiveGet(), ArchiveDuplicateError,
             "duplicates found for WAL segment 01ABCDEF01ABCDEF01ABCDEF:\n"
-            "repo1: 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-                ", 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "repo1: 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                ", 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_LIST(storagePg(), "pg_wal", NULL);

@@ -21,6 +21,8 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
+static unsigned int testCommandAssertProtocolTotal = 0;
+
 __attribute__((__noreturn__)) static void
 testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
 {
@@ -32,7 +34,8 @@ testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
     ASSERT(param == NULL);
     ASSERT(server != NULL);
 
-    hrnErrorThrowP();
+    testCommandAssertProtocolTotal++;
+    hrnErrorThrowP(.message = testCommandAssertProtocolTotal <= 3 ? NULL : "ERR_MESSAGE_RETRY");
 
     // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
 }
@@ -279,7 +282,7 @@ testRun(void)
         OBJ_NEW_BEGIN(ProtocolClient)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
-            *protocolHelperClient.client = (ProtocolClient){.name = STRDEF("test")};
+            *protocolHelperClient.client = (ProtocolClient){.name = STRDEF("test"), .state = protocolClientStateIdle};
             memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
         }
         OBJ_NEW_END();
@@ -526,6 +529,7 @@ testRun(void)
 
                 VariantList *retryList = varLstNew();
                 varLstAdd(retryList, varNewUInt64(0));
+                varLstAdd(retryList, varNewUInt64(500));
 
                 TEST_ASSIGN(
                     server, protocolServerNew(STRDEF("test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
@@ -596,27 +600,21 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command throws assert");
 
-                TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false), AssertError,
-                    "raised from test client: ERR_MESSAGE\nERR_STACK_TRACE");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("command throws error");
-
-                TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
-                    "raised from test client: ERR_MESSAGE");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("command throws error in debug log level");
-
-                harnessLogLevelSet(logLevelDebug);
-
-                TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
-                    "raised from test client: ERR_MESSAGE\nERR_STACK_TRACE");
-
-                harnessLogLevelReset();
+                TRY_BEGIN()
+                {
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false);
+                    THROW(TestError, "error was expected");
+                }
+                CATCH_ANY()
+                {
+                    TEST_RESULT_PTR(errorType(), &AssertError, "check type");
+                    TEST_RESULT_Z(errorFileName(), TEST_PGB_PATH "/src/protocol/client.c", "check file");
+                    TEST_RESULT_Z(errorFunctionName(), "protocolClientError", "check function");
+                    TEST_RESULT_BOOL(errorFileLine() > 0, true, "check file line > 0");
+                    TEST_RESULT_Z(errorMessage(), "raised from test client: ERR_MESSAGE", "check message");
+                    TEST_RESULT_Z(errorStackTrace(), "ERR_STACK_TRACE", "check stack trace");
+                }
+                TRY_END();
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("noop command");
@@ -638,7 +636,11 @@ testRun(void)
                 TEST_ASSIGN(command, protocolCommandNew(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
                 TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
                 TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
-                TEST_RESULT_VOID(protocolClientCommandPut(client, command), "command put");
+                TEST_RESULT_VOID(protocolClientCommandPut(client, command, true), "command put");
+
+                TEST_ERROR(
+                    protocolClientStateExpect(client, protocolClientStateIdle), ProtocolError,
+                    "client state is 'cmd-data-get' but expected 'idle'");
 
                 // Read null data to indicate that the server has started the command and is read to receive data
                 TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "command started and ready for data");
@@ -672,6 +674,15 @@ testRun(void)
                 TEST_RESULT_BOOL(
                     pckReadBoolP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_RETRY), true)), true,
                     "execute");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("command throws assert with retry messages");
+
+                TEST_ERROR(
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false), AssertError,
+                    "raised from test client: ERR_MESSAGE\n"
+                    "[AssertError] on retry after 0ms\n"
+                    "[AssertError] on retry after 500ms: ERR_MESSAGE_RETRY");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");
@@ -970,7 +981,12 @@ testRun(void)
                 TEST_TITLE("error on add without an fd");
 
                 // Fake a client without a read fd
-                ProtocolClient clientError = {.pub = {.read = ioBufferReadNew(bufNew(0))}, .name = STRDEF("test")};
+                ProtocolClient clientError =
+                {
+                    .pub = {.read = ioBufferReadNew(bufNew(0))},
+                    .name = STRDEF("test"),
+                    .state = protocolClientStateIdle,
+                };
 
                 TEST_ERROR(protocolParallelClientAdd(parallel, &clientError), AssertError, "client with read fd is required");
 

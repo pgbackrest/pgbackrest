@@ -250,7 +250,7 @@ helpRender(const Buffer *const helpData)
         ioFilterGroupAdd(ioReadFilterGroup(helpRead), bz2DecompressNew());
         ioReadOpen(helpRead);
 
-        PackRead *pckHelp = pckReadNew(helpRead);
+        PackRead *pckHelp = pckReadNewIo(helpRead);
 
         // Unpack command data
         HelpCommandData *commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL);

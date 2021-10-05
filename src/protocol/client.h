@@ -56,7 +56,7 @@ be added to the expected binary size to account for overhead.
 __attribute__((always_inline)) static inline PackWrite *
 protocolPackNew(void)
 {
-    return pckWriteNewBuf(bufNew(PROTOCOL_PACK_DEFAULT_SIZE));
+    return pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE);
 }
 
 /***********************************************************************************************************************************
@@ -107,7 +107,7 @@ PackRead *protocolClientDataGet(ProtocolClient *this);
 void protocolClientDataEndGet(ProtocolClient *this);
 
 // Put command to the server
-void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command);
+void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command, const bool dataPut);
 
 // Put data to the server
 void protocolClientDataPut(ProtocolClient *this, PackWrite *data);

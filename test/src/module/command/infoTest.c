@@ -670,7 +670,7 @@ testRun(void)
             "20201116-155000F_20201119-152100I={"
             "\"backrest-format\":5,\"backrest-version\":\"2.30\","
             "\"backup-archive-start\":\"000000010000000000000005\",\"backup-archive-stop\":\"000000010000000000000005\","
-            "\"backup-info-repo-size\":2369186,"
+            "\"backup-error\":false,\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
             "\"backup-prior\":\"20201116-155000F\",\"backup-reference\":[\"20201116-155000F\"],"
             "\"backup-timestamp-start\":1605799260,\"backup-timestamp-stop\":1605799263,\"backup-type\":\"incr\","
@@ -860,6 +860,7 @@ testRun(void)
             "[backup:current]\n"
             "20201116-200000F={\"backrest-format\":5,\"backrest-version\":\"2.30\","
             "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
+            "\"backup-error\":true,"
             "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
             "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605556800,\"backup-timestamp-stop\":1605556805,"
             "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
@@ -1202,6 +1203,7 @@ testRun(void)
                                         "\"id\":1,"
                                         "\"repo-key\":2"
                                     "},"
+                                    "\"error\":true,"
                                     "\"info\":{"
                                         "\"delta\":26897020,"
                                         "\"repository\":{"
@@ -1232,6 +1234,7 @@ testRun(void)
                                         "\"id\":2,"
                                         "\"repo-key\":1"
                                     "},"
+                                    "\"error\":false,"
                                     "\"info\":{"
                                         "\"delta\":8428,"
                                         "\"repository\":{"
@@ -1502,6 +1505,7 @@ testRun(void)
                     "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo2: backup set size: 3MB, backup size: 3KB\n"
+                    "            error(s) detected during backup\n"
                     "\n"
                     "        incr backup: 20201116-155000F_20201119-152100I\n"
                     "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
@@ -1594,7 +1598,7 @@ testRun(void)
             "            tablespaces:\n"
             "                ts1 (1) => /tblspc/ts1\n"
             "                ts12 (12) => /tblspc/ts12\n"
-            "            page checksum error: base/16384/17000\n",
+            "            error list: base/16384/17000\n",
             "text - backup set requested");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1628,7 +1632,7 @@ testRun(void)
             "            tablespaces:\n"
             "                ts1 (1) => /tblspc/ts1\n"
             "                ts12 (12) => /tblspc/ts12\n"
-            "            page checksum error: base/16384/17000\n",
+            "            error list: base/16384/17000\n",
             "text - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1701,7 +1705,7 @@ testRun(void)
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: mail (16456), postgres (12173)\n"
-            "            page checksum error: base/16384/17000, base/32768/33000\n",
+            "            error list: base/16384/17000, base/32768/33000\n",
             "text - backup set requested, no links");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1744,7 +1748,7 @@ testRun(void)
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
             TEST_MANIFEST_PATH_DEFAULT,
-            .comment = " rewrite same manifest withut checksum errors");
+            .comment = " rewrite same manifest without checksum errors");
 
         TEST_RESULT_STR_Z(
             infoRender(),

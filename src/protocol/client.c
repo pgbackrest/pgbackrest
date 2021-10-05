@@ -20,11 +20,33 @@ STRING_EXTERN(PROTOCOL_GREETING_SERVICE_STR,                        PROTOCOL_GRE
 STRING_EXTERN(PROTOCOL_GREETING_VERSION_STR,                        PROTOCOL_GREETING_VERSION);
 
 /***********************************************************************************************************************************
+Client state enum
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Client is waiting for a command
+    protocolClientStateIdle = STRID5("idle", 0x2b0890),
+
+    // Command put is in progress
+    protocolClientStateCommandPut = STRID5("cmd-put", 0x52b0d91a30),
+
+    // Waiting for command data from server. Only used when dataPut is true in protocolClientCommandPut().
+    protocolClientStateCommandDataGet = STRID5("cmd-data-get", 0xa14fb0d024d91a30),
+
+    // Putting data to server. Only used when dataPut is true in protocolClientCommandPut().
+    protocolClientStateDataPut = STRID5("data-put", 0xa561b0d0240),
+
+    // Getting data from server
+    protocolClientStateDataGet = STRID5("data-get", 0xa14fb0d0240),
+} ProtocolClientState;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct ProtocolClient
 {
     ProtocolClientPub pub;                                          // Publicly accessible variables
+    ProtocolClientState state;                                      // Current client state
     IoWrite *write;                                                 // Write interface
     const String *name;                                             // Name displayed in logging
     const String *errorPrefix;                                      // Prefix used when throwing error
@@ -45,10 +67,13 @@ protocolClientFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
+    // Switch state to idle so the command is sent no matter the current state
+    this->state = protocolClientStateIdle;
+
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientCommandPut(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT));
+        protocolClientCommandPut(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT), false);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -82,6 +107,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
             {
                 .read = read,
             },
+            .state = protocolClientStateIdle,
             .write = write,
             .name = strDup(name),
             .errorPrefix = strNewFmt("raised from %s", strZ(name)),
@@ -134,6 +160,23 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
     FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, this);
 }
 
+/***********************************************************************************************************************************
+Check protocol state
+***********************************************************************************************************************************/
+static void
+protocolClientStateExpect(const ProtocolClient *const this, const ProtocolClientState expect)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_TEST_PARAM(STRING_ID, expect);
+    FUNCTION_TEST_END();
+
+    if (this->state != expect)
+        THROW_FMT(ProtocolError, "client state is '%s' but expected '%s'", strZ(strIdToStr(this->state)), strZ(strIdToStr(expect)));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 void
 protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
@@ -145,6 +188,9 @@ protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
 
     ASSERT(this != NULL);
 
+    // Expect data-put state before data put
+    protocolClientStateExpect(this, protocolClientStateDataPut);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // End the pack
@@ -152,14 +198,19 @@ protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
             pckWriteEndP(data);
 
         // Write the data
-        PackWrite *dataMessage = pckWriteNew(this->write);
+        PackWrite *dataMessage = pckWriteNewIo(this->write);
         pckWriteU32P(dataMessage, protocolMessageTypeData, .defaultWrite = true);
-        pckWritePackP(dataMessage, data);
+        pckWritePackP(dataMessage, pckWriteResult(data));
         pckWriteEndP(dataMessage);
 
         // Flush when there is no more data to put
         if (data == NULL)
+        {
             ioWriteFlush(this->write);
+
+            // Switch state to data-get after successful data end put
+            this->state = protocolClientStateDataGet;
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -177,30 +228,27 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
         FUNCTION_LOG_PARAM(PACK_READ, error);
     FUNCTION_LOG_END();
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    ASSERT(this != NULL);
+    ASSERT(error != NULL);
+
+    if (type == protocolMessageTypeError)
     {
-        if (type == protocolMessageTypeError)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            const ErrorType *type = errorTypeFromCode(pckReadI32P(error));
-            String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
+            const ErrorType *const type = errorTypeFromCode(pckReadI32P(error));
+            const String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
             const String *const stack = pckReadStrP(error);
             pckReadEndP(error);
 
-            CHECK(message != NULL);
+            // Switch state to idle after error (server will do the same)
+            this->state = protocolClientStateIdle;
 
-            // Add stack trace if the error is an assertion or debug-level logging is enabled
-            if (type == &AssertError || logAny(logLevelDebug))
-            {
-                CHECK(stack != NULL);
+            CHECK(message != NULL && stack != NULL);
 
-                strCat(message, LF_STR);
-                strCat(message, stack);
-            }
-
-            THROWP(type, strZ(message));
+            errorInternalThrow(type, __FILE__, __func__, __LINE__, strZ(message), strZ(stack));
         }
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -213,11 +261,17 @@ protocolClientDataGet(ProtocolClient *const this)
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
     FUNCTION_LOG_END();
 
+    ASSERT(this != NULL);
+
+    // Expect data-get state before data get
+    protocolClientStateExpect(
+        this, this->state == protocolClientStateCommandDataGet ? protocolClientStateCommandDataGet : protocolClientStateDataGet);
+
     PackRead *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *response = pckReadNew(this->pub.read);
+        PackRead *response = pckReadNewIo(this->pub.read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
 
         protocolClientError(this, type, response);
@@ -226,11 +280,15 @@ protocolClientDataGet(ProtocolClient *const this)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = pckReadPackP(response);
+            result = pckReadPackReadP(response);
         }
         MEM_CONTEXT_PRIOR_END();
 
         pckReadEndP(response);
+
+        // Switch state to data-put after successful command data get
+        if (this->state == protocolClientStateCommandDataGet)
+            this->state = protocolClientStateDataPut;
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -245,9 +303,14 @@ protocolClientDataEndGet(ProtocolClient *const this)
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
     FUNCTION_LOG_END();
 
+    ASSERT(this != NULL);
+
+    // Expect data-get state before data end get
+    protocolClientStateExpect(this, protocolClientStateDataGet);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *response = pckReadNew(this->pub.read);
+        PackRead *response = pckReadNewIo(this->pub.read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(response);
 
         protocolClientError(this, type, response);
@@ -255,6 +318,9 @@ protocolClientDataEndGet(ProtocolClient *const this)
         CHECK(type == protocolMessageTypeDataEnd);
 
         pckReadEndP(response);
+
+        // Switch state to idle after successful data end get
+        this->state = protocolClientStateIdle;
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -263,18 +329,28 @@ protocolClientDataEndGet(ProtocolClient *const this)
 
 /**********************************************************************************************************************************/
 void
-protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command)
+protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command, const bool dataPut)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
         FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
+        FUNCTION_LOG_PARAM(BOOL, dataPut);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
+    // Expect idle state before command put
+    protocolClientStateExpect(this, protocolClientStateIdle);
+
+    // Switch state to cmd-put
+    this->state = protocolClientStateDataPut;
+
     // Put command
     protocolCommandPut(command, this->write);
+
+    // Switch state to data-get/data-put after successful command put
+    this->state = dataPut ? protocolClientStateCommandDataGet : protocolClientStateDataGet;
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
@@ -296,7 +372,7 @@ protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command
     ASSERT(command != NULL);
 
     // Put command
-    protocolClientCommandPut(this, command);
+    protocolClientCommandPut(this, command, false);
 
     // Read result if required
     PackRead *result = NULL;
@@ -333,5 +409,5 @@ protocolClientNoOp(ProtocolClient *this)
 String *
 protocolClientToLog(const ProtocolClient *this)
 {
-    return strNewFmt("{name: %s}", strZ(this->name));
+    return strNewFmt("{name: %s, state: %s}", strZ(this->name), strZ(strIdToStr(this->state)));
 }

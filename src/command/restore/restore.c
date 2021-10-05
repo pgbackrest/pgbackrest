@@ -527,80 +527,98 @@ restoreManifestMap(Manifest *manifest)
 
         // Remap links
         // -------------------------------------------------------------------------------------------------------------------------
-        KeyValue *linkMap = varKv(cfgOption(cfgOptLinkMap));
-        bool linkAll = cfgOptionBool(cfgOptLinkAll);
+        const KeyValue *const linkMap = varKv(cfgOption(cfgOptLinkMap));
 
-        StringList *linkRemapped = strLstNew();
-
-        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        if (linkMap != NULL)
         {
-            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+            const StringList *const linkMapList = strLstSort(strLstNewVarLst(kvKeyList(linkMap)), sortOrderAsc);
 
-            // Is this a link?
-            if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
+            for (unsigned int linkMapIdx = 0; linkMapIdx < strLstSize(linkMapList); linkMapIdx++)
             {
-                const String *link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
-                const String *linkPath = linkMap == NULL ? NULL : varStr(kvGet(linkMap, VARSTR(link)));
+                const String *const link = strLstGet(linkMapList, linkMapIdx);
+                const String *const linkPath = varStr(kvGet(linkMap, VARSTR(link)));
+                const String *const manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(link));
 
-                // Remap link if a mapping was found
-                if (linkPath != NULL)
+                // Attempt to find the link target
+                ManifestTarget target = {0};
+
+                if (manifestTargetFindDefault(manifest, manifestName, NULL) != NULL)
+                    target = *manifestTargetFind(manifest, manifestName);
+
+                // Error if the target was not found
+                if (target.name == NULL)
+                    THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
+
+                // Update target to new path
+                target.path = linkPath;
+
+                // The target must be a link since pg_data/ was prepended and pgdata is the only allowed path
+                CHECK(target.type == manifestTargetTypeLink);
+
+                // Error if the target is a tablespace
+                if (target.tablespaceId != 0)
                 {
-                    LOG_INFO_FMT("map link '%s' to '%s'", strZ(link), strZ(linkPath));
-                    manifestLinkUpdate(manifest, target->name, linkPath);
+                    THROW_FMT(
+                        LinkMapError,
+                        "unable to remap tablespace '%s'\n"
+                        "HINT: use '" CFGOPT_TABLESPACE_MAP "' option to remap tablespaces.",
+                        strZ(link));
+                }
 
-                    // If the link is a file separate the file name from the path to update the target
-                    const String *linkFile = NULL;
+                LOG_INFO_FMT("map link '%s' to '%s'", strZ(link), strZ(target.path));
 
-                    if (target->file != NULL)
+                // Update link with new destination
+                manifestLinkUpdate(manifest, target.name, target.path);
+
+                // If the link is a file separate the file name from the path
+                if (target.file != NULL)
+                {
+                    // The link destination must have at least one path component in addition to the file part. So '..' would
+                    // not be a valid destination but '../file' or '/file' is.
+                    if (strSize(strPath(target.path)) == 0)
                     {
-                        // The link destination must have at least one path component in addition to the file part. So '..' would
-                        // not be a valid destination but '../file' or '/file' is.
-                        if (strSize(strPath(linkPath)) == 0)
-                        {
-                            THROW_FMT(
-                                LinkMapError, "'%s' is not long enough to be the destination for file link '%s'", strZ(linkPath),
-                                strZ(link));
-                        }
-
-                        linkFile = strBase(linkPath);
-                        linkPath = strPath(linkPath);
+                        THROW_FMT(
+                            LinkMapError, "'%s' is not long enough to be the destination for file link '%s'", strZ(target.path),
+                            strZ(link));
                     }
 
-                    manifestTargetUpdate(manifest, target->name, linkPath, linkFile);
-
-                    // Add to remapped list for later validation that all links were valid
-                    strLstAdd(linkRemapped, link);
+                    target.file = strBase(target.path);
+                    target.path = strPath(target.path);
                 }
-                // If all links are not being restored then remove the target and link
-                else if (!linkAll)
-                {
-                    if (target->file != NULL)
-                        LOG_WARN_FMT("file link '%s' will be restored as a file at the same location", strZ(link));
-                    else
-                    {
-                        LOG_WARN_FMT(
-                            "contents of directory link '%s' will be restored in a directory at the same location", strZ(link));
-                    }
 
-                    manifestLinkRemove(manifest, target->name);
-                    manifestTargetRemove(manifest, target->name);
-                    targetIdx--;
-                }
+                // Update target with new path/file
+                manifestTargetUpdate(manifest, target.name, target.path, target.file);
             }
         }
 
-        // Error on invalid links
-        if (linkMap != NULL)
+        // If all links are not being restored then check for links that were not remapped and remove them
+        if (!cfgOptionBool(cfgOptLinkAll))
         {
-            const VariantList *linkMapList = kvKeyList(linkMap);
-            strLstSort(linkRemapped, sortOrderAsc);
-
-            for (unsigned int linkMapIdx = 0; linkMapIdx < varLstSize(linkMapList); linkMapIdx++)
+            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
-                const String *link = varStr(varLstGet(linkMapList, linkMapIdx));
+                const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
 
-                if (!strLstExists(linkRemapped, link))
-                    THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
+                // Is this a non-tablespace link?
+                if (target->type == manifestTargetTypeLink && target->tablespaceId == 0)
+                {
+                    const String *const link = strSub(target->name, strSize(MANIFEST_TARGET_PGDATA_STR) + 1);
+
+                    // If the link was not remapped then remove it
+                    if (linkMap == NULL || kvGet(linkMap, VARSTR(link)) == NULL)
+                    {
+                        if (target->file != NULL)
+                            LOG_WARN_FMT("file link '%s' will be restored as a file at the same location", strZ(link));
+                        else
+                        {
+                            LOG_WARN_FMT(
+                                "contents of directory link '%s' will be restored in a directory at the same location", strZ(link));
+                        }
+
+                        manifestLinkRemove(manifest, target->name);
+                        manifestTargetRemove(manifest, target->name);
+                        targetIdx--;
+                    }
+                }
             }
         }
     }
@@ -2085,7 +2103,7 @@ typedef struct RestoreJobData
     const String *cipherSubPass;                                    // Passphrase used to decrypt files in the backup
 } RestoreJobData;
 
-// Helper to caculate the next queue to scan based on the client index
+// Helper to calculate the next queue to scan based on the client index
 static int
 restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal)
 {
@@ -2225,9 +2243,21 @@ cmdRestore(void)
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupData.backupSet);
 
-        // Log the backup set to restore
-        LOG_INFO_FMT(
+        // Log the backup set to restore. If the backup was online then append the time recovery will start from.
+        String *const message = strNewFmt(
             "repo%u: restore backup set %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, backupData.repoIdx), strZ(backupData.backupSet));
+
+        if (manifestData(jobData.manifest)->backupOptionOnline)
+        {
+            struct tm timePart;
+            char timeBuffer[20];
+            time_t backupTimestampStart = manifestData(jobData.manifest)->backupTimestampStart;
+
+            strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&backupTimestampStart, &timePart));
+            strCatFmt(message, ", recovery will start at %s", timeBuffer);
+        }
+
+        LOG_INFO(strZ(message));
 
         // Map manifest
         restoreManifestMap(jobData.manifest);

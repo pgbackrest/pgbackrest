@@ -135,7 +135,8 @@ protocolLocalExec(
             ProtocolServer *server = protocolServerNew(
                 name, PROTOCOL_SERVICE_LOCAL_STR, ioFdReadNewOpen(name, pipeWrite[0], 5000),
                 ioFdWriteNewOpen(name, pipeRead[1], 5000));
-            protocolServerProcess(server, NULL, hrnProtocolStatic.localHandlerList, hrnProtocolStatic.localHandlerListSize);
+            protocolServerProcess(
+                server, cfgCommandJobRetry(), hrnProtocolStatic.localHandlerList, hrnProtocolStatic.localHandlerListSize);
 
             // Exit when done
             exit(0);

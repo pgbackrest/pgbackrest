@@ -263,6 +263,7 @@ testRun(void)
             "                                   [default=blob.core.windows.net]\n"
             "  --repo-azure-key                 azure repository key\n"
             "  --repo-azure-key-type            azure repository key type [default=shared]\n"
+            "  --repo-azure-uri-style           azure URI Style [default=host]\n"
             "  --repo-cipher-pass               repository cipher passphrase\n"
             "                                   [current=<redacted>]\n"
             "  --repo-cipher-type               cipher used to encrypt the repository\n"

@@ -18,17 +18,16 @@ typedef struct IoFilter IoFilter;
 
 #include "common/io/filter/filter.intern.h"
 #include "common/type/object.h"
-#include "common/type/string.h"
-#include "common/type/variant.h"
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Get filter result
-Variant *ioFilterResult(const IoFilter *this);
+Pack *ioFilterResult(const IoFilter *this);
 
 // Identifies the filter and is used when pulling results from the filter group
-__attribute__((always_inline)) static inline const String *
+__attribute__((always_inline)) static inline StringId
 ioFilterType(const IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->type;
