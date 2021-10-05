@@ -298,6 +298,7 @@ manifestLink(const Manifest *const this, const unsigned int linkIdx)
     return lstGet(THIS_PUB(Manifest)->linkList, linkIdx);
 }
 
+void manifestLinkAdd(Manifest *this, const ManifestLink *link);
 const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
 
 // If the link requested is not found in the list, return the default passed rather than throw an error
@@ -355,6 +356,7 @@ manifestTarget(const Manifest *const this, const unsigned int targetIdx)
     return lstGet(THIS_PUB(Manifest)->targetList, targetIdx);
 }
 
+void manifestTargetAdd(Manifest *this, const ManifestTarget *target);
 const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
 
 // If the target requested is not found in the list, return the default passed rather than throw an error
