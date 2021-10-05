@@ -1599,7 +1599,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                         // Continue if stanza option is in a global section
                         if (parseRuleOption[option.id].section == cfgSectionStanza &&
-                            strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
+                            (strEqZ(section, CFGDEF_SECTION_GLOBAL) || strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL ":")))
                         {
                             LOG_WARN_FMT(
                                 "configuration file contains stanza-only option '%s' in global section '%s'", strZ(key),
