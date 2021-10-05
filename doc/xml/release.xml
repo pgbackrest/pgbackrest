@@ -32,6 +32,18 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1484"/>
+                        <github-pull-request id="1508"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Report backup file validation errors in <file>backup.info</file>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1507"/>
                         <github-pull-request id="1518"/>
 

@@ -43,6 +43,7 @@ VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR,         "backup-refe
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR,   "backup-timestamp-start");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR,    "backup-timestamp-stop");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TYPE_VAR,              "backup-type");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ERROR_VAR,             "backup-error");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR,        "option-archive-check");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR,         "option-archive-copy");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR,       "option-backup-standby");
@@ -163,6 +164,9 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
                     kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR) != NULL ?
                         strLstNewVarLst(varVarLst(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR))) : NULL,
 
+                // Report errors detected during the backup. The key may not exist in older versions.
+                .backupError = varDup(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR)),
+
                 // Options
                 .optionArchiveCheck = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR)),
                 .optionArchiveCopy = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR)),
@@ -260,6 +264,11 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARINT64(backupData.backupTimestampStop));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR, VARSTR(strIdToStr(backupData.backupType)));
 
+            // Do not save backup-error if it was not loaded. This prevents backups that were added before the backup-error flag
+            // was introduced from being saved with an incorrect value.
+            if (backupData.backupError != NULL)
+                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR, backupData.backupError);
+
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR, VARBOOL(backupData.optionBackupStandby));
@@ -342,12 +351,13 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
     {
         const ManifestData *manData = manifestData(manifest);
 
-        // Calculate backup sizes and references
+        // Calculate backup sizes, references and report errors
         uint64_t backupSize = 0;
         uint64_t backupSizeDelta = 0;
         uint64_t backupRepoSize = 0;
         uint64_t backupRepoSizeDelta = 0;
         StringList *referenceList = strLstNew();
+        bool backupError = false;
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
@@ -364,6 +374,10 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 backupSizeDelta += file->size;
                 backupRepoSizeDelta += file->sizeRepo > 0 ? file->sizeRepo : file->size;
             }
+
+            // Is there an error in the file?
+            if (file->checksumPageError)
+                backupError = true;
         }
 
         MEM_CONTEXT_BEGIN(lstMemContext(this->pub.backup))
@@ -381,6 +395,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .backupTimestampStart = manData->backupTimestampStart,
                 .backupTimestampStop= manData->backupTimestampStop,
                 .backupType = manData->backupType,
+                .backupError = varNewBool(backupError),
 
                 .backupArchiveStart = strDup(manData->archiveStart),
                 .backupArchiveStop = strDup(manData->archiveStop),
