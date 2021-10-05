@@ -177,9 +177,12 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
         FUNCTION_LOG_PARAM(PACK_READ, error);
     FUNCTION_LOG_END();
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    ASSERT(this != NULL);
+    ASSERT(error != NULL);
+
+    if (type == protocolMessageTypeError)
     {
-        if (type == protocolMessageTypeError)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
             const ErrorType *const type = errorTypeFromCode(pckReadI32P(error));
             const String *const message = strNewFmt("%s: %s", strZ(this->errorPrefix), strZ(pckReadStrP(error)));
@@ -190,8 +193,8 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
 
             errorInternalThrow(type, __FILE__, __func__, __LINE__, strZ(message), strZ(stack));
         }
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -203,6 +206,8 @@ protocolClientDataGet(ProtocolClient *const this)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
     FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
 
     PackRead *result = NULL;
 
@@ -235,6 +240,8 @@ protocolClientDataEndGet(ProtocolClient *const this)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
     FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
