@@ -58,6 +58,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1521"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Report original error and retries on local job failure.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1519"/>
 
                         <release-item-contributor-list>
