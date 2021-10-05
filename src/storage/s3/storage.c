@@ -985,7 +985,6 @@ storageS3New(
             .uriStyle = uriStyle,
             .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
-            .credHost = S3_CREDENTIAL_HOST_STR,
             .credRole = strDup(credRole),
 
             // Force the signing key to be generated on the first run
@@ -1001,7 +1000,18 @@ storageS3New(
 
         // Create the HTTP client used to retreive temporary security credentials
         if (driver->keyType == storageS3KeyTypeAuto)
+        {
+            driver->credHost = S3_CREDENTIAL_HOST_STR,
             driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout), timeout);
+        }
+        else if (driver->keyType == storageS3KeyTypeService)
+        {
+            ASSERT(driver->credRole != NULL);
+
+            driver->credHost = STRDEF("sts.amazonaws.com"); // !!! ADD CONSTANT?
+            driver->credHttpClient = httpClientNew( // !!! REMOVE HARDCODED PORT?
+                tlsClientNew(sckClientNew(driver->credHost, 443, timeout), driver->credHost, timeout, true, NULL, NULL), timeout);
+        }
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();

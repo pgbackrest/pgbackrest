@@ -229,6 +229,8 @@ Option value constants
 
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO                             STRID5("auto", 0x7d2a10)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO_Z                           "auto"
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_SERVICE                          STRID5("service", 0x1469b48b30)
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_SERVICE_Z                        "service"
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED                           STRID5("shared", 0x85905130)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED_Z                         "shared"
 

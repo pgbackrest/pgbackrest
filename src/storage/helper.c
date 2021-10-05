@@ -3,6 +3,7 @@ Storage Helper
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "common/debug.h"
@@ -420,15 +421,36 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
                     port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
+                // Get role
+                const StorageS3KeyType keyType = (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx);
+                const String *role = cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx);
+
+                if (keyType == storageS3KeyTypeService)
+                {
+                    #define S3_ENV_AWS_ROLE_ARN                             "AWS_ROLE_ARN"
+
+                    const char *const roleZ = getenv(S3_ENV_AWS_ROLE_ARN);
+
+                    if (roleZ == NULL)
+                    {
+                        THROW_FMT(
+                            OptionInvalidError,
+                            "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_SERVICE_Z "' but '" S3_ENV_AWS_ROLE_ARN "' is not set",
+                            cfgOptionIdxName(cfgOptRepoS3KeyType, repoIdx));
+                    }
+
+                    role = strNewZ(roleZ);
+                }
+
                 result = storageS3New(
                     cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
                     cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
                     (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
-                    cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx),
+                    cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), keyType,
                     cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
-                    STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+                    cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), role, STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(),
+                    cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
 
                 break;
             }
