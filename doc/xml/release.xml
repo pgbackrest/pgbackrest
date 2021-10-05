@@ -58,7 +58,11 @@
                     </release-item>
 
                     <release-item>
-                        <github-pull-request id="1521"/>
+                        <commit subject="Allow stack trace to be specified for errorInternalThrow()."/>
+                        <commit subject="Add jobRetry parameter to HRN_CFG_LOAD()."/>
+                        <commit subject="Report original error and retries on local job failure.">
+                            <github-pull-request id="1521"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
