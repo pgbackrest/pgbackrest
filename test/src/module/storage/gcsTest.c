@@ -3,6 +3,7 @@ Test GCS Storage
 ***********************************************************************************************************************************/
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "storage/helper.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -183,6 +184,10 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Set storage helper
+    static const StorageHelper storageHelperList[] = {STORAGE_GCS_HELPER, STORAGE_END_HELPER};
+    storageHelperInit(storageHelperList);
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 

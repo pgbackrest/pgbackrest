@@ -34,6 +34,9 @@ Functions
 // prevent damage to the repository from an error in dry-run coding in the individual commands.
 void storageHelperDryRunInit(bool dryRun);
 
+// Initialize helpers to create storage other than built-in Posix
+void storageHelperInit(const StorageHelper *helperList);
+
 // Local storage object. Writable local storage should be used very sparingly. If writes are not needed then always use
 // storageLocal() or a specific storage object instead.
 const Storage *storageLocal(void);
