@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Posix Storage
+Test Posix/CIFS Storage
 ***********************************************************************************************************************************/
 #include "common/io/io.h"
 #include "common/time.h"
@@ -194,6 +194,14 @@ testRun(void)
 
         TEST_RESULT_BOOL(storageInfoP(storagePosixNewP(FSLASH_STR), NULL).exists, true, "info for /");
 
+        // -----------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info for / does not exist with no path feature");
+
+        Storage *storageRootNoPath = storagePosixNewP(FSLASH_STR);
+        storageRootNoPath->pub.interface.feature ^= 1 << storageFeaturePath;
+
+        TEST_RESULT_BOOL(storageInfoP(storageRootNoPath, NULL, .ignoreMissing = true).exists, false, "no info for /");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("directory does not exists");
 
@@ -237,6 +245,26 @@ testRun(void)
         TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
         TEST_RESULT_UINT(info.groupId, TEST_GROUP_ID, "check group id");
         TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info basic - path");
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+
+        TEST_ASSIGN(info, storageInfoP(storageTest, TEST_PATH_STR), "get path info");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypePath, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0, "check mode");
+        TEST_RESULT_INT(info.timeModified, 1555160000, "check mod time");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+        TEST_RESULT_UINT(info.userId, 0, "check user id");
+        TEST_RESULT_STR(info.user, NULL, "check user");
+        TEST_RESULT_UINT(info.groupId, 0, "check group id");
+        TEST_RESULT_STR(info.group, NULL, "check group");
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info - file");
@@ -430,6 +458,32 @@ testRun(void)
             "file {file, s=8, m=0660}\n"
             ". {path}\n",
             "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path basic info - recurse");
+
+        storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
+        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+
+        callbackData.content = strNew();
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
+            "recurse descending");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "pipe {special}\n"
+            "path/file {file, s=8}\n"
+            "path {path}\n"
+            "link {link}\n"
+            "file {file, s=8}\n"
+            ". {path}\n",
+            "check content");
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path - filter");
@@ -1472,6 +1526,54 @@ testRun(void)
 
         TEST_ERROR(storageSpool(), AssertError, "stanza cannot be NULL for this storage object");
         TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageRepoGet() and StorageDriverCifs"))
+    {
+        // Load configuration
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "cifs");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid storage type");
+
+        static const StorageHelper storageHelperListError[] = {{.type = STORAGE_POSIX_TYPE}, STORAGE_END_HELPER};
+        storageHelperInit(storageHelperListError);
+
+        TEST_ERROR(storageRepoGet(0, true), AssertError, "check 'type == STORAGE_POSIX_TYPE' failed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage configuration");
+
+        // Set storage helper
+        static const StorageHelper storageHelperList[] = {STORAGE_CIFS_HELPER, STORAGE_END_HELPER};
+        storageHelperInit(storageHelperList);
+
+        const Storage *storage = NULL;
+        TEST_ASSIGN(storage, storageRepoGet(0, true), "get cifs repo storage");
+        TEST_RESULT_UINT(storageType(storage), STORAGE_CIFS_TYPE, "check storage type");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), true, "check path feature");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), true, "check compress feature");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write object path sync false");
+
+        // Create a FileWrite object with path sync enabled and ensure that path sync is false in the write object
+        StorageWrite *file = NULL;
+        TEST_ASSIGN(file, storageNewWriteP(storage, STRDEF("somefile"), .noSyncPath = false), "new file write");
+
+        TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "path sync is disabled");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path sync result is noop");
+
+        // Test the path sync function -- pass a bogus path to ensure that this is a noop
+        TEST_RESULT_VOID(storagePathSyncP(storage, STRDEF(BOGUS_STR)), "path sync is a noop");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
