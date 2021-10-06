@@ -396,7 +396,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             path = strNewFmt("/%s%s", strZ(this->bucket), strZ(path));
 
         // If temp crendentials will be expiring soon then renew them
-        if (this->keyType == storageS3KeyTypeAuto && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
+        if (this->credExpirationTime != 0 && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
         {
             // Free old credentials
             strFree(this->accessKey);
@@ -408,7 +408,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             httpHeaderAdd(credHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
             httpHeaderAdd(credHeader, HTTP_HEADER_HOST_STR, this->credHost);
 
-            // Auto auth credentials
+            // Get credentials
             storageS3AuthAuto(this, credHeader);
 
             // Reset the signing key date so the signing key gets regenerated
@@ -1016,6 +1016,7 @@ storageS3New(
 
                 driver->credRole = strDup(credRole);
                 driver->credHost = S3_CREDENTIAL_HOST_STR;
+                driver->credExpirationTime = time(NULL);
                 driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout), timeout);
 
                 break;
