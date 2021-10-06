@@ -360,6 +360,9 @@ Automatically get credentials for an associated service account
 
 Documentation is found at: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html
 ***********************************************************************************************************************************/
+STRING_STATIC(S3_STS_HOST_STR,                                      "sts.amazonaws.com");
+#define S3_STS_PORT                                                 443
+
 static void
 storageS3AuthService(StorageS3 *const this, const HttpHeader *const header)
 {
@@ -1096,9 +1099,10 @@ storageS3New(
 
                 driver->credRole = strDup(credRole);
                 driver->webIdToken = strDup(webIdToken);
-                driver->credHost = STRDEF("sts.amazonaws.com"); // !!! ADD CONSTANT?
-                driver->credHttpClient = httpClientNew( // !!! REMOVE HARDCODED PORT?
-                    tlsClientNew(sckClientNew(driver->credHost, 443, timeout), driver->credHost, timeout, true, caFile, caPath),
+                driver->credHost = S3_STS_HOST_STR;
+                driver->credHttpClient = httpClientNew(
+                    tlsClientNew(
+                        sckClientNew(driver->credHost, S3_STS_PORT, timeout), driver->credHost, timeout, true, caFile, caPath),
                     timeout);
 
                 break;
