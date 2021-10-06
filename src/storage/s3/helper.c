@@ -9,6 +9,7 @@ S3 Storage Helper
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "storage/posix/storage.h"
 #include "storage/s3/helper.h"
 
 /**********************************************************************************************************************************/
