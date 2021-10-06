@@ -452,8 +452,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             path = strNewFmt("/%s%s", strZ(this->bucket), strZ(path));
 
         // If temp crendentials will be expiring soon then renew them
-        if ((this->keyType == storageS3KeyTypeAuto || this->keyType == storageS3KeyTypeService) &&
-            (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
+        if (this->credExpirationTime != 0 && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
         {
             // Free old credentials
             strFree(this->accessKey);
@@ -465,17 +464,22 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             httpHeaderAdd(credHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
             httpHeaderAdd(credHeader, HTTP_HEADER_HOST_STR, this->credHost);
 
-            // If auto authentication
-            if (this->keyType == storageS3KeyTypeAuto)
+            // Get credentials
+            switch (this->keyType)
             {
-                storageS3AuthAuto(this, credHeader);
-            }
-            // Else if service authentication
-            else
-            {
-                ASSERT(this->keyType == storageS3KeyTypeService);
+                // Auto authentication
+                case storageS3KeyTypeAuto:
+                    storageS3AuthAuto(this, credHeader);
+                    break;
 
-                storageS3AuthService(this, credHeader);
+                // Service authentication
+                default:
+                {
+                    ASSERT(this->keyType == storageS3KeyTypeService);
+
+                    storageS3AuthService(this, credHeader);
+                    break;
+                }
             }
 
             // Reset the signing key date so the signing key gets regenerated
@@ -1085,6 +1089,7 @@ storageS3New(
 
                 driver->credRole = strDup(credRole);
                 driver->credHost = S3_CREDENTIAL_HOST_STR;
+                driver->credExpirationTime = time(NULL);
                 driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout), timeout);
 
                 break;
@@ -1100,6 +1105,7 @@ storageS3New(
                 driver->credRole = strDup(credRole);
                 driver->webIdToken = strDup(webIdToken);
                 driver->credHost = S3_STS_HOST_STR;
+                driver->credExpirationTime = time(NULL);
                 driver->credHttpClient = httpClientNew(
                     tlsClientNew(
                         sckClientNew(driver->credHost, S3_STS_PORT, timeout), driver->credHost, timeout, true, caFile, caPath),
