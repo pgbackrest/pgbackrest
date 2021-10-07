@@ -8,7 +8,7 @@ old context and then back. Below is a simplified example:
     Variant *result = NULL;    <--- is created in the current memory context (referred to as "old context" below)
     MEM_CONTEXT_TEMP_BEGIN()   <--- begins a new temporary context
     {
-        String *resultStr = strNewN("myNewStr"); <--- creates a string in the temporary memory context
+        String *resultStr = strNewZN("myNewStr"); <--- creates a string in the temporary memory context
 
         MEM_CONTEXT_PRIOR_BEGIN() <--- switch to old context so creation of the variant from the string is in old context
         {

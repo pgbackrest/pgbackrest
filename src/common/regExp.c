@@ -164,7 +164,7 @@ regExpMatchStr(RegExp *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->matchPtr == NULL ? NULL : strNewN(regExpMatchPtr(this), regExpMatchSize(this)));
+    FUNCTION_TEST_RETURN(this->matchPtr == NULL ? NULL : strNewZN(regExpMatchPtr(this), regExpMatchSize(this)));
 }
 
 /**********************************************************************************************************************************/

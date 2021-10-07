@@ -225,7 +225,7 @@ strNewFmt(const char *format, ...)
 
 /**********************************************************************************************************************************/
 String *
-strNewN(const char *string, size_t size)
+strNewZN(const char *string, size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(CHARDATA, string);
@@ -739,7 +739,7 @@ strPath(const String *this)
         end--;
 
     FUNCTION_TEST_RETURN(
-        strNewN(
+        strNewZN(
             this->pub.buffer,
             end - this->pub.buffer <= 1 ? (size_t)(end - this->pub.buffer) : (size_t)(end - this->pub.buffer - 1)));
 }
@@ -918,7 +918,7 @@ strSubN(const String *this, size_t start, size_t size)
     ASSERT(start <= strSize(this));
     ASSERT(start + size <= strSize(this));
 
-    FUNCTION_TEST_RETURN(strNewN(strZ(this) + start, size));
+    FUNCTION_TEST_RETURN(strNewZN(strZ(this) + start, size));
 }
 
 /**********************************************************************************************************************************/

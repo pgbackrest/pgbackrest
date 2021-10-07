@@ -8,7 +8,7 @@ old context and then back. Below is a simplified example:
     String *result = NULL;     <--- is created in the current memory context  (referred to as "old context" below)
     MEM_CONTEXT_TEMP_BEGIN()   <--- begins a new temporary context
     {
-        String *resultStr = strNewN("myNewStr"); <--- creates a string in the temporary memory context
+        String *resultStr = strNewZN("myNewStr"); <--- creates a string in the temporary memory context
 
         MEM_CONTEXT_PRIOR_BEGIN() <--- switch to the old context so the duplication of the string is in that context
         {
@@ -55,6 +55,10 @@ String *strNew(void);
 // Create a new fixed length string from a zero-terminated string
 String *strNewZ(const char *const string);
 
+// Create a new fixed length string from a zero-terminated string with a specific length. The string may or may not be
+// zero-terminated but we'll use that nomenclature since we're not concerned about the end of the string.
+String *strNewZN(const char *string, size_t size);
+
 // Create a new fixed length string from a buffer. If the buffer has a NULL character this may not work as expected. All the data
 // will be copied but only the data before the NULL character will be used as a string.
 String *strNewBuf(const Buffer *buffer);
@@ -67,10 +71,6 @@ String *strNewEncode(EncodeType type, const Buffer *buffer);
 
 // Create a new fixed length string from a format string with parameters (i.e. sprintf)
 String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
-
-// Create a new fixed length string from a zero-terminated string with a specific length. The string may or may not be
-// zero-terminated but we'll use that nomenclature since we're not concerned about the end of the string.
-String *strNewN(const char *string, size_t size);
 
 // Create a new fixed length string from a string
 String *strDup(const String *this);

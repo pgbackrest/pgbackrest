@@ -136,7 +136,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
                     THROW_FMT(FormatError, "%s message must be > 0", strZ(statusFile));
 
                 // Get contents
-                code = varIntForce(VARSTR(strNewN(strZ(content), (size_t)(linefeedPtr - strZ(content)))));
+                code = varIntForce(VARSTR(strNewZN(strZ(content), (size_t)(linefeedPtr - strZ(content)))));
                 message = strTrim(strNewZ(linefeedPtr + 1));
             }
 

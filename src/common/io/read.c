@@ -315,7 +315,7 @@ ioReadLineParam(IoRead *this, bool allowEof)
                 size_t size = (size_t)(linefeed - outputPtr);
 
                 // Create the string
-                result = strNewN(outputPtr, size);
+                result = strNewZN(outputPtr, size);
                 this->outputPos += size + 1;
             }
         }
@@ -342,7 +342,7 @@ ioReadLineParam(IoRead *this, bool allowEof)
             if (ioReadEof(this))
             {
                 if (allowEof)
-                    result = strNewN((char *)bufPtr(this->output), bufUsed(this->output));
+                    result = strNewZN((char *)bufPtr(this->output), bufUsed(this->output));
                 else
                     THROW(FileReadError, "unexpected eof while reading line");
             }

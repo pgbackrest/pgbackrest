@@ -111,7 +111,7 @@ jsonToNumberInternal(const char *json, unsigned int *jsonPos)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Extract the numeric as a string
-        String *resultStr = strNewN(json + beginPos, *jsonPos - beginPos);
+        String *resultStr = strNewZN(json + beginPos, *jsonPos - beginPos);
 
         // Convert the string to a integer variant
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -300,7 +300,7 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
 
                         // Decode char
                         (*jsonPos) += 2;
-                        strCatChr(result, (char)cvtZToUIntBase(strZ(strNewN(json + *jsonPos, 2)), 16));
+                        strCatChr(result, (char)cvtZToUIntBase(strZ(strNewZN(json + *jsonPos, 2)), 16));
                         (*jsonPos) += 1;
 
                         break;

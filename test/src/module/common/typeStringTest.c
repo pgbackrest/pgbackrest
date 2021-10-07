@@ -52,7 +52,7 @@ testRun(void)
         TEST_RESULT_VOID(strFree(string), "free string");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(strNewN("testmorestring", 4), "test", "new string with size limit");
+        TEST_RESULT_STR_Z(strNewZN("testmorestring", 4), "test", "new string with size limit");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *buffer = bufNew(8);

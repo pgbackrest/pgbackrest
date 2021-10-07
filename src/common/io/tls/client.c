@@ -92,7 +92,7 @@ asn1ToStr(ASN1_STRING *nameAsn1)
         THROW(CryptoError, "TLS certificate name entry is missing");
 
     FUNCTION_TEST_RETURN(                                                                                           // {vm_covered}
-        strNewN(
+        strNewZN(
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
             (const char *)ASN1_STRING_data(nameAsn1),
 #else

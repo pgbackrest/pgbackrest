@@ -1214,7 +1214,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                 if (equalPtr)
                 {
-                    optionName = strNewN(arg, (size_t)(equalPtr - arg));
+                    optionName = strNewZN(arg, (size_t)(equalPtr - arg));
                     optionArg = strNewZ(equalPtr + 1);
                 }
                 else
@@ -1435,7 +1435,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                     // Get key and value
                     const String *key = strReplaceChr(
-                        strLower(strNewN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
+                        strLower(strNewZN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
                         '_', '-');
                     const String *value = STR(equalPtr + 1);
 
@@ -1944,7 +1944,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
 
-                                    kvPut(keyValue, VARSTR(strNewN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
+                                    kvPut(keyValue, VARSTR(strNewZN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
                                 }
 
                                 configOptionValue->value = value;

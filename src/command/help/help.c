@@ -67,7 +67,7 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
                     if (stringMatchLast != NULL)
                         stringMatch = stringMatchLast - strlen(delimiter);
 
-                    strLstAdd(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
+                    strLstAdd(this, strNewZN(stringBase, (size_t)(stringMatch - stringBase)));
                     stringBase = stringMatch + strlen(delimiter);
                     stringMatchLast = NULL;
                 }
@@ -79,7 +79,7 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
             {
                 if (stringMatchLast != NULL && strlen(stringBase) - strlen(delimiter) >= size)
                 {
-                    strLstAdd(this, strNewN(stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase)));
+                    strLstAdd(this, strNewZN(stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase)));
                     stringBase = stringMatchLast;
                 }
 
