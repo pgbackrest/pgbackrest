@@ -61,6 +61,8 @@ typedef struct
     uint64_t fileTotal;
 } StorageTestManifestNewBuild;
 
+STRING_STATIC(TEST_MANIFEST_PATH_USER_STR,                          "test");
+
 static StorageInfo
 storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
@@ -74,8 +76,8 @@ storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel 
         .mode = 0600,
         .userId = 100,
         .groupId = 100,
-        .user = STRDEF("test"),
-        .group = STRDEF("test"),
+        .user = TEST_MANIFEST_PATH_USER_STR,
+        .group = TEST_MANIFEST_PATH_USER_STR,
     };
 
     if (strEq(file, STRDEF("/pg")))
