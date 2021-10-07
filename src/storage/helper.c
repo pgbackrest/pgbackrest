@@ -11,12 +11,8 @@ Storage Helper
 #include "common/regExp.h"
 #include "config/config.h"
 #include "protocol/helper.h"
-#include "storage/azure/storage.h"
-#include "storage/cifs/storage.h"
-#include "storage/gcs/storage.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
-#include "storage/s3/storage.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -41,9 +37,11 @@ Error message when writable storage is requested in dry-run mode
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
-static struct StorageHelper
+static struct StorageHelperLocal
 {
     MemContext *memContext;                                         // Mem context for storage helper
+
+    const StorageHelper *helperList;                                // List of helpers to create storage
 
     Storage *storageLocal;                                          // Local read-only storage
     Storage *storageLocalWrite;                                     // Local write storage
@@ -65,7 +63,7 @@ static struct StorageHelper
 Create the storage helper memory context
 ***********************************************************************************************************************************/
 static void
-storageHelperInit(void)
+storageHelperContextInit(void)
 {
     FUNCTION_TEST_VOID();
 
@@ -81,6 +79,18 @@ storageHelperInit(void)
         }
         MEM_CONTEXT_END();
     }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void storageHelperInit(const StorageHelper *const helperList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, helperList);
+    FUNCTION_TEST_END();
+
+    storageHelper.helperList = helperList;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -130,7 +140,7 @@ storageLocal(void)
 
     if (storageHelper.storageLocal == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -149,7 +159,7 @@ storageLocalWrite(void)
 
     if (storageHelper.storageLocalWrite == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -200,7 +210,7 @@ storagePgIdx(unsigned int pgIdx)
 
     if (storageHelper.storagePg == NULL || storageHelper.storagePg[pgIdx] == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -235,7 +245,7 @@ storagePgIdxWrite(unsigned int pgIdx)
 
     if (storageHelper.storagePgWrite == NULL || storageHelper.storagePgWrite[pgIdx] == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
@@ -353,95 +363,28 @@ storageRepoGet(unsigned int repoIdx, bool write)
     // Use local storage
     else
     {
+        // Search for the helper
         const StringId type = cfgOptionIdxStrId(cfgOptRepoType, repoIdx);
 
-        switch (type)
+        if (storageHelper.helperList != NULL)
         {
-            // Use Azure storage
-            case STORAGE_AZURE_TYPE:
+            for (const StorageHelper *helper = storageHelper.helperList; helper->type != 0; helper++)
             {
-                const String *endpoint = cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx);
-                const String *const host = cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx);
-                StorageAzureUriStyle uriStyle = (StorageAzureUriStyle)cfgOptionIdxStrId(cfgOptRepoAzureUriStyle, repoIdx);
-
-                // If the host is set then set it as the endpoint. The host option is used to set path-style URIs when working with
-                // Azurite. This was ill-advised, so the uri-style option was added to allow the user to select the URI style used
-                // by the server. Preserve the old behavior when uri-style is defaulted.
-                if (host != NULL)
+                if (helper->type == type)
                 {
-                    endpoint = host;
-
-                    if (cfgOptionIdxSource(cfgOptRepoAzureUriStyle, repoIdx) == cfgSourceDefault)
-                        uriStyle = storageAzureUriStylePath;
+                    result = helper->helper(repoIdx, write, storageRepoPathExpression);
+                    break;
                 }
-
-                result = storageAzureNew(
-                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
-                    cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx),
-                    (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx),
-                    cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
-                    endpoint, uriStyle, cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx), ioTimeoutMs(),
-                    cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
-
-                break;
             }
+        }
 
-            // Use CIFS storage
-            case STORAGE_CIFS_TYPE:
-                result = storageCifsNew(
-                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
-                    storageRepoPathExpression);
-                break;
+        // If no helper was found it try Posix
+        if (result == NULL)
+        {
+            CHECK(type == STORAGE_POSIX_TYPE);
 
-            // Use GCS storage
-            case STORAGE_GCS_TYPE:
-                result = storageGcsNew(
-                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
-                    cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx),
-                    (StorageGcsKeyType)cfgOptionIdxStrId(cfgOptRepoGcsKeyType, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoGcsKey, repoIdx), STORAGE_GCS_CHUNKSIZE_DEFAULT,
-                    cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), ioTimeoutMs(),
-                    cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
-                break;
-
-            // Use S3 storage
-            case STORAGE_S3_TYPE:
-            {
-                // Set the default port
-                unsigned int port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
-
-                // Extract port from the endpoint and host if it is present
-                const String *const endPoint = cfgOptionIdxHostPort(cfgOptRepoS3Endpoint, repoIdx, &port);
-                const String *const host = cfgOptionIdxHostPort(cfgOptRepoStorageHost, repoIdx, &port);
-
-                // If the port option was set explicitly then use it in preference to appended ports
-                if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
-                    port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
-
-                result = storageS3New(
-                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
-                    cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
-                    (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
-                    cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
-                    STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
-
-                break;
-            }
-
-            // Use Posix storage. Keep this as the default to prevent code churn.
-            default:
-            {
-                CHECK(type == STORAGE_POSIX_TYPE);
-
-                result = storagePosixNewP(
-                    cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression);
-                break;
-            }
+            result = storagePosixNewP(
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression);
         }
     }
 
@@ -458,7 +401,7 @@ storageRepoIdx(unsigned int repoIdx)
 
     if (storageHelper.storageRepo == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
         storageHelperStanzaInit(false);
         storageHelperRepoInit();
 
@@ -501,7 +444,7 @@ storageRepoIdxWrite(unsigned int repoIdx)
 
     if (storageHelper.storageRepoWrite == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
         storageHelperStanzaInit(false);
         storageHelperRepoInit();
 
@@ -582,7 +525,7 @@ storageSpool(void)
 
     if (storageHelper.storageSpool == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
         storageHelperStanzaInit(true);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
@@ -607,7 +550,7 @@ storageSpoolWrite(void)
 
     if (storageHelper.storageSpoolWrite == NULL)
     {
-        storageHelperInit();
+        storageHelperContextInit();
         storageHelperStanzaInit(true);
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
@@ -630,7 +573,7 @@ storageHelperFree(void)
     if (storageHelper.memContext != NULL)
         memContextFree(storageHelper.memContext);
 
-    storageHelper = (struct StorageHelper){.memContext = NULL};
+    storageHelper = (struct StorageHelperLocal){.memContext = NULL, .helperList = storageHelper.helperList};
 
     FUNCTION_TEST_RETURN_VOID();
 }

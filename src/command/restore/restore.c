@@ -545,12 +545,49 @@ restoreManifestMap(Manifest *manifest)
                 if (manifestTargetFindDefault(manifest, manifestName, NULL) != NULL)
                     target = *manifestTargetFind(manifest, manifestName);
 
-                // Error if the target was not found
-                if (target.name == NULL)
-                    THROW_FMT(LinkMapError, "unable to remap invalid link '%s'", strZ(link));
+                // If the target was not found then check if the link is a valid file or path
+                bool create = false;
 
-                // Update target to new path
-                target.path = linkPath;
+                if (target.name == NULL)
+                {
+                    // Is the specified link a file or a path? Error if they both match.
+                    const ManifestPath *const path = manifestPathFindDefault(manifest, manifestName, NULL);
+                    const ManifestFile *const file = manifestFileFindDefault(manifest, manifestName, NULL);
+
+                    CHECK(path == NULL || file == NULL);
+
+                    target = (ManifestTarget){.name = manifestName, .path = linkPath, .type = manifestTargetTypeLink};
+
+                    // If a file
+                    if (file != NULL)
+                    {
+                        // File needs to be set so the file/path is updated later but set it to something invalid just in case it
+                        // it does not get updated due to a regression
+                        target.file = DOT_STR;
+                    }
+                    // Else error if not a path
+                    else if (path == NULL)
+                    {
+                        THROW_FMT(
+                            LinkMapError,
+                            "unable to map link '%s'\n"
+                            "HINT: Does the link reference a valid backup path or file?",
+                            strZ(link));
+                    }
+
+                    // Add the link. Copy user/group from the base data directory.
+                    const ManifestPath *const pathBase = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+
+                    manifestLinkAdd(
+                        manifest,
+                        &(ManifestLink){
+                            .name = manifestName, .destination = linkPath, .group = pathBase->group, .user = pathBase->user});
+
+                    create = true;
+                }
+                // Else update target to new path
+                else
+                    target.path = linkPath;
 
                 // The target must be a link since pg_data/ was prepended and pgdata is the only allowed path
                 CHECK(target.type == manifestTargetTypeLink);
@@ -565,10 +602,11 @@ restoreManifestMap(Manifest *manifest)
                         strZ(link));
                 }
 
-                LOG_INFO_FMT("map link '%s' to '%s'", strZ(link), strZ(target.path));
+                LOG_INFO_FMT("%slink '%s' to '%s'", create ? "" : "map ", strZ(link), strZ(target.path));
 
-                // Update link with new destination
-                manifestLinkUpdate(manifest, target.name, target.path);
+                // If the link was not created update to the new destination
+                if (!create)
+                    manifestLinkUpdate(manifest, target.name, target.path);
 
                 // If the link is a file separate the file name from the path
                 if (target.file != NULL)
@@ -586,8 +624,11 @@ restoreManifestMap(Manifest *manifest)
                     target.path = strPath(target.path);
                 }
 
-                // Update target with new path/file
-                manifestTargetUpdate(manifest, target.name, target.path, target.file);
+                // Create a new target or update the existing target file/path
+                if (create)
+                    manifestTargetAdd(manifest, &target);
+                else
+                    manifestTargetUpdate(manifest, target.name, target.path, target.file);
             }
         }
 

@@ -235,6 +235,21 @@ typedef void StorageInterfacePathSync(void *thisVoid, const String *path, Storag
     STORAGE_COMMON_INTERFACE(thisVoid).pathSync(thisVoid, path, (StorageInterfacePathSyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 /***********************************************************************************************************************************
+Storage type and helper function struct
+
+An array of this struct must be passed to storageHelperInit() to enable storage drivers other than built-in Posix.
+***********************************************************************************************************************************/
+typedef Storage *(*StorageHelperFunction)(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
+
+typedef struct StorageHelper
+{
+    StringId type;                                                  // StringId that identifies the storage driver
+    StorageHelperFunction helper;                                   // Function that creates the storage
+} StorageHelper;
+
+#define STORAGE_END_HELPER                                          {.type = 0}
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageInterface

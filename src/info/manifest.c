@@ -262,7 +262,7 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-static void
+void
 manifestLinkAdd(Manifest *this, const ManifestLink *link)
 {
     FUNCTION_TEST_BEGIN();
@@ -321,7 +321,7 @@ manifestPathAdd(Manifest *this, const ManifestPath *path)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-static void
+void
 manifestTargetAdd(Manifest *this, const ManifestTarget *target)
 {
     FUNCTION_TEST_BEGIN();

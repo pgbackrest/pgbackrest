@@ -5,6 +5,7 @@ Test S3 Storage
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "storage/helper.h"
 #include "version.h"
 
 #include "common/harnessConfig.h"
@@ -149,10 +150,6 @@ testResponse(IoWrite *write, TestResponseParam param)
         case 200:
             strCatZ(response, "OK");
             break;
-
-        case 403:
-            strCatZ(response, "Forbidden");
-            break;
     }
 
     // End header
@@ -204,6 +201,10 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Set storage helper
+    static const StorageHelper storageHelperList[] = {STORAGE_S3_HELPER, STORAGE_END_HELPER};
+    storageHelperInit(storageHelperList);
 
     // Test strings
     const String *path = STRDEF("/");
