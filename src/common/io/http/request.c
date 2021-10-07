@@ -96,7 +96,8 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 
                         // Format the request and user agent
                         String *requestStr =
-                            strNewFmt(
+                            strCatFmt(
+                                strNew(),
                                 "%s %s%s%s " HTTP_VERSION CRLF_Z HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION CRLF_Z,
                                 strZ(httpRequestVerb(this)), strZ(httpRequestPath(this)), httpRequestQuery(this) == NULL ? "" : "?",
                                 httpRequestQuery(this) == NULL ? "" : strZ(httpQueryRenderP(httpRequestQuery(this))));
@@ -242,7 +243,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     ASSERT(response != NULL);
 
     // Error code
-    String *error = strNewFmt("HTTP request failed with %u", httpResponseCode(response));
+    String *error = strCatFmt(strNew(), "HTTP request failed with %u", httpResponseCode(response));
 
     // Add reason when present
     if (strSize(httpResponseReason(response)) > 0)

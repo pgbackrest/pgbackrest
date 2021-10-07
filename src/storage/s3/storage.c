@@ -174,8 +174,8 @@ storageS3Auth(
         const StringList *headerList = strLstSort(strLstDup(httpHeaderList(httpHeader)), sortOrderAsc);
         String *signedHeaders = NULL;
 
-        String *canonicalRequest = strNewFmt(
-            "%s\n%s\n%s\n", strZ(verb), strZ(path), query == NULL ? "" : strZ(httpQueryRenderP(query)));
+        String *canonicalRequest = strCatFmt(
+            strNew(), "%s\n%s\n%s\n", strZ(verb), strZ(path), query == NULL ? "" : strZ(httpQueryRenderP(query)));
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
         {
@@ -189,7 +189,7 @@ storageS3Auth(
             strCatFmt(canonicalRequest, "%s:%s\n", strZ(headerKeyLower), strZ(httpHeaderGet(httpHeader, headerKey)));
 
             if (signedHeaders == NULL)
-                signedHeaders = strDup(headerKeyLower);
+                signedHeaders = strCat(strNew(), headerKeyLower);
             else
                 strCatFmt(signedHeaders, ";%s", strZ(headerKeyLower));
         }

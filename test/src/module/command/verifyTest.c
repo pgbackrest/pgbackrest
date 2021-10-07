@@ -876,7 +876,7 @@ testRun(void)
         TEST_TITLE("encrypted/compressed file in backup");
 
         // Create a compressed encrypted repo file in backup
-        filePathName = strNewZ(STORAGE_REPO_BACKUP "/testfile");
+        filePathName = strCatZ(strNew(), STORAGE_REPO_BACKUP "/testfile");
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), strZ(filePathName), fileContents, .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc,
             .cipherPass = "pass");

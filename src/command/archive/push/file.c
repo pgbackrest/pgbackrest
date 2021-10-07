@@ -140,7 +140,7 @@ archivePushFile(
         }
 
         // Set archive destination initially to the archive file, this will be updated later for wal segments
-        String *archiveDestination = strDup(archiveFile);
+        String *archiveDestination = strCat(strNew(), archiveFile);
 
         // Assume that all repos need a copy of the archive file
         bool destinationCopyAny = true;

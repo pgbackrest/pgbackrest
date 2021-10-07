@@ -1069,7 +1069,7 @@ formatTextDb(
         }
     }
 
-    String *resultCurrent = strNewZ("\n    db (current)");
+    String *resultCurrent = strCatZ(strNew(), "\n    db (current)");
     bool displayCurrent = false;
 
     for (unsigned int dbGrpIdx = backupDbGrpIdxMin; dbGrpIdx < backupDbGrpIdxMax; dbGrpIdx++)

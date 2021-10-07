@@ -38,7 +38,8 @@ bldDefineRender(const String *const define, const String *const value)
 __attribute__((always_inline)) static inline String *
 bldHeader(const char *const module, const char *const description)
 {
-    return strNewFmt(
+    return strCatFmt(
+        strNew(),
         COMMENT_BLOCK_BEGIN "\n"
         "%s\n"
         "\n"

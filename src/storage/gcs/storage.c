@@ -168,7 +168,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     FUNCTION_TEST_END();
 
     // Static header with dot delimiter
-    String *result = strNewZ("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
+    String *result = strCatZ(strNew(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -382,7 +382,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Generate path
-        String *path = strNewFmt("%s/storage/v1/b", param.upload ? "/upload" : "");
+        String *path = strCatFmt(strNew(), "%s/storage/v1/b", param.upload ? "/upload" : "");
 
         if (!param.noBucket)
             strCatFmt(path, "/%s/o", strZ(this->bucket));

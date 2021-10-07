@@ -808,18 +808,35 @@ varNewStr(const String *data)
         FUNCTION_TEST_PARAM(STRING, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantString *this = memNew(sizeof(VariantString));
+    // Allocate memory for the variant
+    VariantString *this = memNew(sizeof(VariantString) + (data != NULL ? sizeof(StringPub) + strSize(data) + 1 : 0));
 
     *this = (VariantString)
     {
         .pub =
         {
             .type = varTypeString,
-            .data = strDup(data),
         },
         .memContext = memContextCurrent(),
     };
+
+    if (data != NULL)
+    {
+        // Point the String after the VariantString struct
+        StringPub *const pubData = (StringPub *)(this + 1);
+        this->pub.data = (String *)pubData;
+
+        // Assign the string size and buffer (after StringPub struct)
+        *pubData = (StringPub)
+        {
+            .size = (unsigned int)strSize(data),
+            .buffer = (char *)(pubData + 1),
+        };
+
+        // Assign the string
+        strncpy(pubData->buffer, strZ(data), strSize(data));
+        pubData->buffer[strSize(data)] = '\0';
+    }
 
     FUNCTION_TEST_RETURN((Variant *)this);
 }
@@ -831,7 +848,7 @@ varNewStrZ(const char *data)
         FUNCTION_TEST_PARAM(STRINGZ, data);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(varNewStr(data == NULL ? NULL : strNewZ(data)));
+    FUNCTION_TEST_RETURN(varNewStr(data == NULL ? NULL : STR(data)));
 }
 
 /**********************************************************************************************************************************/
@@ -1031,7 +1048,6 @@ varFree(Variant *this)
 
             case varTypeString:
                 memContext = ((VariantString *)this)->memContext;
-                strFree(((VariantString *)this)->pub.data);
                 break;
 
             case varTypeUInt:

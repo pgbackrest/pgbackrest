@@ -209,7 +209,7 @@ protocolServerProcess(
                                 if (errType == NULL)
                                 {
                                     errType = errorType();
-                                    errMessage = strNewZ(errorMessage());
+                                    errMessage = strCatZ(strNew(), errorMessage());
                                     errMessageFirst = strNewZ(errorMessage());
                                     errStackTrace = strNewZ(errorStackTrace());
                                 }

@@ -51,7 +51,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     }
 
     // Add request
-    String *request = strNewFmt("%s %s HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n", verb, path);
+    String *request = strCatFmt(strNew(), "%s %s HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n", verb, path);
 
     // Add authorization header when s3 service
     if (s3 != NULL)
@@ -142,7 +142,7 @@ testResponse(IoWrite *write, TestResponseParam param)
     param.code = param.code == 0 ? 200 : param.code;
 
     // Output header and code
-    String *response = strNewFmt("HTTP/%s %u ", param.http == NULL ? "1.1" : param.http, param.code);
+    String *response = strCatFmt(strNew(), "HTTP/%s %u ", param.http == NULL ? "1.1" : param.http, param.code);
 
     // Add reason for some codes
     switch (param.code)

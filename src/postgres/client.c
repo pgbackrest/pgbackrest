@@ -101,7 +101,7 @@ pgClientEscape(const String *string)
 
     ASSERT(string != NULL);
 
-    String *result = strNewZ("'");
+    String *result = strCatZ(strNew(), "'");
 
     // Iterate all characters in the string
     for (unsigned stringIdx = 0; stringIdx < strSize(string); stringIdx++)
@@ -134,7 +134,7 @@ pgClientOpen(PgClient *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Base connection string
-        String *connInfo = strNewFmt("dbname=%s port=%u", strZ(pgClientEscape(this->database)), this->port);
+        String *connInfo = strCatFmt(strNew(), "dbname=%s port=%u", strZ(pgClientEscape(this->database)), this->port);
 
         // Add user if specified
         if (this->user != NULL)

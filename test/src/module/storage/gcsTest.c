@@ -82,7 +82,8 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, const char *verb, TestRequestParam param)
 {
-    String *request = strNewFmt("%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
+    String *request = strCatFmt(
+        strNew(), "%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
 
     // Add object
     if (param.object != NULL)
@@ -140,7 +141,7 @@ testResponse(IoWrite *write, TestResponseParam param)
     param.code = param.code == 0 ? 200 : param.code;
 
     // Output header and code
-    String *response = strNewFmt("HTTP/1.1 %u ", param.code);
+    String *response = strCatFmt(strNew(), "HTTP/1.1 %u ", param.code);
 
     // Add reason for some codes
     switch (param.code)
@@ -335,7 +336,8 @@ testRun(void)
                 const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
                 const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storageDriver(storage)), time(NULL));
 
-                String *const authRequest = strNewFmt(
+                String *const authRequest = strCatFmt(
+                    strNew(),
                     "POST /token HTTP/1.1\r\n"
                     "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
                     "content-length:%zu\r\n"

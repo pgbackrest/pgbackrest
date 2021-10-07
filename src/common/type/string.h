@@ -41,31 +41,38 @@ typedef struct String String;
 
 /***********************************************************************************************************************************
 Constructors
+
+Only strings created with strNew() can use strCat*() functions. If a string needs to be concatenated then start with, .e.g.:
+
+String *example = strCatZ(strNew(), "example");
+
+This syntax signals that the string will be modified so the string is allocated separately from the object so it can be resized when
+needed. Most strings never need to be modified and can be stored more efficiently by allocating their memory with the object.
 ***********************************************************************************************************************************/
-// Create a new empty string
+// Create a new empty string for concatenation
 String *strNew(void);
 
-// Create a new string from a zero-terminated string
+// Create a new fixed length string from a zero-terminated string
 String *strNewZ(const char *const string);
 
-// Create a new string from a buffer. If the buffer has a NULL character this may not work as expected. All the data will be copied
-// but only the data before the NULL character will be used as a string.
+// Create a new fixed length string from a buffer. If the buffer has a NULL character this may not work as expected. All the data
+// will be copied but only the data before the NULL character will be used as a string.
 String *strNewBuf(const Buffer *buffer);
 
-// Create a new string by converting the double value
+// Create a new fixed length string by converting the double value
 String *strNewDbl(double value);
 
-// Create a new string encoded with the specified type (e.g. encodeBase64) from a buffer
+// Create a new fixed length string encoded with the specified type (e.g. encodeBase64) from a buffer
 String *strNewEncode(EncodeType type, const Buffer *buffer);
 
-// Create a new string from a format string with parameters (i.e. sprintf)
+// Create a new fixed length string from a format string with parameters (i.e. sprintf)
 String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
-// Create a new string from a string with a specific length. The string may or may not be zero-terminated but we'll use that
-// nomenclature since we're not concerned about the end of the string.
+// Create a new fixed length string from a zero-terminated string with a specific length. The string may or may not be
+// zero-terminated but we'll use that nomenclature since we're not concerned about the end of the string.
 String *strNewN(const char *string, size_t size);
 
-// Duplicate a string
+// Create a new fixed length string from a string
 String *strDup(const String *this);
 
 /***********************************************************************************************************************************
@@ -110,6 +117,9 @@ bool strBeginsWithZ(const String *this, const char *beginsWith);
 String *strCat(String *this, const String *cat);
 String *strCatZ(String *this, const char *cat);
 
+// Append a buffer
+String *strCatBuf(String *this, const Buffer *buffer);
+
 // Append a character
 String *strCatChr(String *this, char cat);
 
@@ -122,6 +132,13 @@ String *strCatFmt(String *this, const char *format, ...) __attribute__((format(p
 // Append N characters from a zero-terminated string. Note that the string does not actually need to be zero-terminated as long as
 // N is <= the end of the string being concatenated.
 String *strCatZN(String *this, const char *cat, size_t size);
+
+__attribute__((always_inline)) static inline String *
+strCatN(String *this, const String *const cat, const size_t size)
+{
+    ASSERT_INLINE(cat != NULL);
+    return strCatZN(this, strZ(cat), size);
+}
 
 // Return the index to the location of the first occurrence of a character within a string, else -1
 int strChr(const String *this, char chr);

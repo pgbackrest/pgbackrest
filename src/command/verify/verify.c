@@ -227,7 +227,7 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
         CATCH_ANY()
         {
             result.errorCode = errorCode();
-            String *errorMsg = strNewZ(errorMessage());
+            String *errorMsg = strCatZ(strNew(), errorMessage());
 
             if (result.errorCode == errorTypeCode(&ChecksumError))
                 strCat(errorMsg, strNewFmt(" %s", strZ(pathFileName)));
@@ -1252,7 +1252,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
     ASSERT(archiveIdResultList != NULL);
     ASSERT(backupResultList != NULL);
 
-    String *result = strNewZ("Results:");
+    String *result = strCatZ(strNew(), "Results:");
 
     // Render archive results
     if (lstEmpty(archiveIdResultList))

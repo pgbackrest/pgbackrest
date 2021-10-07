@@ -515,7 +515,7 @@ cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole c
         FUNCTION_TEST_PARAM(STRING, separator);
     FUNCTION_TEST_END();
 
-    String *result = strNewZ(cfgParseCommandName(commandId));
+    String *result = strCatZ(strNew(), cfgParseCommandName(commandId));
 
     if (commandRoleId != cfgCmdRoleMain)
         strCatFmt(result, "%s%s", strZ(separator), strZ(cfgParseCommandRoleStr(commandRoleId)));
@@ -1097,14 +1097,14 @@ cfgFileLoad(                                                        // NOTE: Pas
 
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
-            result = strNewBuf(buffer);
+            result = strCatBuf(strNew(), buffer);
         else if (strEq(configFileName, optConfigDefaultCurrent))
         {
             // If config is current default and it was not found, attempt to load the config file from the old default location
             buffer = storageGetP(storageNewReadP(storage, origConfigDefault, .ignoreMissing = !configRequired));
 
             if (buffer != NULL)
-                result = strNewBuf(buffer);
+                result = strCatBuf(strNew(), buffer);
         }
     }
 

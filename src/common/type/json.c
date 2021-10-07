@@ -787,7 +787,7 @@ jsonFromKvInternal(const KeyValue *kv)
 
     ASSERT(kv != NULL);
 
-    String *result = strNewZ("{");
+    String *result = strCatZ(strNew(), "{");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

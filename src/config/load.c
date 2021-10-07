@@ -333,7 +333,8 @@ cfgLoadLogFile(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Construct log filename prefix
-            String *logFile = strNewFmt(
+            String *logFile = strCatFmt(
+                strNew(),
                 "%s/%s-%s", strZ(cfgOptionStr(cfgOptLogPath)),
                 cfgOptionTest(cfgOptStanza) ? strZ(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName());
 
