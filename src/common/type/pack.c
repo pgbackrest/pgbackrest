@@ -702,6 +702,7 @@ pckReadNext(PackRead *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->tagNextId == 0);
 
     FUNCTION_TEST_RETURN(pckReadTagNext(this));
 }
