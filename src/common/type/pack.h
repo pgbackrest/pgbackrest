@@ -266,7 +266,7 @@ typedef struct PckReadModeParam
     mode_t defaultValue;
 } PckReadModeParam;
 
-#define pckReadModeP(this, ...)                                                                                                     \
+#define pckReadModeP(this, ...)                                                                                                    \
     pckReadMode(this, (PckReadModeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 mode_t pckReadMode(PackRead *this, PckReadModeParam param);
@@ -296,13 +296,13 @@ typedef struct PckReadPackParam
     unsigned int id;
 } PckReadPackParam;
 
-#define pckReadPackReadP(this, ...)                                                                                                    \
+#define pckReadPackReadP(this, ...)                                                                                                \
     pckReadPackRead(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackRead *pckReadPackRead(PackRead *this, PckReadPackParam param);
 
 // Read pack buffer
-#define pckReadPackP(this, ...)                                                                                                 \
+#define pckReadPackP(this, ...)                                                                                                    \
     pckReadPack(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 Pack *pckReadPack(PackRead *this, PckReadPackParam param);
@@ -504,7 +504,7 @@ typedef struct PckWriteModeParam
     mode_t defaultValue;
 } PckWriteModeParam;
 
-#define pckWriteModeP(this, value, ...)                                                                                             \
+#define pckWriteModeP(this, value, ...)                                                                                            \
     pckWriteMode(this, value, (PckWriteModeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param);
