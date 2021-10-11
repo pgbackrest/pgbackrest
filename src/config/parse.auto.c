@@ -6053,7 +6053,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("set"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
-        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
@@ -6068,17 +6068,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdExpire),
-
-                PARSE_RULE_OPTION_OPTIONAL_REQUIRED(false),
-            )
-
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
                 PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdInfo),
 
                 PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptStanza),
-                PARSE_RULE_OPTION_OPTIONAL_REQUIRED(false),
             )
 
             PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
@@ -6086,13 +6078,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdRestore),
 
                 PARSE_RULE_OPTION_OPTIONAL_DEFAULT("latest"),
-            )
-
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdVerify),
-
-                PARSE_RULE_OPTION_OPTIONAL_REQUIRED(false),
+                PARSE_RULE_OPTION_OPTIONAL_REQUIRED(true),
             )
         ),
     ),

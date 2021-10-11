@@ -309,18 +309,17 @@ option:
 
   set:
     type: string
+    required: false
     command:
-      expire:
-        required: false
+      expire: {}
       info:
         depend:
           option: stanza
-        required: false
       restore:
         default: latest
+        required: true
       verify:
         internal: true
-        required: false
     command-role:
       main: {}
 
