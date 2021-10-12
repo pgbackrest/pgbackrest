@@ -293,17 +293,13 @@ option:
 
   output:
     type: string
+    default: text
     command:
-      info:
-        default: text
-        allow-list:
-          - text
-          - json
-      repo-ls:
-        default: text
-        allow-list:
-          - text
-          - json
+      info: {}
+      repo-ls: {}
+    allow-list:
+      - text
+      - json
     command-role:
       main: {}
 

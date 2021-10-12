@@ -2289,31 +2289,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST
             (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdInfo),
+                "text",
+                "json"
+            ),
 
-                PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST
-                (
-                    "text",
-                    "json"
-                ),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("text"),
-            )
-
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdRepoLs),
-
-                PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST
-                (
-                    "text",
-                    "json"
-                ),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("text"),
-            )
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("text"),
         ),
     ),
 
