@@ -356,65 +356,65 @@ option:
   target:
     type: string
     command:
-      restore:
-        depend:
-          option: type
-          list:
-            - lsn
-            - name
-            - time
-            - xid
+      restore: {}
+    depend:
+      option: type
+      list:
+        - lsn
+        - name
+        - time
+        - xid
     command-role:
       main: {}
 
   target-action:
     type: string
+    default: pause
     command:
-      restore:
-        allow-list:
-          - pause
-          - promote
-          - shutdown
-        default: pause
-        depend:
-          option: type
-          list:
-            - immediate
-            - lsn
-            - name
-            - time
-            - xid
+      restore: {}
+    allow-list:
+      - pause
+      - promote
+      - shutdown
+    depend:
+      option: type
+      list:
+        - immediate
+        - lsn
+        - name
+        - time
+        - xid
     command-role:
       main: {}
 
   target-exclusive:
     type: boolean
+    default: false
     command:
-      restore:
-        default: false
-        depend:
-          option: type
-          list:
-            - lsn
-            - time
-            - xid
+      restore: {}
+    depend:
+      option: type
+      list:
+        - lsn
+        - time
+        - xid
     command-role:
       main: {}
 
   target-timeline:
     type: string
+    required: false
     command:
-      restore:
-        required: false
-        depend:
-          option: type
-          list:
-            - default
-            - lsn
-            - name
-            - standby
-            - time
-            - xid
+      restore: {}
+    depend:
+      option: type
+      list:
+        - default
+        - lsn
+        - name
+        - standby
+        - time
+        - xid
     command-role:
       main: {}
 

@@ -6378,19 +6378,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
             (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdRestore),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-                (
-                    cfgOptType,
-                    "lsn",
-                    "name",
-                    "time",
-                    "xid"
-                ),
-            )
+                cfgOptType,
+                "lsn",
+                "name",
+                "time",
+                "xid"
+            ),
         ),
     ),
 
@@ -6409,29 +6404,24 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST
             (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdRestore),
+                "pause",
+                "promote",
+                "shutdown"
+            ),
 
-                PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST
-                (
-                    "pause",
-                    "promote",
-                    "shutdown"
-                ),
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgOptType,
+                "immediate",
+                "lsn",
+                "name",
+                "time",
+                "xid"
+            ),
 
-                PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-                (
-                    cfgOptType,
-                    "immediate",
-                    "lsn",
-                    "name",
-                    "time",
-                    "xid"
-                ),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("pause"),
-            )
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("pause"),
         ),
     ),
 
@@ -6450,20 +6440,15 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
             (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdRestore),
+                cfgOptType,
+                "lsn",
+                "time",
+                "xid"
+            ),
 
-                PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-                (
-                    cfgOptType,
-                    "lsn",
-                    "time",
-                    "xid"
-                ),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
-            )
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
         ),
     ),
 
@@ -6472,7 +6457,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (
         PARSE_RULE_OPTION_NAME("target-timeline"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
-        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
@@ -6482,23 +6467,16 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
             (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdRestore),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-                (
-                    cfgOptType,
-                    "default",
-                    "lsn",
-                    "name",
-                    "standby",
-                    "time",
-                    "xid"
-                ),
-
-                PARSE_RULE_OPTION_OPTIONAL_REQUIRED(false),
-            )
+                cfgOptType,
+                "default",
+                "lsn",
+                "name",
+                "standby",
+                "time",
+                "xid"
+            ),
         ),
     ),
 
