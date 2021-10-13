@@ -570,7 +570,7 @@ To add an option, two files need be to be modified:
 
 - `src/build/config/config.yaml`
 
-- `src/build/config/help.xml`
+- `src/build/help/help.xml`
 
 These files are discussed in the following sections along with how to verify the `help` command output.
 
@@ -601,15 +601,11 @@ Note that `section:` is not present thereby making this a command-line only opti
 
 - `type` - the type of the option. Valid values for types are: `boolean`, `hash`, `integer`, `list`, `path`, `size`, `string`, and `time`
 
-
 - `command` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are `backup` and `restore`.
-
 
 - `backup` - details the requirements for the `--set` option for the `backup` command. It is dependent on the option `--stanza`, meaning it is only allowed to be specified for the `backup` command if the `--stanza` option has been specified. And `required: false` indicates that the `--set` option is never required, even with the dependency.
 
-
 - `restore` - details the requirements for the `--set` option for the `restore` command. Since `required:` is omitted, it is not required to be set by the user but it is required by the command and will default to `latest` if it has not been specified by the user.
-
 
 - `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
 
@@ -633,27 +629,19 @@ repo-test-type:
 
 - `repo-test-type` - the name of the option
 
-
 - `section` - the section of the configuration file where this option is valid (omitted for command line only options, see [Example 1](#example-1-hypothetical-command-line-only-option) above)
-
 
 - `type` - the type of the option. Valid values for types are: `boolean`, `hash`, `integer`, `list`, `path`, `size`, `string`, and `time`
 
-
 - `group` - indicates that this option is part of the `repo` group of indexed options and therefore will follow the indexing rules e.g. `repo1-test-type`.
-
 
 - `default` - sets a default for the option if the option is not provided when the command is run. The default can be global (as it is here) or it can be specified for a specific command in the command section (as in [Example 1](#example-1-hypothetical-command-line-only-option) above).
 
-
 - `allow-list` - lists the allowable values for the option for all commands for which the option is valid.
-
 
 - `command` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are `backup` and `restore`.
 
-
 - `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
-
 
 At compile time, the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
@@ -710,30 +698,22 @@ Before submitting a Pull Request:
 
 - Does it meet the [coding standards](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md)?
 
-
 - Have [Unit Tests](#writing-a-unit-test) been written and [run](#running-a-unit-test) with 100% coverage?
-
 
 - If your submission includes changes to the help or online documentation, have the [help](#testing-the-help) and [documentation](#testing-the-documentation) tests been run?
 
-
 - Has it passed continuous integration testing? Simply renaming your branch with the appendix `-cig` and pushing it to your GitHub account will initiate GitHub Actions to run CI tests.
-
 
 When submitting a Pull Request:
 
 - Provide a short submission title.
 
-
 - Write a detailed comment to describe the purpose of your submission and any issue(s), if any, it is resolving; a link to the GitHub issue is also helpful.
-
 
 After submitting a Pull Request:
 
 - One or more reviewers will be assigned.
 
-
 - Respond to any issues (conversations) in GitHub but do not resolve the conversation; the reviewer is responsible for ensuring the issue raised has been resolved and marking the conversation resolved. It is helpful to supply the commit in your reply if one was submitted to fix the issue.
-
 
 Lastly, thank you for contributing to pgBackRest!
