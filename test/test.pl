@@ -531,7 +531,7 @@ eval
             &log(INFO, "autogenerate code");
 
             # Build code
-            executeTest("make -C ${strBuildPath} build-config build-error build-help");
+            executeTest("CFLAGS='-Wfatal-errors -g' make -C ${strBuildPath} build-config build-error build-help");
 
             if ($bGenOnly)
             {
