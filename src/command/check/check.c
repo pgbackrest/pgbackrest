@@ -56,7 +56,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
         // If primary was not found (only have 1 pg configured locally, and we want to still run because this is a standby)
         if (dbGroup.primary == NULL)
         {
-            // If any repo is local or more than one pg-path is found then a master should have been found so error
+            // If any repo is local or more than one pg-path is found then a primary should have been found so error
             bool error = pgPathDefinedTotal > 1;
             unsigned int repoIdx = 0;
 

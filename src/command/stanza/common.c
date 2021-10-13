@@ -46,16 +46,16 @@ pgValidate(void)
     {
         if (cfgOptionBool(cfgOptOnline))
         {
-            // Check the connections of the master (and standby, if any) and return the master database object.
+            // Check the primary connections (and standby, if any) and return the primary database object.
             DbGetResult dbObject = dbGet(false, true, false);
 
-            // Get the pgControl information from the pg*-path deemed to be the master
+            // Get the pgControl information from the pg*-path deemed to be the primary
             result = pgControlFromFile(storagePgIdx(dbObject.primaryIdx));
 
             // Check the user configured path and version against the database
             checkDbConfig(result.version, dbObject.primaryIdx, dbObject.primary, false);
         }
-        // If the database is not online, assume that pg1 is the master
+        // If the database is not online, assume that pg1 is the primary
         else
             result = pgControlFromFile(storagePg());
     }
