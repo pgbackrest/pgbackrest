@@ -7,12 +7,12 @@
         <!-- Variables used by the rest of the script -->
         <variable key="github-url-root">https://github.com</variable>
         <variable key="github-url-base">{[github-url-root]}/pgbackrest/pgbackrest</variable>
-        <variable key="github-url-master">{[github-url-base]}/blob/master</variable>
+        <variable key="github-url-main">{[github-url-base]}/blob/main</variable>
         <variable key="github-url-issues">{[github-url-base]}/issues</variable>
         <variable key="github-url-release">{[github-url-base]}/archive/release</variable>
-        <variable key="github-url-license">{[github-url-master]}/LICENSE</variable>
+        <variable key="github-url-license">{[github-url-main]}/LICENSE</variable>
         <variable key="github-url-projects">{[github-url-base]}/projects</variable>
-        <variable key="github-url-contributing">{[github-url-master]}/CONTRIBUTING.md</variable>
+        <variable key="github-url-contributing">{[github-url-main]}/CONTRIBUTING.md</variable>
 
         <variable key="backrest-url-base">http://www.pgbackrest.org</variable>
         <variable key="backrest-page-user-guide-index">user-guide-index</variable>

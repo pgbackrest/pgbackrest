@@ -15,9 +15,9 @@
         <variable key="host-contrib-user">{[host-user]}</variable>
         <variable key="host-contrib-image">pgbackrest/doc:contrib</variable>
 
-        <variable key="github-url-test">{[github-url-master]}/test/src</variable>
-        <variable key="github-url-test-common">{[github-url-master]}/test/src/common</variable>
-        <variable key="github-url-src">{[github-url-master]}/src</variable>
+        <variable key="github-url-test">{[github-url-main]}/test/src</variable>
+        <variable key="github-url-test-common">{[github-url-main]}/test/src/common</variable>
+        <variable key="github-url-src">{[github-url-main]}/src</variable>
         <variable key="github-url-src-common">{[github-url-src]}/common</variable>
 
         <variable key="cwd" eval="y">use Cwd qw(cwd); cwd()</variable>
@@ -68,7 +68,7 @@
 
         <p>You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.</p>
 
-        <p>Coding standards are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link> and some important coding details and an example are provided in the <link section="/coding">Coding</link> section below. At a minimum, unit tests must be written and run and the documentation generated before <link section="/pr">submitting a Pull Request</link>; see the <link section="/testing">Testing</link> section below for details.</p>
+        <p>Coding standards are defined in <link url="{[github-url-main]}/CODING.md">CODING.md</link> and some important coding details and an example are provided in the <link section="/coding">Coding</link> section below. At a minimum, unit tests must be written and run and the documentation generated before <link section="/pr">submitting a Pull Request</link>; see the <link section="/testing">Testing</link> section below for details.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -142,7 +142,7 @@
             </execute>
         </execute-list>
 
-        <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation</quote>. NOTE that the <quote>Install latex (for building PDF)</quote> section is not required since testing of the docs need only be run for HTML output.</p>
+        <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-main]}/doc">doc</link> directory in the section <quote>The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation</quote>. NOTE that the <quote>Install latex (for building PDF)</quote> section is not required since testing of the docs need only be run for HTML output.</p>
     </section>
 
     <section id="coding">
@@ -167,7 +167,7 @@
         <section id="coding-example">
             <title>Coding Example</title>
 
-            <p>The example below is not structured like an actual implementation and is intended only to provide an understanding of some of the more common coding practices. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document (<link url="{[github-url-master]}/CODING.md">CODING.md</link>) and sections above for an introduction to the concepts provided here. For an actual implementation, see <link url="{[github-url-src]}/db/db.h">db.h</link> and <link url="{[github-url-src]}/db/db.c">db.c</link>.</p>
+            <p>The example below is not structured like an actual implementation and is intended only to provide an understanding of some of the more common coding practices. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document (<link url="{[github-url-main]}/CODING.md">CODING.md</link>) and sections above for an introduction to the concepts provided here. For an actual implementation, see <link url="{[github-url-src]}/db/db.h">db.h</link> and <link url="{[github-url-src]}/db/db.c">db.c</link>.</p>
 
             <section id="coding-ex1">
                 <title>Example: hypothetical basic object construction</title>
@@ -308,7 +308,7 @@ myObjToLog(const MyObj *this)
             pgbackrest/test/test.pl --gen-only
         </code-block>
 
-        <p>Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under <code>pgbackrest/doc/output/html</code>. More details can be found in the <backrest/> <link url="{[github-url-master]}/doc/README.md">doc/README.md</link> file.</p>
+        <p>Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under <code>pgbackrest/doc/output/html</code>. More details can be found in the <backrest/> <link url="{[github-url-main]}/doc/README.md">doc/README.md</link> file.</p>
 
         <code-block>
             pgbackrest/doc/doc.pl --out=html
@@ -326,7 +326,7 @@ myObjToLog(const MyObj *this)
                 <list-item><setting>--test</setting> - the actual test set to be run</list-item>
                 <list-item><setting>--run</setting> - a number identifying the run within a test if testing a single run rather than the entire test</list-item>
                 <list-item><setting>--vm-out</setting> - displays the test output (helpful for monitoring the progress)</list-item>
-                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code>. See <link url="{[github-url-master]}/.github/workflows/test.yml">test.yml</link> for a list of valid vm codes noted by <code>param: test</code>.</list-item>
+                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code>. See <link url="{[github-url-main]}/.github/workflows/test.yml">test.yml</link> for a list of valid vm codes noted by <code>param: test</code>.</list-item>
             </list>
 
             <p>For more options, run the test or documentation engine with the <setting>--help</setting> option:</p>
@@ -777,7 +777,7 @@ pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --va
         <p>Before submitting a Pull Request:</p>
 
         <list>
-            <list-item>Does it meet the <link url="{[github-url-master]}/CODING.md">coding standards</link>?</list-item>
+            <list-item>Does it meet the <link url="{[github-url-main]}/CODING.md">coding standards</link>?</list-item>
             <list-item>Have <link section="/testing/unit-test">Unit Tests</link> been written and <link section="/testing/unit-test-run">run</link> with 100% coverage?</list-item>
             <list-item>If your submission includes changes to the help or online documentation, have the <link section="/option/help-test">help</link> and <link section="/option/doc-test">documentation</link> tests been run?</list-item>
             <list-item>Has it passed continuous integration testing? Simply renaming your branch with the appendix <code>-cig</code> and pushing it to your GitHub account will initiate GitHub Actions to run CI tests.</list-item>

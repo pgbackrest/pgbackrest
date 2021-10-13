@@ -102,11 +102,11 @@ pgBackRest strives to be easy to configure and operate:
 
 ## Contributions
 
-Contributions to pgBackRest are always welcome! Please see our [Contributing Guidelines](https://github.com/pgbackrest/pgbackrest/blob/master/CONTRIBUTING.md) for details on how to contribute features, improvements or issues.
+Contributions to pgBackRest are always welcome! Please see our [Contributing Guidelines](https://github.com/pgbackrest/pgbackrest/blob/main/CONTRIBUTING.md) for details on how to contribute features, improvements or issues.
 
 ## Support
 
-pgBackRest is completely free and open source under the [MIT](https://github.com/pgbackrest/pgbackrest/blob/master/LICENSE) license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible.
+pgBackRest is completely free and open source under the [MIT](https://github.com/pgbackrest/pgbackrest/blob/main/LICENSE) license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible.
 
 Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.
 
