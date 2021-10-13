@@ -14,8 +14,8 @@ Vagrant.configure(2) do |config|
     # Full development and test environment which should be used by default.
     #-------------------------------------------------------------------------------------------------------------------------------
     config.vm.define "default", primary: true do |default|
-        default.vm.box = "ubuntu/bionic64"
-        default.vm.box_version = "20210928.0.0"
+        default.vm.box = "ubuntu/focal64"
+        default.vm.box_version = "20211007.0.0"
 
         default.vm.provider :virtualbox do |vb|
             vb.name = "pgbackrest-test"
@@ -152,7 +152,7 @@ Vagrant.configure(2) do |config|
     #
     # Basic environment to build/test pgBackRest using homebrew installed in the local user account.
     #-------------------------------------------------------------------------------------------------------------------------------
-    # mkdir ~/homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C ~/homebrew
+    # git clone --depth=1 https://github.com/Homebrew/brew homebrew
     # ~/homebrew/bin/brew install -q libpq libxml2 libyaml cpanm lcov
     # ~/homebrew/bin/cpanm --force --local-lib=~/homebrew/perl5 install YAML::XS XML::Checker::Parser
     #
