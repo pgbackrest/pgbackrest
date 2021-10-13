@@ -91,7 +91,7 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
 #define MANIFEST_KEY_GROUP                                          "group"
     STRING_STATIC(MANIFEST_KEY_GROUP_STR,                           MANIFEST_KEY_GROUP);
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_GROUP_VAR,                   MANIFEST_KEY_GROUP);
-#define MANIFEST_KEY_PRIMARY                                        "ma" "st" "er"
+#define MANIFEST_KEY_PRIMARY                                        "mas""ter"
     STRING_STATIC(MANIFEST_KEY_PRIMARY_STR,                         MANIFEST_KEY_PRIMARY);
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_PRIMARY_VAR,                 MANIFEST_KEY_PRIMARY);
 #define MANIFEST_KEY_MODE                                           "mode"
