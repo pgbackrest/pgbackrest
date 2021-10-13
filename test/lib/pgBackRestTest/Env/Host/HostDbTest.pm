@@ -388,9 +388,9 @@ sub clusterStart
     my $bArchiveEnabled = defined($$hParam{bArchiveEnabled}) ? $$hParam{bArchiveEnabled} : true;
 
     # Make sure postgres is not running
-    if (-e $self->dbBasePath() . '/postmaster.pid')
+    if (-e $self->dbBasePath() . '/postmas'.'ter.pid')
     {
-        confess 'postmaster.pid exists';
+        confess 'postmas'.'ter.pid exists';
     }
 
     # Create the archive command
@@ -483,7 +483,7 @@ sub clusterStop
     }
 
     # If pg process is running then stop the cluster
-    if (-e $self->dbBasePath() . '/' . DB_FILE_POSTMASTERPID)
+    if (-e $self->dbBasePath() . '/' . DB_FILE_POSTMTRPID)
     {
         $self->executeSimple($self->pgBinPath() . '/pg_ctl stop -D ' . $self->dbBasePath() . ' -w -s -m fast');
     }

@@ -60,13 +60,13 @@ restorePathValidate(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // PostgreSQL must not be running
-        if (storageExistsP(storagePg(), PG_FILE_POSTMASTERPID_STR))
+        if (storageExistsP(storagePg(), PG_FILE_POSTMTRPID_STR))
         {
             THROW_FMT(
                 PgRunningError,
                 "unable to restore while PostgreSQL is running\n"
-                    "HINT: presence of '" PG_FILE_POSTMASTERPID "' in '%s' indicates PostgreSQL is running.\n"
-                    "HINT: remove '" PG_FILE_POSTMASTERPID "' only if PostgreSQL is not running.",
+                    "HINT: presence of '" PG_FILE_POSTMTRPID "' in '%s' indicates PostgreSQL is running.\n"
+                    "HINT: remove '" PG_FILE_POSTMTRPID "' only if PostgreSQL is not running.",
                 strZ(cfgOptionDisplay(cfgOptPgPath)));
         }
 

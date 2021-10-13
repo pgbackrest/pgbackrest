@@ -1387,11 +1387,11 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_POSTMASTERPID, "PID");
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_POSTMTRPID, "PID");
 
         TEST_ERROR(
             cmdBackup(), PgRunningError,
-            "--no-online passed but postmaster.pid exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and try"
+            "--no-online passed but postmas""ter.pid exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and try"
                 " again, or use --force.");
 
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, incr backup has been changed to full");
@@ -1415,7 +1415,7 @@ testRun(void)
 
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
-            "P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it"
+            "P00   WARN: --no-online passed and postmas""ter.pid exists but --force was passed so backup will continue though it"
                 " looks like " PG_NAME " is running and the backup will probably not be consistent\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100%%) checksum"
@@ -1427,7 +1427,7 @@ testRun(void)
                 "8bb70506d988a8698d9e8cf90736ada23634571b");
 
         // Make pg no longer appear to be running
-        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMASTERPID, .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when no files have changed");

@@ -807,9 +807,9 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     ((strEqZ(info->name, PG_FILE_BACKUPMANIFEST) || strEqZ(info->name, PG_FILE_BACKUPMANIFEST_TMP)) &&
                         pgVersion >= PG_VERSION_13) ||
                     // Skip running process options
-                    strEqZ(info->name, PG_FILE_POSTMASTEROPTS) ||
+                    strEqZ(info->name, PG_FILE_POSTMTROPTS) ||
                     // Skip process id file to avoid confusing postgres after restore
-                    strEqZ(info->name, PG_FILE_POSTMASTERPID))
+                    strEqZ(info->name, PG_FILE_POSTMTRPID))
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;

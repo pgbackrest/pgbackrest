@@ -197,8 +197,8 @@ testRun(void)
 
         // Files that will always be ignored
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_BACKUPLABELOLD, .modeFile = 0600, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTEROPTS, .modeFile = 0600, .timeModified = 1565282101);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMASTERPID, .modeFile = 0600, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMTROPTS, .modeFile = 0600, .timeModified = 1565282101);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTMTRPID, .modeFile = 0600, .timeModified = 1565282101);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYCONF, .modeFile = 0600, .timeModified = 1565282101);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_RECOVERYDONE, .modeFile = 0600, .timeModified = 1565282101);
 

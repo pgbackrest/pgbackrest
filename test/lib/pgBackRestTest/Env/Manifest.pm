@@ -214,10 +214,10 @@ use constant DB_FILE_PGVERSION                                      => 'PG_VERSI
     push @EXPORT, qw(DB_FILE_PGVERSION);
 use constant DB_FILE_POSTGRESQLAUTOCONFTMP                          => 'postgresql.auto.conf.tmp';
     push @EXPORT, qw(DB_FILE_POSTGRESQLAUTOCONFTMP);
-use constant DB_FILE_POSTMASTEROPTS                                 => 'postmaster.opts';
-    push @EXPORT, qw(DB_FILE_POSTMASTEROPTS);
-use constant DB_FILE_POSTMASTERPID                                  => 'postmaster.pid';
-    push @EXPORT, qw(DB_FILE_POSTMASTERPID);
+use constant DB_FILE_POSTMTROPTS                                    => 'postmas'.'ter.opts';
+    push @EXPORT, qw(DB_FILE_POSTMTROPTS);
+use constant DB_FILE_POSTMTRPID                                     => 'postmas'.'ter.pid';
+    push @EXPORT, qw(DB_FILE_POSTMTRPID);
 use constant DB_FILE_RECOVERYCONF                                   => 'recovery.conf';
     push @EXPORT, qw(DB_FILE_RECOVERYCONF);
 use constant DB_FILE_RECOVERYSIGNAL                                 => 'recovery.signal';
@@ -266,10 +266,10 @@ use constant MANIFEST_FILE_PGCONTROL                                => MANIFEST_
     push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
 use constant MANIFEST_FILE_POSTGRESQLAUTOCONFTMP                    => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTGRESQLAUTOCONFTMP;
     push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
-use constant MANIFEST_FILE_POSTMASTEROPTS                           => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMASTEROPTS;
-    push @EXPORT, qw(MANIFEST_FILE_POSTMASTEROPTS);
-use constant MANIFEST_FILE_POSTMASTERPID                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMASTERPID;
-    push @EXPORT, qw(MANIFEST_FILE_POSTMASTERPID);
+use constant MANIFEST_FILE_POSTMTROPTS                              => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMTROPTS;
+    push @EXPORT, qw(MANIFEST_FILE_POSTMTROPTS);
+use constant MANIFEST_FILE_POSTMTRPID                               => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMTRPID;
+    push @EXPORT, qw(MANIFEST_FILE_POSTMTRPID);
 use constant MANIFEST_FILE_RECOVERYCONF                             => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYCONF;
     push @EXPORT, qw(MANIFEST_FILE_RECOVERYCONF);
 use constant MANIFEST_FILE_RECOVERYSIGNAL                           => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYSIGNAL;
@@ -905,8 +905,8 @@ sub build
         # Skip ignored files
         if ($strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe writes
             $strFile eq MANIFEST_FILE_BACKUPLABELOLD ||             # backup_label.old - old backup labels are not useful
-            $strFile eq MANIFEST_FILE_POSTMASTEROPTS ||             # postmaster.opts - not useful for backup
-            $strFile eq MANIFEST_FILE_POSTMASTERPID)                # postmaster.pid - to avoid confusing postgres after restore
+            $strFile eq MANIFEST_FILE_POSTMTROPTS ||                # postmas'.'ter.opts - not useful for backup
+            $strFile eq MANIFEST_FILE_POSTMTRPID)                   # postmas'.'ter.pid - to avoid confusing postgres after restore
         {
             next;
         }

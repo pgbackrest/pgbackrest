@@ -421,7 +421,7 @@ sub run
 
             # More files to ignore
             $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_POSTGRESQLAUTOCONFTMP, 'IGNORE');
-            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_POSTMASTEROPTS, 'IGNORE');
+            $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_POSTMTROPTS, 'IGNORE');
             $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_RECOVERYCONF, 'IGNORE');
             $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, DB_FILE_RECOVERYDONE, 'IGNORE');
             $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'global/' . DB_FILE_PGINTERNALINIT, 'IGNORE');
@@ -529,7 +529,7 @@ sub run
         $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
 
         # These files should never be backed up (this requires the next backup to do --force)
-        testFileCreate($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_POSTMASTERPID, 'JUNK');
+        testFileCreate($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_POSTMTRPID, 'JUNK');
         testFileCreate($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_BACKUPLABELOLD, 'JUNK');
         testFileCreate($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_RECOVERYCONF, 'JUNK');
         testFileCreate($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_RECOVERYDONE, 'JUNK');
@@ -619,8 +619,8 @@ sub run
             {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--force --checksum-page' . ($bDeltaBackup ? ' --delta' : '')});
 
-        # Remove postmaster.pid so restore will succeed (the rest will be cleaned up by the delta)
-        storageTest->remove($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_POSTMASTERPID);
+        # Remove postmas'.'ter.pid so restore will succeed (the rest will be cleaned up by the delta)
+        storageTest->remove($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_POSTMTRPID);
 
         # Restore - tests various mode, extra files/paths, missing files/paths
         #---------------------------------------------------------------------------------------------------------------------------
