@@ -3588,7 +3588,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Check configuration</title>
 
-            <execute user="postgres" output="y" filter="n">
+            <execute user="postgres" output="n" filter="n">
                 <exe-cmd>{[pg-cluster-check-upgrade]}</exe-cmd>
             </execute>
 
