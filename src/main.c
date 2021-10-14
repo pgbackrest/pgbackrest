@@ -233,9 +233,9 @@ main(int argListSize, const char *argList[])
                     cmdStorageRemove();
                     break;
 
-                // Server command
+                // Server start command
                 // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdServer:
+                case cfgCmdServerStart:
                     cmdServer(UINT64_MAX);
                     break;
 

@@ -2274,7 +2274,7 @@
             </command>
 
             <!-- =============================================================================================================== -->
-            <command id="server" name="Server">
+            <command id="server-start" name="Server Start">
                 <summary>Start <backrest/> server.</summary>
 
                 <text>
