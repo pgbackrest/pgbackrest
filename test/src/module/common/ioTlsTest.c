@@ -423,9 +423,9 @@ testRun(void)
         storageRemoveP(storageTest, STRDEF("client-pwd.key"));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("key with bad permissions");
+        TEST_TITLE("key with bad user permissions");
 
-        storagePutP(storageNewWriteP(storageTest, STRDEF("client-bad-perm.key")), BUFSTRDEF("bogus"));
+        storagePutP(storageNewWriteP(storageTest, STRDEF("client-bad-perm.key"), .modeFile = 0640), BUFSTRDEF("bogus"));
 
         TEST_ERROR(
             ioClientOpen(
@@ -433,15 +433,46 @@ testRun(void)
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
                     STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-bad-perm.key"), NULL)),
             FileReadError,
-            "key file '" TEST_PATH "/client-bad-perm.key' must not have group or other permissions\n"
-            "HINT: key file permissions should be 0600 or 0400.");
+            "key file '" TEST_PATH "/client-bad-perm.key' has group or other permissions\n"
+            "HINT: file must have permissions u=rw (0600) or less if owned by the '" TEST_USER "' user\n"
+            "HINT: file must have permissions u=rw, g=r (0640) or less if owned by root\n");
 
         storageRemoveP(storageTest, STRDEF("client-bad-perm.key"));
+
+#ifdef TEST_CONTAINER_REQUIRED
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key with bad user");
+
+        storagePutP(storageNewWriteP(storageTest, STRDEF("client-bad-perm.key"), .modeFile = 0660), BUFSTRDEF("bogus"));
+        HRN_SYSTEM_FMT("sudo chown postgres %s", strZ(storagePathP(storageTest, STRDEF("client-bad-perm.key"))));
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-bad-perm.key"), NULL)),
+            FileReadError, "key file '" TEST_PATH "/client-bad-perm.key' must be owned by the '" TEST_USER "' user or root");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key with bad root permissions");
+
+        HRN_SYSTEM_FMT("sudo chown root %s", strZ(storagePathP(storageTest, STRDEF("client-bad-perm.key"))));
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-bad-perm.key"), NULL)),
+            FileReadError,
+            "key file '" TEST_PATH "/client-bad-perm.key' has group or other permissions\n"
+            "HINT: file must have permissions u=rw (0600) or less if owned by the '" TEST_USER "' user\n"
+            "HINT: file must have permissions u=rw, g=r (0640) or less if owned by root\n");
+
+        HRN_SYSTEM_FMT("sudo rm %s", strZ(storagePathP(storageTest, STRDEF("client-bad-perm.key"))));
 
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------
         // Add test hosts
-#ifdef TEST_CONTAINER_REQUIRED
         HRN_SYSTEM(
             "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" | sudo tee -a /etc/hosts >"
                 " /dev/null");
@@ -555,6 +586,12 @@ testRun(void)
         HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
+        // Put root-owned server key
+        storagePutP(
+            storageNewWriteP(storageTest, STRDEF("server-root-perm.key"), .modeFile = 0640),
+            storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), STRDEF(HRN_SERVER_KEY))));
+        HRN_SYSTEM_FMT("sudo chown root %s", strZ(storagePathP(storageTest, STRDEF("server-root-perm.key"))));
+
         // Put CN only server cert
         storagePutP(storageNewWriteP(storageTest, STRDEF("server-cn-only.crt")), BUFSTRZ(testServerCnOnlyCert));
 
@@ -568,8 +605,8 @@ testRun(void)
                 // TLS server to accept connections
                 IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
                 IoServer *tlsServer = tlsServerNew(
-                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(TEST_PATH "/server-cn-only.crt"),
-                    NULL, 5000);
+                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(TEST_PATH "/server-root-perm.key"),
+                    STRDEF(TEST_PATH "/server-cn-only.crt"), NULL, 5000);
                 IoSession *socketSession = NULL;
 
                 TEST_RESULT_STR(ioServerName(socketServer), strNewFmt("localhost:%u", hrnServerPort(0)), "socket server name");
@@ -740,6 +777,8 @@ testRun(void)
             HRN_FORK_PARENT_END();
         }
         HRN_FORK_END();
+
+        HRN_SYSTEM_FMT("sudo rm %s", strZ(storagePathP(storageTest, STRDEF("server-root-perm.key"))));
 #endif // TEST_CONTAINER_REQUIRED
     }
 

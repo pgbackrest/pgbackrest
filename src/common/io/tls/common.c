@@ -11,6 +11,7 @@ TLS Common
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/tls/common.h"
+#include "common/user.h"
 #include "storage/posix/storage.h"
 
 /**********************************************************************************************************************************/
@@ -100,6 +101,8 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
 
     if (certFile != NULL)
     {
+        userInit();
+
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Set cert password callback
@@ -113,13 +116,24 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
             // Check that key has the correct permissions
             const StorageInfo keyInfo = storageInfoP(storagePosixNewP(FSLASH_STR), keyFile, .ignoreMissing = true);
 
-            if (keyInfo.exists && keyInfo.mode & (S_IRWXG | S_IRWXO))
+            if (keyInfo.exists)
             {
-                THROW_FMT(
-                    FileReadError,
-                    "key file '%s' must not have group or other permissions\n"
-                    "HINT: key file permissions should be 0600 or 0400.",
-                    strZ(keyFile));
+                if (keyInfo.userId != userId() && keyInfo.userId != 0)
+                {
+                    THROW_FMT(
+                        FileReadError, "key file '%s' must be owned by the '%s' user or root", strZ(keyFile), strZ(userName()));
+                }
+
+                if ((keyInfo.userId == userId() && keyInfo.mode & (S_IRWXG | S_IRWXO)) ||
+                    (keyInfo.userId == 0 && keyInfo.mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
+                {
+                    THROW_FMT(
+                        FileReadError,
+                        "key file '%s' has group or other permissions\n"
+                        "HINT: file must have permissions u=rw (0600) or less if owned by the '%s' user\n"
+                        "HINT: file must have permissions u=rw, g=r (0640) or less if owned by root\n",
+                        strZ(keyFile), strZ(userName()));
+                }
             }
 
             // Load key and verify that the key and cert go together
