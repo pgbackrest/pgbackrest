@@ -114,7 +114,8 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
                 strZ(strNewFmt("unable to load cert file '%s'", strZ(certFile))));
 
             // Check that key has the correct permissions
-            const StorageInfo keyInfo = storageInfoP(storagePosixNewP(FSLASH_STR), keyFile, .ignoreMissing = true);
+            const StorageInfo keyInfo = storageInfoP(
+                storagePosixNewP(FSLASH_STR), keyFile, .ignoreMissing = true, .followLink = true);
 
             if (keyInfo.exists)
             {
