@@ -1470,6 +1470,25 @@ testRun(void)
         TEST_RESULT_UINT(port, 777, "check that port was not updated");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("global is a valid stanza prefix");
+
+        storagePutP(
+            storageNewWriteP(storageTestWrite, configFile),
+            BUFSTRDEF(
+                "[global_stanza]\n"
+                "pg1-path=/path/to/global/stanza\n"));
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "global_stanza");
+        hrnCfgArgRaw(argList, cfgOptConfig, configFile);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "parse config");
+
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/global/stanza", "default pg-path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warnings for environment variables, command-line and config file options");
 
         argList = strLstNew();
@@ -1503,6 +1522,7 @@ testRun(void)
                     "compress-level=3\n"
                     "spool-path=/path/to/spool\n"
                     "lock-path=/\n"
+                    "pg1-path=/not/path/to/db\n"
                     "\n"
                     "[global:backup]\n"
                     "repo1-hardlink=y\n"
@@ -1546,7 +1566,8 @@ testRun(void)
             "P00   WARN: configuration file contains reset option 'reset-delta'\n"
             "P00   WARN: configuration file contains command-line only option 'online'\n"
             "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'\n"
-            "P00   WARN: configuration file contains invalid option 'backup-standb'");
+            "P00   WARN: configuration file contains invalid option 'backup-standb'\n"
+            "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global'");
 
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "pg1-host is not set (command line reset override)");

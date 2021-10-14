@@ -42,6 +42,7 @@ testRun(void)
         TEST_ERROR(CHECK_SIZE(STRING_SIZE_MAX + 1), AssertError, "string size must be <= 1073741824 bytes");
 
         String *string = strNewZ("static string");
+        TEST_RESULT_BOOL(string->pub.buffer == (char *)(string + 1), true, "string has fixed buffer");
         TEST_RESULT_STR_Z(string, "static string", "new with static string");
         TEST_RESULT_UINT(strSize(string), 13, "check size");
         TEST_RESULT_BOOL(strEmpty(string), false, "is not empty");
@@ -51,7 +52,7 @@ testRun(void)
         TEST_RESULT_VOID(strFree(string), "free string");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(strNewN("testmorestring", 4), "test", "new string with size limit");
+        TEST_RESULT_STR_Z(strNewZN("testmorestring", 4), "test", "new string with size limit");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *buffer = bufNew(8);
@@ -77,8 +78,10 @@ testRun(void)
         TEST_TITLE("empty string is allocated extra space");
 
         TEST_ASSIGN(string, strNew(), "new empty string");
-        TEST_RESULT_UINT(string->pub.size, 0, "    check size");
-        TEST_RESULT_UINT(string->pub.extra, 64, "    check extra");
+        TEST_RESULT_UINT(string->pub.size, 0, "check size");
+        TEST_RESULT_UINT(string->pub.extra, 0, "check extra");
+        TEST_RESULT_PTR(string->pub.buffer, EMPTY_STR->pub.buffer, "check buffer");
+        TEST_RESULT_VOID(strFree(string), "free string");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strNewEncode()");
@@ -122,23 +125,34 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strCat*()"))
     {
-        String *string = strNewZ("XXXX");
+        String *string = strCatZ(strNew(), "XXX");
         String *string2 = strNewZ("ZZZZ");
 
-        TEST_RESULT_STR_Z(strCat(string, STRDEF("YYYY")), "XXXXYYYY", "cat string");
+        TEST_RESULT_STR_Z(strCatN(string, STRDEF("XX"), 1), "XXXX", "cat N chars");
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
-        TEST_RESULT_STR_Z(strCatFmt(string, "%05d", 777), "XXXXYYYY00777", "cat formatted string");
+        TEST_RESULT_STR_Z(strCatZ(string, ""), "XXXX", "cat empty string");
+        TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
+        TEST_RESULT_STR_Z(strCatEncode(string, encodeBase64, BUFSTRDEF("")), "XXXX", "cat empty encode");
+        TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
+        TEST_RESULT_STR_Z(strCat(string, STRDEF("YYYY")), "XXXXYYYY", "cat string");
+        TEST_RESULT_UINT(string->pub.extra, 56, "check extra");
+        TEST_RESULT_STR_Z(strCatZN(string, NULL, 0), "XXXXYYYY", "cat 0");
+        TEST_RESULT_UINT(string->pub.extra, 56, "check extra");
+        TEST_RESULT_STR_Z(strCatBuf(string, BUFSTRDEF("?")), "XXXXYYYY?", "cat buf");
         TEST_RESULT_UINT(string->pub.extra, 55, "check extra");
-        TEST_RESULT_STR_Z(strCatChr(string, '!'), "XXXXYYYY00777!", "cat chr");
-        TEST_RESULT_UINT(string->pub.extra, 54, "check extra");
+        TEST_RESULT_STR_Z(strCatFmt(string, "%05d", 777), "XXXXYYYY?00777", "cat formatted string");
+        TEST_RESULT_UINT(string->pub.extra, 50, "check extra");
+        TEST_RESULT_STR_Z(strCatChr(string, '!'), "XXXXYYYY?00777!", "cat chr");
+        TEST_RESULT_UINT(string->pub.extra, 49, "check extra");
         TEST_RESULT_STR_Z(
             strCatZN(string, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*", 55),
-            "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
-        TEST_RESULT_UINT(string->pub.extra, 34, "check extra");
+            "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
+        TEST_RESULT_UINT(string->pub.extra, 35, "check extra");
         TEST_RESULT_STR_Z(
             strCatEncode(string, encodeBase64, BUFSTRDEF("zzzzz")),
-            "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=", "cat encode");
-        TEST_RESULT_UINT(string->pub.extra, 26, "check extra");
+            "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=", "cat encode");
+        TEST_RESULT_UINT(string->pub.extra, 27, "check extra");
+        TEST_RESULT_VOID(strFree(string), "free string");
 
         TEST_RESULT_STR_Z(string2, "ZZZZ", "check unaltered string");
     }
@@ -262,7 +276,7 @@ testRun(void)
         TEST_RESULT_INT(strChr(STRDEF("abcd"), 'i'), -1, "i not found");
         TEST_RESULT_INT(strChr(STRDEF(""), 'x'), -1, "empty string - x not found");
 
-        String *val = strNewZ("abcdef");
+        String *val = strCatZ(strNew(), "abcdef");
         TEST_ERROR(
             strTrunc(val, (int)(strSize(val) + 1)), AssertError,
             "assertion 'idx >= 0 && (size_t)idx <= strSize(this)' failed");

@@ -172,7 +172,7 @@ cmdBegin(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Basic info on command start
-            String *info = strNewFmt("%s command begin", strZ(cfgCommandRoleName()));
+            String *info = strCatFmt(strNew(), "%s command begin", strZ(cfgCommandRoleName()));
 
             // Free the old option string if it exists. This is needed when more than one command is run in a row so an option
             // string gets created for the new command.
@@ -213,7 +213,7 @@ cmdEnd(int code, const String *errorMessage)
                 LOG_DETAIL_FMT("statistics: %s", strZ(jsonFromKv(statKv)));
 
             // Basic info on command end
-            String *info = strNewFmt("%s command end: ", strZ(cfgCommandRoleName()));
+            String *info = strCatFmt(strNew(), "%s command end: ", strZ(cfgCommandRoleName()));
 
             if (errorMessage == NULL)
             {

@@ -232,7 +232,7 @@ sub manifestFileCreate
         sprintf('%04o', S_IMODE($oStat->mode));
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_TIMESTAMP} = $oStat->mtime;
     ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_SIZE} = $oStat->size;
-    ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_MASTER} =
+    ${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_PRIMARY} =
         defined($bPrimary) ? ($bPrimary ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
     delete(${$oManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strManifestKey}{&MANIFEST_SUBKEY_REFERENCE});
 
@@ -370,7 +370,7 @@ sub manifestLinkCreate
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_SIZE} = $oStat->size;
         ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_TIMESTAMP} = $oStat->mtime;
         (${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_CHECKSUM}) = storageTest()->hashSize($strDestinationFile);
-        ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_MASTER} =
+        ${$oManifestRef}{$strSection}{$strManifestKey}{&MANIFEST_SUBKEY_PRIMARY} =
             defined($bPrimary) ? ($bPrimary ? JSON::PP::true : JSON::PP::false) : JSON::PP::false;
 
         ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strManifestKey}{&MANIFEST_SUBKEY_FILE} =

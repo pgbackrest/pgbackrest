@@ -291,7 +291,7 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
 String *
 httpQueryToLog(const HttpQuery *this)
 {
-    String *result = strNewZ("{");
+    String *result = strCatZ(strNew(), "{");
     const StringList *keyList = httpQueryList(this);
 
     for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)

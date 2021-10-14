@@ -277,7 +277,8 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
     FUNCTION_TEST_END();
 
     // Build query to return start lsn and WAL segment name
-    String *result = strNewFmt(
+    String *result = strCatFmt(
+        strNew(),
         "select lsn::text as lsn,\n"
         "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name\n"
         "  from pg_catalog.pg_start_backup('" PROJECT_NAME " backup started at ' || current_timestamp",
@@ -372,7 +373,8 @@ dbBackupStopQuery(unsigned int pgVersion)
     FUNCTION_TEST_END();
 
     // Build query to return start lsn and WAL segment name
-    String *result = strNewFmt(
+    String *result = strCatFmt(
+        strNew(),
         "select lsn::text as lsn,\n"
         "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name",
         strZ(pgWalName(pgVersion)));
@@ -510,7 +512,8 @@ dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
         do
         {
             // Build the query
-            String *query = strNewFmt(
+            String *query = strCatFmt(
+                strNew(),
                 "select replayLsn::text,\n"
                 "       (replayLsn > '%s')::bool as targetReached",
                 strZ(targetLsn));

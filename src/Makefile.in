@@ -154,10 +154,13 @@ SRCS = \
 	protocol/parallel.c \
 	protocol/parallelJob.c \
 	protocol/server.c \
+	storage/azure/helper.c \
 	storage/azure/read.c \
 	storage/azure/storage.c \
 	storage/azure/write.c \
+	storage/cifs/helper.c \
 	storage/cifs/storage.c \
+	storage/gcs/helper.c \
 	storage/gcs/read.c \
 	storage/gcs/storage.c \
 	storage/gcs/write.c \
@@ -166,6 +169,7 @@ SRCS = \
 	storage/remote/protocol.c \
 	storage/remote/storage.c \
 	storage/remote/write.c \
+	storage/s3/helper.c \
 	storage/s3/read.c \
 	storage/s3/storage.c \
 	storage/s3/write.c

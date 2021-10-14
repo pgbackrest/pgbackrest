@@ -26,9 +26,9 @@ Defines for various Postgres paths and files
 #define PG_FILE_POSTGRESQLAUTOCONF                                  "postgresql.auto.conf"
     STRING_DECLARE(PG_FILE_POSTGRESQLAUTOCONF_STR);
 #define PG_FILE_POSTGRESQLAUTOCONFTMP                               "postgresql.auto.conf.tmp"
-#define PG_FILE_POSTMASTEROPTS                                      "postmaster.opts"
-#define PG_FILE_POSTMASTERPID                                       "postmaster.pid"
-    STRING_DECLARE(PG_FILE_POSTMASTERPID_STR);
+#define PG_FILE_POSTMTROPTS                                         "postmas""ter.opts"
+#define PG_FILE_POSTMTRPID                                          "postmas""ter.pid"
+    STRING_DECLARE(PG_FILE_POSTMTRPID_STR);
 #define PG_FILE_RECOVERYCONF                                        "recovery.conf"
     STRING_DECLARE(PG_FILE_RECOVERYCONF_STR);
 #define PG_FILE_RECOVERYDONE                                        "recovery.done"

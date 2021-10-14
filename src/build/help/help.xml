@@ -1863,7 +1863,7 @@
                         <text>
                             <p>When used with <br-option>--no-start-stop</br-option> a backup will be run even if <backrest/> thinks that <postgres/> is running. <b>This option should be used with extreme care as it will likely result in a bad backup.</b></p>
 
-                            <p>There are some scenarios where a backup might still be desirable under these conditions. For example, if a server crashes and the database cluster volume can only be mounted read-only, it would be a good idea to take a backup even if <file>postmaster.pid</file> is present. In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL segment that did not get archived.</p>
+                            <p>There are some scenarios where a backup might still be desirable under these conditions. For example, if a server crashes and the database cluster volume can only be mounted read-only, it would be a good idea to take a backup even if <file>postma&#115;ter.pid</file> is present. In this case it would be better to revert to the prior backup and replay WAL, but possibly there is a very important transaction in a WAL segment that did not get archived.</p>
                         </text>
 
                         <example>y</example>

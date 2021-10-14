@@ -114,8 +114,14 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
             }
 
             case storageTypeLink:
-                strCatFmt(data->content, "link, d=%s", strZ(info->linkDestination));
+            {
+                strCatZ(data->content, "link");
+
+                if (info->linkDestination != NULL)
+                    strCatFmt(data->content, ", d=%s", strZ(info->linkDestination));
+
                 break;
+            }
 
             case storageTypePath:
                 strCatZ(data->content, "path");
@@ -182,7 +188,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     ASSERT(storage != NULL);
     ASSERT(file != NULL);
 
-    String *fileFull = storagePathP(storage, STR(file));
+    String *fileFull = strCat(strNew(), storagePathP(storage, STR(file)));
 
     // Add compression extension if one exists
     compressExtCat(fileFull, param.compressType);
@@ -427,7 +433,7 @@ hrnStoragePut(
     ASSERT(file != NULL);
 
     // Add compression extension to file name
-    String *fileStr = strNewZ(file);
+    String *fileStr = strCatZ(strNew(), file);
     compressExtCat(fileStr, param.compressType);
 
     // Create file

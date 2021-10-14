@@ -47,11 +47,8 @@ backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timest
     // Else diff or incr label
     else
     {
-        // Get the full backup portion of the prior backup label
-        result = strSubN(backupLabelPrior, 0, 16);
-
-        // Append the diff/incr timestamp
-        strCatFmt(result, "_%s%s", buffer, type == backupTypeDiff ? "D" : "I");
+        // Get the full backup portion of the prior backup label and append the diff/incr timestamp
+        result = strNewFmt("%.16s_%s%s", strZ(backupLabelPrior), buffer, type == backupTypeDiff ? "D" : "I");
     }
 
     FUNCTION_LOG_RETURN(STRING, result);
@@ -73,7 +70,7 @@ backupRegExp(BackupRegExpParam param)
     String *result = NULL;
 
     // Start the expression with the anchor, date/time regexp and full backup indicator
-    result = strNewZ("^" DATE_TIME_REGEX "F");
+    result = strCatZ(strNew(), "^" DATE_TIME_REGEX "F");
 
     // Add the diff and/or incr expressions if requested
     if (param.differential || param.incremental)

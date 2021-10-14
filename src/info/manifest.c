@@ -91,7 +91,7 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
 #define MANIFEST_KEY_GROUP                                          "group"
     STRING_STATIC(MANIFEST_KEY_GROUP_STR,                           MANIFEST_KEY_GROUP);
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_GROUP_VAR,                   MANIFEST_KEY_GROUP);
-#define MANIFEST_KEY_PRIMARY                                        "ma" "st" "er"
+#define MANIFEST_KEY_PRIMARY                                        "mas""ter"
     STRING_STATIC(MANIFEST_KEY_PRIMARY_STR,                         MANIFEST_KEY_PRIMARY);
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_PRIMARY_VAR,                 MANIFEST_KEY_PRIMARY);
 #define MANIFEST_KEY_MODE                                           "mode"
@@ -807,9 +807,9 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     ((strEqZ(info->name, PG_FILE_BACKUPMANIFEST) || strEqZ(info->name, PG_FILE_BACKUPMANIFEST_TMP)) &&
                         pgVersion >= PG_VERSION_13) ||
                     // Skip running process options
-                    strEqZ(info->name, PG_FILE_POSTMASTEROPTS) ||
+                    strEqZ(info->name, PG_FILE_POSTMTROPTS) ||
                     // Skip process id file to avoid confusing postgres after restore
-                    strEqZ(info->name, PG_FILE_POSTMASTERPID))
+                    strEqZ(info->name, PG_FILE_POSTMTRPID))
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
@@ -2847,7 +2847,7 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *pgPath = strPath(manifestPathPg(target->name));
+        String *pgPath = strCat(strNew(), strPath(manifestPathPg(target->name)));
 
         if (strSize(pgPath) != 0)
             strCatZ(pgPath, "/");

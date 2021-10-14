@@ -79,7 +79,7 @@ cmdStop(void)
                     char contents[LOCK_BUFFER_SIZE];
                     ssize_t actualBytes = read(fd, contents, sizeof(contents));
                     String *processId = actualBytes > 0 ?
-                        strTrim(strLstGet(strLstNewSplitZ(strNewN(contents, (size_t)actualBytes), LF_Z), 0)) : NULL;
+                        strTrim(strLstGet(strLstNewSplitZ(strNewZN(contents, (size_t)actualBytes), LF_Z), 0)) : NULL;
 
                     // If the process id is defined then assume this is a valid lock file
                     if (processId != NULL && strSize(processId) > 0)

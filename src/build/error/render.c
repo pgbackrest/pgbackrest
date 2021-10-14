@@ -48,7 +48,8 @@ Render error.auto.h
 static void
 bldErrRenderErrorAutoH(const Storage *const storageRepo, const BldErr bldErr)
 {
-    String *error = strNewFmt(
+    String *error = strCatFmt(
+        strNew(),
         "%s"
         "#ifndef COMMON_ERROR_AUTO_H\n"
         "#define COMMON_ERROR_AUTO_H\n",
@@ -122,7 +123,7 @@ bldErrRenderErrorAutoC(const Storage *const storageRepo, const BldErr bldErr)
     }
 
     strCatZ(
-        error, 
+        error,
         "    NULL,\n"
         "};\n");
 

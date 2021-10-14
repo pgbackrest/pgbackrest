@@ -61,7 +61,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
             // If a match was found then add the string
             if (stringMatch != NULL)
             {
-                strLstAddInternal(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
+                strLstAddInternal(this, strNewZN(stringBase, (size_t)(stringMatch - stringBase)));
                 stringBase = stringMatch + strlen(delimiter);
             }
             // Else make whatever is left the last string

@@ -149,8 +149,8 @@ use constant MANIFEST_SUBKEY_FUTURE                                 => 'future';
     push @EXPORT, qw(MANIFEST_SUBKEY_FUTURE);
 use constant MANIFEST_SUBKEY_GROUP                                  => 'group';
     push @EXPORT, qw(MANIFEST_SUBKEY_GROUP);
-use constant MANIFEST_SUBKEY_MASTER                                 => 'master';
-    push @EXPORT, qw(MANIFEST_SUBKEY_MASTER);
+use constant MANIFEST_SUBKEY_PRIMARY                                => 'mas'.'ter';
+    push @EXPORT, qw(MANIFEST_SUBKEY_PRIMARY);
 use constant MANIFEST_SUBKEY_MODE                                   => 'mode';
     push @EXPORT, qw(MANIFEST_SUBKEY_MODE);
 use constant MANIFEST_SUBKEY_TIMESTAMP                              => 'timestamp';
@@ -214,10 +214,10 @@ use constant DB_FILE_PGVERSION                                      => 'PG_VERSI
     push @EXPORT, qw(DB_FILE_PGVERSION);
 use constant DB_FILE_POSTGRESQLAUTOCONFTMP                          => 'postgresql.auto.conf.tmp';
     push @EXPORT, qw(DB_FILE_POSTGRESQLAUTOCONFTMP);
-use constant DB_FILE_POSTMASTEROPTS                                 => 'postmaster.opts';
-    push @EXPORT, qw(DB_FILE_POSTMASTEROPTS);
-use constant DB_FILE_POSTMASTERPID                                  => 'postmaster.pid';
-    push @EXPORT, qw(DB_FILE_POSTMASTERPID);
+use constant DB_FILE_POSTMTROPTS                                    => 'postmas'.'ter.opts';
+    push @EXPORT, qw(DB_FILE_POSTMTROPTS);
+use constant DB_FILE_POSTMTRPID                                     => 'postmas'.'ter.pid';
+    push @EXPORT, qw(DB_FILE_POSTMTRPID);
 use constant DB_FILE_RECOVERYCONF                                   => 'recovery.conf';
     push @EXPORT, qw(DB_FILE_RECOVERYCONF);
 use constant DB_FILE_RECOVERYSIGNAL                                 => 'recovery.signal';
@@ -266,10 +266,10 @@ use constant MANIFEST_FILE_PGCONTROL                                => MANIFEST_
     push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
 use constant MANIFEST_FILE_POSTGRESQLAUTOCONFTMP                    => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTGRESQLAUTOCONFTMP;
     push @EXPORT, qw(MANIFEST_FILE_PGCONTROL);
-use constant MANIFEST_FILE_POSTMASTEROPTS                           => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMASTEROPTS;
-    push @EXPORT, qw(MANIFEST_FILE_POSTMASTEROPTS);
-use constant MANIFEST_FILE_POSTMASTERPID                            => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMASTERPID;
-    push @EXPORT, qw(MANIFEST_FILE_POSTMASTERPID);
+use constant MANIFEST_FILE_POSTMTROPTS                              => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMTROPTS;
+    push @EXPORT, qw(MANIFEST_FILE_POSTMTROPTS);
+use constant MANIFEST_FILE_POSTMTRPID                               => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_POSTMTRPID;
+    push @EXPORT, qw(MANIFEST_FILE_POSTMTRPID);
 use constant MANIFEST_FILE_RECOVERYCONF                             => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYCONF;
     push @EXPORT, qw(MANIFEST_FILE_RECOVERYCONF);
 use constant MANIFEST_FILE_RECOVERYSIGNAL                           => MANIFEST_TARGET_PGDATA . '/' . DB_FILE_RECOVERYSIGNAL;
@@ -385,7 +385,7 @@ sub get
         ($strSection eq MANIFEST_SECTION_TARGET_FILE || $strSection eq MANIFEST_SECTION_TARGET_PATH ||
          $strSection eq MANIFEST_SECTION_TARGET_LINK) &&
         ($strSubKey eq MANIFEST_SUBKEY_USER || $strSubKey eq MANIFEST_SUBKEY_GROUP ||
-         $strSubKey eq MANIFEST_SUBKEY_MODE || $strSubKey eq MANIFEST_SUBKEY_MASTER) &&
+         $strSubKey eq MANIFEST_SUBKEY_MODE || $strSubKey eq MANIFEST_SUBKEY_PRIMARY) &&
         $self->test($strSection, $strKey))
     {
         $oValue = $self->SUPER::get("${strSection}:default", $strSubKey, undef, $bRequired, $oDefault);
@@ -905,8 +905,8 @@ sub build
         # Skip ignored files
         if ($strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe writes
             $strFile eq MANIFEST_FILE_BACKUPLABELOLD ||             # backup_label.old - old backup labels are not useful
-            $strFile eq MANIFEST_FILE_POSTMASTEROPTS ||             # postmaster.opts - not useful for backup
-            $strFile eq MANIFEST_FILE_POSTMASTERPID)                # postmaster.pid - to avoid confusing postgres after restore
+            $strFile eq MANIFEST_FILE_POSTMTROPTS ||                # postmas'.'ter.opts - not useful for backup
+            $strFile eq MANIFEST_FILE_POSTMTRPID)                   # postmas'.'ter.pid - to avoid confusing postgres after restore
         {
             next;
         }
@@ -1063,8 +1063,8 @@ sub build
             $self->set($strSection, $strFile, MANIFEST_SUBKEY_TIMESTAMP,
                        $hManifest->{$strName}{modification_time} + 0);
             $self->set($strSection, $strFile, MANIFEST_SUBKEY_SIZE, $hManifest->{$strName}{size} + 0);
-            $self->boolSet($strSection, $strFile, MANIFEST_SUBKEY_MASTER,
-                ($strFile eq MANIFEST_FILE_PGCONTROL || $self->isMasterFile($strFile)));
+            $self->boolSet($strSection, $strFile, MANIFEST_SUBKEY_PRIMARY,
+                ($strFile eq MANIFEST_FILE_PGCONTROL || $self->isPrimaryFile($strFile)));
         }
 
         # Link destination required for link type only
@@ -1192,12 +1192,12 @@ sub build
                         $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE));
                 }
 
-                # Copy master flag from the previous manifest (if it exists)
-                if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER))
+                # Copy primary flag from the previous manifest (if it exists)
+                if ($oLastManifest->test(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_PRIMARY))
                 {
                     $self->set(
-                        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER,
-                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_MASTER));
+                        MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_PRIMARY,
+                        $oLastManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_PRIMARY));
                 }
 
                 # Copy checksum page from the previous manifest (if it exists)
@@ -1258,7 +1258,7 @@ sub fileAdd
         $lModificationTime,
         $lSize,
         $strChecksum,
-        $bMaster,
+        $bPrimary,
     ) =
         logDebugParam
         (
@@ -1267,7 +1267,7 @@ sub fileAdd
             {name => 'lModificationTime'},
             {name => 'lSize'},
             {name => 'lChecksum'},
-            {name => 'bMaster'},
+            {name => 'bPrimary'},
         );
 
     # Set manifest values
@@ -1296,7 +1296,7 @@ sub fileAdd
     $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_TIMESTAMP, $lModificationTime);
     $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_SIZE, $lSize);
     $self->set(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_CHECKSUM, $strChecksum);
-    $self->boolSet(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_MASTER, $bMaster);
+    $self->boolSet(MANIFEST_SECTION_TARGET_FILE, $strManifestFile, MANIFEST_SUBKEY_PRIMARY, $bPrimary);
 }
 
 ####################################################################################################################################
@@ -1314,13 +1314,13 @@ sub buildDefault
     # Set defaults for subkeys that tend to repeat
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
-        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE, &MANIFEST_SUBKEY_MASTER)
+        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE, &MANIFEST_SUBKEY_PRIMARY)
         {
             # Links don't have a mode so skip
             next if ($strSection eq MANIFEST_SECTION_TARGET_LINK && $strSubKey eq &MANIFEST_SUBKEY_MODE);
 
-            # Only files have the master subkey
-            next if ($strSection ne MANIFEST_SECTION_TARGET_FILE && $strSubKey eq &MANIFEST_SUBKEY_MASTER);
+            # Only files have the primary subkey
+            next if ($strSection ne MANIFEST_SECTION_TARGET_FILE && $strSubKey eq &MANIFEST_SUBKEY_PRIMARY);
 
             my %oDefault;
             my $iSectionTotal = 0;
@@ -1359,7 +1359,7 @@ sub buildDefault
 
             if (defined($strMaxValue) > 0 && $iMaxValueTotal > $iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR)
             {
-                if ($strSubKey eq MANIFEST_SUBKEY_MASTER)
+                if ($strSubKey eq MANIFEST_SUBKEY_PRIMARY)
                 {
                     $self->boolSet("${strSection}:default", $strSubKey, undef, $strMaxValue);
                 }
@@ -1448,11 +1448,11 @@ sub walPath
 }
 
 ####################################################################################################################################
-# isMasterFile
+# isPrimaryFile
 #
-# Is this file required to be copied from the master?
+# Is this file required to be copied from the primary?
 ####################################################################################################################################
-sub isMasterFile
+sub isPrimaryFile
 {
     my $self = shift;
     my $strFile = shift;

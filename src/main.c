@@ -41,7 +41,11 @@ Main
 #include "config/load.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
+#include "storage/azure/helper.h"
+#include "storage/cifs/helper.h"
+#include "storage/gcs/helper.h"
 #include "storage/helper.h"
+#include "storage/s3/helper.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -55,6 +59,18 @@ main(int argListSize, const char *argList[])
     // Set stack trace and mem context error cleanup handlers
     static const ErrorHandlerFunction errorHandlerList[] = {stackTraceClean, memContextClean};
     errorHandlerSet(errorHandlerList, sizeof(errorHandlerList) / sizeof(ErrorHandlerFunction));
+
+    // Set storage helpers
+    static const StorageHelper storageHelperList[] =
+    {
+        STORAGE_AZURE_HELPER,
+        STORAGE_CIFS_HELPER,
+        STORAGE_GCS_HELPER,
+        STORAGE_S3_HELPER,
+        STORAGE_END_HELPER
+    };
+
+    storageHelperInit(storageHelperList);
 
 #ifdef WITH_BACKTRACE
     stackTraceInit(argList[0]);

@@ -515,7 +515,7 @@ cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole c
         FUNCTION_TEST_PARAM(STRING, separator);
     FUNCTION_TEST_END();
 
-    String *result = strNewZ(cfgParseCommandName(commandId));
+    String *result = strCatZ(strNew(), cfgParseCommandName(commandId));
 
     if (commandRoleId != cfgCmdRoleMain)
         strCatFmt(result, "%s%s", strZ(separator), strZ(cfgParseCommandRoleStr(commandRoleId)));
@@ -1097,14 +1097,14 @@ cfgFileLoad(                                                        // NOTE: Pas
 
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
-            result = strNewBuf(buffer);
+            result = strCatBuf(strNew(), buffer);
         else if (strEq(configFileName, optConfigDefaultCurrent))
         {
             // If config is current default and it was not found, attempt to load the config file from the old default location
             buffer = storageGetP(storageNewReadP(storage, origConfigDefault, .ignoreMissing = !configRequired));
 
             if (buffer != NULL)
-                result = strNewBuf(buffer);
+                result = strCatBuf(strNew(), buffer);
         }
     }
 
@@ -1214,7 +1214,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                 if (equalPtr)
                 {
-                    optionName = strNewN(arg, (size_t)(equalPtr - arg));
+                    optionName = strNewZN(arg, (size_t)(equalPtr - arg));
                     optionArg = strNewZ(equalPtr + 1);
                 }
                 else
@@ -1435,7 +1435,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                     // Get key and value
                     const String *key = strReplaceChr(
-                        strLower(strNewN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
+                        strLower(strNewZN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
                         '_', '-');
                     const String *value = STR(equalPtr + 1);
 
@@ -1599,7 +1599,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                         // Continue if stanza option is in a global section
                         if (parseRuleOption[option.id].section == cfgSectionStanza &&
-                            strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
+                            (strEqZ(section, CFGDEF_SECTION_GLOBAL) || strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL ":")))
                         {
                             LOG_WARN_FMT(
                                 "configuration file contains stanza-only option '%s' in global section '%s'", strZ(key),
@@ -1944,7 +1944,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
 
-                                    kvPut(keyValue, VARSTR(strNewN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
+                                    kvPut(keyValue, VARSTR(strNewZN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
                                 }
 
                                 configOptionValue->value = value;

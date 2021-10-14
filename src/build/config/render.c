@@ -32,7 +32,7 @@ Build enum from a string
 static String *
 bldEnum(const char *const prefix, const String *const value)
 {
-    String *const result = strNewZ(prefix);
+    String *const result = strCatZ(strNew(), prefix);
     const char *const valuePtr = strZ(value);
 
     bool upper = true;
@@ -82,7 +82,8 @@ Render config.auto.h
 static void
 bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
 {
-    String *config = strNewFmt(
+    String *config = strCatFmt(
+        strNew(),
         "%s"
         "#ifndef CONFIG_CONFIG_AUTO_H\n"
         "#define CONFIG_CONFIG_AUTO_H\n",

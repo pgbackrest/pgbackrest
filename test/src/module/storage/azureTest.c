@@ -3,6 +3,7 @@ Test Azure Storage
 ***********************************************************************************************************************************/
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "storage/helper.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
@@ -39,7 +40,7 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam param)
 {
-    String *request = strNewFmt("%s /" TEST_ACCOUNT "/" TEST_CONTAINER, verb);
+    String *request = strCatFmt(strNew(), "%s /" TEST_ACCOUNT "/" TEST_CONTAINER, verb);
 
     // When SAS spit out the query and merge in the SAS key
     if (driver->sasKey != NULL)
@@ -124,7 +125,7 @@ testResponse(IoWrite *write, TestResponseParam param)
     param.code = param.code == 0 ? 200 : param.code;
 
     // Output header and code
-    String *response = strNewFmt("HTTP/1.1 %u ", param.code);
+    String *response = strCatFmt(strNew(), "HTTP/1.1 %u ", param.code);
 
     // Add reason for some codes
     switch (param.code)
@@ -168,6 +169,10 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Set storage helper
+    static const StorageHelper storageHelperList[] = {STORAGE_AZURE_HELPER, STORAGE_END_HELPER};
+    storageHelperInit(storageHelperList);
 
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))

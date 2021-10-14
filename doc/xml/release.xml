@@ -16,6 +16,21 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.36dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1524"/>
+                        <github-pull-request id="1525"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="younes.alhroub"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <quote>global</quote> as a stanza prefix.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <commit subject="Refactor restoreManifestMap() tests in the command/restore unit."/>
@@ -10787,6 +10802,11 @@
         <contributor id="yogesh.sharma">
             <contributor-name-display>Yogesh Sharma</contributor-name-display>
             <contributor-id type="github">sharmay</contributor-id>
+        </contributor>
+
+        <contributor id="younes.alhroub">
+            <contributor-name-display>Younes Alhroub</contributor-name-display>
+            <contributor-id type="github">alhroub</contributor-id>
         </contributor>
 
         <contributor id="yummyliu">

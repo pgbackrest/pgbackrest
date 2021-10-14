@@ -300,34 +300,29 @@ option:
 
   output:
     type: string
+    default: text
     command:
-      info:
-        default: text
-        allow-list:
-          - text
-          - json
-      repo-ls:
-        default: text
-        allow-list:
-          - text
-          - json
+      info: {}
+      repo-ls: {}
+    allow-list:
+      - text
+      - json
     command-role:
       main: {}
 
   set:
     type: string
+    required: false
     command:
-      expire:
-        required: false
+      expire: {}
       info:
         depend:
           option: stanza
-        required: false
       restore:
         default: latest
+        required: true
       verify:
         internal: true
-        required: false
     command-role:
       main: {}
 
@@ -364,65 +359,65 @@ option:
   target:
     type: string
     command:
-      restore:
-        depend:
-          option: type
-          list:
-            - lsn
-            - name
-            - time
-            - xid
+      restore: {}
+    depend:
+      option: type
+      list:
+        - lsn
+        - name
+        - time
+        - xid
     command-role:
       main: {}
 
   target-action:
     type: string
+    default: pause
     command:
-      restore:
-        allow-list:
-          - pause
-          - promote
-          - shutdown
-        default: pause
-        depend:
-          option: type
-          list:
-            - immediate
-            - lsn
-            - name
-            - time
-            - xid
+      restore: {}
+    allow-list:
+      - pause
+      - promote
+      - shutdown
+    depend:
+      option: type
+      list:
+        - immediate
+        - lsn
+        - name
+        - time
+        - xid
     command-role:
       main: {}
 
   target-exclusive:
     type: boolean
+    default: false
     command:
-      restore:
-        default: false
-        depend:
-          option: type
-          list:
-            - lsn
-            - time
-            - xid
+      restore: {}
+    depend:
+      option: type
+      list:
+        - lsn
+        - time
+        - xid
     command-role:
       main: {}
 
   target-timeline:
     type: string
+    required: false
     command:
-      restore:
-        required: false
-        depend:
-          option: type
-          list:
-            - default
-            - lsn
-            - name
-            - standby
-            - time
-            - xid
+      restore: {}
+    depend:
+      option: type
+      list:
+        - default
+        - lsn
+        - name
+        - standby
+        - time
+        - xid
     command-role:
       main: {}
 

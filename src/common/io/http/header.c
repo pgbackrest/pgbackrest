@@ -95,7 +95,7 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *valueAppend = strDup(varStr(valueVar));
+            String *const valueAppend = strCat(strNew(), varStr(valueVar));
             strCatZ(valueAppend, ", ");
             strCatZ(valueAppend, strZ(value));
 
@@ -177,7 +177,7 @@ httpHeaderRedact(const HttpHeader *this, const String *key)
 String *
 httpHeaderToLog(const HttpHeader *this)
 {
-    String *result = strNewZ("{");
+    String *result = strCatZ(strNew(), "{");
     const StringList *keyList = httpHeaderList(this);
 
     for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)

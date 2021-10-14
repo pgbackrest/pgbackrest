@@ -177,7 +177,7 @@ sub sshSetup
     my $strOS = shift;
     my $strUser = shift;
     my $strGroup = shift;
-    my $bControlMaster = shift;
+    my $bControlMtr = shift;
 
     my $strUserPath = $strUser eq 'root' ? "/${strUser}" : "/home/${strUser}";
 
@@ -205,10 +205,10 @@ sub sshSetup
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 
-    if ($bControlMaster)
+    if ($bControlMtr)
     {
         $strScript .=
-            "    echo '    ControlMaster auto' >> ${strUserPath}/.ssh/config && \\\n" .
+            "    echo '    ControlMas'.'ter auto' >> ${strUserPath}/.ssh/config && \\\n" .
             "    echo '    ControlPath /tmp/\%r\@\%h:\%p' >> ${strUserPath}/.ssh/config && \\\n" .
             "    echo '    ControlPersist 30' >> ${strUserPath}/.ssh/config && \\\n";
     }
@@ -614,7 +614,7 @@ sub containerBuild
             }
 
             $strScript .=
-                sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MASTER});
+                sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MTR});
 
             $strScript .=  sectionHeader() .
                 "# Make " . TEST_USER . " home dir readable\n" .

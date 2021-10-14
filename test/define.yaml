@@ -412,21 +412,11 @@ unit:
           - protocol/command
           - protocol/helper
           - protocol/server
-          - storage/azure/read
-          - storage/azure/storage
-          - storage/azure/write
-          - storage/cifs/storage
-          - storage/gcs/read
-          - storage/gcs/storage
-          - storage/gcs/write
           - storage/helper
           - storage/remote/read
           - storage/remote/protocol
           - storage/remote/storage
           - storage/remote/write
-          - storage/s3/read
-          - storage/s3/storage
-          - storage/s3/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
@@ -527,11 +517,13 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
-        total: 21
+        total: 22
         feature: STORAGE
         harness: storage
 
         coverage:
+          - storage/cifs/helper
+          - storage/cifs/storage
           - storage/posix/read
           - storage/posix/storage
           - storage/posix/write
@@ -539,46 +531,6 @@ unit:
           - storage/read
           - storage/storage
           - storage/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: gcs
-        total: 3
-
-        coverage:
-          - storage/gcs/read
-          - storage/gcs/storage
-          - storage/gcs/write
-          - storage/helper
-
-        include:
-          - storage/storage
-          - storage/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: azure
-        total: 3
-
-        coverage:
-          - storage/azure/read
-          - storage/azure/storage
-          - storage/azure/write
-          - storage/helper
-
-        include:
-          - storage/storage
-          - storage/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: cifs
-        total: 1
-
-        coverage:
-          - storage/cifs/storage
-          - storage/posix/storage
-          - storage/helper
-
-        include:
-          - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
@@ -597,17 +549,48 @@ unit:
           - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: azure
+        total: 3
+
+        coverage:
+          - storage/azure/helper
+          - storage/azure/read
+          - storage/azure/storage
+          - storage/azure/write
+
+        include:
+          - storage/helper
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: gcs
+        total: 3
+
+        coverage:
+          - storage/gcs/helper
+          - storage/gcs/read
+          - storage/gcs/storage
+          - storage/gcs/write
+
+        include:
+          - storage/helper
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: s3
         total: 2
 
         coverage:
+          - storage/s3/helper
           - storage/s3/read
           - storage/s3/storage
           - storage/s3/write
-          - storage/helper
-          - storage/storage
 
         include:
+          - storage/helper
+          - storage/storage
           - storage/write
 
   # ********************************************************************************************************************************

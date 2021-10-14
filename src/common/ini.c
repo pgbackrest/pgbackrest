@@ -257,7 +257,7 @@ iniParse(Ini *this, const String *content)
                                 THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", lineIdx + 1, linePtr);
 
                             // Assign section
-                            section = strNewN(linePtr + 1, strSize(line) - 2);
+                            section = strNewZN(linePtr + 1, strSize(line) - 2);
                         }
                         // Else it should be a key/value
                         else
@@ -272,7 +272,7 @@ iniParse(Ini *this, const String *content)
                                 THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", lineIdx + 1, linePtr);
 
                             // Extract the key
-                            String *key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
+                            String *key = strTrim(strNewZN(linePtr, (size_t)(lineEqual - linePtr)));
 
                             if (strSize(key) == 0)
                                 THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
@@ -363,7 +363,7 @@ iniLoad(
                         // Assign section
                         MEM_CONTEXT_PRIOR_BEGIN()
                         {
-                            section = strNewN(linePtr + 1, strSize(line) - 2);
+                            section = strNewZN(linePtr + 1, strSize(line) - 2);
                         }
                         MEM_CONTEXT_PRIOR_END();
                     }
@@ -394,7 +394,7 @@ iniLoad(
                             retry = false;
 
                             // Get key/value
-                            key = strNewN(linePtr, (size_t)(lineEqual - linePtr));
+                            key = strNewZN(linePtr, (size_t)(lineEqual - linePtr));
                             value = strNewZ(lineEqual + 1);
 
                             // Check that the value is valid JSON

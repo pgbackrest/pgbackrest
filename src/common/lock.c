@@ -108,7 +108,7 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
                     THROW_ON_SYS_ERROR_FMT(actualBytes == -1, FileReadError, "unable to read '%s", strZ(lockFile));
 
                     // Parse the file and see if the exec id matches
-                    const StringList *parse = strLstNewSplitZ(strNewN(buffer, (size_t)actualBytes), LF_Z);
+                    const StringList *parse = strLstNewSplitZ(strNewZN(buffer, (size_t)actualBytes), LF_Z);
 
                     if (strLstSize(parse) == 3 && strEq(strLstGet(parse, 1), execId))
                         result = LOCK_ON_EXEC_ID;

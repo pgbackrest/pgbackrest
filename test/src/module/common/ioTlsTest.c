@@ -321,7 +321,7 @@ testRun(void)
 
         TEST_ERROR(
             tlsClientHostVerifyName(
-                STRDEF("host"), strNewN("ab\0cd", 5)), CryptoError, "TLS certificate name contains embedded null");
+                STRDEF("host"), strNewZN("ab\0cd", 5)), CryptoError, "TLS certificate name contains embedded null");
 
         TEST_ERROR(tlsClientHostVerify(STRDEF("host"), NULL), CryptoError, "No certificate presented by the TLS server");
 

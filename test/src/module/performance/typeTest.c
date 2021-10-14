@@ -61,6 +61,8 @@ typedef struct
     uint64_t fileTotal;
 } StorageTestManifestNewBuild;
 
+STRING_STATIC(TEST_MANIFEST_PATH_USER_STR,                          "test");
+
 static StorageInfo
 storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
@@ -74,8 +76,8 @@ storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel 
         .mode = 0600,
         .userId = 100,
         .groupId = 100,
-        .user = STRDEF("test"),
-        .group = STRDEF("test"),
+        .user = TEST_MANIFEST_PATH_USER_STR,
+        .group = TEST_MANIFEST_PATH_USER_STR,
     };
 
     if (strEq(file, STRDEF("/pg")))
@@ -219,7 +221,7 @@ testRun(void)
     {
         CHECK(TEST_SCALE <= 10000);
 
-        String *iniStr = strNewZ("[section1]\n");
+        String *iniStr = strCatZ(strNew(), "[section1]\n");
         unsigned int iniMax = 100000 * (unsigned int)TEST_SCALE;
 
         for (unsigned int keyIdx = 0; keyIdx < iniMax; keyIdx++)

@@ -30,8 +30,8 @@ use constant VM_DB_TEST                                             => 'db-test'
     push @EXPORT, qw(VM_DB_TEST);
 use constant VMDEF_DEBUG_INTEGRATION                                => 'debug-integration';
     push @EXPORT, qw(VMDEF_DEBUG_INTEGRATION);
-use constant VM_CONTROL_MASTER                                      => 'control-master';
-    push @EXPORT, qw(VM_CONTROL_MASTER);
+use constant VM_CONTROL_MTR                                         => 'control-mtr';
+    push @EXPORT, qw(VM_CONTROL_MTR);
 # Will coverage testing be run for C?
 use constant VMDEF_COVERAGE_C                                       => 'coverage-c';
 use constant VM_DEPRECATED                                          => 'deprecated';
