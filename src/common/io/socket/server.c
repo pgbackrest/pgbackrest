@@ -159,21 +159,63 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         *driver = (SocketServer)
         {
             .memContext = MEM_CONTEXT_NEW(),
-            .address = strDup(address),
             .port = port,
             .name = strNewFmt("%s:%u", strZ(address), port),
             .timeout = timeout,
         };
 
-        // Create socket for address and port
-        struct sockaddr_in address;
+        struct sockaddr_in addressAny =
+        {
+            .sin_family = AF_INET,
+            .sin_port = htons((uint16_t)driver->port),
+            .sin_addr.s_addr = htonl(INADDR_ANY),
+        };
 
-        address.sin_family = AF_INET;
-        address.sin_port = htons((uint16_t)driver->port);
-        // !!! NEEDS TO BE REAL ADDRESS
-        address.sin_addr.s_addr = htonl(INADDR_ANY);
+        struct sockaddr *addressFound = NULL;
+        socklen_t addressFoundSize = 0;
 
-        THROW_ON_SYS_ERROR((driver->socket = socket(AF_INET, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
+        if (address == NULL)
+        {
+            driver->address = strNewZ("any");
+
+            addressFound = (struct sockaddr *)&addressAny;
+            addressFoundSize = sizeof(addressAny);
+        }
+        else
+        {
+            driver->address = strDup(address);
+
+            // Set hints that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
+            struct addrinfo hints = (struct addrinfo)
+            {
+                .ai_family = AF_UNSPEC,
+                .ai_flags = AI_PASSIVE,
+                .ai_socktype = SOCK_STREAM,
+                .ai_protocol = IPPROTO_TCP,
+            };
+
+            // Convert the port to a zero-terminated string for use with getaddrinfo()
+            char port[CVT_BASE10_BUFFER_SIZE];
+            cvtUIntToZ(driver->port, port, sizeof(port));
+
+            // Get an address for the host.  We are only going to try the first address returned.
+            struct addrinfo *hostAddress;
+            int resultAddr;
+
+            if ((resultAddr = getaddrinfo("::1", port, &hints, &hostAddress)) != 0)
+            {
+                THROW_FMT(
+                    HostConnectError, "unable to get address for '%s': [%d] %s", "TEST", resultAddr,
+                    gai_strerror(resultAddr));
+            }
+
+            addressFound = hostAddress->ai_addr;
+            addressFoundSize = hostAddress->ai_addrlen;
+        }
+
+        // Create socket
+        THROW_ON_SYS_ERROR(
+            (driver->socket = socket(addressFound->sa_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
 
         // Set the address as reusable so we can bind again in the same process for testing !!! REMOVE OR MAKE OPTIONAL???
         int reuseAddr = 1;
@@ -185,7 +227,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
         do
         {
-            result = bind(driver->socket, (struct sockaddr *)&address, sizeof(address));
+            result = bind(driver->socket, addressFound, addressFoundSize);
         }
         while (result == -1 && waitMore(wait)); // {uncovered} !!! FIX COVERAGE
 
