@@ -16,12 +16,9 @@ Server Command
 
 /**********************************************************************************************************************************/
 void
-cmdServer(uint64_t connectionMax, const bool dhLoad)
+cmdServer(uint64_t connectionMax)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT64, connectionMax);
-        FUNCTION_LOG_PARAM(BOOL, dhLoad);
-    FUNCTION_LOG_END();
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     ASSERT(connectionMax > 0);
 
@@ -29,7 +26,7 @@ cmdServer(uint64_t connectionMax, const bool dhLoad)
     {
         IoServer *const tlsServer = tlsServerNew(
            cfgOptionStr(cfgOptTlsServerAddress), cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile),
-           cfgOptionStr(cfgOptTlsServerCertFile), dhLoad, cfgOptionUInt64(cfgOptProtocolTimeout));
+           cfgOptionStr(cfgOptTlsServerCertFile), true, cfgOptionUInt64(cfgOptProtocolTimeout));
         IoServer *const socketServer = sckServerNew(
             cfgOptionStr(cfgOptTlsServerAddress), cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
 

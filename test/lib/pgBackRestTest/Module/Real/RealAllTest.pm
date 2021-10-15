@@ -53,9 +53,9 @@ sub run
     foreach my $rhRun
     (
         {pg => PG_VERSION_83, repoDest => HOST_DB_PRIMARY, tls => 0, storage => POSIX, encrypt => 0, compress => NONE, repo => 2},
-        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, tls => 0, storage => AZURE, encrypt => 1, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, tls => 1, storage => AZURE, encrypt => 1, compress =>   GZ, repo => 1},
         {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, tls => 0, storage =>   GCS, encrypt => 1, compress =>  BZ2, repo => 2},
-        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, tls => 0, storage =>   GCS, encrypt => 0, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>   GZ, repo => 1},
         {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress => NONE, repo => 1},
         {pg => PG_VERSION_93, repoDest =>     HOST_BACKUP, tls => 0, storage => AZURE, encrypt => 0, compress => NONE, repo => 2},
         {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 1},

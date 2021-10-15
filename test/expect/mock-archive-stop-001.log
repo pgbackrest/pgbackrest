@@ -1,4 +1,4 @@
-run 001 - rmt 0, tls 1, cmp bz2, error version, storage gcs, enc 1
+run 001 - rmt 0, tls 0, cmp bz2, error version, storage gcs, enc 1
 ==================================================================
 
 stanza-create db - create required data for stanza (db-primary host)

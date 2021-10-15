@@ -125,7 +125,7 @@ testRun(void)
                 // Get pid of this process to identify child process later
                 pid_t pid = getpid();
 
-                TEST_RESULT_VOID(cmdServer(3, TEST_64BIT()), "server");
+                TEST_RESULT_VOID(cmdServer(3), "server");
 
                 // If this is a child process then exit immediately
                 if (pid != getpid())
@@ -198,7 +198,7 @@ testRun(void)
                 // Get pid of this process to identify child process later
                 pid_t pid = getpid();
 
-                TEST_RESULT_VOID(cmdServer(2, TEST_64BIT()), "server");
+                TEST_RESULT_VOID(cmdServer(2), "server");
 
                 // If this is a child process then exit immediately
                 if (pid != getpid())

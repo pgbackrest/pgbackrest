@@ -112,7 +112,7 @@ use constant VM_EXPECT                                              => VM_CO7;
     push @EXPORT, qw(VM_EXPECT);
 
 # VM aliases for run matrices (numbered oldest to newest)
-use constant VM2                                                    => VM_U16;
+use constant VM2                                                    => VM_D9;
     push @EXPORT, qw(VM2);
 use constant VM3                                                    => VM_CO7;
     push @EXPORT, qw(VM3);
@@ -239,12 +239,16 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_OS => VM_OS_DEBIAN,
         &VM_OS_REPO => 'stretch',
-        &VM_IMAGE => 'debian:9',
-        &VM_ARCH => VM_ARCH_AMD64,
+        &VM_IMAGE => 'i386/debian:9',
+        &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VM_DB_TEST =>
+        &VM_DB =>
         [
+            PG_VERSION_83,
+            PG_VERSION_84,
+            PG_VERSION_90,
+            PG_VERSION_91,
             PG_VERSION_92,
             PG_VERSION_93,
             PG_VERSION_94,
@@ -253,11 +257,17 @@ my $oyVm =
             PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
+            PG_VERSION_13,
+            PG_VERSION_14,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_96,
+            PG_VERSION_83,
+            PG_VERSION_84,
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
         ],
     },
 
