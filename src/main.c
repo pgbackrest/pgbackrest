@@ -236,7 +236,7 @@ main(int argListSize, const char *argList[])
                 // Server start command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdServerStart:
-                    cmdServer(UINT64_MAX);
+                    cmdServer(UINT64_MAX, true);
                     break;
 
                 // Server ping command
