@@ -18,8 +18,16 @@ cmdServerPing(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Check for user-specified host
+        const String *host = STRDEF("localhost");
+        const StringList *commandParam = cfgCommandParam();
+
+        if (strLstSize(commandParam) == 1)
+            host = strLstGet(commandParam, 0);
+        else if (strLstSize(commandParam) > 1)
+            THROW(ParamInvalidError, "extra parameters found");
+
         // Connect to server without any verification
-        const String *const host = STRDEF("localhost");
         const TimeMSec timeout = cfgOptionUInt64(cfgOptIoTimeout);
 
         IoClient *const tlsClient = tlsClientNew(

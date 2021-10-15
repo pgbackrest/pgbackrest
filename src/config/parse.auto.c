@@ -215,6 +215,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
         PARSE_RULE_COMMAND_NAME("server-ping"),
         PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),
         PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),
+        PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (

@@ -148,15 +148,34 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdServerPing()"))
     {
-        TEST_TITLE("server ping");
+        TEST_TITLE("error on extra parameters");
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "host");
+        strLstAddZ(argList, "bogus");
+        HRN_CFG_LOAD(cfgCmdServerPing, argList);
+
+        TEST_ERROR(cmdServerPing(), ParamInvalidError, "extra parameters found");
 
         HRN_FORK_BEGIN(.timeout = 5000)
         {
 
             HRN_FORK_CHILD_BEGIN(.prefix = "client")
             {
-                StringList *argList = strLstNew();
+                TEST_TITLE("ping localhost");
+
+                argList = strLstNew();
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                HRN_CFG_LOAD(cfgCmdServerPing, argList);
+
+                TEST_RESULT_VOID(cmdServerPing(), "ping");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("ping 12.0.0.1");
+
+                argList = strLstNew();
+                hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                strLstAddZ(argList, "127.0.0.1");
                 HRN_CFG_LOAD(cfgCmdServerPing, argList);
 
                 TEST_RESULT_VOID(cmdServerPing(), "ping");
@@ -179,7 +198,7 @@ testRun(void)
                 // Get pid of this process to identify child process later
                 pid_t pid = getpid();
 
-                TEST_RESULT_VOID(cmdServer(1), "server");
+                TEST_RESULT_VOID(cmdServer(2), "server");
 
                 // If this is a child process then exit immediately
                 if (pid != getpid())

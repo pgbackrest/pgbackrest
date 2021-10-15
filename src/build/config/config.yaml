@@ -122,6 +122,7 @@ command:
   server-ping:
     internal: true
     log-file: false
+    parameter-allowed: true
 
   server-start:
     internal: true
