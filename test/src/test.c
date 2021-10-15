@@ -102,6 +102,11 @@ The test code is included directly so it can freely interact with the included C
     #include "common/memContext.h"
 #endif
 
+#ifdef HRN_FEATURE_LOG
+    #include "common/harnessLog.h"
+    void harnessLogLevelDefaultSet(LogLevel logLevel);
+#endif
+
 {[C_TEST_INCLUDE]}
 
 /***********************************************************************************************************************************
@@ -109,7 +114,10 @@ Includes that are not generally used by tests
 ***********************************************************************************************************************************/
 #include <assert.h>
 
-#include "common/io/socket/common.h"
+#if defined(HRN_INTEST_SOCKET) || defined(HRN_FEATURE_SOCKET)
+    #include "common/io/socket/common.h"
+    #include "common/harnessServer.h"
+#endif
 
 #ifdef HRN_FEATURE_STAT
     #include "common/stat.h"
@@ -162,11 +170,6 @@ main(int argListSize, const char *argList[])
     statInit();
 #endif
 
-    // Use aggressive keep-alive settings for testing
-#if defined(HRN_INTEST_SOCKET) || defined(HRN_FEATURE_SOCKET)
-    sckInit(false, true, 2, 5, 5);
-#endif
-
     // Set neutral umask for testing
     umask(0000);
 
@@ -190,6 +193,12 @@ main(int argListSize, const char *argList[])
     // Set default test log level
 #ifdef HRN_FEATURE_LOG
     harnessLogLevelDefaultSet({[C_LOG_LEVEL_TEST]});
+#endif
+
+    // Use aggressive keep-alive settings for testing
+#if defined(HRN_INTEST_SOCKET) || defined(HRN_FEATURE_SOCKET)
+    sckInit(false, true, 2, 5, 5);
+    hrnServerInit();
 #endif
 
     // Initialize tests

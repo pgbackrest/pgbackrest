@@ -73,6 +73,7 @@ sub new
         {
             strName => $bStandby ? HOST_DB_STANDBY : HOST_DB_PRIMARY,
             strImage => $$oParam{strImage},
+            bTls => $oParam->{bTls},
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bSynthetic => $$oParam{bSynthetic},

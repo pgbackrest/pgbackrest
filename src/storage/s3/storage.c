@@ -1004,7 +1004,9 @@ storageS3New(
             host = driver->bucketEndpoint;
 
         driver->httpClient = httpClientNew(
-            tlsClientNew(sckClientNew(host, port, timeout), host, timeout, verifyPeer, caFile, caPath), timeout);
+            tlsClientNew(
+                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, caFile, caPath, NULL, NULL),
+            timeout);
 
         // Initialize authentication
         switch (driver->keyType)
@@ -1017,7 +1019,8 @@ storageS3New(
                 driver->credRole = strDup(credRole);
                 driver->credHost = S3_CREDENTIAL_HOST_STR;
                 driver->credExpirationTime = time(NULL);
-                driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout), timeout);
+                driver->credHttpClient = httpClientNew(
+                    sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout, timeout), timeout);
 
                 break;
             }

@@ -14,8 +14,8 @@ Server Test Harness
 
 #include "common/crypto/common.h"
 #include "common/error.h"
-#include "common/io/socket/common.h"
-#include "common/io/socket/session.h"
+#include "common/io/socket/server.h"
+#include "common/io/tls/server.h"
 #include "common/io/tls/session.h"
 #include "common/log.h"
 #include "common/type/buffer.h"
@@ -44,6 +44,29 @@ typedef enum
 Constants
 ***********************************************************************************************************************************/
 #define HRN_SERVER_HOST                                             "tls.test.pgbackrest.org"
+
+/**********************************************************************************************************************************/
+void hrnServerInit(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    // Set correct permissions on private keys
+    THROW_ON_SYS_ERROR(
+        chmod(strZ(strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo())), 0600) == -1, FileModeError,
+        "unable to set mode on server key");
+    THROW_ON_SYS_ERROR(
+        chmod(strZ(strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "client.key", hrnPathRepo())), 0600) == -1, FileModeError,
+        "unable to set mode on client key");
+
+    // Add hostname when running in a container
+    if (testContainer())
+    {
+        if (system("echo \"127.0.0.1 " HRN_SERVER_HOST "\" | sudo tee -a /etc/hosts > /dev/null") != 0)
+            THROW(AssertError, "unable to add test host to /etc/hosts");
+    }
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Send commands to the server
@@ -220,15 +243,8 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
     if (param.port == 0)
         param.port = hrnServerPort(0);
 
-    // Add test hosts
-    if (testContainer())
-    {
-        if (system("echo \"127.0.0.1 " HRN_SERVER_HOST "\" | sudo tee -a /etc/hosts > /dev/null") != 0)
-            THROW(AssertError, "unable to add test host to /etc/hosts");
-    }
-
     // Initialize ssl and create a context
-    SSL_CTX *serverContext = NULL;
+    IoServer *tlsServer = NULL;
 
     if (protocol == hrnServerProtocolTls)
     {
@@ -237,60 +253,14 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
         // If certificate and key are not set then use defaults
         if (param.certificate == NULL)
         {
-            param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".crt", hrnPathRepo());
-            param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".key", hrnPathRepo());
+            param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.crt", hrnPathRepo());
+            param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo());
         }
 
-        // Initialize TLS
-        cryptoInit();
-
-        const SSL_METHOD *method = SSLv23_method();
-        cryptoError(method == NULL, "unable to load TLS method");
-
-        serverContext = SSL_CTX_new(method);
-        cryptoError(serverContext == NULL, "unable to create TLS context");
-
-        // Configure the context by setting key and cert
-        cryptoError(
-            SSL_CTX_use_certificate_file(serverContext, strZ(param.certificate), SSL_FILETYPE_PEM) <= 0,
-            "unable to load server certificate");
-        cryptoError(
-            SSL_CTX_use_PrivateKey_file(serverContext, strZ(param.key), SSL_FILETYPE_PEM) <= 0,
-            "unable to load server private key");
+        tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.ca, param.key, param.certificate, TEST_64BIT(), 5000);
     }
 
-    // Create the socket
-    int serverSocket;
-
-    struct sockaddr_in address;
-
-    address.sin_family = AF_INET;
-    address.sin_port = htons((uint16_t)param.port);
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-        THROW_SYS_ERROR(AssertError, "unable to create socket");
-
-    // Set the address as reusable so we can bind again in the same process for testing
-    int reuseAddr = 1;
-    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr));
-
-    // Bind the address.  It might take a bit to bind if another process was recently using it so retry a few times.
-    Wait *wait = waitNew(2000);
-    int result;
-
-    do
-    {
-        result = bind(serverSocket, (struct sockaddr *)&address, sizeof(address));
-    }
-    while (result < 0 && waitMore(wait));
-
-    if (result < 0)
-        THROW_SYS_ERROR(AssertError, "unable to bind socket");
-
-    // Listen for client connections
-    if (listen(serverSocket, 1) < 0)
-        THROW_SYS_ERROR(AssertError, "unable to listen on socket");
+    IoServer *socketServer = sckServerNew(STRDEF("localhost"), param.port, 5000);
 
     // Loop until no more commands
     IoSession *serverSession = NULL;
@@ -316,25 +286,11 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
 
             case hrnServerCmdAccept:
             {
-                // Accept the socket connection
-                struct sockaddr_in addr;
-                unsigned int len = sizeof(addr);
-
-                int testClientSocket = accept(serverSocket, (struct sockaddr *)&addr, &len);
-
-                if (testClientSocket < 0)
-                    THROW_SYS_ERROR(AssertError, "unable to accept socket");
-
-                // Create socket session
-                sckOptionSet(testClientSocket);
-                serverSession = sckSessionNew(ioSessionRoleServer, testClientSocket, STRDEF("localhost"), param.port, 5000);
+                serverSession = ioServerAccept(socketServer, NULL);
 
                 // Start TLS if requested
                 if (protocol == hrnServerProtocolTls)
-                {
-                    SSL *testClientSSL = SSL_new(serverContext);
-                    serverSession = tlsSessionNew(testClientSSL, serverSession, 5000);
-                }
+                    serverSession = ioServerAccept(tlsServer, serverSession);
 
                 break;
             }
@@ -402,9 +358,9 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
     }
     while (!done);
 
-    // Free TLS context
-    if (protocol == hrnServerProtocolTls)
-        SSL_CTX_free(serverContext);
+    // Free servers
+    ioServerFree(tlsServer);
+    ioServerFree(socketServer);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

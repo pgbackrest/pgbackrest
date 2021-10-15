@@ -33,7 +33,8 @@ typedef struct SocketClient
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
     String *name;                                                   // Socket name (host:port)
-    TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
+    TimeMSec timeoutConnect;                                        // Timeout for connection
+    TimeMSec timeoutSession;                                        // Timeout passed to session
 } SocketClient;
 
 /***********************************************************************************************************************************
@@ -44,7 +45,9 @@ sckClientToLog(const THIS_VOID)
 {
     THIS(const SocketClient);
 
-    return strNewFmt("{host: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->host), this->port, this->timeout);
+    return strNewFmt(
+        "{host: %s, port: %u, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 "}", strZ(this->host), this->port,
+        this->timeoutConnect, this->timeoutSession);
 }
 
 #define FUNCTION_LOG_SOCKET_CLIENT_TYPE                                                                                            \
@@ -69,7 +72,7 @@ sckClientOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         bool retry;
-        Wait *wait = waitNew(this->timeout);
+        Wait *wait = waitNew(this->timeoutConnect);
 
         do
         {
@@ -79,48 +82,28 @@ sckClientOpen(THIS_VOID)
 
             TRY_BEGIN()
             {
-                // Set hints that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
-                struct addrinfo hints = (struct addrinfo)
-                {
-                    .ai_family = AF_UNSPEC,
-                    .ai_socktype = SOCK_STREAM,
-                    .ai_protocol = IPPROTO_TCP,
-                };
-
-                // Convert the port to a zero-terminated string for use with getaddrinfo()
-                char port[CVT_BASE10_BUFFER_SIZE];
-                cvtUIntToZ(this->port, port, sizeof(port));
-
-                // Get an address for the host.  We are only going to try the first address returned.
-                struct addrinfo *hostAddress;
-                int resultAddr;
-
-                if ((resultAddr = getaddrinfo(strZ(this->host), port, &hints, &hostAddress)) != 0)
-                {
-                    THROW_FMT(
-                        HostConnectError, "unable to get address for '%s': [%d] %s", strZ(this->host), resultAddr,
-                        gai_strerror(resultAddr));
-                }
+                // Get an address for the host. We are only going to try the first address returned.
+                struct addrinfo *addressFound = sckHostLookup(this->host, this->port);
 
                 // Connect to the host
                 TRY_BEGIN()
                 {
-                    fd = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
+                    fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
                     THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
                     sckOptionSet(fd);
-                    sckConnect(fd, this->host, this->port, hostAddress, waitRemaining(wait));
+                    sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
                 }
                 FINALLY()
                 {
-                    freeaddrinfo(hostAddress);
+                    freeaddrinfo(addressFound);
                 }
                 TRY_END();
 
                 // Create the session
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = sckSessionNew(ioSessionRoleClient, fd, this->host, this->port, this->timeout);
+                    result = sckSessionNew(ioSessionRoleClient, fd, this->host, this->port, this->timeoutSession);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
@@ -176,12 +159,13 @@ static const IoClientInterface sckClientInterface =
 };
 
 IoClient *
-sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
+sckClientNew(const String *const host, const unsigned int port, const TimeMSec timeoutConnect, const TimeMSec timeoutSession)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
     FUNCTION_LOG_END();
 
     ASSERT(host != NULL);
@@ -197,7 +181,8 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
             .host = strDup(host),
             .port = port,
             .name = strNewFmt("%s:%u", strZ(host), port),
-            .timeout = timeout,
+            .timeoutConnect = timeoutConnect,
+            .timeoutSession = timeoutSession,
         };
 
         statInc(SOCKET_STAT_CLIENT_STR);

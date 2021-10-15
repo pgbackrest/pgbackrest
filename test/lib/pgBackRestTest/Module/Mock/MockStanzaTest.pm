@@ -41,12 +41,12 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM2, remote => false, storage => AZURE, encrypt =>  true, compress => BZ2},
-        {vm => VM2, remote =>  true, storage => POSIX, encrypt => false, compress =>  GZ},
-        {vm => VM3, remote => false, storage =>   GCS, encrypt => false, compress => ZST},
-        {vm => VM3, remote =>  true, storage => AZURE, encrypt =>  true, compress => LZ4},
-        {vm => VM4, remote => false, storage =>    S3, encrypt => false, compress =>  GZ},
-        {vm => VM4, remote =>  true, storage =>   GCS, encrypt =>  true, compress => ZST},
+        {vm => VM2, remote => false, tls => false, storage => AZURE, encrypt =>  true, compress => BZ2},
+        {vm => VM2, remote =>  true, tls =>  true, storage => POSIX, encrypt => false, compress =>  GZ},
+        {vm => VM3, remote => false, tls => false, storage =>   GCS, encrypt => false, compress => ZST},
+        {vm => VM3, remote =>  true, tls =>  true, storage => AZURE, encrypt =>  true, compress => LZ4},
+        {vm => VM4, remote => false, tls => false, storage =>    S3, encrypt => false, compress =>  GZ},
+        {vm => VM4, remote =>  true, tls => false, storage =>   GCS, encrypt =>  true, compress => ZST},
     )
     {
         # Only run tests for this vm
@@ -54,17 +54,19 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bRemote = $rhRun->{remote};
+        my $bTls = $rhRun->{tls};
         my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
         my $strCompressType = $rhRun->{compress};
 
         # Increment the run, log, and decide whether this unit test should be run
-        if (!$self->begin("remote ${bRemote}, storage ${strStorage}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
+        if (!$self->begin("remote ${bRemote}, tls ${bTls}, storage ${strStorage}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
-            strCompressType => $strCompressType});
+            true, $self->expect(),
+            {bHostBackup => $bRemote, bTls => $bTls, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
+                strCompressType => $strCompressType});
 
         # Archive and backup info file names
         my $strArchiveInfoFile = $oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE);

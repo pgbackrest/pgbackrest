@@ -62,6 +62,7 @@ sub new
     my $self = $class->SUPER::new(
         {
             strImage => containerRepo() . ':' . testRunGet()->vm() . "-test",
+            bTls => $oParam->{bTls},
             strBackupDestination => $$oParam{strBackupDestination},
             oLogTest => $$oParam{oLogTest},
             bStandby => $$oParam{bStandby},

@@ -88,7 +88,7 @@ sub setup
 
         $oHostBackup = new pgBackRestTest::Env::Host::HostBackupTest(
             {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest,
-                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
         $oHostGroup->hostAdd($oHostBackup);
     }
     else
@@ -104,13 +104,13 @@ sub setup
     {
         $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
             {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest,
-                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
     }
     else
     {
         $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbTest(
             {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal =>
-                $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt});
+                $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
     }
 
     $oHostGroup->hostAdd($oHostDbPrimary);
@@ -122,7 +122,7 @@ sub setup
     {
         $oHostDbStandby = new pgBackRestTest::Env::Host::HostDbTest(
             {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest,
-                bRepoLocal => $oConfigParam->{strStorage} eq POSIX});
+                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bTls => $oConfigParam->{bTls}});
 
         $oHostGroup->hostAdd($oHostDbStandby);
     }
@@ -140,6 +140,7 @@ sub setup
 
     # Create db-primary config
     $oHostDbPrimary->configCreate({
+        bTls => $oConfigParam->{bTls},
         strBackupSource => $$oConfigParam{strBackupSource},
         strCompressType => $$oConfigParam{strCompressType},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
@@ -151,6 +152,7 @@ sub setup
     if (defined($oHostBackup))
     {
         $oHostBackup->configCreate({
+            bTls => $oConfigParam->{bTls},
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $$oConfigParam{bHardLink},
             strStorage => $oConfigParam->{strStorage},
@@ -176,6 +178,7 @@ sub setup
     if (defined($oHostDbStandby))
     {
         $oHostDbStandby->configCreate({
+            bTls => $oConfigParam->{bTls},
             strBackupSource => $$oConfigParam{strBackupSource},
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},

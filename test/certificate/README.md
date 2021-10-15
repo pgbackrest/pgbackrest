@@ -14,35 +14,44 @@ openssl req -new -x509 -extensions v3_ca -key pgbackrest-test-ca.key -out pgback
 openssl x509 -in pgbackrest-test-ca.crt -text -noout
 ```
 
-## Generating the Test Key (pgbackrest-test.key)
+## Generating the Server Test Key (pgbackrest-test-server.key)
 
 This key will be used for all server certificates to keep things simple.
 
 ```
 cd [pgbackrest-root]/test/certificate
-openssl genrsa -out pgbackrest-test.key 4096
+openssl genrsa -out pgbackrest-test-server.key 4096
 ```
 
-## Generating the Alt Name Test Certificate (pgbackrest-test-alt-name.crt)
-
-This certificate will include alternate names and will only be used in unit tests to check alternate name verification functionality.
-
-```
-cd [pgbackrest-root]/test/certificate
-openssl req -new -sha256 -nodes -out pgbackrest-test-alt-name.csr -key pgbackrest-test.key -config pgbackrest-test-alt-name.cnf
-openssl x509 -req -in pgbackrest-test-alt-name.csr -CA pgbackrest-test-ca.crt -CAkey pgbackrest-test-ca.key -CAcreateserial \
-    -out pgbackrest-test-alt-name.crt -days 99999 -extensions v3_req -extfile pgbackrest-test-alt-name.cnf
-openssl x509 -in pgbackrest-test-alt-name.crt -text -noout
-```
-
-## Generating the Test Certificate (pgbackrest-test.crt)
+## Generating the Server Test Certificate (pgbackrest-test-server.crt/key)
 
 This certificate will be used in unit and integration tests.  It is expected to pass verification but won't be subjected to extensive testing.
 
 ```
 cd [pgbackrest-root]/test/certificate
-openssl req -new -sha256 -nodes -out pgbackrest-test.csr -key pgbackrest-test.key -config pgbackrest-test.cnf
-openssl x509 -req -in pgbackrest-test.csr -CA pgbackrest-test-ca.crt -CAkey pgbackrest-test-ca.key -CAcreateserial \
-    -out pgbackrest-test.crt -days 99999 -extensions v3_req -extfile pgbackrest-test.cnf
-openssl x509 -in pgbackrest-test.crt -text -noout
+openssl req -new -sha256 -nodes -out pgbackrest-test-server.csr -key pgbackrest-test-server.key -config pgbackrest-test-server.cnf
+openssl x509 -req -in pgbackrest-test-server.csr -CA pgbackrest-test-ca.crt -CAkey pgbackrest-test-ca.key -CAcreateserial \
+    -out pgbackrest-test-server.crt -days 99999 -extensions v3_req -extfile pgbackrest-test-server.cnf
+openssl x509 -in pgbackrest-test-server.crt -text -noout
+```
+
+## Generating the Client Test Key (pgbackrest-test-client.key)
+
+This key will be used for all client certificates to keep things simple.
+
+```
+cd [pgbackrest-root]/test/certificate
+openssl genrsa -out pgbackrest-test-client.key 4096
+```
+
+## Generating the Client Test Certificate (pgbackrest-test-client.crt/key)
+
+This certificate will be used in unit and integration tests. It is expected to pass verification but won't be subjected to extensive testing.
+
+```
+cd [pgbackrest-root]/test/certificate
+openssl req -new -sha256 -nodes -out pgbackrest-test-client.csr -key pgbackrest-test-client.key -config pgbackrest-test-client.cnf
+openssl x509 -req -in pgbackrest-test-client.csr -CA pgbackrest-test-ca.crt -CAkey pgbackrest-test-ca.key -CAcreateserial \
+    -out pgbackrest-test-client.crt -days 99999 -extensions v3_req -extfile pgbackrest-test-client.cnf
+openssl x509 -in pgbackrest-test-client.crt -text -noout
 ```

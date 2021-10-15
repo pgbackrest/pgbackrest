@@ -152,6 +152,9 @@ protocolLocalExec(
             ioFdReadNewOpen(strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u shim protocol read", processId), pipeRead[0], 5000),
             ioFdWriteNewOpen(strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u shim protocol write", processId), pipeWrite[1], 5000));
 
+        // Send one noop to catch any errors that might happen after the greeting
+        protocolClientNoOp(helper->client);
+
         FUNCTION_LOG_RETURN_VOID();
     }
     // Else call the base function
@@ -247,6 +250,9 @@ protocolRemoteExec(
             strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol", processId), PROTOCOL_SERVICE_REMOTE_STR,
             ioFdReadNewOpen(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol read", processId), pipeRead[0], 5000),
             ioFdWriteNewOpen(strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u shim protocol write", processId), pipeWrite[1], 5000));
+
+        // Send one noop to catch any errors that might happen after the greeting
+        protocolClientNoOp(helper->client);
 
         FUNCTION_LOG_RETURN_VOID();
     }

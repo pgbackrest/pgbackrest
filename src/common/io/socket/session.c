@@ -22,7 +22,7 @@ typedef struct SocketSession
     int fd;                                                         // File descriptor
     String *host;                                                   // Hostname or IP address
     unsigned int port;                                              // Port to connect to host on
-    TimeMSec timeout;                                               // Timeout for any i/o operation (connect, read, etc.)
+    TimeMSec timeout;                                               // Timeout for any i/o operation (read, write, etc.)
 
     IoRead *read;                                                   // IoRead interface to the file descriptor
     IoWrite *write;                                                 // IoWrite interface to the file descriptor

@@ -119,6 +119,14 @@ command:
       local: {}
       remote: {}
 
+  server-ping:
+    internal: true
+    log-file: false
+    parameter-allowed: true
+
+  server-start:
+    internal: true
+
   stanza-create:
     command-role:
       remote: {}
@@ -599,6 +607,8 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      server-ping: {}
+      server-start: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -822,6 +832,7 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      server-start: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -888,6 +899,47 @@ option:
     allow-range: [1, 900]
     command: buffer-size
     depend: tcp-keep-alive-count
+
+  tls-server-ca-file:
+    section: global
+    type: path
+    command:
+      server-start: {}
+
+  tls-server-cert-file:
+    section: global
+    type: path
+    command:
+      server-start: {}
+
+  tls-server-key-file:
+    section: global
+    type: path
+    command:
+      server-start: {}
+
+  tls-server-auth:
+    section: global
+    type: hash
+    command:
+      server-start: {}
+
+  tls-server-address:
+    section: global
+    type: string
+    default: localhost
+    command:
+      server-ping: {}
+      server-start: {}
+
+  tls-server-port:
+    section: global
+    type: integer
+    default: 8432
+    allow-range: [1, 65535]
+    command:
+      server-ping: {}
+      server-start: {}
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
@@ -1265,6 +1317,31 @@ option:
       db-host: {}
       db?-host: {}
 
+  pg-host-cert-file:
+    section: global
+    group: pg
+    type: string
+    command: pg-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-host-type
+      list:
+        - tls
+
+  pg-host-key-file:
+    inherit: pg-host-cert-file
+
+  pg-host-ca-file:
+    inherit: pg-host-cert-file
+    required: false
+
+  pg-host-ca-path:
+    inherit: pg-host-cert-file
+    required: false
+
   pg-host-cmd:
     section: stanza
     group: pg
@@ -1323,6 +1400,24 @@ option:
     deprecate:
       db-user: {}
       db?-user: {}
+
+  pg-host-type:
+    section: global
+    group: pg
+    type: string
+    default: ssh
+    allow-list:
+      - ssh
+      - tls
+    command: pg-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-local
+      list:
+        - false
 
   pg-path:
     section: stanza
@@ -1697,6 +1792,24 @@ option:
     deprecate:
       hardlink: {}
 
+  repo-host-type:
+    section: global
+    group: repo
+    type: string
+    default: ssh
+    allow-list:
+      - ssh
+      - tls
+    command: repo-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: repo-local
+      list:
+        - false
+
   repo-host:
     section: global
     group: repo
@@ -1707,12 +1820,34 @@ option:
       async: {}
       main: {}
       local: {}
-    depend:
-      option: repo-local
-      list:
-        - false
+    depend: repo-host-type
     deprecate:
       backup-host: {}
+
+  repo-host-cert-file:
+    section: global
+    group: repo
+    type: string
+    command: repo-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: repo-host-type
+      list:
+        - tls
+
+  repo-host-key-file:
+    inherit: repo-host-cert-file
+
+  repo-host-ca-file:
+    inherit: repo-host-cert-file
+    required: false
+
+  repo-host-ca-path:
+    inherit: repo-host-cert-file
+    required: false
 
   repo-host-cmd:
     section: global
@@ -1722,6 +1857,7 @@ option:
     command:
       archive-get: {}
       archive-push: {}
+      backup: {}
       check: {}
       info: {}
       repo-create: {}

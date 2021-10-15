@@ -1,5 +1,5 @@
-run 001 - remote 0, storage gcs, enc 0, cmp zst
-===============================================
+run 001 - remote 0, tls 0, storage gcs, enc 0, cmp zst
+======================================================
 
 stanza-create db - fail on missing control file (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online --log-level-file=[LOG-LEVEL-FILE] stanza-create

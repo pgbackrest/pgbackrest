@@ -128,15 +128,9 @@ testRun(void)
                     protocolClientNoOp(client), PathCreateError,
                     "raised from test: unable to create path '/bogus': [13] Permission denied");
 
-                // The server is in an error state so ignore any client errors
-                TRY_BEGIN()
-                {
-                    protocolClientFree(client);
-                }
-                CATCH_ANY()
-                {
-                }
-                TRY_END();
+                // Do not send the exit command before freeing since the server has already errored
+                TEST_RESULT_VOID(protocolClientNoExit(client), "client no exit");
+                TEST_RESULT_VOID(protocolClientFree(client), "client free");
             }
             HRN_FORK_PARENT_END();
         }
@@ -215,15 +209,9 @@ testRun(void)
 
                 TEST_ERROR(protocolClientNoOp(client), StopError, "raised from test: stop file exists for all stanzas");
 
-                // The server is in an error state so ignore any client errors
-                TRY_BEGIN()
-                {
-                    protocolClientFree(client);
-                }
-                CATCH_ANY()
-                {
-                }
-                TRY_END();
+                // Do not send the exit command before freeing since the server has already errored
+                TEST_RESULT_VOID(protocolClientNoExit(client), "client no exit");
+                TEST_RESULT_VOID(protocolClientFree(client), "client free");
 
                 HRN_STORAGE_REMOVE(hrnStorage, "lock/all" STOP_FILE_EXT);
             }
