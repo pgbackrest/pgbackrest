@@ -159,79 +159,41 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         *driver = (SocketServer)
         {
             .memContext = MEM_CONTEXT_NEW(),
+            .address = strDup(address),
             .port = port,
             .name = strNewFmt("%s:%u", strZ(address), port),
             .timeout = timeout,
         };
 
-        struct sockaddr_in addressAny =
-        {
-            .sin_family = AF_INET,
-            .sin_port = htons((uint16_t)driver->port),
-            .sin_addr.s_addr = htonl(INADDR_ANY),
-        };
-
-        struct sockaddr *addressFound = NULL;
-        socklen_t addressFoundSize = 0;
-
-        if (address == NULL)
-        {
-            driver->address = strNewZ("any");
-
-            addressFound = (struct sockaddr *)&addressAny;
-            addressFoundSize = sizeof(addressAny);
-        }
-        else
-        {
-            driver->address = strDup(address);
-
-            // Set hints that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
-            struct addrinfo hints = (struct addrinfo)
-            {
-                .ai_family = AF_UNSPEC,
-                .ai_flags = AI_PASSIVE,
-                .ai_socktype = SOCK_STREAM,
-                .ai_protocol = IPPROTO_TCP,
-            };
-
-            // Convert the port to a zero-terminated string for use with getaddrinfo()
-            char port[CVT_BASE10_BUFFER_SIZE];
-            cvtUIntToZ(driver->port, port, sizeof(port));
-
-            // Get an address for the host.  We are only going to try the first address returned.
-            struct addrinfo *hostAddress;
-            int resultAddr;
-
-            if ((resultAddr = getaddrinfo("::1", port, &hints, &hostAddress)) != 0)
-            {
-                THROW_FMT(
-                    HostConnectError, "unable to get address for '%s': [%d] %s", "TEST", resultAddr,
-                    gai_strerror(resultAddr));
-            }
-
-            addressFound = hostAddress->ai_addr;
-            addressFoundSize = hostAddress->ai_addrlen;
-        }
-
         // Create socket
-        THROW_ON_SYS_ERROR(
-            (driver->socket = socket(addressFound->sa_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
+        struct addrinfo *addressFound = sckHostLookup(driver->address, driver->port);
 
-        // Set the address as reusable so we can bind again in the same process for testing !!! REMOVE OR MAKE OPTIONAL???
-        int reuseAddr = 1;
-        setsockopt(driver->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr));
-
-        // Bind the address. It might take a bit to bind if another process was recently using it so retry a few times.
-        Wait *wait = waitNew(2000);
-        int result;
-
-        do
+        TRY_BEGIN()
         {
-            result = bind(driver->socket, addressFound, addressFoundSize);
-        }
-        while (result == -1 && waitMore(wait)); // {uncovered} !!! FIX COVERAGE
+            THROW_ON_SYS_ERROR(
+                (driver->socket = socket(addressFound->ai_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
 
-        THROW_ON_SYS_ERROR(result == -1, FileOpenError, "unable to bind socket");
+            // Set the address as reusable so we can bind again in the same process for testing
+            int reuseAddr = 1;
+            setsockopt(driver->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr));
+
+            // Bind the address. It might take a bit to bind if another process was recently using it so retry a few times.
+            Wait *wait = waitNew(5000);
+            int result;
+
+            do
+            {
+                result = bind(driver->socket, addressFound->ai_addr, addressFound->ai_addrlen);
+            }
+            while (result == -1 && waitMore(wait)); // {uncovered} !!! FIX COVERAGE
+
+            THROW_ON_SYS_ERROR(result == -1, FileOpenError, "unable to bind socket");
+        }
+        FINALLY()
+        {
+            freeaddrinfo(addressFound);
+        }
+        TRY_END();
 
         // Ensure file descriptor is closed
         memContextCallbackSet(driver->memContext, sckServerFreeResource, driver);

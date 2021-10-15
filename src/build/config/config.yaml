@@ -931,6 +931,14 @@ option:
     command:
       server-start: {}
 
+  tls-server-address:
+    section: global
+    type: string
+    default: localhost
+    command:
+      server-ping: {}
+      server-start: {}
+
   tls-server-port:
     section: global
     type: integer

@@ -22,15 +22,13 @@ cmdServer(uint64_t connectionMax)
 
     ASSERT(connectionMax > 0);
 
-    const String *const host = STRDEF("localhost");
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
         IoServer *const tlsServer = tlsServerNew(
-           host, cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile), cfgOptionStr(cfgOptTlsServerCertFile),
-           cfgOptionStrNull(cfgOptTlsServerCrlFile), cfgOptionUInt64(cfgOptProtocolTimeout));
+           cfgOptionStr(cfgOptTlsServerAddress), cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile),
+           cfgOptionStr(cfgOptTlsServerCertFile), cfgOptionStrNull(cfgOptTlsServerCrlFile), cfgOptionUInt64(cfgOptProtocolTimeout));
         IoServer *const socketServer = sckServerNew(
-            host, cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
+            cfgOptionStr(cfgOptTlsServerAddress), cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
 
         // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE
         // REPLACED WITH A STOP REQUEST FROM AN AUTHENTICATED CLIENT OR SIGQUIT.

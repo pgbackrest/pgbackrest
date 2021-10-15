@@ -1459,6 +1459,17 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-address" name="TLS Server Address">
+                        <summary>TLS server address.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>!!!</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
                     <config-key id="tls-server-port" name="TLS Server Port">
                         <summary>TLS server port.</summary>
 

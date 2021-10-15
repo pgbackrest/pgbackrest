@@ -15,6 +15,9 @@ Functions
 // Initialize settings for socket connections (some are used only for TCP)
 void sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval);
 
+// !!!
+struct addrinfo *sckHostLookup(const String *const host, unsigned int port);
+
 // Set options on a socket
 void sckOptionSet(int fd);
 

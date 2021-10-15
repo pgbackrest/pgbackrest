@@ -82,41 +82,21 @@ sckClientOpen(THIS_VOID)
 
             TRY_BEGIN()
             {
-                // Set hints that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
-                struct addrinfo hints = (struct addrinfo)
-                {
-                    .ai_family = AF_UNSPEC,
-                    .ai_socktype = SOCK_STREAM,
-                    .ai_protocol = IPPROTO_TCP,
-                };
-
-                // Convert the port to a zero-terminated string for use with getaddrinfo()
-                char port[CVT_BASE10_BUFFER_SIZE];
-                cvtUIntToZ(this->port, port, sizeof(port));
-
-                // Get an address for the host.  We are only going to try the first address returned.
-                struct addrinfo *hostAddress;
-                int resultAddr;
-
-                if ((resultAddr = getaddrinfo(strZ(this->host), port, &hints, &hostAddress)) != 0)
-                {
-                    THROW_FMT(
-                        HostConnectError, "unable to get address for '%s': [%d] %s", strZ(this->host), resultAddr,
-                        gai_strerror(resultAddr));
-                }
+                // Get an address for the host. We are only going to try the first address returned.
+                struct addrinfo *addressFound = sckHostLookup(this->host, this->port);
 
                 // Connect to the host
                 TRY_BEGIN()
                 {
-                    fd = socket(hostAddress->ai_family, hostAddress->ai_socktype, hostAddress->ai_protocol);
+                    fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
                     THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
 
                     sckOptionSet(fd);
-                    sckConnect(fd, this->host, this->port, hostAddress, waitRemaining(wait));
+                    sckConnect(fd, this->host, this->port, addressFound, waitRemaining(wait));
                 }
                 FINALLY()
                 {
-                    freeaddrinfo(hostAddress);
+                    freeaddrinfo(addressFound);
                 }
                 TRY_END();
 

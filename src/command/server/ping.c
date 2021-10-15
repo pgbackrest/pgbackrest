@@ -19,7 +19,7 @@ cmdServerPing(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check for user-specified host
-        const String *host = STRDEF("localhost");
+        const String *host = cfgOptionStr(cfgOptTlsServerAddress);
         const StringList *commandParam = cfgCommandParam();
 
         if (strLstSize(commandParam) == 1)
