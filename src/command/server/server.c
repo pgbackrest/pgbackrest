@@ -26,7 +26,7 @@ cmdServer(uint64_t connectionMax)
     {
         IoServer *const tlsServer = tlsServerNew(
            cfgOptionStr(cfgOptTlsServerAddress), cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile),
-           cfgOptionStr(cfgOptTlsServerCertFile), true, cfgOptionUInt64(cfgOptProtocolTimeout));
+           cfgOptionStr(cfgOptTlsServerCertFile), sizeof(size_t) == 8, cfgOptionUInt64(cfgOptProtocolTimeout));
         IoServer *const socketServer = sckServerNew(
             cfgOptionStr(cfgOptTlsServerAddress), cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
 
