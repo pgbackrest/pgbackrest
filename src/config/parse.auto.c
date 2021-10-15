@@ -2779,7 +2779,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535),
             PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptPgPath),
         ),
     ),
