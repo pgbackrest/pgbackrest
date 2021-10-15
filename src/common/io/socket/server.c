@@ -165,38 +165,32 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
             .timeout = timeout,
         };
 
-        // Create socket
+        // Lookup address
         struct addrinfo *addressFound = sckHostLookup(driver->address, driver->port);
 
         TRY_BEGIN()
         {
+            // Create socket
             THROW_ON_SYS_ERROR(
                 (driver->socket = socket(addressFound->ai_family, SOCK_STREAM, 0)) == -1, FileOpenError, "unable to create socket");
 
-            // Set the address as reusable so we can bind again in the same process for testing
+            // Set the address as reusable so we can bind again quickly after a restart or crash
             int reuseAddr = 1;
             setsockopt(driver->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr));
 
-            // Bind the address. It might take a bit to bind if another process was recently using it so retry a few times.
-            Wait *wait = waitNew(5000);
-            int result;
+            // Ensure file descriptor is closed
+            memContextCallbackSet(driver->memContext, sckServerFreeResource, driver);
 
-            do
-            {
-                result = bind(driver->socket, addressFound->ai_addr, addressFound->ai_addrlen);
-            }
-            while (result == -1 && waitMore(wait)); // {uncovered} !!! FIX COVERAGE
-
-            THROW_ON_SYS_ERROR(result == -1, FileOpenError, "unable to bind socket");
+            // Bind the address
+            THROW_ON_SYS_ERROR(
+                bind(driver->socket, addressFound->ai_addr, addressFound->ai_addrlen) == -1, FileOpenError,
+                "unable to bind socket");
         }
         FINALLY()
         {
             freeaddrinfo(addressFound);
         }
         TRY_END();
-
-        // Ensure file descriptor is closed
-        memContextCallbackSet(driver->memContext, sckServerFreeResource, driver);
 
         // Listen for client connections !!! NEED TO DECIDE HOW BIG BACKLOG CAN BE
         THROW_ON_SYS_ERROR(listen(driver->socket, 5) == -1, FileOpenError, "unable to listen on socket");
