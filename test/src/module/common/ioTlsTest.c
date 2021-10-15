@@ -591,6 +591,9 @@ testRun(void)
             storageNewWriteP(storageTest, STRDEF("server-root-perm.key"), .modeFile = 0640),
             storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), STRDEF(HRN_SERVER_KEY))));
         HRN_SYSTEM_FMT("sudo chown root %s", strZ(storagePathP(storageTest, STRDEF("server-root-perm.key"))));
+        THROW_ON_SYS_ERROR(
+            symlink(TEST_PATH "/server-root-perm.key", TEST_PATH "/server-root-perm-link") == -1, FileOpenError,
+            "unable to create symlink");
 
         // Put CN only server cert
         storagePutP(storageNewWriteP(storageTest, STRDEF("server-cn-only.crt")), BUFSTRZ(testServerCnOnlyCert));
@@ -605,7 +608,7 @@ testRun(void)
                 // TLS server to accept connections
                 IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
                 IoServer *tlsServer = tlsServerNew(
-                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(TEST_PATH "/server-root-perm.key"),
+                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(TEST_PATH "/server-root-perm-link"),
                     STRDEF(TEST_PATH "/server-cn-only.crt"), NULL, 5000);
                 IoSession *socketSession = NULL;
 
@@ -778,6 +781,7 @@ testRun(void)
         }
         HRN_FORK_END();
 
+        storageRemoveP(storageTest, STRDEF("server-root-perm-link"), .errorOnMissing = true);
         HRN_SYSTEM_FMT("sudo rm %s", strZ(storagePathP(storageTest, STRDEF("server-root-perm.key"))));
 #endif // TEST_CONTAINER_REQUIRED
     }
