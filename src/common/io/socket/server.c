@@ -192,8 +192,8 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         }
         TRY_END();
 
-        // Listen for client connections !!! NEED TO DECIDE HOW BIG BACKLOG CAN BE
-        THROW_ON_SYS_ERROR(listen(driver->socket, 5) == -1, FileOpenError, "unable to listen on socket");
+        // Listen for client connections. It might be a good idea to make the backlog configurable but this value seems OK for now.
+        THROW_ON_SYS_ERROR(listen(driver->socket, 100) == -1, FileOpenError, "unable to listen on socket");
 
         statInc(SOCKET_STAT_SERVER_STR);
 

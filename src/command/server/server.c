@@ -26,7 +26,8 @@ cmdServer(uint64_t connectionMax)
     {
         IoServer *const tlsServer = tlsServerNew(
            cfgOptionStr(cfgOptTlsServerAddress), cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile),
-           cfgOptionStr(cfgOptTlsServerCertFile), cfgOptionStrNull(cfgOptTlsServerCrlFile), cfgOptionUInt64(cfgOptProtocolTimeout));
+           cfgOptionStr(cfgOptTlsServerCertFile), cfgOptionStrNull(cfgOptTlsServerCrlFile), true,
+           cfgOptionUInt64(cfgOptProtocolTimeout));
         IoServer *const socketServer = sckServerNew(
             cfgOptionStr(cfgOptTlsServerAddress), cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
 
@@ -45,8 +46,7 @@ cmdServer(uint64_t connectionMax)
                 // Close the server socket so we don't hold the port open if the parent exits first
                 ioServerFree(socketServer);
 
-                // Disable logging and close log file !!! MAYBE REOPEN LOG FILE HERE TO CATCH ERRORS? MAYBE SOMETHING LIKE
-                // logCloseConsole()
+                // Disable logging and close log file
                 logClose();
 
                 // Detach from parent process

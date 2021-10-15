@@ -1580,7 +1580,6 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
-      # !!! SHOULD THESE STILL BE INTERNAL?
       stanza-create:
         internal: true
       stanza-delete:

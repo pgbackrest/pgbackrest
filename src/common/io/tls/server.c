@@ -266,7 +266,7 @@ static const IoServerInterface tlsServerInterface =
 IoServer *
 tlsServerNew(
     const String *const host, const String *const caFile, const String *const keyFile, const String *const certFile,
-    const String *const crlFile, const TimeMSec timeout)
+    const String *const crlFile, const bool dhLoad, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -274,6 +274,7 @@ tlsServerNew(
         FUNCTION_LOG_PARAM(STRING, keyFile);
         FUNCTION_LOG_PARAM(STRING, certFile);
         FUNCTION_LOG_PARAM(STRING, crlFile);
+        FUNCTION_LOG_PARAM(BOOL, dhLoad);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
@@ -315,7 +316,7 @@ tlsServerNew(
         SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);
 
         // Setup ephemeral DH and ECDH keys
-        if (sizeof(size_t) == 8)                                    // !!! ONLY RUN ON 64-BIT
+        if (dhLoad)
         {
             tlsServerDh(driver->context);
             tlsServerEcdh(driver->context);
