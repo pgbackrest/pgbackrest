@@ -116,17 +116,17 @@ sckServerAccept(THIS_VOID, IoSession *const session)
 
 /**********************************************************************************************************************************/
 static const String *
-sckServerName(THIS_VOID)
+sckServerName(THIS_VOID)                                                                                            // {vm_covered}
 {
-    THIS(SocketServer);
+    THIS(SocketServer);                                                                                             // {vm_covered}
 
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(SOCKET_SERVER, this);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
+        FUNCTION_TEST_PARAM(SOCKET_SERVER, this);                                                                   // {vm_covered}
+    FUNCTION_TEST_END();                                                                                            // {vm_covered}
 
-    ASSERT(this != NULL);
+    ASSERT(this != NULL);                                                                                           // {vm_covered}
 
-    FUNCTION_TEST_RETURN(this->name);
+    FUNCTION_TEST_RETURN(this->name);                                                                               // {vm_covered}
 }
 
 /**********************************************************************************************************************************/

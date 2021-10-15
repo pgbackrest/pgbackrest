@@ -119,14 +119,14 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
 
             if (keyInfo.exists)
             {
-                if (keyInfo.userId != userId() && keyInfo.userId != 0)
+                if (keyInfo.userId != userId() && keyInfo.userId != 0)                                              // {vm_covered}
                 {
-                    THROW_FMT(
+                    THROW_FMT(                                                                                      // {vm_covered}
                         FileReadError, "key file '%s' must be owned by the '%s' user or root", strZ(keyFile), strZ(userName()));
                 }
 
-                if ((keyInfo.userId == userId() && keyInfo.mode & (S_IRWXG | S_IRWXO)) ||
-                    (keyInfo.userId == 0 && keyInfo.mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
+                if ((keyInfo.userId == userId() && keyInfo.mode & (S_IRWXG | S_IRWXO)) ||                           // {vm_covered}
+                    (keyInfo.userId == 0 && keyInfo.mode & (S_IWGRP | S_IXGRP | S_IRWXO)))                          // {vm_covered}
                 {
                     THROW_FMT(
                         FileReadError,
@@ -195,20 +195,21 @@ tlsCrlLoad(SSL_CTX *const context, const String *const crlFile)
         FUNCTION_TEST_PARAM(STRING, crlFile);
     FUNCTION_TEST_END();
 
-    if (crlFile != NULL)
+    if (crlFile != NULL)                                                                                            // {vm_covered}
     {
         // Get cert store
-        X509_STORE *const certStore = SSL_CTX_get_cert_store(context);
-        cryptoError(certStore == NULL, "unable to get cert store");
+        X509_STORE *const certStore = SSL_CTX_get_cert_store(context);                                              // {vm_covered}
+        cryptoError(certStore == NULL, "unable to get cert store");                                                 // {vm_covered}
 
         // Load CRL file
-        cryptoError(
-            X509_STORE_load_locations(certStore, strZ(crlFile), NULL) != 1,
-            strZ(strNewFmt("unable to load crl file '%s'", strZ(crlFile))));
+        cryptoError(                                                                                                // {vm_covered}
+            X509_STORE_load_locations(certStore, strZ(crlFile), NULL) != 1,                                         // {vm_covered}
+            strZ(strNewFmt("unable to load crl file '%s'", strZ(crlFile))));                                        // {vm_covered}
 
         // Set flags to reject certs in CRL
-        cryptoError(
-            X509_STORE_set_flags(certStore, X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL) != 1, "unable to set crl flags");
+        cryptoError(                                                                                                // {vm_covered}
+            X509_STORE_set_flags(                                                                                   // {vm_covered}
+                certStore, X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL) != 1, "unable to set crl flags");     // {vm_covered}
     }
 
     FUNCTION_TEST_RETURN_VOID();

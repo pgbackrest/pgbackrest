@@ -237,17 +237,17 @@ tlsServerAccept(THIS_VOID, IoSession *const ioSession)
 
 /**********************************************************************************************************************************/
 static const String *
-tlsServerName(THIS_VOID)
+tlsServerName(THIS_VOID)                                                                                            // {vm_covered}
 {
-    THIS(TlsServer);
+    THIS(TlsServer);                                                                                                // {vm_covered}
 
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TLS_SERVER, this);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
+        FUNCTION_TEST_PARAM(TLS_SERVER, this);                                                                      // {vm_covered}
+    FUNCTION_TEST_END();                                                                                            // {vm_covered}
 
-    ASSERT(this != NULL);
+    ASSERT(this != NULL);                                                                                           // {vm_covered}
 
-    FUNCTION_TEST_RETURN(this->host);
+    FUNCTION_TEST_RETURN(this->host);                                                                               // {vm_covered}
 }
 
 /***********************************************************************************************************************************
@@ -326,28 +326,29 @@ tlsServerNew(
 
         // If a CA store is specified then client certificates will be verified
         // -------------------------------------------------------------------------------------------------------------------------
-        if (caFile != NULL)
+        if (caFile != NULL)                                                                                         // {vm_covered}
         {
             // Load CA store
-            cryptoError(
-                SSL_CTX_load_verify_locations(driver->context, strZ(caFile), NULL) != 1,
-                strZ(strNewFmt("unable to load CA file '%s'", strZ(caFile))));
+            cryptoError(                                                                                            // {vm_covered}
+                SSL_CTX_load_verify_locations(driver->context, strZ(caFile), NULL) != 1,                            // {vm_covered}
+                strZ(strNewFmt("unable to load CA file '%s'", strZ(caFile))));                                      // {vm_covered}
 
             // Tell OpenSSL to send the list of root certs we trust to clients in CertificateRequests. This lets a client with a
             // keystore select the appropriate client certificate to send to us. Also, this ensures that the SSL context will own
             // the rootCertList and free it when no longer needed.
-    		STACK_OF(X509_NAME) *rootCertList = SSL_load_client_CA_file(strZ(caFile));
-            cryptoError(rootCertList == NULL, strZ(strNewFmt("unable to generate CA list from '%s'", strZ(caFile))));
+            STACK_OF(X509_NAME) *rootCertList = SSL_load_client_CA_file(strZ(caFile));                              // {vm_covered}
+            cryptoError(                                                                                            // {vm_covered}
+                rootCertList == NULL, strZ(strNewFmt("unable to generate CA list from '%s'", strZ(caFile))));       // {vm_covered}
 
-            SSL_CTX_set_client_CA_list(driver->context, rootCertList);
+            SSL_CTX_set_client_CA_list(driver->context, rootCertList);                                              // {vm_covered}
 
             // Always ask for SSL client cert, but don't fail when not presented. In this case the server will disconnect after
             // sending a data end message to the client. The client can use this to verify that the server is running without the
             // need to authenticate.
-            SSL_CTX_set_verify(driver->context, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);
+            SSL_CTX_set_verify(driver->context, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);                    // {vm_covered}
 
             // Set a flag so the client cert will be checked later
-            driver->verifyPeer = true;
+            driver->verifyPeer = true;                                                                              // {vm_covered}
         }
 
         // Load certificate revocation list

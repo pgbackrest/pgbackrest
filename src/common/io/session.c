@@ -77,21 +77,21 @@ ioSessionFd(IoSession *this)
 
 /**********************************************************************************************************************************/
 void
-ioSessionPeerNameSet(IoSession *const this, const String *const peerName)
+ioSessionPeerNameSet(IoSession *const this, const String *const peerName)                                           // {vm_covered}
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_SESSION, this);
-        FUNCTION_TEST_PARAM(STRING, peerName);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
+        FUNCTION_TEST_PARAM(IO_SESSION, this);                                                                      // {vm_covered}
+        FUNCTION_TEST_PARAM(STRING, peerName);                                                                      // {vm_covered}
+    FUNCTION_TEST_END();                                                                                            // {vm_covered}
 
-    MEM_CONTEXT_BEGIN(this->pub.memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)                                                                         // {vm_covered}
     {
-        this->pub.peerName = strDup(peerName);
+        this->pub.peerName = strDup(peerName);                                                                      // {vm_covered}
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_END();                                                                                              // {vm_covered}
 
-    FUNCTION_TEST_RETURN_VOID();
-}
+    FUNCTION_TEST_RETURN_VOID();                                                                                    // {vm_covered}
+}                                                                                                                   // {vm_covered}
 
 /**********************************************************************************************************************************/
 String *

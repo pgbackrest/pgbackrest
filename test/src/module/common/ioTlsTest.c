@@ -412,7 +412,7 @@ testRun(void)
         }
         CATCH(TestError)
         {
-            TEST_ERROR(
+            TEST_ERROR(                                                                             // {uncovered - 32-bit error}
                 tlsClientNew(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
                     STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-pwd.key"), NULL),
