@@ -1703,6 +1703,29 @@ testRun(void)
             "key/value 'a' not valid for 'recovery-option' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option cmd");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
+
+        TEST_RESULT_STR_Z(cfgExe(), "pgbackrest", "--cmd not provided; exe is returned as pgbackrest");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        hrnCfgArgRawZ(argList, cfgOptCmd, "pgbackrest_wrapper.sh");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
+
+        TEST_RESULT_STR_Z(cfgExe(), "pgbackrest_wrapper.sh", "--cmd provided; exe is returned as pgbackrest_wrapper.sh");
+
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default job retry and valid duplicate options");
 
         argList = strLstNew();

@@ -140,6 +140,17 @@
                         <example>32K</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - CMD KEY -->
+                    <config-key id="cmd" name="Invocation target">
+                        <summary>Utilize provided command when generating internal command invocations.</summary>
+
+                        <text>
+                            <p><backrest/> may generate and invoke commands or populate them into files, for example <file>recovery.conf</file>. pgbackrest utilizes it's invoked name as the executable in these commands.  This will be <cmd>pgbackrest</cmd> unless the pgbackrest executable has been renamed.  The cmd option will inform <backrest/> to utilize the provided value as the executable when generating commands.</p>
+                        </text>
+
+                        <example>/var/lib/pgsql/bin/pgbackrest_wrapper.sh</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - CMD-SSH KEY -->
                     <config-key id="cmd-ssh" name="SSH client command">
                         <summary>Path to ssh client executable.</summary>
