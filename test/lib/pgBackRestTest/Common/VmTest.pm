@@ -96,14 +96,10 @@ use constant VM_CO8                                                 => 'co8';
     push @EXPORT, qw(VM_CO8);
 use constant VM_F33                                                 => 'f33';
     push @EXPORT, qw(VM_F33);
-use constant VM_U16                                                 => 'u16';
-    push @EXPORT, qw(VM_U16);
 use constant VM_U18                                                 => 'u18';
     push @EXPORT, qw(VM_U18);
 use constant VM_U20                                                 => 'u20';
     push @EXPORT, qw(VM_U20);
-use constant VM_D8                                                  => 'd8';
-    push @EXPORT, qw(VM_D8);
 use constant VM_D9                                                  => 'd9';
     push @EXPORT, qw(VM_D9);
 
