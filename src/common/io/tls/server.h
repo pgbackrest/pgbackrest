@@ -25,6 +25,6 @@ Statistics constants
 Constructors
 ***********************************************************************************************************************************/
 IoServer *tlsServerNew(
-    const String *host, const String *caFile, const String *keyFile, const String *certFile, const bool dhLoad, TimeMSec timeout);
+    const String *host, const String *caFile, const String *keyFile, const String *certFile, TimeMSec timeout);
 
 #endif
