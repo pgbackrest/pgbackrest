@@ -685,6 +685,11 @@ cfgParseOptionDataType(ConfigOption optionId)
         case cfgOptTypeBoolean:
             FUNCTION_TEST_RETURN(cfgOptDataTypeBoolean);
 
+        case cfgOptTypeInteger:
+        case cfgOptTypeSize:
+        case cfgOptTypeTime:
+            FUNCTION_TEST_RETURN(cfgOptDataTypeInteger);
+
         default:
             break;
     }
@@ -737,7 +742,7 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
     // Get the depend option value
     const ConfigOption dependId = (ConfigOption)pckReadU32P(filter);
     ASSERT(config->option[dependId].index != NULL);
-    const Variant *const dependValue = config->option[dependId].index[optionListIdx].value;
+    const Variant *const dependValue = config->option[dependId].index[optionListIdx].valueVar;
 
     // Is the dependency resolved?
     bool result = false;
@@ -2115,7 +2120,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             // If depend value is not set
                             ASSERT(config->option[dependId].index != NULL);
 
-                            if (config->option[dependId].index[optionListIdx].value == NULL)
+                            if (config->option[dependId].index[optionListIdx].valueVar == NULL)
                             {
                                 THROW_FMT(
                                     OptionInvalidError, "option '%s' not valid without option '%s'",
@@ -2180,7 +2185,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                             if (optionType == cfgOptTypeBoolean)
                             {
-                                configOptionValue->value = !parseOptionValue->negate ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
+                                configOptionValue->valueVar = !parseOptionValue->negate ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
+                                configOptionValue->valueBool = !parseOptionValue->negate;
                             }
                             else if (optionType == cfgOptTypeHash)
                             {
@@ -2210,13 +2216,13 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                     kvPut(keyValue, VARSTR(strNewZN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
                                 }
 
-                                configOptionValue->value = value;
+                                configOptionValue->valueVar = value;
                             }
                             else if (optionType == cfgOptTypeList)
                             {
                                 MEM_CONTEXT_BEGIN(config->memContext)
                                 {
-                                    configOptionValue->value = varNewVarLst(varLstNewStrLst(parseOptionValue->valueList));
+                                    configOptionValue->valueVar = varNewVarLst(varLstNewStrLst(parseOptionValue->valueList));
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -2224,7 +2230,6 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             {
                                 String *value = strLstGet(parseOptionValue->valueList, 0);
                                 const String *valueAllow = value;
-                                int64_t valueInt64 = 0;
 
                                 // If a numeric type check that the value is valid
                                 if (optionType == cfgOptTypeInteger ||  optionType == cfgOptTypeSize ||
@@ -2240,40 +2245,31 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                     // Check that the value can be converted
                                     TRY_BEGIN()
                                     {
-                                        if (optionType == cfgOptTypeInteger)
+                                        switch (optionType)
                                         {
-                                            MEM_CONTEXT_BEGIN(config->memContext)
-                                            {
-                                                configOptionValue->value = varNewInt64(cvtZToInt64(strZ(value)));
-                                            }
-                                            MEM_CONTEXT_END();
+                                            case cfgOptTypeInteger:
+                                                configOptionValue->valueInt = cvtZToInt64(strZ(value));
+                                                break;
 
-                                            valueInt64 = varInt64(configOptionValue->value);
+                                            case cfgOptTypeSize:
+                                                configOptionValue->valueInt = (int64_t)convertToByte(value);
+                                                valueAllow = varStrForce(VARINT64(configOptionValue->valueInt));
+                                                break;
+
+                                            default:
+                                            {
+                                                ASSERT(optionType == cfgOptTypeTime);
+
+                                                configOptionValue->valueInt = (int64_t)(cvtZToDouble(strZ(value)) * MSEC_PER_SEC);
+                                                break;
+                                            }
                                         }
-                                        else if (optionType == cfgOptTypeSize)
+
+                                        MEM_CONTEXT_BEGIN(config->memContext) // !!! E
                                         {
-                                            MEM_CONTEXT_BEGIN(config->memContext)
-                                            {
-                                                configOptionValue->value = varNewInt64((int64_t)convertToByte(value));
-                                            }
-                                            MEM_CONTEXT_END();
-
-                                            valueInt64 = varInt64(configOptionValue->value);
-                                            valueAllow = varStrForce(configOptionValue->value);
+                                            configOptionValue->valueVar = varNewInt64(configOptionValue->valueInt);
                                         }
-                                        else
-                                        {
-                                            ASSERT(optionType == cfgOptTypeTime);
-
-                                            MEM_CONTEXT_BEGIN(config->memContext)
-                                            {
-                                                configOptionValue->value = varNewInt64(
-                                                    (int64_t)(cvtZToDouble(strZ(value)) * MSEC_PER_SEC));
-                                            }
-                                            MEM_CONTEXT_END();
-
-                                            valueInt64 = varInt64(configOptionValue->value);
-                                        }
+                                        MEM_CONTEXT_END();
                                     }
                                     CATCH_ANY()
                                     {
@@ -2285,7 +2281,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                                     if (cfgParseOptionalRule(
                                             &optionalRules, parseRuleOptionalTypeAllowRange, config->command, optionId) &&
-                                        (valueInt64 < optionalRules.allowRangeMin || valueInt64 > optionalRules.allowRangeMax))
+                                        (configOptionValue->valueInt < optionalRules.allowRangeMin ||
+                                         configOptionValue->valueInt > optionalRules.allowRangeMax))
                                     {
                                         THROW_FMT(
                                             OptionInvalidValueError, "'%s' is out of range for '%s' option", strZ(value),
@@ -2329,7 +2326,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                                     MEM_CONTEXT_BEGIN(config->memContext)
                                     {
-                                        configOptionValue->value = varNewStr(value);
+                                        configOptionValue->valueVar = varNewStr(value);
                                     }
                                     MEM_CONTEXT_END();
                                 }
@@ -2382,7 +2379,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                                         while (pckReadNext(allowList))
                                         {
-                                            if (parseRuleValueInt[pckReadU32P(allowList)] == valueInt64)
+                                            if (parseRuleValueInt[pckReadU32P(allowList)] == configOptionValue->valueInt)
                                             {
                                                 allowListFound = true;
                                                 break;
@@ -2418,7 +2415,21 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             // If the option has a default
                             if (found)
                             {
-                                configOptionValue->value = optionalRules.defaultValue;
+                                switch (cfgParseOptionDataType(optionId))
+                                {
+                                    case cfgOptDataTypeBoolean:
+                                        configOptionValue->valueBool = varBool(optionalRules.defaultValue);
+                                        break;
+
+                                    case cfgOptDataTypeInteger:
+                                        configOptionValue->valueInt = varInt64(optionalRules.defaultValue);
+                                        break;
+
+                                    default:
+                                        break;
+                                }
+
+                                configOptionValue->valueVar = optionalRules.defaultValue;
                             }
                             // Else error if option is required and help was not requested
                             else

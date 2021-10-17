@@ -33,7 +33,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
             CfgParseOptionResult option = cfgParseOptionP(pckReadStrP(param));
             CHECK(option.found);
 
-            varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
+            varLstAdd(optionList, varDup(cfgOptionIdxVar(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
         }
 
         protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), jsonFromVar(varNewVarLst(optionList))));

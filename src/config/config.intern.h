@@ -27,7 +27,15 @@ typedef struct ConfigOptionValue
     bool reset;                                                 // Is the option reset?
     unsigned int source;                                        // Where the option came from, i.e. ConfigSource enum
     const String *display;                                      // Current display value, if any. Used for messages, etc.
-    const Variant *value;                                       // Value
+    const Variant *valueVar;                                    // !!! TRYING TO GET RID OF THIS!
+
+    union
+    {
+        bool valueBool;
+        StringId valueStrId;
+        const String *valueStr;
+        int64_t valueInt;
+    };
 } ConfigOptionValue;
 
 typedef struct Config
@@ -107,6 +115,15 @@ unsigned int cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key);
 
 // Total indexes for the option if in a group, 1 otherwise.
 unsigned int cfgOptionIdxTotal(ConfigOption optionId);
+
+// Get config option as a Variant
+const Variant *cfgOptionIdxVar(ConfigOption optionId, unsigned int optionIdx);
+
+__attribute__((always_inline)) static inline const Variant *
+cfgOptionVar(const ConfigOption optionId)
+{
+    return cfgOptionIdxVar(optionId, cfgOptionIdxDefault(optionId));
+}
 
 // Invalidate an option so it will not be passed to other processes. This is used to manage deprecated options that have a newer
 // option that should be used when possible, e.g. compress and compress-type.

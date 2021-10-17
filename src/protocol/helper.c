@@ -155,7 +155,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
         // Only enable file logging on the local when requested
         kvPut(
             optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE),
-            cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : VARSTRDEF("off"));
+            cfgOptionBool(cfgOptLogSubprocess) ? VARSTR(cfgOptionStr(cfgOptLogLevelFile)) : VARSTRDEF("off"));
 
         // Always output errors on stderr for debugging purposes
         kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("error"));
@@ -389,7 +389,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
                 {
                     kvPut(
                         optionReplace, VARSTRZ(cfgOptionIdxName(optionId, 0)),
-                        cfgOptionIdxSource(optionId, hostIdx) != cfgSourceDefault ? cfgOptionIdx(optionId, hostIdx) : NULL);
+                        cfgOptionIdxSource(optionId, hostIdx) != cfgSourceDefault ? cfgOptionIdxVar(optionId, hostIdx) : NULL);
                 }
 
                 remove = true;
@@ -426,7 +426,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     // Only enable file logging on the remote when requested
     kvPut(
         optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE),
-        cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : VARSTRDEF("off"));
+        cfgOptionBool(cfgOptLogSubprocess) ? VARSTR(cfgOptionStr(cfgOptLogLevelFile)) : VARSTRDEF("off"));
 
     // Always output errors on stderr for debugging purposes
     kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("error"));

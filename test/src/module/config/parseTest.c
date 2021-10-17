@@ -1425,7 +1425,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "command is backup");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), true, "pg1-path is valid");
-        TEST_RESULT_PTR(cfgOption(cfgOptPgPath), NULL, "pg1-path is not set");
+        TEST_RESULT_PTR(cfgOptionVar(cfgOptPgPath), NULL, "pg1-path is not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command argument valid");
@@ -1747,7 +1747,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionIdxInt64(cfgOptBufferSize, 0), 2097152, "buffer-size is set to bytes from MB");
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptBufferSize), "2MB", "buffer-size display is 2MB");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceParam, "buffer-size is source config");
-        TEST_RESULT_PTR(cfgOption(cfgOptSpoolPath), NULL, "spool-path is not set");
+        TEST_RESULT_PTR(cfgOptionVar(cfgOptSpoolPath), NULL, "spool-path is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptSpoolPath), cfgSourceDefault, "spool-path is source default");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1798,6 +1798,8 @@ testRun(void)
         TEST_RESULT_PTR(cfgCommandJobRetry(), NULL, "no job retries");
 
         const KeyValue *recoveryKv = NULL;
+        TEST_RESULT_PTR(cfgOptionKvNull(cfgOptLinkMap), NULL, "link map is null");
+        TEST_RESULT_PTR(cfgOptionIdxKvNull(cfgOptLinkMap, 0), NULL, "link map is null");
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("a"))), "b", "check recovery option");
         TEST_ASSIGN(recoveryKv, cfgOptionIdxKv(cfgOptRecoveryOption, 0), "get recovery options");
