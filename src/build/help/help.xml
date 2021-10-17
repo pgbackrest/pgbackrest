@@ -555,7 +555,12 @@
                         <summary>Repository host protocol type.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>The following protocol types are supported:</p>
+
+                            <list>
+                                <list-item><id>ssh</id> - Secure Shell.</list-item>
+                                <list-item><id>tls</id> - <backrest/> TLS server.</list-item>
+                            </list>
                         </text>
 
                         <example>tls</example>
@@ -579,10 +584,10 @@
                         <summary>Repository host certificate authority file.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Use a CA file other than the system default for connecting to the repository host.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -590,10 +595,10 @@
                         <summary>Repository host certificate authority path.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Use a CA path other than the system default for connecting to the repository host.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/etc/pki/tls/certs</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -601,10 +606,10 @@
                         <summary>Repository host certificate file.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Sent to repository host to prove client indentity.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/path/to/client.crt</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -612,10 +617,10 @@
                         <summary>Repository host key file.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Proves client certificate was sent by owner.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/path/to/client.key</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-HOST-CMD KEY -->
@@ -1408,10 +1413,10 @@
                         <summary>TLS server certificate authorities.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Checks that client certificates are signed by a trusted certificate authority.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/path/to/server.ca</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1419,10 +1424,10 @@
                         <summary>TLS server certificate file.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Sent to the client to show the server identity.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/path/to/server.crt</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1430,10 +1435,10 @@
                         <summary>TLS server key file.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Proves server certificate was sent by the owner</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/path/to/server.key</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1441,10 +1446,10 @@
                         <summary>TLS server address.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>IP address the server will bind to service client requests.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>::*</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1530,10 +1535,10 @@
                         <summary><postgres/> host certificate authority file.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Use a CA file other than the system default for connecting to the <postgres/> host.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1541,10 +1546,10 @@
                         <summary><postgres/> host certificate authority path.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Use a CA path other than the system default for connecting to the <postgres/> host.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/etc/pki/tls/certs</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1552,10 +1557,10 @@
                         <summary><postgres/> host certificate file.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Sent to <postgres/> host to prove client indentity.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/path/to/client.crt</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1563,10 +1568,10 @@
                         <summary><postgres/> host key file.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Proves client certificate was sent by owner.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>/path/to/client.key</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1574,7 +1579,12 @@
                         <summary><postgres/> host protocol type.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>The following protocol types are supported:</p>
+
+                            <list>
+                                <list-item><id>ssh</id> - Secure Shell.</list-item>
+                                <list-item><id>tls</id> - <backrest/> TLS server.</list-item>
+                            </list>
                         </text>
 
                         <example>tls</example>
