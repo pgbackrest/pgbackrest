@@ -159,7 +159,7 @@ testRun(void)
                         assert(errorTryDepth() == 4);
                         tryDone = true;
 
-                        char bigMessage[sizeof(messageBuffer) * 32];
+                        char bigMessage[sizeof(messageBuffer) + 128];
                         memset(bigMessage, 'A', sizeof(bigMessage));
 
                         THROW(AssertError, bigMessage);
