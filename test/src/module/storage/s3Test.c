@@ -821,18 +821,18 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
-                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeService);
+                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeWebId);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 TEST_ERROR(
                     storageRepoGet(0, true), OptionInvalidError,
-                    "option 'repo1-s3-key-type' is 'service' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
+                    "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
 
                 setenv("AWS_ROLE_ARN", TEST_SERVICE_ROLE, true);
 
                 TEST_ERROR(
                     storageRepoGet(0, true), OptionInvalidError,
-                    "option 'repo1-s3-key-type' is 'service' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
+                    "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
 
                 setenv("AWS_WEB_IDENTITY_TOKEN_FILE", TEST_PATH "/web-id-token", true);
 

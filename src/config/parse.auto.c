@@ -156,6 +156,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("token", 0xe2adf40),
     STRID5("trace", 0x5186540),
     STRID5("warn", 0x748370),
+    STRID5("web-id", 0x89d88b70),
     STRID5("xid", 0x11380),
     STRID5("zst", 0x527a0),
 };
@@ -208,6 +209,7 @@ typedef enum
     parseRuleValStrIdToken,
     parseRuleValStrIdTrace,
     parseRuleValStrIdWarn,
+    parseRuleValStrIdWebId,
     parseRuleValStrIdXid,
     parseRuleValStrIdZst,
 } ParseRuleValueStrId;
@@ -6723,7 +6725,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdShared),
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdAuto),
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdService),
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdWebId),
                 ),
 
                 PARSE_RULE_OPTIONAL_DEFAULT

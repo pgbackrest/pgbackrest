@@ -18,7 +18,7 @@ typedef enum
 {
     storageS3KeyTypeShared = STRID5("shared", 0x85905130),
     storageS3KeyTypeAuto = STRID5("auto", 0x7d2a10),
-    storageS3KeyTypeService = STRID5("service", 0x1469b48b30),
+    storageS3KeyTypeWebId = STRID5("web-id", 0x89d88b70),
 } StorageS3KeyType;
 
 /***********************************************************************************************************************************

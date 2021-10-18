@@ -356,7 +356,7 @@ storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
 }
 
 /***********************************************************************************************************************************
-Automatically get credentials for an associated service account
+Automatically get credentials for an associated web identity service account
 
 Documentation is found at: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html
 ***********************************************************************************************************************************/
@@ -364,7 +364,7 @@ STRING_STATIC(S3_STS_HOST_STR,                                      "sts.amazona
 #define S3_STS_PORT                                                 443
 
 static void
-storageS3AuthService(StorageS3 *const this, const HttpHeader *const header)
+storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -472,12 +472,12 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
                     storageS3AuthAuto(this, credHeader);
                     break;
 
-                // Service authentication
+                // Web identity authentication
                 default:
                 {
-                    ASSERT(this->keyType == storageS3KeyTypeService);
+                    ASSERT(this->keyType == storageS3KeyTypeWebId);
 
-                    storageS3AuthService(this, credHeader);
+                    storageS3AuthWebId(this, credHeader);
                     break;
                 }
             }
@@ -1098,8 +1098,8 @@ storageS3New(
                 break;
             }
 
-            // Create the HTTP client used to retrieve service security credentials
-            case storageS3KeyTypeService:
+            // Create the HTTP client used to retrieve web identity security credentials
+            case storageS3KeyTypeWebId:
             {
                 ASSERT(accessKey == NULL && secretAccessKey == NULL && securityToken == NULL);
                 ASSERT(credRole != NULL);

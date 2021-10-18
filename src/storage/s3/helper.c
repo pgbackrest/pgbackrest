@@ -40,9 +40,9 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
     const String *role = cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx);
     const String *webIdToken = NULL;
 
-    // If service authentication then load the role and token from environment variables documented here:
+    // If web identity authentication then load the role and token from environment variables documented here:
     // https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html
-    if (keyType == storageS3KeyTypeService)
+    if (keyType == storageS3KeyTypeWebId)
     {
         #define S3_ENV_AWS_ROLE_ARN                             "AWS_ROLE_ARN"
         #define S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE              "AWS_WEB_IDENTITY_TOKEN_FILE"
@@ -54,7 +54,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         {
             THROW_FMT(
                 OptionInvalidError,
-                "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_SERVICE_Z "' but '" S3_ENV_AWS_ROLE_ARN "' and '"
+                "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_Z "' but '" S3_ENV_AWS_ROLE_ARN "' and '"
                     S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE "' are not set",
                 cfgOptionIdxName(cfgOptRepoS3KeyType, repoIdx));
         }
