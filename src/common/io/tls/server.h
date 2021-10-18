@@ -26,6 +26,6 @@ Constructors
 ***********************************************************************************************************************************/
 IoServer *tlsServerNew(
     const String *host, const String *caFile, const String *keyFile, const String *certFile, const String *crlFile,
-    const bool dhLoad, TimeMSec timeout);
+    TimeMSec timeout);
 
 #endif

@@ -1461,10 +1461,12 @@ option:
       db?-port: {}
 
   pg-socket-path:
-    inherit: pg-port
+    section: stanza
+    group: pg
     type: path
     required: false
-    default: ~
+    command: pg-database
+    depend: pg-database
     deprecate:
       db-socket-path: {}
       db?-socket-path: {}

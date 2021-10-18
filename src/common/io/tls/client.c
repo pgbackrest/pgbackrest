@@ -385,7 +385,7 @@ tlsClientNew(
         memContextCallbackSet(objMemContext(driver), tlsClientFreeResource, driver);
 
         // Enable safe compatibility options
-        SSL_CTX_set_options(driver->context, (long)SSL_OP_ALL);
+        SSL_CTX_set_options(driver->context, SSL_OP_ALL);
 
         // Set location of CA certificates if the server certificate will be verified
         if (driver->verifyPeer)

@@ -796,8 +796,7 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 IoServer *const tlsServer = tlsServerNew(
-                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), NULL, TEST_64BIT(),
-                    5000);
+                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), NULL, 5000);
                 IoServer *const socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
                 ProtocolServer *server = NULL;
 
