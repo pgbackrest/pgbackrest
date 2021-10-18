@@ -181,7 +181,7 @@ testResponse(IoWrite *write, TestResponseParam param)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -298,7 +298,7 @@ testRun(void)
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_CHILD_BEGIN(.prefix = "meta server", .timeout = 10000)
+            HRN_FORK_CHILD_BEGIN(.prefix = "meta server", .timeout = 15000)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = testPortMeta), "meta server run");
@@ -430,7 +430,7 @@ testRun(void)
                 // Replace the default authClient with one that points locally. The default host and url will still be used so they
                 // can be verified when testing auth.
                 ((StorageGcs *)storageDriver(storage))->authClient = httpClientNew(
-                    sckClientNew(hrnServerHost(), testPortMeta, 2000), 2000);
+                    sckClientNew(hrnServerHost(), testPortMeta, 2000, 2000), 2000);
 
                 // Tests need the chunk size to be 16
                 ((StorageGcs *)storageDriver(storage))->chunkSize = 16;

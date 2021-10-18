@@ -27,6 +27,6 @@ Statistics constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeout);
+IoClient *sckClientNew(const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession);
 
 #endif

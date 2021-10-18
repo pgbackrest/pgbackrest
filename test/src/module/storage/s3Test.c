@@ -197,7 +197,7 @@ testS3DateTime(time_t time)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -265,7 +265,8 @@ testRun(void)
             httpClientToLog(driver->httpClient),
             strNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
-                    ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                    ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
+                    ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
@@ -320,7 +321,7 @@ testRun(void)
         argList = strLstDup(commonArgWithoutEndpointList);
         hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "custom.endpoint:333");
         hrnCfgArgRawZ(argList, cfgOptRepoStorageCaPath, "/path/to/cert");
-        hrnCfgArgRawZ(argList, cfgOptRepoStorageCaFile, HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".crt");
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageCaFile, HRN_SERVER_CA);
         hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -331,7 +332,8 @@ testRun(void)
             httpClientToLog(driver->httpClient),
             strNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
-                    ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                    ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
+                    ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
@@ -360,7 +362,7 @@ testRun(void)
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 5000)
+            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = authPort), "auth server run");
@@ -455,7 +457,7 @@ testRun(void)
 
                 // Testing requires the auth http client to be redirected
                 driver->credHost = hrnServerHost();
-                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000), 5000);
+                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000, 5000), 5000);
 
                 // Now that we have checked the role when set explicitly, null it out to make sure it is retrieved automatically
                 driver->credRole = NULL;

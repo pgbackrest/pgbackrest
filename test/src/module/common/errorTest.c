@@ -19,11 +19,11 @@ ERROR_DEFINE(200, TestChildError, TestParent2Error);
 /***********************************************************************************************************************************
 testTryRecurse - test to blow up try stack
 ***********************************************************************************************************************************/
-volatile int testTryRecurseTotal = 0;
-bool testTryRecurseCatch = false;
-bool testTryRecurseFinally = false;
+static volatile int testTryRecurseTotal = 0;
+static bool testTryRecurseCatch = false;
+static bool testTryRecurseFinally = false;
 
-void
+static void
 testTryRecurse(void)
 {
     TRY_BEGIN()
@@ -58,7 +58,7 @@ testErrorHandler(unsigned int tryDepth)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -159,7 +159,7 @@ testRun(void)
                         assert(errorTryDepth() == 4);
                         tryDone = true;
 
-                        char bigMessage[sizeof(messageBuffer) * 32];
+                        char bigMessage[sizeof(messageBuffer) + 128];
                         memset(bigMessage, 'A', sizeof(bigMessage));
 
                         THROW(AssertError, bigMessage);
