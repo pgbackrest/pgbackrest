@@ -1017,7 +1017,6 @@
 
                         <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
                     </config-key>
-
                 </config-key-list>
             </config-section>
 
@@ -1393,7 +1392,7 @@
             <!-- =============================================================================================================== -->
             <config-section id="server" name="Server">
                 <text>
-                    <p>!!!</p>
+                    <p>The <setting>server</setting> section defines options used for configuring the <proper>TLS</proper> server.</p>
                 </text>
 
                 <config-key-list>
@@ -1402,10 +1401,12 @@
                         <summary>TLS server authorized clients.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Clients are authorized on the server by verifying their certificate and checking the certificate CN (Common name) against a list on the server configured with the <br-option>tls-server-auth</br-option>.</p>
+
+                            <p>A CN can be authorized for as many stanzas as needed by repeating the <br-option>tls-server-auth</br-option> option, or for all stanzas by specifying <br-option>tls-server-auth=*</br-option>.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>stanza1</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1435,7 +1436,7 @@
                         <summary>TLS server key file.</summary>
 
                         <text>
-                            <p>Proves server certificate was sent by the owner</p>
+                            <p>Proves server certificate was sent by the owner.</p>
                         </text>
 
                         <example>/path/to/server.key</example>
@@ -1446,7 +1447,7 @@
                         <summary>TLS server address.</summary>
 
                         <text>
-                            <p>IP address the server will bind to service client requests.</p>
+                            <p>IP address the server will listen on for client requests.</p>
                         </text>
 
                         <example>::*</example>
@@ -1457,10 +1458,10 @@
                         <summary>TLS server port.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Port the server will listen on for client requests.</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>8000</example>
                     </config-key>
                 </config-key-list>
             </config-section>
@@ -2266,7 +2267,7 @@
                 <summary>Start <backrest/> server.</summary>
 
                 <text>
-                    <p>The <backrest/> server allows access to remote hosts without using the <proper>SSH</proper> protocol. !!!</p>
+                    <p>The <backrest/> server allows access to remote hosts without using the <proper>SSH</proper> protocol.</p>
                 </text>
             </command>
 
@@ -2275,7 +2276,9 @@
                 <summary>Ping <backrest/> server.</summary>
 
                 <text>
-                    <p>This serves as an aliveness check only since no authentication is attempted. !!!</p>
+                    <p>Ping a <backrest/> <proper>TLS</proper> server to ensure it is accepting connections. This serves as an aliveness check only since no authentication is attempted.</p>
+
+                    <p>If no host is specified on the command-line then the <br-option>tls-server-host</br-option> option will be used.</p>
                 </text>
             </command>
 
