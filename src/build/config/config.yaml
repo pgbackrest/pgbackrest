@@ -120,12 +120,10 @@ command:
       remote: {}
 
   server-ping:
-    internal: true
     log-file: false
     parameter-allowed: true
 
-  server-start:
-    internal: true
+  server-start: {}
 
   stanza-create:
     command-role:

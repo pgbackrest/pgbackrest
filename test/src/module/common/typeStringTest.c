@@ -16,7 +16,7 @@ typedef enum
     testStringIdEnumTest = STRID5("test", 0xa4cb40),
 } TestStringIdEnum;
 
-TestStringIdEnum
+static TestStringIdEnum
 testStringIdEnumFunc(TestStringIdEnum testEnum)
 {
     return testEnum;
@@ -25,7 +25,7 @@ testStringIdEnumFunc(TestStringIdEnum testEnum)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();

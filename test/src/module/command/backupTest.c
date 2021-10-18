@@ -28,7 +28,7 @@ typedef struct TestBackupValidateCallbackData
     String *content;                                                // String where content should be added
 } TestBackupValidateCallbackData;
 
-void
+static void
 testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 {
     TestBackupValidateCallbackData *data = callbackData;
@@ -438,7 +438,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
