@@ -152,7 +152,7 @@ cfgExe(void)
     {
         FUNCTION_TEST_RETURN(cfgOptionStr(cfgOptCmd));
     }
- 
+
     FUNCTION_TEST_RETURN(configLocal->exe);
 }
 
