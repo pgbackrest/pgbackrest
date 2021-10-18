@@ -1386,16 +1386,8 @@
 
                         <example>/data/tablespace</example>
                     </config-key>
-                </config-key-list>
-            </config-section>
 
-            <!-- =============================================================================================================== -->
-            <config-section id="server" name="Server">
-                <text>
-                    <p>The <setting>server</setting> section defines options used for configuring the <proper>TLS</proper> server.</p>
-                </text>
-
-                <config-key-list>
+                    <!-- For now the server options must be here so they do not show up in the documentation -->
                     <!-- ======================================================================================================= -->
                     <config-key id="tls-server-auth" name="TLS Server Authorized Clients">
                         <summary>TLS server authorized clients.</summary>

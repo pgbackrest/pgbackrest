@@ -901,45 +901,59 @@ option:
     depend: tcp-keep-alive-count
 
   tls-server-ca-file:
+    internal: true
     section: global
     type: path
     command:
-      server-start: {}
+      server-start:
+        internal: false
 
   tls-server-cert-file:
+    internal: true
     section: global
     type: path
     command:
-      server-start: {}
+      server-start:
+        internal: false
 
   tls-server-key-file:
+    internal: true
     section: global
     type: path
     command:
-      server-start: {}
+      server-start:
+        internal: false
 
   tls-server-auth:
+    internal: true
     section: global
     type: hash
     command:
-      server-start: {}
+      server-start:
+        internal: false
 
   tls-server-address:
+    internal: true
     section: global
     type: string
     default: localhost
     command:
-      server-ping: {}
-      server-start: {}
+      server-ping:
+        internal: false
+      server-start:
+        internal: false
 
   tls-server-port:
+    internal: true
     section: global
     type: integer
     default: 8432
     allow-range: [1, 65535]
     command:
-      server-ping: {}
-      server-start: {}
+      server-ping:
+        internal: false
+      server-start:
+        internal: false
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
@@ -1318,6 +1332,7 @@ option:
       db?-host: {}
 
   pg-host-cert-file:
+    internal: true
     section: global
     group: pg
     type: string
@@ -1402,6 +1417,7 @@ option:
       db?-user: {}
 
   pg-host-type:
+    internal: true
     section: global
     group: pg
     type: string
@@ -1795,6 +1811,7 @@ option:
       hardlink: {}
 
   repo-host-type:
+    internal: true
     section: global
     group: repo
     type: string
@@ -1827,6 +1844,7 @@ option:
       backup-host: {}
 
   repo-host-cert-file:
+    internal: true
     section: global
     group: repo
     type: string
