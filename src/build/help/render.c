@@ -223,7 +223,7 @@ bldHlpRenderHelpAutoCPack(const BldCfg bldCfg, const BldHlp bldHlp)
                     pckWriteObjBeginP(pack, .id = cmdIdx + 1);
 
                     if (opt->internal != optCmd->internal)
-                        pckWriteBoolP(pack, optCmd->internal);
+                        pckWriteBoolP(pack, optCmd->internal, .defaultWrite = true);
                     else
                         pckWriteNullP(pack);
 
