@@ -77,7 +77,7 @@ String *hrnPackReadToStr(PackRead *read)
 
             case pckTypePack:
             {
-                strCatFmt(result, "<%s>", strZ(hrnPackReadToStr(pckReadPackReadP(read))));
+                strCatFmt(result, "<%s>", strZ(hrnPackReadToStr(pckReadPackReadP(read, .id = id))));
                 break;
             }
 

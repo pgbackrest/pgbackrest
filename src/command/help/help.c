@@ -449,7 +449,7 @@ helpRender(const Buffer *const helpData)
                             strFirstLower(summary);
 
                         // Output current and default values if they exist
-                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgParseOptionType(optionId));
+                        const String *defaultValue = cfgOptionDefault(optionId);
                         const String *value = NULL;
 
                         if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
@@ -516,7 +516,7 @@ helpRender(const Buffer *const helpData)
                         helpRenderText(optionData[option.id].description, optionData[option.id].internal, 0, true, CONSOLE_WIDTH)));
 
                 // Output current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
+                const String *defaultValue = cfgOptionDefault(option.id);
                 const String *value = NULL;
 
                 if (cfgOptionIdxSource(option.id, 0) != cfgSourceDefault)

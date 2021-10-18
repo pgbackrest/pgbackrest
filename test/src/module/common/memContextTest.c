@@ -5,10 +5,10 @@ Test Memory Contexts
 /***********************************************************************************************************************************
 testFree - test callback function
 ***********************************************************************************************************************************/
-MemContext *memContextCallbackArgument = NULL;
-bool testFreeThrow = false;
+static MemContext *memContextCallbackArgument = NULL;
+static bool testFreeThrow = false;
 
-void
+static void
 testFree(void *thisVoid)
 {
     MemContext *this = thisVoid;
@@ -31,7 +31,7 @@ testFree(void *thisVoid)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();

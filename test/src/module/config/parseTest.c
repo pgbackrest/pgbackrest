@@ -34,7 +34,7 @@ testOptionFind(const char *optionName, unsigned int optionId, unsigned int optio
 /***********************************************************************************************************************************
 Test run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -50,6 +50,37 @@ testRun(void)
 
         TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 40 : 28, "ParseRuleOption size");
         TEST_RESULT_UINT(sizeof(ParseRuleOptionDeprecate), TEST_64BIT() ? 16 : 12, "ParseRuleOptionDeprecate size");
+
+        // Each pack must be <= 127 bytes because only one byte is used for the size. If this check fails then the size of
+        // PARSE_RULE_PACK_SIZE must be increased. There would be little cost of increasing this as a preventative measure but a
+        // check would still be required, so may as well be as efficient as possible.
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check that no packs are > 127 bytes");
+
+        unsigned int packOver127 = 0;
+        unsigned int packTotal = 0;
+        size_t packMaxSize = 0;
+        const char *packMaxName = NULL;
+        size_t packTotalSize = 0;
+
+        for (unsigned int optIdx = 0; optIdx < CFG_OPTION_TOTAL; optIdx++)
+        {
+            packOver127 += parseRuleOption[optIdx].packSize > 127;
+            packTotal += parseRuleOption[optIdx].pack != NULL;
+            packTotalSize += parseRuleOption[optIdx].packSize;
+
+            if (parseRuleOption[optIdx].packSize > packMaxSize)
+            {
+                packMaxName = parseRuleOption[optIdx].name;
+                packMaxSize = parseRuleOption[optIdx].packSize;
+            }
+        }
+
+        TEST_RESULT_UINT(packOver127, 0, "no packs over 127 bytes");
+        TEST_LOG_FMT("total size of option packs is %zu bytes", packTotalSize);
+        TEST_LOG_FMT("avg option pack size is %0.2f bytes", (float)packTotalSize / (float)packTotal);
+        TEST_LOG_FMT("max option pack size is '%s' at %zu bytes", packMaxName, packMaxSize);
+        TEST_LOG_FMT("total options with packs is %u (out of %d options) ", packTotal, CFG_OPTION_TOTAL);
     }
 
     // Config functions that are not tested with parse
@@ -161,9 +192,10 @@ testRun(void)
         HRN_SYSTEM_FMT("mv %s/global-backup.conf %s/global-backup.confsave", strZ(configIncludePath), strZ(configIncludePath));
 
         // Set up defaults
-        String *backupCmdDefConfigValue = strNewZ(cfgParseOptionDefault(cfgParseCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
-        String *backupCmdDefConfigInclPathValue = strNewZ(
-            cfgParseOptionDefault(cfgParseCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
+        const String *const backupCmdDefConfigValue =
+            (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE];
+        const String *const backupCmdDefConfigInclPathValue =
+            (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH];
         const String *oldConfigDefault = STRDEF(TEST_PATH PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
@@ -1134,6 +1166,32 @@ testRun(void)
             "option 'recovery-option' not valid for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option value invalid (string)");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptType, "^bogus");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "'^bogus' is not allowed for 'type' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option value invalid (size)");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptBufferSize, "777");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "'777' is not allowed for 'buffer-size' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("option value not in allowed list");
 
         argList = strLstNew();
@@ -1618,21 +1676,24 @@ testRun(void)
         TEST_RESULT_STR(cfgOptionIdxStrNull(cfgOptPgHost, 1), NULL, "pg2-host is NULL");
         TEST_RESULT_STR(cfgOptionStrNull(cfgOptPgHost), NULL, "pg2-host is NULL");
         TEST_ERROR(cfgOptionIdxStr(cfgOptPgHost, 1), AssertError, "option 'pg2-host' is null but non-null was requested");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptIoTimeout), 60000, "io-timeout is set");
 
-        TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "backup-standby default is false");
-        TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "backup-standby default is false (again)");
+        TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdBackup, cfgOptPgHost), false, "pg-host is not required for backup");
+        TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdInfo, cfgOptStanza), false, "stanza is not required for info");
+
+        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptBackupStandby), "n", "backup-standby default is false");
+        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptBackupStandby), "n", "backup-standby default is false (again)");
         TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHost), NULL, "pg-host default is NULL");
-        TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptLogLevelConsole)), "warn", "log-level-console default is warn");
-        TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptPgPort)), 5432, "pg-port default is 5432");
+        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptLogLevelConsole), "warn", "log-level-console default is warn");
+        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptPgPort), "5432", "pg-port default is 5432");
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptPgPort), "5432", "pg-port display is 5432");
-        TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptDbTimeout)), 1800000, "db-timeout default is 1800000");
+        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptDbTimeout), "1800", "db-timeout default is 1800");
 
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, VARSTRDEF("/default")), "set pg-socket-path default");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "pg1-socket-path unchanged");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 1), "/default", "pg2-socket-path is new default");
         TEST_RESULT_STR_Z(cfgOptionIdxDisplay(cfgOptPgSocketPath, 1), "/default", "pg2-socket-path display");
 
-        TEST_ERROR(cfgOptionDefaultValue(cfgOptDbInclude), AssertError, "default value not available for option type 3");
         TEST_ERROR(cfgOptionDisplay(cfgOptTarget), AssertError, "option 'target' is not valid for the current command");
         TEST_ERROR(cfgOptionLst(cfgOptDbInclude), AssertError, "option 'db-include' is not valid for the current command");
         TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg1-path' is type 4 but 3 was requested");

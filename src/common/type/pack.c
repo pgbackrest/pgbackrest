@@ -391,9 +391,22 @@ pckReadNew(const Pack *const pack)
     if (pack == NULL)
         FUNCTION_TEST_RETURN(NULL);
 
+    FUNCTION_TEST_RETURN(pckReadNewC(bufPtrConst((const Buffer *)pack), bufUsed((const Buffer *)pack)));
+}
+
+PackRead *
+pckReadNewC(const unsigned char *const buffer, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+
     PackRead *this = pckReadNewInternal();
-    this->bufferPtr = bufPtrConst((const Buffer *)pack);
-    this->bufferUsed = bufUsed((const Buffer *)pack);
+    this->bufferPtr = buffer;
+    this->bufferUsed = size;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -721,6 +734,54 @@ pckReadId(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
+size_t
+pckReadSize(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(packTypeMapData[this->tagNextTypeMap].size);
+
+    FUNCTION_TEST_RETURN(this->tagNextSize);
+}
+
+/**********************************************************************************************************************************/
+void
+pckReadConsume(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    unsigned int id = 0;
+
+    pckReadTag(this, &id, pckTypeMapUnknown, true);
+    pckReadTag(this, &id, this->tagNextTypeMap, false);
+    pckReadConsumeBuffer(this);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+const unsigned char *
+pckReadBufPtr(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(packTypeMapData[this->tagNextTypeMap].size);
+    ASSERT(this->buffer == NULL);
+
+    FUNCTION_TEST_RETURN(this->bufferPtr + this->bufferPos);
+}
+
+/**********************************************************************************************************************************/
 // Internal version of pckReadNull() that does not require a PackIdParam struct. Some functions already have an id variable so
 // assigning that to a PackIdParam struct and then copying it back is wasteful.
 static inline bool
@@ -987,6 +1048,27 @@ pckReadPackRead(PackRead *this, PckReadPackParam param)
 
     if (result != NULL)
         pckMove(pack, objMemContext(result));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+PackRead *
+pckReadPackReadConst(PackRead *this, PckReadPackParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(NULL);
+
+    // Read the tag
+    pckReadTag(this, &param.id, pckTypeMapPack, false);
+
+    PackRead *const result = pckReadNewC(pckReadBufPtr(this), pckReadSize(this));
+
+    pckReadConsumeBuffer(this);
 
     FUNCTION_TEST_RETURN(result);
 }

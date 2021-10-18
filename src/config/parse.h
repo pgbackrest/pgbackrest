@@ -62,7 +62,7 @@ typedef struct CfgParseOptionResult
 CfgParseOptionResult cfgParseOption(const String *const optionName, const CfgParseOptionParam param);
 
 // Default value for the option
-const char *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);
+const String *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);
 
 // Option name from id
 const char *cfgParseOptionName(ConfigOption optionId);

@@ -70,7 +70,7 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
 /***********************************************************************************************************************************
 Compare log to a static string
 ***********************************************************************************************************************************/
-void
+static void
 testLogResult(const char *logFile, const char *expected)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -94,7 +94,7 @@ testLogResult(const char *logFile, const char *expected)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();

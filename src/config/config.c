@@ -382,41 +382,7 @@ cfgOptionIdxTotal(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-static Variant *
-cfgOptionDefaultValue(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    Variant *result;
-    Variant *defaultValue = varNewStrZ(cfgParseOptionDefault(cfgCommand(), optionId));
-
-    switch (cfgParseOptionType(optionId))
-    {
-        case cfgOptTypeBoolean:
-            result = varNewBool(varBoolForce(defaultValue));
-            break;
-
-        case cfgOptTypeInteger:
-        case cfgOptTypeSize:
-        case cfgOptTypeTime:
-            result = varNewInt64(varInt64Force(defaultValue));
-            break;
-
-        case cfgOptTypePath:
-        case cfgOptTypeString:
-            result = varDup(defaultValue);
-            break;
-
-        default:
-            THROW_FMT(AssertError, "default value not available for option type %u", cfgParseOptionType(optionId));
-    }
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-const Variant *
+const String *
 cfgOptionDefault(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -427,16 +393,7 @@ cfgOptionDefault(ConfigOption optionId)
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
     if (configLocal->option[optionId].defaultValue == NULL)
-    {
-        if (cfgParseOptionDefault(cfgCommand(), optionId) != NULL)
-        {
-            MEM_CONTEXT_BEGIN(configLocal->memContext)
-            {
-                configLocal->option[optionId].defaultValue = cfgOptionDefaultValue(optionId);
-            }
-            MEM_CONTEXT_END();
-        }
-    }
+        configLocal->option[optionId].defaultValue = cfgParseOptionDefault(cfgCommand(), optionId);
 
     FUNCTION_TEST_RETURN(configLocal->option[optionId].defaultValue);
 }
@@ -455,15 +412,18 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 
     MEM_CONTEXT_BEGIN(configLocal->memContext)
     {
+        // Duplicate into this context
+        defaultValue = varDup(defaultValue);
+
         // Set the default value
-        configLocal->option[optionId].defaultValue = varDup(defaultValue);
+        configLocal->option[optionId].defaultValue = varStr(defaultValue);
 
         // Copy the value to option indexes that are marked as default so the default can be retrieved quickly
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIdxTotal(optionId); optionIdx++)
         {
             if (configLocal->option[optionId].index[optionIdx].source == cfgSourceDefault)
             {
-                configLocal->option[optionId].index[optionIdx].value = configLocal->option[optionId].defaultValue;
+                configLocal->option[optionId].index[optionIdx].value = defaultValue;
                 configLocal->option[optionId].index[optionIdx].display = NULL;
             }
         }
