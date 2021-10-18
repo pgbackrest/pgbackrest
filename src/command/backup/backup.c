@@ -815,12 +815,12 @@ backupStart(BackupData *backupData)
         if (!cfgOptionBool(cfgOptOnline))
         {
             // Check if Postgres is running and if so only continue when forced
-            if (storageExistsP(backupData->storagePrimary, PG_FILE_POSTMASTERPID_STR))
+            if (storageExistsP(backupData->storagePrimary, PG_FILE_POSTMTRPID_STR))
             {
                 if (cfgOptionBool(cfgOptForce))
                 {
                     LOG_WARN(
-                        "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMASTERPID " exists but --" CFGOPT_FORCE " was passed so"
+                        "--no-" CFGOPT_ONLINE " passed and " PG_FILE_POSTMTRPID " exists but --" CFGOPT_FORCE " was passed so"
                         " backup will continue though it looks like " PG_NAME " is running and the backup will probably not be"
                         " consistent");
                 }
@@ -828,8 +828,8 @@ backupStart(BackupData *backupData)
                 {
                     THROW(
                         PgRunningError,
-                        "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running."
-                        " Shut down " PG_NAME " and try again, or use --force.");
+                        "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut"
+                            " down " PG_NAME " and try again, or use --force.");
                 }
             }
         }

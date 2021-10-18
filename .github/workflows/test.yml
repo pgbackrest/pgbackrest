@@ -29,7 +29,7 @@ jobs:
       matrix:
         include:
           # All unit (without coverage) and integration tests for 32-bit
-          - param: test --vm=u16 --param=no-performance
+          - param: test --vm=d9 --param=no-performance
 
           # Debian/Ubuntu documentation
           - param: doc --vm=u18

@@ -6,7 +6,7 @@ Test Time Management
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -29,8 +29,8 @@ testRun(void)
         sleepMSec(0);
         TimeMSec end = timeMSec();
 
-        // Check bounds for time slept (within a range of .01 seconds)
-        TEST_RESULT_BOOL(end - begin < (TimeMSec)10, true, "upper range check");
+        // Check bounds for time slept (within a range of .02 seconds)
+        TEST_RESULT_BOOL(end - begin < (TimeMSec)20, true, "upper range check");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sleep 1400ms");

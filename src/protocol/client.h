@@ -42,6 +42,7 @@ Constants
 #define PROTOCOL_GREETING_VERSION                                   "version"
     STRING_DECLARE(PROTOCOL_GREETING_VERSION_STR);
 
+#define PROTOCOL_COMMAND_CONFIG                                     STRID5("config", 0xe9339e30)
 #define PROTOCOL_COMMAND_EXIT                                       STRID5("exit", 0xa27050)
 #define PROTOCOL_COMMAND_NOOP                                       STRID5("noop", 0x83dee0)
 
@@ -89,6 +90,13 @@ __attribute__((always_inline)) static inline ProtocolClient *
 protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
+}
+
+// Do not send exit command to the server when the client is freed
+__attribute__((always_inline)) static inline void
+protocolClientNoExit(ProtocolClient *const this)
+{
+    memContextCallbackClear(objMemContext(this));
 }
 
 // Send noop to test connection or keep it alive

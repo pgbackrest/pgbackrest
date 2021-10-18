@@ -65,7 +65,7 @@ typedef struct Config
         bool valid;                                                 // Is option valid for current command?
         bool group;                                                 // In a group?
         unsigned int groupId;                                       // Id if in a group
-        const Variant *defaultValue;                                // Default value
+        const String *defaultValue;                                 // Default value
         ConfigOptionValue *index;                                   // List of indexed values (only 1 unless the option is indexed)
     } option[CFG_OPTION_TOTAL];
 } Config;
@@ -94,6 +94,9 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
+// Option default - should only be called by the help command
+const String *cfgOptionDefault(ConfigOption optionId);
+
 // Format a variant for display using the supplied option type. cfgOptionDisplay()/cfgOptionIdxDisplay() should be used whenever
 // possible, but sometimes the variant needs to be manipulated before being formatted.
 const String *cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType);

@@ -104,7 +104,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
                     (linkDestinationSize = readlink(strZ(file), linkDestination, sizeof(linkDestination) - 1)) == -1,
                     FileReadError, "unable to get destination for link '%s'", strZ(file));
 
-                result.linkDestination = strNewN(linkDestination, (size_t)linkDestinationSize);
+                result.linkDestination = strNewZN(linkDestination, (size_t)linkDestinationSize);
             }
         }
     }

@@ -14,7 +14,7 @@ Test Expire Command
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-void
+static void
 archiveGenerate(
     const Storage *storage, const char *const archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
     const char *majorWal)
@@ -38,7 +38,7 @@ archiveGenerate(
     }
 }
 
-const char *
+static const char *
 archiveExpectList(const unsigned int start, unsigned int end, const char *majorWal)
 {
     String *result = strNew();
@@ -65,7 +65,7 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -1821,7 +1821,7 @@ testRun(void)
             "\n"
             "[target:file:default]\n"
             "group=\"postgres\"\n"
-            "master=false\n"
+            "mas""ter=false\n"
             "mode=\"0600\"\n"
             "user=\"postgres\"\n"
             "\n"
@@ -2184,7 +2184,7 @@ testRun(void)
                 "\n"
                 "[target:file:default]\n"
                 "group=\"postgres\"\n"
-                "master=false\n"
+                "mas""ter=false\n"
                 "mode=\"0600\"\n"
                 "user=\"postgres\"\n"
                 "\n"

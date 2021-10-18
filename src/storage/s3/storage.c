@@ -175,8 +175,8 @@ storageS3Auth(
         const StringList *headerList = strLstSort(strLstDup(httpHeaderList(httpHeader)), sortOrderAsc);
         String *signedHeaders = NULL;
 
-        String *canonicalRequest = strNewFmt(
-            "%s\n%s\n%s\n", strZ(verb), strZ(path), query == NULL ? "" : strZ(httpQueryRenderP(query)));
+        String *canonicalRequest = strCatFmt(
+            strNew(), "%s\n%s\n%s\n", strZ(verb), strZ(path), query == NULL ? "" : strZ(httpQueryRenderP(query)));
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
         {
@@ -190,7 +190,7 @@ storageS3Auth(
             strCatFmt(canonicalRequest, "%s:%s\n", strZ(headerKeyLower), strZ(httpHeaderGet(httpHeader, headerKey)));
 
             if (signedHeaders == NULL)
-                signedHeaders = strDup(headerKeyLower);
+                signedHeaders = strCat(strNew(), headerKeyLower);
             else
                 strCatFmt(signedHeaders, ";%s", strZ(headerKeyLower));
         }
@@ -1077,7 +1077,9 @@ storageS3New(
             host = driver->bucketEndpoint;
 
         driver->httpClient = httpClientNew(
-            tlsClientNew(sckClientNew(host, port, timeout), host, timeout, verifyPeer, caFile, caPath), timeout);
+            tlsClientNew(
+                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, caFile, caPath, NULL, NULL),
+            timeout);
 
         // Initialize authentication
         switch (driver->keyType)
@@ -1090,7 +1092,8 @@ storageS3New(
                 driver->credRole = strDup(credRole);
                 driver->credHost = S3_CREDENTIAL_HOST_STR;
                 driver->credExpirationTime = time(NULL);
-                driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout), timeout);
+                driver->credHttpClient = httpClientNew(
+                    sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout, timeout), timeout);
 
                 break;
             }
@@ -1108,7 +1111,8 @@ storageS3New(
                 driver->credExpirationTime = time(NULL);
                 driver->credHttpClient = httpClientNew(
                     tlsClientNew(
-                        sckClientNew(driver->credHost, S3_STS_PORT, timeout), driver->credHost, timeout, true, caFile, caPath),
+                        sckClientNew(driver->credHost, S3_STS_PORT, timeout, timeout), driver->credHost, timeout, true, caFile,
+                        caPath, NULL, NULL, NULL),
                     timeout);
 
                 break;

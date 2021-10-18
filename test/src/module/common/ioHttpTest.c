@@ -20,7 +20,7 @@ HTTP user agent header
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -273,7 +273,7 @@ testRun(void)
     {
         HttpClient *client = NULL;
 
-        TEST_ASSIGN(client, httpClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 500), 500), "new client");
+        TEST_ASSIGN(client, httpClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 500, 500), 500), "new client");
 
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
@@ -297,7 +297,7 @@ testRun(void)
 
                 ioBufferSizeSet(35);
 
-                TEST_ASSIGN(client, httpClientNew(sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), 5000), "new client");
+                TEST_ASSIGN(client, httpClientNew(sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), 5000), "new client");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no output from server");

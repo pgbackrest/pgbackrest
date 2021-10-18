@@ -33,10 +33,18 @@ Option type constants
     STRING_DECLARE(OPT_TYPE_BOOLEAN_STR);
 #define OPT_TYPE_HASH                                               "hash"
     STRING_DECLARE(OPT_TYPE_HASH_STR);
+#define OPT_TYPE_INTEGER                                            "integer"
+    STRING_DECLARE(OPT_TYPE_INTEGER_STR);
 #define OPT_TYPE_LIST                                               "list"
     STRING_DECLARE(OPT_TYPE_LIST_STR);
+#define OPT_TYPE_PATH                                               "path"
+    STRING_DECLARE(OPT_TYPE_PATH_STR);
+#define OPT_TYPE_SIZE                                               "size"
+    STRING_DECLARE(OPT_TYPE_SIZE_STR);
 #define OPT_TYPE_STRING                                             "string"
     STRING_DECLARE(OPT_TYPE_STRING_STR);
+#define OPT_TYPE_STRING_ID                                          "stringId"
+    STRING_DECLARE(OPT_TYPE_STRING_ID_STR);
 #define OPT_TYPE_TIME                                               "time"
     STRING_DECLARE(OPT_TYPE_TIME_STR);
 

@@ -1023,7 +1023,7 @@ cmdArchiveGetAsync(void)
             {
                 LOG_WARN_FMT("[%s] %s", errorTypeName(checkResult.errorType), strZ(checkResult.errorMessage));
 
-                String *message = strDup(checkResult.errorMessage);
+                String *message = strCat(strNew(), checkResult.errorMessage);
 
                 if (!strLstEmpty(checkResult.warnList))
                     strCatFmt(message, "\n%s", strZ(strLstJoin(checkResult.warnList, "\n")));

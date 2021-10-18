@@ -116,9 +116,9 @@ Documentation Features:
 
 Commit to integration with the above message and push to CI.
 
-## Push to master
+## Push to main
 
-Push release commit to master once CI testing is complete.
+Push release commit to main once CI testing is complete.
 
 ## Create release on github
 
@@ -140,13 +140,13 @@ v2.14: Bug Fix and Improvements
 - Add user guide for RHEL/CentOS 7.
 ```
 
-The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from master. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in master!**
+The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from main. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in main!**
 
-## Push web documentation to master and deploy
+## Push web documentation to main and deploy
 ```
 cd ${PGBR_REPO?}/doc/site
 git commit -m "v2.14 documentation."
-git push origin master
+git push origin main
 ```
 
 Deploy the documentation on `pgbackrest.org`.

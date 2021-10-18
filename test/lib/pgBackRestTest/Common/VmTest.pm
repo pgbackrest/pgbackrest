@@ -30,8 +30,8 @@ use constant VM_DB_TEST                                             => 'db-test'
     push @EXPORT, qw(VM_DB_TEST);
 use constant VMDEF_DEBUG_INTEGRATION                                => 'debug-integration';
     push @EXPORT, qw(VMDEF_DEBUG_INTEGRATION);
-use constant VM_CONTROL_MASTER                                      => 'control-master';
-    push @EXPORT, qw(VM_CONTROL_MASTER);
+use constant VM_CONTROL_MTR                                         => 'control-mtr';
+    push @EXPORT, qw(VM_CONTROL_MTR);
 # Will coverage testing be run for C?
 use constant VMDEF_COVERAGE_C                                       => 'coverage-c';
 use constant VM_DEPRECATED                                          => 'deprecated';
@@ -96,14 +96,10 @@ use constant VM_CO8                                                 => 'co8';
     push @EXPORT, qw(VM_CO8);
 use constant VM_F33                                                 => 'f33';
     push @EXPORT, qw(VM_F33);
-use constant VM_U16                                                 => 'u16';
-    push @EXPORT, qw(VM_U16);
 use constant VM_U18                                                 => 'u18';
     push @EXPORT, qw(VM_U18);
 use constant VM_U20                                                 => 'u20';
     push @EXPORT, qw(VM_U20);
-use constant VM_D8                                                  => 'd8';
-    push @EXPORT, qw(VM_D8);
 use constant VM_D9                                                  => 'd9';
     push @EXPORT, qw(VM_D9);
 
@@ -112,7 +108,7 @@ use constant VM_EXPECT                                              => VM_CO7;
     push @EXPORT, qw(VM_EXPECT);
 
 # VM aliases for run matrices (numbered oldest to newest)
-use constant VM2                                                    => VM_U16;
+use constant VM2                                                    => VM_D9;
     push @EXPORT, qw(VM2);
 use constant VM3                                                    => VM_CO7;
     push @EXPORT, qw(VM3);
@@ -203,75 +199,15 @@ my $oyVm =
         ],
     },
 
-    # Debian 8
-    &VM_D8 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_DEBIAN,
-        &VM_OS_REPO => 'jessie',
-        &VM_IMAGE => 'debian:8',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VM_DB =>
-        [
-            PG_VERSION_84,
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_95,
-        ],
-    },
-
     # Debian 9
     &VM_D9 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_OS => VM_OS_DEBIAN,
         &VM_OS_REPO => 'stretch',
-        &VM_IMAGE => 'debian:9',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_96,
-        ],
-    },
-
-    # Ubuntu 16.04
-    &VM_U16 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
-        &VM_OS_REPO => 'xenial',
-        &VM_IMAGE => 'i386/ubuntu:16.04',
+        &VM_IMAGE => 'i386/debian:9',
         &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VMDEF_WITH_BACKTRACE => true,
 
         &VM_DB =>
         [
@@ -280,14 +216,6 @@ my $oyVm =
             PG_VERSION_90,
             PG_VERSION_91,
             PG_VERSION_92,
-            PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-            PG_VERSION_13,
         ],
 
         &VM_DB_TEST =>
@@ -295,8 +223,6 @@ my $oyVm =
             PG_VERSION_83,
             PG_VERSION_84,
             PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
         ],
     },
 
@@ -375,6 +301,8 @@ my $oyVm =
 
         &VM_DB_TEST =>
         [
+            PG_VERSION_91,
+            PG_VERSION_92,
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,

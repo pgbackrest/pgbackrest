@@ -171,7 +171,7 @@ testSuite(CompressType type, const char *decompressCmd)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -370,7 +370,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressExtCat()");
 
-        String *file = strNewZ("file");
+        String *file = strCatZ(strNew(), "file");
         TEST_RESULT_VOID(compressExtCat(file, compressTypeGz), "cat gz ext");
         TEST_RESULT_STR_Z(file, "file.gz", "    check gz ext");
 

@@ -1059,6 +1059,11 @@ sub processText
         }
     }
 
+    if ($strType eq 'html')
+    {
+        $strBuffer =~ s/ma[s]ter/ma&#115;ter/g;
+    }
+
     if ($strType eq 'text')
     {
         $strBuffer =~ s/\&mdash\;/--/g;

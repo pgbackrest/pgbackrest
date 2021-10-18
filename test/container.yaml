@@ -12,6 +12,10 @@
 # - docker login -u pgbackrest
 # - VM=XXX;DATE=YYYYMMDDX;BASE=pgbackrest/test:${VM?}-base;docker tag ${BASE?} ${BASE?}-${DATE?} && docker push ${BASE?}-${DATE?}
 # **********************************************************************************************************************************
+20211016A:
+  x86_64:
+    d9: 3a0ed45fd9115f9612767e7bd13564608d1f8f83
+
 20210930A:
   x86_64:
     u20: 7ffb73ceb9a2e3aad2cba7eb5c8e28fc3982db18
@@ -20,7 +24,6 @@
   x86_64:
     co7: c4d02428812374ab6a22efa437499592ae9c5f08
     f33: 04b3353c5fcc859c9df528e2fa78e6ed73c6390b
-    u16: 3c872cddfdf2534e32c074dfae1ec25295237b5c
 
 20210901A:
   aarch64:

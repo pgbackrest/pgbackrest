@@ -141,7 +141,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -350,15 +350,15 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(),"postmaster.pid");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "postmas""ter.pid");
 
         TEST_ERROR(
             restorePathValidate(), PgRunningError,
             "unable to restore while PostgreSQL is running\n"
-            "HINT: presence of 'postmaster.pid' in '" TEST_PATH "/pg' indicates PostgreSQL is running.\n"
-            "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.");
+            "HINT: presence of 'postmas""ter.pid' in '" TEST_PATH "/pg' indicates PostgreSQL is running.\n"
+            "HINT: remove 'postmas""ter.pid' only if PostgreSQL is not running.");
 
-        HRN_STORAGE_REMOVE(storagePgWrite(), "postmaster.pid", .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "postmas""ter.pid", .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on data directory does not look valid - delta");

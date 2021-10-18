@@ -14,8 +14,8 @@ Vagrant.configure(2) do |config|
     # Full development and test environment which should be used by default.
     #-------------------------------------------------------------------------------------------------------------------------------
     config.vm.define "default", primary: true do |default|
-        default.vm.box = "ubuntu/bionic64"
-        default.vm.box_version = "20210623.0.0"
+        default.vm.box = "ubuntu/focal64"
+        default.vm.box_version = "20211007.0.0"
 
         default.vm.provider :virtualbox do |vb|
             vb.name = "pgbackrest-test"
@@ -76,7 +76,7 @@ Vagrant.configure(2) do |config|
             echo 'Install Build Tools' && date
             apt-get install -y devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
                  libxml2-dev liblz4-dev liblz4-tool libpq-dev lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev pkg-config \
-                 libyaml-dev
+                 libyaml-dev libc6-dbg
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Docker' && date
@@ -152,7 +152,7 @@ Vagrant.configure(2) do |config|
     #
     # Basic environment to build/test pgBackRest using homebrew installed in the local user account.
     #-------------------------------------------------------------------------------------------------------------------------------
-    # mkdir ~/homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C ~/homebrew
+    # git clone --depth=1 https://github.com/Homebrew/brew homebrew
     # ~/homebrew/bin/brew install -q libpq libxml2 libyaml cpanm lcov
     # ~/homebrew/bin/cpanm --force --local-lib=~/homebrew/perl5 install YAML::XS XML::Checker::Parser
     #

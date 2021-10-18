@@ -48,6 +48,7 @@ sub new
         $self->{strCommandMain},
         $self->{strPgSqlBin},
         $self->{strTestPath},
+        $self->{strRepoPath},
     ) =
         logDebugParam
         (
@@ -60,6 +61,7 @@ sub new
             {name => 'strCommandMain', trace => true},
             {name => 'strPgSqlBin', required => false, trace => true},
             {name => 'strTestPath', trace => true},
+            {name => 'strRepoPath', trace => true},
         );
 
     # Initialize the test log
@@ -366,6 +368,9 @@ sub regExpReplaceAll
     # Replace the test path
     $strLine =~ s/$self->{strTestPath}/[TEST_PATH]/g;
 
+    # Replace the repo path
+    $strLine =~ s/$self->{strRepoPath}/[REPO_PATH]/g;
+
     # Replace the pgsql path (if exists)
     if (defined($self->{strPgSqlBin}))
     {
@@ -394,6 +399,8 @@ sub regExpReplaceAll
     {
         $strLine = 'P00 DETAIL: statistics: STATISTICS'
     }
+
+    $strLine = $self->regExpReplace($strLine, 'PRIMARY', 'mas'.'ter', undef, false);
 
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'strGroup = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'unknown group in backup manifest mapped to \'[^\']+', '[^\']+$');

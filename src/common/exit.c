@@ -88,7 +88,8 @@ exitErrorDetail(void)
     FUNCTION_TEST_VOID();
 
     FUNCTION_TEST_RETURN(
-        strNewFmt(
+        strCatFmt(
+            strNew(),
             "--------------------------------------------------------------------\n"
             "If SUBMITTING AN ISSUE please provide the following information:\n"
             "\n"
@@ -148,7 +149,7 @@ exitSafe(int result, bool error, SignalType signalType)
             // On process terminate
             if (result == errorTypeCode(&TermError))
             {
-                errorMessage = strNewZ("terminated on signal ");
+                errorMessage = strCatZ(strNew(), "terminated on signal ");
 
                 // Terminate from a child
                 if (signalType == signalTypeNone)

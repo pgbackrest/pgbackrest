@@ -223,7 +223,7 @@ bldHlpRenderHelpAutoCPack(const BldCfg bldCfg, const BldHlp bldHlp)
                     pckWriteObjBeginP(pack, .id = cmdIdx + 1);
 
                     if (opt->internal != optCmd->internal)
-                        pckWriteBoolP(pack, optCmd->internal);
+                        pckWriteBoolP(pack, optCmd->internal, .defaultWrite = true);
                     else
                         pckWriteNullP(pack);
 
@@ -291,7 +291,8 @@ bldHlpRenderHelpAutoC(const Storage *const storageRepo, const BldCfg bldCfg, con
     // Convert buffer to bytes
     const Buffer *const buffer = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlp);
 
-    String *const help = strNewFmt(
+    String *const help = strCatFmt(
+        strNew(),
         "%s"
         "static const unsigned char helpData[%zu] =\n"
         "{\n",

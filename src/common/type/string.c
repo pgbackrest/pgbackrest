@@ -40,6 +40,21 @@ STRING_EXTERN(Y_STR,                                                Y_Z);
 STRING_EXTERN(ZERO_STR,                                             ZERO_Z);
 
 /***********************************************************************************************************************************
+Buffer macros
+***********************************************************************************************************************************/
+// Fixed size buffer allocated at the end of the object allocation
+#define STR_FIXED_BUFFER                                            (char *)(this + 1)
+
+// Is the string using the fixed size buffer?
+#define STR_IS_FIXED_BUFFER()                                       (this->pub.buffer == STR_FIXED_BUFFER)
+
+// Empty buffer
+#define STR_EMPTY_BUFFER                                            (EMPTY_STR->pub.buffer)
+
+// Is the string using the empty buffer?
+#define STR_IS_EMPTY_BUFFER()                                       (this->pub.buffer == STR_EMPTY_BUFFER)
+
+/***********************************************************************************************************************************
 Maximum size of a string
 ***********************************************************************************************************************************/
 #define STRING_SIZE_MAX                                            1073741824
@@ -74,15 +89,38 @@ strNew(void)
     {
         .pub =
         {
-            // A zero-length string is not very useful so assume this string is being created for appending and allocate extra space
-            .extra = STRING_EXTRA_MIN,
+            // Set empty so nothing is allocated until needed
+            .buffer = STR_EMPTY_BUFFER,
         },
         .memContext = memContextCurrent(),
     };
 
-    // Allocate and assign string
-    this->pub.buffer = memNew(STRING_EXTRA_MIN + 1);
-    this->pub.buffer[0] = '\0';
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Create fixed size String
+***********************************************************************************************************************************/
+static String *
+strNewFixed(const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    CHECK_SIZE(size);
+
+    String *this = memNew(sizeof(String) + size + 1);
+
+    *this = (String)
+    {
+        .pub =
+        {
+            .size = (unsigned int)size,
+            .buffer = STR_FIXED_BUFFER,
+        },
+        .memContext = memContextCurrent(),
+    };
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -97,25 +135,12 @@ strNewZ(const char *const string)
 
     ASSERT(string != NULL);
 
-    // Check size
-    size_t stringSize = strlen(string);
-    CHECK_SIZE(stringSize);
-
     // Create object
-    String *this = memNew(sizeof(String));
+    String *this = strNewFixed(strlen(string));
 
-    *this = (String)
-    {
-        .pub =
-        {
-            .size = (unsigned int)stringSize,
-        },
-        .memContext = memContextCurrent(),
-    };
-
-    // Allocate and assign string
-    this->pub.buffer = memNew(strSize(this) + this->pub.extra + 1);
-    strcpy(this->pub.buffer, string);
+    // Assign string
+    strncpy(this->pub.buffer, string, strSize(this));
+    this->pub.buffer[strSize(this)] = '\0';
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -144,23 +169,10 @@ strNewBuf(const Buffer *buffer)
 
     ASSERT(buffer != NULL);
 
-    // Check size
-    CHECK_SIZE(bufUsed(buffer));
-
     // Create object
-    String *this = memNew(sizeof(String));
+    String *this = strNewFixed(bufUsed(buffer));
 
-    *this = (String)
-    {
-        .pub =
-        {
-            .size = (unsigned int)bufUsed(buffer),
-        },
-        .memContext = memContextCurrent(),
-    };
-
-    // Allocate and assign string
-    this->pub.buffer = memNew(strSize(this) + 1);
+    // Assign string
     memcpy(this->pub.buffer, bufPtrConst(buffer), strSize(this));
     this->pub.buffer[strSize(this)] = 0;
 
@@ -178,24 +190,10 @@ strNewEncode(EncodeType type, const Buffer *buffer)
 
     ASSERT(buffer != NULL);
 
-    // Check encoded size
-    size_t size = encodeToStrSize(type, bufUsed(buffer));
-    CHECK_SIZE(size);
-
     // Create object
-    String *this = memNew(sizeof(String));
+    String *this = strNewFixed(encodeToStrSize(type, bufUsed(buffer)));
 
-    *this = (String)
-    {
-        .pub =
-        {
-            .size = (unsigned int)size,
-        },
-        .memContext = memContextCurrent(),
-    };
-
-    // Allocate and encode buffer
-    this->pub.buffer = memNew(strSize(this) + 1);
+    // Encode buffer
     encodeToStr(type, bufPtrConst(buffer), bufUsed(buffer), this->pub.buffer);
 
     FUNCTION_TEST_RETURN(this);
@@ -211,26 +209,13 @@ strNewFmt(const char *format, ...)
 
     ASSERT(format != NULL);
 
-    // Create object
-    String *this = memNew(sizeof(String));
-
-    *this = (String)
-    {
-        .memContext = memContextCurrent(),
-    };
-
-    // Determine how long the allocated string needs to be
+    // Determine how long the allocated string needs to be and create object
     va_list argumentList;
     va_start(argumentList, format);
-    size_t formatSize = (size_t)vsnprintf(NULL, 0, format, argumentList);
+    String *this = strNewFixed((size_t)vsnprintf(NULL, 0, format, argumentList));
     va_end(argumentList);
 
-    // Check size
-    CHECK_SIZE(formatSize);
-
-    // Allocate and assign string
-    this->pub.size = (unsigned int)formatSize;
-    this->pub.buffer = memNew(strSize(this) + 1);
+    // Format string
     va_start(argumentList, format);
     vsnprintf(this->pub.buffer, strSize(this) + 1, format, argumentList);
     va_end(argumentList);
@@ -240,7 +225,7 @@ strNewFmt(const char *format, ...)
 
 /**********************************************************************************************************************************/
 String *
-strNewN(const char *string, size_t size)
+strNewZN(const char *string, size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(CHARDATA, string);
@@ -249,27 +234,13 @@ strNewN(const char *string, size_t size)
 
     ASSERT(string != NULL);
 
-    // Check size
-    CHECK_SIZE(size);
-
     // Create object
-    String *this = memNew(sizeof(String));
+    String *this = strNewFixed(size);
 
-    *this = (String)
-    {
-        .pub =
-        {
-            .size = (unsigned int)size,
-        },
-        .memContext = memContextCurrent(),
-    };
-
-    // Allocate and assign string
-    this->pub.buffer = memNew(strSize(this) + 1);
+    // Assign string
     strncpy(this->pub.buffer, string, strSize(this));
     this->pub.buffer[strSize(this)] = 0;
 
-    // Return buffer
     FUNCTION_TEST_RETURN(this);
 }
 
@@ -351,6 +322,9 @@ strResize(String *this, size_t requested)
 
     if (requested > this->pub.extra)
     {
+        // Fixed size strings may not be resized
+        CHECK(!STR_IS_FIXED_BUFFER());
+
         // Check size
         CHECK_SIZE(strSize(this) + requested);
 
@@ -363,7 +337,10 @@ strResize(String *this, size_t requested)
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            this->pub.buffer = memResize(this->pub.buffer, strSize(this) + this->pub.extra + 1);
+            if (STR_IS_EMPTY_BUFFER())
+                this->pub.buffer = memNew(strSize(this) + this->pub.extra + 1);
+            else
+                this->pub.buffer = memResize(this->pub.buffer, strSize(this) + this->pub.extra + 1);
         }
         MEM_CONTEXT_END();
     }
@@ -400,13 +377,16 @@ strCatZ(String *this, const char *cat)
     // Determine length of string to append
     size_t sizeGrow = strlen(cat);
 
-    // Ensure there is enough space to grow the string
-    strResize(this, sizeGrow);
+    if (sizeGrow != 0)
+    {
+        // Ensure there is enough space to grow the string
+        strResize(this, sizeGrow);
 
-    // Append the string
-    strcpy(this->pub.buffer + strSize(this), cat);
-    this->pub.size += (unsigned int)sizeGrow;
-    this->pub.extra -= (unsigned int)sizeGrow;
+        // Append the string
+        strcpy(this->pub.buffer + strSize(this), cat);
+        this->pub.size += (unsigned int)sizeGrow;
+        this->pub.extra -= (unsigned int)sizeGrow;
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -421,20 +401,39 @@ strCatZN(String *this, const char *cat, size_t size)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(cat != NULL);
 
-    // Ensure there is enough space to grow the string
-    strResize(this, size);
+    if (size != 0)
+    {
+        ASSERT(cat != NULL);
 
-    // Append the string
-    strncpy(this->pub.buffer + strSize(this), cat, size);
-    this->pub.buffer[strSize(this) + size] = '\0';
+        // Ensure there is enough space to grow the string
+        strResize(this, size);
 
-    // Update size/extra
-    this->pub.size += (unsigned int)size;
-    this->pub.extra -= (unsigned int)size;
+        // Append the string
+        strncpy(this->pub.buffer + strSize(this), cat, size);
+        this->pub.buffer[strSize(this) + size] = '\0';
+
+        // Update size/extra
+        this->pub.size += (unsigned int)size;
+        this->pub.extra -= (unsigned int)size;
+    }
 
     FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+String *
+strCatBuf(String *const this, const Buffer *const buffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+
+    FUNCTION_TEST_RETURN(strCatZN(this, (char *)bufPtrConst(buffer), bufUsed(buffer)));
 }
 
 /**********************************************************************************************************************************/
@@ -473,16 +472,20 @@ strCatEncode(String *this, EncodeType type, const Buffer *buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    // Ensure there is enough space to grow the string
     size_t encodeSize = encodeToStrSize(type, bufUsed(buffer));
-    strResize(this, encodeSize);
 
-    // Append the encoded string
-    encodeToStr(type, bufPtrConst(buffer), bufUsed(buffer), this->pub.buffer + strSize(this));
+    if (encodeSize != 0)
+    {
+        // Ensure there is enough space to grow the string
+        strResize(this, encodeSize);
 
-    // Update size/extra
-    this->pub.size += (unsigned int)encodeSize;
-    this->pub.extra -= (unsigned int)encodeSize;
+        // Append the encoded string
+        encodeToStr(type, bufPtrConst(buffer), bufUsed(buffer), this->pub.buffer + strSize(this));
+
+        // Update size/extra
+        this->pub.size += (unsigned int)encodeSize;
+        this->pub.extra -= (unsigned int)encodeSize;
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -505,16 +508,19 @@ strCatFmt(String *this, const char *format, ...)
     size_t sizeGrow = (size_t)vsnprintf(NULL, 0, format, argumentList);
     va_end(argumentList);
 
-    // Ensure there is enough space to grow the string
-    strResize(this, sizeGrow);
+    if (sizeGrow != 0)
+    {
+        // Ensure there is enough space to grow the string
+        strResize(this, sizeGrow);
 
-    // Append the formatted string
-    va_start(argumentList, format);
-    vsnprintf(this->pub.buffer + strSize(this), sizeGrow + 1, format, argumentList);
-    va_end(argumentList);
+        // Append the formatted string
+        va_start(argumentList, format);
+        vsnprintf(this->pub.buffer + strSize(this), sizeGrow + 1, format, argumentList);
+        va_end(argumentList);
 
-    this->pub.size += (unsigned int)sizeGrow;
-    this->pub.extra -= (unsigned int)sizeGrow;
+        this->pub.size += (unsigned int)sizeGrow;
+        this->pub.extra -= (unsigned int)sizeGrow;
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -695,9 +701,8 @@ strUpper(String *this)
 
     ASSERT(this != NULL);
 
-    if (strSize(this) > 0)
-        for (size_t idx = 0; idx <= strSize(this); idx++)
-            this->pub.buffer[idx] = (char)toupper(this->pub.buffer[idx]);
+    for (size_t idx = 0; idx < strSize(this); idx++)
+        this->pub.buffer[idx] = (char)toupper(this->pub.buffer[idx]);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -712,9 +717,8 @@ strLower(String *this)
 
     ASSERT(this != NULL);
 
-    if (strSize(this) > 0)
-        for (size_t idx = 0; idx <= strSize(this); idx++)
-            this->pub.buffer[idx] = (char)tolower(this->pub.buffer[idx]);
+    for (size_t idx = 0; idx < strSize(this); idx++)
+        this->pub.buffer[idx] = (char)tolower(this->pub.buffer[idx]);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -735,7 +739,7 @@ strPath(const String *this)
         end--;
 
     FUNCTION_TEST_RETURN(
-        strNewN(
+        strNewZN(
             this->pub.buffer,
             end - this->pub.buffer <= 1 ? (size_t)(end - this->pub.buffer) : (size_t)(end - this->pub.buffer - 1)));
 }
@@ -914,7 +918,7 @@ strSubN(const String *this, size_t start, size_t size)
     ASSERT(start <= strSize(this));
     ASSERT(start + size <= strSize(this));
 
-    FUNCTION_TEST_RETURN(strNewN(strZ(this) + start, size));
+    FUNCTION_TEST_RETURN(strNewZN(strZ(this) + start, size));
 }
 
 /**********************************************************************************************************************************/
@@ -947,20 +951,13 @@ strTrim(String *this)
 
         if (begin != this->pub.buffer || newSize < strSize(this))
         {
-            // Calculate new size
+            // Calculate new size and extra
+            this->pub.extra = (unsigned int)(strSize(this) - newSize);
             this->pub.size = (unsigned int)newSize;
 
             // Move the substr to the beginning of the buffer
             memmove(this->pub.buffer, begin, strSize(this));
             this->pub.buffer[strSize(this)] = 0;
-            this->pub.extra = 0;
-
-            MEM_CONTEXT_BEGIN(this->memContext)
-            {
-                // Resize the buffer
-                this->pub.buffer = memResize(this->pub.buffer, strSize(this) + 1);
-            }
-            MEM_CONTEXT_END();
         }
     }
 
@@ -1005,16 +1002,9 @@ strTrunc(String *this, int idx)
     if (strSize(this) > 0)
     {
         // Reset the size to end at the index
-        this->pub.size = (unsigned int)(idx);
+        this->pub.extra = (unsigned int)(strSize(this) - (size_t)idx);
+        this->pub.size = (unsigned int)idx;
         this->pub.buffer[strSize(this)] = 0;
-        this->pub.extra = 0;
-
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            // Resize the buffer
-            this->pub.buffer = memResize(this->pub.buffer, strSize(this) + 1);
-        }
-        MEM_CONTEXT_END();
     }
 
     FUNCTION_TEST_RETURN(this);
@@ -1095,7 +1085,9 @@ strFree(String *this)
     {
         MEM_CONTEXT_BEGIN(this->memContext)
         {
-            memFree(this->pub.buffer);
+            if (!STR_IS_EMPTY_BUFFER() && !STR_IS_FIXED_BUFFER())
+                memFree(this->pub.buffer);
+
             memFree(this);
         }
         MEM_CONTEXT_END();

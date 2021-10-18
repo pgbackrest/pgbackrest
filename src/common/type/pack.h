@@ -167,6 +167,7 @@ Read Constructors
 ***********************************************************************************************************************************/
 // Note that the pack is not moved into the PackRead mem context and must be moved explicitly if the PackRead object is moved.
 PackRead *pckReadNew(const Pack *pack);
+PackRead *pckReadNewC(const unsigned char *const buffer, size_t size);
 
 PackRead *pckReadNewIo(IoRead *read);
 
@@ -183,8 +184,18 @@ typedef struct PackIdParam
 // debugging. If you just need to know if the field exists or not, then use pckReadNullP().
 bool pckReadNext(PackRead *this);
 
+// Current field buffer for fields that have a size, e.g. bin. Can only be used when the pack was created with pckReadNew(). Note
+// that this pointer is tied to the buffer the pack was created with so be careful not to free it too soon.
+const unsigned char *pckReadBufPtr(PackRead *this);
+
+// Consume the next field regardless of type.
+void pckReadConsume(PackRead *this);
+
 // Current field id. Set after a call to pckReadNext().
 unsigned int pckReadId(PackRead *this);
+
+// Current field size for fields that have a size, e.g. bin
+size_t pckReadSize(PackRead *this);
 
 // Current field type. Set after a call to pckReadNext().
 PackType pckReadType(PackRead *this);
@@ -266,7 +277,7 @@ typedef struct PckReadModeParam
     mode_t defaultValue;
 } PckReadModeParam;
 
-#define pckReadModeP(this, ...)                                                                                                     \
+#define pckReadModeP(this, ...)                                                                                                    \
     pckReadMode(this, (PckReadModeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 mode_t pckReadMode(PackRead *this, PckReadModeParam param);
@@ -296,13 +307,20 @@ typedef struct PckReadPackParam
     unsigned int id;
 } PckReadPackParam;
 
-#define pckReadPackReadP(this, ...)                                                                                                    \
+#define pckReadPackReadP(this, ...)                                                                                                \
     pckReadPackRead(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackRead *pckReadPackRead(PackRead *this, PckReadPackParam param);
 
+// Read pack using the same buffer passed to pckReadNew(). Note that this pointer is tied to the buffer the pack was created with so
+// be careful not to free it too soon.
+#define pckReadPackReadConstP(this, ...)                                                                                           \
+    pckReadPackReadConst(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackRead *pckReadPackReadConst(PackRead *this, PckReadPackParam param);
+
 // Read pack buffer
-#define pckReadPackP(this, ...)                                                                                                 \
+#define pckReadPackP(this, ...)                                                                                                    \
     pckReadPack(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 Pack *pckReadPack(PackRead *this, PckReadPackParam param);
@@ -504,7 +522,7 @@ typedef struct PckWriteModeParam
     mode_t defaultValue;
 } PckWriteModeParam;
 
-#define pckWriteModeP(this, value, ...)                                                                                             \
+#define pckWriteModeP(this, value, ...)                                                                                            \
     pckWriteMode(this, value, (PckWriteModeParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param);

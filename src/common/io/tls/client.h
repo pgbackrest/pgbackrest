@@ -31,7 +31,8 @@ Statistics constants
 Constructors
 ***********************************************************************************************************************************/
 IoClient *tlsClientNew(
-    IoClient *ioClient, const String *host, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+    IoClient *ioClient, const String *host, TimeMSec timeoutConnect, TimeMSec timeoutSession, bool verifyPeer, const String *caFile,
+    const String *caPath, const String *certFile, const String *keyFile);
 
 /***********************************************************************************************************************************
 Functions

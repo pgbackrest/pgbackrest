@@ -3188,11 +3188,11 @@
 
     Once the stress test has been run, it is common to perform some additional tests with a custom/debug build.
 
-    To initialize the build, run the following. This only needs to be done once per doc build, though running it more that once only costs additional time:
-        ssh build 'mkdir -p /build/dev && cd /build/dev && /pgbackrest/src/configure -\-enable-test && make clean'
+    To initialize the build, run the following. This only needs to be done once per doc build or branch change, though running it more that once only costs additional time:
+        docker exec -it doc-build bash -c 'rm -rf /build/dev && mkdir -p /build/dev && cd /build/dev && /pgbackrest/src/configure -\-enable-test'
 
     One each host where a new build is required, run the following. This will build pgbackrest, copy it to the host, and display the build time for sanity:
-        ssh build make -C /build/dev -j 8 && scp build:/build/dev/pgbackrest /usr/bin && ls -lah /usr/bin/pgbackrest
+        docker exec -it <container> bash -c 'ssh build make -C /build/dev -j 8 && scp build:/build/dev/pgbackrest /usr/bin && ls -lah /usr/bin/pgbackrest'
     ============================================================================================================================ -->
     <section id="stress" if="'{[stress]}' eq 'y'">
         <title>Stress Testing</title>
@@ -3588,7 +3588,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Check configuration</title>
 
-            <execute user="postgres" output="y" filter="n">
+            <execute user="postgres" output="n" filter="n">
                 <exe-cmd>{[pg-cluster-check-upgrade]}</exe-cmd>
             </execute>
 

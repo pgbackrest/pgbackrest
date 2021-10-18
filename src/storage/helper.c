@@ -306,9 +306,9 @@ storageRepoPathExpression(const String *expression, const String *path)
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)
-            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
+            result = strCatFmt(strNew(), STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
         else
-            result = strNewZ(STORAGE_PATH_ARCHIVE);
+            result = strCatZ(strNew(), STORAGE_PATH_ARCHIVE);
 
         // If a subpath should be appended, determine if it is WAL path, else just append the subpath
         if (path != NULL)
@@ -326,9 +326,9 @@ storageRepoPathExpression(const String *expression, const String *path)
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)
-            result = strNewFmt(STORAGE_PATH_BACKUP "/%s", strZ(storageHelper.stanza));
+            result = strCatFmt(strNew(), STORAGE_PATH_BACKUP "/%s", strZ(storageHelper.stanza));
         else
-            result = strNewZ(STORAGE_PATH_BACKUP);
+            result = strCatZ(strNew(), STORAGE_PATH_BACKUP);
 
         // Append subpath if provided
         if (path != NULL)

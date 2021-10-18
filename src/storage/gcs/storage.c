@@ -168,7 +168,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     FUNCTION_TEST_END();
 
     // Static header with dot delimiter
-    String *result = strNewZ("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
+    String *result = strCatZ(strNew(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -382,7 +382,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Generate path
-        String *path = strNewFmt("%s/storage/v1/b", param.upload ? "/upload" : "");
+        String *path = strCatFmt(strNew(), "%s/storage/v1/b", param.upload ? "/upload" : "");
 
         if (!param.noBucket)
             strCatFmt(path, "/%s/o", strZ(this->bucket));
@@ -955,7 +955,7 @@ storageGcsNew(
                     STRDEF("metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"),
                     .type = httpProtocolTypeHttp);
                 driver->authClient = httpClientNew(
-                    sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout), timeout);
+                    sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout, timeout), timeout);
 
                 break;
             }
@@ -970,8 +970,8 @@ storageGcsNew(
 
                 driver->authClient = httpClientNew(
                     tlsClientNew(
-                        sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout),
-                        httpUrlHost(driver->authUrl), timeout, verifyPeer, caFile, caPath),
+                        sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout, timeout),
+                        httpUrlHost(driver->authUrl), timeout, timeout, verifyPeer, caFile, caPath, NULL, NULL),
                     timeout);
 
                 break;
@@ -990,7 +990,8 @@ storageGcsNew(
         // Create the http client used to service requests
         driver->httpClient = httpClientNew(
             tlsClientNew(
-                sckClientNew(driver->endpoint, httpUrlPort(url), timeout), driver->endpoint, timeout, verifyPeer, caFile, caPath),
+                sckClientNew(driver->endpoint, httpUrlPort(url), timeout, timeout), driver->endpoint, timeout, timeout, verifyPeer,
+                caFile, caPath, NULL, NULL),
             timeout);
 
         // Create list of redacted headers

@@ -19,7 +19,7 @@ Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
 STRING_EXTERN(PG_FILE_PGVERSION_STR,                                PG_FILE_PGVERSION);
 STRING_EXTERN(PG_FILE_POSTGRESQLAUTOCONF_STR,                       PG_FILE_POSTGRESQLAUTOCONF);
-STRING_EXTERN(PG_FILE_POSTMASTERPID_STR,                            PG_FILE_POSTMASTERPID);
+STRING_EXTERN(PG_FILE_POSTMTRPID_STR,                               PG_FILE_POSTMTRPID);
 STRING_EXTERN(PG_FILE_RECOVERYCONF_STR,                             PG_FILE_RECOVERYCONF);
 STRING_EXTERN(PG_FILE_RECOVERYDONE_STR,                             PG_FILE_RECOVERYDONE);
 STRING_EXTERN(PG_FILE_RECOVERYSIGNAL_STR,                           PG_FILE_RECOVERYSIGNAL);

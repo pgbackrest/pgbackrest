@@ -49,6 +49,20 @@ ioSessionNew(void *driver, const IoSessionInterface *interface)
 }
 
 /**********************************************************************************************************************************/
+void
+ioSessionAuthenticatedSet(IoSession *const this, const bool authenticated)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_SESSION, this);
+        FUNCTION_TEST_PARAM(BOOL, authenticated);
+    FUNCTION_TEST_END();
+
+    this->pub.authenticated = authenticated;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 int
 ioSessionFd(IoSession *this)
 {
@@ -60,6 +74,24 @@ ioSessionFd(IoSession *this)
 
     FUNCTION_TEST_RETURN(this->pub.interface->fd == NULL ? -1 : this->pub.interface->fd(this->pub.driver));
 }
+
+/**********************************************************************************************************************************/
+void
+ioSessionPeerNameSet(IoSession *const this, const String *const peerName)                                           // {vm_covered}
+{
+    FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
+        FUNCTION_TEST_PARAM(IO_SESSION, this);                                                                      // {vm_covered}
+        FUNCTION_TEST_PARAM(STRING, peerName);                                                                      // {vm_covered}
+    FUNCTION_TEST_END();                                                                                            // {vm_covered}
+
+    MEM_CONTEXT_BEGIN(this->pub.memContext)                                                                         // {vm_covered}
+    {
+        this->pub.peerName = strDup(peerName);                                                                      // {vm_covered}
+    }
+    MEM_CONTEXT_END();                                                                                              // {vm_covered}
+
+    FUNCTION_TEST_RETURN_VOID();                                                                                    // {vm_covered}
+}                                                                                                                   // {vm_covered}
 
 /**********************************************************************************************************************************/
 String *

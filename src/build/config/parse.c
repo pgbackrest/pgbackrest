@@ -31,8 +31,12 @@ Option type constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(OPT_TYPE_BOOLEAN_STR,                                 OPT_TYPE_BOOLEAN);
 STRING_EXTERN(OPT_TYPE_HASH_STR,                                    OPT_TYPE_HASH);
+STRING_EXTERN(OPT_TYPE_INTEGER_STR,                                 OPT_TYPE_INTEGER);
 STRING_EXTERN(OPT_TYPE_LIST_STR,                                    OPT_TYPE_LIST);
+STRING_EXTERN(OPT_TYPE_PATH_STR,                                    OPT_TYPE_PATH);
+STRING_EXTERN(OPT_TYPE_SIZE_STR,                                    OPT_TYPE_SIZE);
 STRING_EXTERN(OPT_TYPE_STRING_STR,                                  OPT_TYPE_STRING);
+STRING_EXTERN(OPT_TYPE_STRING_ID_STR,                               OPT_TYPE_STRING_ID);
 STRING_EXTERN(OPT_TYPE_TIME_STR,                                    OPT_TYPE_TIME);
 
 /***********************************************************************************************************************************

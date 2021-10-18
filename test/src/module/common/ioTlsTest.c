@@ -6,17 +6,141 @@ Test Tls Client
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
+#include "common/harnessStorage.h"
+
+/***********************************************************************************************************************************
+Server cert with only a common name to test absence of alt names
+
+To regenerate, run the following in a temp path:
+
+openssl req -nodes -new -newkey rsa:4096 -sha256 -key ~/pgbackrest/test/certificate/pgbackrest-test-server.key \
+    -out server-cn-only.csr -subj "/CN=127.0.0.1"
+openssl x509 -extensions usr_cert -req -days 99999 -CA ~/pgbackrest/test/certificate/pgbackrest-test-ca.crt \
+    -CAkey ~/pgbackrest/test/certificate/pgbackrest-test-ca.key -CAcreateserial -in server-cn-only.csr -out server-cn-only.crt
+
+Then copy server-cn-only.crt into the variable below. Use a variable instead of a define so we know when the variable is not used.
+***********************************************************************************************************************************/
+static const char *const testServerCnOnlyCert =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIE+TCCAuECFFtID1qGQ+Q6oyFiD9z5YmANCADjMA0GCSqGSIb3DQEBCwUAMFwx\n"
+    "CzAJBgNVBAYTAlVTMQwwCgYDVQQIDANBbGwxDDAKBgNVBAcMA0FsbDETMBEGA1UE\n"
+    "CgwKcGdCYWNrUmVzdDEcMBoGA1UEAwwTdGVzdC5wZ2JhY2tyZXN0Lm9yZzAgFw0y\n"
+    "MTA4MjYxMjIxNTNaGA8yMjk1MDYxMDEyMjE1M1owFDESMBAGA1UEAwwJMTI3LjAu\n"
+    "MC4xMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAwzNZDX/VhTA6lALX\n"
+    "DZ4AOHv4OQH5wTZipa97XdTrI2TIfMGEffLmv5wzN85pku5HXBuHGJUaUENXt1Ss\n"
+    "GwdfBx/gZZEA8oONqkrxOoJTrABWIAs5k6TTUd+f3Y39rlsyQj076f1sw6Mw9qoC\n"
+    "h+JKXDDqw8kGwQHifXdtCrxL9OfV4eq+gYKrqdlyFM08WfKxe0Js8bB5cZ4Bt/GC\n"
+    "2JhQzQ9bMjYJlxSXIXivP/FFunVT5hZ8gsUVAH+/sm8xlQ4sedW7mIBKkjT3tgL0\n"
+    "FvchB3XyoZ6Sr0JKVaMOcQjIsTzOqdgawgArO541ZwUWHdJH+DODr/gBWXSnnzhH\n"
+    "ED5DAvRMPdO/t353qS/ihpacTqQ91B4UKxK1pVNC84ch3spCLnQncl7kn7RhcdCc\n"
+    "b5g4ZfahRmq79QSoMDvN4+7MtyERLXtSttSWiBzQVVj/jcFNDeGeDjKp6Z55xoso\n"
+    "tMZ3yVajl4IbuQS1pfTLjp7WdJ58y5hQ+8O/ebjUYIxOo5kZhRZV/jxqoR7Ga9MG\n"
+    "bAQ7BPcTuItpfGqiWcdYU+ZdyyFwvpXov6qNoCYt58nj7s+FAbed7EzRHa2Z3RVG\n"
+    "kcqv2iX5EddydHmqKip+QUUR4cPLUXn+kvOHtJEOgAWDURh0DVfhrMD5dX1d+9de\n"
+    "BUwZ89gYvxkkErPL1o8OPRxyiucCAwEAATANBgkqhkiG9w0BAQsFAAOCAgEAlwMZ\n"
+    "tlqvggfXsJh/AQdl1XxqQKzwC+1OyPozqTUMaEiHLgswJw8eXaZB1/8g9ZODPO3N\n"
+    "tLh6JfE4gJJ6gs89YmaZLR0oH3RkoFXSi4+t+WdyF0t3QrBuVx4uO3BeEdD1aLXm\n"
+    "lxS7004mJAEMn9FTBBMwek/DGS1Ic/tHwFCRvvE73mFcPL2Qs03ZzRuYUEI1Ckef\n"
+    "ONFu6/pydIS5MK0QCP/MfUlKP1D3u2aFEbdNHy4GjzGpfg+1DD/ebSswQG1YpjnN\n"
+    "5XLEQZ9IKE2ULq9GnnhqPNUTdX6HFHxVvyZUe/iXasOCX7C9PBipj3tulLcPMbLn\n"
+    "4tToEuLkvsLU2Z6I9mcS88Z30VyYu4BzM6tim7XvsOEObILjs2Qa0dJ2hSF6QJ9L\n"
+    "NUrbWS591v/PvUdk68kC8UL7o7UVS3lsZoRIZD+X+xdEi+zy4DNIMKUBnWtKamUU\n"
+    "1VOosL6vDSZYGg0InGfaBm3Bz3elTrWUHCapNQ5Zsxk+Sq+IQ4hauczrOsd6jugR\n"
+    "m1JzWMUZROfSrcVfighZSencJwJEmyCQwnMUyovPs2v7S+1QQEY210ZZd5Fphoye\n"
+    "1oA2FndLfr8BOG88+TzwdFilOiZ28lIpMFas38uybJBwlxVYN4/aLyIQGp6AyzGR\n"
+    "XqmU0pBFqRYS8xENKxk7lPnxFKyEpb3NK3wk3mo=\n"
+    "-----END CERTIFICATE-----";
+
+/***********************************************************************************************************************************
+Client key with a password
+
+To regenerate, run the following in a temp path:
+
+openssl genrsa -aes256 -passout pass:xxxx -out client-pwd.key 1024
+
+Then copy server-pwd.key into the variable below. Use a variable instead of a define so we know when the variable is not used.
+***********************************************************************************************************************************/
+static const char *const testClientPwdKey =
+    "-----BEGIN RSA PRIVATE KEY-----\n"
+    "Proc-Type: 4,ENCRYPTED\n"
+    "DEK-Info: AES-256-CBC,86BD081993E54559E92BFF24921DCD00\n"
+    "\n"
+    "MglGBz4qfnUUs7IuueInkDrn5GRp6V7ZOs/S8rkrOp0i7MTfFJk1cYByu0FCcLqo\n"
+    "O3UX1dLPOzu74hJGOmOUHEJzrzA09wFIshTZo96z60+gQGcPEWkkkG9eRadJG5EN\n"
+    "TiAq1xopmAYK+srSBsPD7Xf9KeYpFM4Fa98pWbEhzMBiozgh2fH8+6OK8izDFJ57\n"
+    "aW8p/9lwZtkO2nd6G4meU+vyVDsL4GpdHcryi+MGGXfhkrr6mFAQ3PLpHTwr6xNI\n"
+    "wp6IjuLpNwlkNadq8Wgi8qy4YhpdqmSVt/oFJ25HMH+0UT+EAk0f/WMqOgkSmi3y\n"
+    "HgmG7YYAHel5tVeY59/ovxMvc290KQkthVgYBIT/Sy3O4pTRgu+xBkB5VfxjI9gj\n"
+    "yVVHsvJHwWdNyUf093Qvroul6Ulob7DOXmPvRWuu6YIBASYIGrmtI2cZ0SQBoySp\n"
+    "V65yTAwoi7bqsmwCo4sEjKE6FSeVINY/EvwYLbfyGUOmaunWkWkNPsg9fvwTZNOc\n"
+    "3G1IAypM4++02wVVeLdc0+n9FdE6QX3MWpUeZ5YaOzjBjCisk+jJ46L79bi6Z/Xc\n"
+    "H1XXBsMnmFhkhd3lraMQ8QYpWus890OmCnimB59SM1W2LgROwv/fXt/8rwgJY1v5\n"
+    "6VP5KAZkXpCq20gG6C7GW3jL5/prnPoe+uXku4m4iAReUmTewqht8WUyQaiAWy+e\n"
+    "nH5HoTaB3+9ZLu2RivU9l6y1YwYSAbSWBPbnN4HmjP4rmLG5t1ky9igYfJ3NL3LV\n"
+    "gJPetwzWuiONyshwMzcg0bE/NjzTXcCaFVKSJ/M++Kd+abDcixUQ3u6htVFHW/L/\n"
+    "-----END RSA PRIVATE KEY-----";
+
+/***********************************************************************************************************************************
+Client cert signed by another CA used to generate invalid client cert error
+
+To regenerate, run the following in a temp path:
+
+openssl genrsa -out bogus-ca.key 4096
+openssl req -new -x509 -sha256 -days 99999 -key bogus-ca.key -out bogus-ca.crt -subj "/CN=bogus"
+openssl req -nodes -new -newkey rsa:4096 -sha256 -key ~/pgbackrest/test/certificate/pgbackrest-test-client.key \
+    -out client-bad-ca.csr -subj "/CN=bogus"
+openssl x509 -extensions usr_cert -req -days 99999 -CA bogus-ca.crt -CAkey bogus-ca.key -CAcreateserial -in client-bad-ca.csr \
+    -out client-bad-ca.crt
+
+Then copy client-bad-ca.crt into the variable below. Use a variable instead of a define so we know when the variable is not used.
+***********************************************************************************************************************************/
+static const char *const testClientBadCa =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIEqTCCApECFAzHjCL/QJZZRmBhloX298J4V4HbMA0GCSqGSIb3DQEBCwUAMBAx\n"
+    "DjAMBgNVBAMMBWJvZ3VzMCAXDTIxMDgyNjE0MzYyMloYDzIyOTUwNjEwMTQzNjIy\n"
+    "WjAQMQ4wDAYDVQQDDAVib2d1czCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\n"
+    "ggIBALK5ahiXzFqvha28yqe3SGdezs4IREHUDgbn6Tem9k1GazE/IsdIQ9wj9KHd\n"
+    "lXwb/2fsdQk1hkPXa4qRBR/AyeBPRL3d0aZzU+pTjV6n9dJ+KIaivuAxoyyY59XM\n"
+    "36CqTZxe3VqXweRWPn40tzDcUxSVIfipJpFuK2vxpwEHdl/cFQ38/sRoHTjx61nx\n"
+    "obt4RFiEMAFCxxCk/qDyYISHJmH67dIUEw7ujB4vn/gpk5f1WBY5msZMgT3pJbFv\n"
+    "xD8dRgUvMpIM5poVFfhHgRq+L2dxQ2jHD5AnlpY6n8XrWy4QQa3AFsWgnD0w0Wn6\n"
+    "cyU0g5AkIlP+0mMNC9LIPVc9LGKUTrqciBgx8Rysy3mskg8pElEe1ouQOi/Zx8UA\n"
+    "G3RXqvjxXLkMp3S7PKgrr48uZHAso59+k33EkF/ceLsr3r3VY1WWsiszDfK+vbj6\n"
+    "Bbxvtv/S2ZYXMA7nM2Ysu20BpHm9LLo4y8HqDeixqw5enOwuDKSeKD1pJgJ5CUYq\n"
+    "RbA/cUYxHJ36NuPDxec+bhqiJq8RMR4pGGcJ7BvirJxYPJX0LqIfTHL1t2dVm//A\n"
+    "meMDNiM2quAzpBosjvaWaRUcankYE1dL59eVugoDKCNCPg72LjXBB7bPWZT2Xhkc\n"
+    "co0etruIYYJmQ3LO0vGe9pOYBu2FHx5FY72b8gpshm+umdL5AgMBAAEwDQYJKoZI\n"
+    "hvcNAQELBQADggIBAEN3778acjJ46yKzYoM+wiyyiMtmOrf+zvJsF0oK4KcWgec2\n"
+    "O2grmhxxDdF5c/P6XasDQFl8feQfGeDY76DaLrcmIiOYrtnqg11IZcPOHx5nbpu2\n"
+    "ZVV5LiMS8nHhQIyxMF/WYYKGzBQ5AY2+t6dozyDo3R4O7CCmsFKc8NaB4maC7Q16\n"
+    "7MxKXxtAH9I1PigjRMDpi1xQJbXJxFKhZrKBODtreL6cmv6yB4JJezI5ngIdODpI\n"
+    "MaIS0reRGN4QUpzDaXwYBTaOHaIDShPDOfiA5ai4xK/dEWG2rDu+yk7g5SEKMAxU\n"
+    "mfUCO1MGY6NwQupLUyfO2VjvfYeB+ipJq6F8tYMGrQJU/PCQT6nxaZdSoZZQF72y\n"
+    "OuYVfKjnj7MWapGKC3ea1oTUvkwDePe8xg3DBuXImp5mO4MG5K/oVv5SnNVmcUGq\n"
+    "L9WBrvypJK+3x3vbdyH02DR10TcMRSbDODmW59nx2PQEDUM7ddNZ60dRn8Hdgoz2\n"
+    "s/Sk3I1gXvZLQ/shS4Aa7XKz/TqhPNrBnMvSnp5/PtjjeBwxIBimuuM1ALFfwz91\n"
+    "KpzwqfTswuGIO8TWKJZzNTsdwScqmbZTtiVs6GaEZ3FQX5qnrbybX53S2R9fNKm+\n"
+    "qGj7FtRiSdjkZ7pmNpma6ycPR0RBZyL3aHnig+DDfRRt8TgrZzY3aXBReONb\n"
+    "-----END CERTIFICATE-----";
 
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Create default storage object for testing
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+
+    THROW_ON_SYS_ERROR_FMT(chmod(HRN_SERVER_KEY, 0600) == -1, FileModeError, "unable to set mode on " HRN_SERVER_KEY);
+    THROW_ON_SYS_ERROR_FMT(
+        chmod(HRN_SERVER_CLIENT_KEY, 0600) == -1, FileModeError, "unable to set mode on " HRN_SERVER_CLIENT_KEY);
 
     // *****************************************************************************************************************************
     if (testBegin("Socket Common"))
@@ -149,7 +273,7 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("unable to connect to blocking socket");
 
-            IoClient *socketClient = sckClientNew(STR(hostLocal), 7777, 0);
+            IoClient *socketClient = sckClientNew(STR(hostLocal), 7777, 0, 0);
             TEST_RESULT_STR_Z(ioClientName(socketClient), "127.0.0.1:7777", " check name");
 
             socketLocal.block = true;
@@ -179,25 +303,25 @@ testRun(void)
     {
         IoClient *client = NULL;
 
-        TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100), "new client");
+        TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), "new client");
         TEST_ERROR_FMT(
             ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
             hrnServerPort(0));
 
         // This address should not be in use in a test environment -- if it is the test will fail
-        TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), hrnServerPort(0), 100), "new client");
+        TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), hrnServerPort(0), 100, 100), "new client");
         TEST_ERROR_FMT(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", hrnServerPort(0));
     }
 
     // Additional coverage not provided by testing with actual certificates
     // *****************************************************************************************************************************
-    if (testBegin("asn1ToStr(), tlsClientHostVerify(), and tlsClientHostVerifyName()"))
+    if (testBegin("tlsAsn1ToStr(), tlsClientHostVerify(), and tlsClientHostVerifyName()"))
     {
-        TEST_ERROR(asn1ToStr(NULL), CryptoError, "TLS certificate name entry is missing");
+        TEST_ERROR(tlsAsn1ToStr(NULL), CryptoError, "TLS certificate name entry is missing");
 
         TEST_ERROR(
             tlsClientHostVerifyName(
-                STRDEF("host"), strNewN("ab\0cd", 5)), CryptoError, "TLS certificate name contains embedded null");
+                STRDEF("host"), strNewZN("ab\0cd", 5)), CryptoError, "TLS certificate name contains embedded null");
 
         TEST_ERROR(tlsClientHostVerify(STRDEF("host"), NULL), CryptoError, "No certificate presented by the TLS server");
 
@@ -214,33 +338,140 @@ testRun(void)
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            client, tlsClientNew(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0), STRDEF("X"), 0, true, NULL, NULL),
+            client,
+            tlsClientNew(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0, 0), STRDEF("X"), 0, 0, true, NULL, NULL, NULL, NULL),
             "new client");
         TEST_RESULT_STR_Z(ioClientName(client), "99.99.99.99.99:7777", " check name");
         TEST_ERROR(
             ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
 
         TEST_ASSIGN(
-            client, tlsClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100), STRDEF("X"), 100, true, NULL, NULL),
+            client,
+            tlsClientNew(
+                sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 100, 100, true, NULL, NULL, NULL, NULL),
             "new client");
         TEST_ERROR_FMT(
             ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
             hrnServerPort(0));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("bogus client cert/path");
+        TEST_TITLE("missing ca cert/path");
 
         TEST_ERROR(
             ioClientOpen(
                 tlsClientNew(
-                    sckClientNew(
-                        STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, STRDEF("bogus.crt"), STRDEF("/bogus"))),
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, STRDEF("bogus.crt"),
+                    STRDEF("/bogus"), NULL, NULL)),
             CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("missing client cert");
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF("/bogus"), STRDEF("/bogus"))),
+            CryptoError, "unable to load cert file '/bogus': [33558530] No such file or directory");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("missing client key");
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF("/bogus"))),
+            CryptoError, "unable to load key file '/bogus': [33558530] No such file or directory");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("client cert and key do not match");
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(HRN_SERVER_KEY))),
+            CryptoError,
+            "unable to load key file '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': [185073780] key values"
+                " mismatch");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("client cert with passphrase");
+
+        storagePutP(storageNewWriteP(storageTest, STRDEF("client-pwd.key"), .modeFile = 0600), BUFSTRZ(testClientPwdKey));
+
+        TRY_BEGIN()
+        {
+            TEST_ERROR(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-pwd.key")),
+                CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': [101077092] bad decrypt");
+        }
+        CATCH(TestError)
+        {
+            TEST_ERROR(                                                                             // {uncovered - 32-bit error}
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-pwd.key")),
+                CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': [151429224] bad password read");
+        }
+        TRY_END();
+
+        storageRemoveP(storageTest, STRDEF("client-pwd.key"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key with bad user permissions");
+
+        storagePutP(storageNewWriteP(storageTest, STRDEF("client-bad-perm.key"), .modeFile = 0640), BUFSTRDEF("bogus"));
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-bad-perm.key"))),
+            FileReadError,
+            "key file '" TEST_PATH "/client-bad-perm.key' has group or other permissions\n"
+            "HINT: file must have permissions u=rw (0600) or less if owned by the '" TEST_USER "' user\n"
+            "HINT: file must have permissions u=rw, g=r (0640) or less if owned by root\n");
+
+        storageRemoveP(storageTest, STRDEF("client-bad-perm.key"));
+
+#ifdef TEST_CONTAINER_REQUIRED
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key with bad user");
+
+        storagePutP(storageNewWriteP(storageTest, STRDEF("client-bad-perm.key"), .modeFile = 0660), BUFSTRDEF("bogus"));
+        HRN_SYSTEM_FMT("sudo chown postgres %s", strZ(storagePathP(storageTest, STRDEF("client-bad-perm.key"))));
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-bad-perm.key"))),
+            FileReadError, "key file '" TEST_PATH "/client-bad-perm.key' must be owned by the '" TEST_USER "' user or root");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key with bad root permissions");
+
+        HRN_SYSTEM_FMT("sudo chown root %s", strZ(storagePathP(storageTest, STRDEF("client-bad-perm.key"))));
+
+        TEST_ERROR(
+            ioClientOpen(
+                tlsClientNew(
+                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL, NULL,
+                    STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(TEST_PATH "/client-bad-perm.key"))),
+            FileReadError,
+            "key file '" TEST_PATH "/client-bad-perm.key' has group or other permissions\n"
+            "HINT: file must have permissions u=rw (0600) or less if owned by the '" TEST_USER "' user\n"
+            "HINT: file must have permissions u=rw, g=r (0640) or less if owned by root\n");
+
+        HRN_SYSTEM_FMT("sudo rm %s", strZ(storagePathP(storageTest, STRDEF("client-bad-perm.key"))));
 
         // Certificate location and validation errors
         // -------------------------------------------------------------------------------------------------------------------------
         // Add test hosts
-#ifdef TEST_CONTAINER_REQUIRED
         HRN_SYSTEM(
             "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" | sudo tee -a /etc/hosts >"
                 " /dev/null");
@@ -253,8 +484,8 @@ testRun(void)
                 TEST_RESULT_VOID(
                     hrnServerRunP(
                         HRN_FORK_CHILD_READ(), hrnServerProtocolTls,
-                        .certificate = STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-alt-name.crt"),
-                        .key = STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".key")),
+                        .certificate = STRDEF(HRN_SERVER_CERT),
+                        .key = STRDEF(HRN_SERVER_KEY)),
                     "tls alt name server run");
             }
             HRN_FORK_CHILD_END();
@@ -272,8 +503,8 @@ testRun(void)
                 TEST_ERROR_FMT(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true, NULL,
-                            STRDEF("/bogus"))),
+                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true, NULL,
+                            STRDEF("/bogus"), NULL, NULL)),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     hrnServerPort(0));
@@ -287,8 +518,8 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(STRDEF("test.pgbackrest.org"), hrnServerPort(0), 5000), STRDEF("test.pgbackrest.org"),
-                            0, true, STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-ca.crt"), NULL)),
+                            sckClientNew(STRDEF("test.pgbackrest.org"), hrnServerPort(0), 5000, 5000),
+                            STRDEF("test.pgbackrest.org"), 0, 0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL)),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -300,9 +531,8 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(STRDEF("host.test2.pgbackrest.org"), hrnServerPort(0), 5000),
-                            STRDEF("host.test2.pgbackrest.org"), 0, true,
-                            STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-ca.crt"), NULL)),
+                            sckClientNew(STRDEF("host.test2.pgbackrest.org"), hrnServerPort(0), 5000, 5000),
+                            STRDEF("host.test2.pgbackrest.org"), 0, 0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL)),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -314,8 +544,8 @@ testRun(void)
                 TEST_ERROR(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(STRDEF("test3.pgbackrest.org"), hrnServerPort(0), 5000), STRDEF("test3.pgbackrest.org"),
-                            0, true, STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-ca.crt"), NULL)),
+                            sckClientNew(STRDEF("test3.pgbackrest.org"), hrnServerPort(0), 5000, 5000),
+                            STRDEF("test3.pgbackrest.org"), 0, 0, true, STRDEF(HRN_SERVER_CA), NULL, NULL, NULL)),
                     CryptoError,
                     "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
 
@@ -328,9 +558,8 @@ testRun(void)
                 TEST_ERROR_FMT(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true,
-                            STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".crt"),
-                        NULL)),
+                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                            STRDEF(HRN_SERVER_CERT), NULL, NULL, NULL)),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
                     hrnServerPort(0));
@@ -344,7 +573,8 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNew(
-                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, false, NULL, NULL)),
+                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, false, NULL, NULL,
+                            NULL, NULL)),
                         "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -353,6 +583,137 @@ testRun(void)
             HRN_FORK_PARENT_END();
         }
         HRN_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Put root-owned server key
+        storagePutP(
+            storageNewWriteP(storageTest, STRDEF("server-root-perm.key"), .modeFile = 0640),
+            storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), STRDEF(HRN_SERVER_KEY))));
+        HRN_SYSTEM_FMT("sudo chown root %s", strZ(storagePathP(storageTest, STRDEF("server-root-perm.key"))));
+        THROW_ON_SYS_ERROR(
+            symlink(TEST_PATH "/server-root-perm.key", TEST_PATH "/server-root-perm-link") == -1, FileOpenError,
+            "unable to create symlink");
+
+        // Put CN only server cert
+        storagePutP(storageNewWriteP(storageTest, STRDEF("server-cn-only.crt")), BUFSTRZ(testServerCnOnlyCert));
+
+        // Put bad CA client cert
+        storagePutP(storageNewWriteP(storageTest, STRDEF("client-bad-ca.crt")), BUFSTRZ(testClientBadCa));
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                // TLS server to accept connections
+                IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
+                IoServer *tlsServer = tlsServerNew(
+                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(TEST_PATH "/server-root-perm-link"),
+                    STRDEF(TEST_PATH "/server-cn-only.crt"), 5000);
+                IoSession *socketSession = NULL;
+
+                TEST_RESULT_STR(ioServerName(socketServer), strNewFmt("localhost:%u", hrnServerPort(0)), "socket server name");
+                TEST_RESULT_STR_Z(ioServerName(tlsServer), "localhost", "tls server name");
+
+                // Invalid client cert
+                if (TEST_64BIT())                                   // Older 32-bit gives inconsistent results
+                {
+                    socketSession = ioServerAccept(socketServer, NULL);
+
+                    TEST_ERROR(
+                        ioServerAccept(tlsServer, socketSession), ServiceError,
+                        "TLS error [1:337100934] certificate verify failed");
+                }
+
+                // Valid client cert
+                socketSession = ioServerAccept(socketServer, NULL);
+                IoSession *tlsSession = NULL;
+                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
+
+                TEST_RESULT_BOOL(ioSessionAuthenticated(tlsSession), true, "server session authenticated");
+                TEST_RESULT_STR_Z(ioSessionPeerName(tlsSession), "pgbackrest-client", "check peer name");
+                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message")), "server write");
+                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
+
+                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
+
+                // No client cert
+                socketSession = ioServerAccept(socketServer, NULL);
+                TEST_ASSIGN(tlsSession, ioServerAccept(tlsServer, socketSession), "open server session");
+
+                TEST_RESULT_BOOL(ioSessionAuthenticated(tlsSession), false, "server session not authenticated");
+                TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(tlsSession), BUFSTRDEF("message2")), "server write");
+                TEST_RESULT_VOID(ioWriteFlush(ioSessionIoWrite(tlsSession)), "server write flush");
+
+                TEST_RESULT_VOID(ioSessionFree(tlsSession), "free server session");
+
+                // Free socket
+                ioServerFree(socketServer);
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "test client")
+            {
+                IoSession *clientSession = NULL;
+
+                if (TEST_64BIT())                                   // Older 32-bit gives inconsistent results
+                {
+                    TEST_TITLE("client cert is invalid (signed by another CA)");
+
+                    TEST_ASSIGN(
+                        clientSession,
+                        ioClientOpen(
+                            tlsClientNew(
+                                sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000,
+                                true, NULL, NULL, STRDEF(TEST_PATH "/client-bad-ca.crt"), STRDEF(HRN_SERVER_CLIENT_KEY))),
+                        "client open");
+
+                    TEST_ERROR(
+                        ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
+                        "TLS error [1:336151576] tlsv1 alert unknown ca");
+
+                    TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
+                }
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("client cert is valid");
+
+                TEST_ASSIGN(
+                    clientSession,
+                    ioClientOpen(
+                        tlsClientNew(
+                            sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000, true,
+                            NULL, NULL, STRDEF(HRN_SERVER_CLIENT_CERT), STRDEF(HRN_SERVER_CLIENT_KEY))),
+                    "client open");
+
+                Buffer *buffer = bufNew(7);
+                TEST_RESULT_VOID(ioRead(ioSessionIoRead(clientSession), buffer), "client read");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "message", "check read");
+
+                TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("no client cert");
+
+                TEST_ASSIGN(
+                    clientSession,
+                    ioClientOpen(
+                        tlsClientNew(
+                            sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000, true,
+                            NULL, NULL, NULL, NULL)),
+                    "client open");
+
+                buffer = bufNew(8);
+                TEST_RESULT_VOID(ioRead(ioSessionIoRead(clientSession), buffer), "client read");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "message2", "check read");
+
+                TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        storageRemoveP(storageTest, STRDEF("server-root-perm-link"), .errorOnMissing = true);
+        HRN_SYSTEM_FMT("sudo rm %s", strZ(storagePathP(storageTest, STRDEF("server-root-perm.key"))));
 #endif // TEST_CONTAINER_REQUIRED
     }
 
@@ -378,8 +739,8 @@ testRun(void)
                 TEST_ASSIGN(
                     client,
                     tlsClientNew(
-                        sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 0, TEST_IN_CONTAINER, NULL,
-                        NULL),
+                        sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 0, 0, TEST_IN_CONTAINER, NULL,
+                        NULL, NULL, NULL),
                     "new client");
 
                 hrnServerScriptAccept(tls);

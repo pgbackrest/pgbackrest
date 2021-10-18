@@ -188,7 +188,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     ASSERT(storage != NULL);
     ASSERT(file != NULL);
 
-    String *fileFull = storagePathP(storage, STR(file));
+    String *fileFull = strCat(strNew(), storagePathP(storage, STR(file)));
 
     // Add compression extension if one exists
     compressExtCat(fileFull, param.compressType);
@@ -433,7 +433,7 @@ hrnStoragePut(
     ASSERT(file != NULL);
 
     // Add compression extension to file name
-    String *fileStr = strNewZ(file);
+    String *fileStr = strCatZ(strNew(), file);
     compressExtCat(fileStr, param.compressType);
 
     // Create file

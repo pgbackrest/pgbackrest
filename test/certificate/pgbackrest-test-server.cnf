@@ -5,6 +5,14 @@ default_md = sha256
 req_extensions = v3_req
 distinguished_name = dn
 
+[ca]
+default_ca=ca_pgbackrest
+
+[ca_pgbackrest]
+database=index.txt
+unique_subject=no
+default_md=sha256
+
 [ dn ]
 C=US
 ST=All
@@ -19,8 +27,16 @@ keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 subjectAltName = @alt_names
 
 [ alt_names ]
+# Used in container unit tests
 DNS.1 = test.pgbackrest.org
 DNS.2 = *.test.pgbackrest.org
+DNS.3 = *.test2.pgbackrest.org
+
+# Used in non-container unit tests
+DNS.4 = 127.0.0.1
 IP.1 = 127.0.0.1
-DNS.3 = test2.pgbackrest.org
-DNS.4 = *.test2.pgbackrest.org
+
+# Used in integration tests
+DNS.5 = db-primary
+DNS.6 = db-standby
+DNS.7 = backup

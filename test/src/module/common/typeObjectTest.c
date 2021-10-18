@@ -19,32 +19,32 @@ typedef struct TestObjectContext
 /***********************************************************************************************************************************
 Standard object methods
 ***********************************************************************************************************************************/
-TestObject *
+static TestObject *
 testObjectMove(TestObject *this, MemContext *parentNew)
 {
     return objMove(this, parentNew);
 }
 
-void
+static void
 testObjectFree(TestObject *this)
 {
     objFree(this);
 }
 
-TestObjectContext *
+static TestObjectContext *
 testObjectContextMove(TestObjectContext *this, MemContext *parentNew)
 {
     return objMoveContext(this, parentNew);
 }
 
-void
+static void
 testObjectContextFree(TestObjectContext *this)
 {
     objFreeContext(this);
 }
 
 /**********************************************************************************************************************************/
-TestObject *
+static TestObject *
 testObjectNew(void)
 {
     TestObject *this = NULL;
@@ -64,7 +64,7 @@ testObjectNew(void)
 }
 
 /**********************************************************************************************************************************/
-TestObjectContext *
+static TestObjectContext *
 testObjectContextNew(void)
 {
     TestObjectContext *this = NULL;
@@ -86,7 +86,7 @@ testObjectContextNew(void)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();

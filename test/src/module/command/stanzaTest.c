@@ -13,7 +13,7 @@ Test Stanza Commands
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -1036,10 +1036,10 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE, .comment = "create empty backup info for stanza '" TEST_STANZA "'");
         HRN_STORAGE_PUT_EMPTY(storageHrn, strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))), .comment = "create stop file");
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTMASTERPID, .comment = "create postmaster pid file");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTMTRPID, .comment = "create postmas""ter pid file");
 
         TEST_ERROR(
-            cmdStanzaDelete(), PgRunningError, PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running. "
+            cmdStanzaDelete(), PgRunningError, PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. "
             "To delete stanza 'db' on repo1, shut down " PG_NAME " for stanza 'db' and try again, or use --force.");
 
         // Specify repo option
@@ -1051,7 +1051,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, .comment = "create empty backup info repo2");
 
         TEST_ERROR(
-            cmdStanzaDelete(), PgRunningError, PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running. "
+            cmdStanzaDelete(), PgRunningError, PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. "
             "To delete stanza 'db' on repo2, shut down " PG_NAME " for stanza 'db' and try again, or use --force.");
 
         //--------------------------------------------------------------------------------------------------------------------------

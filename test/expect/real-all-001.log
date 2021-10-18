@@ -1,5 +1,5 @@
-run 001 - bkp 1, sby 1, dst backup, cmp none, storage posix, enc 0
-==================================================================
+run 001 - bkp 1, sby 1, tls 0, dst backup, cmp none, storage posix, enc 0
+=========================================================================
 
 stanza-create db - main create stanza info files (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stanza-create
@@ -10,7 +10,7 @@ check db - verify check command runs successfully (db-primary host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - verify check command runs successfully (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5  --reset-pg2-host --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user --reset-pg2-path --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5  --reset-pg2-host --reset-pg2-host-type --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user --reset-pg2-path --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - fail on backup lock exists (backup host)
@@ -484,7 +484,7 @@ archive-copy=y
 start-fast=y
 
 check db - verify check command on standby (db-standby host)
-> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf  --reset-pg2-host --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user --reset-pg2-path --stanza=db check
+> [CONTAINER-EXEC] db-standby [BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.conf  --reset-pg2-host --reset-pg2-host-type --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user --reset-pg2-path --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 diff backup - backup for adhoc expire (backup host)
@@ -736,7 +736,7 @@ archive-copy=y
 start-fast=y
 
 check db - check command with tablespace (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5  --reset-pg2-host --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user --reset-pg2-path --stanza=db check
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --archive-timeout=5  --reset-pg2-host --reset-pg2-host-type --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user --reset-pg2-path --stanza=db check
 ------------------------------------------------------------------------------------------------------------------------------------
 
 restore, type 'default', expect exit 38 - pg running (db-primary host)

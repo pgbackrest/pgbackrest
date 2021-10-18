@@ -13,7 +13,7 @@ Test Configuration Load
 /***********************************************************************************************************************************
 Test run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -386,6 +386,47 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config: retention-full-type=time, retention-full is set");
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("set default when pg-host-type is tls");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "host1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostType, 1, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCertFile, 1, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostKeyFile, 1, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "host2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostType, 2, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCertFile, 2, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostKeyFile, 2, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostPort, 2, "3333");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgHostPort, 0), 8432, "default port");
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgHostPort, 1), 3333, "set port");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("set default when repo-host-type is tls");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "host1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostType, 1, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostCertFile, 1, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostKeyFile, 1, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "host2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostType, 2, "tls");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostCertFile, 2, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostKeyFile, 2, "/not-used");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostPort, 2, "4444");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptRepoHostPort, 0), 8432, "default port");
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptRepoHostPort, 1), 4444, "set port");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid bucket name with verification enabled fails");

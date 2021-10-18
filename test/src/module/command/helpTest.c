@@ -32,7 +32,7 @@ testCfgLoad(const StringList *const argList)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -127,6 +127,7 @@ testRun(void)
         TEST_RESULT_STR_Z(helpRenderValue(varNewStrZ("test-string"), cfgOptTypeString), "test-string", "string");
         TEST_RESULT_STR_Z(helpRenderValue(varNewInt64(1234), cfgOptTypeInteger), "1234", "int");
         TEST_RESULT_STR_Z(helpRenderValue(varNewInt64(1234000), cfgOptTypeTime), "1234", "time");
+        TEST_RESULT_STR_Z(helpRenderValue(NULL, cfgOptTypeString), NULL, "null");
     }
 
     // *****************************************************************************************************************************

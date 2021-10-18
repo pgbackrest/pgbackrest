@@ -15,9 +15,9 @@
         <variable key="host-contrib-user">{[host-user]}</variable>
         <variable key="host-contrib-image">pgbackrest/doc:contrib</variable>
 
-        <variable key="github-url-test">{[github-url-master]}/test/src</variable>
-        <variable key="github-url-test-common">{[github-url-master]}/test/src/common</variable>
-        <variable key="github-url-src">{[github-url-master]}/src</variable>
+        <variable key="github-url-test">{[github-url-main]}/test/src</variable>
+        <variable key="github-url-test-common">{[github-url-main]}/test/src/common</variable>
+        <variable key="github-url-src">{[github-url-main]}/src</variable>
         <variable key="github-url-src-common">{[github-url-src]}/common</variable>
 
         <variable key="cwd" eval="y">use Cwd qw(cwd); cwd()</variable>
@@ -60,15 +60,15 @@
     <section id="introduction">
         <title>Introduction</title>
 
-        <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.
+        <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.</p>
 
-        Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>. You may want to check the <link url="{[github-url-projects]}">Project Boards</link> to see if your suggestion has already been submitted.
+        <p>Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>. You may want to check the <link url="{[github-url-projects]}">Project Boards</link> to see if your suggestion has already been submitted.</p>
 
-        Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>. Please provide as much information as possible to aid in determining the cause of the problem.
+        <p>Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>. Please provide as much information as possible to aid in determining the cause of the problem.</p>
 
-        You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.
+        <p>You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.</p>
 
-        Coding standards are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link> and some important coding details and an example are provided in the <link section="/coding">Coding</link> section below. At a minimum, unit tests must be written and run and the documentation generated before <link section="/pr">submitting a Pull Request</link>; see the <link section="/testing">Testing</link> section below for details.</p>
+        <p>Coding standards are defined in <link url="{[github-url-main]}/CODING.md">CODING.md</link> and some important coding details and an example are provided in the <link section="/coding">Coding</link> section below. At a minimum, unit tests must be written and run and the documentation generated before <link section="/pr">submitting a Pull Request</link>; see the <link section="/testing">Testing</link> section below for details.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -142,7 +142,7 @@
             </execute>
         </execute-list>
 
-        <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation</quote>. NOTE that the <quote>Install latex (for building PDF)</quote> section is not required since testing of the docs need only be run for HTML output.</p>
+        <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-main]}/doc">doc</link> directory in the section <quote>The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation</quote>. NOTE that the <quote>Install latex (for building PDF)</quote> section is not required since testing of the docs need only be run for HTML output.</p>
     </section>
 
     <section id="coding">
@@ -167,7 +167,7 @@
         <section id="coding-example">
             <title>Coding Example</title>
 
-            <p>The example below is not structured like an actual implementation and is intended only to provide an understanding of some of the more common coding practices. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document (<link url="{[github-url-master]}/CODING.md">CODING.md</link>) and sections above for an introduction to the concepts provided here. For an actual implementation, see <link url="{[github-url-src]}/db/db.h">db.h</link> and <link url="{[github-url-src]}/db/db.c">db.c</link>.</p>
+            <p>The example below is not structured like an actual implementation and is intended only to provide an understanding of some of the more common coding practices. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document (<link url="{[github-url-main]}/CODING.md">CODING.md</link>) and sections above for an introduction to the concepts provided here. For an actual implementation, see <link url="{[github-url-src]}/db/db.h">db.h</link> and <link url="{[github-url-src]}/db/db.c">db.c</link>.</p>
 
             <section id="coding-ex1">
                 <title>Example: hypothetical basic object construction</title>
@@ -308,7 +308,7 @@ myObjToLog(const MyObj *this)
             pgbackrest/test/test.pl --gen-only
         </code-block>
 
-        <p>Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under <code>pgbackrest/doc/output/html</code>. More details can be found in the <backrest/> <link url="{[github-url-master]}/doc/README.md">doc/README.md</link> file.</p>
+        <p>Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under <code>pgbackrest/doc/output/html</code>. More details can be found in the <backrest/> <link url="{[github-url-main]}/doc/README.md">doc/README.md</link> file.</p>
 
         <code-block>
             pgbackrest/doc/doc.pl --out=html
@@ -326,7 +326,7 @@ myObjToLog(const MyObj *this)
                 <list-item><setting>--test</setting> - the actual test set to be run</list-item>
                 <list-item><setting>--run</setting> - a number identifying the run within a test if testing a single run rather than the entire test</list-item>
                 <list-item><setting>--vm-out</setting> - displays the test output (helpful for monitoring the progress)</list-item>
-                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code>. See <link url="{[github-url-master]}/.github/workflows/test.yml">test.yml</link> for a list of valid vm codes noted by <code>param: test</code>.</list-item>
+                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code>. See <link url="{[github-url-main]}/.github/workflows/test.yml">test.yml</link> for a list of valid vm codes noted by <code>param: test</code>.</list-item>
             </list>
 
             <p>For more options, run the test or documentation engine with the <setting>--help</setting> option:</p>
@@ -587,9 +587,9 @@ pgbackrest/test/test.pl --vm-out --module=command --test=check --vm=u20
 
 <admonition type="note">Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.</admonition>
 
-            <p>Because a test run has not been specified, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage/lcov/index.html</file> and a file with only the highlighted code that has not been covered will be written to <file>test/result/coverage/coverage.html</file>.
+            <p>Because a test run has not been specified, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage/lcov/index.html</file> and a file with only the highlighted code that has not been covered will be written to <file>test/result/coverage/coverage.html</file>.</p>
 
-            If 100 percent code coverage has not been achieved, an error message will be displayed, for example: <code>ERROR: [125]: c module command/check/check is not fully covered</code></p>
+            <p>If 100 percent code coverage has not been achieved, an error message will be displayed, for example: <code>ERROR: [125]: c module command/check/check is not fully covered</code></p>
 
             <p><b>Debugging with files</b></p>
 
@@ -665,16 +665,11 @@ run 8/1 ------------- L2285 no current backups
 
             <list>
                 <list-item><id>set</id> - the name of the option</list-item>
-                <list-item><id>type</id> - the type of the option. Valid values for types are: <id>boolean</id>, <id>hash</id>, <id>integer</id>, <id>list</id>, <id>path</id>, <id>size</id>, <id>string</id>, and <id>time</id>
-                </list-item>
-                <list-item><id>command</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are <cmd>backup</cmd> and <cmd>restore</cmd>.
-                </list-item>
-                <list-item><id>backup</id> - details the requirements for the <code>--set</code> option for the <cmd>backup</cmd> command. It is dependent on the option <code>--stanza</code>, meaning it is only allowed to be specified for the <cmd>backup</cmd> command if the <code>--stanza</code> option has been specified. And <code>required: false</code> indicates that the <code>--set</code> option is never required, even with the dependency.
-                </list-item>
-                <list-item><id>restore</id> - details the requirements for the <code>--set</code> option for the <cmd>restore</cmd> command. Since <code>required:</code> is omitted, it is not required to be set by the user but it is required by the command and will default to <code>latest</code> if it has not been specified by the user.
-                </list-item>
-                <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.
-                </list-item>
+                <list-item><id>type</id> - the type of the option. Valid values for types are: <id>boolean</id>, <id>hash</id>, <id>integer</id>, <id>list</id>, <id>path</id>, <id>size</id>, <id>string</id>, and <id>time</id></list-item>
+                <list-item><id>command</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are <cmd>backup</cmd> and <cmd>restore</cmd>.</list-item>
+                <list-item><id>backup</id> - details the requirements for the <code>--set</code> option for the <cmd>backup</cmd> command. It is dependent on the option <code>--stanza</code>, meaning it is only allowed to be specified for the <cmd>backup</cmd> command if the <code>--stanza</code> option has been specified. And <code>required: false</code> indicates that the <code>--set</code> option is never required, even with the dependency.</list-item>
+                <list-item><id>restore</id> - details the requirements for the <code>--set</code> option for the <cmd>restore</cmd> command. Since <code>required:</code> is omitted, it is not required to be set by the user but it is required by the command and will default to <code>latest</code> if it has not been specified by the user.</list-item>
+                <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.</list-item>
             </list>
 
             <section id="option-ex2">
@@ -699,22 +694,14 @@ run 8/1 ------------- L2285 no current backups
             </section>
 
             <list>
-                <list-item><id>repo-test-type</id> - the name of the option
-                </list-item>
-                <list-item><id>section</id> - the section of the configuration file where this option is valid (omitted for command line only options, see <link section="/option/config-file/option-ex1">Example 1</link> above)
-                </list-item>
-                <list-item><id>type</id> - the type of the option. Valid values for types are: <id>boolean</id>, <id>hash</id>, <id>integer</id>, <id>list</id>, <id>path</id>, <id>size</id>, <id>string</id>, and <id>time</id>
-                </list-item>
-                <list-item><id>group</id> - indicates that this option is part of the <code>repo</code> group of indexed options and therefore will follow the indexing rules e.g. <code>repo1-test-type</code>.
-                </list-item>
-                <list-item><id>default</id> - sets a default for the option if the option is not provided when the command is run. The default can be global (as it is here) or it can be specified for a specific command in the command section (as in <link section="/option/config-file/option-ex1">Example 1</link> above).
-                </list-item>
-                <list-item><id>allow-list</id> - lists the allowable values for the option for all commands for which the option is valid.
-                </list-item>
-                <list-item><id>command</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are <cmd>backup</cmd> and <cmd>restore</cmd>.
-                </list-item>
-                <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.
-                </list-item>
+                <list-item><id>repo-test-type</id> - the name of the option</list-item>
+                <list-item><id>section</id> - the section of the configuration file where this option is valid (omitted for command line only options, see <link section="/option/config-file/option-ex1">Example 1</link> above)</list-item>
+                <list-item><id>type</id> - the type of the option. Valid values for types are: <id>boolean</id>, <id>hash</id>, <id>integer</id>, <id>list</id>, <id>path</id>, <id>size</id>, <id>string</id>, and <id>time</id></list-item>
+                <list-item><id>group</id> - indicates that this option is part of the <code>repo</code> group of indexed options and therefore will follow the indexing rules e.g. <code>repo1-test-type</code>.</list-item>
+                <list-item><id>default</id> - sets a default for the option if the option is not provided when the command is run. The default can be global (as it is here) or it can be specified for a specific command in the command section (as in <link section="/option/config-file/option-ex1">Example 1</link> above).</list-item>
+                <list-item><id>allow-list</id> - lists the allowable values for the option for all commands for which the option is valid.</list-item>
+                <list-item><id>command</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are <cmd>backup</cmd> and <cmd>restore</cmd>.</list-item>
+                <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.</list-item>
             </list>
 
             <p>At compile time, the <file>config.auto.h</file> file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
@@ -790,31 +777,23 @@ pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --va
         <p>Before submitting a Pull Request:</p>
 
         <list>
-            <list-item>Does it meet the <link url="{[github-url-master]}/CODING.md">coding standards</link>?
-            </list-item>
-            <list-item>Have <link section="/testing/unit-test">Unit Tests</link> been written and <link section="/testing/unit-test-run">run</link> with 100% coverage?
-            </list-item>
-            <list-item>If your submission includes changes to the help or online documentation, have the <link section="/option/help-test">help</link> and <link section="/option/doc-test">documentation</link> tests been run?
-            </list-item>
-            <list-item>Has it passed continuous integration testing? Simply renaming your branch with the appendix <code>-cig</code> and pushing it to your GitHub account will initiate GitHub Actions to run CI tests.
-            </list-item>
+            <list-item>Does it meet the <link url="{[github-url-main]}/CODING.md">coding standards</link>?</list-item>
+            <list-item>Have <link section="/testing/unit-test">Unit Tests</link> been written and <link section="/testing/unit-test-run">run</link> with 100% coverage?</list-item>
+            <list-item>If your submission includes changes to the help or online documentation, have the <link section="/option/help-test">help</link> and <link section="/option/doc-test">documentation</link> tests been run?</list-item>
+            <list-item>Has it passed continuous integration testing? Simply renaming your branch with the appendix <code>-cig</code> and pushing it to your GitHub account will initiate GitHub Actions to run CI tests.</list-item>
         </list>
 
         <p>When submitting a Pull Request:</p>
         <list>
-            <list-item>Provide a short submission title.
-            </list-item>
-            <list-item>Write a detailed comment to describe the purpose of your submission and any issue(s), if any, it is resolving; a link to the GitHub issue is also helpful.
-            </list-item>
+            <list-item>Provide a short submission title.</list-item>
+            <list-item>Write a detailed comment to describe the purpose of your submission and any issue(s), if any, it is resolving; a link to the GitHub issue is also helpful.</list-item>
         </list>
 
         <p>After submitting a Pull Request:</p>
 
         <list>
-            <list-item>One or more reviewers will be assigned.
-            </list-item>
-            <list-item>Respond to any issues (conversations) in GitHub but do not resolve the conversation; the reviewer is responsible for ensuring the issue raised has been resolved and marking the conversation resolved. It is helpful to supply the commit in your reply if one was submitted to fix the issue.
-            </list-item>
+            <list-item>One or more reviewers will be assigned.</list-item>
+            <list-item>Respond to any issues (conversations) in GitHub but do not resolve the conversation; the reviewer is responsible for ensuring the issue raised has been resolved and marking the conversation resolved. It is helpful to supply the commit in your reply if one was submitted to fix the issue.</list-item>
         </list>
 
         <p>Lastly, thank you for contributing to <backrest/>!</p>

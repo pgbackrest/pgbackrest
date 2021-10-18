@@ -38,6 +38,7 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
+use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
 # Error constants
@@ -156,7 +157,7 @@ sub new
     $strUser = testRunGet()->pgUser();
 
     # Create the host
-    my $self = $class->SUPER::new($strName, {strImage => $strImage, strUser => $strUser});
+    my $self = $class->SUPER::new($strName, {strImage => $strImage, strUser => $strUser, bTls => $oParam->{bTls}});
     bless $self, $class;
 
     # If repo is on local filesystem then set the repo-path locally
@@ -704,7 +705,7 @@ sub manifestDefault
     # Set defaults for subkeys that tend to repeat
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
-        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE, &MANIFEST_SUBKEY_MASTER)
+        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE, &MANIFEST_SUBKEY_PRIMARY)
         {
             my %oDefault;
             my $iSectionTotal = 0;
@@ -744,7 +745,7 @@ sub manifestDefault
 
             if (defined($strMaxValue) > 0 && $iMaxValueTotal > $iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR)
             {
-                if ($strSubKey eq MANIFEST_SUBKEY_MASTER)
+                if ($strSubKey eq MANIFEST_SUBKEY_PRIMARY)
                 {
                     $oExpectedManifest->{"${strSection}:default"}{$strSubKey} = $strMaxValue ? JSON::PP::true : JSON::PP::false;
                 }
@@ -1285,6 +1286,13 @@ sub configCreate
             $oParamHash{$strStanza}{'pg1-host-cmd'} = $oHostDb1->backrestExe();
             $oParamHash{$strStanza}{'pg1-host-config'} = $oHostDb1->backrestConfig();
 
+            if ($oParam->{bTls})
+            {
+                $oParamHash{$strStanza}{'pg1-host-type'} = 'tls';
+                $oParamHash{$strStanza}{'pg1-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                $oParamHash{$strStanza}{'pg1-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+            }
+
             # Port can't be configured for a synthetic host
             if (!$self->synthetic())
             {
@@ -1297,12 +1305,15 @@ sub configCreate
         if (defined($oHostDb2))
         {
             # Add an invalid replica to simulate more than one replica. A warning should be thrown when a stanza is created and a
-            # valid replica should be chosen.
-            $oParamHash{$strStanza}{"pg2-host"} = BOGUS;
-            $oParamHash{$strStanza}{"pg2-host-user"} = $oHostDb2->userGet();
-            $oParamHash{$strStanza}{"pg2-host-cmd"} = $oHostDb2->backrestExe();
-            $oParamHash{$strStanza}{"pg2-host-config"} = $oHostDb2->backrestConfig();
-            $oParamHash{$strStanza}{"pg2-path"} = $oHostDb2->dbBasePath();
+            # valid replica should be chosen. Only do this for SSH since TLS takes longer to timeout.
+            if (!$oParam->{bTls})
+            {
+                $oParamHash{$strStanza}{"pg2-host"} = BOGUS;
+                $oParamHash{$strStanza}{"pg2-host-user"} = $oHostDb2->userGet();
+                $oParamHash{$strStanza}{"pg2-host-cmd"} = $oHostDb2->backrestExe();
+                $oParamHash{$strStanza}{"pg2-host-config"} = $oHostDb2->backrestConfig();
+                $oParamHash{$strStanza}{"pg2-path"} = $oHostDb2->dbBasePath();
+            }
 
             # Set a flag so we know there's a bogus host
             $self->{bBogusHost} = true;
@@ -1313,6 +1324,13 @@ sub configCreate
             $oParamHash{$strStanza}{"pg256-host-cmd"} = $oHostDb2->backrestExe();
             $oParamHash{$strStanza}{"pg256-host-config"} = $oHostDb2->backrestConfig();
             $oParamHash{$strStanza}{"pg256-path"} = $oHostDb2->dbBasePath();
+
+            if ($oParam->{bTls})
+            {
+                $oParamHash{$strStanza}{'pg256-host-type'} = 'tls';
+                $oParamHash{$strStanza}{'pg256-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                $oParamHash{$strStanza}{'pg256-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+            }
 
             # Only test explicit ports on the backup server.  This is so locally configured ports are also tested.
             if (!$self->synthetic() && $self->nameTest(HOST_BACKUP))
@@ -1348,12 +1366,27 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
 
+            if ($oParam->{bTls})
+            {
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-type'} = 'tls';
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+            }
+
             if ($iRepoTotal == 2)
             {
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host'} = $oHostBackup->nameGet();
+                $oParam->{bTls} ? $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-type'} = 'tls' : undef;
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-user'} = $oHostBackup->userGet();
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-cmd'} = $oHostBackup->backrestExe();
                 $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-config'} = $oHostBackup->backrestConfig();
+
+                if ($oParam->{bTls})
+                {
+                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-type'} = 'tls';
+                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-cert-file'} = testRunGet()->basePath() . HOST_CLIENT_CERT;
+                    $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-key-file'} = testRunGet()->basePath() . HOST_CLIENT_KEY;
+                }
             }
 
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();

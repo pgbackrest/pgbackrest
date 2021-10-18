@@ -67,7 +67,7 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
                     if (stringMatchLast != NULL)
                         stringMatch = stringMatchLast - strlen(delimiter);
 
-                    strLstAdd(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
+                    strLstAdd(this, strNewZN(stringBase, (size_t)(stringMatch - stringBase)));
                     stringBase = stringMatch + strlen(delimiter);
                     stringMatchLast = NULL;
                 }
@@ -79,7 +79,7 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
             {
                 if (stringMatchLast != NULL && strlen(stringBase) - strlen(delimiter) >= size)
                 {
-                    strLstAdd(this, strNewN(stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase)));
+                    strLstAdd(this, strNewZN(stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase)));
                     stringBase = stringMatchLast;
                 }
 
@@ -238,7 +238,7 @@ helpRender(const Buffer *const helpData)
         FUNCTION_LOG_PARAM(BUFFER, helpData);
     FUNCTION_LOG_END();
 
-    String *result = strNewZ(PROJECT_NAME " " PROJECT_VERSION);
+    String *result = strCatZ(strNew(), PROJECT_NAME " " PROJECT_VERSION);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -441,14 +441,15 @@ helpRender(const Buffer *const helpData)
                         ConfigOption optionId = varUInt(varLstGet(optionList, optionIdx));
 
                         // Get option summary and lower-case first letter if it does not appear to be part of an acronym
-                        String *summary = strNewN(strZ(optionData[optionId].summary), strSize(optionData[optionId].summary) - 1);
+                        String *summary = strCatN(
+                            strNew(), optionData[optionId].summary, strSize(optionData[optionId].summary) - 1);
                         ASSERT(strSize(summary) > 1);
 
                         if (!isupper(strZ(summary)[1]) && !isdigit(strZ(summary)[1]))
                             strFirstLower(summary);
 
                         // Output current and default values if they exist
-                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgParseOptionType(optionId));
+                        const String *defaultValue = cfgOptionDefault(optionId);
                         const String *value = NULL;
 
                         if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
@@ -515,7 +516,7 @@ helpRender(const Buffer *const helpData)
                         helpRenderText(optionData[option.id].description, optionData[option.id].internal, 0, true, CONSOLE_WIDTH)));
 
                 // Output current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
+                const String *defaultValue = cfgOptionDefault(option.id);
                 const String *value = NULL;
 
                 if (cfgOptionIdxSource(option.id, 0) != cfgSourceDefault)

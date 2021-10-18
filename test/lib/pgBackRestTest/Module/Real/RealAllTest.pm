@@ -52,20 +52,20 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => PG_VERSION_83, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt => false, compress => NONE, repo => 2},
-        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt =>  true, compress =>   GZ, repo => 1},
-        {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, storage =>   GCS, encrypt =>  true, compress =>  BZ2, repo => 2},
-        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, storage =>   GCS, encrypt => false, compress =>   GZ, repo => 1},
-        {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress => NONE, repo => 1},
-        {pg => PG_VERSION_93, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress => NONE, repo => 2},
-        {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress =>  LZ4, repo => 1},
-        {pg => PG_VERSION_95, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt => false, compress =>  BZ2, repo => 1},
-        {pg => PG_VERSION_96, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt => false, compress => NONE, repo => 2},
-        {pg => PG_VERSION_10, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt =>  true, compress =>   GZ, repo => 2},
-        {pg => PG_VERSION_11, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>  ZST, repo => 2},
-        {pg => PG_VERSION_12, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt =>  true, compress =>  LZ4, repo => 1},
-        {pg => PG_VERSION_13, repoDest => HOST_DB_STANDBY, storage =>   GCS, encrypt => false, compress =>  ZST, repo => 1},
-        {pg => PG_VERSION_14, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt =>  true, compress =>  LZ4, repo => 2},
+        {pg => PG_VERSION_83, repoDest => HOST_DB_PRIMARY, tls => 0, storage => POSIX, encrypt => 0, compress => NONE, repo => 2},
+        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, tls => 1, storage => AZURE, encrypt => 1, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, tls => 0, storage =>   GCS, encrypt => 1, compress =>  BZ2, repo => 2},
+        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress => NONE, repo => 1},
+        {pg => PG_VERSION_93, repoDest =>     HOST_BACKUP, tls => 0, storage => AZURE, encrypt => 0, compress => NONE, repo => 2},
+        {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 1},
+        {pg => PG_VERSION_95, repoDest =>     HOST_BACKUP, tls => 1, storage =>    S3, encrypt => 0, compress =>  BZ2, repo => 1},
+        {pg => PG_VERSION_96, repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 0, compress => NONE, repo => 2},
+        {pg => PG_VERSION_10, repoDest => HOST_DB_STANDBY, tls => 1, storage =>    S3, encrypt => 1, compress =>   GZ, repo => 2},
+        {pg => PG_VERSION_11, repoDest =>     HOST_BACKUP, tls => 1, storage => AZURE, encrypt => 0, compress =>  ZST, repo => 2},
+        {pg => PG_VERSION_12, repoDest =>     HOST_BACKUP, tls => 0, storage =>    S3, encrypt => 1, compress =>  LZ4, repo => 1},
+        {pg => PG_VERSION_13, repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>  ZST, repo => 1},
+        {pg => PG_VERSION_14, repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 2},
     )
     {
         # Only run tests for this pg version
@@ -74,6 +74,7 @@ sub run
         # Get run parameters
         my $bHostBackup = $rhRun->{repoDest} eq HOST_BACKUP ? true : false;
         my $bHostStandby = $self->pgVersion() >= PG_VERSION_HOT_STANDBY ? true : false;
+        my $bTls = $rhRun->{tls};
         my $strBackupDestination = $rhRun->{repoDest};
         my $strStorage = $rhRun->{storage};
         my $bRepoEncrypt = $rhRun->{encrypt};
@@ -86,21 +87,23 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         next if (!$self->begin(
-            "bkp ${bHostBackup}, sby ${bHostStandby}, dst ${strBackupDestination}, cmp ${strCompressType}" .
+            "bkp ${bHostBackup}, sby ${bHostStandby}, tls ${bTls}, dst ${strBackupDestination}, cmp ${strCompressType}" .
                 ", storage ${strStorage}, enc ${bRepoEncrypt}",
             $bExpectVersion));
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
             false, $self->expect(),
-            {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
+            {bHostBackup => $bHostBackup, bStandby => $bHostStandby, bTls => $bTls, strBackupDestination => $strBackupDestination,
              strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
              bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal});
 
         # Some commands will fail because of the bogus host created when a standby is present. These options reset the bogus host
         # so it won't interfere with commands that won't tolerate a connection failure.
         my $strBogusReset = $oHostBackup->bogusHost() ?
-            ' --reset-pg2-host --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user --reset-pg2-path' : '';
+            ' --reset-pg2-host --reset-pg2-host-type --reset-pg2-host-cmd --reset-pg2-host-config --reset-pg2-host-user' .
+                ' --reset-pg2-path' :
+            '';
 
         # If S3 set process max to 2.  This seems like the best place for parallel testing since it will help speed S3 processing
         # without slowing down the other tests too much.
@@ -282,7 +285,7 @@ sub run
             # Update message for standby
             $oHostDbPrimary->sqlExecute("update test set message = '$strStandbyMessage'");
 
-            if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY)
+            if ($oHostDbStandby->pgVersion() >= PG_VERSION_BACKUP_STANDBY && !$bTls)
             {
                 # If there is only a primary and a replica and the replica is the backup destination, then if pg2-host and
                 # pg256-host are BOGUS, confirm failure to reach the primary

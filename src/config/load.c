@@ -286,6 +286,34 @@ cfgLoadUpdateOption(void)
         }
     }
 
+    // Set pg-host-port/repo-host-port default when pg-host-type/repo-host-type is tls. ??? This should be handled in the parser but
+    // it requires a default that depends on another option value and that is not currently possible.
+    #define HOST_PORT_TLS                                           8432
+
+    if (cfgOptionValid(cfgOptRepoHostPort))
+    {
+        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+        {
+            if (cfgOptionIdxStrId(cfgOptRepoHostType, repoIdx) == CFGOPTVAL_REPO_HOST_TYPE_TLS &&
+                cfgOptionIdxSource(cfgOptRepoHostPort, repoIdx) == cfgSourceDefault)
+            {
+                cfgOptionIdxSet(cfgOptRepoHostPort, repoIdx, cfgSourceDefault, VARINT64(HOST_PORT_TLS));
+            }
+        }
+    }
+
+    if (cfgOptionValid(cfgOptPgHostPort))
+    {
+        for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
+        {
+            if (cfgOptionIdxStrId(cfgOptPgHostType, pgIdx) == CFGOPTVAL_PG_HOST_TYPE_TLS &&
+                cfgOptionIdxSource(cfgOptPgHostPort, pgIdx) == cfgSourceDefault)
+            {
+                cfgOptionIdxSet(cfgOptPgHostPort, pgIdx, cfgSourceDefault, VARINT64(HOST_PORT_TLS));
+            }
+        }
+    }
+
     // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.
     if (cfgOptionValid(cfgOptCompress))
     {
@@ -333,7 +361,8 @@ cfgLoadLogFile(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Construct log filename prefix
-            String *logFile = strNewFmt(
+            String *logFile = strCatFmt(
+                strNew(),
                 "%s/%s-%s", strZ(cfgOptionStr(cfgOptLogPath)),
                 cfgOptionTest(cfgOptStanza) ? strZ(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName());
 

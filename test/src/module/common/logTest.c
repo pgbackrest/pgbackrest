@@ -70,7 +70,7 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
 /***********************************************************************************************************************************
 Compare log to a static string
 ***********************************************************************************************************************************/
-void
+static void
 testLogResult(const char *logFile, const char *expected)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -94,7 +94,7 @@ testLogResult(const char *logFile, const char *expected)
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -178,7 +178,7 @@ testRun(void)
         TEST_RESULT_VOID(
             logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "TEST"), "log timestamp");
 
-        String *logTime = strNewN(logBuffer, 23);
+        String *logTime = strNewZN(logBuffer, 23);
         TEST_RESULT_BOOL(
             regExpMatchOne(
                 STRDEF("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),

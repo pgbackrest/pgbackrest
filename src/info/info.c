@@ -506,7 +506,7 @@ infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callback
                 if (loadErrorType == NULL)
                 {
                     loadErrorType = errorType();
-                    loadErrorMessage = strNewFmt("%s:", strZ(error));
+                    loadErrorMessage = strCatFmt(strNew(), "%s:", strZ(error));
                 }
                 // Else if the error type is different
                 else if (loadErrorType != errorType())

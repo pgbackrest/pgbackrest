@@ -246,6 +246,7 @@ struct PackRead
     unsigned int tagNextId;                                         // Next tag id
     PackTypeMap tagNextTypeMap;                                     // Next tag type map
     uint64_t tagNextValue;                                          // Next tag value
+    size_t tagNextSize;                                             // Next tag size
 
     PackTagStack tagStack;                                          // Stack of object/array tags
 };
@@ -390,9 +391,22 @@ pckReadNew(const Pack *const pack)
     if (pack == NULL)
         FUNCTION_TEST_RETURN(NULL);
 
+    FUNCTION_TEST_RETURN(pckReadNewC(bufPtrConst((const Buffer *)pack), bufUsed((const Buffer *)pack)));
+}
+
+PackRead *
+pckReadNewC(const unsigned char *const buffer, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+
     PackRead *this = pckReadNewInternal();
-    this->bufferPtr = bufPtrConst((const Buffer *)pack);
-    this->bufferUsed = bufUsed((const Buffer *)pack);
+    this->bufferPtr = buffer;
+    this->bufferUsed = size;
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -441,6 +455,28 @@ pckReadBuffer(PackRead *this, size_t size)
     }
 
     FUNCTION_TEST_RETURN(size);
+}
+
+/***********************************************************************************************************************************
+Consume buffer left in tagNextSize
+***********************************************************************************************************************************/
+static void
+pckReadConsumeBuffer(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    while (this->tagNextSize != 0)
+    {
+        size_t size = pckReadBuffer(this, this->tagNextSize);
+        this->bufferPos += size;
+        this->tagNextSize -= size;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -579,6 +615,15 @@ pckReadTagNext(PackRead *this)
         // Increment the next tag id
         this->tagNextId += this->tagStack.top->idLast + 1;
 
+        // Get tag size if it exists
+        if (packTypeMapData[this->tagNextTypeMap].size &&
+            (this->tagNextValue > 0 || !packTypeMapData[this->tagNextTypeMap].valueSingleBit))
+        {
+            this->tagNextSize = (size_t)pckReadU64Internal(this);
+        }
+        else
+            this->tagNextSize = 0;
+
         // Tag was found
         result = true;
     }
@@ -648,17 +693,7 @@ pckReadTag(PackRead *this, unsigned int *id, PackTypeMap typeMap, bool peek)
         }
 
         // Read data for the field being skipped if this is not the field requested
-        if (packTypeMapData[this->tagNextTypeMap].size && this->tagNextValue != 0)
-        {
-            size_t sizeExpected = (size_t)pckReadU64Internal(this);
-
-            while (sizeExpected != 0)
-            {
-                size_t sizeRead = pckReadBuffer(this, sizeExpected);
-                sizeExpected -= sizeRead;
-                this->bufferPos += sizeRead;
-            }
-        }
+        pckReadConsumeBuffer(this);
 
         // Increment the last id to the id just read
         this->tagStack.top->idLast = this->tagNextId;
@@ -680,6 +715,7 @@ pckReadNext(PackRead *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->tagNextId == 0);
 
     FUNCTION_TEST_RETURN(pckReadTagNext(this));
 }
@@ -695,6 +731,54 @@ pckReadId(PackRead *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->tagNextId);
+}
+
+/**********************************************************************************************************************************/
+size_t
+pckReadSize(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(packTypeMapData[this->tagNextTypeMap].size);
+
+    FUNCTION_TEST_RETURN(this->tagNextSize);
+}
+
+/**********************************************************************************************************************************/
+void
+pckReadConsume(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    unsigned int id = 0;
+
+    pckReadTag(this, &id, pckTypeMapUnknown, true);
+    pckReadTag(this, &id, this->tagNextTypeMap, false);
+    pckReadConsumeBuffer(this);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+const unsigned char *
+pckReadBufPtr(PackRead *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(packTypeMapData[this->tagNextTypeMap].size);
+    ASSERT(this->buffer == NULL);
+
+    FUNCTION_TEST_RETURN(this->bufferPtr + this->bufferPos);
 }
 
 /**********************************************************************************************************************************/
@@ -816,7 +900,7 @@ pckReadBin(PackRead *this, PckReadBinParam param)
     if (pckReadTag(this, &param.id, pckTypeMapBin, false))
     {
         // Get the buffer size
-        result = bufNew((size_t)pckReadU64Internal(this));
+        result = bufNew(this->tagNextSize);
 
         // Read the buffer out in chunks
         while (bufUsed(result) < bufSize(result))
@@ -968,6 +1052,27 @@ pckReadPackRead(PackRead *this, PckReadPackParam param)
     FUNCTION_TEST_RETURN(result);
 }
 
+PackRead *
+pckReadPackReadConst(PackRead *this, PckReadPackParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(NULL);
+
+    // Read the tag
+    pckReadTag(this, &param.id, pckTypeMapPack, false);
+
+    PackRead *const result = pckReadNewC(pckReadBufPtr(this), pckReadSize(this));
+
+    pckReadConsumeBuffer(this);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 Pack *
 pckReadPack(PackRead *const this, PckReadPackParam param)
 {
@@ -985,7 +1090,7 @@ pckReadPack(PackRead *const this, PckReadPackParam param)
     pckReadTag(this, &param.id, pckTypeMapPack, false);
 
     // Get the pack size
-    Buffer *result = bufNew((size_t)pckReadU64Internal(this));
+    Buffer *result = bufNew(this->tagNextSize);
 
     // Read the pack out in chunks
     while (bufUsed(result) < bufSize(result))
@@ -1036,7 +1141,7 @@ pckReadStr(PackRead *this, PckReadStrParam param)
     if (pckReadTag(this, &param.id, pckTypeMapStr, false))
     {
         // Read the string size
-        size_t sizeExpected = (size_t)pckReadU64Internal(this);
+        size_t sizeExpected = (size_t)this->tagNextSize;
 
         // Read the string out in chunks
         result = strNew();
