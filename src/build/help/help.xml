@@ -831,7 +831,7 @@
                             <list>
                                 <list-item><id>shared</id> - Shared keys</list-item>
                                 <list-item><id>auto</id> - Automatically retrieve temporary credentials</list-item>
-                                <list-item><id>service</id> - Automatically retrieve service credentials</list-item>
+                                <list-item><id>web-id</id> - Automatically retrieve web identity credentials</list-item>
                             </list>
                         </text>
 
