@@ -700,9 +700,9 @@
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
-        <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> {[pg-version-min]}-{[pg-version-max]}, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the location to install the executable may vary.
+        <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> {[pg-version-min]}-{[pg-version-max]}, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the location to install the executable may vary.</p>
 
-        Configuration information and documentation for PostgreSQL can be found in the <postgres/> <link url='http://www.postgresql.org/docs/{[pg-version]}/static/index.html'>Manual</link>.</p>
+        <p>Configuration information and documentation for PostgreSQL can be found in the <postgres/> <link url='http://www.postgresql.org/docs/{[pg-version]}/static/index.html'>Manual</link>.</p>
 
         <p>A somewhat novel approach is taken to documentation in this user guide.  Each command is run on a virtual machine when the documentation is built from the XML source.  This means you can have a high confidence that the commands work correctly in the order presented.  Output is captured and displayed below the command when appropriate.  If the output is not included it is because it was deemed not relevant or was considered a distraction from the narrative.</p>
 
