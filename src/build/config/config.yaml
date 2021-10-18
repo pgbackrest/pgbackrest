@@ -16,9 +16,9 @@
 #   all the options passed is usually output at the info level, but that might not be appropriate for some commands, such as info,
 #   Allow the log level to be lowered so these common messages will not be emitted where they might be distracting.
 #
-# log-required:
+# lock-required:
 #   Does the command require a lock? This doesn't mean a lock can't be taken explicitly later, just controls whether a lock will be
-#   acquired as soon at the command starts.
+#   acquired as soon as the command starts.
 #
 # lock-remote-required:
 #   Does the command require a lock on the remote? The lock will only be acquired for process id 0.
@@ -180,8 +180,8 @@ optionGroup:
 #   Inherit all definitions for the referenced option. Any definitions can be overridden.
 #
 # command:
-#   List of commands the option can be used with this option. An empty hash signifies that the command does not deviate from the
-#   option defaults. Otherwise, overrides can be specified.
+#   List of commands the option can be used with. An empty hash signifies that the command does not deviate from the option
+#   defaults. Otherwise, overrides can be specified.
 #
 #   If another option is referenced (e.g. command: repo-type) then the list of commands will be copied from the referenced option.
 #
