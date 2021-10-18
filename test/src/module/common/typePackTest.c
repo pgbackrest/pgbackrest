@@ -9,7 +9,7 @@ Test Pack Type
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -349,6 +349,39 @@ testRun(void)
         TEST_RESULT_Z(pckReadPtrP(packRead, .id = 2), "sample", "read pointer");
 
         TEST_RESULT_PTR(pckWriteResult(NULL), NULL, "null pack result");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read const packs");
+
+        TEST_ASSIGN(packWrite, pckWriteNewP(), "new write");
+
+        // Write pack to read as ptr/size
+        packSub = pckWriteNewP();
+        pckWriteU64P(packSub, 777);
+        pckWriteEndP(packSub);
+
+        TEST_RESULT_VOID(pckWritePackP(packWrite, pckWriteResult(packSub)), "write pack");
+
+        // Write pack to read as const
+        TEST_RESULT_VOID(pckWritePackP(packWrite, NULL), "write pack");
+
+        packSub = pckWriteNewP();
+        pckWriteU64P(packSub, 99);
+        pckWriteEndP(packSub);
+
+        TEST_RESULT_VOID(pckWritePackP(packWrite, pckWriteResult(packSub)), "write pack");
+        TEST_RESULT_VOID(pckWriteEndP(packWrite), "write pack end");
+
+        TEST_ASSIGN(packRead, pckReadNew(pckWriteResult(packWrite)), "new read");
+
+        TEST_RESULT_BOOL(pckReadNext(packRead), true, "next pack");
+        TEST_RESULT_UINT(pckReadSize(packRead), 4, "pack size");
+        TEST_RESULT_STR_Z(bufHex(BUF(pckReadBufPtr(packRead), pckReadSize(packRead))), "98890600", "pack hex");
+        TEST_RESULT_UINT(pckReadU64P(pckReadNewC(pckReadBufPtr(packRead), pckReadSize(packRead))), 777, "u64 value");
+        TEST_RESULT_VOID(pckReadConsume(packRead), "consume pack");
+
+        TEST_RESULT_PTR(pckReadPackReadConstP(packRead), NULL, "const null pack");
+        TEST_RESULT_UINT(pckReadU64P(pckReadPackReadConstP(packRead)), 99, "const pack");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pack/unpack write internal buffer empty");
