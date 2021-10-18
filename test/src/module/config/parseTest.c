@@ -1724,7 +1724,6 @@ testRun(void)
 
         TEST_RESULT_STR_Z(cfgExe(), "pgbackrest_wrapper.sh", "--cmd provided; exe is returned as pgbackrest_wrapper.sh");
 
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default job retry and valid duplicate options");
 
