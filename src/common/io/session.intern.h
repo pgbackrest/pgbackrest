@@ -40,6 +40,15 @@ Constructors
 IoSession *ioSessionNew(void *driver, const IoSessionInterface *interface);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Has the session been authenticated?
+void ioSessionAuthenticatedSet(IoSession *this, bool authenticated);
+
+// Set the peer name
+void ioSessionPeerNameSet(IoSession *this, const String *peerName);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_IO_SESSION_INTERFACE_TYPE                                                                                     \

@@ -1,5 +1,5 @@
-run 001 - rmt 0, storage posix, enc 1, cmp lz4
-==============================================
+run 001 - rmt 0, tls 0, storage posix, enc 1, cmp lz4
+=====================================================
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------

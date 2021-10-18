@@ -407,8 +407,9 @@ sub run
                                             # declaration and the renamed implementation.
                                             if ($strLine =~ /^{/)
                                             {
-                                                push(@stryShimModuleSrcRenamed, trim($strFunctionDeclaration) . ";");
-                                                push(@stryShimModuleSrcRenamed, $strFunctionShim);
+                                                push(
+                                                    @stryShimModuleSrcRenamed,
+                                                    trim($strFunctionDeclaration) . "; " . $strFunctionShim);
                                                 push(@stryShimModuleSrcRenamed, $strLine);
 
                                                 $strFunctionShim = undef;
@@ -416,7 +417,7 @@ sub run
                                             # Else keep constructing the declaration and implementation
                                             else
                                             {
-                                                $strFunctionDeclaration .= "${strLine}\n";
+                                                $strFunctionDeclaration .= trim($strLine);
                                                 $strFunctionShim .= "${strLine}\n";
                                             }
                                         }
@@ -436,10 +437,10 @@ sub run
                                                 {
                                                     my $strLineLast = pop(@stryShimModuleSrcRenamed);
 
-                                                    $strFunctionDeclaration = "${strLineLast} ${strLine}\n";
+                                                    $strFunctionDeclaration = "${strLineLast} ${strLine}";
 
                                                     $strLine =~ s/^${strFunction}\(/${strFunction}_SHIMMED\(/;
-                                                    $strFunctionShim = "${strLineLast}\n${strLine}\n";
+                                                    $strFunctionShim = "${strLineLast}\n${strLine}";
 
                                                     $bFound = true;
                                                     last;

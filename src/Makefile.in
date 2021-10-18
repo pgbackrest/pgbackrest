@@ -78,6 +78,8 @@ SRCS = \
 	command/restore/protocol.c \
 	command/restore/restore.c \
 	command/remote/remote.c \
+	command/server/ping.c \
+	command/server/server.c \
 	command/stanza/common.c \
 	command/stanza/create.c \
 	command/stanza/delete.c \
@@ -116,11 +118,15 @@ SRCS = \
 	common/io/http/response.c \
 	common/io/http/session.c \
 	common/io/http/url.c \
+	common/io/server.c \
 	common/io/session.c \
 	common/io/socket/client.c \
 	common/io/socket/common.c \
+	common/io/socket/server.c \
 	common/io/socket/session.c \
 	common/io/tls/client.c \
+	common/io/tls/common.c \
+	common/io/tls/server.c \
 	common/io/tls/session.c \
 	common/lock.c \
 	common/stat.c \

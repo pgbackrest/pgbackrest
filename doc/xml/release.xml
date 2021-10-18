@@ -130,6 +130,21 @@
                         <p>Add hints to standby replay timeout message.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1504"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="andrew.lecuyer"/>
+                        </release-item-contributor-list>
+
+                        <p><proper>Add TLS</proper> server.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
         </release>
 

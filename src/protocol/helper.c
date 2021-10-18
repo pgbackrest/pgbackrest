@@ -8,9 +8,15 @@ Protocol Helper
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/exec.h"
+#include "common/io/client.h"
+#include "common/io/socket/client.h"
+#include "common/io/socket/server.h"
+#include "common/io/tls/client.h"
+#include "common/io/tls/server.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
 #include "config/exec.h"
+#include "config/load.h"
 #include "config/parse.h"
 #include "config/protocol.h"
 #include "postgres/version.h"
@@ -29,6 +35,8 @@ Local variables
 typedef struct ProtocolHelperClient
 {
     Exec *exec;                                                     // Executed client
+    IoClient *ioClient;                                             // Io client, e.g. TlsClient
+    IoSession *ioSession;                                           // Io session, e.g. TlsSession
     ProtocolClient *client;                                         // Protocol client
 } ProtocolHelperClient;
 
@@ -282,6 +290,12 @@ protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
         }
         TRY_END();
 
+        // Free the io client/session (there should be no errors)
+        ioSessionFree(protocolHelperClient->ioSession);
+        ioClientFree(protocolHelperClient->ioClient);
+
+        protocolHelperClient->ioSession = NULL;
+        protocolHelperClient->ioClient = NULL;
         protocolHelperClient->client = NULL;
         protocolHelperClient->exec = NULL;
     }
@@ -304,6 +318,117 @@ protocolLocalFree(unsigned int processId)
     }
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+// Helper to check if client is authorized for a stanza
+static bool
+protocolServerAuthorize(const String *authListStr, const String *const stanza)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, authListStr);
+        FUNCTION_LOG_PARAM(STRING, stanza);
+    FUNCTION_TEST_END();
+
+    ASSERT(authListStr != NULL);
+
+    // Empty list is not valid. ??? It would be better if this were done during config parsing.
+    authListStr = strTrim(strDup(authListStr));
+
+    if (strEmpty(authListStr))
+        THROW(OptionInvalidValueError, "'" CFGOPT_TLS_SERVER_AUTH "' option must have a value");
+
+    // If * then all stanzas are authorized
+    if (strEqZ(authListStr, "*"))
+        FUNCTION_TEST_RETURN(true);
+
+    // Check the list of stanzas for a match with the specified stanza. Each entry will need to be trimmed before comparing.
+    if (stanza != NULL)
+    {
+        StringList *authList = strLstNewSplitZ(authListStr, COMMA_Z);
+
+        for (unsigned int authListIdx = 0; authListIdx < strLstSize(authList); authListIdx++)
+        {
+            if (strEq(strTrim(strLstGet(authList, authListIdx)), stanza))
+                FUNCTION_TEST_RETURN(true);
+        }
+    }
+
+    FUNCTION_TEST_RETURN(false);
+}
+
+ProtocolServer *
+protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_SERVER, tlsServer);
+        FUNCTION_LOG_PARAM(IO_SESSION, socketSession);
+    FUNCTION_LOG_END();
+
+    ProtocolServer *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Start TLS
+        IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
+
+        result = protocolServerNew(
+            PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
+            ioSessionIoWrite(tlsSession));
+
+        // If session is authenticated
+        if (ioSessionAuthenticated(tlsSession))
+        {
+            TRY_BEGIN()
+            {
+                // Get list of authorized stanzas for this client
+                CHECK(cfgOptionTest(cfgOptTlsServerAuth));
+                const String *const clientAuthList = strDup(
+                    varStr(kvGet(cfgOptionKv(cfgOptTlsServerAuth), VARSTR(ioSessionPeerName(tlsSession)))));
+
+                // Error if the client is not authorized for anything
+                if (clientAuthList == NULL)
+                    THROW(AccessError, "access denied");
+
+                // Get parameter list from the client and load it
+                const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
+                CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
+
+                StringList *const paramList = pckReadStrLstP(pckReadNew(command.param));
+                strLstInsert(paramList, 0, cfgExe());
+                cfgLoad(strLstSize(paramList), strLstPtr(paramList));
+
+                // Error if the client is authorized for the requested stanza
+                if (!protocolServerAuthorize(clientAuthList, cfgOptionStrNull(cfgOptStanza)))
+                    THROW(AccessError, "access denied");
+            }
+            CATCH_ANY()
+            {
+                protocolServerError(result, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
+                RETHROW();
+            }
+            TRY_END();
+
+            // Ack the config command
+            protocolServerDataEndPut(result);
+
+            ioSessionMove(tlsSession, memContextPrior());
+            protocolServerMove(result, memContextPrior());
+        }
+        // Else the client can only detect that the server is alive
+        else
+        {
+            // Send a data end message and return a NULL server. Do not waste time looking at what the client wrote.
+            protocolServerDataEndPut(result);
+
+            // Set result to NULL so there is no server for the caller to use. The TLS session will be freed when the temp mem
+            // context ends.
+            result = NULL;
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER, result);
 }
 
 /***********************************************************************************************************************************
@@ -511,22 +636,84 @@ protocolRemoteExec(
 
     ASSERT(helper != NULL);
 
-    // Execute the protocol command
-    const char *const host =
-        strZ(cfgOptionIdxStr(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx));
+    // Get remote info
+    const bool isRepo = protocolStorageType == protocolStorageTypeRepo;
+    const StringId remoteType = cfgOptionIdxStrId(isRepo ? cfgOptRepoHostType : cfgOptPgHostType, hostIdx);
+    const String *const host = cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx);
 
-    helper->exec = execNew(
-        cfgOptionStr(cfgOptCmdSsh), protocolRemoteParamSsh(protocolStorageType, hostIdx),
-        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, host), cfgOptionUInt64(cfgOptProtocolTimeout));
-    execOpen(helper->exec);
+    // Handle remote types
+    IoRead *read;
+    IoWrite *write;
+
+    switch (remoteType)
+    {
+        // SSH remote
+        case CFGOPTVAL_REPO_HOST_TYPE_SSH:
+        {
+            // Exec SSH
+            helper->exec = execNew(
+                cfgOptionStr(cfgOptCmdSsh), protocolRemoteParamSsh(protocolStorageType, hostIdx),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(host)),
+                cfgOptionUInt64(cfgOptProtocolTimeout));
+            execOpen(helper->exec);
+
+            read = execIoRead(helper->exec);
+            write = execIoWrite(helper->exec);
+
+            break;
+        }
+
+        // TLS remote
+        default:
+        {
+            ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
+
+            // Negotiate TLS
+            helper->ioClient = tlsClientNew(
+                sckClientNew(
+                    host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx),
+                    cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptProtocolTimeout)),
+                host, cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptProtocolTimeout), true,
+                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaFile : cfgOptPgHostCaFile, hostIdx),
+                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaPath : cfgOptPgHostCaPath, hostIdx),
+                cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
+                cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx));
+            helper->ioSession = ioClientOpen(helper->ioClient);
+
+            read = ioSessionIoRead(helper->ioSession);
+            write = ioSessionIoWrite(helper->ioSession);
+
+            break;
+        }
+    }
 
     // Create protocol object
     helper->client = protocolClientNew(
-        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, host), PROTOCOL_SERVICE_REMOTE_STR,
-        execIoRead(helper->exec), execIoWrite(helper->exec));
+        strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u %s protocol on '%s'", processId, strZ(strIdToStr(remoteType)), strZ(host)),
+        PROTOCOL_SERVICE_REMOTE_STR, read, write);
 
-    // Move client to exec context so they are freed together
-    protocolClientMove(helper->client, execMemContext(helper->exec));
+    // Remote initialization
+    switch (remoteType)
+    {
+        // SSH remote
+        case CFGOPTVAL_REPO_HOST_TYPE_SSH:
+            // Move client to exec context so they are freed together
+            protocolClientMove(helper->client, execMemContext(helper->exec));
+            break;
+
+        // TLS remote
+        default:
+        {
+            ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
+
+            // Pass parameters to server
+            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
+            pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
+            protocolClientExecute(helper->client, command, false);
+
+            break;
+        }
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }

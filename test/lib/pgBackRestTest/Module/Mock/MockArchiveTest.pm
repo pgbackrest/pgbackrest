@@ -83,12 +83,12 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM2, remote => false, storage =>    S3, encrypt =>  true, compress => BZ2},
-        {vm => VM2, remote =>  true, storage => POSIX, encrypt =>  true, compress => BZ2},
-        {vm => VM3, remote => false, storage => POSIX, encrypt =>  true, compress => LZ4},
-        {vm => VM3, remote =>  true, storage =>    S3, encrypt => false, compress => ZST},
-        {vm => VM4, remote => false, storage => AZURE, encrypt =>  true, compress => ZST},
-        {vm => VM4, remote =>  true, storage => POSIX, encrypt => false, compress =>  GZ},
+        {vm => VM2, remote => false, tls => false, storage =>    S3, encrypt =>  true, compress => BZ2},
+        {vm => VM2, remote =>  true, tls => false, storage => POSIX, encrypt =>  true, compress => BZ2},
+        {vm => VM3, remote => false, tls => false, storage => POSIX, encrypt =>  true, compress => LZ4},
+        {vm => VM3, remote =>  true, tls =>  true, storage =>    S3, encrypt => false, compress => ZST},
+        {vm => VM4, remote => false, tls => false, storage => AZURE, encrypt =>  true, compress => ZST},
+        {vm => VM4, remote =>  true, tls =>  true, storage => POSIX, encrypt => false, compress =>  GZ},
     )
     {
         # Only run tests for this vm
@@ -96,16 +96,18 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bRemote = $rhRun->{remote};
+        my $bTls = $rhRun->{tls};
         my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
         my $strCompressType = $rhRun->{compress};
 
-        if (!$self->begin("rmt ${bRemote}, storage ${strStorage}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
+        if (!$self->begin("rmt ${bRemote}, tls ${bTls}, storage ${strStorage}, enc ${bEncrypt}, cmp ${strCompressType}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
-            strCompressType => NONE});
+            true, $self->expect(),
+            {bHostBackup => $bRemote, bTls => $bTls, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
+                strCompressType => NONE});
 
         # Reduce console logging to detail
         $oHostDbPrimary->configUpdate({&CFGDEF_SECTION_GLOBAL => {'log-level-console' => lc(DETAIL)}});

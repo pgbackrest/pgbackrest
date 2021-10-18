@@ -305,16 +305,28 @@ unit:
 
         coverage:
           - common/io/client
+          - common/io/server
           - common/io/session
           - common/io/tls/client
+          - common/io/tls/common
+          - common/io/tls/server
           - common/io/tls/session
           - common/io/socket/client
           - common/io/socket/common
+          - common/io/socket/server
           - common/io/socket/session
 
         include:
           - common/io/fdRead
           - common/io/read
+
+        depend:
+          - storage/posix/read
+          - storage/posix/storage
+          - storage/posix/write
+          - storage/read
+          - storage/storage
+          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
@@ -343,14 +355,6 @@ unit:
 
         coverage:
           - common/ini
-
-        depend:
-          - storage/posix/read
-          - storage/posix/storage
-          - storage/posix/write
-          - storage/read
-          - storage/storage
-          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress
@@ -448,7 +452,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol
-        total: 7
+        total: 8
         harness:
           name: protocol
           shim:
@@ -856,6 +860,14 @@ unit:
 
         coverage:
           - command/local/local
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: server
+        total: 2
+
+        coverage:
+          - command/server/ping
+          - command/server/server
 
 # **********************************************************************************************************************************
 # Integration tests

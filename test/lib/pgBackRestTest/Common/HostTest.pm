@@ -42,6 +42,7 @@ sub new
         $self->{strOption},
         $self->{strParam},
         $self->{bHostUpdate},
+        $self->{strEntryPoint},
     ) =
         logDebugParam
         (
@@ -55,6 +56,7 @@ sub new
             {name => 'strOption', required => false, trace => true},
             {name => 'strParam', required => false, trace => true},
             {name => 'bHostUpdate', required => false, trace => true, default => true},
+            {name => 'strEntryPoint', required => false, trace => true},
         );
 
     executeTest("docker rm -f $self->{strContainer}", {bSuppressError => true});
@@ -62,6 +64,7 @@ sub new
     executeTest("docker run -itd -h $self->{strName} --name=$self->{strContainer}" .
                 (defined($self->{strOption}) ? ' ' . $self->{strOption} : '') .
                 (defined($self->{stryMount}) ? ' -v ' . join(' -v ', @{$self->{stryMount}}) : '') .
+                (defined($self->{strEntryPoint}) ? " --entrypoint=$self->{strEntryPoint} --user=$self->{strUser}" : '') .
                 " $self->{strImage} " . (defined($self->{strParam}) ? ' ' . $self->{strParam} : ''),
                 {bSuppressStdErr => true});
 
