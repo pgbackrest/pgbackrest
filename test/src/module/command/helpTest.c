@@ -222,6 +222,8 @@ testRun(void)
             "\n"
             "  --buffer-size                    buffer size for file operations\n"
             "                                   [current=32768, default=1048576]\n"
+            "  --cmd                            utilize provided command when generating\n"
+            "                                   internal command invocations\n"
             "  --cmd-ssh                        path to ssh client executable [default=ssh]\n"
             "  --compress-level-network         network compression level [default=3]\n"
             "  --config                         pgBackRest configuration file\n"
