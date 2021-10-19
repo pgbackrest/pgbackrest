@@ -744,7 +744,7 @@ cfgOptionIdxInternal(
     FUNCTION_TEST_RETURN(result);
 }
 
-const Variant *
+Variant *
 cfgOptionIdxVar(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -758,7 +758,31 @@ cfgOptionIdxVar(const ConfigOption optionId, const unsigned int optionIdx)
         (configLocal->option[optionId].group && optionIdx <
             configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
-    FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].valueVar);
+    if (configLocal->option[optionId].index[optionIdx].set)
+    {
+        switch (configLocal->option[optionId].dataType)
+        {
+            case cfgOptDataTypeBoolean:
+                FUNCTION_TEST_RETURN(varNewBool(configLocal->option[optionId].index[optionIdx].value.boolean));
+
+            case cfgOptDataTypeHash:
+                FUNCTION_TEST_RETURN(varNewKv(kvDup(configLocal->option[optionId].index[optionIdx].value.keyValue)));
+
+            case cfgOptDataTypeInteger:
+                FUNCTION_TEST_RETURN(varNewInt64(configLocal->option[optionId].index[optionIdx].value.integer));
+
+            case cfgOptDataTypeList:
+                FUNCTION_TEST_RETURN(varNewVarLst(configLocal->option[optionId].index[optionIdx].value.list));
+
+            default:
+                ASSERT(configLocal->option[optionId].dataType == cfgOptDataTypeString);
+                break;
+        }
+
+        FUNCTION_TEST_RETURN(varNewStr(configLocal->option[optionId].index[optionIdx].value.string));
+    }
+
+    FUNCTION_TEST_RETURN(NULL);
 }
 
 bool

@@ -121,9 +121,9 @@ unsigned int cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key);
 unsigned int cfgOptionIdxTotal(ConfigOption optionId);
 
 // Get config option as a Variant
-const Variant *cfgOptionIdxVar(ConfigOption optionId, unsigned int optionIdx);
+Variant *cfgOptionIdxVar(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline const Variant *
+__attribute__((always_inline)) static inline Variant *
 cfgOptionVar(const ConfigOption optionId)
 {
     return cfgOptionIdxVar(optionId, cfgOptionIdxDefault(optionId));
