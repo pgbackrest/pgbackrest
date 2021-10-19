@@ -161,6 +161,12 @@ else
     # Add additional warnings
     AC_SUBST(CFLAGS, "${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith")
     AC_SUBST(CFLAGS, "${CFLAGS} -Wvla")
+
+    # Add error on warnings and stop on first error
+    AC_SUBST(CFLAGS, "${CFLAGS} -Werror -Wfatal-errors")
+
+    # Add debug info
+    AC_SUBST(CFLAGS, "${CFLAGS} -g")
 fi
 
 # Write output

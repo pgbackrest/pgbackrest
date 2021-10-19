@@ -531,7 +531,7 @@ eval
             &log(INFO, "autogenerate code");
 
             # Build code
-            executeTest("CFLAGS='-Wfatal-errors -g' make -C ${strBuildPath} build-config build-error build-help");
+            executeTest("make -C ${strBuildPath} build-config build-error build-help");
 
             if ($bGenOnly)
             {
@@ -693,7 +693,6 @@ eval
 
                     # Build configure/compile options and see if they have changed from the previous build
                     my $strCFlags =
-                        "-Wfatal-errors -g" .
                         (vmWithBackTrace($strBuildVM) && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
                         ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
                     my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace  ? '-lbacktrace' : '';

@@ -4384,6 +4384,14 @@ fi
 
     CFLAGS="${CFLAGS} -Wvla"
 
+
+    # Add error on warnings and stop on first error
+    CFLAGS="${CFLAGS} -Werror -Wfatal-errors"
+
+
+    # Add debug info
+    CFLAGS="${CFLAGS} -g"
+
 fi
 
 # Write output
@@ -5664,4 +5672,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 999f26c80409188dd6ae0d2e9fed7e56d765b056
+# Generated from src/build/configure.ac sha1 b69b4dba61cbc695a6e947f8415d430163db8821
