@@ -969,7 +969,6 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
     {
         // Set the source
         configLocal->option[optionId].index[optionIdx].source = source;
-        configLocal->option[optionId].index[optionIdx].set = true;
 
         // Only set value if it is not null
         if (value != NULL)
@@ -1024,9 +1023,17 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                 default:
                     THROW_FMT(AssertError, "set not available for option type %u", cfgParseOptionType(optionId));
             }
+
+            configLocal->option[optionId].index[optionIdx].set = true;
         }
         else
+        {
+            configLocal->option[optionId].index[optionIdx].set = false;
             configLocal->option[optionId].index[optionIdx].valueVar = NULL;
+
+            // !!! FIND A WAY TO IMPROVE THIS -- SEEMS LIKE SET SHOULD BE ENOUGH
+            configLocal->option[optionId].index[optionIdx].valueStr = NULL;
+        }
 
         // Clear the display value, which will be generated when needed
         configLocal->option[optionId].index[optionIdx].display = NULL;
@@ -1092,7 +1099,7 @@ cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx)
          (configLocal->option[optionId].group && optionIdx <
           configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal)));
 
-    FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configLocal->option[optionId].index[optionIdx].valueVar != NULL);
+    FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configLocal->option[optionId].index[optionIdx].set);
 }
 
 /**********************************************************************************************************************************/
