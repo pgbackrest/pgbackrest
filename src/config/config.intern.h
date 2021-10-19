@@ -23,6 +23,7 @@ cfgInit() to load it as the current configuration. Various cfg*() functions prov
 ***********************************************************************************************************************************/
 typedef struct ConfigOptionValue
 {
+    bool set;                                                   // Is the option set?
     bool negate;                                                // Is the option negated?
     bool reset;                                                 // Is the option reset?
     unsigned int source;                                        // Where the option came from, i.e. ConfigSource enum
@@ -31,10 +32,12 @@ typedef struct ConfigOptionValue
 
     union
     {
-        bool valueBool;
-        StringId valueStrId;
-        const String *valueStr;
-        int64_t valueInt;
+        bool valueBool;                                         // Boolean
+        int64_t valueInt;                                       // Integer
+        const KeyValue *valueKv;                                // KeyValue
+        const VariantList *valueLst;                            // VariantList
+        // StringId valueStrId;                                    // StringId !!! DO THIS?
+        const String *valueStr;                                 // String
     };
 } ConfigOptionValue;
 

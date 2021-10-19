@@ -2090,7 +2090,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                     // Is the value set for this option?
                     bool optionSet =
-                        parseOptionValue->found && (optionType == cfgOptTypeBoolean || !parseOptionValue->negate) &&
+                            parseOptionValue->found && (optionType == cfgOptTypeBoolean || !parseOptionValue->negate) &&
                         !parseOptionValue->reset;
 
                     // Initialize option value and set negate and reset flag
@@ -2181,6 +2181,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         // Is the option set?
                         if (optionSet)
                         {
+                            configOptionValue->set = true;
                             configOptionValue->source = parseOptionValue->source;
 
                             if (optionType == cfgOptTypeBoolean)
@@ -2190,15 +2191,13 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             }
                             else if (optionType == cfgOptTypeHash)
                             {
-                                Variant *value = NULL;
+                                KeyValue *value = NULL;
 
                                 MEM_CONTEXT_BEGIN(config->memContext)
                                 {
-                                    value = varNewKv(kvNew());
+                                    value = kvNew();
                                 }
                                 MEM_CONTEXT_END();
-
-                                KeyValue *keyValue = varKv(value);
 
                                 for (unsigned int listIdx = 0; listIdx < strLstSize(parseOptionValue->valueList); listIdx++)
                                 {
@@ -2213,16 +2212,23 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
 
-                                    kvPut(keyValue, VARSTR(strNewZN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
+                                    kvPut(value, VARSTR(strNewZN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
                                 }
 
-                                configOptionValue->valueVar = value;
+                                configOptionValue->valueKv = value;
+
+                                MEM_CONTEXT_BEGIN(config->memContext)
+                                {
+                                    configOptionValue->valueVar = varNewKv(value);
+                                }
+                                MEM_CONTEXT_END();
                             }
                             else if (optionType == cfgOptTypeList)
                             {
                                 MEM_CONTEXT_BEGIN(config->memContext)
                                 {
-                                    configOptionValue->valueVar = varNewVarLst(varLstNewStrLst(parseOptionValue->valueList));
+                                    configOptionValue->valueLst = varLstNewStrLst(parseOptionValue->valueList);
+                                    configOptionValue->valueVar = varNewVarLst(configOptionValue->valueLst);
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -2327,6 +2333,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                     MEM_CONTEXT_BEGIN(config->memContext)
                                     {
                                         configOptionValue->valueVar = varNewStr(value);
+                                        configOptionValue->valueStr = strDup(value);
                                     }
                                     MEM_CONTEXT_END();
                                 }
@@ -2415,6 +2422,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             // If the option has a default
                             if (found)
                             {
+                                configOptionValue->set = true;
+
                                 switch (cfgParseOptionDataType(optionId))
                                 {
                                     case cfgOptDataTypeBoolean:
@@ -2425,8 +2434,13 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                         configOptionValue->valueInt = varInt64(optionalRules.defaultValue);
                                         break;
 
-                                    default:
+                                    case cfgOptDataTypeString:
+                                    {
+                                        ASSERT(cfgParseOptionDataType(optionId) == cfgOptDataTypeString);
+
+                                        configOptionValue->valueStr = optionalRules.defaultRaw;
                                         break;
+                                    }
                                 }
 
                                 configOptionValue->valueVar = optionalRules.defaultValue;

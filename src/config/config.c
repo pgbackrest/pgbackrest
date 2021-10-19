@@ -405,6 +405,7 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(configLocal->option[optionId].valid);
+    ASSERT(cfgParseOptionType(optionId) == cfgOptTypeString || cfgParseOptionType(optionId) == cfgOptTypePath);
 
     MEM_CONTEXT_BEGIN(configLocal->memContext)
     {
@@ -419,7 +420,9 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
         {
             if (configLocal->option[optionId].index[optionIdx].source == cfgSourceDefault)
             {
+                configLocal->option[optionId].index[optionIdx].set = true;
                 configLocal->option[optionId].index[optionIdx].valueVar = defaultValue;
+                configLocal->option[optionId].index[optionIdx].valueStr = varStr(defaultValue);
                 configLocal->option[optionId].index[optionIdx].display = NULL;
             }
         }
@@ -725,7 +728,7 @@ cfgOptionIdxInternal(
     // If the option is not NULL then check it is the requested type
     const ConfigOptionValue *const result = &configLocal->option[optionId].index[optionIdx];
 
-    if (result->valueVar != NULL)
+    if (result->set)
     {
         if (varType(result->valueVar) != typeRequested)
         {
@@ -829,7 +832,7 @@ cfgOptionIdxKv(ConfigOption optionId, unsigned int optionIdx)
         FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(KEY_VALUE, varKv(cfgOptionIdxInternal(optionId, optionIdx, varTypeKeyValue, false)->valueVar));
+    FUNCTION_LOG_RETURN_CONST(KEY_VALUE, cfgOptionIdxInternal(optionId, optionIdx, varTypeKeyValue, false)->valueKv);
 }
 
 const KeyValue *
@@ -840,7 +843,7 @@ cfgOptionIdxKvNull(ConfigOption optionId, unsigned int optionIdx)
         FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(KEY_VALUE, varKv(cfgOptionIdxInternal(optionId, optionIdx, varTypeKeyValue, true)->valueVar));
+    FUNCTION_LOG_RETURN_CONST(KEY_VALUE, cfgOptionIdxInternal(optionId, optionIdx, varTypeKeyValue, true)->valueKv);
 }
 
 const VariantList *
@@ -853,19 +856,20 @@ cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx)
 
     ASSERT(configLocal != NULL);
 
-    const Variant *optionValue = cfgOptionIdxInternal(optionId, optionIdx, varTypeVariantList, true)->valueVar;
+    const VariantList *optionValue = cfgOptionIdxInternal(optionId, optionIdx, varTypeVariantList, true)->valueLst;
 
     if (optionValue == NULL)
     {
         MEM_CONTEXT_BEGIN(configLocal->memContext)
         {
-            optionValue = varNewVarLst(varLstNew());
-            configLocal->option[optionId].index[optionIdx].valueVar = optionValue;
+            optionValue = varLstNew();
+            configLocal->option[optionId].index[optionIdx].valueLst = optionValue;
+            configLocal->option[optionId].index[optionIdx].valueVar = varNewVarLst(optionValue);
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(optionValue));
+    FUNCTION_LOG_RETURN_CONST(VARIANT_LIST, optionValue);
 }
 
 const String *
@@ -876,7 +880,7 @@ cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx)
         FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionIdxInternal(optionId, optionIdx, varTypeString, false)->valueVar));
+    FUNCTION_LOG_RETURN_CONST(STRING, cfgOptionIdxInternal(optionId, optionIdx, varTypeString, false)->valueStr);
 }
 
 const String *
@@ -887,7 +891,7 @@ cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx)
         FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionIdxInternal(optionId, optionIdx, varTypeString, true)->valueVar));
+    FUNCTION_LOG_RETURN_CONST(STRING, cfgOptionIdxInternal(optionId, optionIdx, varTypeString, true)->valueStr);
 }
 
 // Helper to convert option String values to StringIds. Some options need 6-bit encoding while most work fine with 5-bit encoding.
@@ -902,7 +906,7 @@ cfgOptionStrIdInternal(
         FUNCTION_TEST_PARAM(UINT, optionIdx);
     FUNCTION_TEST_END();
 
-    const String *const value = varStr(cfgOptionIdxInternal(optionId, optionIdx, varTypeString, false)->valueVar);
+    const String *const value = cfgOptionIdxInternal(optionId, optionIdx, varTypeString, false)->valueStr;
     StringId result = 0;
 
     TRY_BEGIN()
@@ -965,6 +969,7 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
     {
         // Set the source
         configLocal->option[optionId].index[optionIdx].source = source;
+        configLocal->option[optionId].index[optionIdx].set = true;
 
         // Only set value if it is not null
         if (value != NULL)
@@ -1003,7 +1008,10 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                 case cfgOptTypeString:
                 {
                     if (varType(value) == varTypeString)
+                    {
                         configLocal->option[optionId].index[optionIdx].valueVar = varDup(value);
+                        configLocal->option[optionId].index[optionIdx].valueStr = strDup(varStr(value));
+                    }
                     else
                     {
                         THROW_FMT(
