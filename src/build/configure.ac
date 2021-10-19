@@ -40,39 +40,6 @@ AC_LINK_IFELSE(
     [AC_LANG_PROGRAM([], [[int x; static int y[__builtin_types_compatible_p(__typeof__(x), int)];]])],
     [AC_DEFINE(HAVE_BUILTIN_TYPES_COMPATIBLE_P)])
 
-# Set warnings and optimizations based on build type (i.e. production or test)
-# ----------------------------------------------------------------------------------------------------------------------------------
-AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough")
-
-# -Wno-clobbered is not supported on all compilers
-AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [AC_SUBST(CFLAGS, "${CFLAGS} -Wno-clobbered")], [], [-Werror])
-
-AC_ARG_ENABLE(
-    test, [AS_HELP_STRING([--enable-test], [enable internal test code and assertions for debugging])])
-
-if test "$enable_test" != yes
-then
-    AC_DEFINE(NDEBUG)
-
-    # Enable optimizations if not testing and they have not been disabled
-    AC_ARG_ENABLE(optimize, [AS_HELP_STRING([--disable-optimize], [disable compiler optimizations])])
-
-    if test "$enable_optimize" != no
-    then
-        AC_SUBST(CFLAGS, "${CFLAGS} -O2")
-        AC_SUBST(CFLAGS_PAGE_CHECKSUM, "-funroll-loops -ftree-vectorize")
-    fi
-else
-    # Check for optional warnings (note that these must be checked before the additional warnings below are added)
-    AX_CHECK_COMPILE_FLAG([-Wformat-signedness], [AC_SUBST(CFLAGS, "${CFLAGS} -Wformat-signedness")], [], [-Werror])
-    AX_CHECK_COMPILE_FLAG([-Wduplicated-branches], [AC_SUBST(CFLAGS, "${CFLAGS} -Wduplicated-branches")], [], [-Werror])
-    AX_CHECK_COMPILE_FLAG([-Wduplicated-cond], [AC_SUBST(CFLAGS, "${CFLAGS} -Wduplicated-cond")], [], [-Werror])
-
-    # Add additional warnings
-    AC_SUBST(CFLAGS, "${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith")
-    AC_SUBST(CFLAGS, "${CFLAGS} -Wvla")
-fi
-
 # Include the build directory
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_SUBST(CPPFLAGS, "${CPPFLAGS} -I.")
@@ -162,6 +129,39 @@ AC_ARG_WITH(
     [configdir], [AS_HELP_STRING([--with-configdir=DIR], [default configuration path])],
     [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["${withval}"])],
     [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["/etc/" PROJECT_BIN])])
+
+# Set warnings and optimizations based on build type (i.e. production or test)
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough")
+
+# -Wno-clobbered is not supported on all compilers
+AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [AC_SUBST(CFLAGS, "${CFLAGS} -Wno-clobbered")], [], [-Werror])
+
+AC_ARG_ENABLE(
+    test, [AS_HELP_STRING([--enable-test], [enable internal test code and assertions for debugging])])
+
+if test "$enable_test" != yes
+then
+    AC_DEFINE(NDEBUG)
+
+    # Enable optimizations if not testing and they have not been disabled
+    AC_ARG_ENABLE(optimize, [AS_HELP_STRING([--disable-optimize], [disable compiler optimizations])])
+
+    if test "$enable_optimize" != no
+    then
+        AC_SUBST(CFLAGS, "${CFLAGS} -O2")
+        AC_SUBST(CFLAGS_PAGE_CHECKSUM, "-funroll-loops -ftree-vectorize")
+    fi
+else
+    # Check for optional warnings (note that these must be checked before the additional warnings below are added)
+    AX_CHECK_COMPILE_FLAG([-Wformat-signedness], [AC_SUBST(CFLAGS, "${CFLAGS} -Wformat-signedness")], [], [-Werror])
+    AX_CHECK_COMPILE_FLAG([-Wduplicated-branches], [AC_SUBST(CFLAGS, "${CFLAGS} -Wduplicated-branches")], [], [-Werror])
+    AX_CHECK_COMPILE_FLAG([-Wduplicated-cond], [AC_SUBST(CFLAGS, "${CFLAGS} -Wduplicated-cond")], [], [-Werror])
+
+    # Add additional warnings
+    AC_SUBST(CFLAGS, "${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith")
+    AC_SUBST(CFLAGS, "${CFLAGS} -Wvla")
+fi
 
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
