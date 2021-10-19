@@ -1696,7 +1696,7 @@ testRun(void)
 
         TEST_ERROR(cfgOptionDisplay(cfgOptTarget), AssertError, "option 'target' is not valid for the current command");
         TEST_ERROR(cfgOptionLst(cfgOptDbInclude), AssertError, "option 'db-include' is not valid for the current command");
-        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg1-path' is type 4 but 3 was requested");
+        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg1-path' is type 4 but 1 was requested");
 
         TEST_RESULT_VOID(cfgOptionInvalidate(cfgOptPgPath), "invalidate pg-path");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), false, "pg-path no longer valid");
@@ -1875,7 +1875,8 @@ testRun(void)
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProcessMax, cfgSourceParam, VARINT64(51)), "set process-max to 51");
         TEST_RESULT_INT(cfgOptionInt(cfgOptProcessMax), 51, "check process-max");
 
-        TEST_ERROR(cfgOptionSet(cfgOptDbInclude, cfgSourceParam, VARINT(1)), AssertError, "set not available for option type 3");
+        TEST_ERROR(
+            cfgOptionSet(cfgOptDbInclude, cfgSourceParam, VARINT(1)), AssertError, "set not available for option data type 3");
 
         TEST_ERROR(
             cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, VARINT(1)), AssertError,

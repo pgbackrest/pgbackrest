@@ -32,13 +32,13 @@ typedef struct ConfigOptionValue
 
     union
     {
-        bool valueBool;                                         // Boolean
-        int64_t valueInt;                                       // Integer
-        const KeyValue *valueKv;                                // KeyValue
-        const VariantList *valueLst;                            // VariantList
+        bool boolean;                                           // Boolean
+        int64_t integer;                                        // Integer
+        const KeyValue *keyValue;                               // KeyValue
+        const VariantList *list;                                // VariantList
         // StringId valueStrId;                                    // StringId !!! DO THIS?
-        const String *valueStr;                                 // String
-    };
+        const String *string;                                   // String
+    } value;
 } ConfigOptionValue;
 
 typedef struct Config
@@ -76,6 +76,7 @@ typedef struct Config
         bool valid;                                                 // Is option valid for current command?
         bool group;                                                 // In a group?
         unsigned int groupId;                                       // Id if in a group
+        ConfigOptionDataType dataType;                              // Underlying data type
         const String *defaultValue;                                 // Default value
         ConfigOptionValue *index;                                   // List of indexed values (only 1 unless the option is indexed)
     } option[CFG_OPTION_TOTAL];
