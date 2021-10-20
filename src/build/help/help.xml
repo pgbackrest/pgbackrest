@@ -141,11 +141,11 @@
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - CMD KEY -->
-                    <config-key id="cmd" name="Invocation target">
+                    <config-key id="cmd" name="Invocation Target">
                         <summary>Utilize provided command when generating internal command invocations.</summary>
 
                         <text>
-                            <p><backrest/> may generate and invoke commands or populate them into files, for example <file>recovery.conf</file>. pgbackrest utilizes it's invoked name as the executable in these commands.  This will be <cmd>pgbackrest</cmd> unless the pgbackrest executable has been renamed.  The cmd option will inform <backrest/> to utilize the provided value as the executable when generating commands.</p>
+                            <p><backrest/> may generate or invoke commands (to e.g. create the <code>restore_command</code> during the restore process). The executable used to trigger the <backrest/> process will then also be used in those cases, unless the <br-option>cmd</br-option> option is provided.</p>
                         </text>
 
                         <example>/var/lib/pgsql/bin/pgbackrest_wrapper.sh</example>
