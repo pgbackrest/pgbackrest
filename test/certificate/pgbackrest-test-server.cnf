@@ -44,6 +44,6 @@ DNS.7 = backup
 
 # Used in documentation
 # !!! REMOVE ONCE DOCS BUILD THEIR OWN CERTS
-DNS.5 = pg-primary
-DNS.6 = pg-standby
-DNS.7 = repository
+DNS.8 = pg-primary
+DNS.9 = pg-standby
+DNS.10 = repository
