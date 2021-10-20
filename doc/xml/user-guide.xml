@@ -399,6 +399,67 @@
         <p><backrest/> requires passwordless SSH to enable communication between the hosts.</p>
     </block-define>
 
+    <block-define id="setup-tls">
+        <section if="{[os-type-is-debian]}" id="setup-tls">
+            <title>Setup TLS</title>
+
+            <execute-list host="{[setup-tls-host]}">
+                <title>Setup <host>{[setup-tls-host]}</host></title>
+
+                <execute user="root">
+                    <exe-cmd>mkdir -p -m 700 /etc/pgbackrest/cert</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>
+                        cp /pgbackrest/test/certificate/pgbackrest-test-client.key
+                        /etc/pgbackrest/cert/client.key
+                    </exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>
+                        cp /pgbackrest/test/certificate/pgbackrest-test-client.crt
+                        /etc/pgbackrest/cert/client.crt
+                    </exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>
+                        cp /pgbackrest/test/certificate/pgbackrest-test-server.key
+                        /etc/pgbackrest/cert/server.key
+                    </exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>
+                        cp /pgbackrest/test/certificate/pgbackrest-test-server.crt
+                        /etc/pgbackrest/cert/server.crt
+                    </exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>
+                        cp /pgbackrest/test/certificate/pgbackrest-test-ca.crt
+                            /etc/pgbackrest/cert/ca.crt</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>chown -R {[setup-tls-user]} /etc/pgbackrest/cert</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>chmod 600 /etc/pgbackrest/cert/server.crt</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>chmod 600 /etc/pgbackrest/cert/client.crt</exe-cmd>
+                </execute>
+                <execute user="{[setup-tls-user]}">
+                    <exe-cmd>
+                        pgbackrest server-start --tls-server-auth=pgbackrest-client=demo
+                        --tls-server-address=::0
+                        --tls-server-ca-file=/etc/pgbackrest/cert/ca.crt
+                        --tls-server-cert-file=/etc/pgbackrest/cert/server.crt
+                        --tls-server-key-file=/etc/pgbackrest/cert/server.key &amp;
+                    </exe-cmd>
+                </execute>
+            </execute-list>
+        </section>
+    </block-define>
+
     <block-define id="setup-ssh">
         <execute-list host="{[setup-ssh-host]}">
             <title>Create <host>{[setup-ssh-host]}</host> host key pair</title>
@@ -2304,7 +2365,17 @@
             </block>
         </section>
 
-        <section id="setup-ssh">
+        <block if="{[os-type-is-debian]}" id="setup-tls">
+            <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
+            <block-variable-replace key="setup-tls-user">{[br-user]}</block-variable-replace>
+        </block>
+
+        <block if="{[os-type-is-debian]}" id="setup-tls">
+            <block-variable-replace key="setup-tls-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+        </block>
+
+        <section if="{[os-type-is-rhel]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
@@ -2355,7 +2426,11 @@
                 <title>Configure <br-option>pg1-host</br-option>/<br-option>pg1-host-user</br-option> and <br-option>pg1-path</br-option></title>
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="pg1-host-type">tls</backrest-config-option>
                 <backrest-config-option section="demo" key="pg1-host">{[host-pg1]}</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="pg1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="pg1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="pg1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
                 <!-- <backrest-config-option if="{[pg-version]} >= 11" section="demo" key="pg1-host-user">{[br-user]}</backrest-config-option> -->
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
@@ -2372,7 +2447,11 @@
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
 
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="repo1-host-type">tls</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
@@ -2655,8 +2734,13 @@
             </block>
         </section>
 
+        <block if="{[os-type-is-debian]}" id="setup-tls">
+            <block-variable-replace key="setup-tls-host">{[host-pg2]}</block-variable-replace>
+            <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+        </block>
+
         <!-- SECTION => REPLICATION - SETUP-SSH -->
-        <section id="setup-ssh">
+        <section if="{[os-type-is-rhel]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
@@ -2690,7 +2774,11 @@
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
 
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="repo1-host-type">tls</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
@@ -3162,7 +3250,12 @@
             <title>Configure <br-option>pg2-host</br-option>/<br-option>pg2-host-user</br-option> and <br-option>pg2-path</br-option></title>
 
             <backrest-config-option section="demo" key="pg2-path">{[pg-path]}</backrest-config-option>
+            <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="pg2-host-type">tls</backrest-config-option>
             <backrest-config-option section="demo" key="pg2-host">{[host-pg2]}</backrest-config-option>
+            <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="pg2-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+            <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="pg2-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+            <backrest-config-option if="{[os-type-is-debian]}" section="demo" key="pg2-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+
             <!-- <backrest-config-option if="{[pg-version]} >= 11" section="demo"
                 key="pg2-host-user">{[br-user]}</backrest-config-option> -->
 
