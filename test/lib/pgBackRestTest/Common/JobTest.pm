@@ -289,7 +289,7 @@ sub run
                 # Generate Makefile.param
                 my $strMakefileParam =
                     "CFLAGS =" .
-                        " \\\n\t-Werror -Wfatal-errors -g" .
+                        " \\\n\t-DERROR_MESSAGE_BUFFER_SIZE=131072" .
                         ($self->{bProfile} ? " \\\n\t-pg" : '') .
                         (vmArchBits($self->{oTest}->{&TEST_VM}) == 32 ? " \\\n\t-D_FILE_OFFSET_BITS=64" : '') .
                         ($self->{bDebug} ? '' : " \\\n\t-DNDEBUG") .
@@ -298,7 +298,6 @@ sub run
                         ($self->{bDebugTestTrace} && $self->{bDebug} ? " \\\n\t-DDEBUG_TEST_TRACE" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? " \\\n\t-DWITH_BACKTRACE" : '') .
                         ($self->{oTest}->{&TEST_CDEF} ? " \\\n\t$self->{oTest}->{&TEST_CDEF}" : '') .
-                        " -DERROR_MESSAGE_BUFFER_SIZE=131072\n" .
                         "\n" .
                     "\n" .
                     "CFLAGS_TEST =" .
