@@ -1032,7 +1032,7 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
     {
         configLocal->option[optionId].index[optionIdx].set = false;
 
-        // !!! FIND A WAY TO IMPROVE THIS -- SEEMS LIKE SET SHOULD BE ENOUGH?
+        // Pointer values need to be set to null since they can be accessed when the option is not set, e.g. cfgOptionStrNull().
         configLocal->option[optionId].index[optionIdx].value.string = NULL;
     }
 
