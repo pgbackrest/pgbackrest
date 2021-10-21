@@ -337,7 +337,7 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigne
             {
                 cfgOptionIdxSet(
                     cfgOptRepoRetentionArchive, repoIdx, cfgSourceDefault,
-                    varNewUInt(strLstSize(currentBackupList) - numFullExpired));
+                    VARINT64(strLstSize(currentBackupList) - numFullExpired));
             }
         }
     }
