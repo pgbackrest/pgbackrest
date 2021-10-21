@@ -2295,7 +2295,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                 // Else if string make sure it is valid
                                 else
                                 {
-                                    // Make sure it is long enough to be a path
+                                    // Empty strings are not valid
                                     if (strSize(value) == 0)
                                     {
                                         THROW_FMT(
