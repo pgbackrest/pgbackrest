@@ -34,6 +34,8 @@
         <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release.  Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
 
         <p>Documentation for <proper>v1</proper> can be found <link url="{[backrest-url-base]}/1">here</link>.  No further releases are planned for <proper>v1</proper> because <proper>v2</proper> is backward-compatible with <proper>v1</proper> options and repositories.</p>
+
+        <p>Please find us on <link url="{[github-url-base]}">GitHub</link> and give us a star if you like <backrest/>!</p>
     </section>
 
     <section id="features">

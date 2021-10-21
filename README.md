@@ -8,6 +8,8 @@ pgBackRest [v2.35](https://github.com/pgbackrest/pgbackrest/releases/tag/release
 
 Documentation for v1 can be found [here](http://www.pgbackrest.org/1). No further releases are planned for v1 because v2 is backward-compatible with v1 options and repositories.
 
+Please find us on [GitHub](https://github.com/pgbackrest/pgbackrest) and give us a star if you like pgBackRest!
+
 ## Features
 
 ### Parallel Backup & Restore
