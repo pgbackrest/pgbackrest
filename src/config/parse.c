@@ -2027,7 +2027,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     unsigned int optionIdxMax = 0;
                     unsigned int optionKeyIdx = 0;
 
-                    // ??? For the pg group, key 1 is required to maintain compatibilty with older versions. Before removing this
+                    // ??? For the pg group, key 1 is required to maintain compatibility with older versions. Before removing this
                     // constraint the pg group remap to key 1 for remotes will need to be dealt with in the protocol/helper module.
                     if (groupId == cfgOptGrpPg)
                     {

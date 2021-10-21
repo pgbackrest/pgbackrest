@@ -76,7 +76,7 @@ typedef struct DbBackupStartResult
 
 DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto);
 
-// Stop backup and return starting lsn, wal segment name, backup label, and tablspace map
+// Stop backup and return starting lsn, wal segment name, backup label, and tablespace map
 typedef struct DbBackupStopResult
 {
     String *lsn;

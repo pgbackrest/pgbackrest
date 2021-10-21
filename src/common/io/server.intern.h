@@ -16,7 +16,7 @@ typedef struct IoServerInterface
     // Type used to identify the server
     StringId type;
 
-    // Server name, usually address:port or some other unique indentifier
+    // Server name, usually address:port or some other unique identifier
     const String *(*name)(void *driver);
 
     // Accept a session
