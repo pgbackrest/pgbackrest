@@ -220,7 +220,7 @@ cfgLoadUpdateOption(void)
                             cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx))
                         {
                             cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
-                                VARUINT(cfgOptionIdxUInt(cfgOptRepoRetentionFull, optionIdx)));
+                                VARINT64(cfgOptionIdxInt64(cfgOptRepoRetentionFull, optionIdx)));
                         }
 
                         break;
@@ -232,7 +232,7 @@ cfgLoadUpdateOption(void)
                         if (cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx))
                         {
                             cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
-                                VARUINT(cfgOptionIdxUInt(cfgOptRepoRetentionDiff, optionIdx)));
+                                VARINT64(cfgOptionIdxInt64(cfgOptRepoRetentionDiff, optionIdx)));
                         }
                         else
                         {
@@ -346,7 +346,7 @@ cfgLoadUpdateOption(void)
     {
         cfgOptionSet(
             cfgOptCompressLevel, cfgSourceDefault,
-            VARINT(compressLevelDefault(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))));
+            VARINT64(compressLevelDefault(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))));
     }
 
     FUNCTION_LOG_RETURN_VOID();

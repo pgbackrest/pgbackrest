@@ -421,7 +421,6 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
             if (configLocal->option[optionId].index[optionIdx].source == cfgSourceDefault)
             {
                 configLocal->option[optionId].index[optionIdx].set = true;
-                configLocal->option[optionId].index[optionIdx].valueVar = defaultValue;
                 configLocal->option[optionId].index[optionIdx].value.string = varStr(defaultValue);
                 configLocal->option[optionId].index[optionIdx].display = NULL;
             }
@@ -489,7 +488,7 @@ cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
     // Generate the display value based on the type
     MEM_CONTEXT_BEGIN(configLocal->memContext)
     {
-        option->display = cfgOptionDisplayVar(option->valueVar, cfgParseOptionType(optionId));
+        option->display = cfgOptionDisplayVar(cfgOptionIdxVar(optionId, optionIdx), cfgParseOptionType(optionId));
     }
     MEM_CONTEXT_END();
 
@@ -888,7 +887,6 @@ cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx)
         {
             optionValue = varLstNew();
             configLocal->option[optionId].index[optionIdx].value.list = optionValue;
-            configLocal->option[optionId].index[optionIdx].valueVar = varNewVarLst(optionValue);
         }
         MEM_CONTEXT_END();
     }
@@ -989,77 +987,57 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
         (configLocal->option[optionId].group && optionIdx <
             configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
-    MEM_CONTEXT_BEGIN(configLocal->memContext)
+    // Set the source
+    configLocal->option[optionId].index[optionIdx].source = source;
+
+    // Only set value if it is not null
+    if (value != NULL)
     {
-        // Set the source
-        configLocal->option[optionId].index[optionIdx].source = source;
-
-        // Only set value if it is not null
-        if (value != NULL)
+        switch (configLocal->option[optionId].dataType)
         {
-            switch (configLocal->option[optionId].dataType)
+            case cfgOptDataTypeBoolean:
+                configLocal->option[optionId].index[optionIdx].value.boolean = varBool(value);
+                break;
+
+            case cfgOptDataTypeInteger:
+                configLocal->option[optionId].index[optionIdx].value.integer = varInt64(value);
+                break;
+
+            case cfgOptDataTypeString:
             {
-                case cfgOptDataTypeBoolean:
+                if (varType(value) == varTypeString)
                 {
-                    if (varType(value) == varTypeBool)
-                        configLocal->option[optionId].index[optionIdx].valueVar = varDup(value);
-                    else
-                        configLocal->option[optionId].index[optionIdx].valueVar = varNewBool(varBoolForce(value));
-
-                    configLocal->option[optionId].index[optionIdx].value.boolean = varBool(
-                        configLocal->option[optionId].index[optionIdx].valueVar);
-
-                    break;
-                }
-
-                case cfgOptDataTypeInteger:
-                {
-                    if (varType(value) == varTypeInt64)
-                        configLocal->option[optionId].index[optionIdx].valueVar = varDup(value);
-                    else
-                        configLocal->option[optionId].index[optionIdx].valueVar = varNewInt64(varInt64Force(value));
-
-                    configLocal->option[optionId].index[optionIdx].value.integer = varInt64(
-                        configLocal->option[optionId].index[optionIdx].valueVar);
-
-                    break;
-                }
-
-                case cfgOptDataTypeString:
-                {
-                    if (varType(value) == varTypeString)
+                    MEM_CONTEXT_BEGIN(configLocal->memContext)
                     {
-                        configLocal->option[optionId].index[optionIdx].valueVar = varDup(value);
                         configLocal->option[optionId].index[optionIdx].value.string = strDup(varStr(value));
                     }
-                    else
-                    {
-                        THROW_FMT(
-                            AssertError, "option '%s' must be set with String variant", cfgOptionIdxName(optionId, optionIdx));
-                    }
-
-                    break;
+                    MEM_CONTEXT_END();
+                }
+                else
+                {
+                    THROW_FMT(
+                        AssertError, "option '%s' must be set with String variant", cfgOptionIdxName(optionId, optionIdx));
                 }
 
-                default:
-                    THROW_FMT(AssertError, "set not available for option data type %u", configLocal->option[optionId].dataType);
+                break;
             }
 
-            configLocal->option[optionId].index[optionIdx].set = true;
-        }
-        else
-        {
-            configLocal->option[optionId].index[optionIdx].set = false;
-            configLocal->option[optionId].index[optionIdx].valueVar = NULL;
-
-            // !!! FIND A WAY TO IMPROVE THIS -- SEEMS LIKE SET SHOULD BE ENOUGH?
-            configLocal->option[optionId].index[optionIdx].value.string = NULL;
+            default:
+                THROW_FMT(AssertError, "set not available for option data type %u", configLocal->option[optionId].dataType);
         }
 
-        // Clear the display value, which will be generated when needed
-        configLocal->option[optionId].index[optionIdx].display = NULL;
+        configLocal->option[optionId].index[optionIdx].set = true;
     }
-    MEM_CONTEXT_END();
+    else
+    {
+        configLocal->option[optionId].index[optionIdx].set = false;
+
+        // !!! FIND A WAY TO IMPROVE THIS -- SEEMS LIKE SET SHOULD BE ENOUGH?
+        configLocal->option[optionId].index[optionIdx].value.string = NULL;
+    }
+
+    // Clear the display value, which will be generated when needed
+    configLocal->option[optionId].index[optionIdx].display = NULL;
 
     FUNCTION_TEST_RETURN_VOID();
 }

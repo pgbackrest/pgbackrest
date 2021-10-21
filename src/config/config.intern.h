@@ -21,6 +21,15 @@ The maximum number of keys that an indexed option can have, e.g. pg256-path woul
 Configuration data. These structures are not directly user-created or accessible. configParse() creates the structures and uses
 cfgInit() to load it as the current configuration. Various cfg*() functions provide access.
 ***********************************************************************************************************************************/
+typedef union ConfigOptionValueType
+{
+    bool boolean;                                           // Boolean
+    int64_t integer;                                        // Integer
+    const KeyValue *keyValue;                               // KeyValue
+    const VariantList *list;                                // VariantList
+    const String *string;                                   // String
+} ConfigOptionValueType;
+
 typedef struct ConfigOptionValue
 {
     bool set;                                                   // Is the option set?
@@ -28,17 +37,7 @@ typedef struct ConfigOptionValue
     bool reset;                                                 // Is the option reset?
     unsigned int source;                                        // Where the option came from, i.e. ConfigSource enum
     const String *display;                                      // Current display value, if any. Used for messages, etc.
-    const Variant *valueVar;                                    // !!! TRYING TO GET RID OF THIS!
-
-    union
-    {
-        bool boolean;                                           // Boolean
-        int64_t integer;                                        // Integer
-        const KeyValue *keyValue;                               // KeyValue
-        const VariantList *list;                                // VariantList
-        // StringId valueStrId;                                    // StringId !!! DO THIS?
-        const String *string;                                   // String
-    } value;
+    ConfigOptionValueType value;                                // Option value
 } ConfigOptionValue;
 
 typedef struct Config
