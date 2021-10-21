@@ -156,10 +156,10 @@
         <p><backrest/> strives to be easy to configure and operate:</p>
 
         <list>
-          <list-item><link page="{[backrest-page-user-guide-index]}">User guides</link> for various operating systems and <postgres/> versions.</list-item>
-          <list-item><link page="{[backrest-page-command]}">Command reference</link> for command-line operations.</list-item>
-          <list-item><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating <backrest/> configurations.</list-item>
-      </list>
+            <list-item><link page="{[backrest-page-user-guide-index]}">User guides</link> for various operating systems and <postgres/> versions.</list-item>
+            <list-item><link page="{[backrest-page-command]}">Command reference</link> for command-line operations.</list-item>
+            <list-item><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating <backrest/> configurations.</list-item>
+        </list>
 
         <p>Documentation for <proper>v1</proper> can be found <link url="{[backrest-url-base]}/1">here</link>. No further releases are planned for <proper>v1</proper> because <proper>v2</proper> is backward-compatible with <proper>v1</proper> options and repositories.</p>
     </section>
