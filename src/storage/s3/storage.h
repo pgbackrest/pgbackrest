@@ -18,6 +18,7 @@ typedef enum
 {
     storageS3KeyTypeShared = STRID5("shared", 0x85905130),
     storageS3KeyTypeAuto = STRID5("auto", 0x7d2a10),
+    storageS3KeyTypeWebId = STRID5("web-id", 0x89d88b70),
 } StorageS3KeyType;
 
 /***********************************************************************************************************************************
@@ -40,7 +41,7 @@ Constructors
 Storage *storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, const String *credRole, size_t partSize, const String *host,
-    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+    const String *secretAccessKey, const String *securityToken, const String *credRole, const String *webIdToken, size_t partSize,
+    const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif

@@ -78,6 +78,21 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1203"/>
+                        <github-pull-request id="1527"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="james.callahan"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="benjamin.blattberg"/>
+                            <release-item-reviewer id="andrew.lecuyer"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>WebIdentity</id> authentication for <proper>AWS S3</proper>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1484"/>
                         <github-pull-request id="1508"/>
 
@@ -10142,6 +10157,11 @@
             <contributor-id type="github">bastianwegge</contributor-id>
         </contributor>
 
+        <contributor id="benjamin.blattberg">
+            <contributor-name-display>Benjamin Blattberg</contributor-name-display>
+            <contributor-id type="github">benjaminjb</contributor-id>
+        </contributor>
+
         <contributor id="benoit.lobréau">
             <contributor-name-display>blogh</contributor-name-display>
             <contributor-id type="github">blogh</contributor-id>
@@ -10422,6 +10442,11 @@
         <contributor id="james.badger">
             <contributor-name-display>James Badger</contributor-name-display>
             <contributor-id type="github">openfirmware</contributor-id>
+        </contributor>
+
+        <contributor id="james.callahan">
+            <contributor-name-display>James Callahan</contributor-name-display>
+            <contributor-id type="github">james-callahan</contributor-id>
         </contributor>
 
         <contributor id="james.chanco.jr">
