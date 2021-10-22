@@ -1425,7 +1425,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "command is backup");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), true, "pg1-path is valid");
-        TEST_RESULT_PTR(cfgOption(cfgOptPgPath), NULL, "pg1-path is not set");
+        TEST_RESULT_PTR(cfgOptionVar(cfgOptPgPath), NULL, "pg1-path is not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command argument valid");
@@ -1633,6 +1633,7 @@ testRun(void)
         TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 0, "pg1 is default");
         TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "pg2 is index 2");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "default pg-path");
+        TEST_RESULT_STR_Z(varStr(cfgOptionVar(cfgOptPgPath)), "/path/to/db", "default pg-path as variant");
         TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), true, "pg group is valid");
         TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 3, "pg1, pg2, and pg256 are set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "pg2-local is set");
@@ -1652,6 +1653,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptStartFast), cfgSourceConfig, "start-fast is config param");
         TEST_RESULT_UINT(cfgOptionIdxTotal(cfgOptDelta), 1, "delta not indexed");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "delta not set");
+        TEST_RESULT_BOOL(varBool(cfgOptionVar(cfgOptDelta)), true, "delta as variant");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "delta is source config");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "archive-check is not set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCopy), false, "archive-copy is not set");
@@ -1659,6 +1661,7 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptRepoHardlink), "true", "repo-hardlink display is true");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");
         TEST_RESULT_UINT(cfgOptionUInt(cfgOptRepoRetentionFull), 55, "repo-retention-full is set");
+        TEST_RESULT_INT(varInt64(cfgOptionVar(cfgOptRepoRetentionFull)), 55, "repo-retention-full as variant");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "compress-level is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "backup-standby not is set");
@@ -1696,7 +1699,7 @@ testRun(void)
 
         TEST_ERROR(cfgOptionDisplay(cfgOptTarget), AssertError, "option 'target' is not valid for the current command");
         TEST_ERROR(cfgOptionLst(cfgOptDbInclude), AssertError, "option 'db-include' is not valid for the current command");
-        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg1-path' is type 4 but 3 was requested");
+        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg1-path' is type 4 but 1 was requested");
 
         TEST_RESULT_VOID(cfgOptionInvalidate(cfgOptPgPath), "invalidate pg-path");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), false, "pg-path no longer valid");
@@ -1747,7 +1750,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionIdxInt64(cfgOptBufferSize, 0), 2097152, "buffer-size is set to bytes from MB");
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptBufferSize), "2MB", "buffer-size display is 2MB");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceParam, "buffer-size is source config");
-        TEST_RESULT_PTR(cfgOption(cfgOptSpoolPath), NULL, "spool-path is not set");
+        TEST_RESULT_PTR(cfgOptionVar(cfgOptSpoolPath), NULL, "spool-path is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptSpoolPath), cfgSourceDefault, "spool-path is source default");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1778,7 +1781,7 @@ testRun(void)
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,15000]", "default job retry");
 
         const VariantList *includeList = NULL;
-        TEST_ASSIGN(includeList, cfgOptionLst(cfgOptDbInclude), "get db include options");
+        TEST_ASSIGN(includeList, varVarLst(cfgOptionVar(cfgOptDbInclude)), "get db include options");
         TEST_RESULT_STR_Z(varStr(varLstGet(includeList, 0)), "abc", "check db include option");
         TEST_RESULT_STR_Z(varStr(varLstGet(includeList, 1)), "def", "check db include option");
 
@@ -1798,9 +1801,11 @@ testRun(void)
         TEST_RESULT_PTR(cfgCommandJobRetry(), NULL, "no job retries");
 
         const KeyValue *recoveryKv = NULL;
+        TEST_RESULT_PTR(cfgOptionKvNull(cfgOptLinkMap), NULL, "link map is null");
+        TEST_RESULT_PTR(cfgOptionIdxKvNull(cfgOptLinkMap, 0), NULL, "link map is null");
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("a"))), "b", "check recovery option");
-        TEST_ASSIGN(recoveryKv, cfgOptionIdxKv(cfgOptRecoveryOption, 0), "get recovery options");
+        TEST_ASSIGN(recoveryKv, varKv(cfgOptionIdxVar(cfgOptRecoveryOption, 0)), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("c"))), "de=fg hi", "check recovery option");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "restore command does not require lock");
 
@@ -1858,22 +1863,19 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cfgOptionSet() and cfgOptionIdxSet()");
 
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptForce, cfgSourceParam, VARINT(1)), "set force true");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), true, "check force");
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptForce, cfgSourceParam, VARBOOL(false)), "set force false");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "check force");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptForce, cfgSourceParam, VARBOOL(false)), "set boolean");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "check boolean");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT64(1000)), "set protocol-timeout to 1");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 1000, "check protocol-timeout");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT64(2200)), "set protocol-timeout to 2.2");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 2200, "check protocol-timeout");
 
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptProcessMax, cfgSourceParam, VARINT(50)), "set process-max to 50");
-        TEST_RESULT_INT(cfgOptionInt(cfgOptProcessMax), 50, "check process-max");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProcessMax, cfgSourceParam, VARINT64(51)), "set process-max to 51");
         TEST_RESULT_INT(cfgOptionInt(cfgOptProcessMax), 51, "check process-max");
 
-        TEST_ERROR(cfgOptionSet(cfgOptDbInclude, cfgSourceParam, VARINT(1)), AssertError, "set not available for option type 3");
+        TEST_ERROR(
+            cfgOptionSet(cfgOptDbInclude, cfgSourceParam, VARINT(1)), AssertError, "set not available for option data type 3");
 
         TEST_ERROR(
             cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, VARINT(1)), AssertError,

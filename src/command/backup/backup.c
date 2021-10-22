@@ -386,7 +386,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     CHECK(manifestPriorData->backupOptionCompressLevel != NULL);
 
                     // Set the compression level back to whatever was in the prior backup
-                    cfgOptionSet(cfgOptCompressLevel, cfgSourceParam, manifestPriorData->backupOptionCompressLevel);
+                    cfgOptionSet(
+                        cfgOptCompressLevel, cfgSourceParam, VARINT64(varUInt(manifestPriorData->backupOptionCompressLevel)));
                 }
 
                 // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that

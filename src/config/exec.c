@@ -71,7 +71,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                     if (cfgOptionIdxNegate(optionId, optionIdx))
                         value = BOOL_FALSE_VAR;
                     else if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
-                        value = cfgOptionIdx(optionId, optionIdx);
+                        value = cfgOptionIdxVar(optionId, optionIdx);
                 }
 
                 // If the option was reset

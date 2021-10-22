@@ -101,29 +101,105 @@ Option Functions
 Access option values, indexes, and determine if an option is valid for the current command. Most functions have a variant that
 accepts an index, which currently work with non-indexed options (with optionIdx 0) but they may not always do so.
 ***********************************************************************************************************************************/
-// Get config options for various types
-const Variant *cfgOption(ConfigOption optionId);
-const Variant *cfgOptionIdx(ConfigOption optionId, unsigned int optionIdx);
-bool cfgOptionBool(ConfigOption optionId);
+// Get default index for a group option
+unsigned int cfgOptionIdxDefault(ConfigOption optionId);
+
+// Get boolean config option
 bool cfgOptionIdxBool(ConfigOption optionId, unsigned int optionIdx);
-int cfgOptionInt(ConfigOption optionId);
+
+__attribute__((always_inline)) static inline bool
+cfgOptionBool(const ConfigOption optionId)
+{
+    return cfgOptionIdxBool(optionId, cfgOptionIdxDefault(optionId));
+}
+
+// Get int config option
 int cfgOptionIdxInt(ConfigOption optionId, unsigned int optionIdx);
-int64_t cfgOptionInt64(ConfigOption optionId);
+
+__attribute__((always_inline)) static inline int
+cfgOptionInt(const ConfigOption optionId)
+{
+    return cfgOptionIdxInt(optionId, cfgOptionIdxDefault(optionId));
+}
+
+// Get int64 config option
 int64_t cfgOptionIdxInt64(ConfigOption optionId, unsigned int optionIdx);
-const KeyValue *cfgOptionKv(ConfigOption optionId);
+
+__attribute__((always_inline)) static inline int64_t
+cfgOptionInt64(const ConfigOption optionId)
+{
+    return cfgOptionIdxInt64(optionId, cfgOptionIdxDefault(optionId));
+}
+
+// Get kv config option
 const KeyValue *cfgOptionIdxKv(ConfigOption optionId, unsigned int optionIdx);
-const VariantList *cfgOptionLst(ConfigOption optionId);
+
+__attribute__((always_inline)) static inline const KeyValue *
+cfgOptionKv(const ConfigOption optionId)
+{
+    return cfgOptionIdxKv(optionId, cfgOptionIdxDefault(optionId));
+}
+
+const KeyValue *cfgOptionIdxKvNull(ConfigOption optionId, unsigned int optionIdx);
+
+__attribute__((always_inline)) static inline const KeyValue *
+cfgOptionKvNull(const ConfigOption optionId)
+{
+    return cfgOptionIdxKvNull(optionId, cfgOptionIdxDefault(optionId));
+}
+
+// Get list config option
 const VariantList *cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx);
-const String *cfgOptionStr(ConfigOption optionId);
+
+__attribute__((always_inline)) static inline const VariantList *
+cfgOptionLst(const ConfigOption optionId)
+{
+    return cfgOptionIdxLst(optionId, cfgOptionIdxDefault(optionId));
+}
+
+// Get String config option
 const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx);
-StringId cfgOptionStrId(ConfigOption optionId);
-StringId cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx);
-const String *cfgOptionStrNull(ConfigOption optionId);
+
+__attribute__((always_inline)) static inline const String *
+cfgOptionStr(const ConfigOption optionId)
+{
+    return cfgOptionIdxStr(optionId, cfgOptionIdxDefault(optionId));
+}
+
 const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx);
-unsigned int cfgOptionUInt(ConfigOption optionId);
+
+__attribute__((always_inline)) static inline const String *
+cfgOptionStrNull(const ConfigOption optionId)
+{
+    return cfgOptionIdxStrNull(optionId, cfgOptionIdxDefault(optionId));
+}
+
+// Get StringId config option
+StringId cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx);
+
+__attribute__((always_inline)) static inline StringId
+cfgOptionStrId(const ConfigOption optionId)
+{
+    return cfgOptionIdxStrId(optionId, cfgOptionIdxDefault(optionId));
+}
+
+// Get uint config option
 unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
-uint64_t cfgOptionUInt64(ConfigOption optionId);
+
+__attribute__((always_inline)) static inline unsigned int
+cfgOptionUInt(const ConfigOption optionId)
+{
+    return cfgOptionIdxUInt(optionId, cfgOptionIdxDefault(optionId));
+}
+
+// Get uint64 config option
 uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int optionIdx);
+
+__attribute__((always_inline)) static inline uint64_t
+cfgOptionUInt64(const ConfigOption optionId)
+{
+    return cfgOptionIdxUInt64(optionId, cfgOptionIdxDefault(optionId));
+}
 
 // Format the configuration value for display to the user or passing on a command line. If the value was set by the user via the
 // command line, config, etc., then that exact value will be displayed. This makes it easier for the user to recognize the value and
