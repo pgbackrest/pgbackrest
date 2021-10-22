@@ -73,6 +73,7 @@
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="james.callahan"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="benjamin.blattberg"/>
                             <release-item-reviewer id="andrew.lecuyer"/>
                         </release-item-contributor-list>
 
@@ -10131,6 +10132,11 @@
         <contributor id="bastian.wegge">
             <contributor-name-display>Bastian Wegge</contributor-name-display>
             <contributor-id type="github">bastianwegge</contributor-id>
+        </contributor>
+
+        <contributor id="benjamin.blattberg">
+            <contributor-name-display>Benjamin Blattberg</contributor-name-display>
+            <contributor-id type="github">benjaminjb</contributor-id>
         </contributor>
 
         <contributor id="benoit.lobréau">
