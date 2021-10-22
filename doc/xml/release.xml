@@ -156,6 +156,17 @@
 
                         <p><proper>Add TLS</proper> server.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1543"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Store config values as a union instead of a variant.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
