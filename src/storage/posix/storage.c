@@ -578,7 +578,7 @@ storagePosixNewInternal(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
 
-    // Initialze user module
+    // Initialize user module
     userInit();
 
     // Create the object

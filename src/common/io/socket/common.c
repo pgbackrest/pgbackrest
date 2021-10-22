@@ -23,7 +23,7 @@ static struct SocketLocal
 
     bool block;                                                     // Use blocking mode socket
 
-    bool keepAlive;                                                 // Are socket keep alives enabled?
+    bool keepAlive;                                                 // Is socket keep-alive enabled?
     int tcpKeepAliveCount;                                          // TCP keep alive count (0 disables)
     int tcpKeepAliveIdle;                                           // TCP keep alive idle (0 disables)
     int tcpKeepAliveInterval;                                       // TCP keep alive interval (0 disables)

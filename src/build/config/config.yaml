@@ -16,9 +16,9 @@
 #   all the options passed is usually output at the info level, but that might not be appropriate for some commands, such as info,
 #   Allow the log level to be lowered so these common messages will not be emitted where they might be distracting.
 #
-# log-required:
+# lock-required:
 #   Does the command require a lock? This doesn't mean a lock can't be taken explicitly later, just controls whether a lock will be
-#   acquired as soon at the command starts.
+#   acquired as soon as the command starts.
 #
 # lock-remote-required:
 #   Does the command require a lock on the remote? The lock will only be acquired for process id 0.
@@ -173,15 +173,15 @@ optionGroup:
 # Options
 #
 # Contains the defines for options: which commands the option can/cannot be specified, for which commands it is required, default
-# settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
+# settings, types, ranges, whether the option may be negated, whether it has dependencies, etc. The initial section is the global
 # section, meaning that the defines defined there apply to all commands listed for the option.
 #
 # inherit:
 #   Inherit all definitions for the referenced option. Any definitions can be overridden.
 #
 # command:
-#   List of commands the option can be used with this option. An empty hash signifies that the command does not deviate from the
-#   option defaults. Otherwise, overrides can be specified.
+#   List of commands the option can be used with. An empty hash signifies that the command does not deviate from the option
+#   defaults. Otherwise, overrides can be specified.
 #
 #   If another option is referenced (e.g. command: repo-type) then the list of commands will be copied from the referenced option.
 #
@@ -223,7 +223,7 @@ optionGroup:
 #   If the default is a string output it as-is without quoting. This allows C defines to be used as defaults.
 #
 # negate:
-#   All config file boolean options are automatically negatable. This setting is used to maintain backward compatibility with older
+#   All config file boolean options automatically may be negated. This setting is used to maintain backward compatibility with older
 #   options and should not be used for new options. For instance --online would be named --offline if it were created now to avoid
 #   the need for negation. --no-config is another special case that would now be implemented with a separate boolean option,
 #   e.g. --config-ignore.

@@ -54,7 +54,7 @@ void hrnCfgLoad(ConfigCommand commandId, const StringList *argList, const HrnCfg
 Configuration helper functions
 
 These functions set options in the argument list using the option IDs rather than string constants. Each function has a "Key"
-variant that works with indexed options and allows the key to be specified, e.g. hrnCfgArgKeyRawZ(cfgOptPgpath, 3, "/pg") will add
+variant that works with indexed options and allows the key to be specified, e.g. hrnCfgArgKeyRawZ(cfgOptPgPath, 3, "/pg") will add
 --pg3-path=/pg to the argument list.
 ***********************************************************************************************************************************/
 void hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const String *value);

@@ -16,7 +16,7 @@ typedef struct IoClientInterface
     // Type used to identify the client
     StringId type;
 
-    // Client name, usually host:port or some other unique indentifier
+    // Client name, usually host:port or some other unique identifier
     const String *(*name)(void *driver);
 
     // Open a session
