@@ -29,6 +29,18 @@
 
                         <p>Allow <quote>global</quote> as a stanza prefix.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1536"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="henrik.feldt"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix segfault on invalid <proper>GCS</proper> key file.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -10374,6 +10386,11 @@
         <contributor id="heath.lord">
             <contributor-name-display>Heath Lord</contributor-name-display>
             <contributor-id type="github">crunchyheath</contributor-id>
+        </contributor>
+
+        <contributor id="henrik.feldt">
+            <contributor-name-display>Henrik Feldt</contributor-name-display>
+            <contributor-id type="github">haf</contributor-id>
         </contributor>
 
         <contributor id="ibrahim.edib.kokdemir">
