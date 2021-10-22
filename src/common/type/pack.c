@@ -414,7 +414,7 @@ pckReadNewC(const unsigned char *const buffer, size_t size)
 /***********************************************************************************************************************************
 Read bytes from the buffer
 
-IMPORTANT NOTE: To avoid having dyamically created return buffers the current buffer position (this->bufferPos) is stored in the
+IMPORTANT NOTE: To avoid having dynamically created return buffers the current buffer position (this->bufferPos) is stored in the
 object. Therefore this function should not be used as a parameter in other function calls since the value of this->bufferPos will
 change.
 ***********************************************************************************************************************************/
@@ -1419,7 +1419,7 @@ pckWriteU64Internal(PackWrite *this, uint64_t value)
     unsigned char buffer[PACK_UINT64_SIZE_MAX];
     size_t size = 0;
 
-    // Convert uint64 to varint-128 encloding. Keep writing out bytes while the remaining value is greater than 7 bits.
+    // Convert uint64 to varint-128 encoding. Keep writing out bytes while the remaining value is greater than 7 bits.
     while (value >= 0x80)
     {
         // Encode the lower order 7 bits, adding the continuation bit to indicate there is more data

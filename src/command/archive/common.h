@@ -79,7 +79,7 @@ void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment
 // Write an error status file
 void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message);
 
-// Execute the async process.  This function will only return in the calling process and the implementation is platform depedent.
+// Execute the async process. This function will only return in the calling process and the implementation is platform dependent.
 void archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec);
 
 // Comparator function for sorting archive ids by the database history id (the number after the dash) e.g. 9.4-1, 10-2

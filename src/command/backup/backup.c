@@ -239,7 +239,7 @@ backupInit(const InfoBackup *infoBackup)
         cfgOptionSet(cfgOptStartFast, cfgSourceParam, BOOL_FALSE_VAR);
     }
 
-    // If checksum page is not explicity set then automatically enable it when checksums are available
+    // If checksum page is not explicitly set then automatically enable it when checksums are available
     if (!cfgOptionTest(cfgOptChecksumPage))
     {
         // If online then use the value in pg_control to set checksum-page
@@ -1605,7 +1605,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
-        // exist in to repo.  Also create tablspace symlinks when symlinks are available,  This makes it possible for the user to
+        // exist in to repo. Also create tablespace symlinks when symlinks are available. This makes it possible for the user to
         // make a copy of the backup path and get a valid cluster.
         if (backupType == backupTypeFull || hardLink)
         {

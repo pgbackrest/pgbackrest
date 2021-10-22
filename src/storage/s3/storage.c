@@ -395,7 +395,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         if (this->uriStyle == storageS3UriStylePath)
             path = strNewFmt("/%s%s", strZ(this->bucket), strZ(path));
 
-        // If temp crendentials will be expiring soon then renew them
+        // If temp credentials will be expiring soon then renew them
         if (this->credExpirationTime != 0 && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
         {
             // Free old credentials

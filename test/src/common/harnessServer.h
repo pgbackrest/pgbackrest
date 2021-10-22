@@ -70,15 +70,15 @@ void hrnServerScriptAccept(IoWrite *write);
 // Close the connection
 void hrnServerScriptClose(IoWrite *write);
 
-// Expect the specfified string
+// Expect the specified string
 void hrnServerScriptExpect(IoWrite *write, const String *data);
 void hrnServerScriptExpectZ(IoWrite *write, const char *data);
 
-// Reply with the specfified string
+// Reply with the specified string
 void hrnServerScriptReply(IoWrite *write, const String *data);
 void hrnServerScriptReplyZ(IoWrite *write, const char *data);
 
-// Sleep specfified milliseconds
+// Sleep specified milliseconds
 void hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs);
 
 /***********************************************************************************************************************************

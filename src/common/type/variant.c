@@ -19,7 +19,7 @@ Variant Data Type
 /***********************************************************************************************************************************
 Constant variants that are generally useful
 ***********************************************************************************************************************************/
-// Used to declare Bool Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
+// Used to declare Bool Variant constants that will be extern'd using VARIANT_DECLARE(). Must be used in a .c file.
 #define VARIANT_BOOL_EXTERN(name, dataParam)                                                                                       \
     const Variant *const name = ((const Variant *)&(const VariantBoolPub){.type = varTypeBool, .data = dataParam})
 

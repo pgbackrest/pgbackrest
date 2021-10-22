@@ -136,7 +136,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned in
         if (infoBackupDataByLabel(infoBackup, latestBackup) == NULL)
         {
             // If retention settings have been configured, then there may be holes in the archives. For example, if the archive
-            // for db-id=1 has 01,02,03,04,05 and F1 backup has archive start-stop 02-03 and rentention-full=1
+            // for db-id=1 has 01,02,03,04,05 and F1 backup has archive start-stop 02-03 and retention-full=1
             // (hence retention-archive=1 and retention-archive-type=full), then when F2 backup is created and assuming its
             // archive start-stop=05-06 then archives 01 and 04 will be removed resulting in F1 not being able to play through
             // PITR, which is expected. Now adhoc expire is attempted on F2 - it will be allowed but now there will be no
@@ -426,7 +426,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                     break;
             }
 
-            // Expire archives. If no backups were found or the number of backups found is not enough to satify archive retention
+            // Expire archives. If no backups were found or the number of backups found is not enough to satisfy archive retention
             // then preserve current archive logs - too soon to expire them.
             if (!strLstEmpty(globalBackupRetentionList) && archiveRetention <= strLstSize(globalBackupRetentionList))
             {

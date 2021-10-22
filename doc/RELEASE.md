@@ -70,7 +70,7 @@ docker exec -it doc-pg-standby tail -f /var/log/pgbackrest/demo-restore.log
 
 Processes can generally be monitored using 'top'. Once `top` is running, press `o` then enter `COMMAND=pgbackrest`. This will filter output to pgbackrest processes.
 
-- Check for many log entries in the `archive-push`/`archive-get` logs to ensure aync archiving was enabled:
+- Check for many log entries in the `archive-push`/`archive-get` logs to ensure async archiving was enabled:
 ```
 docker exec -it doc-pg-primary vi /var/log/pgbackrest/demo-archive-push-async.log
 docker exec -it doc-pg-standby vi /var/log/pgbackrest/demo-archive-get-async.log
@@ -102,11 +102,11 @@ v2.14: Bug Fix and Improvements
 
 Bug Fixes:
 
-* Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by Jens Wilke.)
+* Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by User.)
 
 Improvements:
 
-* Bypass database checks when stanza-delete issued with force. (Contributed by Cynthia Shang. Suggested by hatifnatt.)
+* Bypass database checks when stanza-delete issued with force. (Contributed by User. Suggested by User.)
 * Add configure script for improved multi-platform support.
 
 Documentation Features:
@@ -128,11 +128,11 @@ v2.14: Bug Fix and Improvements
 
 **Bug Fixes**:
 
-- Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by Jens Wilke.)
+- Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by User.)
 
 **Improvements**:
 
-- Bypass database checks when stanza-delete issued with force. (Contributed by Cynthia Shang. Suggested by hatifnatt.)
+- Bypass database checks when stanza-delete issued with force. (Contributed by User. Suggested by User.)
 - Add configure script for improved multi-platform support.
 
 **Documentation Features**:
