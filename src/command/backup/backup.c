@@ -430,7 +430,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             else
             {
                 LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)));
-                cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(strIdToStr(backupTypeFull)));
+                cfgOptionSet(cfgOptType, cfgSourceParam, VARUINT64(backupTypeFull));
             }
         }
         MEM_CONTEXT_TEMP_END();

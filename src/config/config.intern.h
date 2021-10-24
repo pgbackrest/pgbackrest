@@ -28,6 +28,7 @@ typedef union ConfigOptionValueType
     const KeyValue *keyValue;                               // KeyValue
     const VariantList *list;                                // VariantList
     const String *string;                                   // String
+    StringId stringId;                                      // StringId
 } ConfigOptionValueType;
 
 typedef struct ConfigOptionValue
