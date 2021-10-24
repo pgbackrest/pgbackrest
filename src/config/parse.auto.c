@@ -8070,7 +8070,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("target"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 

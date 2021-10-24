@@ -358,7 +358,7 @@ option:
       verify: {}
 
   target:
-    type: string-id
+    type: string
     command:
       restore: {}
     depend:

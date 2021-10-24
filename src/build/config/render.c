@@ -175,28 +175,27 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
 
             strLstSort(allowList, sortOrderAsc);
 
-            if (!strLstEmpty(allowList))
+            ASSERT(!strLstEmpty(allowList));
+
+            if (lf)
+                strCatChr(config, '\n');
+
+            for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(allowList); allowListIdx++)
             {
-                if (lf)
-                    strCatChr(config, '\n');
+                const String *const allowListItem = strLstGet(allowList, allowListIdx);
+                const String *const constPrefix = strUpper(
+                    strReplaceChr(strNewFmt("CFGOPTVAL_%s_%s", strZ(opt->name), strZ(allowListItem)), '-', '_'));
 
-                for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(allowList); allowListIdx++)
-                {
-                    const String *const allowListItem = strLstGet(allowList, allowListIdx);
-                    const String *const constPrefix = strUpper(
-                        strReplaceChr(strNewFmt("CFGOPTVAL_%s_%s", strZ(opt->name), strZ(allowListItem)), '-', '_'));
+                // Render StringId
+                strCatFmt(config, "%s\n", strZ(bldDefineRender(constPrefix, bldStrId(strZ(allowListItem)))));
 
-                    // Render StringId
-                    strCatFmt(config, "%s\n", strZ(bldDefineRender(constPrefix, bldStrId(strZ(allowListItem)))));
-
-                    // Render Z
-                    strCatFmt(
-                        config, "%s\n",
-                        strZ(bldDefineRender(strNewFmt("%s_Z", strZ(constPrefix)), strNewFmt("\"%s\"", strZ(allowListItem)))));
-                }
-
-                lf = true;
+                // Render Z
+                strCatFmt(
+                    config, "%s\n",
+                    strZ(bldDefineRender(strNewFmt("%s_Z", strZ(constPrefix)), strNewFmt("\"%s\"", strZ(allowListItem)))));
             }
+
+            lf = true;
         }
     }
 
