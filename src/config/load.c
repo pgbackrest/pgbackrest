@@ -340,16 +340,14 @@ cfgLoadUpdateOption(void)
 
     // Check that selected compress type has been compiled into this binary
     if (cfgOptionValid(cfgOptCompressType))
-        // !!! FIX THIS
-        compressTypePresent(compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType))));
+        compressTypePresent(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
 
     // Update compress-level default based on the compression type
     if (cfgOptionValid(cfgOptCompressLevel) && cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
     {
-        // !!! FIX THIS
         cfgOptionSet(
             cfgOptCompressLevel, cfgSourceDefault,
-            VARINT64(compressLevelDefault(compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType))))));
+            VARINT64(compressLevelDefault(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))));
     }
 
     FUNCTION_LOG_RETURN_VOID();
