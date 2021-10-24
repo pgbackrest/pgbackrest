@@ -1482,7 +1482,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "stanza is source param");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/path/to/db", "pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceParam, "pg1-path is source param");
-        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptRepoType, 0), strIdFromZ(stringIdBit6, "s3"), "repo-type is set");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptRepoType, 0), strIdFromZ("s3"), "repo-type is set");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), " test ", "repo1-s3-bucket is set and preserves spaces");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3KeySecret), "xxx", "repo1-s3-secret is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "repo1-s3-secret is source env");
@@ -1641,6 +1641,9 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "pg1-path is source config");
         TEST_RESULT_STR_Z(
             cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 256)), "/path/to/db256", "pg256-path is set");
+        TEST_RESULT_UINT(varUInt64(cfgOptionVar(cfgOptType)), STRID5("incr", 0x90dc90), "check type");
+        TEST_RESULT_STR_Z(
+            cfgOptionDisplayVar(VARUINT64(STRID5("incr", 0x90dc90)), cfgOptTypeStringId), "incr", "check type display");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLockPath), "/", "lock-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "lock-path is source config");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "pg1-socket-path is set");

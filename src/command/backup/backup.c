@@ -368,7 +368,8 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     strZ(manifestData(result)->backrestVersion));
 
                 // Warn if compress-type option changed
-                if (compressTypeEnum(cfgOptionStr(cfgOptCompressType)) != manifestPriorData->backupOptionCompressType)
+                // !!! FIX
+                if (compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType))) != manifestPriorData->backupOptionCompressType)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter " CFGOPT_COMPRESS_TYPE " option to '%s', reset to value in %s",
@@ -701,7 +702,8 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             }
                             // Check compression. Compression can't be changed between backups so resume won't work either.
                             else if (
-                                manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
+                                // !!! FIX
+                                manifestResumeData->backupOptionCompressType != compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType))))
                             {
                                 reason = strNewFmt(
                                     "new compression '%s' does not match resumable compression '%s'",
@@ -777,7 +779,8 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
             {
                 .manifest = manifest,
                 .manifestResume = manifestResume,
-                .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
+                // !!! FIX
+                .compressType = compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType))),
                 .delta = cfgOptionBool(cfgOptDelta),
                 .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel)),
             };
@@ -902,7 +905,8 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         {
             // Create file
             const String *manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(name));
-            CompressType compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+            // !!! FIX
+            CompressType compressType = compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType)));
 
             StorageWrite *write = storageNewWriteP(
                 storageRepoWrite(),
@@ -1648,7 +1652,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         {
             .backupLabel = backupLabel,
             .backupStandby = backupStandby,
-            .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
+            // !!! FIX
+            .compressType = compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType))),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
             .cipherSubPass = manifestCipherSubPass(manifest),
@@ -1844,7 +1849,8 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                         // Get compression type of the WAL segment and backup
                         CompressType archiveCompressType = compressTypeFromName(archiveFile);
-                        CompressType backupCompressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+                        // !!! FIX
+                        CompressType backupCompressType = compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType)));
 
                         // Open the archive file
                         StorageRead *read = storageNewReadP(
@@ -1886,7 +1892,8 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                                 storageRepoWrite(),
                                 strNewFmt(
                                     STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
-                                    strZ(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))))));
+                                    // Fix
+                                    strZ(compressExtStr(compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType))))))));
 
                         // Add to manifest
                         ManifestFile file =
@@ -2041,7 +2048,8 @@ cmdBackup(void)
 
         // Validate the manifest using the copy start time
         manifestBuildValidate(
-            manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true), compressTypeEnum(cfgOptionStr(cfgOptCompressType)));
+            // !!! FIX
+            manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true), compressTypeEnum(strIdToStr(cfgOptionStrId(cfgOptCompressType))));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))

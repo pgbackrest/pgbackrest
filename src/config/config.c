@@ -1006,17 +1006,7 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                 if (varType(value) == varTypeUInt64)
                     configLocal->option[optionId].index[optionIdx].value.stringId = varUInt64(value);
                 else
-                {
-                    TRY_BEGIN()
-                    {
-                        configLocal->option[optionId].index[optionIdx].value.stringId = strIdFromStr(stringIdBit5, varStr(value));
-                    }
-                    CATCH_ANY()
-                    {
-                        configLocal->option[optionId].index[optionIdx].value.stringId = strIdFromStr(stringIdBit6, varStr(value));
-                    }
-                    TRY_END();
-                }
+                    configLocal->option[optionId].index[optionIdx].value.stringId = strIdFromStr(varStr(value));
 
                 break;
             }

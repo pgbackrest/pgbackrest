@@ -2275,23 +2275,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                 // Else if StringId
                                 else if (optionType == cfgOptTypeStringId)
                                 {
-                                    TRY_BEGIN()
-                                    {
-                                        TRY_BEGIN()
-                                        {
-                                            configOptionValue->value.stringId = strIdFromStr(stringIdBit5, valueAllow);
-                                        }
-                                        CATCH_ANY()
-                                        {
-                                            configOptionValue->value.stringId = strIdFromStr(stringIdBit6, valueAllow);
-                                        }
-                                        TRY_END();
-                                    }
-                                    CATCH_ANY()
-                                    {
-                                        // !!!
-                                    }
-                                    TRY_END();
+                                    configOptionValue->value.stringId = strIdFromZN(strZ(valueAllow), strSize(valueAllow), false);
                                 }
                                 // Else if string make sure it is valid
                                 else
@@ -2352,16 +2336,12 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                                     if (parseRuleOption[optionId].type == cfgOptTypeStringId)
                                     {
-                                        if (configOptionValue->value.stringId != 0)
+                                        while (pckReadNext(allowList))
                                         {
-                                            while (pckReadNext(allowList))
+                                            if (parseRuleValueStrId[pckReadU32P(allowList)] == configOptionValue->value.stringId)
                                             {
-                                                if (parseRuleValueStrId[pckReadU32P(allowList)] ==
-                                                    configOptionValue->value.stringId)
-                                                {
-                                                    allowListFound = true;
-                                                    break;
-                                                }
+                                                allowListFound = true;
+                                                break;
                                             }
                                         }
                                     }

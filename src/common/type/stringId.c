@@ -15,8 +15,9 @@ Constants used to extract information from the header
 #define STRING_ID_PREFIX                                            4
 
 /**********************************************************************************************************************************/
-StringId
-strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
+// Helper to do encoding for specified number of bits
+static StringId
+strIdBitFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, bit);
@@ -61,7 +62,7 @@ strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
                     break;
 
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
-                    THROW_FMT(FormatError, "'%c' is invalid for 5-bit encoding in '%s'", buffer[bufferIdx], buffer);
+                    FUNCTION_TEST_RETURN(0);
             }
 
             // Set encoding in header
@@ -149,7 +150,7 @@ strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
                     break;
 
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
-                    THROW_FMT(FormatError, "'%c' is invalid for 6-bit encoding in '%s'", buffer[bufferIdx], buffer);
+                    FUNCTION_TEST_RETURN(0);
             }
 
             // Set encoding in header
@@ -198,6 +199,30 @@ strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
             FUNCTION_TEST_RETURN(result);
         }
     }
+}
+
+StringId
+strIdFromZN(const char *const buffer, const size_t size, const bool error)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
+        FUNCTION_TEST_PARAM(BOOL, error);
+    FUNCTION_TEST_END();
+
+    StringId result = strIdBitFromZN(stringIdBit5, buffer, size);
+
+    // If 5-bit encoding fails try 6-bit
+    if (result == 0)
+    {
+        result = strIdBitFromZN(stringIdBit6, buffer, size);
+
+        // Error when 6-bit encoding also fails
+        if (result == 0 && error)
+            THROW_FMT(FormatError, "'%s' contains invalid characters", buffer);
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
