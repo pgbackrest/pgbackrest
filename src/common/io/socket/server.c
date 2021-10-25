@@ -176,7 +176,10 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
             // Set the address as reusable so we can bind again quickly after a restart or crash
             int reuseAddr = 1;
-            setsockopt(driver->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr));
+
+            THROW_ON_SYS_ERROR(
+                setsockopt(driver->socket, SOL_SOCKET, SO_REUSEADDR, &reuseAddr, sizeof(reuseAddr)) == -1, ProtocolError,
+                "unable to set SO_REUSEADDR");
 
             // Ensure file descriptor is closed
             memContextCallbackSet(driver->memContext, sckServerFreeResource, driver);
