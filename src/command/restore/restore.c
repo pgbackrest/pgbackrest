@@ -1606,7 +1606,6 @@ restoreRecoveryOption(unsigned int pgVersion)
         {
             // Write the recovery target
             kvPut(
-                // !!! FIX
                 result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", strZ(strIdToStr(cfgOptionStrId(cfgOptType))))),
                 VARSTR(cfgOptionStr(cfgOptTarget)));
 

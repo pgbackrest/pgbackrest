@@ -39,17 +39,14 @@ cfgLoadLogSetting(void)
     bool logTimestamp = true;
     unsigned int logProcessMax = 1;
 
-    // CHANGE THESE TO STRID
     if (cfgOptionValid(cfgOptLogLevelConsole))
-        logLevelConsole = logLevelEnum(strZ(strIdToStr(cfgOptionStrId(cfgOptLogLevelConsole))));
+        logLevelConsole = logLevelEnum(cfgOptionStrId(cfgOptLogLevelConsole));
 
     if (cfgOptionValid(cfgOptLogLevelStderr))
-    {
-        logLevelStdErr = logLevelEnum(strZ(strIdToStr(cfgOptionStrId(cfgOptLogLevelStderr))));
-    }
+        logLevelStdErr = logLevelEnum(cfgOptionStrId(cfgOptLogLevelStderr));
 
     if (cfgOptionValid(cfgOptLogLevelFile))
-        logLevelFile = logLevelEnum(strZ(strIdToStr(cfgOptionStrId(cfgOptLogLevelFile))));
+        logLevelFile = logLevelEnum(cfgOptionStrId(cfgOptLogLevelFile));
 
     if (cfgOptionValid(cfgOptLogTimestamp))
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);

@@ -102,10 +102,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("logLevelEnum() and logLevelStr()"))
     {
-        TEST_ERROR(logLevelEnum(BOGUS_STR), AssertError, "log level 'BOGUS' not found");
-        TEST_RESULT_INT(logLevelEnum("OFF"), logLevelOff, "log level 'OFF' found");
-        TEST_RESULT_INT(logLevelEnum("info"), logLevelInfo, "log level 'info' found");
-        TEST_RESULT_INT(logLevelEnum("TRACE"), logLevelTrace, "log level 'TRACE' found");
+        TEST_ERROR(logLevelEnum(strIdFromZ(BOGUS_STR)), AssertError, "check 'result != LOG_LEVEL_TOTAL' failed");
+        TEST_RESULT_INT(logLevelEnum(strIdFromZ("off")), logLevelOff, "log level 'OFF' found");
+        TEST_RESULT_INT(logLevelEnum(strIdFromZ("info")), logLevelInfo, "log level 'info' found");
+        TEST_RESULT_INT(logLevelEnum(strIdFromZ("trace")), logLevelTrace, "log level 'TRACE' found");
 
         TEST_ERROR(logLevelStr(999), AssertError, "assertion 'logLevel <= LOG_LEVEL_MAX' failed");
         TEST_RESULT_Z(logLevelStr(logLevelOff), "OFF", "log level 'OFF' found");

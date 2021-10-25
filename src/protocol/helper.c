@@ -552,8 +552,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     // Only enable file logging on the remote when requested
     kvPut(
         optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE),
-        // !!! FIX
-        cfgOptionBool(cfgOptLogSubprocess) ? VARSTR(strIdToStr(cfgOptionStrId(cfgOptLogLevelFile))) : VARSTRDEF("off"));
+        cfgOptionBool(cfgOptLogSubprocess) ? VARUINT64(cfgOptionStrId(cfgOptLogLevelFile)) : VARSTRDEF("off"));
 
     // Always output errors on stderr for debugging purposes
     kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("error"));
