@@ -1238,6 +1238,7 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-container'} = HOST_AZURE_CONTAINER;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-host'} = HOST_AZURE;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-verify-tls'} = 'n';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-uri-style'} = 'path';
         }
         elsif ($oParam->{strStorage} eq GCS)
         {

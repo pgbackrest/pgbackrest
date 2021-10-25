@@ -78,12 +78,16 @@
                     </release-item>
 
                     <release-item>
-                        <github-issue id="1203"/>
-                        <github-pull-request id="1527"/>
+                        <commit subject="Add WebIdentity authentication for AWS S3.">
+                            <github-issue id="1203"/>
+                            <github-pull-request id="1527"/>
+                        </commit>
+                        <commit subject="Fix mismatched parameters in tlsClientNew() call."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="james.callahan"/>
+                            <release-item-reviewer id="reid.thompson"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
                             <release-item-reviewer id="benjamin.blattberg"/>
                             <release-item-reviewer id="andrew.lecuyer"/>
@@ -160,7 +164,10 @@
 
                 <release-development-list>
                     <release-item>
-                        <github-pull-request id="1504"/>
+                        <commit subject="Add TLS server.">
+                            <github-pull-request id="1504"/>
+                        </commit>
+                        <commit subject="Check return value of getsockopt()."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
