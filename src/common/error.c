@@ -42,7 +42,7 @@ Maximum allowed number of nested try blocks
 /***********************************************************************************************************************************
 States for each try
 ***********************************************************************************************************************************/
-typedef enum {errorStateBegin, errorStateTry, errorStateCatch, errorStateFinal, errorStateEnd} ErrorState;
+typedef enum {errorStateTry, errorStateCatch, errorStateEnd} ErrorState;
 
 /***********************************************************************************************************************************
 Track error handling
@@ -260,27 +260,19 @@ errorInternalState(void)
 }
 
 /**********************************************************************************************************************************/
-bool
-errorInternalStateTry(void)
+void
+errorInternalTryBegin(const char *const fileName, const char *const functionName, const int fileLine)
 {
-    return errorInternalState() == errorStateTry;
-}
+    // If try total has been exceeded then throw an error
+    if (errorContext.tryTotal >= ERROR_TRY_MAX)
+        errorInternalThrowFmt(&AssertError, fileName, functionName, fileLine, "too many nested try blocks");
 
-/**********************************************************************************************************************************/
-bool
-errorInternalStateCatch(const ErrorType *errorTypeCatch)
-{
-    if (errorInternalState() == errorStateCatch && errorInstanceOf(errorTypeCatch))
-        return errorInternalProcess(true);
+    // Increment try total
+    errorContext.tryTotal++;
 
-    return false;
-}
-
-/**********************************************************************************************************************************/
-bool
-errorInternalStateFinal(void)
-{
-    return errorInternalState() == errorStateFinal;
+    // Setup try
+    errorContext.tryList[errorContext.tryTotal].state = errorStateTry;
+    errorContext.tryList[errorContext.tryTotal].uncaught = false;
 }
 
 /**********************************************************************************************************************************/
@@ -292,21 +284,26 @@ errorInternalJump(void)
 
 /**********************************************************************************************************************************/
 bool
-errorInternalTry(const char *fileName, const char *functionName, int fileLine)
+errorInternalCatch(const ErrorType *const errorTypeCatch)
 {
-    // If try total has been exceeded then throw an error
-    if (errorContext.tryTotal >= ERROR_TRY_MAX)
-        errorInternalThrowFmt(&AssertError, fileName, functionName, fileLine, "too many nested try blocks");
+    // If just entering error state clean up the stack
+    if (errorInternalState() == errorStateTry)
+    {
+        for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
+            errorContext.handlerList[handlerIdx](errorTryDepth());
 
-    // Increment try total
-    errorContext.tryTotal++;
+        errorContext.tryList[errorContext.tryTotal].state++;
+    }
 
-    // Setup try
-    errorContext.tryList[errorContext.tryTotal].state = errorStateBegin;
-    errorContext.tryList[errorContext.tryTotal].uncaught = false;
+    if (errorInternalState() == errorStateCatch && errorInstanceOf(errorTypeCatch))
+    {
+        errorContext.tryList[errorContext.tryTotal].uncaught = false;
+        errorContext.tryList[errorContext.tryTotal].state++;
 
-    // Try setup was successful
-    return true;
+        return true;
+    }
+
+    return false;
 }
 
 /**********************************************************************************************************************************/
@@ -331,42 +328,15 @@ errorInternalPropagate(void)
 }
 
 /**********************************************************************************************************************************/
-bool
-errorInternalProcess(bool catch)
+void
+errorInternalTryEnd(void)
 {
-    // If a catch statement then return
-    if (catch)
-    {
-        errorContext.tryList[errorContext.tryTotal].uncaught = false;
-        return true;
-    }
-    // Else if just entering error state clean up the stack
-    else if (errorContext.tryList[errorContext.tryTotal].state == errorStateTry)
-    {
-        for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
-            errorContext.handlerList[handlerIdx](errorTryDepth());
-    }
-
     // Any catch blocks have been processed and none of them called RETHROW() so clear the error
-    if (errorContext.tryList[errorContext.tryTotal].state == errorStateCatch &&
+    if (errorContext.tryList[errorContext.tryTotal].state == errorStateEnd &&
         !errorContext.tryList[errorContext.tryTotal].uncaught)
     {
         errorContext.error = (Error){0};
     }
-
-    // Increment the state
-    errorContext.tryList[errorContext.tryTotal].state++;
-
-    // If the error has been caught then increment the state
-    if (errorContext.tryList[errorContext.tryTotal].state == errorStateCatch &&
-        !errorContext.tryList[errorContext.tryTotal].uncaught)
-    {
-        errorContext.tryList[errorContext.tryTotal].state++;
-    }
-
-    // Return if not done
-    if (errorContext.tryList[errorContext.tryTotal].state < errorStateEnd)
-        return true;
 
     // Remove the try
     errorContext.tryTotal--;
@@ -374,9 +344,6 @@ errorInternalProcess(bool catch)
     // If not caught in the last try then propagate
     if (errorContext.tryList[errorContext.tryTotal + 1].uncaught)
         errorInternalPropagate();
-
-    // Nothing left to process
-    return false;
 }
 
 /**********************************************************************************************************************************/
