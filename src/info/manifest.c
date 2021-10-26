@@ -384,7 +384,7 @@ manifestNewInternal(void)
 /***********************************************************************************************************************************
 Ensure that symlinks do not point to the same file, directory, or subdirectory of another link
 
-There are two implementations: manifestLinkCheck(), which is extern'd, and manifestLinkCheckOne(), which is intended to be
+There are two implementations: manifestLinkCheck(), which is externed, and manifestLinkCheckOne(), which is intended to be
 used internally during processing. manifestLinkCheck() works simply by calling manifestLinkCheckOne() for every link in the target
 list. manifestLinkCheckOne() is optimized to work quickly on a single link.
 ***********************************************************************************************************************************/

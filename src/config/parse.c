@@ -47,7 +47,7 @@ Prefix for environment variables
 #define PGBACKREST_ENV                                              "PGBACKREST_"
 #define PGBACKREST_ENV_SIZE                                         (sizeof(PGBACKREST_ENV) - 1)
 
-// In some environments this will not be extern'd
+// In some environments this will not be externed
 extern char **environ;
 
 /***********************************************************************************************************************************

@@ -105,9 +105,9 @@ typedef struct InlineCommentExample
 
                 <p><b>String Constants</b></p>
 
-                <p>String constants can be declared using the <code>STRING_STATIC()</code> macro for local strings and <code>STRING_EXTERN()</code> for strings that will be extern'd for use in other modules.</p>
+                <p>String constants can be declared using the <code>STRING_STATIC()</code> macro for local strings and <code>STRING_EXTERN()</code> for strings that will be externed for use in other modules.</p>
 
-                <p>Extern'd strings should be declared in the header file as:</p>
+                <p>Externed strings should be declared in the header file as:</p>
 
                 <code-block type="c">
 #define SAMPLE_VALUE                                                "STRING"
@@ -120,7 +120,7 @@ typedef struct InlineCommentExample
 STRING_EXTERN(SAMPLE_VALUE_STR,                                     SAMPLE_VALUE);
                 </code-block>
 
-                <p>Static strings declared in the C file are not required to have a <code>#define</code> if the <code>#define</code> version is not used.  Extern'd strings must always have the <code>#define</code> in the header file.</p>
+                <p>Static strings declared in the C file are not required to have a <code>#define</code> if the <code>#define</code> version is not used.  Externed strings must always have the <code>#define</code> in the header file.</p>
 
                 <p><b>Enum Constants</b></p>
 
