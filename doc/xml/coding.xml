@@ -81,11 +81,11 @@ typedef struct InlineCommentExample
             <section id="types">
                 <title>Types</title>
 
-                <p>Type names use camel case with the first letter upper case:
+                <p>Type names use camel case with the first letter upper case:</p>
 
-                <code>typedef struct MemContext &lt;...&gt;</code>
+                <p><code>typedef struct MemContext &lt;...&gt;</code></p>
 
-                <code>typedef enum {&lt;...&gt;} ErrorState;</code></p>
+                <p><code>typedef enum {&lt;...&gt;} ErrorState;</code></p>
             </section>
 
             <section id="constants">
@@ -251,9 +251,9 @@ switch (int)
         <section id="data-types">
             <title>Data Types</title>
 
-            <p>Don't get exotic - use the simplest type that will work.
+            <p>Don't get exotic - use the simplest type that will work.</p>
 
-            Use <id>int</id> or <id>unsigned int</id> for general cases. <id>int</id> will be at least 32 bits. When not using <id>int</id> use one of the types defined in <file>common/type.h</file>.</p>
+            <p>Use <id>int</id> or <id>unsigned int</id> for general cases. <id>int</id> will be at least 32 bits. When not using <id>int</id> use one of the types defined in <file>common/type.h</file>.</p>
         </section>
 
         <section id="macros">
