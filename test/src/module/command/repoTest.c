@@ -179,6 +179,12 @@ testRun(void)
         // Not in a test wrapper to avoid writing to stdout
         cmdStorageList();
 
+        // Close the fd to make sure the error gets caught
+        close(STDOUT_FILENO);
+
+        // // Not in a test wrapper to avoid writing to stdout
+        cmdStorageList();
+
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
@@ -530,11 +536,16 @@ testRun(void)
         // Not in a test wrapper to avoid writing to stdout
         ASSERT(cmdStorageGet() == 0);
 
+        // Close the fd to make sure the error gets caught
+        close(STDOUT_FILENO);
+
+        // Not in a test wrapper to avoid writing to stdout
+        ASSERT(cmdStorageGet() == 1);
+
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
         TEST_STORAGE_GET(storageRepo(), "stdout.txt", fileRawContent, .comment = "get matches put");
-
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ignore missing file");

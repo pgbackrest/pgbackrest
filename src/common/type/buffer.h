@@ -181,7 +181,7 @@ By convention all buffer constant identifiers are appended with _BUF.
 #define BUFSTRDEF(stringdef)                                                                                                       \
     BUF((unsigned char *)stringdef, (sizeof(stringdef) - 1))
 
-// Used to declare buffer constants that will be extern'd using BUFFER_DECLARE(). Must be used in a .c file.
+// Used to declare buffer constants that will be externed using BUFFER_DECLARE().  Must be used in a .c file.
 #define BUFFER_STRDEF_EXTERN(name, string)                                                                                         \
     const Buffer *const name = BUFSTRDEF(string)
 

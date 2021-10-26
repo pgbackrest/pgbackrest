@@ -199,6 +199,7 @@
                         <commit subject="Update contributing.xml with rendering changes from def7d513."/>
                         <commit subject="Add missing paragraph tag in user guide."/>
                         <commit subject="Add br tags for HTML documentation rendering missed in def7d513."/>
+                        <commit subject="Add missing paragraph tags in coding standards."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
