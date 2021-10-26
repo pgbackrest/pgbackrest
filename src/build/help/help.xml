@@ -561,6 +561,22 @@
                         <example>none</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-type" name="Repository Host Protocol Type">
+                        <summary>Repository host protocol type.</summary>
+
+                        <text>
+                            <p>The following protocol types are supported:</p>
+
+                            <list>
+                                <list-item><id>ssh</id> - Secure Shell.</list-item>
+                                <list-item><id>tls</id> - <backrest/> TLS server.</list-item>
+                            </list>
+                        </text>
+
+                        <example>tls</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
                     <config-key id="repo-host" name="Repository Host">
                         <summary>Repository host when operating remotely via SSH.</summary>
@@ -572,6 +588,50 @@
                         </text>
 
                         <example>repo1.domain.com</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-ca-file" name="Repository Host Certificate Authority File">
+                        <summary>Repository host certificate authority file.</summary>
+
+                        <text>
+                            <p>Use a CA file other than the system default for connecting to the repository host.</p>
+                        </text>
+
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-ca-path" name="Repository Host Certificate Authority Path">
+                        <summary>Repository host certificate authority path.</summary>
+
+                        <text>
+                            <p>Use a CA path other than the system default for connecting to the repository host.</p>
+                        </text>
+
+                        <example>/etc/pki/tls/certs</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-cert-file" name="Repository Host Certificate File">
+                        <summary>Repository host certificate file.</summary>
+
+                        <text>
+                            <p>Sent to repository host to prove client indentity.</p>
+                        </text>
+
+                        <example>/path/to/client.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-host-key-file" name="Repository Host Key File">
+                        <summary>Repository host key file.</summary>
+
+                        <text>
+                            <p>Proves client certificate was sent by owner.</p>
+                        </text>
+
+                        <example>/path/to/client.key</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-HOST-CMD KEY -->
@@ -1337,6 +1397,75 @@
 
                         <example>/data/tablespace</example>
                     </config-key>
+
+                    <!-- For now the server options must be here so they do not show up in the documentation -->
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-auth" name="TLS Server Authorized Clients">
+                        <summary>TLS server authorized clients.</summary>
+
+                        <text>
+                            <p>Clients are authorized on the server by verifying their certificate and checking the certificate CN (Common name) against a list on the server configured with the <br-option>tls-server-auth</br-option>.</p>
+
+                            <p>A CN can be authorized for as many stanzas as needed by repeating the <br-option>tls-server-auth</br-option> option, or for all stanzas by specifying <br-option>tls-server-auth=*</br-option>.</p>
+                        </text>
+
+                        <example>stanza1</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-ca-file" name="TLS Server Certificate Authorities">
+                        <summary>TLS server certificate authorities.</summary>
+
+                        <text>
+                            <p>Checks that client certificates are signed by a trusted certificate authority.</p>
+                        </text>
+
+                        <example>/path/to/server.ca</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-cert-file" name="TLS Server Certificate">
+                        <summary>TLS server certificate file.</summary>
+
+                        <text>
+                            <p>Sent to the client to show the server identity.</p>
+                        </text>
+
+                        <example>/path/to/server.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-key-file" name="TLS Server Key">
+                        <summary>TLS server key file.</summary>
+
+                        <text>
+                            <p>Proves server certificate was sent by the owner.</p>
+                        </text>
+
+                        <example>/path/to/server.key</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-address" name="TLS Server Address">
+                        <summary>TLS server address.</summary>
+
+                        <text>
+                            <p>IP address the server will listen on for client requests.</p>
+                        </text>
+
+                        <example>::*</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="tls-server-port" name="TLS Server Port">
+                        <summary>TLS server port.</summary>
+
+                        <text>
+                            <p>Port the server will listen on for client requests.</p>
+                        </text>
+
+                        <example>8000</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 
@@ -1403,6 +1532,66 @@
                         </text>
 
                         <example>db.domain.com</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-ca-file" name="PostgreSQL Host Certificate Authority File">
+                        <summary><postgres/> host certificate authority file.</summary>
+
+                        <text>
+                            <p>Use a CA file other than the system default for connecting to the <postgres/> host.</p>
+                        </text>
+
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-ca-path" name="PostgreSQL Host Certificate Authority Path">
+                        <summary><postgres/> host certificate authority path.</summary>
+
+                        <text>
+                            <p>Use a CA path other than the system default for connecting to the <postgres/> host.</p>
+                        </text>
+
+                        <example>/etc/pki/tls/certs</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-cert-file" name="PostgreSQL Host Certificate File">
+                        <summary><postgres/> host certificate file.</summary>
+
+                        <text>
+                            <p>Sent to <postgres/> host to prove client indentity.</p>
+                        </text>
+
+                        <example>/path/to/client.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-key-file" name="PostgreSQL Host Key File">
+                        <summary><postgres/> host key file.</summary>
+
+                        <text>
+                            <p>Proves client certificate was sent by owner.</p>
+                        </text>
+
+                        <example>/path/to/client.key</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-host-type" name="PostgreSQL Host Protocol Type">
+                        <summary><postgres/> host protocol type.</summary>
+
+                        <text>
+                            <p>The following protocol types are supported:</p>
+
+                            <list>
+                                <list-item><id>ssh</id> - Secure Shell.</list-item>
+                                <list-item><id>tls</id> - <backrest/> TLS server.</list-item>
+                            </list>
+                        </text>
+
+                        <example>tls</example>
                     </config-key>
 
                     <!-- CONFIG - STANZA SECTION - PG-HOST-USER KEY -->
@@ -2073,6 +2262,26 @@
 
                 <text>
                     <p>Three levels of help are provided. If no command is specified then general help will be displayed. If a command is specified (e.g. <cmd>pgbackrest help backup</cmd>) then a full description of the command will be displayed along with a list of valid options. If an option is specified in addition to a command (e.g. <cmd>pgbackrest help backup type</cmd>) then a full description of the option as it applies to the command will be displayed.</p>
+                </text>
+            </command>
+
+            <!-- =============================================================================================================== -->
+            <command id="server-start" name="Server Start">
+                <summary>Start <backrest/> server.</summary>
+
+                <text>
+                    <p>The <backrest/> server allows access to remote hosts without using the <proper>SSH</proper> protocol.</p>
+                </text>
+            </command>
+
+            <!-- =============================================================================================================== -->
+            <command id="server-ping" name="Server Ping">
+                <summary>Ping <backrest/> server.</summary>
+
+                <text>
+                    <p>Ping a <backrest/> <proper>TLS</proper> server to ensure it is accepting connections. This serves as an aliveness check only since no authentication is attempted.</p>
+
+                    <p>If no host is specified on the command-line then the <br-option>tls-server-host</br-option> option will be used.</p>
                 </text>
             </command>
 

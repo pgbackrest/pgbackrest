@@ -45,6 +45,21 @@ use constant HOST_S3                                                => 's3-serve
     push @EXPORT, qw(HOST_S3);
 
 ####################################################################################################################################
+# CA/cert/key constants
+####################################################################################################################################
+use constant HOST_CERT_PATH                                         => '/test/certificate/';
+
+use constant HOST_CLIENT_CERT                                       => HOST_CERT_PATH . 'pgbackrest-test-client.crt';
+    push @EXPORT, qw(HOST_CLIENT_CERT);
+use constant HOST_CLIENT_KEY                                        => HOST_CERT_PATH . 'pgbackrest-test-client.key';
+    push @EXPORT, qw(HOST_CLIENT_KEY);
+
+use constant HOST_SERVER_CA                                         => HOST_CERT_PATH . 'pgbackrest-test-ca.crt';
+    push @EXPORT, qw(HOST_SERVER_CA);
+use constant HOST_SERVER_CERT                                       => HOST_CERT_PATH . 'pgbackrest-test-server.crt';
+use constant HOST_SERVER_KEY                                        => HOST_CERT_PATH . 'pgbackrest-test-server.key';
+
+####################################################################################################################################
 # new
 ####################################################################################################################################
 sub new
@@ -68,6 +83,12 @@ sub new
     my $strTestPath = testRunGet()->testPath() . ($strName eq HOST_BASE ? '' : "/${strName}");
     storageTest()->pathCreate($strTestPath, {strMode => '0770'});
 
+    # Make sure keys have the correct permissions
+    if (chmod(0600, testRunGet()->basePath() . HOST_SERVER_KEY, testRunGet()->basePath() . HOST_CLIENT_KEY) != 2)
+    {
+        confess "unable to set mode on keys";
+    }
+
     # Create the host
     my $strProjectPath = dirname(dirname(abs_path($0)));
     my $strBinPath = dirname(dirname($strTestPath)) . '/bin/' . testRunGet()->vm() . '/' . PROJECT_EXE;
@@ -75,7 +96,13 @@ sub new
 
     my $self = $class->SUPER::new(
         $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, testRunGet()->vm(),
-        ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}", "${strBinPath}:${strBinPath}:ro"]);
+        ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}", "${strBinPath}:${strBinPath}:ro"], undef,
+        $oParam->{bTls} ?
+            'server-start --log-level-console=debug --tls-server-ca-file=' . testRunGet()->basePath() . HOST_SERVER_CA .
+                ' --tls-server-cert-file=' . testRunGet()->basePath() . HOST_SERVER_CERT . ' --tls-server-key-file=' .
+                testRunGet()->basePath() . HOST_SERVER_KEY . ' --tls-server-auth=pgbackrest-client=* --tls-server-address=0.0.0.0' :
+            undef,
+        undef, $oParam->{bTls} ? testRunGet()->backrestExe() : undef);
     bless $self, $class;
 
     # Set test path

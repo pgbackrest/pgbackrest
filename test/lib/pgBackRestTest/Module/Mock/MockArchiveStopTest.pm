@@ -43,12 +43,12 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM2, remote => false, storage =>    S3, encrypt => false, compress =>  NONE, error => 0},
-        {vm => VM2, remote =>  true, storage => POSIX, encrypt =>  true, compress =>  NONE, error => 0},
-        {vm => VM3, remote => false, storage =>   GCS, encrypt =>  true, compress =>   BZ2, error => 0},
-        {vm => VM3, remote =>  true, storage => AZURE, encrypt => false, compress =>   LZ4, error => 1},
-        {vm => VM4, remote => false, storage =>    S3, encrypt =>  true, compress =>  NONE, error => 0},
-        {vm => VM4, remote =>  true, storage =>   GCS, encrypt => false, compress =>   ZST, error => 0},
+        {vm => VM2, remote => false, tls => false, storage =>    S3, encrypt => false, compress =>  NONE, error => 0},
+        {vm => VM2, remote =>  true, tls =>  true, storage => POSIX, encrypt =>  true, compress =>  NONE, error => 0},
+        {vm => VM3, remote => false, tls => false, storage =>   GCS, encrypt =>  true, compress =>   BZ2, error => 0},
+        {vm => VM3, remote =>  true, tls => false, storage => AZURE, encrypt => false, compress =>   LZ4, error => 1},
+        {vm => VM4, remote => false, tls => false, storage =>    S3, encrypt =>  true, compress =>  NONE, error => 0},
+        {vm => VM4, remote =>  true, tls =>  true, storage =>   GCS, encrypt => false, compress =>   ZST, error => 0},
     )
     {
         # Only run tests for this vm
@@ -56,6 +56,7 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         my $bRemote = $rhRun->{remote};
+        my $bTls = $rhRun->{tls};
         my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
         my $strCompressType = $rhRun->{compress};
@@ -63,13 +64,14 @@ sub run
 
         # Increment the run, log, and decide whether this unit test should be run
         if (!$self->begin(
-                "rmt ${bRemote}, cmp ${strCompressType}, error " . ($iError ? 'connect' : 'version') .
+                "rmt ${bRemote}, tls ${bTls}, cmp ${strCompressType}, error " . ($iError ? 'connect' : 'version') .
                     ", storage ${strStorage}, enc ${bEncrypt}")) {next}
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(), {bHostBackup => $bRemote, strCompressType => $strCompressType, bArchiveAsync => true,
-            strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
+            true, $self->expect(),
+            {bHostBackup => $bRemote, bTls => $bTls, strCompressType => $strCompressType, bArchiveAsync => true,
+                strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
         # Create compression extension
         my $strCompressExt = $strCompressType ne NONE ? ".${strCompressType}" : '';

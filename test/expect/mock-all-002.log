@@ -1,5 +1,5 @@
-run 002 - rmt 1, storage s3, enc 1, delta 0
-===========================================
+run 002 - rmt 1, tls 1, storage s3, enc 1, delta 0
+==================================================
 
 stanza-create db - create required data for stanza (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-create
@@ -77,8 +77,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -86,8 +89,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base
 
@@ -272,8 +278,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -281,8 +290,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base
 
@@ -506,8 +518,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -515,8 +530,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base
 
@@ -713,8 +731,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -722,8 +743,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base
 
@@ -928,8 +952,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -937,8 +964,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base
 
@@ -1160,8 +1190,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -1169,8 +1202,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base-2
 
@@ -1372,8 +1408,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -1381,8 +1420,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base-2
 
@@ -1587,8 +1629,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -1596,8 +1641,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base-2
 
@@ -1803,8 +1851,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -1812,8 +1863,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base-2
 
@@ -2013,8 +2067,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -2022,8 +2079,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base-2
 
@@ -2228,8 +2288,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -2237,8 +2300,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base-2
 
@@ -2443,7 +2509,7 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.con
 diff backup - option backup-standby reset - backup performed from primary (backup host)
 > [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --no-online --log-level-console=info --backup-standby --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-primary --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-primary/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-storage-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --backup-standby --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=lz4 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/backup/lock --log-level-console=info --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-primary --pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf --pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key --pg1-host-type=tls --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-primary/db/base-2/base --process-max=2 --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-s3-bucket=pgbackrest-dev --repo1-s3-endpoint=s3.amazonaws.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=us-east-1 --no-repo1-storage-verify-tls --repo1-type=s3 --stanza=db --start-fast --type=diff
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary
@@ -2479,8 +2545,11 @@ log-timestamp=n
 process-max=2
 protocol-timeout=60
 repo1-host=backup
+repo1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
+repo1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+repo1-host-type=tls
 repo1-host-user=[USER-1]
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -2488,8 +2557,11 @@ spool-path=[TEST_PATH]/db-primary/spool
 -------------------------------------------------------
 [db]
 pg1-host=db-primary
+pg1-host-cert-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.crt
 pg1-host-cmd=[BACKREST-BIN]
 pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf
+pg1-host-key-file=[REPO_PATH]/test/certificate/pgbackrest-test-client.key
+pg1-host-type=tls
 pg1-host-user=[USER-1]
 pg1-path=[TEST_PATH]/db-primary/db/base-2/base
 

@@ -23,7 +23,7 @@ static struct SocketLocal
 
     bool block;                                                     // Use blocking mode socket
 
-    bool keepAlive;                                                 // Are socket keep alives enabled?
+    bool keepAlive;                                                 // Is socket keep-alive enabled?
     int tcpKeepAliveCount;                                          // TCP keep alive count (0 disables)
     int tcpKeepAliveIdle;                                           // TCP keep alive idle (0 disables)
     int tcpKeepAliveInterval;                                       // TCP keep alive interval (0 disables)
@@ -53,6 +53,41 @@ sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle,
     socketLocal.tcpKeepAliveInterval = tcpKeepAliveInterval;
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+struct addrinfo *
+sckHostLookup(const String *const host, unsigned int port)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(UINT, port);
+    FUNCTION_LOG_END();
+
+    ASSERT(host != NULL);
+    ASSERT(port != 0);
+
+    // Set hints that narrow the type of address we are looking for -- we'll take ipv4 or ipv6
+    struct addrinfo hints = (struct addrinfo)
+    {
+        .ai_family = AF_UNSPEC,
+        .ai_flags = AI_PASSIVE,
+        .ai_socktype = SOCK_STREAM,
+        .ai_protocol = IPPROTO_TCP,
+    };
+
+    // Convert the port to a zero-terminated string for use with getaddrinfo()
+    char portZ[CVT_BASE10_BUFFER_SIZE];
+    cvtUIntToZ(port, portZ, sizeof(portZ));
+
+    // Do the lookup
+    struct addrinfo *result;
+    int error;
+
+    if ((error = getaddrinfo(strZ(host), portZ, &hints, &result)) != 0)
+        THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", strZ(host), error, gai_strerror(error));
+
+    FUNCTION_LOG_RETURN_P(VOID, result);
 }
 
 /**********************************************************************************************************************************/

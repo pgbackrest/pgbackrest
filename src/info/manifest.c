@@ -384,7 +384,7 @@ manifestNewInternal(void)
 /***********************************************************************************************************************************
 Ensure that symlinks do not point to the same file, directory, or subdirectory of another link
 
-There are two implementations: manifestLinkCheck(), which is externed, and manifestLinkCheckOne(), which is intended to be
+There are two implementations: manifestLinkCheck(), which is extern'd, and manifestLinkCheckOne(), which is intended to be
 used internally during processing. manifestLinkCheck() works simply by calling manifestLinkCheckOne() for every link in the target
 list. manifestLinkCheckOne() is optimized to work quickly on a single link.
 ***********************************************************************************************************************************/
@@ -638,7 +638,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
     ManifestBuildData buildData = *(ManifestBuildData *)data;
     unsigned int pgVersion = buildData.manifest->pub.data.pgVersion;
 
-    // Contruct the name used to identify this file/link/path in the manifest
+    // Construct the name used to identify this file/link/path in the manifest
     const String *manifestName = strNewFmt("%s/%s", strZ(buildData.manifestParentName), strZ(info->name));
 
     // Skip excluded files/links/paths

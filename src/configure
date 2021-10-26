@@ -621,6 +621,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+CFLAGS_PAGE_CHECKSUM
 LIBS_BUILD
 XML2_CONFIG_EXISTS
 XML2_CONFIG
@@ -629,7 +630,6 @@ GREP
 CPP
 PG_CONFIG_EXISTS
 PG_CONFIG
-CFLAGS_PAGE_CHECKSUM
 host_os
 host_vendor
 host_cpu
@@ -687,9 +687,9 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+with_configdir
 enable_test
 enable_optimize
-with_configdir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -3175,192 +3175,6 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
-# Set warnings and optimizations based on build type (i.e. production or test)
-# ----------------------------------------------------------------------------------------------------------------------------------
-CFLAGS="${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough"
-
-
-# -Wno-clobbered is not supported on all compilers
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wno-clobbered" >&5
-$as_echo_n "checking whether C compiler accepts -Wno-clobbered... " >&6; }
-if ${ax_cv_check_cflags__Werror__Wno_clobbered+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS -Werror -Wno-clobbered"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags__Werror__Wno_clobbered=yes
-else
-  ax_cv_check_cflags__Werror__Wno_clobbered=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wno_clobbered" >&5
-$as_echo "$ax_cv_check_cflags__Werror__Wno_clobbered" >&6; }
-if test "x$ax_cv_check_cflags__Werror__Wno_clobbered" = xyes; then :
-  CFLAGS="${CFLAGS} -Wno-clobbered"
-
-else
-  :
-fi
-
-
-# Check whether --enable-test was given.
-if test "${enable_test+set}" = set; then :
-  enableval=$enable_test;
-fi
-
-
-if test "$enable_test" != yes
-then
-    $as_echo "#define NDEBUG 1" >>confdefs.h
-
-
-    # Enable optimizations if not testing and they have not been disabled
-    # Check whether --enable-optimize was given.
-if test "${enable_optimize+set}" = set; then :
-  enableval=$enable_optimize;
-fi
-
-
-    if test "$enable_optimize" != no
-    then
-        CFLAGS="${CFLAGS} -O2"
-
-        CFLAGS_PAGE_CHECKSUM="-funroll-loops -ftree-vectorize"
-
-    fi
-else
-    # Check for optional warnings (note that these must be checked before the additional warnings below are added)
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wformat-signedness" >&5
-$as_echo_n "checking whether C compiler accepts -Wformat-signedness... " >&6; }
-if ${ax_cv_check_cflags__Werror__Wformat_signedness+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS -Werror -Wformat-signedness"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags__Werror__Wformat_signedness=yes
-else
-  ax_cv_check_cflags__Werror__Wformat_signedness=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wformat_signedness" >&5
-$as_echo "$ax_cv_check_cflags__Werror__Wformat_signedness" >&6; }
-if test "x$ax_cv_check_cflags__Werror__Wformat_signedness" = xyes; then :
-  CFLAGS="${CFLAGS} -Wformat-signedness"
-
-else
-  :
-fi
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wduplicated-branches" >&5
-$as_echo_n "checking whether C compiler accepts -Wduplicated-branches... " >&6; }
-if ${ax_cv_check_cflags__Werror__Wduplicated_branches+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS -Werror -Wduplicated-branches"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags__Werror__Wduplicated_branches=yes
-else
-  ax_cv_check_cflags__Werror__Wduplicated_branches=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wduplicated_branches" >&5
-$as_echo "$ax_cv_check_cflags__Werror__Wduplicated_branches" >&6; }
-if test "x$ax_cv_check_cflags__Werror__Wduplicated_branches" = xyes; then :
-  CFLAGS="${CFLAGS} -Wduplicated-branches"
-
-else
-  :
-fi
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wduplicated-cond" >&5
-$as_echo_n "checking whether C compiler accepts -Wduplicated-cond... " >&6; }
-if ${ax_cv_check_cflags__Werror__Wduplicated_cond+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CFLAGS
-  CFLAGS="$CFLAGS -Werror -Wduplicated-cond"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_check_cflags__Werror__Wduplicated_cond=yes
-else
-  ax_cv_check_cflags__Werror__Wduplicated_cond=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wduplicated_cond" >&5
-$as_echo "$ax_cv_check_cflags__Werror__Wduplicated_cond" >&6; }
-if test "x$ax_cv_check_cflags__Werror__Wduplicated_cond" = xyes; then :
-  CFLAGS="${CFLAGS} -Wduplicated-cond"
-
-else
-  :
-fi
-
-
-    # Add additional warnings
-    CFLAGS="${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith"
-
-    CFLAGS="${CFLAGS} -Wvla"
-
-fi
-
 # Include the build directory
 # ----------------------------------------------------------------------------------------------------------------------------------
 CPPFLAGS="${CPPFLAGS} -I."
@@ -4385,6 +4199,200 @@ _ACEOF
 
 fi
 
+
+# Set warnings and optimizations based on build type (i.e. production or test)
+# ----------------------------------------------------------------------------------------------------------------------------------
+CFLAGS="${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough"
+
+
+# -Wno-clobbered is not supported on all compilers
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wno-clobbered" >&5
+$as_echo_n "checking whether C compiler accepts -Wno-clobbered... " >&6; }
+if ${ax_cv_check_cflags__Werror__Wno_clobbered+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS -Werror -Wno-clobbered"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags__Werror__Wno_clobbered=yes
+else
+  ax_cv_check_cflags__Werror__Wno_clobbered=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wno_clobbered" >&5
+$as_echo "$ax_cv_check_cflags__Werror__Wno_clobbered" >&6; }
+if test "x$ax_cv_check_cflags__Werror__Wno_clobbered" = xyes; then :
+  CFLAGS="${CFLAGS} -Wno-clobbered"
+
+else
+  :
+fi
+
+
+# Check whether --enable-test was given.
+if test "${enable_test+set}" = set; then :
+  enableval=$enable_test;
+fi
+
+
+if test "$enable_test" != yes
+then
+    $as_echo "#define NDEBUG 1" >>confdefs.h
+
+
+    # Enable optimizations if not testing and they have not been disabled
+    # Check whether --enable-optimize was given.
+if test "${enable_optimize+set}" = set; then :
+  enableval=$enable_optimize;
+fi
+
+
+    if test "$enable_optimize" != no
+    then
+        CFLAGS="${CFLAGS} -O2"
+
+        CFLAGS_PAGE_CHECKSUM="-funroll-loops -ftree-vectorize"
+
+    fi
+else
+    # Check for optional warnings (note that these must be checked before the additional warnings below are added)
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wformat-signedness" >&5
+$as_echo_n "checking whether C compiler accepts -Wformat-signedness... " >&6; }
+if ${ax_cv_check_cflags__Werror__Wformat_signedness+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS -Werror -Wformat-signedness"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags__Werror__Wformat_signedness=yes
+else
+  ax_cv_check_cflags__Werror__Wformat_signedness=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wformat_signedness" >&5
+$as_echo "$ax_cv_check_cflags__Werror__Wformat_signedness" >&6; }
+if test "x$ax_cv_check_cflags__Werror__Wformat_signedness" = xyes; then :
+  CFLAGS="${CFLAGS} -Wformat-signedness"
+
+else
+  :
+fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wduplicated-branches" >&5
+$as_echo_n "checking whether C compiler accepts -Wduplicated-branches... " >&6; }
+if ${ax_cv_check_cflags__Werror__Wduplicated_branches+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS -Werror -Wduplicated-branches"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags__Werror__Wduplicated_branches=yes
+else
+  ax_cv_check_cflags__Werror__Wduplicated_branches=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wduplicated_branches" >&5
+$as_echo "$ax_cv_check_cflags__Werror__Wduplicated_branches" >&6; }
+if test "x$ax_cv_check_cflags__Werror__Wduplicated_branches" = xyes; then :
+  CFLAGS="${CFLAGS} -Wduplicated-branches"
+
+else
+  :
+fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wduplicated-cond" >&5
+$as_echo_n "checking whether C compiler accepts -Wduplicated-cond... " >&6; }
+if ${ax_cv_check_cflags__Werror__Wduplicated_cond+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS -Werror -Wduplicated-cond"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags__Werror__Wduplicated_cond=yes
+else
+  ax_cv_check_cflags__Werror__Wduplicated_cond=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wduplicated_cond" >&5
+$as_echo "$ax_cv_check_cflags__Werror__Wduplicated_cond" >&6; }
+if test "x$ax_cv_check_cflags__Werror__Wduplicated_cond" = xyes; then :
+  CFLAGS="${CFLAGS} -Wduplicated-cond"
+
+else
+  :
+fi
+
+
+    # Add additional warnings
+    CFLAGS="${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith"
+
+    CFLAGS="${CFLAGS} -Wvla"
+
+
+    # Add error on warnings and stop on first error
+    CFLAGS="${CFLAGS} -Werror -Wfatal-errors"
+
+
+    # Add debug info
+    CFLAGS="${CFLAGS} -g"
+
+fi
 
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
@@ -5664,4 +5672,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 2336ad90534fbc1720acde6510879f314f49ee62
+# Generated from src/build/configure.ac sha1 b69b4dba61cbc695a6e947f8415d430163db8821

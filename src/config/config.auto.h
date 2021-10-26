@@ -22,6 +22,8 @@ Command constants
 #define CFGCMD_REPO_PUT                                             "repo-put"
 #define CFGCMD_REPO_RM                                              "repo-rm"
 #define CFGCMD_RESTORE                                              "restore"
+#define CFGCMD_SERVER_PING                                          "server-ping"
+#define CFGCMD_SERVER_START                                         "server-start"
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
 #define CFGCMD_STANZA_DELETE                                        "stanza-delete"
 #define CFGCMD_STANZA_UPGRADE                                       "stanza-upgrade"
@@ -30,7 +32,7 @@ Command constants
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           20
+#define CFG_COMMAND_TOTAL                                           22
 
 /***********************************************************************************************************************************
 Option group constants
@@ -116,9 +118,15 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_COUNT                                 "tcp-keep-alive-count"
 #define CFGOPT_TCP_KEEP_ALIVE_IDLE                                  "tcp-keep-alive-idle"
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
+#define CFGOPT_TLS_SERVER_ADDRESS                                   "tls-server-address"
+#define CFGOPT_TLS_SERVER_AUTH                                      "tls-server-auth"
+#define CFGOPT_TLS_SERVER_CA_FILE                                   "tls-server-ca-file"
+#define CFGOPT_TLS_SERVER_CERT_FILE                                 "tls-server-cert-file"
+#define CFGOPT_TLS_SERVER_KEY_FILE                                  "tls-server-key-file"
+#define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            133
+#define CFG_OPTION_TOTAL                                            149
 
 /***********************************************************************************************************************************
 Option value constants
@@ -189,6 +197,11 @@ Option value constants
 #define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
 #define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
 
+#define CFGOPTVAL_PG_HOST_TYPE_SSH                                  STRID5("ssh", 0x22730)
+#define CFGOPTVAL_PG_HOST_TYPE_SSH_Z                                "ssh"
+#define CFGOPTVAL_PG_HOST_TYPE_TLS                                  STRID5("tls", 0x4d940)
+#define CFGOPTVAL_PG_HOST_TYPE_TLS_Z                                "tls"
+
 #define CFGOPTVAL_REMOTE_TYPE_PG                                    STRID5("pg", 0xf00)
 #define CFGOPTVAL_REMOTE_TYPE_PG_Z                                  "pg"
 #define CFGOPTVAL_REMOTE_TYPE_REPO                                  STRID5("repo", 0x7c0b20)
@@ -215,6 +228,11 @@ Option value constants
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_SERVICE_Z                       "service"
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_TOKEN                           STRID5("token", 0xe2adf40)
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_TOKEN_Z                         "token"
+
+#define CFGOPTVAL_REPO_HOST_TYPE_SSH                                STRID5("ssh", 0x22730)
+#define CFGOPTVAL_REPO_HOST_TYPE_SSH_Z                              "ssh"
+#define CFGOPTVAL_REPO_HOST_TYPE_TLS                                STRID5("tls", 0x4d940)
+#define CFGOPTVAL_REPO_HOST_TYPE_TLS_Z                              "tls"
 
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                  STRID5("diff", 0x319240)
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF_Z                "diff"
@@ -306,6 +324,8 @@ typedef enum
     cfgCmdRepoPut,
     cfgCmdRepoRm,
     cfgCmdRestore,
+    cfgCmdServerPing,
+    cfgCmdServerStart,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,
     cfgCmdStanzaUpgrade,
@@ -382,11 +402,16 @@ typedef enum
     cfgOptPg,
     cfgOptPgDatabase,
     cfgOptPgHost,
+    cfgOptPgHostCaFile,
+    cfgOptPgHostCaPath,
+    cfgOptPgHostCertFile,
     cfgOptPgHostCmd,
     cfgOptPgHostConfig,
     cfgOptPgHostConfigIncludePath,
     cfgOptPgHostConfigPath,
+    cfgOptPgHostKeyFile,
     cfgOptPgHostPort,
+    cfgOptPgHostType,
     cfgOptPgHostUser,
     cfgOptPgLocal,
     cfgOptPgPath,
@@ -415,11 +440,16 @@ typedef enum
     cfgOptRepoGcsKeyType,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
+    cfgOptRepoHostCaFile,
+    cfgOptRepoHostCaPath,
+    cfgOptRepoHostCertFile,
     cfgOptRepoHostCmd,
     cfgOptRepoHostConfig,
     cfgOptRepoHostConfigIncludePath,
     cfgOptRepoHostConfigPath,
+    cfgOptRepoHostKeyFile,
     cfgOptRepoHostPort,
+    cfgOptRepoHostType,
     cfgOptRepoHostUser,
     cfgOptRepoLocal,
     cfgOptRepoPath,
@@ -462,6 +492,12 @@ typedef enum
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
+    cfgOptTlsServerAddress,
+    cfgOptTlsServerAuth,
+    cfgOptTlsServerCaFile,
+    cfgOptTlsServerCertFile,
+    cfgOptTlsServerKeyFile,
+    cfgOptTlsServerPort,
     cfgOptType,
 } ConfigOption;
 

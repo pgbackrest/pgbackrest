@@ -1752,8 +1752,8 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         }
         // Else the file does exist so comment out old recovery options that could interfere with the current recovery. Don't
         // comment out *all* recovery options because some should only be commented out if there is a new option to replace it, e.g.
-        // primary_conninfo. If the option shouldn't be commented out all the time then it won't ever be commnented out -- this
-        // may not be ideal but it is what was decided. PostgreSQL will use the last value set so this is safe as long as the option
+        // primary_conninfo. If the option shouldn't be commented out all the time then it won't ever be commented out -- this may
+        // not be ideal but it is what was decided. PostgreSQL will use the last value set so this is safe as long as the option
         // does not have dependencies on other options.
         else
         {

@@ -531,7 +531,7 @@ bldCfgParseOptionDeprecate(Yaml *const yaml)
                 indexed = true;
             }
 
-            // Create final deprecation if it does not aready exist
+            // Create final deprecation if it does not already exist
             BldCfgOptionDeprecateRaw *deprecate = lstFind(result, &name);
 
             if (deprecate == NULL)
@@ -1019,7 +1019,7 @@ bldCfgParseOptionResolveList(const List *const optList)
     List *const result = lstNewP(sizeof(BldCfgOption *), .comparator = lstComparatorStr);
 
     // The stanza option will always be resolved first since errors can be confusing when it is missing. That means it must exist
-    // and cannot have any depedencies.
+    // and cannot have any dependencies.
     // -----------------------------------------------------------------------------------------------------------------------------
     const BldCfgOption *const optStanza = lstFind(optList, &OPT_STANZA_STR);
 

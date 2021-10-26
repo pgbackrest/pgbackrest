@@ -148,6 +148,7 @@
         <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
         <!-- Azure Settings -->
+        <variable key="azure-image">mcr.microsoft.com/azure-storage/azurite:3.14.2</variable>  <!-- Azurite docker image -->
         <variable key="azure-all">n</variable>                      <!-- Build all the documentation with Azure? -->
         <variable key="azure-local">y</variable>
         <variable key="azure-account">pgbackrest</variable>
@@ -164,6 +165,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
+        <variable key="s3-image">minio/minio</variable>             <!-- Minio docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -693,10 +695,10 @@
         <title>Introduction</title>
 
         <!-- Create Azure server first to allow it time to boot before being used -->
-        <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="mcr.microsoft.com/azure-storage/azurite" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
+        <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="{[azure-image]}" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -2869,7 +2871,7 @@
                 </execute>
             </execute-list>
 
-            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>{[host-pg1]}</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
+            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>{[host-pg2]}</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create <file>pg_hba.conf</file> entry for replication user</title>

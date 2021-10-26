@@ -7,6 +7,8 @@ client using the hrnServerScript() functions.
 #ifndef TEST_COMMON_HARNESS_SERVER_H
 #define TEST_COMMON_HARNESS_SERVER_H
 
+#include <sys/stat.h>
+
 #include "common/io/read.h"
 #include "common/io/write.h"
 
@@ -27,16 +29,25 @@ Maximum number of ports allowed for each test
 /***********************************************************************************************************************************
 Path and prefix for test certificates
 ***********************************************************************************************************************************/
-#define HRN_SERVER_CERT_PREFIX                                     "test/certificate/pgbackrest-test"
+#define HRN_SERVER_CERT_PREFIX                                     "test/certificate/pgbackrest-test-"
+#define HRN_SERVER_CERT                                            HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "server.crt"
+#define HRN_SERVER_KEY                                             HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "server.key"
+#define HRN_SERVER_CA                                              HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "ca.crt"
+#define HRN_SERVER_CLIENT_CERT                                     HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "client.crt"
+#define HRN_SERVER_CLIENT_KEY                                      HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "client.key"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Initialize the server
+void hrnServerInit(void);
+
 // Run server
 typedef struct HrnServerRunParam
 {
     VAR_PARAM_HEADER;
     unsigned int port;                                              // Server port, defaults to hrnServerPort(0)
+    const String *ca;                                               // TLS CA store when protocol = hrnServerProtocolTls
     const String *certificate;                                      // TLS certificate when protocol = hrnServerProtocolTls
     const String *key;                                              // TLS key when protocol = hrnServerProtocolTls
 } HrnServerRunParam;
@@ -59,15 +70,15 @@ void hrnServerScriptAccept(IoWrite *write);
 // Close the connection
 void hrnServerScriptClose(IoWrite *write);
 
-// Expect the specfified string
+// Expect the specified string
 void hrnServerScriptExpect(IoWrite *write, const String *data);
 void hrnServerScriptExpectZ(IoWrite *write, const char *data);
 
-// Reply with the specfified string
+// Reply with the specified string
 void hrnServerScriptReply(IoWrite *write, const String *data);
 void hrnServerScriptReplyZ(IoWrite *write, const char *data);
 
-// Sleep specfified milliseconds
+// Sleep specified milliseconds
 void hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs);
 
 /***********************************************************************************************************************************

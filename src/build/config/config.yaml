@@ -119,6 +119,14 @@ command:
       local: {}
       remote: {}
 
+  server-ping:
+    internal: true
+    log-file: false
+    parameter-allowed: true
+
+  server-start:
+    internal: true
+
   stanza-create:
     command-role:
       remote: {}
@@ -165,7 +173,7 @@ optionGroup:
 # Options
 #
 # Contains the defines for options: which commands the option can/cannot be specified, for which commands it is required, default
-# settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
+# settings, types, ranges, whether the option may be negated, whether it has dependencies, etc. The initial section is the global
 # section, meaning that the defines defined there apply to all commands listed for the option.
 #
 # inherit:
@@ -215,7 +223,7 @@ optionGroup:
 #   If the default is a string output it as-is without quoting. This allows C defines to be used as defaults.
 #
 # negate:
-#   All config file boolean options are automatically negatable. This setting is used to maintain backward compatibility with older
+#   All config file boolean options automatically may be negated. This setting is used to maintain backward compatibility with older
 #   options and should not be used for new options. For instance --online would be named --offline if it were created now to avoid
 #   the need for negation. --no-config is another special case that would now be implemented with a separate boolean option,
 #   e.g. --config-ignore.
@@ -599,6 +607,8 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      server-ping: {}
+      server-start: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -630,29 +640,9 @@ option:
       local: {}
 
   cmd-ssh:
-    section: global
-    type: string
+    inherit: cmd
+    required: true
     default: ssh
-    command:
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      info: {}
-      repo-create: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
-    command-role:
-      async: {}
-      main: {}
-      local: {}
 
   # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
   compress:
@@ -847,6 +837,7 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      server-start: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -913,6 +904,61 @@ option:
     allow-range: [1, 900]
     command: buffer-size
     depend: tcp-keep-alive-count
+
+  tls-server-ca-file:
+    internal: true
+    section: global
+    type: path
+    command:
+      server-start:
+        internal: false
+
+  tls-server-cert-file:
+    internal: true
+    section: global
+    type: path
+    command:
+      server-start:
+        internal: false
+
+  tls-server-key-file:
+    internal: true
+    section: global
+    type: path
+    command:
+      server-start:
+        internal: false
+
+  tls-server-auth:
+    internal: true
+    section: global
+    type: hash
+    command:
+      server-start:
+        internal: false
+
+  tls-server-address:
+    internal: true
+    section: global
+    type: string
+    default: localhost
+    command:
+      server-ping:
+        internal: false
+      server-start:
+        internal: false
+
+  tls-server-port:
+    internal: true
+    section: global
+    type: integer
+    default: 8432
+    allow-range: [1, 65535]
+    command:
+      server-ping:
+        internal: false
+      server-start:
+        internal: false
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
@@ -1290,6 +1336,32 @@ option:
       db-host: {}
       db?-host: {}
 
+  pg-host-cert-file:
+    internal: true
+    section: global
+    group: pg
+    type: string
+    command: pg-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-host-type
+      list:
+        - tls
+
+  pg-host-key-file:
+    inherit: pg-host-cert-file
+
+  pg-host-ca-file:
+    inherit: pg-host-cert-file
+    required: false
+
+  pg-host-ca-path:
+    inherit: pg-host-cert-file
+    required: false
+
   pg-host-cmd:
     section: stanza
     group: pg
@@ -1348,6 +1420,25 @@ option:
     deprecate:
       db-user: {}
       db?-user: {}
+
+  pg-host-type:
+    internal: true
+    section: global
+    group: pg
+    type: string
+    default: ssh
+    allow-list:
+      - ssh
+      - tls
+    command: pg-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-local
+      list:
+        - false
 
   pg-path:
     section: stanza
@@ -1724,6 +1815,25 @@ option:
     deprecate:
       hardlink: {}
 
+  repo-host-type:
+    internal: true
+    section: global
+    group: repo
+    type: string
+    default: ssh
+    allow-list:
+      - ssh
+      - tls
+    command: repo-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: repo-local
+      list:
+        - false
+
   repo-host:
     section: global
     group: repo
@@ -1734,12 +1844,35 @@ option:
       async: {}
       main: {}
       local: {}
-    depend:
-      option: repo-local
-      list:
-        - false
+    depend: repo-host-type
     deprecate:
       backup-host: {}
+
+  repo-host-cert-file:
+    internal: true
+    section: global
+    group: repo
+    type: string
+    command: repo-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: repo-host-type
+      list:
+        - tls
+
+  repo-host-key-file:
+    inherit: repo-host-cert-file
+
+  repo-host-ca-file:
+    inherit: repo-host-cert-file
+    required: false
+
+  repo-host-ca-path:
+    inherit: repo-host-cert-file
+    required: false
 
   repo-host-cmd:
     section: global
@@ -1749,6 +1882,7 @@ option:
     command:
       archive-get: {}
       archive-push: {}
+      backup: {}
       check: {}
       info: {}
       repo-create: {}

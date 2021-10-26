@@ -130,7 +130,40 @@
                         <p>Add hints to standby replay timeout message.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1504"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="andrew.lecuyer"/>
+                        </release-item-contributor-list>
+
+                        <p><proper>Add TLS</proper> server.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Eliminate linefeed formatting from documentation."/>
+                        <commit subject="Update contributing.xml with rendering changes from def7d513."/>
+                        <commit subject="Add missing paragraph tag in user guide."/>
+                        <commit subject="Add br tags for HTML documentation rendering missed in def7d513."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Eliminate linefeed formatting from documentation.</p>
+                    </release-item>
+                </release-development-list>
+            </release-doc-list>
         </release>
 
         <release date="2021-08-23" version="2.35" title="Binary Protocol">
@@ -10351,6 +10384,11 @@
         <contributor id="isaac.yuen">
             <contributor-name-display>Isaac Yuen</contributor-name-display>
             <contributor-id type="github">Isaacwhyuenac</contributor-id>
+        </contributor>
+
+        <contributor id="reid.thompson">
+            <contributor-name-display>Reid Thompson</contributor-name-display>
+            <contributor-id type="github">jreidthompson</contributor-id>
         </contributor>
 
         <contributor id="james.badger">

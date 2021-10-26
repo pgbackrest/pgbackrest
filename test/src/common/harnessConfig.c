@@ -84,7 +84,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     // Apply special option rules
     cfgLoadUpdateOption();
 
-    // Set buffer size when it is specified explicity -- otherwise the module default will be used. Note that this is *not* the
+    // Set buffer size when it is specified explicitly -- otherwise the module default will be used. Note that this is *not* the
     // configuration default, which is much larger.
     if (cfgOptionTest(cfgOptBufferSize))
         ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));

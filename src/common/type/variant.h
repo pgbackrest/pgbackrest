@@ -187,7 +187,7 @@ By convention all variant constant identifiers are appended with _VAR.
 #define VARSTR(dataParam)                                                                                                          \
     ((const Variant *)&(const VariantStringPub){.type = varTypeString, .data = (String *)(dataParam)})
 
-// Used to declare String Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
+// Used to declare String Variant constants that will be extern'd using VARIANT_DECLARE(). Must be used in a .c file.
 #define VARIANT_STRDEF_EXTERN(name, dataParam)                                                                                     \
     const Variant *const name = VARSTRDEF(dataParam)
 

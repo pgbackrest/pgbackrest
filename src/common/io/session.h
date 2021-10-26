@@ -36,7 +36,16 @@ typedef struct IoSessionPub
     MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Driver object
     const IoSessionInterface *interface;                            // Driver interface
+    const String *peerName;                                         // Name of peer (exact meaning depends on driver)
+    bool authenticated;                                             // Is the session authenticated?
 } IoSessionPub;
+
+// Is the session authenticated? The exact meaning of "authenticated" will vary by driver type.
+__attribute__((always_inline)) static inline bool
+ioSessionAuthenticated(const IoSession *const this)
+{
+    return THIS_PUB(IoSession)->authenticated;
+}
 
 // Session file descriptor, -1 if none
 int ioSessionFd(IoSession *this);
@@ -53,6 +62,14 @@ __attribute__((always_inline)) static inline IoWrite *
 ioSessionIoWrite(IoSession *const this)
 {
     return THIS_PUB(IoSession)->interface->ioWrite(THIS_PUB(IoSession)->driver);
+}
+
+// The peer name, if any. The exact meaning will vary by driver type, for example the peer name will be the client CN for the
+// TlsSession driver.
+__attribute__((always_inline)) static inline const String *
+ioSessionPeerName(const IoSession *const this)
+{
+    return THIS_PUB(IoSession)->peerName;
 }
 
 // Session role

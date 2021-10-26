@@ -147,7 +147,6 @@ const String *
 cfgExe(void)
 {
     FUNCTION_TEST_VOID();
-
     ASSERT(configLocal != NULL);
 
     if (cfgOptionTest(cfgOptCmd))
