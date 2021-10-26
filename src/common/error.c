@@ -88,7 +88,6 @@ situations.
 
 The temp buffer is required because the error message being passed might be the error already stored in the message buffer.
 ***********************************************************************************************************************************/
-
 #ifndef ERROR_MESSAGE_BUFFER_SIZE
     #define ERROR_MESSAGE_BUFFER_SIZE                                   8192
 #endif
