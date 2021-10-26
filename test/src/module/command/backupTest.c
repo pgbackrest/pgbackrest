@@ -1192,6 +1192,27 @@ testRun(void)
         cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_TRUE_VAR);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when error on manifest load");
+
+        Manifest *manifest = NULL;
+
+        OBJ_NEW_BEGIN(Manifest)
+        {
+            manifest = manifestNewInternal();
+            manifest->pub.data.backupType = backupTypeFull;
+            manifest->pub.data.backrestVersion = STRDEF("BOGUS");
+        }
+        OBJ_NEW_END();
+
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, "X");
+
+        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed: unable to read"
+                " <REPO:BACKUP>/20191003-105320F/backup.manifest.copy");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when pgBackRest version has changed");
 
         Manifest *manifestResume = NULL;
@@ -1215,16 +1236,6 @@ testRun(void)
             storageWriteIo(
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
-
-        Manifest *manifest = NULL;
-
-        OBJ_NEW_BEGIN(Manifest)
-        {
-            manifest = manifestNewInternal();
-            manifest->pub.data.backupType = backupTypeFull;
-            manifest->pub.data.backrestVersion = STRDEF("BOGUS");
-        }
-        OBJ_NEW_END();
 
         TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
 
