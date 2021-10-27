@@ -596,6 +596,7 @@ testRun(void)
         TEST_ERROR(cfgParseSizeQualifier('w'), AssertError, "'w' is not a valid size qualifier");
         TEST_RESULT_INT(cfgParseSize(STRDEF("10B")), 10, "10B");
         TEST_RESULT_INT(cfgParseSize(STRDEF("1k")), 1024, "1k");
+        TEST_RESULT_INT(cfgParseSize(STRDEF("1KiB")), 1024, "1KiB");
         TEST_RESULT_INT(cfgParseSize(STRDEF("5G")), (uint64_t)5 * 1024 * 1024 * 1024, "5G");
         TEST_RESULT_INT(cfgParseSize(STRDEF("3Tb")), (uint64_t)3 * 1024 * 1024 * 1024 * 1024, "3Tb");
         TEST_RESULT_INT(cfgParseSize(STRDEF("11")), 11, "11 - no qualifier, default bytes");

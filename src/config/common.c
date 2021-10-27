@@ -77,7 +77,7 @@ cfgParseSize(const String *const value)
     String *valueLower = strLower(strDup(value));
 
     // Match the value against possible values
-    if (regExpMatchOne(STRDEF("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), valueLower))
+    if (regExpMatchOne(STRDEF("^[0-9]+(kib|kb|k|mib|mb|m|gib|gb|g|tib|tb|t|pib|pb|p|b)*$"), valueLower))
     {
         // Get the character array and size
         const char *strArray = strZ(valueLower);
@@ -88,10 +88,12 @@ cfgParseSize(const String *const value)
         if (strArray[size - 1] == 'b')
         {
             // If the previous character is a number, then the letter to look at is 'b' which is the last position else it is in the
-            // next to last position (e.g. kb - so the 'k' is the position of interest).  Only need to test for <= 9 since the regex
-            // enforces the format.
+            // next to last position (e.g. kb - so the 'k' is the position of interest). Only need to test for <= 9 since the regex
+            // enforces the format. Also allow an 'i' before the 'b'.
             if (strArray[size - 2] <= '9')
                 chrPos = (int)(size - 1);
+            else if (strArray[size - 2] == 'i')
+                chrPos = (int)(size - 3);
             else
                 chrPos = (int)(size - 2);
         }

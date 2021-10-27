@@ -2144,7 +2144,6 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                                             case cfgOptTypeSize:
                                                 configOptionValue->value.integer = cfgParseSize(value);
-                                                valueAllow = varStrForce(VARINT64(configOptionValue->value.integer)); // !!!
                                                 break;
 
                                             default:

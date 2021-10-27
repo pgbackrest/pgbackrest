@@ -130,14 +130,14 @@
                         <summary>Buffer size for file operations.</summary>
 
                         <text>
-                            <p>Set the buffer size used for copy, compress, and uncompress functions. A maximum of 3 buffers will be in use at a time per process. An additional maximum of 256K per process may be used for zlib buffers.</p>
+                            <p>Set the buffer size used for copy, compress, decompress, encrypt, and other filters. The number of buffers used depends on options and each filter may use additional memory internally, e.g. <id>gz</id> may use an additional 256KiB of memory.</p>
 
-                            <p>Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024. For example, the case-insensitive value 32k (or 32KB) can be used instead of 32768.</p>
+                            <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 32KiB (or 32KB, 32k) can be used instead of 32768.</p>
 
-                            <p>Allowed values, in bytes, are <id>16384</id>, <id>32768</id>, <id>65536</id>, <id>131072</id>, <id>262144</id>, <id>524288</id>, <id>1048576</id>, <id>2097152</id>, <id>4194304</id>, <id>8388608</id>, and <id>16777216</id>.</p>
+                            <p>Allowed values are <id>16Kib</id>, <id>32Kib</id>, <id>64Kib</id>, <id>128Kib</id>, <id>256Kib</id>, <id>512Kib</id>, <id>1MiB</id>, <id>2MiB</id>, <id>4MiB</id>, <id>8MiB</id>, and <id>16MiB</id>.</p>
                         </text>
 
-                        <example>32K</example>
+                        <example>32KiB</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - CMD-SSH KEY -->

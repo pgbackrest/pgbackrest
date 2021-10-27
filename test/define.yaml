@@ -386,6 +386,7 @@ unit:
         depend:
           - command/backup/pageChecksum
           - common/lock
+          - config/common
           - config/config
           - config/parse
           - config/exec

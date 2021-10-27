@@ -7,6 +7,7 @@ Render Configuration Data
 
 #include "common/log.h"
 #include "common/type/convert.h"
+#include "config/common.h"
 #include "storage/posix/storage.h"
 
 #include "build/common/render.h"
@@ -384,6 +385,10 @@ bldCfgRenderScalar(const String *const scalar, const String *const optType)
     if (strEq(optType, OPT_TYPE_TIME_STR))
     {
         value = (int64_t)(cvtZToDouble(strZ(scalar)) * 1000);
+    }
+    else if (strEq(optType, OPT_TYPE_SIZE_STR))
+    {
+        value = cfgParseSize(scalar);
     }
     else
     {
@@ -779,7 +784,12 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             kvAdd(optionalDefaultRule, ruleAllowList, VARSTR(bldCfgRenderAllowList(opt->allowList, opt->type)));
 
             for (unsigned int allowIdx = 0; allowIdx < strLstSize(opt->allowList); allowIdx++)
-                strLstAddIfMissing(ruleDataList, strLstGet(opt->allowList, allowIdx));
+            {
+                if (strEq(opt->type, OPT_TYPE_SIZE_STR))
+                    strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, cfgParseSize(strLstGet(opt->allowList, allowIdx))));
+                else
+                    strLstAddIfMissing(ruleDataList, strLstGet(opt->allowList, allowIdx));
+            }
         }
 
         if (opt->defaultValue != NULL)
@@ -792,6 +802,11 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 {
                     strLstAddIfMissing(
                         ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(opt->defaultValue)) * 1000)));
+                }
+                else if (strEq(opt->type, OPT_TYPE_SIZE_STR))
+                {
+                    strLstAddIfMissing(ruleStrList, strNewFmt("\"%s\"", strZ(opt->defaultValue)));
+                    strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, cfgParseSize(opt->defaultValue)));
                 }
                 else
                     strLstAddIfMissing(ruleDataList, opt->defaultValue);
@@ -836,6 +851,11 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                     {
                         strLstAddIfMissing(
                             ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(optCmd->defaultValue)) * 1000)));
+                    }
+                    else if (strEq(opt->type, OPT_TYPE_SIZE_STR))
+                    {
+                        strLstAddIfMissing(ruleStrList, strNewFmt("\"%s\"", strZ(optCmd->defaultValue)));
+                        strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, cfgParseSize(optCmd->defaultValue)));
                     }
                     else
                         strLstAddIfMissing(ruleDataList, optCmd->defaultValue);
