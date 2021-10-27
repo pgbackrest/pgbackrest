@@ -142,7 +142,7 @@
 
                     <!-- CONFIG - GENERAL SECTION - CMD KEY -->
                     <config-key id="cmd" name="Invocation Target">
-                        <summary>Utilize provided command when generating internal command invocations.</summary>
+                        <summary><backrest/> command.</summary>
 
                         <text>
                             <p><backrest/> may generate or invoke commands (to e.g. create the <code>restore_command</code> during the restore process). The command used to trigger the <backrest/> process will then also be used in those cases, unless the <br-option>cmd</br-option> option is provided.</p>
