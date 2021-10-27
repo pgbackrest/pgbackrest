@@ -2097,6 +2097,7 @@ option:
     allow-list:
       - shared
       - auto
+      - web-id
 
   repo-s3-region:
     inherit: repo-s3-bucket

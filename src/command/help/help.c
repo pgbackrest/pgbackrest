@@ -453,7 +453,7 @@ helpRender(const Buffer *const helpData)
                         const String *value = NULL;
 
                         if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
-                            value = helpRenderValue(cfgOptionIdx(optionId, 0), cfgParseOptionType(optionId));
+                            value = helpRenderValue(cfgOptionIdxVar(optionId, 0), cfgParseOptionType(optionId));
 
                         if (value != NULL || defaultValue != NULL)
                         {
@@ -520,7 +520,7 @@ helpRender(const Buffer *const helpData)
                 const String *value = NULL;
 
                 if (cfgOptionIdxSource(option.id, 0) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOptionIdx(option.id, 0), cfgParseOptionType(option.id));
+                    value = helpRenderValue(cfgOptionIdxVar(option.id, 0), cfgParseOptionType(option.id));
 
                 if (value != NULL || defaultValue != NULL)
                 {

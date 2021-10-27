@@ -99,6 +99,7 @@ struct StorageS3
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
     const String *credRole;                                         // Role to use for credential requests
+    const String *webIdToken;                                       // Token to use for credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
     // Current signing key and date it is valid for
@@ -355,6 +356,61 @@ storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
 }
 
 /***********************************************************************************************************************************
+Automatically get credentials for an associated web identity service account
+
+Documentation is found at: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html
+***********************************************************************************************************************************/
+STRING_STATIC(S3_STS_HOST_STR,                                      "sts.amazonaws.com");
+#define S3_STS_PORT                                                 443
+
+static void
+storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_S3, this);
+        FUNCTION_LOG_PARAM(HTTP_HEADER, header);
+    FUNCTION_LOG_END();
+
+    // Get credentials
+    HttpQuery *const query = httpQueryNewP();
+    httpQueryAdd(query, STRDEF("Action"), STRDEF("AssumeRoleWithWebIdentity"));
+    httpQueryAdd(query, STRDEF("RoleArn"), this->credRole);
+    httpQueryAdd(query, STRDEF("RoleSessionName"), STRDEF(PROJECT_NAME));
+    httpQueryAdd(query, STRDEF("Version"), STRDEF("2011-06-15"));
+    httpQueryAdd(query, STRDEF("WebIdentityToken"), this->webIdToken);
+
+    HttpRequest *const request = httpRequestNewP(
+        this->credHttpClient, HTTP_VERB_GET_STR, FSLASH_STR, .header = header, .query = query);
+    HttpResponse *const response = httpRequestResponse(request, true);
+
+    CHECK(httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND);
+
+    // Copy credentials
+    const XmlNode *const xmlCred =
+        xmlNodeChild(
+            xmlNodeChild(
+                xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), STRDEF("AssumeRoleWithWebIdentityResult"), true),
+            STRDEF("Credentials"), true);
+
+    const XmlNode *const accessKeyNode = xmlNodeChild(xmlCred, STRDEF("AccessKeyId"), true);
+    const XmlNode *const secretAccessKeyNode = xmlNodeChild(xmlCred, STRDEF("SecretAccessKey"), true);
+    const XmlNode *const securityTokenNode = xmlNodeChild(xmlCred, STRDEF("SessionToken"), true);
+
+    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    {
+        this->accessKey = xmlNodeContent(accessKeyNode);
+        this->secretAccessKey = xmlNodeContent(secretAccessKeyNode);
+        this->securityToken = xmlNodeContent(securityTokenNode);
+    }
+    MEM_CONTEXT_END();
+
+    // Update expiration time
+    this->credExpirationTime = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xmlCred, STRDEF("Expiration"), true)));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
 HttpRequest *
@@ -409,7 +465,22 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             httpHeaderAdd(credHeader, HTTP_HEADER_HOST_STR, this->credHost);
 
             // Get credentials
-            storageS3AuthAuto(this, credHeader);
+            switch (this->keyType)
+            {
+                // Auto authentication
+                case storageS3KeyTypeAuto:
+                    storageS3AuthAuto(this, credHeader);
+                    break;
+
+                // Web identity authentication
+                default:
+                {
+                    ASSERT(this->keyType == storageS3KeyTypeWebId);
+
+                    storageS3AuthWebId(this, credHeader);
+                    break;
+                }
+            }
 
             // Reset the signing key date so the signing key gets regenerated
             this->signingKeyDate = YYYYMMDD_STR;
@@ -946,8 +1017,9 @@ Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, const String *credRole, size_t partSize, const String *host,
-    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+    const String *secretAccessKey, const String *securityToken, const String *credRole, const String *const webIdToken,
+    size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile,
+    const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -962,6 +1034,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
         FUNCTION_TEST_PARAM(STRING, credRole);
+        FUNCTION_TEST_PARAM(STRING, webIdToken);
         FUNCTION_LOG_PARAM(SIZE, partSize);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
@@ -1021,6 +1094,26 @@ storageS3New(
                 driver->credExpirationTime = time(NULL);
                 driver->credHttpClient = httpClientNew(
                     sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout, timeout), timeout);
+
+                break;
+            }
+
+            // Create the HTTP client used to retrieve web identity security credentials
+            case storageS3KeyTypeWebId:
+            {
+                ASSERT(accessKey == NULL && secretAccessKey == NULL && securityToken == NULL);
+                ASSERT(credRole != NULL);
+                ASSERT(webIdToken != NULL);
+
+                driver->credRole = strDup(credRole);
+                driver->webIdToken = strDup(webIdToken);
+                driver->credHost = S3_STS_HOST_STR;
+                driver->credExpirationTime = time(NULL);
+                driver->credHttpClient = httpClientNew(
+                    tlsClientNew(
+                        sckClientNew(driver->credHost, S3_STS_PORT, timeout, timeout), driver->credHost, timeout, timeout, true,
+                        caFile, caPath, NULL, NULL),
+                    timeout);
 
                 break;
             }

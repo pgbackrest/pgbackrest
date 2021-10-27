@@ -287,6 +287,11 @@ sub htmlGet
     }
 
     $strHtml .=
+        $self->indent(1) . "<script async src=\"https://www.googletagmanager.com/gtag/js?id=G-VKCRNV73H1\"></script>\n" .
+        $self->indent(1) . "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}" .
+            "gtag('js',new Date());gtag('config','G-VKCRNV73H1');</script>\n";
+
+    $strHtml .=
         $self->indent(0) . "</head>" . $self->lf() .
         $self->htmlRender($self->bodyGet(), 0);
 

@@ -148,7 +148,7 @@
         <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
         <!-- Azure Settings -->
-        <variable key="azure-image">mcr.microsoft.com/azure-storage/azurite:3.14.2</variable>  <!-- Azurite docker image -->
+        <variable key="azure-image">mcr.microsoft.com/azure-storage/azurite</variable>  <!-- Azurite docker image -->
         <variable key="azure-all">n</variable>                      <!-- Build all the documentation with Azure? -->
         <variable key="azure-local">y</variable>
         <variable key="azure-account">pgbackrest</variable>

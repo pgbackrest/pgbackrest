@@ -304,6 +304,7 @@ tlsClientOpen(THIS_VOID)
         while (retry);
 
         // Authenticate TLS session
+        ASSERT(result != NULL);
         ioSessionAuthenticatedSet(result, tlsClientAuth(this, tlsSession));
 
         // Move session

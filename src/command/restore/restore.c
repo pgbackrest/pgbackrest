@@ -440,7 +440,7 @@ restoreManifestMap(Manifest *manifest)
 
         // Remap tablespaces
         // -------------------------------------------------------------------------------------------------------------------------
-        KeyValue *tablespaceMap = varKv(cfgOption(cfgOptTablespaceMap));
+        const KeyValue *const tablespaceMap = cfgOptionKvNull(cfgOptTablespaceMap);
         const String *tablespaceMapAllPath = cfgOptionStrNull(cfgOptTablespaceMapAll);
 
         if (tablespaceMap != NULL || tablespaceMapAllPath != NULL)
@@ -527,7 +527,7 @@ restoreManifestMap(Manifest *manifest)
 
         // Remap links
         // -------------------------------------------------------------------------------------------------------------------------
-        const KeyValue *const linkMap = varKv(cfgOption(cfgOptLinkMap));
+        const KeyValue *const linkMap = cfgOptionKvNull(cfgOptLinkMap);
 
         if (linkMap != NULL)
         {

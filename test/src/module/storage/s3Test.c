@@ -645,9 +645,6 @@ testRun(void)
                 // Check that the signing key changed
                 TEST_RESULT_BOOL(bufEq(driver->signingKey, oldSigningKey), false, "signing key changed");
 
-                // Auth service no longer needed
-                hrnServerScriptEnd(auth);
-
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
 
@@ -799,16 +796,94 @@ testRun(void)
                 TEST_RESULT_BOOL(storageInfoP(s3, NULL, .ignoreMissing = true).exists, false, "info for /");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to service credentials");
+
+                hrnServerScriptClose(service);
+
+                #define TEST_SERVICE_ROLE                           "arn:aws:iam::123456789012:role/TestRole"
+                #define TEST_SERVICE_TOKEN                          "TOKEN"
+                #define TEST_SERVICE_URI                                                                                           \
+                    "/?Action=AssumeRoleWithWebIdentity&RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole"               \
+                        "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=" TEST_SERVICE_TOKEN
+                #define TEST_SERVICE_RESPONSE                                                                                      \
+                    "<AssumeRoleWithWebIdentityResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\">\n"                    \
+                    "  <AssumeRoleWithWebIdentityResult>\n"                                                                        \
+                    "    <Credentials>\n"                                                                                          \
+                    "      <SessionToken>zz</SessionToken>\n"                                                                      \
+                    "      <SecretAccessKey>yy</SecretAccessKey>\n"                                                                \
+                    "      <Expiration>%s</Expiration>\n"                                                                          \
+                    "      <AccessKeyId>xx</AccessKeyId>\n"                                                                        \
+                    "    </Credentials>\n"                                                                                         \
+                    "  </AssumeRoleWithWebIdentityResult>\n"                                                                       \
+                    "</AssumeRoleWithWebIdentityResponse>"
+
+                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), "web-id-token", TEST_SERVICE_TOKEN);
+
+                argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeWebId);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+                TEST_ERROR(
+                    storageRepoGet(0, true), OptionInvalidError,
+                    "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
+
+                setenv("AWS_ROLE_ARN", TEST_SERVICE_ROLE, true);
+
+                TEST_ERROR(
+                    storageRepoGet(0, true), OptionInvalidError,
+                    "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
+
+                setenv("AWS_WEB_IDENTITY_TOKEN_FILE", TEST_PATH "/web-id-token", true);
+
+                s3 = storageRepoGet(0, true);
+                driver = (StorageS3 *)storageDriver(s3);
+
+                TEST_RESULT_STR_Z(driver->credRole, TEST_SERVICE_ROLE, "check role");
+                TEST_RESULT_STR_Z(driver->webIdToken, TEST_SERVICE_TOKEN, "check token");
+
+                // Set partSize to a small value for testing
+                driver->partSize = 16;
+
+                // Testing requires the auth http client to be redirected
+                driver->credHost = hrnServerHost();
+                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000, 5000), 5000);
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
 
+                // Get service credentials
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_SERVICE_URI);
+                testResponseP(
+                    auth,
+                    .content = strZ(
+                        strNewFmt(TEST_SERVICE_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1))))));
+
+                hrnServerScriptClose(auth);
+
                 // File missing
-                testRequestP(service, s3, HTTP_VERB_HEAD, "/BOGUS");
+                testRequestP(service, s3, HTTP_VERB_HEAD, "/BOGUS", .accessKey = "xx", .securityToken = "zz");
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(storageInfoP(s3, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for file");
+
+                // Get service credentials
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_SERVICE_URI);
+                testResponseP(
+                    auth,
+                    .content = strZ(
+                        strNewFmt(TEST_SERVICE_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2))))));
+
+                hrnServerScriptClose(auth);
 
                 testRequestP(service, s3, HTTP_VERB_HEAD, "/subdir/file1.txt");
                 testResponseP(service, .header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
@@ -819,6 +894,9 @@ testRun(void)
                 TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
                 TEST_RESULT_UINT(info.size, 9999, "check exists");
                 TEST_RESULT_INT(info.timeModified, 1445412480, "check time");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");

@@ -23,6 +23,18 @@ typedef enum
 } ConfigOptionType;
 
 /***********************************************************************************************************************************
+Underlying data type for an option
+***********************************************************************************************************************************/
+typedef enum
+{
+    cfgOptDataTypeBoolean,                                          // Boolean
+    cfgOptDataTypeHash,                                             // Hash
+    cfgOptDataTypeInteger,                                          // Signed 64-bit integer
+    cfgOptDataTypeList,                                             // List
+    cfgOptDataTypeString,                                           // String
+} ConfigOptionDataType;
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Parse the command-line arguments and config file to produce final config data
@@ -75,6 +87,9 @@ bool cfgParseOptionSecure(ConfigOption optionId);
 
 // Option data type
 ConfigOptionType cfgParseOptionType(ConfigOption optionId);
+
+// Get the underlying data type for an option
+ConfigOptionDataType cfgParseOptionDataType(ConfigOption optionId);
 
 // Is the option required?
 bool cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId);

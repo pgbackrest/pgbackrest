@@ -430,7 +430,7 @@ sub run
                                             {
                                                 # If the function to shim is static then we need to create a declaration with the
                                                 # original name so references to the original name in the C module will compile.
-                                                # This is not necessary for extern'd functions since they should already have a
+                                                # This is not necessary for externed functions since they should already have a
                                                 # declaration in the header file.
                                                 if ($strLine =~ /^${strFunction}\(/ && $stryShimModuleSrcRenamed[-1] =~ /^static /)
                                                 {
