@@ -366,15 +366,15 @@ testRun(void)
             "\n"
             "Buffer size for I/O operations.\n"
             "\n"
-            "Set the buffer size used for copy, compress, decompress, encrypt, and other\n"
-            "filters. The number of buffers used depends on options and each filter may use\n"
-            "additional memory internally, e.g. gz may use an additional 256KiB of memory.\n"
+            "Buffer size used for copy, compress, encrypt, and other operations. The number\n"
+            "of buffers used depends on options and each operation may use additional\n"
+            "memory, e.g. gz compression may use an additional 256KiB of memory.\n"
             "\n"
             "Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the\n"
             "multiplier is a power of 1024. For example, the case-insensitive value 32KiB\n"
             "(or 32KB, 32k) can be used instead of 32768.\n"
             "\n"
-            "Allowed values are 16Kib, 32Kib, 64Kib, 128Kib, 256Kib, 512Kib, 1MiB, 2MiB,\n"
+            "Allowed values are 16KiB, 32KiB, 64KiB, 128KiB, 256KiB, 512KiB, 1MiB, 2MiB,\n"
             "4MiB, 8MiB, and 16MiB.\n",
             helpVersion));
 
