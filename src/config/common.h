@@ -10,6 +10,9 @@ Configuration Common
 Functions
 ***********************************************************************************************************************************/
 // Parse option size, e.g. 23m
-int64_t cfgParseSize(const String *const value);
+int64_t cfgParseSize(const String *value);
+
+// int64_t option time, e.g. 900
+int64_t cfgParseTime(const String *value);
 
 #endif

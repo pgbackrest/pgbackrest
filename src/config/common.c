@@ -5,6 +5,7 @@ Configuration Common
 
 #include "common/debug.h"
 #include "common/regExp.h"
+#include "common/time.h"
 #include "config/common.h"
 
 /**********************************************************************************************************************************/
@@ -104,4 +105,16 @@ cfgParseSize(const String *const value)
     }
 
     THROW_FMT(FormatError, "value '%s' is not valid", strZ(value));
+}
+
+int64_t
+cfgParseTime(const String *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+
+    FUNCTION_TEST_RETURN((int64_t)(cvtZToDouble(strZ(value)) * MSEC_PER_SEC));
 }

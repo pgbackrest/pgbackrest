@@ -2150,8 +2150,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                             {
                                                 ASSERT(optionType == cfgOptTypeTime);
 
-                                                configOptionValue->value.integer = (int64_t)(cvtZToDouble(
-                                                    strZ(value)) * MSEC_PER_SEC);
+                                                configOptionValue->value.integer = cfgParseTime(value);
                                                 break;
                                             }
                                         }

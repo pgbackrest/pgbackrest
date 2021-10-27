@@ -384,7 +384,7 @@ bldCfgRenderScalar(const String *const scalar, const String *const optType)
 
     if (strEq(optType, OPT_TYPE_TIME_STR))
     {
-        value = (int64_t)(cvtZToDouble(strZ(scalar)) * 1000);
+        value = cfgParseTime(scalar);
     }
     else if (strEq(optType, OPT_TYPE_SIZE_STR))
     {
@@ -520,7 +520,7 @@ bldCfgRenderValueAdd(
     const String *const optType, const String *const value, StringList *const ruleDataList, StringList *const ruleStrList)
 {
     if (strEq(optType, OPT_TYPE_TIME_STR))
-        strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(value)) * 1000)));
+        strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, cfgParseTime(value)));
     else if (strEq(optType, OPT_TYPE_SIZE_STR))
         strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, cfgParseSize(value)));
     else
