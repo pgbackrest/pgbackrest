@@ -483,6 +483,7 @@ unit:
         total: 6
 
         coverage:
+          - config/common
           - config/config
           - config/parse
           - config/parse.auto: noCode

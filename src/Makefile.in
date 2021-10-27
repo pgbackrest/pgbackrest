@@ -39,6 +39,7 @@ SRCS_BUILD = \
 	common/type/xml.c \
 	common/user.c \
 	common/wait.c \
+	config/common.c \
 	storage/posix/read.c \
 	storage/posix/storage.c \
 	storage/posix/write.c \
