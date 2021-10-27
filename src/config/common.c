@@ -3,22 +3,9 @@ Configuration Common
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-// #include <ctype.h>
-// #include <stdlib.h>
-// #include <string.h>
-// #include <strings.h>
-// #include <unistd.h>
-
 #include "common/debug.h"
-// #include "common/error.h"
-// #include "common/ini.h"
-// #include "common/log.h"
-// #include "common/macro.h"
-// #include "common/memContext.h"
 #include "common/regExp.h"
-// #include "config/config.intern.h"
 #include "config/common.h"
-// #include "version.h"
 
 /**********************************************************************************************************************************/
 // Helper to get the multiplier based on the qualifier
@@ -97,7 +84,7 @@ cfgParseSize(const String *const value)
             else
                 chrPos = (int)(size - 2);
         }
-        // else if there is no 'b' at the end but the last position is not a number then it must be one of the letters, e.g. 'k'
+        // Else if there is no 'b' at the end but the last position is not a number then it must be one of the letters, e.g. 'k'
         else if (strArray[size - 1] > '9')
             chrPos = (int)(size - 1);
 

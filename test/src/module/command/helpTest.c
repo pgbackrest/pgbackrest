@@ -221,8 +221,8 @@ testRun(void)
             "\n"
             "General Options:\n"
             "\n"
-            "  --buffer-size                    buffer size for file operations\n"
-            "                                   [current=32768, default=1048576]\n"
+            "  --buffer-size                    buffer size for I/O operations\n"
+            "                                   [current=32768, default=1MiB]\n"
             "  --cmd-ssh                        path to ssh client executable [default=ssh]\n"
             "  --compress-level-network         network compression level [default=3]\n"
             "  --config                         pgBackRest configuration file\n"
@@ -364,18 +364,18 @@ testRun(void)
         const char *optionHelp = strZ(strNewFmt(
             "%s - 'archive-push' command - 'buffer-size' option help\n"
             "\n"
-            "Buffer size for file operations.\n"
+            "Buffer size for I/O operations.\n"
             "\n"
-            "Set the buffer size used for copy, compress, and uncompress functions. A\n"
-            "maximum of 3 buffers will be in use at a time per process. An additional\n"
-            "maximum of 256K per process may be used for zlib buffers.\n"
+            "Set the buffer size used for copy, compress, decompress, encrypt, and other\n"
+            "filters. The number of buffers used depends on options and each filter may use\n"
+            "additional memory internally, e.g. gz may use an additional 256KiB of memory.\n"
             "\n"
-            "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the\n"
-            "multiplier is a power of 1024. For example, the case-insensitive value 32k (or\n"
-            "32KB) can be used instead of 32768.\n"
+            "Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the\n"
+            "multiplier is a power of 1024. For example, the case-insensitive value 32KiB\n"
+            "(or 32KB, 32k) can be used instead of 32768.\n"
             "\n"
-            "Allowed values, in bytes, are 16384, 32768, 65536, 131072, 262144, 524288,\n"
-            "1048576, 2097152, 4194304, 8388608, and 16777216.\n",
+            "Allowed values are 16Kib, 32Kib, 64Kib, 128Kib, 256Kib, 512Kib, 1MiB, 2MiB,\n"
+            "4MiB, 8MiB, and 16MiB.\n",
             helpVersion));
 
         argList = strLstNew();
@@ -384,13 +384,13 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "buffer-size");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(helpRender(helpData), strNewFmt("%s\ndefault: 1048576\n", optionHelp), "check text");
+        TEST_RESULT_STR(helpRender(helpData), strNewFmt("%s\ndefault: 1MiB\n", optionHelp), "check text");
 
         // Set a current value
         hrnCfgArgRawZ(argList, cfgOptBufferSize, "32768");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(
-            helpRender(helpData), strNewFmt("%s\ncurrent: 32768\ndefault: 1048576\n", optionHelp), "check text, current value");
+            helpRender(helpData), strNewFmt("%s\ncurrent: 32768\ndefault: 1MiB\n", optionHelp), "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated host option names");
