@@ -8,9 +8,17 @@ Represent Short Strings as Integers
 #include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
+Number of bits to use for encoding. The number of bits affects the character set that can be encoded.
+***********************************************************************************************************************************/
+typedef enum
+{
+    stringIdBit5 = 0,                                               // 5-bit encoding for a-z, 2, 5, 6, and - characters
+    stringIdBit6 = 1,                                               // 6-bit encoding for a-z, 0-9, A-Z, and - characters
+} StringIdBit;
+
+/***********************************************************************************************************************************
 Constants used to extract information from the header
 ***********************************************************************************************************************************/
-#define STRING_ID_BIT_MASK                                          3
 #define STRING_ID_HEADER_SIZE                                       4
 #define STRING_ID_PREFIX                                            4
 
