@@ -916,34 +916,6 @@ cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN_CONST(STRING, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeString, true)->value.string);
 }
 
-// Helper to convert option String values to StringIds. Some options need 6-bit encoding while most work fine with 5-bit encoding.
-// At some point the config parser will work with StringIds directly and this code can be removed, but for now it protects the
-// callers from this logic and hopefully means no changes to the callers when the parser is updated.
-static StringId
-cfgOptionStrIdInternal(
-    const ConfigOption optionId, const unsigned int optionIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-        FUNCTION_TEST_PARAM(UINT, optionIdx);
-    FUNCTION_TEST_END();
-
-    const String *const value = cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeString, false)->value.string;
-    StringId result = 0;
-
-    TRY_BEGIN()
-    {
-        result = strIdFromStr(stringIdBit5, value);
-    }
-    CATCH_ANY()
-    {
-        result = strIdFromStr(stringIdBit6, value);
-    }
-    TRY_END();
-
-    FUNCTION_TEST_RETURN(result);
-}
-
 StringId
 cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx)
 {
@@ -952,7 +924,10 @@ cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx)
         FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(STRING_ID, cfgOptionStrIdInternal(optionId, optionIdx));
+    // At some point the config parser will work with StringIds directly and strIdFromStr() will be removed, but for now it protects
+    // the callers from this logic and hopefully means no changes to the callers when the parser is updated.
+    FUNCTION_LOG_RETURN(
+        STRING_ID, strIdFromStr(cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeString, false)->value.string));
 }
 
 /**********************************************************************************************************************************/

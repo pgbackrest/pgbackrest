@@ -747,20 +747,8 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
         // If a depend list exists, make sure the value is in the list
         if (pckReadNext(filter))
         {
-            StringId dependValueStrId = 0;
-
-            if (cfgParseOptionDataType(dependId) == cfgOptDataTypeString)
-            {
-                TRY_BEGIN()
-                {
-                    dependValueStrId = strIdFromStr(stringIdBit5, dependValue->value.string);
-                }
-                CATCH_ANY()
-                {
-                    dependValueStrId = strIdFromStr(stringIdBit6, dependValue->value.string);
-                }
-                TRY_END();
-            }
+            const StringId dependValueStrId = cfgParseOptionDataType(dependId) == cfgOptDataTypeString ?
+                strIdFromStr(dependValue->value.string) : 0;
 
             do
             {
@@ -2336,36 +2324,14 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                                     if (parseRuleOption[optionId].type == cfgOptTypeString)
                                     {
-                                        bool valueValid = true;
-                                        StringId value = 0;
+                                        const StringId value = strIdFromZN(strZ(valueAllow), strSize(valueAllow), false);
 
-                                        TRY_BEGIN()
+                                        while (pckReadNext(allowList))
                                         {
-                                            TRY_BEGIN()
+                                            if (parseRuleValueStrId[pckReadU32P(allowList)] == value)
                                             {
-                                                value = strIdFromStr(stringIdBit5, valueAllow);
-                                            }
-                                            CATCH_ANY()
-                                            {
-                                                value = strIdFromStr(stringIdBit6, valueAllow);
-                                            }
-                                            TRY_END();
-                                        }
-                                        CATCH_ANY()
-                                        {
-                                            valueValid = false;
-                                        }
-                                        TRY_END();
-
-                                        if (valueValid)
-                                        {
-                                            while (pckReadNext(allowList))
-                                            {
-                                                if (parseRuleValueStrId[pckReadU32P(allowList)] == value)
-                                                {
-                                                    allowListFound = true;
-                                                    break;
-                                                }
+                                                allowListFound = true;
+                                                break;
                                             }
                                         }
                                     }

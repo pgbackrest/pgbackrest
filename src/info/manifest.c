@@ -1865,7 +1865,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 manifest->pub.data.backupTimestampStop = (time_t)varUInt64(value);
             else if (strEq(key, MANIFEST_KEY_BACKUP_TYPE_STR))
             {
-                manifest->pub.data.backupType = (BackupType)strIdFromStr(stringIdBit5, varStr(value));
+                manifest->pub.data.backupType = (BackupType)strIdFromStr(varStr(value));
                 ASSERT(
                     manifest->pub.data.backupType == backupTypeFull || manifest->pub.data.backupType == backupTypeDiff ||
                     manifest->pub.data.backupType == backupTypeIncr);
