@@ -373,7 +373,7 @@ sub containerBuild
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            if ($strOS eq VM_CO7)
+            if ($strOS eq VM_RH7)
             {
                 $strScript .=
                     "    yum -y install centos-release-scl-rh epel-release && \\\n";
@@ -476,7 +476,7 @@ sub containerBuild
                 $strScript .=
                     "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG && \\\n";
 
-                if ($strOS eq VM_CO7)
+                if ($strOS eq VM_RH7)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .

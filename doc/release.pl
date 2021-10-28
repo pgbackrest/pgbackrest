@@ -234,10 +234,10 @@ eval
         # Remove all docker containers to get consistent IP address assignments
         executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});
 
-        # Generate deployment docs for RHEL/Centos
-        if (!defined($strVm) || $strVm eq VM_CO8)
+        # Generate deployment docs for RHEL
+        if (!defined($strVm) || $strVm eq VM_RH8)
         {
-            &log(INFO, "Generate RHEL/CentOS documentation");
+            &log(INFO, "Generate RHEL documentation");
 
             executeTest("${strDocExe} --deploy --key-var=os-type=rhel --out=pdf", {bShowOutputAsync => true});
 
