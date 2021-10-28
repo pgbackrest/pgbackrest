@@ -680,7 +680,7 @@ test/bin/none/pgbackrest help backup repo-type
 
 To quickly view the HTML documentation, the `--no-exe` option can be passed to the documentation generator in order to bypass executing the code elements:
 ```
-pgbackrest/doc/doc.pl --output=html --no-exe
+pgbackrest/doc/doc.pl --out=html --no-exe
 ```
 The generated HTML files will be placed in the `doc/output/html` directory where they can be viewed locally in a browser.
 
