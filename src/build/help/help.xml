@@ -141,11 +141,11 @@
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - CMD KEY -->
-                    <config-key id="cmd" name="Invocation Target">
+                    <config-key id="cmd" name="{[project]} Command">
                         <summary><backrest/> command.</summary>
 
                         <text>
-                            <p><backrest/> may generate or invoke commands (to e.g. create the <code>restore_command</code> during the restore process). The command used to trigger the <backrest/> process will then also be used in those cases, unless the <br-option>cmd</br-option> option is provided.</p>
+                            <p><backrest/> may generate or invoke commands (to e.g. create the <code>restore_command</code> during the restore process). The command used to trigger the <backrest/> process will be used in those cases unless the <br-option>cmd</br-option> option is provided.</p>
                         </text>
 
                         <example>/var/lib/pgsql/bin/pgbackrest_wrapper.sh</example>
