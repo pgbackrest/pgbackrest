@@ -81,7 +81,7 @@ strIdFromStr(const String *const str)
     return strIdFromZN(strZ(str), strSize(str), true);
 }
 
-// Convert zero-terminted string to StringId using strIdFromZN()
+// Convert zero-terminated string to StringId using strIdFromZN()
 __attribute__((always_inline)) static inline StringId
 strIdFromZ(const char *const str)
 {

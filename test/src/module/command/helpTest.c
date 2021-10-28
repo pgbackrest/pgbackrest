@@ -232,7 +232,7 @@ testRun(void)
             "  --config-path                    base path of pgBackRest configuration files\n"
             "                                   [default=/etc/pgbackrest]\n"
             "  --delta                          restore or backup using checksums [default=n]\n"
-            "  --io-timeout                     i/O timeout [default=60]\n"
+            "  --io-timeout                     I/O timeout [default=60]\n"
             "  --lock-path                      path where lock files are stored\n"
             "                                   [default=/tmp/pgbackrest]\n"
             "  --neutral-umask                  use a neutral umask [default=y]\n"
