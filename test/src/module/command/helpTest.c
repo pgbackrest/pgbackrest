@@ -120,17 +120,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("helpRenderValue()"))
-    {
-        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(true), cfgOptTypeBoolean), "y", "boolean y");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(false), cfgOptTypeBoolean), "n", "boolean n");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewStrZ("test-string"), cfgOptTypeString), "test-string", "string");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewInt64(1234), cfgOptTypeInteger), "1234", "int");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewInt64(1234000), cfgOptTypeTime), "1234", "time");
-        TEST_RESULT_STR_Z(helpRenderValue(NULL, cfgOptTypeString), NULL, "null");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("helpRender()"))
     {
         StringList *argList = NULL;
@@ -387,10 +376,10 @@ testRun(void)
         TEST_RESULT_STR(helpRender(helpData), strNewFmt("%s\ndefault: 1MiB\n", optionHelp), "check text");
 
         // Set a current value
-        hrnCfgArgRawZ(argList, cfgOptBufferSize, "32768");
+        hrnCfgArgRawZ(argList, cfgOptBufferSize, "32k");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(
-            helpRender(helpData), strNewFmt("%s\ncurrent: 32768\ndefault: 1MiB\n", optionHelp), "check text, current value");
+            helpRender(helpData), strNewFmt("%s\ncurrent: 32k\ndefault: 1MiB\n", optionHelp), "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated host option names");

@@ -150,61 +150,65 @@ helpRenderText(const String *text, const bool internal, size_t indent, bool inde
 Helper function for helpRender() to output values as strings
 ***********************************************************************************************************************************/
 static const String *
-helpRenderValue(const Variant *value, ConfigOptionType type)
+helpRenderValue(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(VARIANT, value);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+        FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
     const String *result = NULL;
 
-    if (value != NULL)
+    if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
     {
-        if (varType(value) == varTypeBool)
-        {
-            if (varBool(value))
-                result = Y_STR;
-            else
-                result = N_STR;
-        }
-        else if (varType(value) == varTypeKeyValue)
-        {
-            String *resultTemp = strNew();
+        const Variant *const value = cfgOptionIdxVar(optionId, optionIdx);
+        ASSERT(value != NULL);
 
-            const KeyValue *optionKv = varKv(value);
-            const VariantList *keyList = kvKeyList(optionKv);
-
-            for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+        switch (varType(value))
+        {
+            case varTypeKeyValue:
             {
-                if (keyIdx != 0)
-                    strCatZ(resultTemp, ", ");
+                String *resultTemp = strNew();
 
-                strCatFmt(
-                    resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+                const KeyValue *optionKv = varKv(value);
+                const VariantList *keyList = kvKeyList(optionKv);
+
+                for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+                {
+                    if (keyIdx != 0)
+                        strCatZ(resultTemp, ", ");
+
+                    strCatFmt(
+                        resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                        strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+                }
+
+                result = resultTemp;
+                break;
             }
 
-            result = resultTemp;
-        }
-        else if (varType(value) == varTypeVariantList)
-        {
-            String *resultTemp = strNew();
-
-            const VariantList *list = varVarLst(value);
-
-            for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
+            case varTypeVariantList:
             {
-                if (listIdx != 0)
-                    strCatZ(resultTemp, ", ");
+                String *resultTemp = strNew();
 
-                strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
+                const VariantList *list = varVarLst(value);
+
+                for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
+                {
+                    if (listIdx != 0)
+                        strCatZ(resultTemp, ", ");
+
+                    strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
+                }
+
+                result = resultTemp;
+                break;
             }
 
-            result = resultTemp;
+            default:
+                result = cfgOptionIdxDisplay(optionId, optionIdx);
+                break;
         }
-        else
-            result = cfgOptionDisplayVar(value, type);
     }
 
     FUNCTION_LOG_RETURN_CONST(STRING, result);
@@ -450,10 +454,7 @@ helpRender(const Buffer *const helpData)
 
                         // Output current and default values if they exist
                         const String *defaultValue = cfgOptionDefault(optionId);
-                        const String *value = NULL;
-
-                        if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
-                            value = helpRenderValue(cfgOptionIdxVar(optionId, 0), cfgParseOptionType(optionId));
+                        const String *value = helpRenderValue(optionId, 0);
 
                         if (value != NULL || defaultValue != NULL)
                         {
@@ -517,10 +518,7 @@ helpRender(const Buffer *const helpData)
 
                 // Output current and default values if they exist
                 const String *defaultValue = cfgOptionDefault(option.id);
-                const String *value = NULL;
-
-                if (cfgOptionIdxSource(option.id, 0) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOptionIdxVar(option.id, 0), cfgParseOptionType(option.id));
+                const String *value = helpRenderValue(option.id, 0);
 
                 if (value != NULL || defaultValue != NULL)
                 {
