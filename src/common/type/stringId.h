@@ -51,15 +51,6 @@ StringId typedef to make them more recognizable in the code
 typedef uint64_t StringId;
 
 /***********************************************************************************************************************************
-Number of bits to use for encoding. The number of bits affects the character set that can be encoded.
-***********************************************************************************************************************************/
-typedef enum
-{
-    stringIdBit5 = 0,                                               // 5-bit encoding for a-z, 2, 5, 6, and - characters
-    stringIdBit6 = 1,                                               // 6-bit encoding for a-z, 0-9, A-Z, and - characters
-} StringIdBit;
-
-/***********************************************************************************************************************************
 Macros to define constant StringIds. ALWAYS use bldStrId() to create these macros. The parameters in the macros are not verified
 against each other so the str parameter is included only for documentation purposes.
 ***********************************************************************************************************************************/
@@ -81,7 +72,7 @@ strIdFromStr(const String *const str)
     return strIdFromZN(strZ(str), strSize(str), true);
 }
 
-// Convert zero-terminted string to StringId using strIdFromZN()
+// Convert zero-terminated string to StringId using strIdFromZN()
 __attribute__((always_inline)) static inline StringId
 strIdFromZ(const char *const str)
 {
