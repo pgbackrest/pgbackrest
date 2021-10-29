@@ -625,7 +625,7 @@ sub backrestConfigProcess
         #            {strContent => "${strFile}:"});
 
         # Convert linefeeds to br tags
-        $strConfig =~ s/\n/<\/br>/g;
+        $strConfig =~ s/\n/<br\/>\n/g;
 
         $oConfigBodyElement->
             addNew(HTML_DIV, "config-body-output",
@@ -685,7 +685,7 @@ sub postgresConfigProcess
         #            {strContent => "append to ${strFile}:"});
 
         # Convert linefeeds to br tags
-        $strConfig =~ s/\n/<\/br>/g;
+        $strConfig =~ s/\n/<br\/>\n/g;
 
         $oConfigBodyElement->
             addNew(HTML_DIV, "config-body-output",

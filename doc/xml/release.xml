@@ -200,6 +200,7 @@
                         <commit subject="Add missing paragraph tag in user guide."/>
                         <commit subject="Add br tags for HTML documentation rendering missed in def7d513."/>
                         <commit subject="Add missing paragraph tags in coding standards."/>
+                        <commit subject="Restore some linefeed rendering behavior from before def7d513."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
