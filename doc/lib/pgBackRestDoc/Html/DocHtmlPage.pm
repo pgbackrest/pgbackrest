@@ -186,7 +186,11 @@ sub process
     return logDebugReturn
     (
         $strOperation,
-        {name => 'strHtml', value => $oHtmlBuilder->htmlGet(), trace => true}
+        {name => 'strHtml',
+            value => $oHtmlBuilder->htmlGet(
+                {bAnalytics => defined($self->{oManifest}->variableGet('analytics')) &&
+                    $self->{oManifest}->variableGet('analytics') eq 'y'}),
+            trace => true}
     );
 }
 

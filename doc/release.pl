@@ -297,9 +297,9 @@ eval
         {
             &log(INFO, "Generate website documentation");
 
-            executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=rhel --out=html");
+            executeTest("${strDocExe} --var=analytics=y --deploy --cache-only --key-var=os-type=rhel --out=html");
             $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-rhel.html");
-            executeTest("${strDocExe} --deploy --out-preserve --cache-only --out=html");
+            executeTest("${strDocExe} --var=analytics=y --deploy --out-preserve --cache-only --out=html");
 
             # Deploy to repository
             &log(INFO, '...Deploy to repository');
