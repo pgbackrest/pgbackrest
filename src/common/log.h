@@ -8,6 +8,7 @@ Log Handler
 #include <stdbool.h>
 
 #include "common/logLevel.h"
+#include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
 Max size allowed for a single log message including header
@@ -36,7 +37,7 @@ bool logFileSet(const char *logFile);
 bool logAny(LogLevel logLevel);
 
 // Convert log level to string and vice versa
-LogLevel logLevelEnum(const char *logLevel);
+LogLevel logLevelEnum(StringId logLevelId);
 const char *logLevelStr(LogLevel logLevel);
 
 /***********************************************************************************************************************************

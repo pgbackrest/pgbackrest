@@ -40,15 +40,13 @@ cfgLoadLogSetting(void)
     unsigned int logProcessMax = 1;
 
     if (cfgOptionValid(cfgOptLogLevelConsole))
-        logLevelConsole = logLevelEnum(strZ(cfgOptionStr(cfgOptLogLevelConsole)));
+        logLevelConsole = logLevelEnum(cfgOptionStrId(cfgOptLogLevelConsole));
 
     if (cfgOptionValid(cfgOptLogLevelStderr))
-    {
-        logLevelStdErr = logLevelEnum(strZ(cfgOptionStr(cfgOptLogLevelStderr)));
-    }
+        logLevelStdErr = logLevelEnum(cfgOptionStrId(cfgOptLogLevelStderr));
 
     if (cfgOptionValid(cfgOptLogLevelFile))
-        logLevelFile = logLevelEnum(strZ(cfgOptionStr(cfgOptLogLevelFile)));
+        logLevelFile = logLevelEnum(cfgOptionStrId(cfgOptLogLevelFile));
 
     if (cfgOptionValid(cfgOptLogTimestamp))
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
@@ -95,7 +93,7 @@ cfgLoadUpdateOption(void)
                 for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
                 {
                     if (optionIdx != repoIdx && !(cfgOptionIdxTest(cfgOptRepoHost, repoIdx)) &&
-                        strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), cfgOptionIdxStr(cfgOptRepoType, repoIdx)) &&
+                        cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == cfgOptionIdxStrId(cfgOptRepoType, repoIdx) &&
                         strEq(cfgOptionIdxStr(cfgOptRepoPath, optionIdx), cfgOptionIdxStr(cfgOptRepoPath, repoIdx)))
                     {
                         THROW_FMT(
@@ -339,14 +337,14 @@ cfgLoadUpdateOption(void)
 
     // Check that selected compress type has been compiled into this binary
     if (cfgOptionValid(cfgOptCompressType))
-        compressTypePresent(compressTypeEnum(cfgOptionStr(cfgOptCompressType)));
+        compressTypePresent(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
 
     // Update compress-level default based on the compression type
     if (cfgOptionValid(cfgOptCompressLevel) && cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
     {
         cfgOptionSet(
             cfgOptCompressLevel, cfgSourceDefault,
-            VARINT64(compressLevelDefault(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))));
+            VARINT64(compressLevelDefault(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))));
     }
 
     FUNCTION_LOG_RETURN_VOID();

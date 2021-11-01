@@ -26,7 +26,7 @@ typedef enum
     compressTypeXz,                                                 // xz/lzma
 } CompressType;
 
-#include <common/type/string.h>
+#include <common/type/stringId.h>
 #include <common/io/filter/group.h>
 
 /***********************************************************************************************************************************
@@ -40,7 +40,7 @@ supported type is not in this list then it should cause an integration test to f
 Functions
 ***********************************************************************************************************************************/
 // Get enum from a compression type string
-CompressType compressTypeEnum(const String *type);
+CompressType compressTypeEnum(StringId type);
 
 // Check that a valid compress type is compiled into this binary.  Errors when the compress type is not present.
 void compressTypePresent(CompressType type);
