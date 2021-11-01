@@ -1,5 +1,10 @@
 [
     {
+        "commit": "42fd6ce4e09ee92614cfbfb6766d9c3a6ba9cc1a",
+        "date": "2021-11-01 08:59:14 -0400",
+        "subject": "v2.36: Minor Bug Fixes and Improvements"
+    },
+    {
         "commit": "6abb06248c2829f2c27a7a553d373b0fdf70cfc3",
         "date": "2021-10-29 11:45:50 -0400",
         "subject": "Make analytics optional for HTML documentation.",
