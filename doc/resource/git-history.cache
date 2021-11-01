@@ -1,5 +1,670 @@
 [
     {
+        "commit": "6abb06248c2829f2c27a7a553d373b0fdf70cfc3",
+        "date": "2021-10-29 11:45:50 -0400",
+        "subject": "Make analytics optional for HTML documentation.",
+        "body": "Analytics should only be added to the current HTML documentation on the website, so exclude them by default."
+    },
+    {
+        "commit": "13366573261bf2562bc93ef77014f7d16b815e5b",
+        "date": "2021-10-29 10:35:56 -0400",
+        "subject": "Restore some linefeed rendering behavior from before def7d513.",
+        "body": "The new rendering behavior is correct in normal cases, but for the pre-rendered HTML blocks in the command and configuration references it causes a lot of churn. This would be OK if the new HTML was diff-able, but it is not.\n\nGo back to the old behavior of using br tags for this case to reduce churn until a more permanent solution is found."
+    },
+    {
+        "commit": "c32e000ab92e9e9e5495ddec7c4e347c35801570",
+        "date": "2021-10-28 15:15:49 -0400",
+        "subject": "Use Rocky Linux for documentation builds instead of CentOS.",
+        "body": "Since CentOS 8 will be EOL at the end of the year it makes sense to do this now. The centos:8 image is still used in documentation.xml because changes there require manual testing, which will need to be done at a later date. The changes are not user-facing, however, and can be done at any time.\n\nAlso update CentOS references to RHEL since that is what we are emulating for testing purposes."
+    },
+    {
+        "commit": "30c589ace7a459f3b3d09b702e314efd412e71d6",
+        "date": "2021-10-28 13:28:49 -0400",
+        "subject": "Fix typo in contributing guide.",
+        "body": "Not sure how this got broken but it was probably an errant search and replace."
+    },
+    {
+        "commit": "2f1a2877373c7be68d553c7f781299edaf8ff196",
+        "date": "2021-10-28 11:49:00 -0400",
+        "subject": "Add missing assert."
+    },
+    {
+        "commit": "adc09ffc3bccb24c83a471c8af1f9bf68f2cf9c8",
+        "date": "2021-10-28 08:10:43 -0400",
+        "subject": "Minor fix for lower-casing of option summaries.",
+        "body": "This works with existing cases and fixes \"I/O\"."
+    },
+    {
+        "commit": "fa564ee1969229b5cf60d2479d8ace85325f4db3",
+        "date": "2021-10-27 11:08:32 -0400",
+        "subject": "Improve documentation for cmd-ssh, repo-host-cmd, pg-host-cmd options.",
+        "body": "Use \"command\" instead of \"exe\" and make the descriptions more consistent."
+    },
+    {
+        "commit": "e1f6c066b3da11fd21b1155c90370c3fa2da06b7",
+        "date": "2021-10-27 10:52:39 -0400",
+        "subject": "Improve documentation for buffer-size option."
+    },
+    {
+        "commit": "1f7c7b7dda1c736fab2673084498fc7c220b742a",
+        "date": "2021-10-26 16:56:44 -0400",
+        "subject": "Fix test descriptions in common/typeVariantTest."
+    },
+    {
+        "commit": "d74fe7a222c1e1ae0f02addbeb712f8946d3d731",
+        "date": "2021-10-26 13:53:44 -0400",
+        "subject": "Add coverage for empty CATCH() blocks.",
+        "body": "Currently empty CATCH() blocks are always marked as covered because of the loop structure of error handling.\n\nA prototype implementation of error handling without looping has shown that these CATCH() blocks are not covered without new tests. Whether or not that prototype gets committed it is worth adding the tests."
+    },
+    {
+        "commit": "e2eea974c144f77448aa9d5fbb55c933b70ea5ad",
+        "date": "2021-10-26 12:09:41 -0400",
+        "subject": "Add assertion for Coverity.",
+        "body": "Coverity thinks this value might be NULL but that should not be possible because of the TRY...CATCH block."
+    },
+    {
+        "commit": "4f10441574761c9cd4e31cdef750742e004ae669",
+        "date": "2021-10-26 08:25:21 -0400",
+        "subject": "Add missing paragraph tags in coding standards."
+    },
+    {
+        "commit": "7fb99c59c88fe11c679d6ba7835f995a969462c0",
+        "date": "2021-10-26 07:46:48 -0400",
+        "subject": "Use externed instead of extern'd in comments.",
+        "body": "This is mostly to revert some comment changes in b11ab9f7 that will break the ppc64le patch, but at the same time keep the spelling consistent in all comments and documentation.\n\nAlso revert some space changes for the same reason."
+    },
+    {
+        "commit": "653ffcf8d98ebfe94ae44ed54b4a295428c57850",
+        "date": "2021-10-25 15:42:28 -0400",
+        "subject": "Adjustments for new breaking change in Azurite.",
+        "body": "Azurite released another breaking change (see fbd018cd, 096829b3, c38d6926, and Azurite issue 1039) so make adjustments as needed to documentation and tests.\n\nAlso remove some dead code that hid the repo-storage-host option and was made obsolete by all these changes."
+    },
+    {
+        "commit": "13d4559708819787ad05be6f37ec0badb0eccae5",
+        "date": "2021-10-25 15:31:39 -0400",
+        "subject": "Check return value of getsockopt().",
+        "body": "Checking the return value is not terribly important here, but if setsockopt() fails it is likely that bind() will fail as well. May as well get it over with and this makes Coverity happy."
+    },
+    {
+        "commit": "1152f7a7d64e69eed1d9e74b48a308f6c742c28a",
+        "date": "2021-10-25 12:56:33 -0400",
+        "subject": "Fix mismatched parameters in tlsClientNew() call.",
+        "body": "3879bc69 added this call and the parameters were not quite right but in way that the compiler decided they were OK. It was mostly working but TLS verification was disabled if caPath was NULL, which is not OK."
+    },
+    {
+        "commit": "a1a2284c881ba6c3b9b1c316b31e0583c006f1af",
+        "date": "2021-10-25 09:01:22 -0400",
+        "subject": "Fix typos in error messages."
+    },
+    {
+        "commit": "3879bc69b888daa04d2ca98a2d1219cf22519ddc",
+        "date": "2021-10-22 18:31:55 -0400",
+        "subject": "Add WebIdentity authentication for AWS S3.",
+        "body": "This allows credentials to be automatically acquired in an EKS environment."
+    },
+    {
+        "commit": "51785739f44b624091246c48af6defe97c30d7a7",
+        "date": "2021-10-22 18:02:20 -0400",
+        "subject": "Store config values as a union instead of a variant.",
+        "body": "The variants were needed to easily serialize configurations for the Perl code.\r\n\r\nUnions are more efficient and will allow us to add new types that are not supported by variants, e.g. StringId."
+    },
+    {
+        "commit": "2cea005f740d640290a9948595f5933833e30e7d",
+        "date": "2021-10-22 17:19:16 -0400",
+        "subject": "Fix segfault on invalid GCS key file."
+    },
+    {
+        "commit": "cb36fec102855bf268ec5234bbb5261be98bdc61",
+        "date": "2021-10-21 17:48:00 -0400",
+        "subject": "Add analytics to the HTML documentation."
+    },
+    {
+        "commit": "a63e732987bc1f6f26514568dabc6c0b23df07ab",
+        "date": "2021-10-21 17:25:32 -0400",
+        "subject": "Fix indentation."
+    },
+    {
+        "commit": "78e1bd333068c4a857054490698115fa2c698e0b",
+        "date": "2021-10-21 17:10:00 -0400",
+        "subject": "Move v1 documentation links out of the introduction.",
+        "body": "There should be few if any users running v1 now so these links do not need to be so prominent."
+    },
+    {
+        "commit": "861df2a73cafbd49049dccdc55d5214b00dd3cec",
+        "date": "2021-10-21 17:02:46 -0400",
+        "subject": "Add GitHub repository link to index.html and README.md."
+    },
+    {
+        "commit": "1cb8ae15de5b4276682bdd9825ca97012cd43855",
+        "date": "2021-10-21 13:51:59 -0400",
+        "subject": "Fix incorrect host name in user guide.",
+        "body": "The text indicates to populate the pg-primary IP address into the pg_hba.conf file to allow replication connections. It should indicate to populate the pg-standby IP address"
+    },
+    {
+        "commit": "b11ab9f799aa6fc32dd03e96e8a0428d5c83d9ae",
+        "date": "2021-10-21 13:31:22 -0400",
+        "subject": "Fix typos."
+    },
+    {
+        "commit": "8ad6b7330e1ee6bcbc0f06ec0562a433e7888f44",
+        "date": "2021-10-21 09:20:40 -0400",
+        "subject": "Fix outdated comment.",
+        "body": "This check was moved from within the path checks at some point but the comment did not get updated."
+    },
+    {
+        "commit": "fbd018cd56482efff425beb4026fe22482115138",
+        "date": "2021-10-20 08:22:37 -0400",
+        "subject": "Allow S3/Azure Docker images to be specified in user guide.",
+        "body": "It is not uncommon for the S3/Azure emulators we use to introduce breaking changes without warning. If that happens the documentation can still be built by specifying a working version of the image. In general, it is better to let the version float so we know when things break.\n\nAzurite has yet another breaking change coming up (see 096829b3, c38d6926, and Azurite issue 1039) so set azure-image at the current version until the breaking change has been released."
+    },
+    {
+        "commit": "5dfdd6dd5b7b43dc3a223b9552aed4052d0db3aa",
+        "date": "2021-10-19 12:45:20 -0400",
+        "subject": "Add -Werror -Wfatal-errors -g flags to configure --enable-test.",
+        "body": "These flags are used for all tests but it was not possible to add them to configure before the change in 046d6643. This is especially important for adhoc tests to ensure the flags are not forgotten.\n\nRemove the flags from test make commands where they were being applied.\n\nThere is no change for production builds."
+    },
+    {
+        "commit": "046d6643373859c5e848a97e06389ed2aa553723",
+        "date": "2021-10-19 12:14:09 -0400",
+        "subject": "Set most compiler flags as late as possible in configure.",
+        "body": "Some flags, e.g. -Wfatal-errors, will cause tests in configure to behave incorrectly so we have not been able to add them to --enable-test.\n\nAdd the compiler flags as late as possible so configure checks are not affected. This will allow us to add flags that we need for testing without having to explicitly pass them to make."
+    },
+    {
+        "commit": "e443e3c6c05c9d65a67dac0c8430b59239fbc1b8",
+        "date": "2021-10-19 09:06:06 -0400",
+        "subject": "Add br tags for HTML documentation rendering missed in def7d513."
+    },
+    {
+        "commit": "4c2d89eb66e11017e2e73ad4171e4493c28acdad",
+        "date": "2021-10-18 16:43:19 -0400",
+        "subject": "Fix typos."
+    },
+    {
+        "commit": "6cc8e45df68c299990c0ad1f40c53b9282cb46db",
+        "date": "2021-10-18 14:45:36 -0400",
+        "subject": "Add missing paragraph tag in user guide."
+    },
+    {
+        "commit": "ccc255d3e05d8ce2b6ac251d1498f71b04098a86",
+        "date": "2021-10-18 14:32:41 -0400",
+        "subject": "Add TLS Server.",
+        "body": "The TLS server is an alternative to using SSH for protocol connections to remote hosts.\n\nThis command is currently experimental and intended only for trial and testing. As such, the new commands and options will not show up in the command-line help unless directly requested."
+    },
+    {
+        "commit": "09fb9393f14b47effebaecc449a97ad07ef4c752",
+        "date": "2021-10-18 14:02:05 -0400",
+        "subject": "Write command configuration overrides explicitly.",
+        "body": "If not written explicitly then it is impossible to distinguish the override from a NULL, which indicates no override."
+    },
+    {
+        "commit": "90f7f11a9f71152185219bbb57bf1de001e3a91b",
+        "date": "2021-10-18 12:22:48 -0400",
+        "subject": "Add missing static keywords in test modules."
+    },
+    {
+        "commit": "4570c7e27528400373ece8dc7bd348baf3ff064e",
+        "date": "2021-10-18 11:32:53 -0400",
+        "subject": "Allow error buffer to be resized for testing.",
+        "body": "Some tests can generate very large error messages for diffs and they often get cut off before the end.\n\nAlso fix a test so it does not create too large a buffer on the stack."
+    },
+    {
+        "commit": "838ee3bd08c739e3dcf611e9bddfaa6c8acbb2aa",
+        "date": "2021-10-18 11:05:53 -0400",
+        "subject": "Increase some storage test timeouts.",
+        "body": "32-bit Debian 9 is sometimes timing out on these tests so increase the timeouts to make the tests more reliable."
+    },
+    {
+        "commit": "6b9e19d423d99d3063c4bff3d3533b1e5081e4cb",
+        "date": "2021-10-16 12:35:47 -0400",
+        "subject": "Convert configuration optional rules to pack format.",
+        "body": "The previous format was custom for configuration parsing and was not as expressive as the pack format. An immediate benefit is that commands with the same optional rules are merged.\n\nDefaults are now represented correctly (not multiplied), which simplifies the option default functions used by help."
+    },
+    {
+        "commit": "360cff94e4e9e1ab5a690a1f5c38eb278158a892",
+        "date": "2021-10-16 12:33:31 -0400",
+        "subject": "Update 32-bit test container to Debian 9.",
+        "body": "Also rebalance PostgreSQL version integration tests."
+    },
+    {
+        "commit": "0e84c19a9fde0480b30078f5d3b419267b2f7673",
+        "date": "2021-10-15 17:50:54 -0400",
+        "subject": "Remove allow range from pg-socket-path option.",
+        "body": "The allow range was never processed because the string type does not allow ranges, but it is wasteful to have it in the parse rules.\n\nIt would be good if auto-generation errored on useless allow ranges, but that will need wait since it does not impact production."
+    },
+    {
+        "commit": "144469b9772bad14466fcafc65edef58c5366755",
+        "date": "2021-10-15 15:50:55 -0400",
+        "subject": "Add const buffer functions to Pack type.",
+        "body": "These allow packs to be created without allocating a buffer in the case that the buffer already exists or the data is in a global constant.\n\nAlso fix a rendering issue in hrnPackReadToStr()."
+    },
+    {
+        "commit": "66bfd1327e56f0f2de99fc6009431f3ee06ad6b8",
+        "date": "2021-10-13 19:48:41 -0400",
+        "subject": "Rename SSH connection control parameters in integration tests."
+    },
+    {
+        "commit": "447b24309d02938d04e036ec7814e75982210eb4",
+        "date": "2021-10-13 19:43:40 -0400",
+        "subject": "Update RHEL package URL."
+    },
+    {
+        "commit": "01b20724daf4c5cb25d6f636fb90456759773d22",
+        "date": "2021-10-13 19:36:59 -0400",
+        "subject": "Rename PostgreSQL pid file constants and tests."
+    },
+    {
+        "commit": "570162040864b8c56b236aa66d8f5c8d610b754b",
+        "date": "2021-10-13 19:02:58 -0400",
+        "subject": "Rename manifest file primary flag in tests."
+    },
+    {
+        "commit": "a44f9e373b47354a09bec0eaf2f3bf9e261c6941",
+        "date": "2021-10-13 13:21:04 -0400",
+        "subject": "Update Vagrantfile to Ubuntu 20.04."
+    },
+    {
+        "commit": "b16e827d69364408ea687a8e4b8894f7e889792e",
+        "date": "2021-10-13 13:20:11 -0400",
+        "subject": "Do not show output of PostgreSQL upgrade status check in user guide.",
+        "body": "On some platforms the output may contain UTF-8 characters that the latex code is not prepared to handle.\n\nShowing the command is much more important than showing the output, so no big loss."
+    },
+    {
+        "commit": "5e84645ac030544b572036c08d055885d96d8905",
+        "date": "2021-10-13 12:16:47 -0400",
+        "subject": "Update comments referring to the PostgreSQL primary."
+    },
+    {
+        "commit": "430efff98a5b8dcf7c048f383abc12d9c0e5bbf0",
+        "date": "2021-10-13 12:01:53 -0400",
+        "subject": "Update documentation/links to main branch."
+    },
+    {
+        "commit": "1212668d5eff51756b0719b5296f7640e8096605",
+        "date": "2021-10-13 11:43:14 -0400",
+        "subject": "Update contributing.xml with rendering changes from def7d513.",
+        "body": "Also update help.xml path missed in f4e1babf."
+    },
+    {
+        "commit": "90c73183ea5de6a63a23a9047ae2debb3f59b940",
+        "date": "2021-10-13 09:37:03 -0400",
+        "subject": "Add libc6-dbg required by updated valgrind to Vagrantfile/Dockerfile."
+    },
+    {
+        "commit": "c2d4552b7328489d703dc03defa769b1ccb8f739",
+        "date": "2021-10-13 08:51:58 -0400",
+        "subject": "Add debug options to code generation make in test.pl."
+    },
+    {
+        "commit": "bd91ebca759d2d6cfc2f7aa660366f5f7f09994a",
+        "date": "2021-10-12 16:16:05 -0400",
+        "subject": "Remove command overrides for output options.",
+        "body": "The overrides are not needed since both commands require the same default and allow list."
+    },
+    {
+        "commit": "e8e346bc8738815b07bd80a37ace862fdab3dc1d",
+        "date": "2021-10-12 08:53:12 -0400",
+        "subject": "Remove command overrides for restore-only options.",
+        "body": "The overrides are not needed since these options are only valid for one command."
+    },
+    {
+        "commit": "576b04763477877d4f2a61ad692703e20471901b",
+        "date": "2021-10-11 16:25:36 -0400",
+        "subject": "Invert required in set option to simplify generated rules."
+    },
+    {
+        "commit": "980b777a4a0cc07200ccb06cc55b89181101b266",
+        "date": "2021-10-09 12:39:54 -0400",
+        "subject": "Fix indentation."
+    },
+    {
+        "commit": "cc7f2eea900d0a7a429ffdc2cd45ead88c0298a9",
+        "date": "2021-10-09 12:37:25 -0400",
+        "subject": "Add assert in pckReadNext() to prevent reading into a field."
+    },
+    {
+        "commit": "610bfd736ef091a8298e5602d41aba86f10189bb",
+        "date": "2021-10-09 12:34:45 -0400",
+        "subject": "Increase tolerance for 0ms sleep in common/time test."
+    },
+    {
+        "commit": "7ab8dcbe6e007831e8a7f9f26e08f083c1026388",
+        "date": "2021-10-09 12:15:19 -0400",
+        "subject": "Read tag size in pckReadTagNext().",
+        "body": "Rather than reading the size everywhere it is needed, get it when the tag is read, if it exists.\n\nThis simplifies logic around consuming the data when not needed. There are more use cases for this coming up."
+    },
+    {
+        "commit": "ed68792e765411a994d8ac79e4d047bbafc25582",
+        "date": "2021-10-07 19:57:28 -0400",
+        "subject": "Rename strNewN() to strNewZN().",
+        "body": "Make the function name consistent with other functions that accept zero-terminated strings, e.g. strNewZ() and strCatZN()."
+    },
+    {
+        "commit": "b7e17d80ea02d70e56327828310c578af51795b5",
+        "date": "2021-10-07 19:43:28 -0400",
+        "subject": "More efficient memory allocation for Strings and String Variants.",
+        "body": "The vast majority of Strings are never modified so for most cases allocate memory for the string with the object. This results in one allocation in most cases instead of two. Use strNew() if strCat*() functions are needed.\n\nUpdate varNewStr() in the same way since String Variants can never be modified. This results in one allocation in all cases instead of three. Also update varNewStrZ() to use STR() instead of strNewZ() to save two more allocations."
+    },
+    {
+        "commit": "208641ac7fd22f676a55e7305b3e69df574f36f8",
+        "date": "2021-10-07 18:50:56 -0400",
+        "subject": "Use constant string for user/group in performance/type test.",
+        "body": "It is not safe to return strings created with STRDEF() from a function."
+    },
+    {
+        "commit": "74d3131830646c9f71ffa9847729cae40e3aa866",
+        "date": "2021-10-07 14:58:11 -0400",
+        "subject": "More efficient generation of diff/incr backup label."
+    },
+    {
+        "commit": "498902e885c9d7a44648ccc01b20454094d5b742",
+        "date": "2021-10-07 12:18:24 -0400",
+        "subject": "Allow \"global\" as a stanza prefix.",
+        "body": "A stanza name like global_stanza was not allowed because the code was not selective enough about how a global section should be formatted.\r\n\r\nUpdate the config parser to correctly recognize global sections."
+    },
+    {
+        "commit": "338102861fd0ea4d2773b010dee34a39a96ad702",
+        "date": "2021-10-07 11:01:48 -0400",
+        "subject": "Improve instructions for rebuilding pgbackrest during stress testing."
+    },
+    {
+        "commit": "fb3f6928c9aef499938e195fbb612c1940a2dc19",
+        "date": "2021-10-06 19:27:04 -0400",
+        "subject": "Add configurable storage helpers to create repository storage.",
+        "body": "Remove the hardcoded storage helpers from storageRepoGet() except for the the built-in Posix helper and the special remote helper.\n\nThe goal is to make storage driver development a bit easier by isolating as much of the code as possible into the driver module. This also makes coverage reporting much simpler for additional drivers since they do not need to provide coverage for storage/helper.\n\nConsolidate the CIFS tests into the Posix tests since CIFS is just a special case of the Posix.\n\nTest all storage features in the Posix test so that other storage driver tests do not need to provide coverage for storage/storage.\n\nRemove some dead code in the storage/s3 test."
+    },
+    {
+        "commit": "cfd823355af2ac99f30c5e1393a121c6dbf622b7",
+        "date": "2021-10-06 12:38:56 -0400",
+        "subject": "Refactor S3 storage driver for additional auth methods.",
+        "body": "Currently only two auth methods are supported and a lot of refactoring is required to add a third one.\n\nDo the refactoring now to reduce noise in the commit that adds the third auth method."
+    },
+    {
+        "commit": "68c5f3eaf18fc9bd10fde15a323890bcdcbf4534",
+        "date": "2021-10-05 17:59:05 -0400",
+        "subject": "Allow link-map option to create new links.",
+        "body": "Currently link-map only allows links that exist in the backup manifest to be remapped to a new destination.\r\n\r\nAllow link-map to create a new link as long as a valid path/file from the backup is referenced."
+    },
+    {
+        "commit": "f2aeb30fc706c04d6200cefeeb2645229a31ff69",
+        "date": "2021-10-05 14:06:59 -0400",
+        "subject": "Add state to ProtocolClient.",
+        "body": "This is currently only useful for debugging, but in the future the state may be used for resetting the protocol when something goes wrong."
+    },
+    {
+        "commit": "2c65fed80f47124283d4f8be92f987dc55237f48",
+        "date": "2021-10-05 12:29:16 -0400",
+        "subject": "Add missing asserts and move temp mem context block."
+    },
+    {
+        "commit": "6af827cbb1e78cd4c5d649ed4cb24c49a7204b8f",
+        "date": "2021-10-05 09:00:16 -0400",
+        "subject": "Report original error and retries on local job failure.",
+        "body": "The local process will retry jobs (e.g. backup file) but after a certain number of failures gives up. Previously, the last error was reported but generally the first error is far more valuable. The last error is likely to be a cascade failure such as the protocol being out of sync.\r\n\r\nReport the first error (and stack trace) and append the retry errors to the first error without stack trace information."
+    },
+    {
+        "commit": "34f78734325743b4e34cb39224852e6debf49750",
+        "date": "2021-10-04 13:45:53 -0400",
+        "subject": "Report backup file validation errors in backup.info.",
+        "body": "Currently errors found during the backup are only available in text output when specifying --set.\r\n\r\nAdd a flag to backup.info that is available in both the text and json output when --set is not specified. This at least provides the basic info that an error was found in the cluster during the backup, though details are still only available as described above."
+    },
+    {
+        "commit": "57c62315465972f6b85558020198134e34cf2ee0",
+        "date": "2021-10-02 17:27:33 -0400",
+        "subject": "Add arm64 testing on Cirrus CI.",
+        "body": "These tests run in a container without permissions to mount tempfs, so add an option to ci.pl to not create tempfs. Also add some packages not in the base image."
+    },
+    {
+        "commit": "f1ed8f0e5112d1a74d86168e67632be55eddb416",
+        "date": "2021-10-02 16:29:31 -0400",
+        "subject": "Sort WAL segment names when reporting duplicates.",
+        "body": "Make the output consistent even when files are listed in a different order. This is purely for testing purposes, but there is no harm in consistent output.\n\nFound on arm64."
+    },
+    {
+        "commit": "71047a9d6d1eea71b3fbd430983541a54049cc69",
+        "date": "2021-10-02 16:17:33 -0400",
+        "subject": "Use strncpy() to limit characters copied to optionName.",
+        "body": "Valgrind complained about uninitialized values on arm64 when comparing the reset prefix, probably because \"reset\" ended up being larger than the option name: Conditional jump or move depends on uninitialised value(s) at cfgParseOption (parse.c:568).\n\nCoverity complained because it could not verify the size of the string to be copied into optionName, probably because it does not understand the purpose of strSize(): You might overrun the 65-character fixed-size string \"optionName\" by copying the return value of \"strZ\" without checking the length.\n\nUse strncpy() even though we have already checked the size and make sure the string is terminated. Keep the size check because searching for truncated option names is not a good idea.\n\nThis is not a production bug since the code has not been released yet."
+    },
+    {
+        "commit": "b792a14cd7dbdfb61362700ffc5fc01997db890c",
+        "date": "2021-10-01 18:23:03 -0400",
+        "subject": "Use temp mem context when calling command handlers.",
+        "body": "It is safer and more efficient to free memory after each handler completes.\n\nThe db command handlers use the server context so update them to use the top context."
+    },
+    {
+        "commit": "ae40ed6ec9cf77e577518b128518a5763767f589",
+        "date": "2021-10-01 17:15:36 -0400",
+        "subject": "Add jobRetry parameter to HRN_CFG_LOAD().",
+        "body": "Allow the default of 0 to be overridden to test retry behavior for commands."
+    },
+    {
+        "commit": "136d309dd4bc1ada9f3d775f036b62292fda390b",
+        "date": "2021-10-01 15:29:31 -0400",
+        "subject": "Allow stack trace to be specified for errorInternalThrow().",
+        "body": "This allows the stack trace to be set when an error is received by the protocol, rather than appending it to the message. Now these errors will look no different than any other error and the stack trace will be reported in the same way.\n\nOne immediate benefit is that test.pl --vm-out --log-level-test=debug will work for tests that check expect log results. Previously, the test would error at the first check because the stack trace included in the message would not match the expected log output."
+    },
+    {
+        "commit": "62f6fbe2a9ecd9bc48611ecfaf27a05b9f36a87d",
+        "date": "2021-10-01 10:15:34 -0400",
+        "subject": "Update file mode in info/manifest test to 0600.",
+        "body": "0400 is not a very realistic mode. It may have become the default due to copy-pasting."
+    },
+    {
+        "commit": "0690cb25a077735780b2fe24343c946f8a4efbc6",
+        "date": "2021-09-30 17:55:38 -0400",
+        "subject": "Remove repository format 6 notes.",
+        "body": "The notes have been moved to a Github project."
+    },
+    {
+        "commit": "376362475e3b3b13b70313d9002d4ff8b25b4b40",
+        "date": "2021-09-30 16:15:45 -0400",
+        "subject": "Move archive-header-check option to the archive reference section."
+    },
+    {
+        "commit": "cf1a57518fe3230886509f59fcec9c9a81e6513c",
+        "date": "2021-09-30 14:29:49 -0400",
+        "subject": "Refactor restoreManifestMap() to be driven by link-map.",
+        "body": "This will allow new links to be added in a future commit. The current implementation is driven by the links that already exist in the manifest, which would make the new use case more complex to implement.\n\nAlso, add a more helpful error when a tablespace link is specified."
+    },
+    {
+        "commit": "d89a67776cfbb7b3047dbe297cc0c768e5c670e8",
+        "date": "2021-09-30 13:39:29 -0400",
+        "subject": "Refactor restoreManifestMap() tests in the command/restore unit.",
+        "body": "Add test titles, new tests, and rearrange.\n\nAlso manifestTargetFindDefault(), which will soon be used by core code in a refactoring commit."
+    },
+    {
+        "commit": "7a53ba7c7f38bff2c9ef99c6ab58d22c59dd2290",
+        "date": "2021-09-30 13:28:14 -0400",
+        "subject": "Add note to comment for int64 typedef."
+    },
+    {
+        "commit": "815377cc6009c800b6a5fdc1fe98ddfceaaae824",
+        "date": "2021-09-30 13:27:14 -0400",
+        "subject": "Finalize catalog number for PostgreSQL 14 release."
+    },
+    {
+        "commit": "baf186bfb05ca683714a59485900892f5e7e8a1b",
+        "date": "2021-09-29 12:03:01 -0400",
+        "subject": "Fix comment typos."
+    },
+    {
+        "commit": "9e79f0e64b661e944ce2b3897c366feea1544ac2",
+        "date": "2021-09-29 10:31:51 -0400",
+        "subject": "Add recovery start time to online backup restore log.",
+        "body": "This helps give an idea of how much recovery needs to be done to reach the end of the WAL stream and is easier to read than the backup label."
+    },
+    {
+        "commit": "9346895f5b61627b50d431f09447e08d8a50caa8",
+        "date": "2021-09-29 09:58:47 -0400",
+        "subject": "Rename page checksum error to error list in info text output.",
+        "body": "\"error list\" makes it clearer that other errors may be reported. For example, if checksum-page is true in the manifest but no checksum-page-error list is provided then the error is in alignment, i.e. the file size is not a multiple of the page size, with allowances made for a valid-looking partial page at the end of the file.\r\n\r\nIt is still not possible to differentiate between alignment and page checksum errors in the output but this will be addressed in a future commit."
+    },
+    {
+        "commit": "b7ef12a76f219881d0b24c715592af96fe5c9b8f",
+        "date": "2021-09-28 15:55:13 -0400",
+        "subject": "Add hints to standby replay timeout message."
+    },
+    {
+        "commit": "096829b3b257444162417662612e80d8cb2ac6ec",
+        "date": "2021-09-27 09:01:53 -0400",
+        "subject": "Add repo-azure-uri-style option.",
+        "body": "Azurite introduced a breaking change in 8f63964e to use automatically host-style URIs when the endpoint appears to be a multipart hostname.\n\nThis option allows the user to configure which style URI will be used, but changing the endpoint might cause breakage if Azurite decides to use a different style. Future changes to Azurite may also cause breakage."
+    },
+    {
+        "commit": "c8ea17c68f8fa72f2bf3b979539be3f709448493",
+        "date": "2021-09-24 17:40:31 -0400",
+        "subject": "Convert page checksum filter result to a pack.",
+        "body": "The pack is both more compact and more efficient than a variant.\n\nAlso aggregate the page error info in the main process rather than in the filter to allow additional LSN filtering, to be added in a future commit."
+    },
+    {
+        "commit": "ac1f6db4a25520b1ee957b66925dde2e1ef156ab",
+        "date": "2021-09-23 14:06:00 -0400",
+        "subject": "Centralize and optimize tag stack management.",
+        "body": "The push and pop code was duplicated in four places, so centralize the code into pckTagStackPop() and pckTagStackPush().\n\nAlso create a default bottom item for the stack to avoid allocating a list if there will only ever be the default container, which is very common. This avoids the extra time and memory to allocate a list."
+    },
+    {
+        "commit": "15e7ff10d3d6fe3570335a5abec5ff683c07e2e6",
+        "date": "2021-09-23 08:31:32 -0400",
+        "subject": "Add Pack pseudo-type.",
+        "body": "Rather than working directly with Buffer types, define a new Pack pseudo-type that represents a Buffer containing a pack. This makes it clearer that a pack is being stored and allows stronger typing."
+    },
+    {
+        "commit": "131ac0ab5e98500569d4ff6985d31c55a9ef53b9",
+        "date": "2021-09-22 11:18:12 -0400",
+        "subject": "Rename pckReadNew()/pckWriteNew() to pckReadNewIo()/pckWriteNewIo().",
+        "body": "These names more accurately describe the purpose of the constructors."
+    },
+    {
+        "commit": "0e76ccb5b7b2089f8d0300ab0086c454aebbbbbf",
+        "date": "2021-09-22 10:48:21 -0400",
+        "subject": "Convert filter param/result to Pack type.",
+        "body": "The Pack type is more compact and flexible than the Variant type. The Pack type also allows binary data to be stored, which is useful for transferring the passphrase in the CipherBlock filter.\n\nThe primary purpose is to allow more (and more complex) result data to be returned efficiently from the PageChecksum filter. For now the PageChecksum filter still returns the original Variant. Converting the result data will be the subject of a future commit.\n\nAlso convert filter types to StringId."
+    },
+    {
+        "commit": "802373cb9df28384529fe5a7bd102bfe5c8f3911",
+        "date": "2021-09-21 10:16:16 -0400",
+        "subject": "Limit valgrind error output to the first error.",
+        "body": "Generally the first error is the only important error. The rest simply lead to a lot of scrolling."
+    },
+    {
+        "commit": "473afce57bc7646c53bae4a6300b41b11b5b0357",
+        "date": "2021-09-20 11:03:50 -0400",
+        "subject": "Copy data page before verifying checksum.",
+        "body": "Using UNCONSTIFY() is potentially dangerous since the buffer is modified while calculating the checksum, even though the page is reverted to the original state. Instead make a copy to ensure that the original data is never modified.\n\nThis requires the logic to be shuffled a bit since the copy cannot be made until we are sure the page is complete."
+    },
+    {
+        "commit": "0efb8adb9452cb8bc67ebaa8b6dca0d4a69c1682",
+        "date": "2021-09-19 20:38:51 -0400",
+        "subject": "Automatically include all PostgreSQL version interface files."
+    },
+    {
+        "commit": "95d814cf81b84d162f40717346c3ad0cb642f724",
+        "date": "2021-09-19 20:32:27 -0400",
+        "subject": "Specify size for helpData array."
+    },
+    {
+        "commit": "912a498b0bcc988bd5ebaaa22198956d752251bd",
+        "date": "2021-09-11 16:07:59 -0400",
+        "subject": "Skip comments when rendering help output.",
+        "body": "Comments should not appear in the help. They are simply notes on implementation."
+    },
+    {
+        "commit": "c38d6926d6c9aa01b895a28e66fc0aa6965350a3",
+        "date": "2021-09-09 08:48:45 -0400",
+        "subject": "Revert Azurite version for testing to 3.14.0.",
+        "body": "3.14.2 is causing breakage in the documentation. There is no obvious cause so for now just revert to the last working version."
+    },
+    {
+        "commit": "f4e1babf6b4ce7087ace8221cac7cadb51488f0e",
+        "date": "2021-09-08 18:16:06 -0400",
+        "subject": "Migrate command-line help generation to C.",
+        "body": "Command-line help is now generated at build time so it does not need to be committed. This reduces churn on commits that add configuration and/or update the help.\n\nSince churn is no longer an issue, help.auto.c is bzip2 compressed to save space in the binary.\n\nThe Perl config parser (Data.pm) has been moved to doc/lib since the Perl build path is no longer required.\n\nLikewise doc/xml/reference.xml has been moved to src/build/help/help.xml since it is required at build time."
+    },
+    {
+        "commit": "def7d513cdd2d4579acf6e8c675a3d6f7da4f655",
+        "date": "2021-09-08 17:35:45 -0400",
+        "subject": "Eliminate linefeed formatting from documentation.",
+        "body": "Linefeeds were originally used in the place of <p> tags to denote a paragraph. While much of the linefeed usage has been replaced over time, there were many places where it was still being used, especially in reference.xml. This made it difficult to get consistent formatting across different output types. In particular there were formatting issues in the command-line help because it is harder to audit than HTML or PDF.\n\nReplace linefeed formatting with proper <p> tags to make formatting more consistent.\n\nRemove double spaces in all text where <p> tags were added since it does not add churn.\n\nUpdate all <ul>/<ol>/<li> tags to the more general <list>/<list-item> tags.\n\nAdd a few missing periods."
+    },
+    {
+        "commit": "245b0c048ae62eb174b534d156b7a00b1de19a53",
+        "date": "2021-09-08 13:32:13 -0400",
+        "subject": "Add initializer braces required by older versions of gcc."
+    },
+    {
+        "commit": "38eeac48d617ec5d5f14a1cb612c9a8b721326d8",
+        "date": "2021-09-03 10:39:30 -0400",
+        "subject": "Remove invalid comment block."
+    },
+    {
+        "commit": "1afea449e2f54e69f9f8f0d772a294fcf09e0d83",
+        "date": "2021-09-02 13:26:21 -0400",
+        "subject": "Build newer valgrind and move CA cert install in test containers.",
+        "body": "The newer version of valgrind helps with some arm64 issues that have been fixed since the architecture has become more popular. Also add the valgrind builds to the Vagrantfile and Dockerfile.\n\nMove the CA cert install from the base container to the test container. This means the CA cert can be changed without rebuilding all the base containers."
+    },
+    {
+        "commit": "475b57c89b58e9709a3eafd08fe9949b467a99cd",
+        "date": "2021-09-01 11:10:35 -0400",
+        "subject": "Allow additional memory to be allocated with a mem context.",
+        "body": "The primary benefit is that objects can allocate memory for their struct with the context, which saves an additional allocation and makes it easier to read context/allocation dumps. Also, the memory context does not need to be stored with the object since it can be determined using the object pointer.\n\nObject pointers cannot be moved, so this means whatever additional memory is allocated cannot be resized. That makes the additional memory ideal for object structs, but not so much for allocating a list that might change size.\n\nMem contexts can no longer be reused since they will probably be the wrong size so their memory is freed on memContextFree(). This still means fewer allocations and frees overall.\n\nInterfaces still need to be freed by mem context so the old objMove() and objFree() have been preserved as objMoveContext() and objFreeContext(). This will be addressed in a future commit."
+    },
+    {
+        "commit": "02b06aa4957cf3fe64ceb7a44cc1893bff12fe99",
+        "date": "2021-08-31 12:09:50 -0400",
+        "subject": "Increase max index allowed for pg/repo options to 256.",
+        "body": "The prior limitations were based on using getopt_long() to parse command-line options, which required a static list of allowed options. Setting index max too high bloated the binary unacceptably. 45a4e80 replaced the functionality of getopt_long() but the static list remained.\r\n\r\nImprove cfgParseOption() to use available option data and remove the need for a static list. This also allows the option deprecations to be represented more compactly.\r\n\r\nIndex max is still capped at 256 because a large enough index could cause parseOptionIdxValue() to run out of memory since it allocates a static list based on the highest index found. If that function were improved with a map of found index values then index max could be set to UINT64_MAX.\r\n\r\nNote that deprecations no longer set an index max or define whether reset is valid. These were space-saving measures which are no longer required. This means that indexed deprecated options will also be valid up to 256 and always allow reset, but it doesn't seem worth additional code to limit this behavior.\r\n\r\ncfgParseOptionId() is no longer needed because calling cfgParseOption() with .ignoreMissingIndex = true duplicates the functionality of cfgParseOptionId(). This leads to some simplification in the help code."
+    },
+    {
+        "commit": "8a4063c2b69919d1bba305d986568f529139eaa3",
+        "date": "2021-08-27 06:41:56 -0400",
+        "subject": "Add required header for Illumos."
+    },
+    {
+        "commit": "5d857e196a6eeb2e1d137f2faf9001cccc066cfd",
+        "date": "2021-08-25 07:33:31 -0400",
+        "subject": "Do not use certs in container for testing.",
+        "body": "The certs are available in test/certificate so it makes more sense to use them there. In addition the container does not need to be rebuilt unless the CA cert changes."
+    },
+    {
+        "commit": "7b4d69211e64855f9ca0db0e4b2950a6492afa59",
+        "date": "2021-08-23 16:09:14 -0400",
+        "subject": "Add missing header."
+    },
+    {
+        "commit": "beafdbfc1873902f4b17fbbc5f88e47d6344d113",
+        "date": "2021-08-23 08:37:57 -0400",
+        "subject": "Add const to memContextFreeing()/memContextName() parameters.",
+        "body": "These functions do not modify the mem context so they can use const pointers."
+    },
+    {
+        "commit": "726d04f13a2217b78e2cbef48ef4c889f15b5b68",
+        "date": "2021-08-23 08:31:50 -0400",
+        "subject": "Remove useless if in memContextFree().",
+        "body": "If the upper bound of the loop is 0 then nothing will be done, making the if condition extraneous."
+    },
+    {
+        "commit": "d72d4415a7c79296e3160aede9df59cd5d959694",
+        "date": "2021-08-23 08:27:07 -0400",
+        "subject": "Use contextParentIdx instead of a loop when moving a context.",
+        "body": "contextParentIdx was introduced in 90709dfd to improve the performance of mem context frees. memContextMove() did not get the message, however, and continued to use a loop to find the mem context in the old parent.\n\nUse contextParentIdx to find the mem context in the old parent to avoid a loop."
+    },
+    {
+        "commit": "8a9887f27cb46728e85801e075474928207e012f",
+        "date": "2021-08-23 07:58:59 -0400",
+        "subject": "Remove useless memFree() in regExpNew().",
+        "body": "The MEM_CONTEXT_NEW*() block will automatically free memory if there is an error.\n\nThis code is pretty old so this may not have been true when it was written."
+    },
+    {
+        "commit": "5ffb7cc77127a60de98e2d9080f27ed28bf95b4f",
+        "date": "2021-08-23 07:14:22 -0400",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "aee0e7bac746c5c68baee106d8d4809cf6d8edfd",
+        "date": "2021-08-23 07:03:40 -0400",
+        "subject": "Begin v2.36 development."
+    },
+    {
         "commit": "3787cf78032cb928f27044c13b6f50d57bf06d20",
         "date": "2021-08-23 06:52:51 -0400",
         "subject": "v2.35: Binary Protocol"
