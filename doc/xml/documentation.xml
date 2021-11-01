@@ -14,7 +14,7 @@
 ./doc.pl
         </code-block>
 
-        <p>The user guide can be built for <id>rhel</id> and <id>debian</id>. This will build the HTML user guide for RHEL/CentOS:</p>
+        <p>The user guide can be built for <id>rhel</id> and <id>debian</id>. This will build the HTML user guide for RHEL:</p>
 
         <code-block type="bash">
 ./doc.pl --out=html --include=user-guide --var=os-type=rhel
@@ -33,7 +33,7 @@
 ./doc.pl --out=html --include=user-guide --var=os-type=rhel --var=os-image=centos:7
         </code-block>
 
-        <p>The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation.</p>
+        <p>The following is a sample RHEL 7 configuration that can be used for building the documentation.</p>
 
         <code-block type="bash">
 # Install docker
@@ -48,7 +48,7 @@ sudo yum install -y git wget
 # Install latex (for building PDF)
 sudo yum install -y texlive texlive-titlesec texlive-sectsty texlive-framed texlive-epstopdf ghostscript
 
-# Install Perl modules that do not have CentOS packages via CPAN
+# Install Perl modules via CPAN that do not have packages
 sudo yum install -y yum cpanminus
 sudo yum groupinstall -y "Development Tools" "Development Libraries"
 sudo cpanm install --force XML::Checker::Parser
@@ -73,13 +73,13 @@ sudo usermod -aG docker testdoc
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=debian --var=os-image=ubuntu:16.04 --var=package=test/package/pgbackrest_2.08-0_amd64.deb
         </code-block>
 
-        <p>RHEL/CentOS 7:</p>
+        <p>RHEL 7:</p>
 
         <code-block type="bash">
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:7  --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
         </code-block>
 
-        <p>RHEL/CentOS 8:</p>
+        <p>RHEL 8:</p>
 
         <code-block type="bash">
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:8 --var=package=test/package/pgbackrest-2.08-1.el8.x86_64.rpm
