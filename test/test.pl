@@ -81,7 +81,7 @@ test.pl [options]
    --no-gen             do not run code generation
    --gen-check          check that auto-generated files are correct (used in CI to detect changes)
    --code-count         generate code counts
-   --expect             --vm=co7 --pg-version=9.6 --log-force
+   --expect             --vm=rh7 --pg-version=9.6 --log-force
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-coverage-report run coverage but don't generate coverage report (saves time)
@@ -108,7 +108,7 @@ test.pl [options]
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
-   --vm                 docker container to build/test (e.g. co7)
+   --vm                 docker container to build/test (e.g. rh7)
    --vm-build           build Docker containers
    --vm-force           force a rebuild of Docker containers
    --vm-out             Show VM output (default false)
@@ -901,7 +901,7 @@ eval
                         # Patch files in RHEL package builds
                         #
                         # Use these commands to create a new patch (may need to modify first line):
-                        # BRDIR=/backrest;BRVM=co7;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
+                        # BRDIR=/backrest;BRVM=rh7;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
                         # PKDIR=${BRDIR?}/test/result/package/${BRVM}/SPECS
                         # diff -Naur ${PKDIR?}.old ${PKDIR}.new > ${BRPATCHFILE?}
                         my $strPackagePatch = "${strBackRestBase}/test/patch/rhel-package.patch";

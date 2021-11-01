@@ -11,7 +11,7 @@
 
         <!-- OS titles -->
         <variable key="os-debian-title">Debian &amp; Ubuntu</variable>
-        <variable key="os-rhel-title">RHEL &amp; CentOS 7-8</variable>
+        <variable key="os-rhel-title">RHEL 7-8</variable>
 
         <!-- Base PostgreSQL versions -->
         <variable key="os-debian-pg-version">12</variable>
@@ -42,13 +42,13 @@
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:18.04</variable>
-        <variable key="os-image" if="{[os-type-is-rhel]}">centos:8</variable>
+        <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
         <variable key="user-guide-subtitle" if="{[os-type-is-rhel]}">{[os-rhel-title]}</variable>
 
         <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
-        <variable key="user-guide-os" if="{[os-type-is-rhel]}">RHEL/CentOS 7-8</variable>
+        <variable key="user-guide-os" if="{[os-type-is-rhel]}">RHEL 7-8</variable>
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 

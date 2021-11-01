@@ -511,6 +511,22 @@ src/command/restore/restore.h:
   class: core
   type: c/h
 
+src/command/server/ping.c:
+  class: core
+  type: c
+
+src/command/server/ping.h:
+  class: core
+  type: c/h
+
+src/command/server/server.c:
+  class: core
+  type: c
+
+src/command/server/server.h:
+  class: core
+  type: c/h
+
 src/command/stanza/common.c:
   class: core
   type: c
@@ -951,6 +967,18 @@ src/common/io/read.intern.h:
   class: core
   type: c/h
 
+src/common/io/server.c:
+  class: core
+  type: c
+
+src/common/io/server.h:
+  class: core
+  type: c/h
+
+src/common/io/server.intern.h:
+  class: core
+  type: c/h
+
 src/common/io/session.c:
   class: core
   type: c
@@ -979,6 +1007,14 @@ src/common/io/socket/common.h:
   class: core
   type: c/h
 
+src/common/io/socket/server.c:
+  class: core
+  type: c
+
+src/common/io/socket/server.h:
+  class: core
+  type: c/h
+
 src/common/io/socket/session.c:
   class: core
   type: c
@@ -992,6 +1028,22 @@ src/common/io/tls/client.c:
   type: c
 
 src/common/io/tls/client.h:
+  class: core
+  type: c/h
+
+src/common/io/tls/common.c:
+  class: core
+  type: c
+
+src/common/io/tls/common.h:
+  class: core
+  type: c/h
+
+src/common/io/tls/server.c:
+  class: core
+  type: c
+
+src/common/io/tls/server.h:
   class: core
   type: c/h
 
@@ -1487,6 +1539,14 @@ src/protocol/server.h:
   class: core
   type: c/h
 
+src/storage/azure/helper.c:
+  class: core
+  type: c
+
+src/storage/azure/helper.h:
+  class: core
+  type: c/h
+
 src/storage/azure/read.c:
   class: core
   type: c
@@ -1515,11 +1575,27 @@ src/storage/azure/write.h:
   class: core
   type: c/h
 
+src/storage/cifs/helper.c:
+  class: core
+  type: c
+
+src/storage/cifs/helper.h:
+  class: core
+  type: c/h
+
 src/storage/cifs/storage.c:
   class: core
   type: c
 
 src/storage/cifs/storage.h:
+  class: core
+  type: c/h
+
+src/storage/gcs/helper.c:
+  class: core
+  type: c
+
+src/storage/gcs/helper.h:
   class: core
   type: c/h
 
@@ -1636,6 +1712,14 @@ src/storage/remote/write.c:
   type: c
 
 src/storage/remote/write.h:
+  class: core
+  type: c/h
+
+src/storage/s3/helper.c:
+  class: core
+  type: c
+
+src/storage/s3/helper.h:
   class: core
   type: c/h
 
@@ -2135,6 +2219,10 @@ test/src/module/command/restoreTest.c:
   class: test/module
   type: c
 
+test/src/module/command/serverTest.c:
+  class: test/module
+  type: c
+
 test/src/module/command/stanzaTest.c:
   class: test/module
   type: c
@@ -2348,10 +2436,6 @@ test/src/module/protocol/protocolTest.c:
   type: c
 
 test/src/module/storage/azureTest.c:
-  class: test/module
-  type: c
-
-test/src/module/storage/cifsTest.c:
   class: test/module
   type: c
 
