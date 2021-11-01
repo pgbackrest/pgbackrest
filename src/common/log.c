@@ -70,7 +70,6 @@ static const char *const logLevelList[LOG_LEVEL_TOTAL] =
     "OFF",
     "ASSERT",
     "ERROR",
-    "PROTOCOL",
     "WARN",
     "INFO",
     "DETAIL",

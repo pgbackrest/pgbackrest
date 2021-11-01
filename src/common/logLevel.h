@@ -12,7 +12,6 @@ typedef enum
     logLevelOff,
     logLevelAssert,
     logLevelError,
-    logLevelProtocol,
     logLevelWarn,
     logLevelInfo,
     logLevelDetail,
