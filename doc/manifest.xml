@@ -23,6 +23,9 @@
         <variable key="dev">n</variable>
         <variable key="debug">n</variable>
 
+        <!-- Add analytics to the HTML documentation? -->
+        <variable key="analytics">n</variable>
+
         <!-- Release date - static allows for reproducible builds -->
         <variable key="release-date-static">n</variable>
         <variable key="release-date" eval="y">

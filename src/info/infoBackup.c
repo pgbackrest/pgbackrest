@@ -154,7 +154,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
                 // When reading timestamps, read as uint64 to ensure always positive value (guarantee no backups before 1970)
                 .backupTimestampStart = (time_t)varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR)),
                 .backupTimestampStop= (time_t)varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR)),
-                .backupType = (BackupType)strIdFromStr(stringIdBit5, varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR))),
+                .backupType = (BackupType)strIdFromStr(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR))),
 
                 // Possible NULL values
                 .backupArchiveStart = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR))),
