@@ -2270,6 +2270,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                 // Else if string make sure it is valid
                                 else
                                 {
+                                    ASSERT(optionType == cfgOptTypePath || optionType == cfgOptTypeString);
+
                                     // Set string value to display value
                                     configOptionValue->value.string = configOptionValue->display;
 

@@ -14,7 +14,10 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.36dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.37dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2021-11-01" version="2.36" title="Minor Bug Fixes and Improvements">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -200,6 +203,7 @@
                         <commit subject="Add missing paragraph tag in user guide."/>
                         <commit subject="Add br tags for HTML documentation rendering missed in def7d513."/>
                         <commit subject="Add missing paragraph tags in coding standards."/>
+                        <commit subject="Restore some linefeed rendering behavior from before def7d513."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

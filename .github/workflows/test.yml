@@ -40,11 +40,11 @@ jobs:
           # All unit tests (with coverage) on the newest gcc available
           - param: test --vm=f33 --param=c-only --param=tz=America/New_York
 
-          # RHEL/CentOS 8 documentation
-          - param: doc --vm=co8
+          # RHEL documentation
+          - param: doc --vm=rh8
 
           # All integration tests
-          - param: test --vm=co7 --param=module=mock --param=module=real
+          - param: test --vm=rh7 --param=module=mock --param=module=real
 
     steps:
       - name: Checkout Code

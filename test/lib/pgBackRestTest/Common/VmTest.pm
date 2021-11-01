@@ -38,8 +38,6 @@ use constant VM_DEPRECATED                                          => 'deprecat
     push @EXPORT, qw(VM_DEPRECATED);
 use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
-use constant VM_OS                                                  => 'os';
-    push @EXPORT, qw(VM_OS);
 use constant VM_OS_BASE                                             => 'os-base';
     push @EXPORT, qw(VM_OS_BASE);
 use constant VM_OS_REPO                                             => 'os-repo';
@@ -64,16 +62,6 @@ use constant VM_OS_BASE_RHEL                                        => 'rhel';
     push @EXPORT, qw(VM_OS_BASE_RHEL);
 
 ####################################################################################################################################
-# Valid OS list
-####################################################################################################################################
-use constant VM_OS_CENTOS                                           => 'centos';
-    push @EXPORT, qw(VM_OS_CENTOS);
-use constant VM_OS_DEBIAN                                           => 'debian';
-    push @EXPORT, qw(VM_OS_DEBIAN);
-use constant VM_OS_UBUNTU                                           => 'ubuntu';
-    push @EXPORT, qw(VM_OS_DEBIAN);
-
-####################################################################################################################################
 # Valid architecture list
 ####################################################################################################################################
 use constant VM_ARCH_I386                                           => 'i386';
@@ -90,10 +78,10 @@ use constant VM_ALL                                                 => 'all';
 use constant VM_NONE                                                => 'none';
     push @EXPORT, qw(VM_NONE);
 
-use constant VM_CO7                                                 => 'co7';
-    push @EXPORT, qw(VM_CO7);
-use constant VM_CO8                                                 => 'co8';
-    push @EXPORT, qw(VM_CO8);
+use constant VM_RH7                                                 => 'rh7';
+    push @EXPORT, qw(VM_RH7);
+use constant VM_RH8                                                 => 'rh8';
+    push @EXPORT, qw(VM_RH8);
 use constant VM_F33                                                 => 'f33';
     push @EXPORT, qw(VM_F33);
 use constant VM_U18                                                 => 'u18';
@@ -104,13 +92,13 @@ use constant VM_D9                                                  => 'd9';
     push @EXPORT, qw(VM_D9);
 
 # Defines the vm that will be used for expect testing
-use constant VM_EXPECT                                              => VM_CO7;
+use constant VM_EXPECT                                              => VM_RH7;
     push @EXPORT, qw(VM_EXPECT);
 
 # VM aliases for run matrices (numbered oldest to newest)
 use constant VM2                                                    => VM_D9;
     push @EXPORT, qw(VM2);
-use constant VM3                                                    => VM_CO7;
+use constant VM3                                                    => VM_RH7;
     push @EXPORT, qw(VM3);
 use constant VM4                                                    => VM_U20;
     push @EXPORT, qw(VM4);
@@ -125,7 +113,6 @@ my $oyVm =
     &VM_NONE =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
@@ -143,11 +130,10 @@ my $oyVm =
         ],
     },
 
-    # CentOS 7
-    &VM_CO7 =>
+    # RHEL 7
+    &VM_RH7 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'centos:7',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
@@ -175,7 +161,6 @@ my $oyVm =
     &VM_F33 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_OS => VM_OS_CENTOS,
         &VM_IMAGE => 'fedora:33',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
@@ -203,7 +188,6 @@ my $oyVm =
     &VM_D9 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_DEBIAN,
         &VM_OS_REPO => 'stretch',
         &VM_IMAGE => 'i386/debian:9',
         &VM_ARCH => VM_ARCH_I386,
@@ -230,7 +214,6 @@ my $oyVm =
     &VM_U18 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'bionic',
         &VM_IMAGE => 'ubuntu:18.04',
         &VM_ARCH => VM_ARCH_AMD64,
@@ -273,7 +256,6 @@ my $oyVm =
     &VM_U20 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS => VM_OS_UBUNTU,
         &VM_OS_REPO => 'focal',
         &VM_IMAGE => 'ubuntu:20.04',
         &VM_ARCH => VM_ARCH_AMD64,
