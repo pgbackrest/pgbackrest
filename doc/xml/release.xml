@@ -15,6 +15,22 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.37dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Simplify strIdFrom*() functions.">
+                            <github-pull-request id="1551"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>StringId</code> as an option type.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
         </release>
 
         <release date="2021-11-01" version="2.36" title="Minor Bug Fixes and Improvements">

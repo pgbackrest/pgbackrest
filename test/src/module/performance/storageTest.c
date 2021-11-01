@@ -172,8 +172,7 @@ testRun(void)
 
                 driver.interface.infoList = storageTestPerfInfoList;
 
-                Storage *storageTest = storageNew(
-                    strIdFromZ(stringIdBit6, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
+                Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
                 storageHelper.storageRepoWrite = memNew(sizeof(Storage *));
                 storageHelper.storageRepoWrite[0] = storageTest;
 
