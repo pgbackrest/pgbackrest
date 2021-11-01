@@ -16,6 +16,22 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.37dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="1537"/>
+                        <github-pull-request id="1540"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="virgile.crevon"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>--cmd</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-development-list>
                     <release-item>
                         <commit subject="Simplify strIdFrom*() functions.">
@@ -10906,6 +10922,11 @@
         <contributor id="vitaliy.kukharik">
             <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
             <contributor-id type="github">vitabaks</contributor-id>
+        </contributor>
+
+        <contributor id="virgile.crevon">
+            <contributor-name-display>Virgile CREVON</contributor-name-display>
+            <contributor-id type="github">collectionneurfou</contributor-id>
         </contributor>
 
         <contributor id="vthriller">
