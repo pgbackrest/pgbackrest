@@ -21,6 +21,9 @@
                         <commit subject="Simplify strIdFrom*() functions.">
                             <github-pull-request id="1551"/>
                         </commit>
+                        <commit subject="Use cfgOptionStrId() instead of cfgOptionStr() where appropriate.">
+                            <github-pull-request id="1554"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
