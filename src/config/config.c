@@ -150,9 +150,6 @@ cfgExe(void)
     FUNCTION_TEST_VOID();
     ASSERT(configLocal != NULL);
 
-    if (cfgOptionTest(cfgOptCmd))
-        FUNCTION_TEST_RETURN(cfgOptionStr(cfgOptCmd));
-
     FUNCTION_TEST_RETURN(configLocal->exe);
 }
 

@@ -145,7 +145,7 @@
                         <summary><backrest/> command.</summary>
 
                         <text>
-                            <p><backrest/> may generate or invoke commands (to e.g. create the <code>restore_command</code> during the restore process). The command used to trigger the <backrest/> process will then also be used in those cases, unless the <br-option>cmd</br-option> option is provided.</p>
+                            <p><backrest/> may generate a command string when creating the <code>restore_command</code> during the restore process. The command used to trigger the <backrest/> process will then also be used in this case, unless the <br-option>cmd</br-option> option is provided.</p>
                         </text>
 
                         <example>/var/lib/pgsql/bin/pgbackrest_wrapper.sh</example>

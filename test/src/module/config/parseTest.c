@@ -1779,6 +1779,14 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgExe(), "pgbackrest", "--cmd not provided; command is returned as pgbackrest");
 
         argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        // compare against strBase, as full path differs by vm=xxxx
+        TEST_RESULT_STR_Z(strBase(cfgOptionStr(cfgOptCmd)), "pgbackrest", "--cmd not provided; command is defaulted to pgbackrest");
+
+        argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
@@ -1786,7 +1794,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptCmd, "pgbackrest_wrapper.sh");
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
 
-        TEST_RESULT_STR_Z(cfgExe(), "pgbackrest_wrapper.sh", "--cmd provided; command is returned as pgbackrest_wrapper.sh");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCmd), "pgbackrest_wrapper.sh", "--cmd provided; command is returned as pgbackrest_wrapper.sh");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default job retry and valid duplicate options");

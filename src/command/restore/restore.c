@@ -1580,12 +1580,13 @@ restoreRecoveryOption(unsigned int pgVersion)
             kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_SUBPROCESS), NULL);
             kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_TIMESTAMP), NULL);
             kvPut(optionReplace, VARSTRDEF(CFGOPT_PROCESS_MAX), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_CMD), NULL);
 
             kvPut(
                 result, VARSTRZ(RESTORE_COMMAND),
                 VARSTR(
                     strNewFmt(
-                        "%s %s %%f \"%%p\"", strZ(cfgExe()),
+                        "%s %s %%f \"%%p\"", strZ(cfgOptionStr(cfgOptCmd)),
                         strZ(strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleMain, optionReplace, true, true), " ")))));
         }
 

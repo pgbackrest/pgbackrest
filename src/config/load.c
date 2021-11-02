@@ -109,6 +109,10 @@ cfgLoadUpdateOption(void)
         }
     }
 
+    // Set default for cmd
+    if (cfgOptionValid(cfgOptCmd))
+        cfgOptionDefaultSet(cfgOptCmd, VARSTR(cfgExe()));
+
     // Set default for repo-host-cmd
     if (cfgOptionValid(cfgOptRepoHostCmd))
         cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
