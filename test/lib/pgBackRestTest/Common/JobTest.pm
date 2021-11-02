@@ -293,7 +293,7 @@ sub run
                         ($self->{bProfile} ? " \\\n\t-pg" : '') .
                         (vmArchBits($self->{oTest}->{&TEST_VM}) == 32 ? " \\\n\t-D_FILE_OFFSET_BITS=64" : '') .
                         ($self->{bDebug} ? '' : " \\\n\t-DNDEBUG") .
-                        ($self->{oTest}->{&TEST_VM} eq VM_CO7 ? " \\\n\t-DDEBUG_EXEC_TIME" : '') .
+                        ($self->{oTest}->{&TEST_VM} eq VM_RH7 ? " \\\n\t-DDEBUG_EXEC_TIME" : '') .
                         ($bCoverage ? " \\\n\t-DDEBUG_COVERAGE" : '') .
                         ($self->{bDebugTestTrace} && $self->{bDebug} ? " \\\n\t-DDEBUG_TEST_TRACE" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? " \\\n\t-DWITH_BACKTRACE" : '') .

@@ -14,7 +14,42 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.36dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.37dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="1537"/>
+                        <github-pull-request id="1540"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="virgile.crevon"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>--cmd</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Simplify strIdFrom*() functions.">
+                            <github-pull-request id="1551"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>StringId</code> as an option type.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2021-11-01" version="2.36" title="Minor Bug Fixes and Improvements">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -200,6 +235,7 @@
                         <commit subject="Add missing paragraph tag in user guide."/>
                         <commit subject="Add br tags for HTML documentation rendering missed in def7d513."/>
                         <commit subject="Add missing paragraph tags in coding standards."/>
+                        <commit subject="Restore some linefeed rendering behavior from before def7d513."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -10886,6 +10922,11 @@
         <contributor id="vitaliy.kukharik">
             <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
             <contributor-id type="github">vitabaks</contributor-id>
+        </contributor>
+
+        <contributor id="virgile.crevon">
+            <contributor-name-display>Virgile CREVON</contributor-name-display>
+            <contributor-id type="github">collectionneurfou</contributor-id>
         </contributor>
 
         <contributor id="vthriller">

@@ -8,7 +8,7 @@ This will build all documentation with defaults:
 ```bash
 ./doc.pl
 ```
-The user guide can be built for `rhel` and `debian`. This will build the HTML user guide for RHEL/CentOS:
+The user guide can be built for `rhel` and `debian`. This will build the HTML user guide for RHEL:
 ```bash
 ./doc.pl --out=html --include=user-guide --var=os-type=rhel
 ```
@@ -21,7 +21,7 @@ Each `os-type` has a default container image that will be used as a base for cre
 ./doc.pl --out=html --include=user-guide --var=os-type=debian --var=os-image=debian:9
 ./doc.pl --out=html --include=user-guide --var=os-type=rhel --var=os-image=centos:7
 ```
-The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation.
+The following is a sample RHEL 7 configuration that can be used for building the documentation.
 ```bash
 # Install docker
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
@@ -35,7 +35,7 @@ sudo yum install -y git wget
 # Install latex (for building PDF)
 sudo yum install -y texlive texlive-titlesec texlive-sectsty texlive-framed texlive-epstopdf ghostscript
 
-# Install Perl modules that do not have CentOS packages via CPAN
+# Install Perl modules via CPAN that do not have packages
 sudo yum install -y yum cpanminus
 sudo yum groupinstall -y "Development Tools" "Development Libraries"
 sudo cpanm install --force XML::Checker::Parser
@@ -56,11 +56,11 @@ Ubuntu 16.04:
 ```bash
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=debian --var=os-image=ubuntu:16.04 --var=package=test/package/pgbackrest_2.08-0_amd64.deb
 ```
-RHEL/CentOS 7:
+RHEL 7:
 ```bash
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:7  --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
 ```
-RHEL/CentOS 8:
+RHEL 8:
 ```bash
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:8 --var=package=test/package/pgbackrest-2.08-1.el8.x86_64.rpm
 ```

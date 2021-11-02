@@ -92,10 +92,6 @@ static const struct CompressHelperLocal
         .type = STRDEF(XZ_EXT),
         .ext = STRDEF("." XZ_EXT),
     },
-    {
-        .type = STRDEF(BZ2_EXT),
-        .ext = STRDEF("." BZ2_EXT),
-    },
 };
 
 #define COMPRESS_LIST_SIZE                                                                                                         \

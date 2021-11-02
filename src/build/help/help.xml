@@ -141,7 +141,7 @@
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - CMD KEY -->
-                    <config-key id="cmd" name="Invocation Target">
+                    <config-key id="cmd" name="{[project]} Command">
                         <summary><backrest/> command.</summary>
 
                         <text>
