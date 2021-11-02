@@ -244,7 +244,7 @@ protocolServerProcess(
                                     retryRemaining--;
                                     retry = true;
 
-                                    // Send keep alives to remotes. A retry means the command is taking longer than usual so make
+                                    // Send keep-alive to remotes. A retry means the command is taking longer than usual so make
                                     // sure the remote does not timeout.
                                     protocolKeepAlive();
                                 }
@@ -277,7 +277,7 @@ protocolServerProcess(
                     }
                 }
 
-                // Send keep alives to remotes.  When a local process is doing work that does not involve the remote it is important
+                // Send keep-alive to remotes. When a local process is doing work that does not involve the remote it is important
                 // that the remote does not timeout.  This will send a keep alive once per unit of work that is performed by the
                 // local process.
                 protocolKeepAlive();

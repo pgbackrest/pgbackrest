@@ -142,7 +142,7 @@
             </execute>
         </execute-list>
 
-        <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-main]}/doc">doc</link> directory in the section <quote>The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation</quote>. NOTE that the <quote>Install latex (for building PDF)</quote> section is not required since testing of the docs need only be run for HTML output.</p>
+        <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-main]}/doc">doc</link> directory in the section <quote>The following is a sample RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <quote>Install latex (for building PDF)</quote> section is not required since testing of the docs need only be run for HTML output.</p>
     </section>
 
     <section id="coding">
@@ -754,7 +754,7 @@ test/bin/none/pgbackrest help backup repo-type
             <p>To quickly view the HTML documentation, the <code>--no-exe</code> option can be passed to the documentation generator in order to bypass executing the code elements:</p>
 
             <code-block>
-pgbackrest/doc/doc.pl --output=html --no-exe
+pgbackrest/doc/doc.pl --out=html --no-exe
             </code-block>
 
             <p>The generated HTML files will be placed in the <file>doc/output/html</file> directory where they can be viewed locally in a browser.</p>

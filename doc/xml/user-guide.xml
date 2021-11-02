@@ -11,7 +11,7 @@
 
         <!-- OS titles -->
         <variable key="os-debian-title">Debian &amp; Ubuntu</variable>
-        <variable key="os-rhel-title">RHEL &amp; CentOS 7-8</variable>
+        <variable key="os-rhel-title">RHEL 7-8</variable>
 
         <!-- Base PostgreSQL versions -->
         <variable key="os-debian-pg-version">12</variable>
@@ -42,13 +42,13 @@
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:18.04</variable>
-        <variable key="os-image" if="{[os-type-is-rhel]}">centos:8</variable>
+        <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
         <variable key="user-guide-subtitle" if="{[os-type-is-rhel]}">{[os-rhel-title]}</variable>
 
         <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
-        <variable key="user-guide-os" if="{[os-type-is-rhel]}">RHEL/CentOS 7-8</variable>
+        <variable key="user-guide-os" if="{[os-type-is-rhel]}">RHEL 7-8</variable>
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
@@ -148,7 +148,7 @@
         <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
         <!-- Azure Settings -->
-        <variable key="azure-image">mcr.microsoft.com/azure-storage/azurite:3.14.2</variable>  <!-- Azurite docker image -->
+        <variable key="azure-image">mcr.microsoft.com/azure-storage/azurite</variable>  <!-- Azurite docker image -->
         <variable key="azure-all">n</variable>                      <!-- Build all the documentation with Azure? -->
         <variable key="azure-local">y</variable>
         <variable key="azure-account">pgbackrest</variable>
@@ -2959,7 +2959,7 @@
                 </execute>
             </execute-list>
 
-            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>{[host-pg1]}</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
+            <p>The <file>pg_hba.conf</file> file must be updated to allow the standby to connect as the replication user.  Be sure to replace the IP address below with the actual IP address of your <host>{[host-pg2]}</host>.  A reload will be required after modifying the <file>pg_hba.conf</file> file.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create <file>pg_hba.conf</file> entry for replication user</title>

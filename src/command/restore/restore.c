@@ -440,7 +440,7 @@ restoreManifestMap(Manifest *manifest)
 
         // Remap tablespaces
         // -------------------------------------------------------------------------------------------------------------------------
-        KeyValue *tablespaceMap = varKv(cfgOption(cfgOptTablespaceMap));
+        const KeyValue *const tablespaceMap = cfgOptionKvNull(cfgOptTablespaceMap);
         const String *tablespaceMapAllPath = cfgOptionStrNull(cfgOptTablespaceMapAll);
 
         if (tablespaceMap != NULL || tablespaceMapAllPath != NULL)
@@ -527,7 +527,7 @@ restoreManifestMap(Manifest *manifest)
 
         // Remap links
         // -------------------------------------------------------------------------------------------------------------------------
-        const KeyValue *const linkMap = varKv(cfgOption(cfgOptLinkMap));
+        const KeyValue *const linkMap = cfgOptionKvNull(cfgOptLinkMap);
 
         if (linkMap != NULL)
         {
@@ -1606,7 +1606,7 @@ restoreRecoveryOption(unsigned int pgVersion)
         {
             // Write the recovery target
             kvPut(
-                result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", strZ(cfgOptionStr(cfgOptType)))),
+                result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", strZ(strIdToStr(cfgOptionStrId(cfgOptType))))),
                 VARSTR(cfgOptionStr(cfgOptTarget)));
 
             // Write recovery_target_inclusive
@@ -1752,8 +1752,8 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         }
         // Else the file does exist so comment out old recovery options that could interfere with the current recovery. Don't
         // comment out *all* recovery options because some should only be commented out if there is a new option to replace it, e.g.
-        // primary_conninfo. If the option shouldn't be commented out all the time then it won't ever be commnented out -- this
-        // may not be ideal but it is what was decided. PostgreSQL will use the last value set so this is safe as long as the option
+        // primary_conninfo. If the option shouldn't be commented out all the time then it won't ever be commented out -- this may
+        // not be ideal but it is what was decided. PostgreSQL will use the last value set so this is safe as long as the option
         // does not have dependencies on other options.
         else
         {

@@ -14,7 +14,29 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.36dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.37dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Simplify strIdFrom*() functions.">
+                            <github-pull-request id="1551"/>
+                        </commit>
+                        <commit subject="Use cfgOptionStrId() instead of cfgOptionStr() where appropriate.">
+                            <github-pull-request id="1554"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>StringId</code> as an option type.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2021-11-01" version="2.36" title="Minor Bug Fixes and Improvements">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -28,6 +50,18 @@
                         </release-item-contributor-list>
 
                         <p>Allow <quote>global</quote> as a stanza prefix.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1536"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="henrik.feldt"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix segfault on invalid <proper>GCS</proper> key file.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -63,6 +97,25 @@
                         </release-item-contributor-list>
 
                         <p>Increase max index allowed for <id>pg</id>/<id>repo</id> options to 256.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Add WebIdentity authentication for AWS S3.">
+                            <github-issue id="1203"/>
+                            <github-pull-request id="1527"/>
+                        </commit>
+                        <commit subject="Fix mismatched parameters in tlsClientNew() call."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="james.callahan"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="benjamin.blattberg"/>
+                            <release-item-reviewer id="andrew.lecuyer"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <id>WebIdentity</id> authentication for <proper>AWS S3</proper>.</p>
                     </release-item>
 
                     <release-item>
@@ -133,7 +186,10 @@
 
                 <release-development-list>
                     <release-item>
-                        <github-pull-request id="1504"/>
+                        <commit subject="Add TLS server.">
+                            <github-pull-request id="1504"/>
+                        </commit>
+                        <commit subject="Check return value of getsockopt()."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -143,6 +199,17 @@
                         </release-item-contributor-list>
 
                         <p><proper>Add TLS</proper> server.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1543"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Store config values as a union instead of a variant.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -154,6 +221,8 @@
                         <commit subject="Update contributing.xml with rendering changes from def7d513."/>
                         <commit subject="Add missing paragraph tag in user guide."/>
                         <commit subject="Add br tags for HTML documentation rendering missed in def7d513."/>
+                        <commit subject="Add missing paragraph tags in coding standards."/>
+                        <commit subject="Restore some linefeed rendering behavior from before def7d513."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -10119,6 +10188,11 @@
             <contributor-id type="github">bastianwegge</contributor-id>
         </contributor>
 
+        <contributor id="benjamin.blattberg">
+            <contributor-name-display>Benjamin Blattberg</contributor-name-display>
+            <contributor-id type="github">benjaminjb</contributor-id>
+        </contributor>
+
         <contributor id="benoit.lobréau">
             <contributor-name-display>blogh</contributor-name-display>
             <contributor-id type="github">blogh</contributor-id>
@@ -10376,6 +10450,11 @@
             <contributor-id type="github">crunchyheath</contributor-id>
         </contributor>
 
+        <contributor id="henrik.feldt">
+            <contributor-name-display>Henrik Feldt</contributor-name-display>
+            <contributor-id type="github">haf</contributor-id>
+        </contributor>
+
         <contributor id="ibrahim.edib.kokdemir">
             <contributor-name-display>Ibrahim Edib Kokdemir</contributor-name-display>
             <contributor-id type="github">Edib</contributor-id>
@@ -10394,6 +10473,11 @@
         <contributor id="james.badger">
             <contributor-name-display>James Badger</contributor-name-display>
             <contributor-id type="github">openfirmware</contributor-id>
+        </contributor>
+
+        <contributor id="james.callahan">
+            <contributor-name-display>James Callahan</contributor-name-display>
+            <contributor-id type="github">james-callahan</contributor-id>
         </contributor>
 
         <contributor id="james.chanco.jr">

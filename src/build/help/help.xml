@@ -127,10 +127,10 @@
 
                 <config-key-list>
                     <config-key id="buffer-size" name="Buffer Size">
-                        <summary>Buffer size for file operations.</summary>
+                        <summary>Buffer size for I/O operations.</summary>
 
                         <text>
-                            <p>Set the buffer size used for copy, compress, and uncompress functions. A maximum of 3 buffers will be in use at a time per process. An additional maximum of 256K per process may be used for zlib buffers.</p>
+                            <p>Buffer size used for copy, compress, encrypt, and other operations. The number of buffers used depends on options and each operation may use additional memory, e.g. <id>gz</id> compression may use an additional 256KiB of memory.</p>
 
                             <p>Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024. For example, the case-insensitive value 32k (or 32KB) can be used instead of 32768.</p>
 
@@ -141,11 +141,11 @@
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - CMD-SSH KEY -->
-                    <config-key id="cmd-ssh" name="SSH client command">
-                        <summary>Path to ssh client executable.</summary>
+                    <config-key id="cmd-ssh" name="SSH Client Command">
+                        <summary>SSH client command.</summary>
 
                         <text>
-                            <p>Use a specific SSH client when an alternate is desired or the <file>ssh</file> executable is not in $PATH.</p>
+                            <p>Use a specific SSH client command when an alternate is desired or the <file>ssh</file> command is not in $PATH.</p>
                         </text>
 
                         <example>/usr/bin/ssh</example>
@@ -636,10 +636,10 @@
 
                     <!-- CONFIG - REPO SECTION - REPO-HOST-CMD KEY -->
                     <config-key id="repo-host-cmd" name="Repository Host Command">
-                        <summary><backrest/> exe path on the repository host.</summary>
+                        <summary>Repository host <backrest/> command.</summary>
 
                         <text>
-                            <p>Required only if the path to <exe/> is different on the local and repository hosts. If not defined, the repository host exe path will be set the same as the local exe path.</p>
+                            <p>Required only if the path to the <backrest/> command is different on the local and repository hosts. If not defined, the repository host command will be set the same as the local command.</p>
                         </text>
 
                         <default>same as local</default>
@@ -842,6 +842,7 @@
                             <list>
                                 <list-item><id>shared</id> - Shared keys</list-item>
                                 <list-item><id>auto</id> - Automatically retrieve temporary credentials</list-item>
+                                <list-item><id>web-id</id> - Automatically retrieve web identity credentials</list-item>
                             </list>
                         </text>
 
@@ -1499,10 +1500,10 @@
                 <config-key-list>
                     <!-- CONFIG - STANZA SECTION - PG-HOST-CMD KEY -->
                     <config-key id="pg-host-cmd" name="PostgreSQL Host Command">
-                        <summary><backrest/> exe path on the <postgres/> host.</summary>
+                        <summary><postgres/> host <backrest/> command.</summary>
 
                         <text>
-                            <p>Required only if the path to <exe/> is different on the local and <postgres/> hosts. If not defined, the database host exe path will be set the same as the local exe path.</p>
+                            <p>Required only if the path to the <backrest/> command is different on the local and <postgres/> hosts. If not defined, the <postgres/> host command will be set the same as the local command.</p>
                         </text>
 
                         <default>same as local</default>

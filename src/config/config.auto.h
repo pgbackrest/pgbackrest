@@ -250,6 +250,8 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO_Z                           "auto"
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED                           STRID5("shared", 0x85905130)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED_Z                         "shared"
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID                           STRID5("web-id", 0x89d88b70)
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_Z                         "web-id"
 
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST                            STRID5("host", 0xa4de80)
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST_Z                          "host"

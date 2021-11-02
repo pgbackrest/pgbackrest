@@ -200,7 +200,7 @@ size_t pckReadSize(PackRead *this);
 // Current field type. Set after a call to pckReadNext().
 PackType pckReadType(PackRead *this);
 
-// Is the field NULL? If the field is NULL the id will be advanced so the field does not need to be read explictly. If the field is
+// Is the field NULL? If the field is NULL the id will be advanced so the field does not need to be read explicitly. If the field is
 // not NULL then the id is not advanced since a subsequent read is expected.
 #define pckReadNullP(this, ...)                                                                                                    \
     pckReadNull(this, (PackIdParam){VAR_PARAM_INIT, __VA_ARGS__})

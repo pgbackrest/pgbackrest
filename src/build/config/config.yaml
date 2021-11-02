@@ -171,7 +171,7 @@ optionGroup:
 # Options
 #
 # Contains the defines for options: which commands the option can/cannot be specified, for which commands it is required, default
-# settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
+# settings, types, ranges, whether the option may be negated, whether it has dependencies, etc. The initial section is the global
 # section, meaning that the defines defined there apply to all commands listed for the option.
 #
 # inherit:
@@ -221,7 +221,7 @@ optionGroup:
 #   If the default is a string output it as-is without quoting. This allows C defines to be used as defaults.
 #
 # negate:
-#   All config file boolean options are automatically negatable. This setting is used to maintain backward compatibility with older
+#   All config file boolean options automatically may be negated. This setting is used to maintain backward compatibility with older
 #   options and should not be used for new options. For instance --online would be named --offline if it were created now to avoid
 #   the need for negation. --no-config is another special case that would now be implemented with a separate boolean option,
 #   e.g. --config-ignore.
@@ -2089,6 +2089,7 @@ option:
     allow-list:
       - shared
       - auto
+      - web-id
 
   repo-s3-region:
     inherit: repo-s3-bucket

@@ -70,7 +70,7 @@ docker exec -it doc-pg-standby tail -f /var/log/pgbackrest/demo-restore.log
 
 Processes can generally be monitored using 'top'. Once `top` is running, press `o` then enter `COMMAND=pgbackrest`. This will filter output to pgbackrest processes.
 
-- Check for many log entries in the `archive-push`/`archive-get` logs to ensure aync archiving was enabled:
+- Check for many log entries in the `archive-push`/`archive-get` logs to ensure async archiving was enabled:
 ```
 docker exec -it doc-pg-primary vi /var/log/pgbackrest/demo-archive-push-async.log
 docker exec -it doc-pg-standby vi /var/log/pgbackrest/demo-archive-get-async.log
@@ -102,16 +102,16 @@ v2.14: Bug Fix and Improvements
 
 Bug Fixes:
 
-* Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by Jens Wilke.)
+* Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by User.)
 
 Improvements:
 
-* Bypass database checks when stanza-delete issued with force. (Contributed by Cynthia Shang. Suggested by hatifnatt.)
+* Bypass database checks when stanza-delete issued with force. (Contributed by User. Suggested by User.)
 * Add configure script for improved multi-platform support.
 
 Documentation Features:
 
-* Add user guide for RHEL/CentOS 7.
+* Add user guide for Debian.
 ```
 
 Commit to integration with the above message and push to CI.
@@ -128,16 +128,16 @@ v2.14: Bug Fix and Improvements
 
 **Bug Fixes**:
 
-- Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by Jens Wilke.)
+- Fix segfault when process-max > 8 for archive-push/archive-get. (Reported by User.)
 
 **Improvements**:
 
-- Bypass database checks when stanza-delete issued with force. (Contributed by Cynthia Shang. Suggested by hatifnatt.)
+- Bypass database checks when stanza-delete issued with force. (Contributed by User. Suggested by User.)
 - Add configure script for improved multi-platform support.
 
 **Documentation Features**:
 
-- Add user guide for RHEL/CentOS 7.
+- Add user guide for Debian.
 ```
 
 The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from main. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in main!**
@@ -190,7 +190,7 @@ git push origin integration
 
 These scripts are required by `src/config` and should be updated after each release, when needed. Note that these files are updated very infrequently.
 
-Check the latest version of `automake` and see if it is > `1.16.4`:
+Check the latest version of `automake` and see if it is > `1.16.5`:
 ```
 https://git.savannah.gnu.org/gitweb/?p=automake.git
 ```

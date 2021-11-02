@@ -23,7 +23,7 @@ static struct SocketLocal
 
     bool block;                                                     // Use blocking mode socket
 
-    bool keepAlive;                                                 // Are socket keep alives enabled?
+    bool keepAlive;                                                 // Is socket keep-alive enabled?
     int tcpKeepAliveCount;                                          // TCP keep alive count (0 disables)
     int tcpKeepAliveIdle;                                           // TCP keep alive idle (0 disables)
     int tcpKeepAliveInterval;                                       // TCP keep alive interval (0 disables)
@@ -106,7 +106,7 @@ sckOptionSet(int fd)
     int socketValue = 1;
 
     THROW_ON_SYS_ERROR(
-        setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &socketValue, sizeof(int)) == -1, ProtocolError, "unable set TCP_NODELAY");
+        setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &socketValue, sizeof(int)) == -1, ProtocolError, "unable to set TCP_NODELAY");
 #endif
 
     // Put the socket in non-blocking mode
@@ -121,7 +121,7 @@ sckOptionSet(int fd)
     // Automatically close the socket (in the child process) on a successful execve() call. Connections are never shared between
     // processes so there is no reason to leave them open.
 #ifdef F_SETFD
-	THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable set FD_CLOEXEC");
+	THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable to set FD_CLOEXEC");
 #endif
 
     // Enable TCP keepalives
@@ -130,7 +130,7 @@ sckOptionSet(int fd)
         int socketValue = 1;
 
         THROW_ON_SYS_ERROR(
-            setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &socketValue, sizeof(int)) == -1, ProtocolError, "unable set SO_KEEPALIVE");
+            setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &socketValue, sizeof(int)) == -1, ProtocolError, "unable to set SO_KEEPALIVE");
 
         // Set TCP_KEEPCNT when available
 #ifdef TCP_KEEPIDLE
@@ -139,7 +139,8 @@ sckOptionSet(int fd)
             socketValue = socketLocal.tcpKeepAliveCount;
 
             THROW_ON_SYS_ERROR(
-                setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError, "unable set TCP_KEEPCNT");
+                setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &socketValue, sizeof(int)) == -1, ProtocolError,
+                "unable to set TCP_KEEPCNT");
         }
 #endif
 
@@ -151,7 +152,7 @@ sckOptionSet(int fd)
 
             THROW_ON_SYS_ERROR(
                 setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &socketValue, sizeof(int)) == -1, ProtocolError,
-                "unable set SO_KEEPIDLE");
+                "unable to set SO_KEEPIDLE");
         }
 #endif
 
@@ -163,7 +164,7 @@ sckOptionSet(int fd)
 
             THROW_ON_SYS_ERROR(
                 setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &socketValue, sizeof(int)) == -1, ProtocolError,
-                "unable set SO_KEEPINTVL");
+                "unable to set SO_KEEPINTVL");
         }
 #endif
     }

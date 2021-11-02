@@ -499,7 +499,7 @@ testRun(void)
         hrnCfgArgRawNegate(argList, cfgOptCompress);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "none", "compress-type=none");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptCompressType), CFGOPTVAL_COMPRESS_TYPE_NONE, "compress-type=none");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 0, "compress-level=0");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "compress is not valid");
 
@@ -512,7 +512,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptCompressLevel, "9");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "compress-type=gz");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptCompressType), CFGOPTVAL_COMPRESS_TYPE_GZ, "compress-type=gz");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 9, "compress-level=9");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "compress is not valid");
 
@@ -525,7 +525,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCompressType), "gz", "compress-type=gz");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptCompressType), CFGOPTVAL_COMPRESS_TYPE_GZ, "compress-type=gz");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 6, "compress-level=6");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "compress is not valid");
 
@@ -550,7 +550,7 @@ testRun(void)
 
         // Only the error case is tested here, success is tested in cfgLoad()
         TEST_RESULT_VOID(cfgLoadLogFile(), "attempt to open bogus log file");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLogLevelFile), "off", "log-level-file should now be off");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptLogLevelFile), CFGOPTVAL_LOG_LEVEL_FILE_OFF, "log-level-file should now be off");
     }
 
     // *****************************************************************************************************************************

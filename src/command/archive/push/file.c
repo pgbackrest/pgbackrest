@@ -168,7 +168,7 @@ archivePushFile(
             {
                 const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
 
-                // Check if the WAL segement already exists in the repo
+                // Check if the WAL segment already exists in the repo
                 const String *walSegmentFile = NULL;
 
                 TRY_BEGIN()

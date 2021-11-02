@@ -966,7 +966,11 @@ storageGcsNew(
                 KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
                 driver->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
                 driver->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
-                driver->authUrl = httpUrlNewParseP(varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR)), .type = httpProtocolTypeHttps);
+                const String *const uri = varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR));
+
+                CHECK(driver->credential != NULL && driver->privateKey != NULL && uri != NULL);
+
+                driver->authUrl = httpUrlNewParseP(uri, .type = httpProtocolTypeHttps);
 
                 driver->authClient = httpClientNew(
                     tlsClientNew(

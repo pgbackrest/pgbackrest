@@ -594,7 +594,7 @@ testRun(void)
                 TEST_TITLE("invalid command");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(strIdFromZ(stringIdBit6, "BOGUS")), false), ProtocolError,
+                    protocolClientExecute(client, protocolCommandNew(strIdFromZ("BOGUS")), false), ProtocolError,
                     "raised from test client: invalid command 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -883,7 +883,7 @@ testRun(void)
         {
             TEST_ASSIGN(
                 job,
-                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNew(strIdFromZ(stringIdBit5, "c"))), "new job");
+                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNew(strIdFromZ("c"))), "new job");
             TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
             TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
         }
@@ -915,7 +915,7 @@ testRun(void)
                     "local server 1");
 
                 // Command with output
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-one"), "c-one command get");
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c-one"), "c-one command get");
 
                 // Wait for notify from parent
                 HRN_FORK_CHILD_NOTIFY_GET();
@@ -938,7 +938,7 @@ testRun(void)
                     "local server 2");
 
                 // Command with output
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c2"), "c2 command get");
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c2"), "c2 command get");
 
                 // Wait for notify from parent
                 HRN_FORK_CHILD_NOTIFY_GET();
@@ -947,7 +947,7 @@ testRun(void)
                 TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
 
                 // Command with error
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ(stringIdBit5, "c-three"), "c-three command get");
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c-three"), "c-three command get");
                 TEST_RESULT_VOID(protocolServerError(server, 39, STRDEF("very serious error"), STRDEF("stack")), "error put");
 
                 // Wait for exit
@@ -993,20 +993,20 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("add jobs");
 
-                ProtocolCommand *command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-one"));
+                ProtocolCommand *command = protocolCommandNew(strIdFromZ("c-one"));
                 pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
                 pckWriteStrP(protocolCommandParam(command), STRDEF("param2"));
 
                 ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strIdFromZ(stringIdBit5, "c2"));
+                command = protocolCommandNew(strIdFromZ("c2"));
                 pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
 
                 job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-three"));
+                command = protocolCommandNew(strIdFromZ("c-three"));
                 pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
 
                 job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command);

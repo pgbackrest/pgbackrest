@@ -293,7 +293,7 @@ sub run
                         ($self->{bProfile} ? " \\\n\t-pg" : '') .
                         (vmArchBits($self->{oTest}->{&TEST_VM}) == 32 ? " \\\n\t-D_FILE_OFFSET_BITS=64" : '') .
                         ($self->{bDebug} ? '' : " \\\n\t-DNDEBUG") .
-                        ($self->{oTest}->{&TEST_VM} eq VM_CO7 ? " \\\n\t-DDEBUG_EXEC_TIME" : '') .
+                        ($self->{oTest}->{&TEST_VM} eq VM_RH7 ? " \\\n\t-DDEBUG_EXEC_TIME" : '') .
                         ($bCoverage ? " \\\n\t-DDEBUG_COVERAGE" : '') .
                         ($self->{bDebugTestTrace} && $self->{bDebug} ? " \\\n\t-DDEBUG_TEST_TRACE" : '') .
                         (vmWithBackTrace($self->{oTest}->{&TEST_VM}) && $self->{bBackTrace} ? " \\\n\t-DWITH_BACKTRACE" : '') .
@@ -430,7 +430,7 @@ sub run
                                             {
                                                 # If the function to shim is static then we need to create a declaration with the
                                                 # original name so references to the original name in the C module will compile.
-                                                # This is not necessary for extern'd functions since they should already have a
+                                                # This is not necessary for externed functions since they should already have a
                                                 # declaration in the header file.
                                                 if ($strLine =~ /^${strFunction}\(/ && $stryShimModuleSrcRenamed[-1] =~ /^static /)
                                                 {

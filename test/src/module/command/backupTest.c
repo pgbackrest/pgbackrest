@@ -1192,6 +1192,27 @@ testRun(void)
         cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_TRUE_VAR);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when error on manifest load");
+
+        Manifest *manifest = NULL;
+
+        OBJ_NEW_BEGIN(Manifest)
+        {
+            manifest = manifestNewInternal();
+            manifest->pub.data.backupType = backupTypeFull;
+            manifest->pub.data.backrestVersion = STRDEF("BOGUS");
+        }
+        OBJ_NEW_END();
+
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, "X");
+
+        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed: unable to read"
+                " <REPO:BACKUP>/20191003-105320F/backup.manifest.copy");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when pgBackRest version has changed");
 
         Manifest *manifestResume = NULL;
@@ -1215,16 +1236,6 @@ testRun(void)
             storageWriteIo(
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
-
-        Manifest *manifest = NULL;
-
-        OBJ_NEW_BEGIN(Manifest)
-        {
-            manifest = manifestNewInternal();
-            manifest->pub.data.backupType = backupTypeFull;
-            manifest->pub.data.backrestVersion = STRDEF("BOGUS");
-        }
-        OBJ_NEW_END();
 
         TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
 
@@ -1311,7 +1322,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report job error");
 
-        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ(stringIdBit5, "x")));
+        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
         TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0), AssertError, "error message");
@@ -1320,7 +1331,7 @@ testRun(void)
         TEST_TITLE("report host/100% progress on noop result");
 
         // Create job that skips file
-        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(strIdFromZ(stringIdBit5, "x")));
+        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(strIdFromZ("x")));
 
         PackWrite *const resultPack = protocolPackNew();
         pckWriteU32P(resultPack, backupCopyResultNoOp);

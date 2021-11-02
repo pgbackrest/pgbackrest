@@ -225,7 +225,16 @@ sub htmlGet
     my $self = shift;
 
     # Assign function parameters, defaults, and log debug info
-    my ($strOperation) = logDebugParam(__PACKAGE__ . '->htmlGet');
+    my
+    (
+        $strOperation,
+        $bAnalytics,
+    ) =
+        logDebugParam
+        (
+            __PACKAGE__ . '->htmlGet', \@_,
+            {name => 'bAnalytics', optional => true, default => false, trace => true},
+        );
 
     # Build the header
     my $strHtml =
@@ -284,6 +293,14 @@ sub htmlGet
     {
         $strHtml .=
             $self->indent(1) . "<link rel=\"stylesheet\" href=\"default.css\" type=\"text/css\"></link>\n";
+    }
+
+    if ($bAnalytics)
+    {
+        $strHtml .=
+            $self->indent(1) . "<script async src=\"https://www.googletagmanager.com/gtag/js?id=G-VKCRNV73H1\"></script>\n" .
+            $self->indent(1) . "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}" .
+                "gtag('js',new Date());gtag('config','G-VKCRNV73H1');</script>\n";
     }
 
     $strHtml .=
