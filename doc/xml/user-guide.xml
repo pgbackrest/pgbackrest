@@ -403,6 +403,16 @@
         <section if="{[os-type-is-debian]}" id="setup-tls">
             <title>Setup TLS</title>
 
+            <backrest-config host="{[setup-tls-host]}" owner="{[setup-tls-user]}:{[setup-tls-group]}" file="{[backrest-config-demo]}">
+                <title>!!!</title>
+
+                <backrest-config-option section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
+                <backrest-config-option section="global" key="tls-server-address">::0</backrest-config-option>
+                <backrest-config-option section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
+            </backrest-config>
+
             <execute-list host="{[setup-tls-host]}">
                 <title>Setup <host>{[setup-tls-host]}</host></title>
 
@@ -448,13 +458,7 @@
                     <exe-cmd>chmod 600 /etc/pgbackrest/cert/client.crt</exe-cmd>
                 </execute>
                 <execute user="{[setup-tls-user]}">
-                    <exe-cmd>
-                        pgbackrest server-start --tls-server-auth=pgbackrest-client=demo
-                        --tls-server-address=::0
-                        --tls-server-ca-file=/etc/pgbackrest/cert/ca.crt
-                        --tls-server-cert-file=/etc/pgbackrest/cert/server.crt
-                        --tls-server-key-file=/etc/pgbackrest/cert/server.key &amp;
-                    </exe-cmd>
+                    <exe-cmd>pgbackrest server-start</exe-cmd>
                 </execute>
             </execute-list>
         </section>
@@ -1249,6 +1253,29 @@
                     <exe-highlight>could not find WAL segment|did not reach the archive</exe-highlight>
                 </execute>
             </execute-list>
+
+<!--
+[Unit]
+Description=pgBackRest service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=postgres
+ExecStart=/usr/bin/pgbackrest
+
+[Install]
+WantedBy=multi-user.target
+-->
+
+            <block if="{[os-type-is-rhel]}" id="setup-tls">
+                <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
+            </block>
         </section>
 
         <!-- SECTION => QUICKSTART - PERFORM BACKUP -->
