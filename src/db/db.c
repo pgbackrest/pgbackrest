@@ -223,7 +223,8 @@ dbOpen(Db *this)
                 "select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                 " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
                 " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
-                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text"));
+                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
+                " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4"));
 
         // Check that none of the return values are null, which indicates the user cannot select some rows in pg_settings
         for (unsigned int columnIdx = 0; columnIdx < varLstSize(row); columnIdx++)
@@ -244,11 +245,13 @@ dbOpen(Db *this)
 
         // Store the data directory that PostgreSQL is running in, the archive mode, and archive command. These can be compared to
         // the configured pgBackRest directory, and archive settings checked for validity, when validating the configuration.
+        // Also store the checkpoint timeout to warn in case a backup is requested without using the start-fast option.
         MEM_CONTEXT_BEGIN(this->pub.memContext)
         {
             this->pub.pgDataPath = strDup(varStr(varLstGet(row, 1)));
             this->pub.archiveMode = strDup(varStr(varLstGet(row, 2)));
             this->pub.archiveCommand = strDup(varStr(varLstGet(row, 3)));
+            this->pub.checkpointTimeout = varUIntForce(varLstGet(row, 4));
         }
         MEM_CONTEXT_END();
 
