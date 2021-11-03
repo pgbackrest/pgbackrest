@@ -126,37 +126,43 @@ Begin a block where errors can be thrown
 #define TRY_BEGIN()                                                                                                                \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (errorInternalTry(__FILE__, __func__, __LINE__) && setjmp(*errorInternalJump()) >= 0)                                   \
-        {                                                                                                                          \
-            while (errorInternalProcess(false))                                                                                    \
-            {                                                                                                                      \
-                if (errorInternalStateTry())
+        errorInternalTryBegin(__FILE__, __func__, __LINE__);                                                                       \
+                                                                                                                                   \
+        if (setjmp(*errorInternalJump()) == 0)                                                                                     \
+        {
 
 /***********************************************************************************************************************************
 Catch a specific error thrown in the try block
 ***********************************************************************************************************************************/
 #define CATCH(errorTypeCatch)                                                                                                      \
-                else if (errorInternalStateCatch(&errorTypeCatch))
+        }                                                                                                                          \
+        else if (errorInternalCatch(&errorTypeCatch))                                                                              \
+        {
 
 /***********************************************************************************************************************************
 Catch any error thrown in the try block
 ***********************************************************************************************************************************/
 #define CATCH_ANY()                                                                                                                \
-                else if (errorInternalStateCatch(&RuntimeError))
+        }                                                                                                                          \
+        else if (errorInternalCatch(&RuntimeError))                                                                                \
+        {
 
 /***********************************************************************************************************************************
 Code to run whether the try block was successful or not
 ***********************************************************************************************************************************/
 #define FINALLY()                                                                                                                  \
-                else if (errorInternalStateFinal())
+        }                                                                                                                          \
+        {
 
 /***********************************************************************************************************************************
 End the try block
 ***********************************************************************************************************************************/
 #define TRY_END()                                                                                                                  \
-            }                                                                                                                      \
         }                                                                                                                          \
-    } while (0)
+                                                                                                                                   \
+        errorInternalTryEnd();                                                                                                     \
+    }                                                                                                                              \
+    while (0)
 
 /***********************************************************************************************************************************
 Throw an error
@@ -279,25 +285,19 @@ Internal functions
 These functions are used by the macros to implement the error handler and should never be called independently.
 ***********************************************************************************************************************************/
 // Begin the try block
-bool errorInternalTry(const char *fileName, const char *functionName, int fileLine);
+void errorInternalTryBegin(const char *fileName, const char *functionName, int fileLine);
 
 // Return jump buffer for current try
 jmp_buf *errorInternalJump(void);
 
-// True when in try state
-bool errorInternalStateTry(void);
-
 // True when in catch state and the expected error matches
-bool errorInternalStateCatch(const ErrorType *errorTypeCatch);
-
-// True when in final state
-bool errorInternalStateFinal(void);
-
-// Process the error through each try and state
-bool errorInternalProcess(bool catch);
+bool errorInternalCatch(const ErrorType *errorTypeCatch);
 
 // Propagate the error up so it can be caught
 void errorInternalPropagate(void) __attribute__((__noreturn__));
+
+// End the try block
+void errorInternalTryEnd(void);
 
 // Throw an error
 void errorInternalThrow(

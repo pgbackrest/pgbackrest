@@ -96,7 +96,7 @@ testRun(void)
         }
         FINALLY()
         {
-            assert(errorContext.tryList[1].state == errorStateFinal);
+            assert(errorContext.tryList[1].state == errorStateTry);
             finallyDone = true;
         }
         TRY_END();
@@ -195,7 +195,7 @@ testRun(void)
         {
             assert(testErrorHandlerTryDepth == 1);
             assert(errorTryDepth() == 1);
-            assert(errorContext.tryList[1].state == errorStateCatch);
+            assert(errorContext.tryList[1].state == errorStateEnd);
             assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
 
             catchDone = true;

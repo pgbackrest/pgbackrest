@@ -141,6 +141,19 @@
                         <example>2MiB</example>
                     </config-key>
 
+                    <!-- CONFIG - GENERAL SECTION - CMD KEY -->
+                    <config-key id="cmd" name="{[project]} Command">
+                        <summary><backrest/> command.</summary>
+
+                        <text>
+                            <p><backrest/> may generate a command string, e.g. when the <cmd>restore</cmd> command generates the <pg-setting>restore_command</pg-setting> setting. The command used to run the <backrest/> process will be used in this case unless the <br-option>cmd</br-option> option is provided.</p>
+
+                            <admonition type="caution">Wrapping the <backrest/> command may cause unpredictable behavior and is not recommended.</admonition>
+                        </text>
+
+                        <example>/var/lib/pgsql/bin/pgbackrest_wrapper.sh</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - CMD-SSH KEY -->
                     <config-key id="cmd-ssh" name="SSH Client Command">
                         <summary>SSH client command.</summary>

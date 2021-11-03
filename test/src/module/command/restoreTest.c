@@ -1585,6 +1585,20 @@ testRun(void)
             "check recovery options");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("user-specified cmd");
+
+        argList = strLstDup(argBaseList);
+        hrnCfgArgRawZ(argList, cfgOptCmd, "/usr/local/bin/pg_wrapper.sh");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_94, restoreLabel),
+            RECOVERY_SETTING_HEADER
+            "restore_command = '/usr/local/bin/pg_wrapper.sh --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
+                " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
+            "restore_command invokes /usr/local/bin/pg_wrapper.sh per --cmd option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("override restore_command");
 
         hrnCfgArgRawZ(argBaseList, cfgOptRecoveryOption, "restore-command=my_restore_command");

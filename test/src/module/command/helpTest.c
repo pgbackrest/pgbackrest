@@ -212,6 +212,8 @@ testRun(void)
             "\n"
             "  --buffer-size                    buffer size for I/O operations\n"
             "                                   [current=32768, default=1MiB]\n"
+            "  --cmd                            pgBackRest command\n"
+            "                                   [default=/path/to/pgbackrest]\n"
             "  --cmd-ssh                        SSH client command [default=ssh]\n"
             "  --compress-level-network         network compression level [default=3]\n"
             "  --config                         pgBackRest configuration file\n"

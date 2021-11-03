@@ -55,6 +55,7 @@ Option constants
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
 #define CFGOPT_CIPHER_PASS                                          "cipher-pass"
+#define CFGOPT_CMD                                                  "cmd"
 #define CFGOPT_CMD_SSH                                              "cmd-ssh"
 #define CFGOPT_COMPRESS                                             "compress"
 #define CFGOPT_COMPRESS_LEVEL                                       "compress-level"
@@ -125,7 +126,7 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            148
+#define CFG_OPTION_TOTAL                                            149
 
 /***********************************************************************************************************************************
 Option value constants
@@ -364,6 +365,7 @@ typedef enum
     cfgOptBufferSize,
     cfgOptChecksumPage,
     cfgOptCipherPass,
+    cfgOptCmd,
     cfgOptCmdSsh,
     cfgOptCompress,
     cfgOptCompressLevel,
