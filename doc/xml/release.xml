@@ -37,6 +37,24 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <commit subject="Centralize logic to build value lists during config rendering."/>
+                        <commit subject="Display size option defaults and allowed values in KiB/MiB/GiB/PiB.">
+                            <github-pull-request id="1557"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Display size option defaults and allowed values in KiB/MiB/GiB/PiB.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2021-11-01" version="2.36" title="Minor Bug Fixes and Improvements">
