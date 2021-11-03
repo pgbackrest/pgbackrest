@@ -614,10 +614,10 @@ option:
       stanza-upgrade: {}
       verify: {}
 
-  cmd-ssh:
+  cmd:
     section: global
     type: string
-    default: ssh
+    required: false
     command:
       archive-get: {}
       archive-push: {}
@@ -638,6 +638,11 @@ option:
       async: {}
       main: {}
       local: {}
+
+  cmd-ssh:
+    inherit: cmd
+    required: true
+    default: ssh
 
   # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
   compress:

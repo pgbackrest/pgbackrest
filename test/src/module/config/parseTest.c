@@ -1769,6 +1769,35 @@ testRun(void)
             "key/value 'a' not valid for 'recovery-option' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option cmd");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
+
+        TEST_RESULT_STR_Z(cfgExe(), "pgbackrest", "--cmd not provided; cfgExe() returns " TEST_BACKREST_EXE);
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCmd), TEST_PROJECT_EXE , "--cmd not provided; cmd is defaulted to " TEST_PROJECT_EXE);
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        hrnCfgArgRawZ(argList, cfgOptCmd, "pgbackrest_wrapper.sh");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
+
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCmd), "pgbackrest_wrapper.sh", "--cmd provided; cmd is returned as pgbackrest_wrapper.sh");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default job retry and valid duplicate options");
 
         argList = strLstNew();
