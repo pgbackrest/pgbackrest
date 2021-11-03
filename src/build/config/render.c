@@ -514,7 +514,7 @@ bldCfgRenderDefault(
     return result;
 }
 
-// Helper to add values
+// Helper to add values to value lists
 static void
 bldCfgRenderValueAdd(
     const String *const optType, const String *const value, StringList *const ruleDataList, StringList *const ruleStrList)
