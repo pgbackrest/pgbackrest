@@ -327,7 +327,7 @@ cfgLoadUpdateOption(void)
             // Set compress-type to none. Eventually the compress option will be deprecated and removed so this reduces code churn
             // when that happens.
             if (!cfgOptionBool(cfgOptCompress) && cfgOptionSource(cfgOptCompressType) == cfgSourceDefault)
-                cfgOptionSet(cfgOptCompressType, cfgSourceParam, VARSTR(compressTypeStr(compressTypeNone)));
+                cfgOptionSet(cfgOptCompressType, cfgSourceParam, VARUINT64(CFGOPTVAL_COMPRESS_TYPE_NONE));
         }
 
         // Now invalidate compress so it can't be used and won't be passed to child processes
@@ -385,7 +385,7 @@ cfgLoadLogFile(void)
 
             // Attempt to open log file
             if (!logFileSet(strZ(logFile)))
-                cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, varNewStrZ("off"));
+                cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, VARUINT64(CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF));
         }
         MEM_CONTEXT_TEMP_END();
     }

@@ -1479,7 +1479,6 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionNegate(cfgOptConfig), true, "config is negated");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "stanza is source param");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "db", "stanza is set");
-        TEST_RESULT_UINT(cfgOptionStrId(cfgOptStanza), strIdFromZ("db"), "stanza is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "stanza is source param");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/path/to/db", "pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceParam, "pg1-path is source param");
@@ -1642,6 +1641,9 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "pg1-path is source config");
         TEST_RESULT_STR_Z(
             cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 256)), "/path/to/db256", "pg256-path is set");
+        TEST_RESULT_UINT(varUInt64(cfgOptionVar(cfgOptType)), STRID5("incr", 0x90dc90), "check type");
+        TEST_RESULT_STR_Z(
+            cfgOptionDisplayVar(VARUINT64(STRID5("incr", 0x90dc90)), cfgOptTypeStringId), "incr", "check type display");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLockPath), "/", "lock-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "lock-path is source config");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "pg1-socket-path is set");
@@ -1882,6 +1884,12 @@ testRun(void)
             "option 'pg1-path' must be set with String variant");
         TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, VARSTRDEF("/new")), "set pg1-path");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/new", "check pg1-path");
+
+        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARUINT64(STRID5("preserve", 0x2da45996500))), "set type");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("preserve", 0x2da45996500), "check type");
+
+        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARSTRDEF("standby")), "set type");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("standby", 0x6444706930), "check type");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza options should not be loaded for commands that don't take a stanza");

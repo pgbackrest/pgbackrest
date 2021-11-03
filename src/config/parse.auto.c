@@ -890,7 +890,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("archive-mode"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -912,6 +912,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdPreserve),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_preserve_QT),
                 ),
             ),
@@ -1354,7 +1355,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("compress-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -1385,6 +1386,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdGz),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_gz_QT),
                 ),
             ),
@@ -2320,7 +2322,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("log-level-console"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -2400,6 +2402,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdWarn),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_warn_QT),
                 ),
             ),
@@ -2410,7 +2413,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("log-level-file"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -2490,6 +2493,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdInfo),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_info_QT),
                 ),
             ),
@@ -2500,7 +2504,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("log-level-stderr"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -2580,6 +2584,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdWarn),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_warn_QT),
                 ),
             ),
@@ -2961,7 +2966,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("output"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
@@ -2983,6 +2988,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdText),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_text_QT),
                 ),
             ),
@@ -3526,7 +3532,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("pg-host-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -3577,6 +3583,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSsh),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_ssh_QT),
                 ),
             ),
@@ -4152,7 +4159,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("remote-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
@@ -4585,7 +4592,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-azure-key-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -4663,6 +4670,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdShared),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_shared_QT),
                 ),
             ),
@@ -4673,7 +4681,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-azure-uri-style"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -4751,6 +4759,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdHost),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_host_QT),
                 ),
             ),
@@ -4840,7 +4849,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-cipher-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -4913,6 +4922,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdNone),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_none_QT),
                 ),
             ),
@@ -5159,7 +5169,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-gcs-key-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -5238,6 +5248,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdService),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_service_QT),
                 ),
             ),
@@ -5878,7 +5889,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-host-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -5938,6 +5949,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSsh),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_ssh_QT),
                 ),
             ),
@@ -6176,7 +6188,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-retention-archive-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -6202,6 +6214,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdFull),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_full_QT),
                 ),
             ),
@@ -6272,7 +6285,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-retention-full-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -6297,6 +6310,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdCount),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_count_QT),
                 ),
             ),
@@ -6651,7 +6665,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-s3-key-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -6730,6 +6744,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdShared),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_shared_QT),
                 ),
             ),
@@ -6973,7 +6988,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-s3-uri-style"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -7051,6 +7066,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdHost),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_host_QT),
                 ),
             ),
@@ -7472,7 +7488,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("repo-type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -7548,6 +7564,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdPosix),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_posix_QT),
                 ),
             ),
@@ -7789,7 +7806,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("sort"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
@@ -7811,6 +7828,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdAsc),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_asc_QT),
                 ),
             ),
@@ -8081,7 +8099,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("target-action"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
@@ -8113,6 +8131,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdPause),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_pause_QT),
                 ),
             ),
@@ -8561,7 +8580,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION
     (
         PARSE_RULE_OPTION_NAME("type"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
@@ -8589,6 +8608,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdIncr),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_incr_QT),
                 ),
             ),
@@ -8615,6 +8635,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdDefault),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_default_QT),
                 ),
             ),

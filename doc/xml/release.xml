@@ -24,6 +24,9 @@
                         <commit subject="Use cfgOptionStrId() instead of cfgOptionStr() where appropriate.">
                             <github-pull-request id="1554"/>
                         </commit>
+                        <commit subject="Add StringId as an option type.">
+                            <github-pull-request id="1555"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
