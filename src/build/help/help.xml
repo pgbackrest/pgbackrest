@@ -138,7 +138,7 @@
                             <p>Allowed values are <id>16KiB</id>, <id>32KiB</id>, <id>64KiB</id>, <id>128KiB</id>, <id>256KiB</id>, <id>512KiB</id>, <id>1MiB</id>, <id>2MiB</id>, <id>4MiB</id>, <id>8MiB</id>, and <id>16MiB</id>.</p>
                         </text>
 
-                        <example>32KiB</example>
+                        <example>2MiB</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - CMD-SSH KEY -->
@@ -1130,7 +1130,7 @@
                             <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
                         </text>
 
-                        <example>5G</example>
+                        <example>8GiB</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - EXPIRE-AUTO -->
@@ -1218,7 +1218,7 @@
                             <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
                         </text>
 
-                        <example>1073741824</example>
+                        <example>1GiB</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1256,7 +1256,7 @@
                             <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
                         </text>
 
-                        <example>1GB</example>
+                        <example>1TiB</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->

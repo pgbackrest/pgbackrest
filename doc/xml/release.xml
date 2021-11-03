@@ -42,7 +42,7 @@
                 <release-improvement-list>
                     <release-item>
                         <commit subject="Centralize logic to build value lists during config rendering."/>
-                        <commit subject="Display size option defaults and allowed values in KiB/MiB/GiB/PiB.">
+                        <commit subject="Display size option default and allowed values with appropriate units.">
                             <github-pull-request id="1557"/>
                         </commit>
 
@@ -51,7 +51,7 @@
                             <release-item-reviewer id="reid.thompson"/>
                         </release-item-contributor-list>
 
-                        <p>Display size option defaults and allowed values in KiB/MiB/GiB/PiB.</p>
+                        <p>Display size option default and allowed values with appropriate units.</p>
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
