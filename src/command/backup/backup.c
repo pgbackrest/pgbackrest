@@ -666,12 +666,19 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                     // occurs then the backup will be considered unusable and a resume will not be attempted.
                     if (cfgOptionBool(cfgOptResume))
                     {
-                        reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
-
                         TRY_BEGIN()
                         {
                             manifestResume = manifestLoadFile(
                                 storageRepo(), manifestFile, cfgOptionStrId(cfgOptRepoCipherType), cipherPassBackup);
+                        }
+                        CATCH_ANY()
+                        {
+                            reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
+                        }
+                        TRY_END();
+
+                        if (manifestResume != NULL)
+                        {
                             const ManifestData *manifestResumeData = manifestData(manifestResume);
 
                             // Check pgBackRest version. This allows the resume implementation to be changed with each version of
@@ -712,10 +719,6 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             else
                                 usable = true;
                         }
-                        CATCH_ANY()
-                        {
-                        }
-                        TRY_END();
                     }
                 }
 
