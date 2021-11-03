@@ -509,6 +509,20 @@ bldCfgRenderDefault(
     return result;
 }
 
+// Helper to add values to value lists
+static void
+bldCfgRenderValueAdd(
+    const String *const optType, const String *const value, StringList *const ruleDataList, StringList *const ruleStrList)
+{
+    if (strEq(optType, OPT_TYPE_TIME_STR))
+        strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(value)) * 1000)));
+    else
+        strLstAddIfMissing(ruleDataList, value);
+
+    if (ruleStrList != NULL && !strEq(optType, OPT_TYPE_STRING_STR) && !strEq(optType, OPT_TYPE_PATH_STR))
+        strLstAddIfMissing(ruleStrList, strNewFmt("\"%s\"", strZ(value)));
+}
+
 static void
 bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 {
@@ -762,16 +776,8 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 optionalDefaultRule, ruleAllowRange,
                 VARSTR(bldCfgRenderAllowRange(opt->allowRangeMin, opt->allowRangeMax, opt->type)));
 
-            if (strEq(opt->type, OPT_TYPE_TIME_STR))
-            {
-                strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(opt->allowRangeMin)) * 1000)));
-                strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(opt->allowRangeMax)) * 1000)));
-            }
-            else
-            {
-                strLstAddIfMissing(ruleDataList, opt->allowRangeMin);
-                strLstAddIfMissing(ruleDataList, opt->allowRangeMax);
-            }
+            bldCfgRenderValueAdd(opt->type, opt->allowRangeMin, ruleDataList, NULL);
+            bldCfgRenderValueAdd(opt->type, opt->allowRangeMax, ruleDataList, NULL);
         }
 
         if (opt->allowList != NULL)
@@ -779,7 +785,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             kvAdd(optionalDefaultRule, ruleAllowList, VARSTR(bldCfgRenderAllowList(opt->allowList, opt->type)));
 
             for (unsigned int allowIdx = 0; allowIdx < strLstSize(opt->allowList); allowIdx++)
-                strLstAddIfMissing(ruleDataList, strLstGet(opt->allowList, allowIdx));
+                bldCfgRenderValueAdd(opt->type, strLstGet(opt->allowList, allowIdx), ruleDataList, NULL);
         }
 
         if (opt->defaultValue != NULL)
@@ -787,19 +793,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             kvAdd(optionalDefaultRule, ruleDefault, VARSTR(bldCfgRenderDefault(opt->defaultValue, opt->defaultLiteral, opt->type)));
 
             if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
-            {
-                if (strEq(opt->type, OPT_TYPE_TIME_STR))
-                {
-                    strLstAddIfMissing(
-                        ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(opt->defaultValue)) * 1000)));
-                }
-                else
-                    strLstAddIfMissing(ruleDataList, opt->defaultValue);
-
-                strLstAddIfMissing(
-                    ruleStrList,
-                    strNewFmt("%s%s%s", opt->defaultLiteral ? "" : "\"", strZ(opt->defaultValue), opt->defaultLiteral ? "" : "\""));
-            }
+                bldCfgRenderValueAdd(opt->type, opt->defaultValue, ruleDataList, ruleStrList);
         }
 
         // Build command optional rules
@@ -820,7 +814,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 kvAdd(optionalCmdRuleType, ruleAllowList, VARSTR(bldCfgRenderAllowList(optCmd->allowList, opt->type)));
 
                 for (unsigned int allowIdx = 0; allowIdx < strLstSize(optCmd->allowList); allowIdx++)
-                    strLstAddIfMissing(ruleDataList, strLstGet(optCmd->allowList, allowIdx));
+                    bldCfgRenderValueAdd(opt->type, strLstGet(optCmd->allowList, allowIdx), ruleDataList, NULL);
             }
 
             // Defaults
@@ -831,21 +825,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                     VARSTR(bldCfgRenderDefault(optCmd->defaultValue, opt->defaultLiteral, opt->type)));
 
                 if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
-                {
-                    if (strEq(opt->type, OPT_TYPE_TIME_STR))
-                    {
-                        strLstAddIfMissing(
-                            ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(optCmd->defaultValue)) * 1000)));
-                    }
-                    else
-                        strLstAddIfMissing(ruleDataList, optCmd->defaultValue);
-
-                    strLstAddIfMissing(
-                        ruleStrList,
-                        strNewFmt(
-                            "%s%s%s", opt->defaultLiteral ? "" : "\"", strZ(optCmd->defaultValue),
-                            opt->defaultLiteral ? "" : "\""));
-                }
+                    bldCfgRenderValueAdd(opt->type, optCmd->defaultValue, ruleDataList, ruleStrList);
             }
 
             // Requires
