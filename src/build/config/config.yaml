@@ -298,7 +298,7 @@ option:
       main: {}
 
   output:
-    type: string
+    type: string-id
     default: text
     command:
       info: {}
@@ -370,7 +370,7 @@ option:
       main: {}
 
   target-action:
-    type: string
+    type: string-id
     default: pause
     command:
       restore: {}
@@ -421,6 +421,7 @@ option:
       main: {}
 
   type:
+    type: string-id
     command:
       backup:
         allow-list:
@@ -442,7 +443,6 @@ option:
         default: default
     command-role:
       main: {}
-    type: string
 
   # Command-line only local/remote options
   #---------------------------------------------------------------------------------------------------------------------------------
@@ -477,7 +477,7 @@ option:
       remote: {}
 
   remote-type:
-    type: string
+    type: string-id
     internal: true
     required: false
     allow-list:
@@ -550,7 +550,7 @@ option:
       main: {}
 
   sort:
-    type: string
+    type: string-id
     default: asc
     allow-list:
       - none
@@ -612,10 +612,10 @@ option:
       stanza-upgrade: {}
       verify: {}
 
-  cmd-ssh:
+  cmd:
     section: global
     type: string
-    default: ssh
+    required: false
     command:
       archive-get: {}
       archive-push: {}
@@ -636,6 +636,11 @@ option:
       async: {}
       main: {}
       local: {}
+
+  cmd-ssh:
+    inherit: cmd
+    required: true
+    default: ssh
 
   # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
   compress:
@@ -684,7 +689,7 @@ option:
 
   compress-type:
     section: global
-    type: string
+    type: string-id
     default: gz
     allow-list:
       - none
@@ -950,7 +955,7 @@ option:
   #---------------------------------------------------------------------------------------------------------------------------------
   log-level-console:
     section: global
-    type: string
+    type: string-id
     default: warn
     allow-list:
       - off
@@ -963,13 +968,13 @@ option:
 
   log-level-file:
     section: global
-    type: string
+    type: string-id
     default: info
     allow-list: log-level-console
 
   log-level-stderr:
     section: global
-    type: string
+    type: string-id
     default: warn
     allow-list: log-level-console
 
@@ -1172,7 +1177,7 @@ option:
   #---------------------------------------------------------------------------------------------------------------------------------
   archive-mode:
     section: global
-    type: string
+    type: string-id
     default: preserve
     allow-list:
       - off
@@ -1413,7 +1418,7 @@ option:
   pg-host-type:
     section: global
     group: pg
-    type: string
+    type: string-id
     default: ssh
     allow-list:
       - ssh
@@ -1595,7 +1600,7 @@ option:
   repo-type:
     section: global
     group: repo
-    type: string
+    type: string-id
     default: posix
     allow-list:
       - azure
@@ -1707,6 +1712,7 @@ option:
 
   repo-azure-key-type:
     inherit: repo-azure-container
+    type: string-id
     default: shared
     allow-list:
       - shared
@@ -1715,7 +1721,7 @@ option:
   repo-azure-uri-style:
     section: global
     group: repo
-    type: string
+    type: string-id
     default: host
     allow-list:
       - host
@@ -1738,7 +1744,7 @@ option:
 
   repo-cipher-type:
     section: global
-    type: string
+    type: string-id
     group: repo
     default: none
     allow-list:
@@ -1778,7 +1784,7 @@ option:
 
   repo-gcs-key-type:
     section: global
-    type: string
+    type: string-id
     group: repo
     default: service
     allow-list:
@@ -1806,7 +1812,7 @@ option:
   repo-host-type:
     section: global
     group: repo
-    type: string
+    type: string-id
     default: ssh
     allow-list:
       - ssh
@@ -1981,7 +1987,7 @@ option:
 
   repo-retention-archive-type:
     section: global
-    type: string
+    type: string-id
     group: repo
     default: full
     allow-list:
@@ -2013,7 +2019,7 @@ option:
   repo-retention-full-type:
     section: global
     group: repo
-    type: string
+    type: string-id
     default: count
     allow-list:
       - count
@@ -2085,6 +2091,7 @@ option:
 
   repo-s3-key-type:
     inherit: repo-s3-bucket
+    type: string-id
     default: shared
     allow-list:
       - shared
@@ -2112,7 +2119,7 @@ option:
   repo-s3-uri-style:
     section: global
     group: repo
-    type: string
+    type: string-id
     default: host
     allow-list:
       - host

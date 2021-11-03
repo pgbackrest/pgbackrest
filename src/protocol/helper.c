@@ -163,7 +163,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
         // Only enable file logging on the local when requested
         kvPut(
             optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE),
-            cfgOptionBool(cfgOptLogSubprocess) ? VARSTR(cfgOptionStr(cfgOptLogLevelFile)) : VARSTRDEF("off"));
+            cfgOptionBool(cfgOptLogSubprocess) ? VARUINT64(cfgOptionStrId(cfgOptLogLevelFile)) : VARSTRDEF("off"));
 
         // Always output errors on stderr for debugging purposes
         kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("error"));
@@ -551,7 +551,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     // Only enable file logging on the remote when requested
     kvPut(
         optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE),
-        cfgOptionBool(cfgOptLogSubprocess) ? VARSTR(cfgOptionStr(cfgOptLogLevelFile)) : VARSTRDEF("off"));
+        cfgOptionBool(cfgOptLogSubprocess) ? VARUINT64(cfgOptionStrId(cfgOptLogLevelFile)) : VARSTRDEF("off"));
 
     // Always output errors on stderr for debugging purposes
     kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("error"));
@@ -778,7 +778,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 
                 VariantList *optionList = configOptionRemote(protocolHelperClient->client, param);
 
-                if (!strEq(varStr(varLstGet(optionList, 0)), strIdToStr(cipherTypeNone)))
+                if (varUInt64(varLstGet(optionList, 0)) != cipherTypeNone)
                 {
                     cfgOptionIdxSet(cfgOptRepoCipherType, hostIdx, cfgSourceConfig, varLstGet(optionList, 0));
                     cfgOptionIdxSet(cfgOptRepoCipherPass, hostIdx, cfgSourceConfig, varLstGet(optionList, 1));

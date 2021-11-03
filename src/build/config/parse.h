@@ -43,7 +43,7 @@ Option type constants
     STRING_DECLARE(OPT_TYPE_SIZE_STR);
 #define OPT_TYPE_STRING                                             "string"
     STRING_DECLARE(OPT_TYPE_STRING_STR);
-#define OPT_TYPE_STRING_ID                                          "stringId"
+#define OPT_TYPE_STRING_ID                                          "string-id"
     STRING_DECLARE(OPT_TYPE_STRING_ID_STR);
 #define OPT_TYPE_TIME                                               "time"
     STRING_DECLARE(OPT_TYPE_TIME_STR);
