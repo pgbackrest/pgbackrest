@@ -360,8 +360,9 @@ testRun(void)
             "memory, e.g. gz compression may use an additional 256KiB of memory.\n"
             "\n"
             "Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the\n"
-            "multiplier is a power of 1024. For example, the case-insensitive value 32KiB\n"
-            "(or 32KB, 32k) can be used instead of 32768.\n"
+            "multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or\n"
+            "5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB\n"
+            "are not allowed, use 2560MiB instead.\n"
             "\n"
             "Allowed values are 16KiB, 32KiB, 64KiB, 128KiB, 256KiB, 512KiB, 1MiB, 2MiB,\n"
             "4MiB, 8MiB, and 16MiB.\n",
