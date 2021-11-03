@@ -35,6 +35,7 @@ Configuration for supported and future compression types
 ***********************************************************************************************************************************/
 static const struct CompressHelperLocal
 {
+    StringId typeId;                                                // Compress type id
     const String *const type;                                       // Compress type -- must be extension without period prefixed
     const String *const ext;                                        // File extension with period prefixed
     StringId compressType;                                          // Type of the compression filter
@@ -45,10 +46,12 @@ static const struct CompressHelperLocal
 } compressHelperLocal[] =
 {
     {
+        .typeId = STRID5("none", 0x2b9ee0),
         .type = STRDEF(COMPRESS_TYPE_NONE),
         .ext = STRDEF(""),
     },
     {
+        .typeId = STRID5("bz2", 0x73420),
         .type = STRDEF(BZ2_EXT),
         .ext = STRDEF("." BZ2_EXT),
         .compressType = BZ2_COMPRESS_FILTER_TYPE,
@@ -58,6 +61,7 @@ static const struct CompressHelperLocal
         .levelDefault = 9,
     },
     {
+        .typeId = STRID5("gz", 0x3470),
         .type = STRDEF(GZ_EXT),
         .ext = STRDEF("." GZ_EXT),
         .compressType = GZ_COMPRESS_FILTER_TYPE,
@@ -67,6 +71,7 @@ static const struct CompressHelperLocal
         .levelDefault = 6,
     },
     {
+        .typeId = STRID6("lz4", 0x2068c1),
         .type = STRDEF(LZ4_EXT),
         .ext = STRDEF("." LZ4_EXT),
 #ifdef HAVE_LIBLZ4
@@ -78,6 +83,7 @@ static const struct CompressHelperLocal
 #endif
     },
     {
+        .typeId = STRID5("zst", 0x527a0),
         .type = STRDEF(ZST_EXT),
         .ext = STRDEF("." ZST_EXT),
 #ifdef HAVE_LIBZST
@@ -89,6 +95,7 @@ static const struct CompressHelperLocal
 #endif
     },
     {
+        .typeId = STRID5("xz", 0x3580),
         .type = STRDEF(XZ_EXT),
         .ext = STRDEF("." XZ_EXT),
     },
@@ -99,24 +106,24 @@ static const struct CompressHelperLocal
 
 /**********************************************************************************************************************************/
 CompressType
-compressTypeEnum(const String *type)
+compressTypeEnum(const StringId type)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, type);
+        FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
 
     CompressType result = compressTypeNone;
 
     for (; result < COMPRESS_LIST_SIZE; result++)
     {
-        if (strEq(type, compressHelperLocal[result].type))
+        if (type == compressHelperLocal[result].typeId)
             break;
     }
 
     if (result == COMPRESS_LIST_SIZE)
-        THROW_FMT(AssertError, "invalid compression type '%s'", strZ(type));
+        THROW_FMT(AssertError, "invalid compression type '%s'", strZ(strIdToStr(type)));
 
     FUNCTION_TEST_RETURN(result);
 }

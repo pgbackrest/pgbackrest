@@ -457,6 +457,10 @@ cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionTyp
     {
         FUNCTION_TEST_RETURN(strNewDbl((double)varInt64(value) / MSEC_PER_SEC));
     }
+    else if (optionType == cfgOptTypeStringId)
+    {
+        FUNCTION_TEST_RETURN(strIdToStr(varUInt64(value)));
+    }
 
     FUNCTION_TEST_RETURN(varStrForce(value));
 }
@@ -774,6 +778,9 @@ cfgOptionIdxVar(const ConfigOption optionId, const unsigned int optionIdx)
             case cfgOptDataTypeList:
                 FUNCTION_TEST_RETURN(varNewVarLst(configLocal->option[optionId].index[optionIdx].value.list));
 
+            case cfgOptDataTypeStringId:
+                FUNCTION_TEST_RETURN(varNewUInt64(configLocal->option[optionId].index[optionIdx].value.stringId));
+
             default:
                 ASSERT(configLocal->option[optionId].dataType == cfgOptDataTypeString);
                 break;
@@ -925,10 +932,7 @@ cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx)
         FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    // At some point the config parser will work with StringIds directly and strIdFromStr() will be removed, but for now it protects
-    // the callers from this logic and hopefully means no changes to the callers when the parser is updated.
-    FUNCTION_LOG_RETURN(
-        STRING_ID, strIdFromStr(cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeString, false)->value.string));
+    FUNCTION_LOG_RETURN(STRING_ID, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeStringId, false)->value.stringId);
 }
 
 /**********************************************************************************************************************************/
@@ -994,6 +998,16 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                     THROW_FMT(
                         AssertError, "option '%s' must be set with String variant", cfgOptionIdxName(optionId, optionIdx));
                 }
+
+                break;
+            }
+
+            case cfgOptDataTypeStringId:
+            {
+                if (varType(value) == varTypeUInt64)
+                    configLocal->option[optionId].index[optionIdx].value.stringId = varUInt64(value);
+                else
+                    configLocal->option[optionId].index[optionIdx].value.stringId = strIdFromStr(varStr(value));
 
                 break;
             }

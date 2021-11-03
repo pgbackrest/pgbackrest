@@ -65,37 +65,64 @@ static char logBuffer[LOG_BUFFER_SIZE];
 /**********************************************************************************************************************************/
 #define LOG_LEVEL_TOTAL                                             (LOG_LEVEL_MAX + 1)
 
-static const char *const logLevelList[LOG_LEVEL_TOTAL] =
+static const struct LogLevel
 {
-    "OFF",
-    "ASSERT",
-    "ERROR",
-    "WARN",
-    "INFO",
-    "DETAIL",
-    "DEBUG",
-    "TRACE",
+    const StringId id;                                              // Id
+    const char *const name;                                         // Name
+} logLevelList[LOG_LEVEL_TOTAL] =
+{
+    {
+        .id = STRID5("off", 0x18cf0),
+        .name = "OFF",
+    },
+    {
+        // No id here because this level is not user selectable
+        .name = "ASSERT",
+    },
+    {
+        .id = STRID5("error", 0x127ca450),
+        .name = "ERROR",
+    },
+    {
+        .id = STRID5("warn", 0x748370),
+        .name = "WARN",
+    },
+    {
+        .id = STRID5("info", 0x799c90),
+        .name = "INFO",
+    },
+    {
+        .id = STRID5("detail", 0x1890d0a40),
+        .name = "DETAIL",
+    },
+    {
+        .id = STRID5("debug", 0x7a88a40),
+        .name = "DEBUG",
+    },
+    {
+        .id = STRID5("trace", 0x5186540),
+        .name = "TRACE",
+    },
 };
 
 LogLevel
-logLevelEnum(const char *logLevel)
+logLevelEnum(const StringId logLevelId)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, logLevel);
+        FUNCTION_TEST_PARAM(STRING_ID, logLevelId);
     FUNCTION_TEST_END();
 
-    ASSERT(logLevel != NULL);
+    ASSERT(logLevelId != 0);
 
     LogLevel result = logLevelOff;
 
     // Search for the log level
     for (; result < LOG_LEVEL_TOTAL; result++)
-        if (strcasecmp(logLevel, logLevelList[result]) == 0)
+        if (logLevelId == logLevelList[result].id)
             break;
 
-    // If the log level was not found
-    if (result == LOG_LEVEL_TOTAL)
-        THROW_FMT(AssertError, "log level '%s' not found", logLevel);
+    // Check that the log level was found
+    CHECK(result != LOG_LEVEL_TOTAL);
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -109,7 +136,7 @@ logLevelStr(LogLevel logLevel)
 
     ASSERT(logLevel <= LOG_LEVEL_MAX);
 
-    FUNCTION_TEST_RETURN(logLevelList[logLevel]);
+    FUNCTION_TEST_RETURN(logLevelList[logLevel].name);
 }
 
 /**********************************************************************************************************************************/

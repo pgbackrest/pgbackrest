@@ -413,7 +413,7 @@ cmdArchivePush(void)
                 // Push the file to the archive
                 ArchivePushFileResult fileResult = archivePushFile(
                     walFile, cfgOptionBool(cfgOptArchiveHeaderCheck), archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
-                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList,
+                    compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList,
                     archiveInfo.errorList);
 
                 // If a warning was returned then log it
@@ -526,7 +526,7 @@ cmdArchivePushAsync(void)
         ArchivePushAsyncData jobData =
         {
             .walPath = strLstGet(commandParam, 0),
-            .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
+            .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
         };
 
