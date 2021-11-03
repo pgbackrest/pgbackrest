@@ -553,13 +553,13 @@ testRun(void)
         #define TEST_STR5ID12                                       (TEST_STR5ID11 | (uint64_t)('6' - 24) << 59)
         #define TEST_STR5ID13                                       (TEST_STR5ID12 | STRING_ID_PREFIX)
 
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "a", 1), TEST_STR5ID1, "5 bits 1 char");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zk", 6), TEST_STR5ID6, "5 bits 6 chars");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz2-y56", 12), TEST_STR5ID12, "5 bits 12 chars");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz2-y56?", 13), TEST_STR5ID13, "5 bits 13 chars");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz2-y56??", 14), TEST_STR5ID13, "5 bits 14 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "a", 1), TEST_STR5ID1, "5 bits 1 char");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zk", 6), TEST_STR5ID6, "5 bits 6 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-y56", 12), TEST_STR5ID12, "5 bits 12 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-y56?", 13), TEST_STR5ID13, "5 bits 13 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-y56??", 14), TEST_STR5ID13, "5 bits 14 chars");
 
-        TEST_ERROR(strIdFromZN(stringIdBit5, "AB", 2), FormatError, "'A' is invalid for 5-bit encoding in 'AB'");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "AB", 2), 0, "'A' is invalid for 5-bit encoding in 'AB'");
 
         #define TEST_STR6ID1                                        (stringIdBit6 | (uint16_t)('a' - 96) << 4)
         #define TEST_STR6ID2                                        (TEST_STR6ID1 | (uint16_t)('b' - 96) << 10)
@@ -573,13 +573,13 @@ testRun(void)
         #define TEST_STR6ID10                                       (TEST_STR6ID9 | (uint64_t)('9' - 20) << 58)
         #define TEST_STR6ID11                                       (TEST_STR6ID10 | STRING_ID_PREFIX)
 
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "a", 1), TEST_STR6ID1, "6 bits 1 char");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-4", 5), TEST_STR6ID5, "6 bits 5 chars");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9", 10), TEST_STR6ID10, "6 bits 10 chars");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9?", 11), TEST_STR6ID11, "6 bits 11 chars");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9??", 12), TEST_STR6ID11, "6 bits 12 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "a", 1), TEST_STR6ID1, "6 bits 1 char");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-4", 5), TEST_STR6ID5, "6 bits 5 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9", 10), TEST_STR6ID10, "6 bits 10 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9?", 11), TEST_STR6ID11, "6 bits 11 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9??", 12), TEST_STR6ID11, "6 bits 12 chars");
 
-        TEST_ERROR(strIdFromZN(stringIdBit6, "|B", 2), FormatError, "'|' is invalid for 6-bit encoding in '|B'");
+        TEST_RESULT_UINT(strIdFromZN("|B", 2, false), 0, "'|' is invalid for 6-bit encoding in '|B'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STRID*()");
@@ -590,12 +590,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdFromStr()");
 
-        TEST_RESULT_UINT(strIdFromStr(stringIdBit5, STRDEF("abc-")), TEST_STR5ID4, "5 bits 4 chars");
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("abc-")), TEST_STR5ID4, "5 bits 4 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdFromZ()");
 
-        TEST_RESULT_UINT(strIdFromZ(stringIdBit6, "abC-"), TEST_STR6ID4, "6 bits 4 chars");
+        TEST_RESULT_UINT(strIdFromZ("abC-"), TEST_STR6ID4, "6 bits 4 chars");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid encoding");
+
+        TEST_ERROR(strIdFromZ("abc?"), FormatError, "'abc?' contains invalid characters");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToZN()");

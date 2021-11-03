@@ -335,9 +335,9 @@ testRun(void)
     {
         TEST_TITLE("compressTypeEnum()");
 
-        TEST_RESULT_UINT(compressTypeEnum(STRDEF("none")), compressTypeNone, "none enum");
-        TEST_RESULT_UINT(compressTypeEnum(STRDEF("gz")), compressTypeGz, "gz enum");
-        TEST_ERROR(compressTypeEnum(STRDEF(BOGUS_STR)), AssertError, "invalid compression type 'BOGUS'");
+        TEST_RESULT_UINT(compressTypeEnum(strIdFromZ("none")), compressTypeNone, "none enum");
+        TEST_RESULT_UINT(compressTypeEnum(strIdFromZ("gz")), compressTypeGz, "gz enum");
+        TEST_ERROR(compressTypeEnum(strIdFromZ(BOGUS_STR)), AssertError, "invalid compression type 'BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypeStr()");

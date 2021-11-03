@@ -15,7 +15,7 @@ testRun(void)
     if (testBegin("bool"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantBoolPub), 8, "check VariantBoolConst size");
+        TEST_RESULT_UINT(sizeof(VariantBoolPub), 8, "check VariantBoolPub size");
         TEST_RESULT_UINT(sizeof(VariantBool), TEST_64BIT() ? 16 : 12, "check VariantBool size");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ testRun(void)
     if (testBegin("int"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantIntPub), 8, "check VariantIntConst size");
+        TEST_RESULT_UINT(sizeof(VariantIntPub), 8, "check VariantIntPub size");
         TEST_RESULT_UINT(sizeof(VariantInt), TEST_64BIT() ? 16 : 12, "check VariantInt size");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ testRun(void)
     if (testBegin("int64"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantInt64Pub), TEST_64BIT() ? 16 : 12, "check VariantInt64Const size");
+        TEST_RESULT_UINT(sizeof(VariantInt64Pub), TEST_64BIT() ? 16 : 12, "check VariantInt64Pub size");
         TEST_RESULT_UINT(sizeof(VariantInt64), TEST_64BIT() ? 24 : 16, "check VariantInt64 size");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ testRun(void)
     if (testBegin("unsigned int"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantUIntPub), 8, "check VariantUIntConst size");
+        TEST_RESULT_UINT(sizeof(VariantUIntPub), 8, "check VariantUIntPub size");
         TEST_RESULT_UINT(sizeof(VariantUInt), TEST_64BIT() ? 16 : 12, "check VariantUInt size");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -177,7 +177,7 @@ testRun(void)
     if (testBegin("uint64"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantUInt64Pub), TEST_64BIT() ? 16 : 12, "check VariantUInt64Const size");
+        TEST_RESULT_UINT(sizeof(VariantUInt64Pub), TEST_64BIT() ? 16 : 12, "check VariantUInt64Pub size");
         TEST_RESULT_UINT(sizeof(VariantUInt64), TEST_64BIT() ? 24 : 16, "check VariantUInt64 size");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -253,7 +253,7 @@ testRun(void)
     if (testBegin("String"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantStringPub), TEST_64BIT() ? 16 : 8, "check VariantStringConst size");
+        TEST_RESULT_UINT(sizeof(VariantStringPub), TEST_64BIT() ? 16 : 8, "check VariantStringPub size");
         TEST_RESULT_UINT(sizeof(VariantString), TEST_64BIT() ? 24 : 12, "check VariantString size");
 
         // -------------------------------------------------------------------------------------------------------------------------

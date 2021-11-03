@@ -445,7 +445,7 @@ helpRender(const Buffer *const helpData)
                             strNew(), optionData[optionId].summary, strSize(optionData[optionId].summary) - 1);
                         ASSERT(strSize(summary) > 1);
 
-                        if (!isupper(strZ(summary)[1]) && !isdigit(strZ(summary)[1]))
+                        if (!isupper(strZ(summary)[1]) && isalpha(strZ(summary)[1]))
                             strFirstLower(summary);
 
                         // Output current and default values if they exist

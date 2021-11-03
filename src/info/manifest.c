@@ -1865,7 +1865,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 manifest->pub.data.backupTimestampStop = (time_t)varUInt64(value);
             else if (strEq(key, MANIFEST_KEY_BACKUP_TYPE_STR))
             {
-                manifest->pub.data.backupType = (BackupType)strIdFromStr(stringIdBit5, varStr(value));
+                manifest->pub.data.backupType = (BackupType)strIdFromStr(varStr(value));
                 ASSERT(
                     manifest->pub.data.backupType == backupTypeFull || manifest->pub.data.backupType == backupTypeDiff ||
                     manifest->pub.data.backupType == backupTypeIncr);
@@ -1903,7 +1903,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             // This new option allows any type of compression to be specified.  It must be parsed after the option above so the
             // value does not get overwritten.  Since options are stored in alpha order this should always be true.
             else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR))
-                manifest->pub.data.backupOptionCompressType = compressTypeEnum(varStr(value));
+                manifest->pub.data.backupOptionCompressType = compressTypeEnum(strIdFromStr(varStr(value)));
             else if (strEq(key, MANIFEST_KEY_OPTION_HARDLINK_STR))
                 manifest->pub.data.backupOptionHardLink = varBool(value);
             else if (strEq(key, MANIFEST_KEY_OPTION_ONLINE_STR))

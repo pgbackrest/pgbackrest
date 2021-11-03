@@ -117,7 +117,7 @@ Define how an option is parsed and interacts with other options
 typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
-    unsigned int type:3;                                            // e.g. string, int, boolean
+    unsigned int type:4;                                            // e.g. string, int, boolean
     bool negate:1;                                                  // Can the option be negated on the command line?
     bool reset:1;                                                   // Can the option be reset on the command line?
     bool required:1;                                                // Is the option required?
@@ -687,6 +687,9 @@ cfgParseOptionDataType(const ConfigOption optionId)
         case cfgOptTypeList:
             FUNCTION_TEST_RETURN(cfgOptDataTypeList);
 
+        case cfgOptTypeStringId:
+            FUNCTION_TEST_RETURN(cfgOptDataTypeStringId);
+
         default:
             break;
     }
@@ -747,21 +750,6 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
         // If a depend list exists, make sure the value is in the list
         if (pckReadNext(filter))
         {
-            StringId dependValueStrId = 0;
-
-            if (cfgParseOptionDataType(dependId) == cfgOptDataTypeString)
-            {
-                TRY_BEGIN()
-                {
-                    dependValueStrId = strIdFromStr(stringIdBit5, dependValue->value.string);
-                }
-                CATCH_ANY()
-                {
-                    dependValueStrId = strIdFromStr(stringIdBit6, dependValue->value.string);
-                }
-                TRY_END();
-            }
-
             do
             {
                 switch (cfgParseOptionDataType(dependId))
@@ -772,9 +760,9 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
 
                     default:
                     {
-                        ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeString);
+                        ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeStringId);
 
-                        if (parseRuleValueStrId[pckReadU32P(filter)] == dependValueStrId)
+                        if (parseRuleValueStrId[pckReadU32P(filter)] == dependValue->value.stringId)
                             result = true;
                         break;
                     }
@@ -974,6 +962,11 @@ cfgParseOptionalRule(
 
                                         break;
                                     }
+
+                                    case cfgOptTypeStringId:
+                                        optionalRules->defaultValue.stringId = parseRuleValueStrId[pckReadU32P(ruleData)];
+                                        optionalRules->defaultRaw = (const String *)&parseRuleValueStr[pckReadU32P(ruleData)];
+                                        break;
                                 }
                             }
                         }
@@ -2138,7 +2131,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                                 default:
                                 {
-                                    ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeString);
+                                    ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeStringId);
 
                                     String *const errorList = strNew();
                                     unsigned int validSize = 0;
@@ -2279,9 +2272,16 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
                                 }
+                                // Else if StringId
+                                else if (optionType == cfgOptTypeStringId)
+                                {
+                                    configOptionValue->value.stringId = strIdFromZN(strZ(valueAllow), strSize(valueAllow), false);
+                                }
                                 // Else if string make sure it is valid
                                 else
                                 {
+                                    ASSERT(optionType == cfgOptTypePath || optionType == cfgOptTypeString);
+
                                     // Set string value to display value
                                     configOptionValue->value.string = configOptionValue->display;
 
@@ -2334,38 +2334,14 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                     PackRead *const allowList = pckReadNewC(optionalRules.allowList, optionalRules.allowListSize);
                                     bool allowListFound = false;
 
-                                    if (parseRuleOption[optionId].type == cfgOptTypeString)
+                                    if (parseRuleOption[optionId].type == cfgOptTypeStringId)
                                     {
-                                        bool valueValid = true;
-                                        StringId value = 0;
-
-                                        TRY_BEGIN()
+                                        while (pckReadNext(allowList))
                                         {
-                                            TRY_BEGIN()
+                                            if (parseRuleValueStrId[pckReadU32P(allowList)] == configOptionValue->value.stringId)
                                             {
-                                                value = strIdFromStr(stringIdBit5, valueAllow);
-                                            }
-                                            CATCH_ANY()
-                                            {
-                                                value = strIdFromStr(stringIdBit6, valueAllow);
-                                            }
-                                            TRY_END();
-                                        }
-                                        CATCH_ANY()
-                                        {
-                                            valueValid = false;
-                                        }
-                                        TRY_END();
-
-                                        if (valueValid)
-                                        {
-                                            while (pckReadNext(allowList))
-                                            {
-                                                if (parseRuleValueStrId[pckReadU32P(allowList)] == value)
-                                                {
-                                                    allowListFound = true;
-                                                    break;
-                                                }
+                                                allowListFound = true;
+                                                break;
                                             }
                                         }
                                     }

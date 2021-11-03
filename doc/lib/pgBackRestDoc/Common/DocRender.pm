@@ -118,7 +118,7 @@ my $oRenderTag =
         'quote' => ['<q>', '</q>'],
         'b' => ['<b>', '</b>'],
         'i' => ['<i>', '</i>'],
-        'p' => ['<div class="section-body-text">', '</div>'],
+        'p' => ['', ''],
         # 'bi' => ['<i><b>', '</b></i>'],
         'list' => ['<ul class="list-unordered">', '</ul>'],
         'list-item' => ['<li class="list-unordered">', '</li>'],
@@ -986,6 +986,7 @@ sub processText
 
     my $strType = $self->{strType};
     my $strBuffer = '';
+    my $strLastTag = 'body';
 
     foreach my $oNode ($oText->nodeList(undef, false))
     {
@@ -1004,7 +1005,22 @@ sub processText
         }
         else
         {
+            # Add br tags to separate paragraphs and linefeeds to make the output more diffable. This is needed because of the hacky
+            # way config text is being rendered in the final document, i.e. by passing rendered HTML into divs rather than XML to be
+            # rendered at that time.
+            if ($strLastTag eq 'p' && $strType eq 'html')
+            {
+                $strBuffer .= "<br/>\n";
+
+                if ($oNode->nameGet() eq 'p')
+                {
+                    $strBuffer .= "<br/>\n";
+                }
+            }
+
             $strBuffer .= $self->processTag($oNode);
+
+            $strLastTag = $oNode->nameGet();
         }
     }
     #
