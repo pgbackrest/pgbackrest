@@ -1596,7 +1596,7 @@ testRun(void)
             RECOVERY_SETTING_HEADER
             "restore_command = '/usr/local/bin/pg_wrapper.sh --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
                 " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
-            "check recovery options");
+            "restore_command invokes /usr/local/bin/pg_wrapper.sh per --cmd option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("override restore_command");
