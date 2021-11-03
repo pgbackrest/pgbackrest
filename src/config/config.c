@@ -149,7 +149,6 @@ cfgExe(void)
 {
     FUNCTION_TEST_VOID();
     ASSERT(configLocal != NULL);
-
     FUNCTION_TEST_RETURN(configLocal->exe);
 }
 
