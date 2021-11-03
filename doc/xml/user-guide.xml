@@ -400,7 +400,7 @@
     </block-define>
 
     <block-define id="setup-tls">
-        <section if="{[os-type-is-debian]}" id="setup-tls">
+        <section id="setup-tls">
             <title>Setup TLS</title>
 
             <backrest-config host="{[setup-tls-host]}" owner="{[setup-tls-user]}:{[setup-tls-group]}" file="{[backrest-config-demo]}">
@@ -457,9 +457,35 @@
                 <execute user="root">
                     <exe-cmd>chmod 600 /etc/pgbackrest/cert/client.crt</exe-cmd>
                 </execute>
-                <execute user="{[setup-tls-user]}">
-                    <exe-cmd>pgbackrest server-start</exe-cmd>
+            </execute-list>
+
+            <execute-list host="{[setup-tls-host]}">
+                <title>Setup pgBackRest server <host>{[setup-tls-host]}</host></title>
+
+                <execute user="root" user-force="y" show="n">
+                    <exe-cmd>
+                        echo '[Unit]' | tee /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'Description=pgBackRest Server' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'After=network.target' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'StartLimitIntervalSec=0' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo '[Service]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'Type=simple' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'Restart=always' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'RestartSec=1' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'User=postgres' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'ExecStart=/usr/bin/pgbackrest server-start' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'ExecReload=kill -HUP $MAINPID' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo '[Install]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'WantedBy=multi-user.target' | tee -a /etc/systemd/system/pgbackrest.service
+                    </exe-cmd>
                 </execute>
+
+                <execute user="root">
+                    <exe-cmd>systemctl start pgbackrest</exe-cmd>
+                </execute>
+
             </execute-list>
         </section>
     </block-define>
@@ -1254,25 +1280,8 @@
                 </execute>
             </execute-list>
 
-<!--
-[Unit]
-Description=pgBackRest service
-After=network.target
-StartLimitIntervalSec=0
-
-[Service]
-Type=simple
-Restart=always
-RestartSec=1
-User=postgres
-ExecStart=/usr/bin/pgbackrest
-
-[Install]
-WantedBy=multi-user.target
--->
-
             <block if="{[os-type-is-rhel]}" id="setup-tls">
-                <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
                 <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
             </block>
