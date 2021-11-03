@@ -1366,8 +1366,8 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create list of process queue
-        *queueList = lstNewP(sizeof(List *));
+        // Create list of process queues (use void * instead of List * to avoid Coverity false positive)
+        *queueList = lstNewP(sizeof(void *));
 
         // Generate the list of targets
         StringList *targetList = strLstNew();
