@@ -407,7 +407,7 @@
                 <title>!!!</title>
 
                 <backrest-config-option section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
-                <backrest-config-option section="global" key="tls-server-address">::0</backrest-config-option>
+                <backrest-config-option section="global" key="tls-server-address">*</backrest-config-option>
                 <backrest-config-option section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
                 <backrest-config-option section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
                 <backrest-config-option section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
@@ -460,7 +460,7 @@
             </execute-list>
 
             <execute-list host="{[setup-tls-host]}">
-                <title>Setup pgBackRest server <host>{[setup-tls-host]}</host></title>
+                <title>Setup pgBackRest server</title>
 
                 <execute user="root" user-force="y" show="n">
                     <exe-cmd>
@@ -481,11 +481,16 @@
                         echo 'WantedBy=multi-user.target' | tee -a /etc/systemd/system/pgbackrest.service
                     </exe-cmd>
                 </execute>
-
+                <execute user="root">
+                    <exe-cmd>cat /etc/systemd/system/pgbackrest.service</exe-cmd>
+                </execute>
+                <execute user="root">
+                    <exe-cmd>systemctl enable pgbackrest</exe-cmd>
+                    <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+                </execute>
                 <execute user="root">
                     <exe-cmd>systemctl start pgbackrest</exe-cmd>
                 </execute>
-
             </execute-list>
         </section>
     </block-define>
@@ -1279,12 +1284,6 @@
                     <exe-highlight>could not find WAL segment|did not reach the archive</exe-highlight>
                 </execute>
             </execute-list>
-
-            <block if="{[os-type-is-rhel]}" id="setup-tls">
-                <block-variable-replace key="setup-tls-host">{[host-pg1]}</block-variable-replace>
-                <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
-                <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
-            </block>
         </section>
 
         <!-- SECTION => QUICKSTART - PERFORM BACKUP -->
@@ -2401,17 +2400,19 @@
             </block>
         </section>
 
-        <block if="{[os-type-is-debian]}" id="setup-tls">
+        <block if="{[os-type-is-rhel]}" id="setup-tls">
             <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
             <block-variable-replace key="setup-tls-user">{[br-user]}</block-variable-replace>
+            <block-variable-replace key="setup-tls-group">{[br-group]}</block-variable-replace>
         </block>
 
-        <block if="{[os-type-is-debian]}" id="setup-tls">
+        <block if="{[os-type-is-rhel]}" id="setup-tls">
             <block-variable-replace key="setup-tls-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+            <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
         </block>
 
-        <section if="{[os-type-is-rhel]}" id="setup-ssh">
+        <section if="{[os-type-is-debian]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
@@ -2770,13 +2771,14 @@
             </block>
         </section>
 
-        <block if="{[os-type-is-debian]}" id="setup-tls">
+        <block if="{[os-type-is-rhel]}" id="setup-tls">
             <block-variable-replace key="setup-tls-host">{[host-pg2]}</block-variable-replace>
             <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+            <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
         </block>
 
         <!-- SECTION => REPLICATION - SETUP-SSH -->
-        <section if="{[os-type-is-rhel]}" id="setup-ssh">
+        <section if="{[os-type-is-debian]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
