@@ -348,8 +348,7 @@ static const IoClientInterface tlsClientInterface =
 IoClient *
 tlsClientNew(
     IoClient *const ioClient, const String *const host, const TimeMSec timeoutConnect, const TimeMSec timeoutSession,
-    const bool verifyPeer, const String *const caFile, const String *const caPath, const String *const certFile,
-    const String *const keyFile, const String *const crlFile)
+    const bool verifyPeer, const TlsClientNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_CLIENT, ioClient);
@@ -357,11 +356,11 @@ tlsClientNew(
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
-        FUNCTION_LOG_PARAM(STRING, caFile);
-        FUNCTION_LOG_PARAM(STRING, caPath);
-        FUNCTION_LOG_PARAM(STRING, certFile);
-        FUNCTION_LOG_PARAM(STRING, keyFile);
-        FUNCTION_LOG_PARAM(STRING, crlFile);
+        FUNCTION_LOG_PARAM(STRING, param.caFile);
+        FUNCTION_LOG_PARAM(STRING, param.caPath);
+        FUNCTION_LOG_PARAM(STRING, param.certFile);
+        FUNCTION_LOG_PARAM(STRING, param.keyFile);
+        FUNCTION_LOG_PARAM(STRING, param.crlFile);
     FUNCTION_LOG_END();
 
     ASSERT(ioClient != NULL);
@@ -392,10 +391,11 @@ tlsClientNew(
         if (driver->verifyPeer)
         {
             // If the user specified a location
-            if (caFile != NULL || caPath != NULL)                                                                   // {vm_covered}
+            if (param.caFile != NULL || param.caPath != NULL)                                                       // {vm_covered}
             {
                 cryptoError(                                                                                        // {vm_covered}
-                    SSL_CTX_load_verify_locations(driver->context, strZNull(caFile), strZNull(caPath)) != 1,        // {vm_covered}
+                    SSL_CTX_load_verify_locations(                                                                  // {vm_covered}
+                        driver->context, strZNull(param.caFile), strZNull(param.caPath)) != 1,                      // {vm_covered}
                     "unable to set user-defined CA certificate location");                                          // {vm_covered}
             }
             // Else use the defaults
@@ -407,10 +407,10 @@ tlsClientNew(
         }
 
         // Load certificate and key, if specified
-        tlsCertKeyLoad(driver->context, certFile, keyFile);
+        tlsCertKeyLoad(driver->context, param.certFile, param.keyFile);
 
         // Load certificate revocation list
-        tlsCrlLoad(driver->context, crlFile);
+        tlsCrlLoad(driver->context, param.crlFile);
 
         // Increment stat
         statInc(TLS_STAT_CLIENT_STR);

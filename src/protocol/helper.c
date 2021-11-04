@@ -669,16 +669,16 @@ protocolRemoteExec(
             ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
 
             // Negotiate TLS
-            helper->ioClient = tlsClientNew(
+            helper->ioClient = tlsClientNewP(
                 sckClientNew(
                     host, cfgOptionIdxUInt(isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort, hostIdx),
                     cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptProtocolTimeout)),
                 host, cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptProtocolTimeout), true,
-                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaFile : cfgOptPgHostCaFile, hostIdx),
-                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaPath : cfgOptPgHostCaPath, hostIdx),
-                cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
-                cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx),
-                cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCrlFile : cfgOptPgHostCrlFile, hostIdx));
+                .caFile = cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaFile : cfgOptPgHostCaFile, hostIdx),
+                .caPath = cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaPath : cfgOptPgHostCaPath, hostIdx),
+                .certFile = cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
+                .keyFile = cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx),
+                .crlFile = cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCrlFile : cfgOptPgHostCrlFile, hostIdx));
             helper->ioSession = ioClientOpen(helper->ioClient);
 
             read = ioSessionIoRead(helper->ioSession);

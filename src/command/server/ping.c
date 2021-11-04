@@ -30,9 +30,8 @@ cmdServerPing(void)
         // Connect to server without any verification
         const TimeMSec timeout = cfgOptionUInt64(cfgOptIoTimeout);
 
-        IoClient *const tlsClient = tlsClientNew(
-            sckClientNew(host, cfgOptionUInt(cfgOptTlsServerPort), timeout, timeout), host, timeout, timeout, false, NULL, NULL,
-            NULL, NULL, NULL);
+        IoClient *const tlsClient = tlsClientNewP(
+            sckClientNew(host, cfgOptionUInt(cfgOptTlsServerPort), timeout, timeout), host, timeout, timeout, false);
         IoSession *const tlsSession = ioClientOpen(tlsClient);
 
         // Send ping

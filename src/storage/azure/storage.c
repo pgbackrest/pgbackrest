@@ -737,9 +737,9 @@ storageAzureNew(
 
         // Create the http client used to service requests
         driver->httpClient = httpClientNew(
-            tlsClientNew(
-                sckClientNew(driver->host, port, timeout, timeout), driver->host, timeout, timeout, verifyPeer, caFile, caPath,
-                NULL, NULL, NULL),
+            tlsClientNewP(
+                sckClientNew(driver->host, port, timeout, timeout), driver->host, timeout, timeout, verifyPeer, .caFile = caFile,
+                .caPath = caPath),
             timeout);
 
         // Create list of redacted headers

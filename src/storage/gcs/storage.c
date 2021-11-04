@@ -973,9 +973,9 @@ storageGcsNew(
                 driver->authUrl = httpUrlNewParseP(uri, .type = httpProtocolTypeHttps);
 
                 driver->authClient = httpClientNew(
-                    tlsClientNew(
+                    tlsClientNewP(
                         sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout, timeout),
-                        httpUrlHost(driver->authUrl), timeout, timeout, verifyPeer, caFile, caPath, NULL, NULL, NULL),
+                        httpUrlHost(driver->authUrl), timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
                     timeout);
 
                 break;
@@ -993,9 +993,9 @@ storageGcsNew(
 
         // Create the http client used to service requests
         driver->httpClient = httpClientNew(
-            tlsClientNew(
+            tlsClientNewP(
                 sckClientNew(driver->endpoint, httpUrlPort(url), timeout, timeout), driver->endpoint, timeout, timeout, verifyPeer,
-                caFile, caPath, NULL, NULL, NULL),
+                .caFile = caFile, .caPath = caPath),
             timeout);
 
         // Create list of redacted headers
