@@ -25,7 +25,7 @@ Constants used to extract information from the header
 /**********************************************************************************************************************************/
 // Helper to do encoding for specified number of bits
 static StringId
-strIdBitFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
+strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, bit);
@@ -76,17 +76,18 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, const size_t siz
             // Set encoding in header
             uint64_t result = stringIdBit5;
 
+            // If size is greater than can be encoded then add prefix bit and adjust size
+            if (size >= STRID5_MAX)
+            {
+                result |= STRING_ID_PREFIX;
+                size = STRID5_MAX - 1;
+            }
+
             // Encode based on the number of characters that need to be encoded
             switch (size)
             {
-                default:
-                {
-                    // If size is greater then can be encoded set the prefix flag
-                    if (size >= STRID5_MAX)
-                        result |= STRING_ID_PREFIX;
-
+                case 12:
                     result |= (uint64_t)map[(uint8_t)buffer[11]] << 59;
-                }
 
                 case 11:
                     result |= (uint64_t)map[(uint8_t)buffer[10]] << 54;
@@ -164,17 +165,18 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, const size_t siz
             // Set encoding in header
             uint64_t result = stringIdBit6;
 
+            // If size is greater than can be encoded then add prefix bit and adjust size
+            if (size >= STRID6_MAX)
+            {
+                result |= STRING_ID_PREFIX;
+                size = STRID6_MAX - 1;
+            }
+
             // Encode based on the number of characters that need to be encoded
             switch (size)
             {
-                default:
-                {
-                    // If size is greater then can be encoded set the prefix flag
-                    if (size >= STRID6_MAX)
-                        result |= STRING_ID_PREFIX;
-
+                case 10:
                     result |= (uint64_t)map[(uint8_t)buffer[9]] << 58;
-                }
 
                 case 9:
                     result |= (uint64_t)map[(uint8_t)buffer[8]] << 52;
