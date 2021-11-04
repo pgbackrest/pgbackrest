@@ -122,17 +122,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("helpRenderValue()"))
-    {
-        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(true), cfgOptTypeBoolean), "y", "boolean y");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(false), cfgOptTypeBoolean), "n", "boolean n");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewStrZ("test-string"), cfgOptTypeString), "test-string", "string");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewInt64(1234), cfgOptTypeInteger), "1234", "int");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewInt64(1234000), cfgOptTypeTime), "1234", "time");
-        TEST_RESULT_STR_Z(helpRenderValue(NULL, cfgOptTypeString), NULL, "null");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("helpRender()"))
     {
         StringList *argList = NULL;
@@ -224,7 +213,7 @@ testRun(void)
             "General Options:\n"
             "\n"
             "  --buffer-size                    buffer size for I/O operations\n"
-            "                                   [current=32768, default=1048576]\n"
+            "                                   [current=32768, default=1MiB]\n"
             "  --cmd                            pgBackRest command\n"
             "                                   [default=/path/to/pgbackrest]\n"
             "  --cmd-ssh                        SSH client command [default=ssh]\n"
@@ -380,12 +369,13 @@ testRun(void)
             "of buffers used depends on options and each operation may use additional\n"
             "memory, e.g. gz compression may use an additional 256KiB of memory.\n"
             "\n"
-            "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the\n"
-            "multiplier is a power of 1024. For example, the case-insensitive value 32k (or\n"
-            "32KB) can be used instead of 32768.\n"
+            "Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the\n"
+            "multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or\n"
+            "5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB\n"
+            "are not allowed, use 2560MiB instead.\n"
             "\n"
-            "Allowed values, in bytes, are 16384, 32768, 65536, 131072, 262144, 524288,\n"
-            "1048576, 2097152, 4194304, 8388608, and 16777216.\n",
+            "Allowed values are 16KiB, 32KiB, 64KiB, 128KiB, 256KiB, 512KiB, 1MiB, 2MiB,\n"
+            "4MiB, 8MiB, and 16MiB.\n",
             helpVersion));
 
         argList = strLstNew();
@@ -394,13 +384,13 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "buffer-size");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(helpRender(helpData), strNewFmt("%s\ndefault: 1048576\n", optionHelp), "check text");
+        TEST_RESULT_STR(helpRender(helpData), strNewFmt("%s\ndefault: 1MiB\n", optionHelp), "check text");
 
         // Set a current value
-        hrnCfgArgRawZ(argList, cfgOptBufferSize, "32768");
+        hrnCfgArgRawZ(argList, cfgOptBufferSize, "32k");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(
-            helpRender(helpData), strNewFmt("%s\ncurrent: 32768\ndefault: 1048576\n", optionHelp), "check text, current value");
+            helpRender(helpData), strNewFmt("%s\ncurrent: 32k\ndefault: 1MiB\n", optionHelp), "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated host option names");

@@ -579,19 +579,19 @@ option:
   buffer-size:
     section: global
     type: size
-    default: 1048576
+    default: 1MiB
     allow-list:
-      - 16384
-      - 32768
-      - 65536
-      - 131072
-      - 262144
-      - 524288
-      - 1048576
-      - 2097152
-      - 4194304
-      - 8388608
-      - 16777216
+      - 16KiB
+      - 32KiB
+      - 64KiB
+      - 128KiB
+      - 256KiB
+      - 512KiB
+      - 1MiB
+      - 2MiB
+      - 4MiB
+      - 8MiB
+      - 16MiB
     command:
       archive-get: {}
       archive-push: {}
@@ -1023,8 +1023,8 @@ option:
   archive-get-queue-max:
     section: global
     type: size
-    default: 134217728
-    allow-range: [0, 4503599627370496]
+    default: 128MiB
+    allow-range: [0, 4PiB]
     command:
       archive-get: {}
     command-role:
@@ -1045,7 +1045,7 @@ option:
     section: global
     type: size
     required: false
-    allow-range: [0, 4503599627370496]
+    allow-range: [0, 4PiB]
     command:
       archive-push: {}
     command-role:
@@ -1139,8 +1139,8 @@ option:
   manifest-save-threshold:
     section: global
     type: size
-    default: 1073741824
-    allow-range: [1, 1099511627776]
+    default: 1GiB
+    allow-range: [1, 1TiB]
     command:
       backup: {}
     command-role:

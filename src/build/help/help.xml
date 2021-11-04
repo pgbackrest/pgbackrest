@@ -132,12 +132,13 @@
                         <text>
                             <p>Buffer size used for copy, compress, encrypt, and other operations. The number of buffers used depends on options and each operation may use additional memory, e.g. <id>gz</id> compression may use an additional 256KiB of memory.</p>
 
-                            <p>Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024. For example, the case-insensitive value 32k (or 32KB) can be used instead of 32768.</p>
+                            <!-- Be sure to update other copies of this block when modifying -->
+                            <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
 
-                            <p>Allowed values, in bytes, are <id>16384</id>, <id>32768</id>, <id>65536</id>, <id>131072</id>, <id>262144</id>, <id>524288</id>, <id>1048576</id>, <id>2097152</id>, <id>4194304</id>, <id>8388608</id>, and <id>16777216</id>.</p>
+                            <p>Allowed values are <id>16KiB</id>, <id>32KiB</id>, <id>64KiB</id>, <id>128KiB</id>, <id>256KiB</id>, <id>512KiB</id>, <id>1MiB</id>, <id>2MiB</id>, <id>4MiB</id>, <id>8MiB</id>, and <id>16MiB</id>.</p>
                         </text>
 
-                        <example>32K</example>
+                        <example>2MiB</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - CMD KEY -->
@@ -1149,10 +1150,11 @@
                         <text>
                             <p>Defines how often the manifest will be saved during a backup. Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently. The actual threshold used is 1% of the backup size or <setting>manifest-save-threshold</setting>, whichever is greater.</p>
 
-                            <p>Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</p>
+                            <!-- Be sure to update other copies of this block when modifying -->
+                            <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
                         </text>
 
-                        <example>5G</example>
+                        <example>8GiB</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - EXPIRE-AUTO -->
@@ -1236,10 +1238,11 @@
                         <text>
                             <p>Specifies the maximum size of the <cmd>archive-get</cmd> queue when <br-option>archive-async</br-option> is enabled. The queue is stored in the <br-option>spool-path</br-option> and is used to speed providing WAL to <postgres/>.</p>
 
-                            <p>Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</p>
+                            <!-- Be sure to update other copies of this block when modifying -->
+                            <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
                         </text>
 
-                        <example>1073741824</example>
+                        <example>1GiB</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -1273,10 +1276,11 @@
 
                             <p>The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely. Better to lose the backup than have <postgres/> go down.</p>
 
-                            <p>Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024.</p>
+                            <!-- Be sure to update other copies of this block when modifying -->
+                            <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
                         </text>
 
-                        <example>1GB</example>
+                        <example>1TiB</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
