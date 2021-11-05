@@ -456,10 +456,10 @@
                     <exe-cmd>chown -R {[setup-tls-user]} /etc/pgbackrest/cert</exe-cmd>
                 </execute>
                 <execute user="root">
-                    <exe-cmd>chmod 600 /etc/pgbackrest/cert/server.crt</exe-cmd>
+                    <exe-cmd>chmod 600 /etc/pgbackrest/cert/server.key</exe-cmd>
                 </execute>
                 <execute user="root">
-                    <exe-cmd>chmod 600 /etc/pgbackrest/cert/client.crt</exe-cmd>
+                    <exe-cmd>chmod 600 /etc/pgbackrest/cert/client.key</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -477,7 +477,7 @@
                         echo 'Type=simple' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                         echo 'Restart=always' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                         echo 'RestartSec=1' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
-                        echo 'User=postgres' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                        echo 'User={[setup-tls-user]}' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                         echo 'ExecStart=/usr/bin/pgbackrest server-start' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                         echo 'ExecReload=kill -HUP $MAINPID' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                         echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
@@ -2404,18 +2404,6 @@
             </block>
         </section>
 
-        <block if="{[protocol-tls]}" id="setup-tls">
-            <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
-            <block-variable-replace key="setup-tls-user">{[br-user]}</block-variable-replace>
-            <block-variable-replace key="setup-tls-group">{[br-group]}</block-variable-replace>
-        </block>
-
-        <block if="{[protocol-tls]}" id="setup-tls">
-            <block-variable-replace key="setup-tls-host">{[host-pg1]}</block-variable-replace>
-            <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
-            <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
-        </block>
-
         <section if="{[protocol-ssh]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
 
@@ -2545,6 +2533,18 @@
                 <block-variable-replace key="s3-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
+            </block>
+
+            <block if="{[protocol-tls]}" id="setup-tls">
+                <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-group">{[br-group]}</block-variable-replace>
+            </block>
+
+            <block if="{[protocol-tls]}" id="setup-tls">
+                <block-variable-replace key="setup-tls-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
             </block>
 
             <p if="!{[object-any-all]}">Create the stanza in the new repository.</p>
@@ -2775,12 +2775,6 @@
             </block>
         </section>
 
-        <block if="{[protocol-tls]}" id="setup-tls">
-            <block-variable-replace key="setup-tls-host">{[host-pg2]}</block-variable-replace>
-            <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
-            <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
-        </block>
-
         <!-- SECTION => REPLICATION - SETUP-SSH -->
         <section if="{[protocol-ssh]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
@@ -2827,6 +2821,12 @@
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
+
+            <block if="{[protocol-tls]}" id="setup-tls">
+                <block-variable-replace key="setup-tls-host">{[host-pg2]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
+            </block>
 
             <p if="{[os-type-is-debian]}">The demo cluster must be created (even though it will be overwritten on restore) in order to create the <postgres/> configuration files.</p>
 
