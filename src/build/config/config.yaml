@@ -2101,6 +2101,12 @@ option:
       - auto
       - web-id
 
+  repo-s3-kms-key-id:
+    inherit: repo-s3-bucket
+    required: false
+    deprecate:
+      repo-s3-kms-key-id: {}
+
   repo-s3-region:
     inherit: repo-s3-bucket
     deprecate:

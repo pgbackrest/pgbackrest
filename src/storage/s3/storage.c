@@ -31,6 +31,9 @@ S3 HTTP headers
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
 STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
+STRING_STATIC(S3_HEADER_SRVSDENC_STR,                               "x-amz-server-side-encryption");
+STRING_STATIC(S3_HEADER_SRVSDENC_KMS_STR,                           "aws:kms");
+STRING_STATIC(S3_HEADER_SRVSDENC_KMSKEYID_STR,                      "x-amz-server-side-encryption-aws-kms-key-id");
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -90,6 +93,7 @@ struct StorageS3
     String *accessKey;                                              // Access key
     String *secretAccessKey;                                        // Secret access key
     String *securityToken;                                          // Security token, if any
+    const String *kmsKeyId;                                         // Server-side encryption key
     size_t partSize;                                                // Part size for multi-part upload
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
@@ -170,6 +174,13 @@ storageS3Auth(
 
         if (this->securityToken != NULL)
             httpHeaderPut(httpHeader, S3_HEADER_TOKEN_STR, this->securityToken);
+
+        // Set KMS key header if this is a write request
+        if (this->kmsKeyId != NULL && !strCmp(verb, HTTP_VERB_PUT_STR))
+        {
+            httpHeaderPut(httpHeader, S3_HEADER_SRVSDENC_STR, S3_HEADER_SRVSDENC_KMS_STR);
+            httpHeaderPut(httpHeader, S3_HEADER_SRVSDENC_KMSKEYID_STR, this->kmsKeyId);
+        }
 
         // Generate canonical request and signed headers
         const StringList *headerList = strLstSort(strLstDup(httpHeaderList(httpHeader)), sortOrderAsc);
@@ -1017,7 +1028,8 @@ Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
-    const String *secretAccessKey, const String *securityToken, const String *credRole, const String *const webIdToken,
+    const String *secretAccessKey, const String *securityToken, const String *kmsKeyId,
+    const String *credRole, const String *const webIdToken,
     size_t partSize, const String *host, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile,
     const String *caPath)
 {
@@ -1033,6 +1045,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
+        FUNCTION_TEST_PARAM(STRING, kmsKeyId);
         FUNCTION_TEST_PARAM(STRING, credRole);
         FUNCTION_TEST_PARAM(STRING, webIdToken);
         FUNCTION_LOG_PARAM(SIZE, partSize);
@@ -1062,6 +1075,7 @@ storageS3New(
             .bucket = strDup(bucket),
             .region = strDup(region),
             .keyType = keyType,
+            .kmsKeyId = kmsKeyId,
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,

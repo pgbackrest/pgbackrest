@@ -67,7 +67,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
         cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint, (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
         cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
-        cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), role,
+        cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
+        cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), role,
         webIdToken, STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
         cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
 
