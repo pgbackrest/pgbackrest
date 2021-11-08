@@ -899,7 +899,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdStanzaDelete(), stanzaDelete(), manifestDelete()"))
+    if (testBegin("cmdStanzaDelete(), stanzaDelete()"))
     {
         // Load Parameters
         StringList *argListCmd = strLstNew();
@@ -976,46 +976,6 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - backup only");
         TEST_STORAGE_LIST(
             storageTest, "repo/backup", "otherstanza/\n", .noRecurse=true, .comment = "stanza '" TEST_STANZA "' deleted");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("stanza-delete - error on file that looks like backup directory");
-
-        // Create a backup file that matches the regex for a backup directory
-        HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190708-154306F", .comment = "backup file that looks like a directory");
-        HRN_STORAGE_PUT_EMPTY(storageHrn, strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))), .comment = "create stop file");
-        TEST_ERROR(
-            cmdStanzaDelete(), FileRemoveError,
-            "unable to remove '" TEST_PATH "/repo/backup/db/20190708-154306F/backup.manifest': [20] Not a directory");
-        HRN_STORAGE_REMOVE(storageTest, "repo/backup/db/20190708-154306F", "cleanup - remove backup file");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifestDelete()");
-
-        // Create backup manifests
-        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20190708-154306F/" BACKUP_MANIFEST_FILE);
-        HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190708-154306F_20190716-191726I/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
-        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20190708-154306F_20190716-191800D/" BACKUP_MANIFEST_FILE);
-        HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190708-154306F_20190716-191800D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
-
-        TEST_STORAGE_LIST(
-            storageRepoWrite(), STORAGE_REPO_BACKUP,
-            "20190708-154306F/\n"
-            "20190708-154306F/backup.manifest\n"
-            "20190708-154306F_20190716-191726I/\n"
-            "20190708-154306F_20190716-191726I/backup.manifest.copy\n"
-            "20190708-154306F_20190716-191800D/\n"
-            "20190708-154306F_20190716-191800D/backup.manifest\n"
-            "20190708-154306F_20190716-191800D/backup.manifest.copy\n");
-
-        TEST_RESULT_VOID(manifestDelete(storageRepoWrite()), "delete manifests");
-        TEST_STORAGE_LIST(
-            storageRepoWrite(), STORAGE_REPO_BACKUP,
-            "20190708-154306F/\n"
-            "20190708-154306F_20190716-191726I/\n"
-            "20190708-154306F_20190716-191800D/\n", .comment = "all manifest files deleted");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-delete - empty directories");
