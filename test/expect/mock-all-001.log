@@ -324,7 +324,7 @@ P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/PG_VERSION (3B, 100%) che
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/zero_from_start (0B, 100%)
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? (0B, 100%)
 P00   INFO: new backup label = [BACKUP-FULL-2]
-P00   INFO: full backup size = 192KB, file total = 18
+P00   INFO: full backup size = 14B, file total = 18
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -1006,7 +1006,7 @@ P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: new backup label = [BACKUP-INCR-2]
-P00   INFO: incr backup size = 192KB, file total = 22
+P00   INFO: incr backup size = 41B, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -1224,7 +1224,7 @@ P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: new backup label = [BACKUP-DIFF-1]
-P00   INFO: diff backup size = 192KB, file total = 21
+P00   INFO: diff backup size = 32B, file total = 21
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -1800,7 +1800,7 @@ P00 DETAIL: reference pg_data/zerosize.txt to [BACKUP-DIFF-1]
 P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt to [BACKUP-DIFF-1]
 P00 DETAIL: reference pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt to [BACKUP-INCR-3]
 P00   INFO: new backup label = [BACKUP-INCR-4]
-P00   INFO: incr backup size = 176KB, file total = 22
+P00   INFO: incr backup size = 8B, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -2017,7 +2017,7 @@ P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: new backup label = [BACKUP-DIFF-2]
-P00   INFO: diff backup size = 176KB, file total = 22
+P00   INFO: diff backup size = 46B, file total = 22
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
@@ -2234,7 +2234,7 @@ P00 DETAIL: reference pg_data/postgresql.conf to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/special-!_.*'()&!@;:+,? to [BACKUP-FULL-2]
 P00 DETAIL: reference pg_data/zero_from_start to [BACKUP-FULL-2]
 P00   INFO: new backup label = [BACKUP-DIFF-3]
-P00   INFO: diff backup size = 176KB, file total = 20
+P00   INFO: diff backup size = 37B, file total = 20
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired
