@@ -30,9 +30,21 @@ Statistics constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
+typedef struct TlsClientNewParam
+{
+    VAR_PARAM_HEADER;
+    const String *caFile;
+    const String *caPath;
+    const String *certFile;
+    const String *keyFile;
+} TlsClientNewParam;
+
+#define tlsClientNewP(ioClient, host, timeoutConnect, timeoutSession, verifyPeer, ...)                                             \
+    tlsClientNew(ioClient, host, timeoutConnect, timeoutSession, verifyPeer, (TlsClientNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
 IoClient *tlsClientNew(
-    IoClient *ioClient, const String *host, TimeMSec timeoutConnect, TimeMSec timeoutSession, bool verifyPeer, const String *caFile,
-    const String *caPath, const String *certFile, const String *keyFile);
+    IoClient *ioClient, const String *host, TimeMSec timeoutConnect, TimeMSec timeoutSession, bool verifyPeer,
+    TlsClientNewParam param);
 
 /***********************************************************************************************************************************
 Functions

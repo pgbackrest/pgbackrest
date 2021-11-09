@@ -18,6 +18,7 @@ testRun(void)
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "5");
+        hrnCfgArgRawZ(argList, cfgOptBufferSize, "64KiB");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/db path");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/db2");
@@ -34,14 +35,14 @@ testRun(void)
 
         TEST_RESULT_STRLST_Z(
             cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, NULL, false, true),
-            "--archive-async\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
+            "--archive-async\n--buffer-size=64KiB\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
                 "--pg1-path=\"" TEST_PATH "/db path\"\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\n"
                 "archive-get:async\n",
             "exec archive-get -> archive-get:async");
 
         TEST_RESULT_STRLST_Z(
             cfgExecParam(cfgCmdBackup, cfgCmdRoleMain, NULL, false, false),
-            "--archive-timeout=5\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
+            "--archive-timeout=5\n--buffer-size=64KiB\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
                 "--pg1-path=" TEST_PATH "/db path\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\nbackup\n",
             "exec archive-get -> backup");
 

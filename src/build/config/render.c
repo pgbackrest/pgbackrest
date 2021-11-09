@@ -7,6 +7,7 @@ Render Configuration Data
 
 #include "common/log.h"
 #include "common/type/convert.h"
+#include "config/common.h"
 #include "storage/posix/storage.h"
 
 #include "build/common/render.h"
@@ -152,7 +153,7 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
     {
         const BldCfgOption *const opt = lstGet(bldCfg.optList, optIdx);
 
-        if (strEqZ(opt->type, CFGDEF_TYPE_STRING))
+        if (strEq(opt->type, OPT_TYPE_STRING_ID_STR))
         {
             StringList *const allowList = strLstNew();
 
@@ -175,28 +176,27 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
 
             strLstSort(allowList, sortOrderAsc);
 
-            if (!strLstEmpty(allowList))
+            ASSERT(!strLstEmpty(allowList));
+
+            if (lf)
+                strCatChr(config, '\n');
+
+            for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(allowList); allowListIdx++)
             {
-                if (lf)
-                    strCatChr(config, '\n');
+                const String *const allowListItem = strLstGet(allowList, allowListIdx);
+                const String *const constPrefix = strUpper(
+                    strReplaceChr(strNewFmt("CFGOPTVAL_%s_%s", strZ(opt->name), strZ(allowListItem)), '-', '_'));
 
-                for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(allowList); allowListIdx++)
-                {
-                    const String *const allowListItem = strLstGet(allowList, allowListIdx);
-                    const String *const constPrefix = strUpper(
-                        strReplaceChr(strNewFmt("CFGOPTVAL_%s_%s", strZ(opt->name), strZ(allowListItem)), '-', '_'));
+                // Render StringId
+                strCatFmt(config, "%s\n", strZ(bldDefineRender(constPrefix, bldStrId(strZ(allowListItem)))));
 
-                    // Render StringId
-                    strCatFmt(config, "%s\n", strZ(bldDefineRender(constPrefix, bldStrId(strZ(allowListItem)))));
-
-                    // Render Z
-                    strCatFmt(
-                        config, "%s\n",
-                        strZ(bldDefineRender(strNewFmt("%s_Z", strZ(constPrefix)), strNewFmt("\"%s\"", strZ(allowListItem)))));
-                }
-
-                lf = true;
+                // Render Z
+                strCatFmt(
+                    config, "%s\n",
+                    strZ(bldDefineRender(strNewFmt("%s_Z", strZ(constPrefix)), strNewFmt("\"%s\"", strZ(allowListItem)))));
             }
+
+            lf = true;
         }
     }
 
@@ -384,7 +384,11 @@ bldCfgRenderScalar(const String *const scalar, const String *const optType)
 
     if (strEq(optType, OPT_TYPE_TIME_STR))
     {
-        value = (int64_t)(cvtZToDouble(strZ(scalar)) * 1000);
+        value = cfgParseTime(scalar);
+    }
+    else if (strEq(optType, OPT_TYPE_SIZE_STR))
+    {
+        value = cfgParseSize(scalar);
     }
     else
     {
@@ -491,7 +495,7 @@ bldCfgRenderDefault(
         "                PARSE_RULE_OPTIONAL_DEFAULT\n"
         "                (\n");
 
-    if (!strEq(optType, OPT_TYPE_STRING_STR) && !strEq(optType, OPT_TYPE_PATH_STR) && !strEq(optType, OPT_TYPE_STRING_ID_STR))
+    if (!strEq(optType, OPT_TYPE_STRING_STR) && !strEq(optType, OPT_TYPE_PATH_STR))
         strCatFmt(result, "                    %s,\n", strZ(bldCfgRenderScalar(defaultValue, optType)));
 
     if (!strEq(optType, OPT_TYPE_BOOLEAN_STR))
@@ -508,6 +512,22 @@ bldCfgRenderDefault(
     strCatZ(result, "                )");
 
     return result;
+}
+
+// Helper to add values to value lists
+static void
+bldCfgRenderValueAdd(
+    const String *const optType, const String *const value, StringList *const ruleDataList, StringList *const ruleStrList)
+{
+    if (strEq(optType, OPT_TYPE_TIME_STR))
+        strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, cfgParseTime(value)));
+    else if (strEq(optType, OPT_TYPE_SIZE_STR))
+        strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, cfgParseSize(value)));
+    else
+        strLstAddIfMissing(ruleDataList, value);
+
+    if (ruleStrList != NULL && !strEq(optType, OPT_TYPE_STRING_STR) && !strEq(optType, OPT_TYPE_PATH_STR))
+        strLstAddIfMissing(ruleStrList, strNewFmt("\"%s\"", strZ(value)));
 }
 
 static void
@@ -745,16 +765,6 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             }
         }
 
-        // Determine if the option has an allow list. This will decide whether it is treated as a String or StringId. This should be
-        // replaced with a StringId type.
-        bool allowList = opt->allowList != NULL;
-
-        for (unsigned int optCmdIdx = 0; optCmdIdx < lstSize(opt->cmdList); optCmdIdx++)
-        {
-            if (((BldCfgOptionCommand *)lstGet(opt->cmdList, optCmdIdx))->allowList != NULL)
-                allowList = true;
-        }
-
         // Build default optional rules
         KeyValue *const optionalDefaultRule = kvNew();
         const Variant *const ruleDepend = VARSTRDEF("01-depend");
@@ -773,53 +783,24 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 optionalDefaultRule, ruleAllowRange,
                 VARSTR(bldCfgRenderAllowRange(opt->allowRangeMin, opt->allowRangeMax, opt->type)));
 
-            if (strEq(opt->type, OPT_TYPE_TIME_STR))
-            {
-                strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(opt->allowRangeMin)) * 1000)));
-                strLstAddIfMissing(ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(opt->allowRangeMax)) * 1000)));
-            }
-            else
-            {
-                strLstAddIfMissing(ruleDataList, opt->allowRangeMin);
-                strLstAddIfMissing(ruleDataList, opt->allowRangeMax);
-            }
+            bldCfgRenderValueAdd(opt->type, opt->allowRangeMin, ruleDataList, NULL);
+            bldCfgRenderValueAdd(opt->type, opt->allowRangeMax, ruleDataList, NULL);
         }
 
         if (opt->allowList != NULL)
         {
-            kvAdd(
-                optionalDefaultRule, ruleAllowList,
-                VARSTR(
-                    bldCfgRenderAllowList(
-                        opt->allowList, strEq(opt->type, OPT_TYPE_STRING_STR) ? OPT_TYPE_STRING_ID_STR : opt->type)));
+            kvAdd(optionalDefaultRule, ruleAllowList, VARSTR(bldCfgRenderAllowList(opt->allowList, opt->type)));
 
             for (unsigned int allowIdx = 0; allowIdx < strLstSize(opt->allowList); allowIdx++)
-                strLstAddIfMissing(ruleDataList, strLstGet(opt->allowList, allowIdx));
+                bldCfgRenderValueAdd(opt->type, strLstGet(opt->allowList, allowIdx), ruleDataList, NULL);
         }
 
         if (opt->defaultValue != NULL)
         {
-            kvAdd(
-                optionalDefaultRule, ruleDefault,
-                VARSTR(
-                    bldCfgRenderDefault(
-                        opt->defaultValue, opt->defaultLiteral,
-                        strEq(opt->type, OPT_TYPE_STRING_STR) && allowList ? OPT_TYPE_STRING_ID_STR : opt->type)));
+            kvAdd(optionalDefaultRule, ruleDefault, VARSTR(bldCfgRenderDefault(opt->defaultValue, opt->defaultLiteral, opt->type)));
 
             if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
-            {
-                if (strEq(opt->type, OPT_TYPE_TIME_STR))
-                {
-                    strLstAddIfMissing(
-                        ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(opt->defaultValue)) * 1000)));
-                }
-                else
-                    strLstAddIfMissing(ruleDataList, opt->defaultValue);
-
-                strLstAddIfMissing(
-                    ruleStrList,
-                    strNewFmt("%s%s%s", opt->defaultLiteral ? "" : "\"", strZ(opt->defaultValue), opt->defaultLiteral ? "" : "\""));
-            }
+                bldCfgRenderValueAdd(opt->type, opt->defaultValue, ruleDataList, ruleStrList);
         }
 
         // Build command optional rules
@@ -837,14 +818,10 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             // Allow lists
             if (optCmd->allowList != NULL)
             {
-                kvAdd(
-                    optionalCmdRuleType, ruleAllowList,
-                    VARSTR(
-                        bldCfgRenderAllowList(
-                            optCmd->allowList, strEq(opt->type, OPT_TYPE_STRING_STR) ? OPT_TYPE_STRING_ID_STR : opt->type)));
+                kvAdd(optionalCmdRuleType, ruleAllowList, VARSTR(bldCfgRenderAllowList(optCmd->allowList, opt->type)));
 
                 for (unsigned int allowIdx = 0; allowIdx < strLstSize(optCmd->allowList); allowIdx++)
-                    strLstAddIfMissing(ruleDataList, strLstGet(optCmd->allowList, allowIdx));
+                    bldCfgRenderValueAdd(opt->type, strLstGet(optCmd->allowList, allowIdx), ruleDataList, NULL);
             }
 
             // Defaults
@@ -852,27 +829,10 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             {
                 kvAdd(
                     optionalCmdRuleType, ruleDefault,
-                    VARSTR(
-                        bldCfgRenderDefault(
-                            optCmd->defaultValue, opt->defaultLiteral,
-                            strEq(opt->type, OPT_TYPE_STRING_STR) && allowList ? OPT_TYPE_STRING_ID_STR : opt->type)));
+                    VARSTR(bldCfgRenderDefault(optCmd->defaultValue, opt->defaultLiteral, opt->type)));
 
                 if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
-                {
-                    if (strEq(opt->type, OPT_TYPE_TIME_STR))
-                    {
-                        strLstAddIfMissing(
-                            ruleDataList, strNewFmt("%" PRId64, (int64_t)(cvtZToDouble(strZ(optCmd->defaultValue)) * 1000)));
-                    }
-                    else
-                        strLstAddIfMissing(ruleDataList, optCmd->defaultValue);
-
-                    strLstAddIfMissing(
-                        ruleStrList,
-                        strNewFmt(
-                            "%s%s%s", opt->defaultLiteral ? "" : "\"", strZ(optCmd->defaultValue),
-                            opt->defaultLiteral ? "" : "\""));
-                }
+                    bldCfgRenderValueAdd(opt->type, optCmd->defaultValue, ruleDataList, ruleStrList);
             }
 
             // Requires
@@ -1003,10 +963,11 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
         if (strEq(opt->type, OPT_TYPE_STRING_STR) || strEq(opt->type, OPT_TYPE_PATH_STR))
         {
-            if (allowList)
-                ruleAddList = ruleStrIdList;
-            else
-                ruleAddList = ruleStrList;
+            ruleAddList = ruleStrList;
+        }
+        else if (strEq(opt->type, OPT_TYPE_STRING_ID_STR))
+        {
+            ruleAddList = ruleStrIdList;
         }
         else
         {
@@ -1017,19 +978,20 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         for (unsigned int ruleDataIdx = 0; ruleDataIdx < strLstSize(ruleDataList); ruleDataIdx++)
         {
             if (ruleInt)
+            {
                 strLstAddIfMissing(ruleAddList, strNewFmt("%20s", strZ(strLstGet(ruleDataList, ruleDataIdx))));
+            }
+            else if (strEq(opt->type, OPT_TYPE_STRING_ID_STR))
+            {
+                strLstAddIfMissing(ruleAddList, strLstGet(ruleDataList, ruleDataIdx));
+            }
             else
             {
-                if (allowList)
-                    strLstAddIfMissing(ruleAddList, strLstGet(ruleDataList, ruleDataIdx));
-                else
-                {
-                    strLstAddIfMissing(
-                        ruleAddList,
-                        strNewFmt(
-                            "%s%s%s", opt->defaultLiteral ? "" : "\"", strZ(strLstGet(ruleDataList, ruleDataIdx)),
-                            opt->defaultLiteral ? "" : "\""));
-                }
+                strLstAddIfMissing(
+                    ruleAddList,
+                    strNewFmt(
+                        "%s%s%s", opt->defaultLiteral ? "" : "\"", strZ(strLstGet(ruleDataList, ruleDataIdx)),
+                        opt->defaultLiteral ? "" : "\""));
             }
         }
     }

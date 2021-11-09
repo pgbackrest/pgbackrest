@@ -711,9 +711,8 @@ testRun(void)
                 TEST_TITLE("ping server");
 
                 // Connect to server without any verification
-                IoClient *tlsClient = tlsClientNew(
-                    sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 5000, 5000, false, NULL, NULL,
-                    NULL, NULL);
+                IoClient *tlsClient = tlsClientNewP(
+                    sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 5000, 5000, false);
                 IoSession *tlsSession = ioClientOpen(tlsClient);
 
                 // Send ping

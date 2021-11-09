@@ -16,6 +16,7 @@ Command and Option Parse
 #include "common/macro.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "config/common.h"
 #include "config/config.intern.h"
 #include "config/parse.h"
 #include "version.h"
@@ -117,7 +118,7 @@ Define how an option is parsed and interacts with other options
 typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
-    unsigned int type:3;                                            // e.g. string, int, boolean
+    unsigned int type:4;                                            // e.g. string, int, boolean
     bool negate:1;                                                  // Can the option be negated on the command line?
     bool reset:1;                                                   // Can the option be reset on the command line?
     bool required:1;                                                // Is the option required?
@@ -687,6 +688,9 @@ cfgParseOptionDataType(const ConfigOption optionId)
         case cfgOptTypeList:
             FUNCTION_TEST_RETURN(cfgOptDataTypeList);
 
+        case cfgOptTypeStringId:
+            FUNCTION_TEST_RETURN(cfgOptDataTypeStringId);
+
         default:
             break;
     }
@@ -747,9 +751,6 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
         // If a depend list exists, make sure the value is in the list
         if (pckReadNext(filter))
         {
-            const StringId dependValueStrId = cfgParseOptionDataType(dependId) == cfgOptDataTypeString ?
-                strIdFromStr(dependValue->value.string) : 0;
-
             do
             {
                 switch (cfgParseOptionDataType(dependId))
@@ -760,9 +761,9 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
 
                     default:
                     {
-                        ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeString);
+                        ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeStringId);
 
-                        if (parseRuleValueStrId[pckReadU32P(filter)] == dependValueStrId)
+                        if (parseRuleValueStrId[pckReadU32P(filter)] == dependValue->value.stringId)
                             result = true;
                         break;
                     }
@@ -962,6 +963,11 @@ cfgParseOptionalRule(
 
                                         break;
                                     }
+
+                                    case cfgOptTypeStringId:
+                                        optionalRules->defaultValue.stringId = parseRuleValueStrId[pckReadU32P(ruleData)];
+                                        optionalRules->defaultRaw = (const String *)&parseRuleValueStr[pckReadU32P(ruleData)];
+                                        break;
                                 }
                             }
                         }
@@ -1135,104 +1141,6 @@ cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, Co
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
     FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandRoleValid[commandRoleId] & ((uint32_t)1 << commandId));
-}
-
-/***********************************************************************************************************************************
-Generate multiplier based on character
-***********************************************************************************************************************************/
-static uint64_t
-sizeQualifierToMultiplier(char qualifier)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CHAR, qualifier);
-    FUNCTION_TEST_END();
-
-    uint64_t result;
-
-    switch (qualifier)
-    {
-        case 'b':
-            result = 1;
-            break;
-
-        case 'k':
-            result = 1024;
-            break;
-
-        case 'm':
-            result = 1024 * 1024;
-            break;
-
-        case 'g':
-            result = 1024 * 1024 * 1024;
-            break;
-
-        case 't':
-            result = 1024LL * 1024LL * 1024LL * 1024LL;
-            break;
-
-        case 'p':
-            result = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
-            break;
-
-        default:
-            THROW_FMT(AssertError, "'%c' is not a valid size qualifier", qualifier);
-    }
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-static uint64_t
-convertToByte(const String *value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, value);
-    FUNCTION_TEST_END();
-
-    ASSERT(value != NULL);
-
-    // Lowercase the value
-    String *valueLower = strLower(strDup(value));
-
-    // Match the value against possible values
-    if (regExpMatchOne(STRDEF("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), valueLower))
-    {
-        // Get the character array and size
-        const char *strArray = strZ(valueLower);
-        size_t size = strSize(valueLower);
-        int chrPos = -1;
-
-        // If there is a 'b' on the end, then see if the previous character is a number
-        if (strArray[size - 1] == 'b')
-        {
-            // If the previous character is a number, then the letter to look at is 'b' which is the last position else it is in the
-            // next to last position (e.g. kb - so the 'k' is the position of interest).  Only need to test for <= 9 since the regex
-            // enforces the format.
-            if (strArray[size - 2] <= '9')
-                chrPos = (int)(size - 1);
-            else
-                chrPos = (int)(size - 2);
-        }
-        // else if there is no 'b' at the end but the last position is not a number then it must be one of the letters, e.g. 'k'
-        else if (strArray[size - 1] > '9')
-            chrPos = (int)(size - 1);
-
-        uint64_t multiplier = 1;
-
-        // If a letter was found calculate multiplier, else do nothing since assumed value is already in bytes
-        if (chrPos != -1)
-        {
-            multiplier = sizeQualifierToMultiplier(strArray[chrPos]);
-
-            // Remove any letters
-            strTrunc(valueLower, chrPos);
-        }
-
-        // Convert string to bytes
-        FUNCTION_TEST_RETURN(cvtZToUInt64(strZ(valueLower)) * multiplier);
-    }
-    else
-        THROW_FMT(FormatError, "value '%s' is not valid", strZ(value));
 }
 
 /***********************************************************************************************************************************
@@ -2126,7 +2034,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                                 default:
                                 {
-                                    ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeString);
+                                    ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeStringId);
 
                                     String *const errorList = strNew();
                                     unsigned int validSize = 0;
@@ -2235,16 +2143,14 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                                 break;
 
                                             case cfgOptTypeSize:
-                                                configOptionValue->value.integer = (int64_t)convertToByte(value);
-                                                valueAllow = varStrForce(VARINT64(configOptionValue->value.integer));
+                                                configOptionValue->value.integer = cfgParseSize(value);
                                                 break;
 
                                             default:
                                             {
                                                 ASSERT(optionType == cfgOptTypeTime);
 
-                                                configOptionValue->value.integer = (int64_t)(cvtZToDouble(
-                                                    strZ(value)) * MSEC_PER_SEC);
+                                                configOptionValue->value.integer = cfgParseTime(value);
                                                 break;
                                             }
                                         }
@@ -2266,6 +2172,11 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                             OptionInvalidValueError, "'%s' is out of range for '%s' option", strZ(value),
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
+                                }
+                                // Else if StringId
+                                else if (optionType == cfgOptTypeStringId)
+                                {
+                                    configOptionValue->value.stringId = strIdFromZN(strZ(valueAllow), strSize(valueAllow), false);
                                 }
                                 // Else if string make sure it is valid
                                 else
@@ -2324,13 +2235,11 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                     PackRead *const allowList = pckReadNewC(optionalRules.allowList, optionalRules.allowListSize);
                                     bool allowListFound = false;
 
-                                    if (parseRuleOption[optionId].type == cfgOptTypeString)
+                                    if (parseRuleOption[optionId].type == cfgOptTypeStringId)
                                     {
-                                        const StringId value = strIdFromZN(strZ(valueAllow), strSize(valueAllow), false);
-
                                         while (pckReadNext(allowList))
                                         {
-                                            if (parseRuleValueStrId[pckReadU32P(allowList)] == value)
+                                            if (parseRuleValueStrId[pckReadU32P(allowList)] == configOptionValue->value.stringId)
                                             {
                                                 allowListFound = true;
                                                 break;

@@ -1077,8 +1077,8 @@ storageS3New(
             host = driver->bucketEndpoint;
 
         driver->httpClient = httpClientNew(
-            tlsClientNew(
-                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, caFile, caPath, NULL, NULL),
+            tlsClientNewP(
+                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
             timeout);
 
         // Initialize authentication
@@ -1110,9 +1110,9 @@ storageS3New(
                 driver->credHost = S3_STS_HOST_STR;
                 driver->credExpirationTime = time(NULL);
                 driver->credHttpClient = httpClientNew(
-                    tlsClientNew(
+                    tlsClientNewP(
                         sckClientNew(driver->credHost, S3_STS_PORT, timeout, timeout), driver->credHost, timeout, timeout, true,
-                        caFile, caPath, NULL, NULL),
+                        .caFile = caFile, .caPath = caPath),
                     timeout);
 
                 break;

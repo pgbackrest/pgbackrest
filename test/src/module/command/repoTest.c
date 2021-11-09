@@ -45,12 +45,12 @@ testRun(void)
         TEST_TITLE("missing directory");
 
         Buffer *output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (text)");
         TEST_RESULT_STR_Z(strNewBuf(output), "", "check output");
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_JSON));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
@@ -65,12 +65,12 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), NULL, .mode = 0700);
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory (text)");
         TEST_RESULT_STR_Z(strNewBuf(output), "", "check output");
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_JSON));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
@@ -99,7 +99,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add path and file");
 
-        cfgOptionSet(cfgOptSort, cfgSourceParam, VARSTRDEF("asc"));
+        cfgOptionSet(cfgOptSort, cfgSourceParam, VARUINT64(CFGOPTVAL_SORT_ASC));
 
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), "bbb");
         HRN_STORAGE_PUT_Z(storageRepoWrite(), "aaa", "TESTDATA", .timeModified = 1578671569);
@@ -109,12 +109,12 @@ testRun(void)
         HRN_SYSTEM("mkfifo " TEST_PATH "/repo/pipe");
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
         TEST_RESULT_STR_Z(strNewBuf(output), "aaa\nbbb\nlink\npipe\n", "check output");
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("json"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_JSON));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
@@ -130,10 +130,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reverse sort");
 
-        cfgOptionSet(cfgOptSort, cfgSourceParam, VARSTRDEF("desc"));
+        cfgOptionSet(cfgOptSort, cfgSourceParam, VARUINT64(CFGOPTVAL_SORT_DESC));
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
         TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb\naaa\n", "check output");
 
@@ -143,7 +143,7 @@ testRun(void)
         cfgOptionSet(cfgOptRecurse, cfgSourceParam, VARBOOL(true));
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
         TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb/ccc\nbbb\naaa\n", "check output");
 
@@ -153,7 +153,7 @@ testRun(void)
         cfgOptionSet(cfgOptFilter, cfgSourceParam, VARSTRDEF("^aaa$"));
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
         TEST_RESULT_STR_Z(strNewBuf(output), "aaa\n", "check output");
 
@@ -165,7 +165,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "subdirectory");
         TEST_RESULT_STR_Z(strNewBuf(output), "ccc\n", "check output");
 

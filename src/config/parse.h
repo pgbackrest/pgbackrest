@@ -19,6 +19,7 @@ typedef enum
     cfgOptTypePath,                                                 // Path string with validation
     cfgOptTypeSize,                                                 // Size, e.g. 1m, 2gb
     cfgOptTypeString,                                               // String
+    cfgOptTypeStringId,                                             // StringId
     cfgOptTypeTime,                                                 // Time in seconds, e.g. 23, 1.5
 } ConfigOptionType;
 
@@ -32,6 +33,7 @@ typedef enum
     cfgOptDataTypeInteger,                                          // Signed 64-bit integer
     cfgOptDataTypeList,                                             // List
     cfgOptDataTypeString,                                           // String
+    cfgOptDataTypeStringId,                                         // StringId
 } ConfigOptionDataType;
 
 /***********************************************************************************************************************************
