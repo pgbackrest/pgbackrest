@@ -1157,7 +1157,7 @@ backupJobResult(
             // Format log strings
             const String *const logProgress =
                 strNewFmt(
-                    "%s, %" PRIu64 "%%", strZ(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : (*sizeProgress) * 100 / sizeTotal);
+                    "%s, %" PRIu64 "%%", strZ(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : *sizeProgress * 100 / sizeTotal);
             const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
 
             // If the file is in a prior backup and nothing changed, just log it
@@ -1169,6 +1169,9 @@ backupJobResult(
             // Else if the repo matched the expect checksum, just log it
             else if (copyResult == backupCopyResultChecksum)
             {
+                // Increment size to account for checksum resumed file
+                *sizeCopied += copySize;
+
                 LOG_DETAIL_PID_FMT(
                     processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
             }
