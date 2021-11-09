@@ -40,7 +40,7 @@
                         </commit>
 
                         <release-item-contributor-list>
-                            <release-item-ideator id="mahomedh"/>
+                            <release-item-ideator id="mahomed.h"/>
                             <release-item-contributor id="reid.thompson"/>
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
@@ -10718,8 +10718,8 @@
             <contributor-id type="github">mhagander</contributor-id>
         </contributor>
 
-        <contributor id="mahomedh">
-            <contributor-name-display>mahomedh</contributor-name-display>
+        <contributor id="mahomed.h">
+            <contributor-name-display>Mahomed</contributor-name-display>
             <contributor-id type="github">mahomedh</contributor-id>
         </contributor>
 
