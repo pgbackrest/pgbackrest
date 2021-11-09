@@ -1354,10 +1354,10 @@ testRun(void)
         OBJ_NEW_END();
 
         uint64_t sizeProgress = 0;
-        uint64_t sizeCopy = 0;
+        uint64_t sizeCopied = 0;
 
         TEST_RESULT_VOID(
-            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, &sizeProgress, &sizeCopy), "log noop result");
+            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, &sizeProgress, &sizeCopied), "log noop result");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:log-test (0B, 100%)");
     }

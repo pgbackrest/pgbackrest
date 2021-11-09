@@ -1115,7 +1115,7 @@ Log the results of a job and throw errors
 static void
 backupJobResult(
     Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t *sizeProgress, uint64_t *sizeCopy)
+    const uint64_t sizeTotal, uint64_t *sizeProgress, uint64_t *sizeCopied)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1125,7 +1125,7 @@ backupJobResult(
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
-        FUNCTION_LOG_PARAM_P(UINT64, sizeCopy);
+        FUNCTION_LOG_PARAM_P(UINT64, sizeCopied);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1184,7 +1184,7 @@ backupJobResult(
             else
             {
                 // Increment size of files copied
-                *sizeCopy += copySize;
+                *sizeCopied += copySize;
 
                 // If the file had to be recopied then warn that there may be an issue with corruption in the repository
                 // ??? This should really be below the message below for more context -- can be moved after the migration
@@ -1598,7 +1598,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     ASSERT(manifest != NULL);
 
     uint64_t sizeTotal = 0;
-    uint64_t sizeCopy = 0;
+    uint64_t sizeCopied = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1707,7 +1707,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
                             manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
-                        fileRemove, job, sizeTotal, &sizeProgress, &sizeCopy);
+                        fileRemove, job, sizeTotal, &sizeProgress, &sizeCopied);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
@@ -1785,7 +1785,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(UINT64, sizeCopy);
+    FUNCTION_LOG_RETURN(UINT64, sizeCopied);
 }
 
 /***********************************************************************************************************************************
