@@ -2521,11 +2521,15 @@
         <section if="{[protocol-tls]}" id="setup-tls">
             <title>Setup TLS Server</title>
 
+            <p>!!!</p>
+
             <block if="{[protocol-tls]}" id="setup-tls">
                 <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="setup-tls-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="setup-tls-group">{[br-group]}</block-variable-replace>
             </block>
+
+            <p>!!!</p>
 
             <block if="{[protocol-tls]}" id="setup-tls">
                 <block-variable-replace key="setup-tls-host">{[host-pg1]}</block-variable-replace>
