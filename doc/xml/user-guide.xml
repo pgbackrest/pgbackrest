@@ -350,7 +350,7 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim dnf-plugins-core 2>&amp;1
+        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl dnf-plugins-core 2>&amp;1
 
         # Enable PowerTools repository (only available on RHEL8)
         RUN dnf config-manager --set-enabled powertools || true
@@ -418,53 +418,35 @@
             </backrest-config>
 
             <execute-list host="{[setup-tls-host]}">
-                <title>Setup <host>{[setup-tls-host]}</host></title>
-
-                <execute user="root">
-                    <exe-cmd>mkdir -p -m 700 /etc/pgbackrest/cert</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>
-                        cp /pgbackrest/test/certificate/pgbackrest-test-client.key
-                        /etc/pgbackrest/cert/client.key
-                    </exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>
-                        cp /pgbackrest/test/certificate/pgbackrest-test-client.crt
-                        /etc/pgbackrest/cert/client.crt
-                    </exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>
-                        cp /pgbackrest/test/certificate/pgbackrest-test-server.key
-                        /etc/pgbackrest/cert/server.key
-                    </exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>
-                        cp /pgbackrest/test/certificate/pgbackrest-test-server.crt
-                        /etc/pgbackrest/cert/server.crt
-                    </exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>
-                        cp /pgbackrest/test/certificate/pgbackrest-test-ca.crt
-                            /etc/pgbackrest/cert/ca.crt</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chown -R {[setup-tls-user]} /etc/pgbackrest/cert</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chmod 600 /etc/pgbackrest/cert/server.key</exe-cmd>
-                </execute>
-                <execute user="root">
-                    <exe-cmd>chmod 600 /etc/pgbackrest/cert/client.key</exe-cmd>
-                </execute>
-            </execute-list>
-
-            <execute-list host="{[setup-tls-host]}">
                 <title>Setup pgBackRest server</title>
+
+                <execute user="root" user-force="y" show="n">
+                    <exe-cmd>
+                        mkdir -p -m 770 /etc/pgbackrest/cert &amp;&amp;
+                        cp {[pgbackrest-repo-path]}/doc/{[fake-cert-path-relative]}/ca.crt
+                            /etc/pgbackrest/cert/ca.crt &amp;&amp;
+
+                        openssl genrsa -out /etc/pgbackrest/cert/server.key 2048 2>&amp;1 &amp;&amp;
+                        chmod 600 /etc/pgbackrest/cert/server.key &amp;&amp;
+                        openssl req -new -sha256 -nodes -out /etc/pgbackrest/cert/server.csr
+                            -key /etc/pgbackrest/cert/server.key -subj "/CN={[setup-tls-host]}" 2>&amp;1 &amp;&amp;
+                        openssl x509 -req -in /etc/pgbackrest/cert/server.csr
+                            -CA /etc/pgbackrest/cert/ca.crt
+                            -CAkey {[pgbackrest-repo-path]}/doc/{[fake-cert-path-relative]}/ca.key -CAcreateserial
+                            -out /etc/pgbackrest/cert/server.crt -days 9 2>&amp;1 &amp;&amp;
+
+                        openssl genrsa -out /etc/pgbackrest/cert/client.key 2048 2>&amp;1 &amp;&amp;
+                        chmod 600 /etc/pgbackrest/cert/client.key &amp;&amp;
+                        openssl req -new -sha256 -nodes -out /etc/pgbackrest/cert/client.csr
+                            -key /etc/pgbackrest/cert/client.key -subj "/CN=pgbackrest-client" 2>&amp;1 &amp;&amp;
+                        openssl x509 -req -in /etc/pgbackrest/cert/client.csr
+                            -CA /etc/pgbackrest/cert/ca.crt
+                            -CAkey {[pgbackrest-repo-path]}/doc/{[fake-cert-path-relative]}/ca.key -CAcreateserial
+                            -out /etc/pgbackrest/cert/client.crt -days 9 2>&amp;1 &amp;&amp;
+
+                        chown -R {[setup-tls-user]} /etc/pgbackrest/cert
+                    </exe-cmd>
+                </execute>
 
                 <execute user="root" user-force="y" show="n">
                     <exe-cmd>
@@ -485,7 +467,8 @@
                         echo 'WantedBy=multi-user.target' | tee -a /etc/systemd/system/pgbackrest.service
                     </exe-cmd>
                 </execute>
-                <execute user="root">
+
+                <execute user="root" output="y">
                     <exe-cmd>cat /etc/systemd/system/pgbackrest.service</exe-cmd>
                 </execute>
                 <execute user="root">
