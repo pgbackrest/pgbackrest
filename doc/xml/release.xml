@@ -32,6 +32,23 @@
                     </release-item>
                 </release-feature-list>
 
+                <release-improvement-list>
+                    <release-item>
+                        <commit subject="Match backup log size with size reported by info command.">
+                            <github-issue id="766"/>
+                            <github-pull-request id="1562"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="mahomedh"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Make backup size logging exactly match <cmd>info</cmd> command output.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <github-pull-request id="1549"/>
@@ -10699,6 +10716,11 @@
         <contributor id="magnus.hagander">
             <contributor-name-display>Magnus Hagander</contributor-name-display>
             <contributor-id type="github">mhagander</contributor-id>
+        </contributor>
+
+        <contributor id="mahomedh">
+            <contributor-name-display>mahomedh</contributor-name-display>
+            <contributor-id type="github">mahomedh</contributor-id>
         </contributor>
 
         <contributor id="MannerMan">
