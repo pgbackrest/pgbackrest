@@ -88,7 +88,7 @@ Macros for defining groups of functions that implement various queries and comma
         : archiveMode},                                                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = archiveCommand == NULL ? PROJECT_BIN        \
         : archiveCommand},                                                                                                         \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,4]", .resultInt = 300},                                     \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,4]", .resultZ = STRINGIFY(versionParam)},                   \
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 

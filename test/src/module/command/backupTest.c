@@ -1688,6 +1688,8 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   WARN: start-fast is disabled and db-timeout (1800s) is smaller than the checkpoint_timeout (90500s)"
+                " reported by the database - timeout may occur before the backup actually starts\n"
                 "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
                 "P00   WARN: resumable backup 20191002-070640F of same type exists -- remove invalid files and resume\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
@@ -1827,6 +1829,8 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   WARN: start-fast is disabled and db-timeout (1800s) is smaller than the checkpoint_timeout (90500s)"
+                " reported by the database - timeout may occur before the backup actually starts\n"
                 "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
                 "P00   WARN: resumable backup 20191003-105320F of same type exists -- remove invalid files and resume\n"
                 "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/bogus_path' from resumed"
@@ -1990,6 +1994,8 @@ testRun(void)
                 "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
                 "P00   WARN: diff backup cannot alter compress-type option to 'none', reset to value in 20191003-105320F\n"
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   WARN: start-fast is disabled and db-timeout (1800s) is smaller than the checkpoint_timeout (90500s)"
+                " reported by the database - timeout may occur before the backup actually starts\n"
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   WARN: file 'time-mismatch2' has timestamp in the future, enabling delta checksum\n"
                 "P00   WARN: resumable backup 20191003-105320F_20191004-144000D of same type exists"
@@ -2306,6 +2312,8 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   WARN: start-fast is disabled and db-timeout (1800s) is smaller than the checkpoint_timeout (110000s)"
+                " reported by the database - timeout may occur before the backup actually starts\n"
                 "P00   INFO: backup start archive = 0000000105DB5DE000000000, lsn = 5db5de0/0\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (32KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksums found in file " TEST_PATH "/pg1/base/1/3 at pages 0, 2-3\n"
@@ -2432,6 +2440,8 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   WARN: start-fast is disabled and db-timeout (1800s) is smaller than the checkpoint_timeout (110000s)"
+                " reported by the database - timeout may occur before the backup actually starts\n"
                 "P00   INFO: backup start archive = 0000000105DB764000000000, lsn = 5db7640/0");
 
             // Remove partial backup so it won't be resumed (since it errored before any checksums were written)
@@ -2457,6 +2467,8 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
+            // With start-fast being disabled, increase db-timeout to be greater than checkpoint_timeout
+            hrnCfgArgRawZ(argList, cfgOptDbTimeout, "110001");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Update pg_control timestamp
