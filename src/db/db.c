@@ -251,7 +251,7 @@ dbOpen(Db *this)
             this->pub.pgDataPath = strDup(varStr(varLstGet(row, 1)));
             this->pub.archiveMode = strDup(varStr(varLstGet(row, 2)));
             this->pub.archiveCommand = strDup(varStr(varLstGet(row, 3)));
-            this->pub.checkpointTimeout = varUIntForce(varLstGet(row, 4));
+            this->pub.checkpointTimeout = (TimeMSec)(varUIntForce(varLstGet(row, 4))) * MSEC_PER_SEC;
         }
         MEM_CONTEXT_END();
 

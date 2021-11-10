@@ -30,7 +30,7 @@ typedef struct DbPub
     const String *archiveMode;                                      // The archive_mode reported by the database
     const String *archiveCommand;                                   // The archive_command reported by the database
     const String *pgDataPath;                                       // Data directory reported by the database
-    unsigned int checkpointTimeout;                                 // The checkpoint timeout reported by the database
+    TimeMSec checkpointTimeout;                                     // The checkpoint timeout reported by the database
     unsigned int pgVersion;                                         // Version as reported by the database
 } DbPub;
 
@@ -56,7 +56,7 @@ dbPgDataPath(const Db *const this)
 }
 
 // Checkpoint timeout loaded from the checkpoint_timeout GUC
-__attribute__((always_inline)) static inline unsigned int
+__attribute__((always_inline)) static inline TimeMSec
 dbCheckpointTimeout(const Db *const this)
 {
     return THIS_PUB(Db)->checkpointTimeout;
