@@ -386,6 +386,7 @@ unit:
         depend:
           - command/backup/pageChecksum
           - common/lock
+          - config/common
           - config/config
           - config/parse
           - config/exec
@@ -483,6 +484,7 @@ unit:
         total: 6
 
         coverage:
+          - config/common
           - config/config
           - config/parse
           - config/parse.auto: noCode
@@ -770,7 +772,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: help
-        total: 5
+        total: 4
 
         coverage:
           - command/help/help

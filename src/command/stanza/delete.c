@@ -17,39 +17,6 @@ Stanza Delete Command
 #include "protocol/helper.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Helper functions to assist with testing
-***********************************************************************************************************************************/
-static void
-manifestDelete(const Storage *storageRepoWriteStanza)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, storageRepoWriteStanza);
-    FUNCTION_TEST_END();
-
-    ASSERT(storageRepoWriteStanza != NULL);
-
-    // Get the list of backup directories from newest to oldest since don't want to invalidate a backup before
-    // invalidating any backups that depend on it.
-    StringList *backupList = strLstSort(
-        storageListP(
-            storageRepo(), STORAGE_REPO_BACKUP_STR,
-            .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
-        sortOrderDesc);
-
-    // Delete all manifest files
-    for (unsigned int idx = 0; idx < strLstSize(backupList); idx++)
-    {
-        storageRemoveP(
-            storageRepoWriteStanza, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(strLstGet(backupList, idx))));
-        storageRemoveP(
-            storageRepoWriteStanza,
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(strLstGet(backupList, idx))));
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 static bool
 stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveList, const StringList *backupList)
 {
@@ -106,9 +73,6 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                 storageRemoveP(storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR);
                 storageRemoveP(storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_COPY_STR);
             }
-
-            // Remove manifest files
-            manifestDelete(storageRepoWriteStanza);
         }
 
         // Recursively remove the entire stanza repo if exists. S3 will attempt to remove even if not.

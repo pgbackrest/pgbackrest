@@ -16,7 +16,52 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.37dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="1537"/>
+                        <github-pull-request id="1540"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="virgile.crevon"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>--cmd</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <commit subject="Match backup log size with size reported by info command.">
+                            <github-issue id="766"/>
+                            <github-pull-request id="1562"/>
+                        </commit>
+                        <commit subject="Update contributor for 6e635764."/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="mahomed.hussein"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Make backup size logging exactly match <cmd>info</cmd> command output.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1549"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Simplify error handler.</p>
+                    </release-item>
+
                     <release-item>
                         <commit subject="Simplify strIdFrom*() functions.">
                             <github-pull-request id="1551"/>
@@ -37,6 +82,24 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <commit subject="Centralize logic to build value lists during config rendering."/>
+                        <commit subject="Display size option default and allowed values with appropriate units.">
+                            <github-pull-request id="1557"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Display size option default and allowed values with appropriate units.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2021-11-01" version="2.36" title="Minor Bug Fixes and Improvements">
@@ -10656,6 +10719,11 @@
             <contributor-id type="github">mhagander</contributor-id>
         </contributor>
 
+        <contributor id="mahomed.hussein">
+            <contributor-name-display>Mahomed Hussein</contributor-name-display>
+            <contributor-id type="github">mahomedh</contributor-id>
+        </contributor>
+
         <contributor id="MannerMan">
             <contributor-name-display>Oscar</contributor-name-display>
             <contributor-id type="github">MannerMan</contributor-id>
@@ -10912,6 +10980,11 @@
         <contributor id="vitaliy.kukharik">
             <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
             <contributor-id type="github">vitabaks</contributor-id>
+        </contributor>
+
+        <contributor id="virgile.crevon">
+            <contributor-name-display>Virgile CREVON</contributor-name-display>
+            <contributor-id type="github">collectionneurfou</contributor-id>
         </contributor>
 
         <contributor id="vthriller">

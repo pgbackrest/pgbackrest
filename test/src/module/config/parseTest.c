@@ -593,14 +593,15 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("convertToByte()"))
     {
-        TEST_ERROR(sizeQualifierToMultiplier('w'), AssertError, "'w' is not a valid size qualifier");
-        TEST_RESULT_UINT(convertToByte(STRDEF("10B")), 10, "10B");
-        TEST_RESULT_UINT(convertToByte(STRDEF("1k")), 1024, "1k");
-        TEST_RESULT_UINT(convertToByte(STRDEF("5G")), (uint64_t)5 * 1024 * 1024 * 1024, "5G");
-        TEST_RESULT_UINT(convertToByte(STRDEF("3Tb")), (uint64_t)3 * 1024 * 1024 * 1024 * 1024, "3Tb");
-        TEST_RESULT_UINT(convertToByte(STRDEF("11")), 11, "11 - no qualifier, default bytes");
-        TEST_RESULT_UINT(convertToByte(STRDEF("4pB")), 4503599627370496, "4pB");
-        TEST_RESULT_UINT(convertToByte(STRDEF("15MB")), (uint64_t)15 * 1024 * 1024, "15MB");
+        TEST_ERROR(cfgParseSizeQualifier('w'), AssertError, "'w' is not a valid size qualifier");
+        TEST_RESULT_INT(cfgParseSize(STRDEF("10B")), 10, "10B");
+        TEST_RESULT_INT(cfgParseSize(STRDEF("1k")), 1024, "1k");
+        TEST_RESULT_INT(cfgParseSize(STRDEF("1KiB")), 1024, "1KiB");
+        TEST_RESULT_INT(cfgParseSize(STRDEF("5G")), (uint64_t)5 * 1024 * 1024 * 1024, "5G");
+        TEST_RESULT_INT(cfgParseSize(STRDEF("3Tb")), (uint64_t)3 * 1024 * 1024 * 1024 * 1024, "3Tb");
+        TEST_RESULT_INT(cfgParseSize(STRDEF("11")), 11, "11 - no qualifier, default bytes");
+        TEST_RESULT_INT(cfgParseSize(STRDEF("4pB")), 4503599627370496, "4pB");
+        TEST_RESULT_INT(cfgParseSize(STRDEF("15MB")), (uint64_t)15 * 1024 * 1024, "15MB");
     }
 
     // *****************************************************************************************************************************
@@ -958,10 +959,10 @@ testRun(void)
         strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "9999999999999999999p");
+        hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "999999999999999999p");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "'9999999999999999999p' is out of range for 'manifest-save-threshold' option");
+            "'999999999999999999p' is out of range for 'manifest-save-threshold' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("value missing");
@@ -1767,6 +1768,35 @@ testRun(void)
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "key/value 'a' not valid for 'recovery-option' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option cmd");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
+
+        TEST_RESULT_STR_Z(cfgExe(), "pgbackrest", "--cmd not provided; cfgExe() returns " TEST_BACKREST_EXE);
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCmd), TEST_PROJECT_EXE , "--cmd not provided; cmd is defaulted to " TEST_PROJECT_EXE);
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        hrnCfgArgRawZ(argList, cfgOptCmd, "pgbackrest_wrapper.sh");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
+
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCmd), "pgbackrest_wrapper.sh", "--cmd provided; cmd is returned as pgbackrest_wrapper.sh");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default job retry and valid duplicate options");

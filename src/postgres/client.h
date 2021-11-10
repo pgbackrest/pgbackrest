@@ -22,7 +22,54 @@ typedef struct PgClient PgClient;
 Constructors
 ***********************************************************************************************************************************/
 PgClient *pgClientNew(
-    const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec queryTimeout);
+    const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec timeout);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct PgClientPub
+{
+    const String *host;                                             // Pg host
+    unsigned int port;                                              // Pg port
+    const String *database;                                         // Pg database
+    const String *user;                                             // Pg user
+    TimeMSec timeout;                                               // Timeout for statements/queries
+} PgClientPub;
+
+// Pg host
+__attribute__((always_inline)) static inline const String *
+pgClientHost(const PgClient *const this)
+{
+    return THIS_PUB(PgClient)->host;
+}
+
+// Pg port
+__attribute__((always_inline)) static inline unsigned int
+pgClientPort(const PgClient *const this)
+{
+    return THIS_PUB(PgClient)->port;
+}
+
+// Pg database
+__attribute__((always_inline)) static inline const String *
+pgClientDatabase(const PgClient *const this)
+{
+    return THIS_PUB(PgClient)->database;
+}
+
+// Pg user
+__attribute__((always_inline)) static inline const String *
+pgClientUser(const PgClient *const this)
+{
+    return THIS_PUB(PgClient)->user;
+}
+
+// Timeout for statements/queries
+__attribute__((always_inline)) static inline TimeMSec
+pgClientTimeout(const PgClient *const this)
+{
+    return THIS_PUB(PgClient)->timeout;
+}
 
 /***********************************************************************************************************************************
 Functions

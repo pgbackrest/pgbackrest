@@ -114,7 +114,11 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                         else
                         {
                             valueList = strLstNew();
-                            strLstAdd(valueList, cfgOptionDisplayVar(value, cfgParseOptionType(optionId)));
+
+                            strLstAdd(
+                                valueList,
+                                exists ? cfgOptionDisplayVar(value, cfgParseOptionType(optionId)) :
+                                    cfgOptionIdxDisplay(optionId, optionIdx));
                         }
 
                         // Output options and values

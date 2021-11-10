@@ -666,12 +666,19 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                     // occurs then the backup will be considered unusable and a resume will not be attempted.
                     if (cfgOptionBool(cfgOptResume))
                     {
-                        reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
-
                         TRY_BEGIN()
                         {
                             manifestResume = manifestLoadFile(
                                 storageRepo(), manifestFile, cfgOptionStrId(cfgOptRepoCipherType), cipherPassBackup);
+                        }
+                        CATCH_ANY()
+                        {
+                            reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
+                        }
+                        TRY_END();
+
+                        if (manifestResume != NULL)
+                        {
                             const ManifestData *manifestResumeData = manifestData(manifestResume);
 
                             // Check pgBackRest version. This allows the resume implementation to be changed with each version of
@@ -712,10 +719,6 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             else
                                 usable = true;
                         }
-                        CATCH_ANY()
-                        {
-                        }
-                        TRY_END();
                     }
                 }
 
@@ -1124,10 +1127,10 @@ backupJobResultPageChecksum(PackRead *const checksumPageResult)
 /***********************************************************************************************************************************
 Log the results of a job and throw errors
 ***********************************************************************************************************************************/
-static uint64_t
+static void
 backupJobResult(
     Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t sizeCopied)
+    const uint64_t sizeTotal, uint64_t *sizeProgress, uint64_t *sizeCopied)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1136,7 +1139,8 @@ backupJobResult(
         FUNCTION_LOG_PARAM(STRING_LIST, fileRemove);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
-        FUNCTION_LOG_PARAM(UINT64, sizeCopied);
+        FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
+        FUNCTION_LOG_PARAM_P(UINT64, sizeCopied);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1160,7 +1164,7 @@ backupJobResult(
             PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
 
             // Increment backup copy progress
-            sizeCopied += copySize;
+            *sizeProgress += copySize;
 
             // Create log file name
             const String *fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strZ(host), strZ(fileName));
@@ -1168,7 +1172,7 @@ backupJobResult(
             // Format log strings
             const String *const logProgress =
                 strNewFmt(
-                    "%s, %" PRIu64 "%%", strZ(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : sizeCopied * 100 / sizeTotal);
+                    "%s, %" PRIu64 "%%", strZ(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : *sizeProgress * 100 / sizeTotal);
             const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
 
             // If the file is in a prior backup and nothing changed, just log it
@@ -1180,6 +1184,9 @@ backupJobResult(
             // Else if the repo matched the expect checksum, just log it
             else if (copyResult == backupCopyResultChecksum)
             {
+                // Increment size to account for checksum resumed file
+                *sizeCopied += copySize;
+
                 LOG_DETAIL_PID_FMT(
                     processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
             }
@@ -1194,6 +1201,9 @@ backupJobResult(
             // Else file was copied so update manifest
             else
             {
+                // Increment size of files copied
+                *sizeCopied += copySize;
+
                 // If the file had to be recopied then warn that there may be an issue with corruption in the repository
                 // ??? This should really be below the message below for more context -- can be moved after the migration
                 // ??? The name should be a pg path not manifest name -- can be fixed after the migration
@@ -1297,7 +1307,7 @@ backupJobResult(
     else
         THROW_CODE(protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
-    FUNCTION_LOG_RETURN(UINT64, sizeCopied);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -1374,8 +1384,8 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create list of process queue
-        *queueList = lstNewP(sizeof(List *));
+        // Create list of process queues (use void * instead of List * to avoid Coverity false positive)
+        *queueList = lstNewP(sizeof(void *));
 
         // Generate the list of targets
         StringList *targetList = strLstNew();
@@ -1606,6 +1616,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     ASSERT(manifest != NULL);
 
     uint64_t sizeTotal = 0;
+    uint64_t sizeCopied = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1696,7 +1707,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             manifestSaveSize = cfgOptionUInt64(cfgOptManifestSaveThreshold);
 
         // Process jobs
-        uint64_t sizeCopied = 0;
+        uint64_t sizeProgress = 0;
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
@@ -1708,23 +1719,23 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 {
                     ProtocolParallelJob *job = protocolParallelResult(parallelExec);
 
-                    sizeCopied = backupJobResult(
+                    backupJobResult(
                         manifest,
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
                             manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
-                        fileRemove, job, sizeTotal, sizeCopied);
+                        fileRemove, job, sizeTotal, &sizeProgress, &sizeCopied);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
                 protocolKeepAlive();
 
                 // Save the manifest periodically to preserve checksums for resume
-                if (sizeCopied - manifestSaveLast >= manifestSaveSize)
+                if (sizeProgress - manifestSaveLast >= manifestSaveSize)
                 {
                     backupManifestSaveCopy(manifest, cipherPassBackup);
-                    manifestSaveLast = sizeCopied;
+                    manifestSaveLast = sizeProgress;
                 }
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -1792,7 +1803,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(UINT64, sizeTotal);
+    FUNCTION_LOG_RETURN(UINT64, sizeCopied);
 }
 
 /***********************************************************************************************************************************
