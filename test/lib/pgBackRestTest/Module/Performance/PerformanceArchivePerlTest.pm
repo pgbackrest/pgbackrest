@@ -28,6 +28,7 @@ sub initModule
     my $self = shift;
 
     $self->{strSpoolPath} = $self->testPath() . '/spool';
+    $self->{strLogPath} = $self->testPath() . '/log';
 }
 
 ####################################################################################################################################
@@ -39,6 +40,7 @@ sub initTest
 
     # Create spool path
     storageTest()->pathCreate($self->{strSpoolPath}, {bIgnoreExists => true, bCreateParent => true});
+    storageTest()->pathCreate($self->{strLogPath}, {bIgnoreExists => true, bCreateParent => true});
 }
 
 ####################################################################################################################################
@@ -56,14 +58,20 @@ sub run
             storageTest()->openWrite(
                 'spool/archive/' . $self->stanza() . '/out/000000010000000100000001.ok', {bPathCreate => true}));
 
-        my $iRunTotal = 1;
+        my $iRunTotal = 100;
         my $lTimeBegin = gettimeofday();
 
         for (my $iIndex = 0; $iIndex < $iRunTotal; $iIndex++)
         {
-            executeTest(
+            my $iResult = system(
                 $self->backrestExe() . ' --stanza=' . $self->stanza() . ' --archive-async --spool-path=' . $self->{strSpoolPath} .
-                ' --archive-timeout=1 archive-push /pg_xlog/000000010000000100000001');
+                ' --log-level-file=detail --log-path=' . $self->{strLogPath} . ' --archive-timeout=1' .
+                ' --pg1-path=/not/used archive-push /pg_xlog/000000010000000100000001');
+
+            if ($iResult != 0)
+            {
+                confess "archive-push returned ${iResult}";
+            }
         }
 
         &log(INFO, 'time per execution: ' . ((gettimeofday() - $lTimeBegin) / $iRunTotal));
