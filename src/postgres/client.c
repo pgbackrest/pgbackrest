@@ -16,13 +16,8 @@ Object type
 ***********************************************************************************************************************************/
 struct PgClient
 {
-    const String *host;
-    unsigned int port;
-    const String *database;
-    const String *user;
-    TimeMSec queryTimeout;
-
-    PGconn *connection;
+    PgClientPub pub;                                                // Publicly accessible variables
+    PGconn *connection;                                             // Pg connection
 };
 
 /***********************************************************************************************************************************
@@ -46,14 +41,14 @@ pgClientFreeResource(THIS_VOID)
 
 /**********************************************************************************************************************************/
 PgClient *
-pgClientNew(const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec queryTimeout)
+pgClientNew(const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(STRING, database);
         FUNCTION_LOG_PARAM(STRING, user);
-        FUNCTION_LOG_PARAM(TIME_MSEC, queryTimeout);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(port >= 1 && port <= 65535);
@@ -67,11 +62,14 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
 
         *this = (PgClient)
         {
-            .host = strDup(host),
-            .port = port,
-            .database = strDup(database),
-            .user = strDup(user),
-            .queryTimeout = queryTimeout,
+            .pub =
+            {
+                .host = strDup(host),
+                .port = port,
+                .database = strDup(database),
+                .user = strDup(user),
+                .timeout = timeout,
+            },
         };
     }
     OBJ_NEW_END();
@@ -134,15 +132,16 @@ pgClientOpen(PgClient *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Base connection string
-        String *connInfo = strCatFmt(strNew(), "dbname=%s port=%u", strZ(pgClientEscape(this->database)), this->port);
+        String *connInfo = strCatFmt(
+            strNew(), "dbname=%s port=%u", strZ(pgClientEscape(pgClientDatabase(this))), pgClientPort(this));
 
         // Add user if specified
-        if (this->user != NULL)
-            strCatFmt(connInfo, " user=%s", strZ(pgClientEscape(this->user)));
+        if (pgClientUser(this) != NULL)
+            strCatFmt(connInfo, " user=%s", strZ(pgClientEscape(pgClientUser(this))));
 
         // Add host if specified
-        if (this->host != NULL)
-            strCatFmt(connInfo, " host=%s", strZ(pgClientEscape(this->host)));
+        if (pgClientHost(this) != NULL)
+            strCatFmt(connInfo, " host=%s", strZ(pgClientEscape(pgClientHost(this))));
 
         // Make the connection
         this->connection = PQconnectdb(strZ(connInfo));
@@ -192,7 +191,7 @@ pgClientQuery(PgClient *this, const String *query)
         }
 
         // Wait for a result
-        Wait *wait = waitNew(this->queryTimeout);
+        Wait *wait = waitNew(pgClientTimeout(this));
         bool busy = false;
 
         do
@@ -232,7 +231,7 @@ pgClientQuery(PgClient *this, const String *query)
         {
             // Throw timeout error if cancelled
             if (busy)
-                THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strZ(query), this->queryTimeout);
+                THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strZ(query), pgClientTimeout(this));
 
             // If this was a command that returned no results then we are done
             ExecStatusType resultStatus = PQresultStatus(pgResult);
@@ -357,6 +356,6 @@ String *
 pgClientToLog(const PgClient *this)
 {
     return strNewFmt(
-        "{host: %s, port: %u, database: %s, user: %s, queryTimeout %" PRIu64 "}", strZ(strToLog(this->host)), this->port,
-        strZ(strToLog(this->database)), strZ(strToLog(this->user)), this->queryTimeout);
+        "{host: %s, port: %u, database: %s, user: %s, queryTimeout %" PRIu64 "}", strZ(strToLog(pgClientHost(this))),
+        pgClientPort(this), strZ(strToLog(pgClientDatabase(this))), strZ(strToLog(pgClientUser(this))), pgClientTimeout(this));
 }
