@@ -27,7 +27,7 @@ testRun(void)
     {
         TEST_TITLE("server");
 
-        HRN_FORK_BEGIN(.timeout = 10000)
+        HRN_FORK_BEGIN(.timeout = 15000)
         {
             HRN_FORK_CHILD_BEGIN(.prefix = "client repo")
             {
@@ -112,20 +112,25 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN(.prefix = "client control")
             {
-                HRN_FORK_BEGIN(.timeout = 10000)
+                HRN_FORK_BEGIN(.timeout = 15000)
                 {
                     HRN_FORK_CHILD_BEGIN(.prefix = "server")
                     {
+                        // Write a config file to demonstrate that options are loaded and reloaded
+                        HRN_STORAGE_PUT_Z(
+                            storageTest,
+                            "pgbackrest.conf",
+                            "[global]\n"
+                            CFGOPT_TLS_SERVER_CA_FILE "=" HRN_SERVER_CA "\n"
+                            CFGOPT_TLS_SERVER_CERT_FILE "=" HRN_SERVER_CERT "\n"
+                            CFGOPT_TLS_SERVER_KEY_FILE "=" HRN_SERVER_KEY "\n"
+                            CFGOPT_TLS_SERVER_AUTH "=pgbackrest-client=db\n"
+                            "repo1-path=" TEST_PATH "/repo\n");
+
                         StringList *argList = strLstNew();
-                        hrnCfgArgRawZ(argList, cfgOptTlsServerCaFile, HRN_SERVER_CA);
-                        hrnCfgArgRawZ(argList, cfgOptTlsServerCertFile, HRN_SERVER_CERT);
-                        hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
-                        hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=db");
+                        hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
                         hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
                         HRN_CFG_LOAD(cfgCmdServerStart, argList);
-
-                        // Write a config file to demonstrate that settings are loaded
-                        HRN_STORAGE_PUT_Z(storageTest, "pgbackrest.conf", "[global]\nrepo1-path=" TEST_PATH "/repo");
 
                         // Init exit signal handlers
                         exitInit();
