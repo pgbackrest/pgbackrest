@@ -13,6 +13,7 @@ Server Command
 #include "common/io/socket/server.h"
 #include "common/io/tls/server.h"
 #include "config/config.h"
+#include "config/load.h"
 #include "protocol/helper.h"
 
 /***********************************************************************************************************************************
@@ -21,6 +22,9 @@ Local variables
 static struct ServerLocal
 {
     MemContext *memContext;                                         // Mem context for server
+
+    unsigned int argListSize;                                       // Argument list size
+    const char **argList;                                           // Argument list
 
     IoServer *tlsServer;                                            // TLS Server
 } serverLocal;
@@ -47,7 +51,7 @@ cmdServerInit(void)
 
     MEM_CONTEXT_BEGIN(serverLocal.memContext)
     {
-        // Free the old TLS server, if any
+        // Free the old TLS server
         ioServerFree(serverLocal.tlsServer);
 
         // Create new TLS server
@@ -59,14 +63,40 @@ cmdServerInit(void)
     MEM_CONTEXT_END();
 }
 
+/***********************************************************************************************************************************
+Handler to reload configuration on SIGHUP
+***********************************************************************************************************************************/
+static void
+cmdServerSigHup(int signalType)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, signalType);
+    FUNCTION_LOG_END();
+
+    // Reload configuration
+    cfgLoad(serverLocal.argListSize, serverLocal.argList);
+
+    // Reinitialize server
+    cmdServerInit();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 void
-cmdServer(void)
+cmdServer(const unsigned int argListSize, const char *argList[])
 {
-    FUNCTION_LOG_VOID(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, argListSize);
+        FUNCTION_LOG_PARAM(CHARPY, argList);
+    FUNCTION_LOG_END();
 
     // Initialize server
     cmdServerInit();
+
+    // Set arguments used for reload
+    serverLocal.argListSize = argListSize;
+    serverLocal.argList = argList;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -76,48 +106,54 @@ cmdServer(void)
         // Do not error when exiting on SIGTERM
         exitErrorOnSigTerm(false);
 
+        // Handler to reload configuration on SIGHUP
+        signal(SIGHUP, cmdServerSigHup);
+
         // Accept connections indefinitely. The only way to exit this loop is for the process to receive a signal.
         do
         {
             // Accept a new connection
             IoSession *const socketSession = ioServerAccept(socketServer, NULL);
 
-            // Fork off the child process
-            pid_t pid = forkSafe();
-
-            if (pid == 0)
+            if (socketSession != NULL)
             {
-                // Close the server socket so we don't hold the port open if the parent exits first
-                ioServerFree(socketServer);
+                // Fork off the child process
+                pid_t pid = forkSafe();
 
-                // Disable logging and close log file
-                logClose();
+                if (pid == 0)
+                {
+                    // Close the server socket so we don't hold the port open if the parent exits first
+                    ioServerFree(socketServer);
 
-                // Detach from parent process
-                forkDetach();
+                    // Disable logging and close log file
+                    logClose();
 
-                // Start standard remote processing if a server is returned
-                ProtocolServer *server = protocolServer(serverLocal.tlsServer, socketSession);
+                    // Detach from parent process
+                    forkDetach();
 
-                if (server != NULL)
-                    cmdRemote(server);
+                    // Start standard remote processing if a server is returned
+                    ProtocolServer *server = protocolServer(serverLocal.tlsServer, socketSession);
 
-                break;
+                    if (server != NULL)
+                        cmdRemote(server);
+
+                    break;
+                }
+                // Wait for first fork to exit
+                else
+                {
+                    // The process that was just forked should return immediately
+                    int processStatus;
+
+                    THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
+
+                    // The first fork should exit with success. If not, something went wrong during the second fork.
+                    CHECK(WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0);
+                }
+
+                // Free the socket since the child is now using it
+                ioSessionFree(socketSession);
             }
-            // Wait for first fork to exit
-            else
-            {
-                // The process that was just forked should return immediately
-                int processStatus;
-
-                THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
-
-                // The first fork should exit with success. If not, something went wrong during the second fork.
-                CHECK(WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0);
-            }
-
-            // Free the socket since the child is now using it
-            ioSessionFree(socketSession);
         }
         while (true);
     }

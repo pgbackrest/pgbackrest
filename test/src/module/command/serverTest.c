@@ -27,7 +27,7 @@ testRun(void)
     {
         TEST_TITLE("server");
 
-        HRN_FORK_BEGIN(.timeout = 15000)
+        HRN_FORK_BEGIN(.timeout = 10000)
         {
             HRN_FORK_CHILD_BEGIN(.prefix = "client repo")
             {
@@ -112,7 +112,7 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN(.prefix = "client control")
             {
-                HRN_FORK_BEGIN(.timeout = 15000)
+                HRN_FORK_BEGIN(.timeout = 10000)
                 {
                     HRN_FORK_CHILD_BEGIN(.prefix = "server")
                     {
@@ -135,15 +135,17 @@ testRun(void)
                         // Init exit signal handlers
                         exitInit();
 
-                        cmdServerInit(); // REMOVE !!!
-
                         // No log testing needed
                         harnessLogLevelSet(logLevelWarn);
 
                         // Get pid of this process to identify child process later
                         pid_t pid = getpid();
 
-                        TEST_RESULT_VOID(cmdServer(), "server");
+                        // Add parameters to arg list required for a reload
+                        strLstInsert(argList, 0, cfgExe());
+                        strLstAddZ(argList, CFGCMD_SERVER_START);
+
+                        TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");
 
                         // If this is a child process then exit immediately
                         if (pid != getpid())
@@ -156,12 +158,13 @@ testRun(void)
 
                     HRN_FORK_PARENT_BEGIN(.prefix = "server control")
                     {
-                        // Wait for forked child processes to exit
+                        // Wait for forked server processes to exit
                         HRN_FORK_PARENT_NOTIFY_GET(0);
+                        kill(HRN_FORK_PROCESS_ID(0), SIGHUP);
                         HRN_FORK_PARENT_NOTIFY_GET(0);
                         HRN_FORK_PARENT_NOTIFY_GET(0);
 
-                        // Send term to child processes
+                        // Send term to server processes
                         kill(HRN_FORK_PROCESS_ID(0), SIGTERM);
                     }
                     HRN_FORK_PARENT_END();
@@ -194,7 +197,7 @@ testRun(void)
 
         TEST_ERROR(cmdServerPing(), ParamInvalidError, "extra parameters found");
 
-        HRN_FORK_BEGIN(.timeout = 5000)
+        HRN_FORK_BEGIN(.timeout = 10000)
         {
 
             HRN_FORK_CHILD_BEGIN(.prefix = "client")
@@ -224,7 +227,7 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN(.prefix = "client control")
             {
-                HRN_FORK_BEGIN(.timeout = 5000)
+                HRN_FORK_BEGIN(.timeout = 10000)
                 {
                     HRN_FORK_CHILD_BEGIN(.prefix = "server")
                     {
@@ -245,7 +248,7 @@ testRun(void)
                         // Get pid of this process to identify child process later
                         pid_t pid = getpid();
 
-                        TEST_RESULT_VOID(cmdServer(), "server");
+                        TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");
 
                         // If this is a child process then exit immediately
                         if (pid != getpid())

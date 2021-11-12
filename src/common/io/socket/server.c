@@ -96,18 +96,21 @@ sckServerAccept(THIS_VOID, IoSession *const session)
 
         int serverSocket = accept(this->socket, (struct sockaddr *)&addr, &len);
 
-        THROW_ON_SYS_ERROR(serverSocket == -1, FileOpenError, "unable to accept socket");
-
-        // Create socket session
-        sckOptionSet(serverSocket);
-
-        MEM_CONTEXT_PRIOR_BEGIN()
+        if (serverSocket != -1)
         {
-            result = sckSessionNew(ioSessionRoleServer, serverSocket, this->address, this->port, this->timeout);
-        }
-        MEM_CONTEXT_PRIOR_END();
+            // Create socket session
+            sckOptionSet(serverSocket);
 
-        statInc(SOCKET_STAT_SESSION_STR);
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result = sckSessionNew(ioSessionRoleServer, serverSocket, this->address, this->port, this->timeout);
+            }
+            MEM_CONTEXT_PRIOR_END();
+
+            statInc(SOCKET_STAT_SESSION_STR);
+        }
+        else if (errno != EINTR)
+            THROW_ON_SYS_ERROR(true, FileOpenError, "unable to accept socket");
     }
     MEM_CONTEXT_TEMP_END();
 
