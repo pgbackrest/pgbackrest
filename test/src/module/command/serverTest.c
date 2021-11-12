@@ -27,7 +27,7 @@ testRun(void)
     {
         TEST_TITLE("server");
 
-        HRN_FORK_BEGIN(.timeout = 5000)
+        HRN_FORK_BEGIN(.timeout = 10000)
         {
             HRN_FORK_CHILD_BEGIN(.prefix = "client repo")
             {
@@ -112,7 +112,7 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN(.prefix = "client control")
             {
-                HRN_FORK_BEGIN(.timeout = 5000)
+                HRN_FORK_BEGIN(.timeout = 10000)
                 {
                     HRN_FORK_CHILD_BEGIN(.prefix = "server")
                     {
@@ -129,6 +129,8 @@ testRun(void)
 
                         // Init exit signal handlers
                         exitInit();
+
+                        cmdServerInit(); // REMOVE !!!
 
                         // No log testing needed
                         harnessLogLevelSet(logLevelWarn);

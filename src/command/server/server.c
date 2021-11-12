@@ -15,25 +15,68 @@ Server Command
 #include "config/config.h"
 #include "protocol/helper.h"
 
+/***********************************************************************************************************************************
+Local variables
+***********************************************************************************************************************************/
+static struct ServerLocal
+{
+    MemContext *memContext;                                         // Mem context for server
+
+    IoServer *tlsServer;                                            // TLS Server
+} serverLocal;
+
+/***********************************************************************************************************************************
+Initialization can be redone when options change
+***********************************************************************************************************************************/
+static void
+cmdServerInit(void)
+{
+    // Initialize mem context
+    if (serverLocal.memContext == NULL)
+    {
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            MEM_CONTEXT_NEW_BEGIN("Server")
+            {
+                serverLocal.memContext = MEM_CONTEXT_NEW();
+            }
+            MEM_CONTEXT_NEW_END();
+        }
+        MEM_CONTEXT_END();
+    }
+
+    MEM_CONTEXT_BEGIN(serverLocal.memContext)
+    {
+        // Free the old TLS server, if any
+        ioServerFree(serverLocal.tlsServer);
+
+        // Create new TLS server
+        serverLocal.tlsServer = tlsServerNew(
+            cfgOptionStr(cfgOptTlsServerAddress), cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile),
+            cfgOptionStr(cfgOptTlsServerCertFile), cfgOptionStrNull(cfgOptTlsServerCrlFile),
+            cfgOptionUInt64(cfgOptProtocolTimeout));
+    }
+    MEM_CONTEXT_END();
+}
+
 /**********************************************************************************************************************************/
 void
 cmdServer(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // Do not error when exiting on SIGTERM
-    exitErrorOnSigTerm(false);
+    // Initialize server
+    cmdServerInit();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        IoServer *const tlsServer = tlsServerNew(
-           cfgOptionStr(cfgOptTlsServerAddress), cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile),
-           cfgOptionStr(cfgOptTlsServerCertFile), cfgOptionStrNull(cfgOptTlsServerCrlFile), cfgOptionUInt64(cfgOptProtocolTimeout));
         IoServer *const socketServer = sckServerNew(
             cfgOptionStr(cfgOptTlsServerAddress), cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
 
-        // Accept connections until connection max is reached. !!! THIS IS A HACK TO LIMIT THE LOOP AND ALLOW TESTING. IT SHOULD BE
-        // REPLACED WITH A STOP REQUEST FROM AN AUTHENTICATED CLIENT OR SIGQUIT.
+        // Do not error when exiting on SIGTERM
+        exitErrorOnSigTerm(false);
+
+        // Accept connections indefinitely. The only way to exit this loop is for the process to receive a signal.
         do
         {
             // Accept a new connection
@@ -54,7 +97,7 @@ cmdServer(void)
                 forkDetach();
 
                 // Start standard remote processing if a server is returned
-                ProtocolServer *server = protocolServer(tlsServer, socketSession);
+                ProtocolServer *server = protocolServer(serverLocal.tlsServer, socketSession);
 
                 if (server != NULL)
                     cmdRemote(server);
