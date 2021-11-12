@@ -27,7 +27,7 @@ testRun(void)
     {
         TEST_TITLE("server");
 
-        HRN_FORK_BEGIN(.timeout = 10000)
+        HRN_FORK_BEGIN(.timeout = 15000)
         {
             HRN_FORK_CHILD_BEGIN(.prefix = "client repo")
             {
@@ -112,7 +112,7 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN(.prefix = "client control")
             {
-                HRN_FORK_BEGIN(.timeout = 10000)
+                HRN_FORK_BEGIN(.timeout = 15000)
                 {
                     HRN_FORK_CHILD_BEGIN(.prefix = "server")
                     {
@@ -197,7 +197,7 @@ testRun(void)
 
         TEST_ERROR(cmdServerPing(), ParamInvalidError, "extra parameters found");
 
-        HRN_FORK_BEGIN(.timeout = 10000)
+        HRN_FORK_BEGIN(.timeout = 15000)
         {
 
             HRN_FORK_CHILD_BEGIN(.prefix = "client")
@@ -227,7 +227,7 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN(.prefix = "client control")
             {
-                HRN_FORK_BEGIN(.timeout = 10000)
+                HRN_FORK_BEGIN(.timeout = 15000)
                 {
                     HRN_FORK_CHILD_BEGIN(.prefix = "server")
                     {

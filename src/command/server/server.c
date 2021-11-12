@@ -26,7 +26,8 @@ static struct ServerLocal
     unsigned int argListSize;                                       // Argument list size
     const char **argList;                                           // Argument list
 
-    IoServer *tlsServer;                                            // TLS Server
+    IoServer *socketServer;                                         // Socket server
+    IoServer *tlsServer;                                            // TLS server
 } serverLocal;
 
 /***********************************************************************************************************************************
@@ -51,10 +52,13 @@ cmdServerInit(void)
 
     MEM_CONTEXT_BEGIN(serverLocal.memContext)
     {
-        // Free the old TLS server
+        // Free old servers
+        ioServerFree(serverLocal.socketServer);
         ioServerFree(serverLocal.tlsServer);
 
-        // Create new TLS server
+        // Create new servers
+        serverLocal.socketServer = sckServerNew(
+            cfgOptionStr(cfgOptTlsServerAddress), cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
         serverLocal.tlsServer = tlsServerNew(
             cfgOptionStr(cfgOptTlsServerAddress), cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile),
             cfgOptionStr(cfgOptTlsServerCertFile), cfgOptionStrNull(cfgOptTlsServerCrlFile),
@@ -100,9 +104,6 @@ cmdServer(const unsigned int argListSize, const char *argList[])
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        IoServer *const socketServer = sckServerNew(
-            cfgOptionStr(cfgOptTlsServerAddress), cfgOptionUInt(cfgOptTlsServerPort), cfgOptionUInt64(cfgOptProtocolTimeout));
-
         // Do not error when exiting on SIGTERM
         exitErrorOnSigTerm(false);
 
@@ -113,7 +114,7 @@ cmdServer(const unsigned int argListSize, const char *argList[])
         do
         {
             // Accept a new connection
-            IoSession *const socketSession = ioServerAccept(socketServer, NULL);
+            IoSession *const socketSession = ioServerAccept(serverLocal.socketServer, NULL);
 
             if (socketSession != NULL)
             {
@@ -123,7 +124,7 @@ cmdServer(const unsigned int argListSize, const char *argList[])
                 if (pid == 0)
                 {
                     // Close the server socket so we don't hold the port open if the parent exits first
-                    ioServerFree(socketServer);
+                    ioServerFree(serverLocal.socketServer);
 
                     // Disable logging and close log file
                     logClose();
