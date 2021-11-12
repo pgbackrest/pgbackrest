@@ -26,6 +26,9 @@ static struct ServerLocal
     unsigned int argListSize;                                       // Argument list size
     const char **argList;                                           // Argument list
 
+    bool sigHup;                                                    // SIGHUP was caught
+    bool sigTerm;                                                   // SIGTERM was caught
+
     IoServer *socketServer;                                         // Socket server
     IoServer *tlsServer;                                            // TLS server
 } serverLocal;
@@ -68,22 +71,20 @@ cmdServerInit(void)
 }
 
 /***********************************************************************************************************************************
-Handler to reload configuration on SIGHUP
+Handlers to set flags on signals
 ***********************************************************************************************************************************/
 static void
 cmdServerSigHup(int signalType)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, signalType);
-    FUNCTION_LOG_END();
+    (void)signalType;
+    serverLocal.sigHup = true;
+}
 
-    // Reload configuration
-    cfgLoad(serverLocal.argListSize, serverLocal.argList);
-
-    // Reinitialize server
-    cmdServerInit();
-
-    FUNCTION_LOG_RETURN_VOID();
+static void
+cmdServerSigTerm(int signalType)
+{
+    (void)signalType;
+    serverLocal.sigTerm = true;
 }
 
 /**********************************************************************************************************************************/
@@ -104,11 +105,10 @@ cmdServer(const unsigned int argListSize, const char *argList[])
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Do not error when exiting on SIGTERM
-        exitErrorOnSigTerm(false);
-
-        // Handler to reload configuration on SIGHUP
-        signal(SIGHUP, cmdServerSigHup);
+        // Set signal handlers
+        sigaction(SIGHUP, &(struct sigaction){.sa_handler = cmdServerSigHup}, NULL);
+        sigaction(SIGTERM, &(struct sigaction){.sa_handler = cmdServerSigTerm}, NULL);
+        sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
 
         // Accept connections indefinitely. The only way to exit this loop is for the process to receive a signal.
         do
@@ -129,9 +129,6 @@ cmdServer(const unsigned int argListSize, const char *argList[])
                     // Disable logging and close log file
                     logClose();
 
-                    // Detach from parent process
-                    forkDetach();
-
                     // Start standard remote processing if a server is returned
                     ProtocolServer *server = protocolServer(serverLocal.tlsServer, socketSession);
 
@@ -140,25 +137,33 @@ cmdServer(const unsigned int argListSize, const char *argList[])
 
                     break;
                 }
-                // Wait for first fork to exit
-                else
-                {
-                    // The process that was just forked should return immediately
-                    int processStatus;
-
-                    THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
-
-                    // The first fork should exit with success. If not, something went wrong during the second fork.
-                    CHECK(WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0);
-                }
 
                 // Free the socket since the child is now using it
                 ioSessionFree(socketSession);
             }
+
+            // Reload configuration
+            if (serverLocal.sigHup)
+            {
+                LOG_DETAIL("configuration reload begin");
+
+                // Reload configuration
+                cfgLoad(serverLocal.argListSize, serverLocal.argList);
+
+                // Reinitialize server
+                cmdServerInit();
+
+                LOG_DETAIL("configuration reload end");
+
+                // Reset flag
+                serverLocal.sigHup = false;
+            }
         }
-        while (true);
+        while (!serverLocal.sigTerm);
     }
     MEM_CONTEXT_TEMP_END();
+
+    // !!! TERMINATE REMAINING CHILD PROCESSES
 
     FUNCTION_LOG_RETURN_VOID();
 }

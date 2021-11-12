@@ -23,9 +23,6 @@ Functions
 // Setup signal handlers
 void exitInit(void);
 
-// Error on SIGTERM? Defaults to true.
-void exitErrorOnSigTerm(bool errorOnSigTerm);
-
 // Do cleanup and return result code
 int exitSafe(int result, bool error, SignalType signalType);
 

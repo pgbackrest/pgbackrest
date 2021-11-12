@@ -3460,7 +3460,7 @@
                     <title>Load data</title>
 
                     <execute user="postgres">
-                        <exe-cmd>pgbench -n -i -s {[stress-scale-data]}</exe-cmd>
+                        <exe-cmd>{[pg-bin-path]}/pgbench -n -i -s {[stress-scale-data]}</exe-cmd>
                         <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
                     </execute>
                 </execute-list>

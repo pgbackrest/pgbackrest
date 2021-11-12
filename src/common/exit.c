@@ -17,14 +17,6 @@ Exit Routines
 #include "version.h"
 
 /***********************************************************************************************************************************
-Local variables
-***********************************************************************************************************************************/
-static struct ExitLocal
-{
-    bool errorOnSigTerm;                                            // Error on SIGTERM?
-} exitLocal;
-
-/***********************************************************************************************************************************
 Return signal names
 ***********************************************************************************************************************************/
 static const char *
@@ -67,7 +59,7 @@ exitOnSignal(int signalType)
         FUNCTION_LOG_PARAM(INT, signalType);
     FUNCTION_LOG_END();
 
-    exit(exitSafe(exitLocal.errorOnSigTerm ? errorTypeCode(&TermError) : 0, false, (SignalType)signalType));
+    exit(exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -78,27 +70,12 @@ exitInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    exitLocal = (struct ExitLocal){.errorOnSigTerm = true};
-
     signal(SIGHUP, exitOnSignal);
     signal(SIGINT, exitOnSignal);
     signal(SIGTERM, exitOnSignal);
 
     // Ignore SIGPIPE and check for EPIPE errors on write() instead
     signal(SIGPIPE, SIG_IGN);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-exitErrorOnSigTerm(const bool errorOnSigTerm)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, errorOnSigTerm);
-    FUNCTION_LOG_END();
-
-    exitLocal.errorOnSigTerm = errorOnSigTerm;
 
     FUNCTION_LOG_RETURN_VOID();
 }

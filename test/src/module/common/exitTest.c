@@ -30,8 +30,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
-        TEST_TITLE("exit on SIGTERM with error");
-
         HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
 
         HRN_FORK_BEGIN()
@@ -39,21 +37,6 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN(.expectedExitStatus = errorTypeCode(&TermError))
             {
                 exitInit();
-                raise(SIGTERM);
-            }
-            HRN_FORK_CHILD_END();                               // {uncoverable - signal is raised in block}
-        }
-        HRN_FORK_END();
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("exit on SIGTERM with no error");
-
-        HRN_FORK_BEGIN()
-        {
-            HRN_FORK_CHILD_BEGIN()
-            {
-                exitInit();
-                exitErrorOnSigTerm(false);
                 raise(SIGTERM);
             }
             HRN_FORK_CHILD_END();                               // {uncoverable - signal is raised in block}
