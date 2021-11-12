@@ -16,11 +16,9 @@ Server Command
 
 /**********************************************************************************************************************************/
 void
-cmdServer(uint64_t connectionMax)
+cmdServer(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
-
-    ASSERT(connectionMax > 0);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -74,7 +72,7 @@ cmdServer(uint64_t connectionMax)
             // Free the socket since the child is now using it
             ioSessionFree(socketSession);
         }
-        while (--connectionMax > 0);
+        while (true);
     }
     MEM_CONTEXT_TEMP_END();
 
