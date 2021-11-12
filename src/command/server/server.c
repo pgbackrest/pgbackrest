@@ -8,6 +8,7 @@ Server Command
 #include "command/remote/remote.h"
 #include "command/server/server.h"
 #include "common/debug.h"
+#include "common/exit.h"
 #include "common/fork.h"
 #include "common/io/socket/server.h"
 #include "common/io/tls/server.h"
@@ -19,6 +20,9 @@ void
 cmdServer(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
+
+    // Do not error when exiting on SIGTERM
+    exitErrorOnSigTerm(false);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
