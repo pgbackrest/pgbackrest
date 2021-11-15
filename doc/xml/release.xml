@@ -98,6 +98,16 @@
 
                         <p>Display size option default and allowed values with appropriate units.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="reid.thompson"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix typos and improve documentation for the <br-option>tablespace-map-all</br-option> option.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-doc-list>
         </release>
