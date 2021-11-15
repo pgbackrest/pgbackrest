@@ -147,6 +147,12 @@ cmdServer(const unsigned int argListSize, const char *argList[])
 
                 if (pid == 0)
                 {
+                    // Reset SIGCHLD to default
+                    sigaction(SIGCHLD, &(struct sigaction){.sa_handler = SIG_DFL}, NULL);
+
+                    // Set standard signal handlers
+                    exitInit();
+
                     // Close the server socket so we don't hold the port open if the parent exits first
                     ioServerFree(serverLocal.socketServer);
 
@@ -190,15 +196,18 @@ cmdServer(const unsigned int argListSize, const char *argList[])
     }
     MEM_CONTEXT_TEMP_END();
 
-    // Terminate any remaining children. Disable the callback so it does not fire in the middle of this loop.
-    sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
-
-    for (unsigned int processIdx  = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
+    // Terminate any remaining children on SIGTERM. Disable the callback so it does not fire in the middle of the loop.
+    if (serverLocal.sigTerm)
     {
-        pid_t pid = *(int *)lstGet(serverLocal.processList, processIdx);
+        sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
 
-        LOG_WARN_FMT("terminate child process %d", pid);
-        kill(pid, SIGTERM);
+        for (unsigned int processIdx  = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
+        {
+            pid_t pid = *(int *)lstGet(serverLocal.processList, processIdx);
+
+            LOG_WARN_FMT("terminate child process %d", pid);
+            kill(pid, SIGTERM);
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
