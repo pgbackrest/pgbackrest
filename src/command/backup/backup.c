@@ -888,7 +888,7 @@ backupStart(BackupData *backupData)
 Stop the backup
 ***********************************************************************************************************************************/
 // Helper to write a file from a string to the repository and update the manifest
-static void
+static uint64_t
 backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, time_t timestamp, const String *content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -899,9 +899,13 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         FUNCTION_LOG_PARAM(STRING, content);
     FUNCTION_LOG_END();
 
+    uint64_t fileSize = 0;
+
     // Skip files with no content
     if (content != NULL)
     {
+        fileSize = strSize(content);
+
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Create file
@@ -964,7 +968,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(UINT64, fileSize);
 }
 
 /*--------------------------------------------------------------------------------------------------------------------------------*/
@@ -976,7 +980,7 @@ typedef struct BackupStopResult
 } BackupStopResult;
 
 static BackupStopResult
-backupStop(BackupData *backupData, Manifest *manifest)
+backupStop(BackupData *backupData, Manifest *manifest, uint64_t *backupSizeTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -1007,8 +1011,8 @@ backupStop(BackupData *backupData, Manifest *manifest)
             LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Save files returned by stop backup
-            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
-            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
+            *backupSizeTotal += backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
+            *backupSizeTotal += backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -2080,7 +2084,7 @@ cmdBackup(void)
         uint64_t backupSizeTotal = backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
 
         // Stop the backup
-        BackupStopResult backupStopResult = backupStop(backupData, manifest);
+        BackupStopResult backupStopResult = backupStop(backupData, manifest, &backupSizeTotal);
 
         // Complete manifest
         manifestBuildComplete(
