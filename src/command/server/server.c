@@ -26,6 +26,8 @@ static struct ServerLocal
     unsigned int argListSize;                                       // Argument list size
     const char **argList;                                           // Argument list
 
+    List *processList;                                              // List of child processes
+
     bool sigHup;                                                    // SIGHUP was caught
     bool sigTerm;                                                   // SIGTERM was caught
 
@@ -47,6 +49,7 @@ cmdServerInit(void)
             MEM_CONTEXT_NEW_BEGIN("Server")
             {
                 serverLocal.memContext = MEM_CONTEXT_NEW();
+                serverLocal.processList = lstNewP(sizeof(pid_t));
             }
             MEM_CONTEXT_NEW_END();
         }
@@ -74,17 +77,36 @@ cmdServerInit(void)
 Handlers to set flags on signals
 ***********************************************************************************************************************************/
 static void
-cmdServerSigHup(int signalType)
+cmdServerSigHup(const int signalType)
 {
     (void)signalType;
     serverLocal.sigHup = true;
 }
 
 static void
-cmdServerSigTerm(int signalType)
+cmdServerSigTerm(const int signalType)
 {
     (void)signalType;
     serverLocal.sigTerm = true;
+}
+
+/***********************************************************************************************************************************
+Handler to reap child processes
+***********************************************************************************************************************************/
+static void
+cmdServerSigChild(const int signalType, siginfo_t *signalInfo, void *context)
+{
+    (void)signalType;
+    (void)context;
+
+    // !!! if (signalInfo->si_code == CLD_EXITED)
+    // {
+        for (unsigned int processIdx  = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
+        {
+            if (*(int *)lstGet(serverLocal.processList, processIdx) == signalInfo->si_pid)
+                lstRemoveIdx(serverLocal.processList, processIdx);
+        }
+    // }
 }
 
 /**********************************************************************************************************************************/
@@ -108,7 +130,9 @@ cmdServer(const unsigned int argListSize, const char *argList[])
         // Set signal handlers
         sigaction(SIGHUP, &(struct sigaction){.sa_handler = cmdServerSigHup}, NULL);
         sigaction(SIGTERM, &(struct sigaction){.sa_handler = cmdServerSigTerm}, NULL);
-        sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
+        sigaction(
+            SIGCHLD, &(struct sigaction){.sa_sigaction = cmdServerSigChild, .sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT | SA_SIGINFO},
+            NULL);
 
         // Accept connections indefinitely. The only way to exit this loop is for the process to receive a signal.
         do
@@ -137,6 +161,9 @@ cmdServer(const unsigned int argListSize, const char *argList[])
 
                     break;
                 }
+                // Add process to list
+                else
+                    lstAdd(serverLocal.processList, &pid);
 
                 // Free the socket since the child is now using it
                 ioSessionFree(socketSession);
@@ -163,7 +190,13 @@ cmdServer(const unsigned int argListSize, const char *argList[])
     }
     MEM_CONTEXT_TEMP_END();
 
-    // !!! TERMINATE REMAINING CHILD PROCESSES
+    sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
+
+    for (unsigned int processIdx  = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
+    {
+        LOG_WARN_FMT("terminating child process %d", *(int *)lstGet(serverLocal.processList, processIdx));
+        kill(*(int *)lstGet(serverLocal.processList, processIdx), SIGTERM);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }

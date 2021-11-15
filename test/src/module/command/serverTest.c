@@ -136,7 +136,7 @@ testRun(void)
                         exitInit();
 
                         // No log testing needed
-                        harnessLogLevelSet(logLevelWarn);
+                        harnessLogLevelSet(logLevelError);
 
                         // Get pid of this process to identify child process later
                         pid_t pid = getpid();
@@ -243,7 +243,7 @@ testRun(void)
                         exitInit();
 
                         // No log testing needed
-                        harnessLogLevelSet(logLevelWarn);
+                        harnessLogLevelSet(logLevelError);
 
                         // Get pid of this process to identify child process later
                         pid_t pid = getpid();
