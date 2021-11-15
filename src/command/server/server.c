@@ -99,14 +99,14 @@ cmdServerSigChild(const int signalType, siginfo_t *signalInfo, void *context)
     (void)signalType;
     (void)context;
 
-    // !!! if (signalInfo->si_code == CLD_EXITED)
-    // {
-        for (unsigned int processIdx  = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
-        {
-            if (*(int *)lstGet(serverLocal.processList, processIdx) == signalInfo->si_pid)
-                lstRemoveIdx(serverLocal.processList, processIdx);
-        }
-    // }
+    ASSERT(signalInfo->si_code == CLD_EXITED);
+
+    // Find the process and remove it
+    for (unsigned int processIdx  = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
+    {
+        if (*(int *)lstGet(serverLocal.processList, processIdx) == signalInfo->si_pid)
+            lstRemoveIdx(serverLocal.processList, processIdx);
+    }
 }
 
 /**********************************************************************************************************************************/
@@ -190,12 +190,15 @@ cmdServer(const unsigned int argListSize, const char *argList[])
     }
     MEM_CONTEXT_TEMP_END();
 
+    // Terminate any remaining children. Disable the callback so it does not fire in the middle of this loop.
     sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
 
     for (unsigned int processIdx  = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
     {
-        LOG_WARN_FMT("terminating child process %d", *(int *)lstGet(serverLocal.processList, processIdx));
-        kill(*(int *)lstGet(serverLocal.processList, processIdx), SIGTERM);
+        pid_t pid = *(int *)lstGet(serverLocal.processList, processIdx);
+
+        LOG_WARN_FMT("terminate child process %d", pid);
+        kill(pid, SIGTERM);
     }
 
     FUNCTION_LOG_RETURN_VOID();
