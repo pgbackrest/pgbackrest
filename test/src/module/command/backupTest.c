@@ -422,7 +422,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
                 // Stop backup
-                HRNPQ_MACRO_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, false),
+                HRNPQ_MACRO_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, true),
 
                 // Get stop time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
@@ -2325,12 +2325,13 @@ testRun(void)
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB5DE000000002, lsn = 5db5de0/280000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000002\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000001 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000002 to backup\n"
                 "P00   INFO: new backup label = 20191027-181320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 12");
+                "P00   INFO: full backup size = [SIZE], file total = 13");
 
             TEST_RESULT_STR(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
@@ -2352,6 +2353,7 @@ testRun(void)
                     "pg_data/pg_wal/0000000105DB5DE000000001.gz {file, s=1048576}\n"
                     "pg_data/pg_wal/0000000105DB5DE000000002.gz {file, s=1048576}\n"
                     "pg_data/postgresql.conf.gz {file, s=11}\n"
+                    "pg_data/tablespace_map.gz {file, s=19}\n"
                     "pg_tblspc {path}\n"
                     "pg_tblspc/32768 {path}\n"
                     "pg_tblspc/32768/PG_11_201809051 {path}\n"
@@ -2382,6 +2384,8 @@ testRun(void)
                     "pg_data/pg_wal/0000000105DB5DE000000002={\"size\":1048576,\"timestamp\":1572200002}\n"
                     "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
                         ",\"timestamp\":1570000000}\n"
+                    "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
+                        ",\"timestamp\":1572200002}\n"
                     "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"mas""ter\":false,\"size\":0"
                         ",\"timestamp\":1572200000}\n"
                     "\n"
@@ -2487,9 +2491,10 @@ testRun(void)
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000002C05DB8EB000000000, lsn = 5db8eb0/80000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000000\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I\n"
-                "P00   INFO: incr backup size = [SIZE], file total = 6");
+                "P00   INFO: incr backup size = [SIZE], file total = 7");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -2506,6 +2511,7 @@ testRun(void)
                 "pg_data/pg_tblspc/32768 {link, d=../../pg_tblspc/32768}\n"
                 "pg_data/pg_wal {path}\n"
                 "pg_data/postgresql.conf.gz {file, s=11}\n"
+                "pg_data/tablespace_map.gz {file, s=19}\n"
                 "pg_tblspc {path}\n"
                 "pg_tblspc/32768 {path}\n"
                 "pg_tblspc/32768/PG_11_201809051 {path}\n"
@@ -2527,6 +2533,8 @@ testRun(void)
                 "pg_data/global/pg_control={\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
                     ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
+                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
+                    ",\"timestamp\":1572400002}\n"
                 "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"mas""ter\":false,\"reference\":\"20191027-181320F\""
                     ",\"size\":0,\"timestamp\":1572200000}\n"
                 "\n"

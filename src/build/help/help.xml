@@ -1397,7 +1397,7 @@
                         <summary>Restore all tablespaces into the specified directory.</summary>
 
                         <text>
-                            <p>By default tablespaces are restored into their original locations and while this behavior can be modified by with the <setting>tablespace-map</setting> open it is sometime preferable to remap all tablespaces to a new directory all at once. This is particularly useful for development or staging systems that may not have the same storage layout as the original system where the backup was generated.</p>
+                            <p>Tablespaces are restored into their original locations by default. This behavior can be modified for each tablespace with the <setting>tablespace-map</setting> option, but it is sometimes preferable to remap all tablespaces to a new directory all at once. This is particularly useful for development or staging systems that may not have the same storage layout as the original system where the backup was generated.</p>
 
                             <p>The path specified will be the parent path used to create all the tablespaces in the backup.</p>
                         </text>

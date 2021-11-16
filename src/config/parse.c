@@ -289,7 +289,7 @@ static ParseOptionValue *
 parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int optionKeyIdx)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PARSE_OPTION, parseOption);             // Structure containing all options being parsed
+        FUNCTION_TEST_PARAM_P(PARSE_OPTION, optionList);            // Structure containing all options being parsed
         FUNCTION_TEST_PARAM(UINT, optionId);                        // Unique ID which also identifies the option in the parse list
         FUNCTION_TEST_PARAM(UINT, optionKeyIdx);                    // Zero-based key index (e.g. pg3-path => 2), 0 for non-indexed
     FUNCTION_TEST_END();
