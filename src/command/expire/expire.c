@@ -133,7 +133,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned in
         StringList *backupExpired = expireBackup(infoBackup, backupLabel, repoIdx);
 
         // If the latest backup was removed, then update the latest link if not a dry-run
-        if (infoBackupDataByLabel(infoBackup, latestBackup) == NULL)
+        if (!infoBackupLabelExists(infoBackup, latestBackup))
         {
             // If retention settings have been configured, then there may be holes in the archives. For example, if the archive
             // for db-id=1 has 01,02,03,04,05 and F1 backup has archive start-stop 02-03 and retention-full=1
@@ -835,7 +835,7 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
                     infoPgCipherPass(infoBackupPg(infoBackup)));
 
                 // If the ancestor of the resumable backup still exists in backup.info then do not remove the resumable backup
-                if (infoBackupDataByLabel(infoBackup, manifestData(manifestResume)->backupLabelPrior) != NULL)
+                if (infoBackupLabelExists(infoBackup, manifestData(manifestResume)->backupLabelPrior))
                     backupIdx = 1;
             }
         }
@@ -1020,7 +1020,7 @@ cmdExpire(void)
                 // If a backupLabel was set, then attempt to expire the requested backup
                 if (adhocBackupLabel != NULL)
                 {
-                    if (infoBackupDataByLabel(infoBackup, adhocBackupLabel) != NULL)
+                    if (infoBackupLabelExists(infoBackup, adhocBackupLabel))
                     {
                         adhocBackupFound = true;
                         expireAdhocBackup(infoBackup, adhocBackupLabel, repoIdx);

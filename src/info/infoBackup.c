@@ -649,7 +649,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
 
             // If the manifest does not exist on disk and this backup has not already been deleted from the current list in the
             // infoBackup object, then remove it and its dependencies
-            if (!storageExistsP(storage, manifestFileName) && infoBackupDataByLabel(infoBackup, backupLabel) != NULL)
+            if (!storageExistsP(storage, manifestFileName) && infoBackupLabelExists(infoBackup, backupLabel))
             {
                 StringList *backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
 
@@ -695,8 +695,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                         // or there is a backup-prior and it is in the list, then add this backup to the current backup list
                         if (manData->pgId == pgHistory.id && manData->pgSystemId == pgHistory.systemId &&
                             manData->pgVersion == pgHistory.version &&
-                            (manData->backupLabelPrior == NULL ||
-                                infoBackupDataByLabel(infoBackup, manData->backupLabelPrior) != NULL))
+                            (manData->backupLabelPrior == NULL || infoBackupLabelExists(infoBackup, manData->backupLabelPrior)))
                         {
                             LOG_WARN_FMT("backup '%s' found in repository added to " INFO_BACKUP_FILE, strZ(backupLabel));
                             infoBackupDataAdd(infoBackup, manifest);

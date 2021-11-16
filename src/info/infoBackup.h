@@ -105,11 +105,19 @@ infoBackupCipherPass(const InfoBackup *const this)
 // Return a structure of the backup data from a specific index
 InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 
+// Does the specified backup label exist?
+__attribute__((always_inline)) static inline bool
+infoBackupLabelExists(const InfoBackup *const this, const String *const backupLabel)
+{
+    ASSERT_INLINE(backupLabel != NULL);
+    return lstFind(THIS_PUB(InfoBackup)->backup, &backupLabel) != NULL;
+}
+
 // Return a pointer to a structure from the current backup data given a label, else NULL
 __attribute__((always_inline)) static inline InfoBackupData *
 infoBackupDataByLabel(const InfoBackup *const this, const String *const backupLabel)
 {
-    ASSERT_INLINE(backupLabel != NULL);
+    ASSERT_INLINE(infoBackupLabelExists(this, backupLabel));
     return lstFind(THIS_PUB(InfoBackup)->backup, &backupLabel);
 }
 

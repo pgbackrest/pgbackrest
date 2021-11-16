@@ -190,7 +190,7 @@ testRun(void)
             (strLstSize(backupDataPtr->backupReference) == 1 &&
                 strLstExists(backupDataPtr->backupReference, STRDEF("20161219-212741F"))),
             true, "backup reference exists");
-        TEST_RESULT_PTR(infoBackupDataByLabel(infoBackup, STRDEF("20161219-12345")), NULL, "backup label does not exist");
+        TEST_RESULT_BOOL(infoBackupLabelExists(infoBackup, STRDEF("20161219-12345")), false, "backup label does not exist");
         TEST_RESULT_BOOL(varBool(backupDataPtr->backupError), true, "backup error");
 
         backupData = infoBackupData(infoBackup, 2);
