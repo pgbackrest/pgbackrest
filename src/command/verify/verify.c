@@ -1152,7 +1152,7 @@ verifySetBackupCheckArchive(
             // Get the last backup as current if it is not in backup.info current list
             String *backupLabel = strLstGet(backupList, strLstSize(backupList) - 1);
 
-            if (infoBackupDataByLabel(backupInfo, backupLabel) == NULL)
+            if (!infoBackupLabelExists(backupInfo, backupLabel))
             {
                 // Duplicate the string into the prior context
                 MEM_CONTEXT_PRIOR_BEGIN()
