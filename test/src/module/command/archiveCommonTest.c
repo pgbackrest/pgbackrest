@@ -297,7 +297,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("walSegmentNext()"))
+    if (testBegin("walSegmentNext()/walSegmentPrior()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("beginning and end range");
@@ -306,24 +306,42 @@ testRun(void)
             walSegmentNext(STRDEF("000000010000000100000001"), 16 * 1024 * 1024, PG_VERSION_10), "000000010000000100000002",
             "get next");
         TEST_RESULT_STR_Z(
+            walSegmentPrior(STRDEF("000000010000000100000002"), 16 * 1024 * 1024, PG_VERSION_10), "000000010000000100000001",
+            "get prior");
+        TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("0000000100000001000000FE"), 16 * 1024 * 1024, PG_VERSION_93), "0000000100000001000000FF",
             "get next");
+        TEST_RESULT_STR_Z(
+            walSegmentPrior(STRDEF("0000000100000001000000FF"), 16 * 1024 * 1024, PG_VERSION_93), "0000000100000001000000FE",
+            "get prior");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check overflow by version");
+        TEST_TITLE("check overflow/underflow by version");
 
         TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("0000009900000001000000FF"), 16 * 1024 * 1024, PG_VERSION_93), "000000990000000200000000",
             "get next overflow >= 9.3");
         TEST_RESULT_STR_Z(
+            walSegmentPrior(STRDEF("000000990000000200000000"), 16 * 1024 * 1024, PG_VERSION_93), "0000009900000001000000FF",
+            "get prior underflow >= 9.3");
+        TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("0000000100000001000000FE"), 16 * 1024 * 1024, PG_VERSION_92), "000000010000000200000000",
             "get next overflow < 9.3");
+        TEST_RESULT_STR_Z(
+            walSegmentPrior(STRDEF("000000010000000200000000"), 16 * 1024 * 1024, PG_VERSION_92), "0000000100000001000000FE",
+            "get prior underflow < 9.3");
         TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("000000010000000100000003"), 1024 * 1024 * 1024, PG_VERSION_11), "000000010000000200000000",
             "get next overflow >= 11/1GB");
         TEST_RESULT_STR_Z(
+            walSegmentPrior(STRDEF("000000010000000200000000"), 1024 * 1024 * 1024, PG_VERSION_11), "000000010000000100000003",
+            "get prior underflow >= 11/1GB");
+        TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("000000010000006700000FFF"), 1024 * 1024, PG_VERSION_11), "000000010000006800000000",
             "get next overflow >= 11/1MB");
+        TEST_RESULT_STR_Z(
+            walSegmentPrior(STRDEF("000000010000006800000000"), 1024 * 1024, PG_VERSION_11), "000000010000006700000FFF",
+            "get prior underflow >= 11/1MB");
     }
 
     // *****************************************************************************************************************************

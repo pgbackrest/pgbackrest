@@ -890,7 +890,12 @@ backupStart(BackupData *backupData)
             // Make sure the first WAL segment has been archived. If archiving is not working then the backup will eventually fail
             // so better to catch it as early as possible.
             if (cfgOptionBool(cfgOptArchiveCheck))
-                walSegmentFind(storageRepo(), backupData->archiveId, result.walSegmentName, cfgOptionUInt64(cfgOptArchiveTimeout));
+            {
+                walSegmentFind(
+                    storageRepo(), backupData->archiveId,
+                    walSegmentPrior(result.walSegmentName, backupData->walSegmentSize, backupData->version),
+                    cfgOptionUInt64(cfgOptArchiveTimeout));
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();

@@ -238,6 +238,7 @@ typedef struct TestBackupPqScriptParam
     bool backupStandby;
     bool errorAfterStart;
     bool noWal;                                                     // Don't write test WAL segments
+    bool noPriorWal;                                                // Don't write prior test WAL segments
     CompressType walCompressType;                                   // Compress type for the archive files
     unsigned int walTotal;                                          // Total WAL to write
     unsigned int timeline;                                          // Timeline to use for WAL files
@@ -272,12 +273,14 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
     // Write WAL segments to the archive
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (!param.noWal)
+    if (!param.noPriorWal)
     {
         InfoArchive *infoArchive = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
         const String *archiveId = infoArchiveId(infoArchive);
         StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-            pgControl.version, param.timeline, lsnStart, lsnStop, pgControl.walSegmentSize);
+            pgControl.version, param.timeline, lsnStart - pgControl.walSegmentSize,
+            param.noWal ? lsnStart - pgControl.walSegmentSize : lsnStop,
+            pgControl.walSegmentSize);
 
         Buffer *walBuffer = bufNew((size_t)pgControl.walSegmentSize);
         bufUsedSet(walBuffer, bufSize(walBuffer));
@@ -340,7 +343,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         ASSERT(param.backupStandby);
         ASSERT(!param.errorAfterStart);
 
-        if (param.noWal)
+        if (param.noPriorWal)
         {
             harnessPqScriptSet((HarnessPq [])
             {
@@ -2171,8 +2174,19 @@ testRun(void)
             // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
             harnessLogLevelSet(logLevelWarn);
 
+            // Run backup but error on first archive check
+            testBackupPqScriptP(
+                PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
+            TEST_ERROR(
+                cmdBackup(), ArchiveTimeoutError,
+                "WAL segment 0000000105DA69BF000000FF was not archived before the 100ms timeout\n"
+                "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+                "HINT: check the PostgreSQL server log for errors.\n"
+                "HINT: run the 'start' command if the stanza was previously stopped.");
+
             // Run backup but error on archive check
-            testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true);
+            testBackupPqScriptP(
+                PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
                 cmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69C000000000 was not archived before the 100ms timeout\n"
