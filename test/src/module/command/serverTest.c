@@ -141,7 +141,7 @@ testRun(void)
                         // Add a fake pid to ensure SIGTERM is sent to unterminated children
                         cmdServerInit();
 
-                        int fakePid = 0;
+                        int fakePid = INT_MAX;
                         lstAdd(serverLocal.processList, &fakePid);
 
                         // Get pid of this process to identify child process later

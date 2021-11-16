@@ -41,9 +41,3 @@ IP.1 = 127.0.0.1
 DNS.5 = db-primary
 DNS.6 = db-standby
 DNS.7 = backup
-
-# Used in documentation
-# !!! REMOVE ONCE DOCS BUILD THEIR OWN CERTS
-DNS.8 = pg-primary
-DNS.9 = pg-standby
-DNS.10 = repository
