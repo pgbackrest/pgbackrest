@@ -1011,8 +1011,10 @@ backupStop(BackupData *backupData, Manifest *manifest, uint64_t *backupSizeTotal
             LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Save files returned by stop backup
-            *backupSizeTotal += backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
-            *backupSizeTotal += backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
+            *backupSizeTotal += backupFilePut(
+                backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
+            *backupSizeTotal += backupFilePut(
+                backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
         }
         MEM_CONTEXT_TEMP_END();
     }
