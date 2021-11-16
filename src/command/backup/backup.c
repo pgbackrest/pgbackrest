@@ -1853,7 +1853,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                     // Find the actual wal segment file in the archive
                     const String *archiveFile = walSegmentFind(
-                        storageRepo(), archiveId, walSegment,  cfgOptionUInt64(cfgOptArchiveTimeout));
+                        storageRepo(), archiveId, walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
                     if (cfgOptionBool(cfgOptArchiveCopy))
                     {
