@@ -138,6 +138,12 @@ testRun(void)
                         // No log testing needed
                         harnessLogLevelSet(logLevelError);
 
+                        // Add a fake pid to ensure SIGTERM is sent to unterminated children
+                        cmdServerInit();
+
+                        int fakePid = 0;
+                        lstAdd(serverLocal.processList, &fakePid);
+
                         // Get pid of this process to identify child process later
                         pid_t pid = getpid();
 
@@ -164,33 +170,8 @@ testRun(void)
                         HRN_FORK_PARENT_NOTIFY_GET(0);
                         HRN_FORK_PARENT_NOTIFY_GET(0);
 
-                        // Create a client that will be terminated
-                        StringList *argList = strLstNew();
-                        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/BOGUS");
-                        hrnCfgArgRaw(argList, cfgOptPgHost, hrnServerHost());
-                        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
-                        hrnCfgArgRawZ(argList, cfgOptPgHostType, "tls");
-#if !TEST_IN_CONTAINER
-                        hrnCfgArgRawZ(argList, cfgOptPgHostCaFile, HRN_SERVER_CA);
-#endif
-                        hrnCfgArgRawZ(argList, cfgOptPgHostCertFile, HRN_SERVER_CLIENT_CERT);
-                        hrnCfgArgRawZ(argList, cfgOptPgHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                        hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));
-                        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-                        hrnCfgArgRawZ(argList, cfgOptProcess, "1");
-                        HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal);
-
-                        TEST_RESULT_VOID(
-                            storageRemoteNew(
-                                STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL,
-                                protocolRemoteGet(protocolStorageTypePg, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
-                            "new client to be terminated");
-
                         // Send term to server processes
                         kill(HRN_FORK_PROCESS_ID(0), SIGTERM);
-
-                        // Free test client
-                        TEST_RESULT_VOID(protocolRemoteFree(0), "free client 3");
                     }
                     HRN_FORK_PARENT_END();
                 }
