@@ -39,6 +39,9 @@
                             <github-pull-request id="1562"/>
                         </commit>
                         <commit subject="Update contributor for 6e635764."/>
+                        <commit subject="Include backup_label and tablespace_map file sizes in log output.">
+                            <github-pull-request id="1568"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="mahomed.hussein"/>
