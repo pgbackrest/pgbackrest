@@ -350,7 +350,7 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl dnf-plugins-core 2>&amp;1
+        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core 2>&amp;1
 
         # Enable PowerTools repository (only available on RHEL8)
         RUN dnf config-manager --set-enabled powertools || true
