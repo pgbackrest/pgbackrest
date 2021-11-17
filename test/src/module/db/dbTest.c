@@ -273,6 +273,7 @@ testRun(void)
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
             HRNPQ_MACRO_IS_IN_BACKUP(1, false),
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_84_95(1, false, "2/3", "000000010000000200000003"),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
@@ -328,6 +329,7 @@ testRun(void)
             HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "1/1", "000000010000000100000001"),
 
             // Start backup
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_84_95(1, true, "2/5", "000000010000000200000005"),
 
             // Stop backup
@@ -361,6 +363,7 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_96(1, false, "3/3", "000000010000000300000003"),
 
             // Stop backup
@@ -407,6 +410,7 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_84_95(1, false, "5/4", "000000050000000500000004"),
 
             // Wait for standby to sync
@@ -442,6 +446,7 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
 
             // Standby returns NULL lsn

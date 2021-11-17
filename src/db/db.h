@@ -72,6 +72,7 @@ typedef struct DbBackupStartResult
 {
     String *lsn;
     String *walSegmentName;
+    bool restorePoint;                                              // Was a restore point generated?
 } DbBackupStartResult;
 
 DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto);

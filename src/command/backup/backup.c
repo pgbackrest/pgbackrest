@@ -887,9 +887,9 @@ backupStart(BackupData *backupData)
                 protocolRemoteFree(backupData->pgIdxStandby);
             }
 
-            // Make sure the first WAL segment has been archived. If archiving is not working then the backup will eventually fail
-            // so better to catch it as early as possible.
-            if (cfgOptionBool(cfgOptArchiveCheck))
+            // Make sure the prior WAL segment has been archived. If archiving is not working then the backup will eventually fail
+            // so better to catch it as early as possible. This check only works reliably when restore points are available.
+            if (cfgOptionBool(cfgOptArchiveCheck) && dbBackupStartResult.restorePoint) // {uncovered - !!!}
             {
                 walSegmentFind(
                     storageRepo(), backupData->archiveId,
