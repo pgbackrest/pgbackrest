@@ -239,6 +239,7 @@ typedef struct TestBackupPqScriptParam
     bool errorAfterStart;
     bool noWal;                                                     // Don't write test WAL segments
     bool noPriorWal;                                                // Don't write prior test WAL segments
+    bool noArchiveCheck;                                            // Do not check archive
     CompressType walCompressType;                                   // Compress type for the archive files
     unsigned int walTotal;                                          // Total WAL to write
     unsigned int timeline;                                          // Timeline to use for WAL files
@@ -266,6 +267,8 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     uint64_t lsnStop =
         lsnStart + ((param.walTotal == 0 ? 0 : param.walTotal - 1) * pgControl.walSegmentSize) + (pgControl.walSegmentSize / 2);
 
+    const char *walSegmentPrior = strZ(
+        pgLsnToWalSegment(param.timeline, lsnStart - pgControl.walSegmentSize, pgControl.walSegmentSize));
     const char *lsnStartStr = strZ(pgLsnToStr(lsnStart));
     const char *walSegmentStart = strZ(pgLsnToWalSegment(param.timeline, lsnStart, pgControl.walSegmentSize));
     const char *lsnStopStr = strZ(pgLsnToStr(lsnStop));
@@ -309,40 +312,74 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         ASSERT(!param.backupStandby);
         ASSERT(!param.errorAfterStart);
 
-        harnessPqScriptSet((HarnessPq [])
+        if (param.noArchiveCheck)
         {
-            // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, pg1Path, false, NULL, NULL),
+            harnessPqScriptSet((HarnessPq [])
+            {
+                // Connect to primary
+                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, pg1Path, false, NULL, NULL),
 
-            // Get start time
-            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
+                // Get start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
 
-            // Start backup
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_IS_IN_BACKUP(1, false),
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
-            HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
-            HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
-            HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+                // Start backup
+                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+                HRNPQ_MACRO_IS_IN_BACKUP(1, false),
+                HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
-            // Get copy start time
-            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
-            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+                // Get copy start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
-            // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
+                // Stop backup
+                HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
 
-            // Get stop time
-            HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+                // Get stop time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
 
-            HRNPQ_MACRO_DONE()
-        });
+                HRNPQ_MACRO_DONE()
+            });
+        }
+        else
+        {
+            harnessPqScriptSet((HarnessPq [])
+            {
+                // Connect to primary
+                HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, pg1Path, false, NULL, NULL),
+
+                // Get start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000),
+
+                // Start backup
+                HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+                HRNPQ_MACRO_IS_IN_BACKUP(1, false),
+                HRNPQ_MACRO_CURRENT_WAL_LE_96(1, walSegmentPrior),
+                HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+                HRNPQ_MACRO_TABLESPACE_LIST_0(1),
+
+                // Get copy start time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+                // Stop backup
+                HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
+
+                // Get stop time
+                HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 2000),
+
+                HRNPQ_MACRO_DONE()
+            });
+        }
     }
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (pgVersion == PG_VERSION_96)
     {
         ASSERT(param.backupStandby);
         ASSERT(!param.errorAfterStart);
+        ASSERT(!param.noArchiveCheck);
 
         if (param.noPriorWal)
         {
@@ -359,7 +396,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
+                HRNPQ_MACRO_CURRENT_WAL_LE_96(1, walSegmentPrior),
                 HRNPQ_MACRO_START_BACKUP_96(1, true, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
@@ -385,7 +422,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
+                HRNPQ_MACRO_CURRENT_WAL_LE_96(1, walSegmentPrior),
                 HRNPQ_MACRO_START_BACKUP_96(1, true, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
@@ -411,6 +448,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     else if (pgVersion == PG_VERSION_11)
     {
         ASSERT(!param.backupStandby);
+        ASSERT(!param.noArchiveCheck);
 
         if (param.errorAfterStart)
         {
@@ -424,7 +462,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
+                HRNPQ_MACRO_CURRENT_WAL_GE_10(1, walSegmentPrior),
                 HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
@@ -448,7 +486,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-                HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
+                HRNPQ_MACRO_CURRENT_WAL_GE_10(1, walSegmentPrior),
                 HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
@@ -1744,7 +1782,7 @@ testRun(void)
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
 
             // Run backup
-            testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
+            testBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             TEST_RESULT_LOG(

@@ -860,7 +860,8 @@ backupStart(BackupData *backupData)
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
             DbBackupStartResult dbBackupStartResult = dbBackupStart(
-                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto));
+                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto),
+                cfgOptionBool(cfgOptArchiveCheck));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -889,7 +890,7 @@ backupStart(BackupData *backupData)
 
             // Make sure the prior WAL segment has been archived. If archiving is not working then the backup will eventually fail
             // so better to catch it as early as possible. This check only works reliably when restore points are available.
-            if (cfgOptionBool(cfgOptArchiveCheck) && dbBackupStartResult.restorePoint) // {uncovered - !!!}
+            if (dbBackupStartResult.walSegmentCheck != NULL)
             {
                 walSegmentFind(
                     storageRepo(), backupData->archiveId,

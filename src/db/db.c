@@ -321,12 +321,13 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
 }
 
 DbBackupStartResult
-dbBackupStart(Db *this, bool startFast, bool stopAuto)
+dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const bool archiveCheck)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
         FUNCTION_LOG_PARAM(BOOL, startFast);
         FUNCTION_LOG_PARAM(BOOL, stopAuto);
+        FUNCTION_LOG_PARAM(BOOL, archiveCheck);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -365,21 +366,43 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
             }
         }
 
-        // Create a restore point to ensure current WAL will be archived
-        if (dbPgVersion(this) >= PG_VERSION_RESTORE_POINT)
+        // If archive check then get the current WAL segment
+        const String *walSegmentCheck = NULL;
+
+        if (archiveCheck)
         {
-            dbRestorePoint(this);
-            result.restorePoint = true;
+            walSegmentCheck = varStr(
+                dbQueryColumn(
+                    this,
+                    strNewFmt(
+                        "select pg_catalog.pg_%sfile_name(pg_catalog.pg_current_%s_%s())::text",
+                        strZ(pgWalName(dbPgVersion(this))), strZ(pgWalName(dbPgVersion(this))),
+                        strZ(pgLsnName(dbPgVersion(this))))));
         }
 
         // Start backup
         VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
 
+        // If archive check then make sure WAL segment was switched on start backup
+        const String *const walSegmentName = varStr(varLstGet(row, 1));
+
+        if (archiveCheck && strEq(walSegmentCheck, walSegmentName))
+        {
+            if (dbPgVersion(this) >= PG_VERSION_RESTORE_POINT)
+            {
+                dbWalSwitch(this);
+                walSegmentCheck = walSegmentName;
+            }
+            else
+                walSegmentCheck = NULL;
+        }
+
         // Return results
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result.lsn = strDup(varStr(varLstGet(row, 0)));
-            result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
+            result.walSegmentName = strDup(walSegmentName);
+            result.walSegmentCheck = strDup(walSegmentCheck);
         }
         MEM_CONTEXT_PRIOR_END();
     }

@@ -252,7 +252,7 @@ testRun(void)
         DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false).lsn, "1/1", "start backup");
+        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false, false).lsn, "1/1", "start backup");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
@@ -273,7 +273,6 @@ testRun(void)
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
             HRNPQ_MACRO_IS_IN_BACKUP(1, false),
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_84_95(1, false, "2/3", "000000010000000200000003"),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
@@ -292,12 +291,12 @@ testRun(void)
         TEST_RESULT_UINT(dbTimeMSec(db.primary), 1000, "check time");
 
         TEST_ERROR(
-            dbBackupStart(db.primary, false, false), LockAcquireError,
+            dbBackupStart(db.primary, false, false, false), LockAcquireError,
             "unable to acquire pgBackRest advisory lock\n"
             "HINT: is another pgBackRest backup already running on this cluster?");
 
         DbBackupStartResult backupStartResult = {.lsn = NULL};
-        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true), "start backup");
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, false), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "2/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000200000003", "check wal segment name");
 
@@ -329,7 +328,6 @@ testRun(void)
             HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "1/1", "000000010000000100000001"),
 
             // Start backup
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_84_95(1, true, "2/5", "000000010000000200000005"),
 
             // Stop backup
@@ -343,7 +341,7 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, true, true).lsn, "2/5", "start backup");
+        TEST_RESULT_STR_Z(dbBackupStart(db.primary, true, true, false).lsn, "2/5", "start backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: the cluster is already in backup mode but no pgBackRest backup process is running."
@@ -363,7 +361,6 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_96(1, false, "3/3", "000000010000000300000003"),
 
             // Stop backup
@@ -377,7 +374,7 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
-        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true), "start backup");
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, false), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "3/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000300000003", "check wal segment name");
 
@@ -410,7 +407,6 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_84_95(1, false, "5/4", "000000050000000500000004"),
 
             // Wait for standby to sync
@@ -427,7 +423,7 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false).lsn, "5/4", "start backup");
+        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false, false).lsn, "5/4", "start backup");
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), 1000), "sync standby");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
@@ -446,7 +442,6 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
 
             // Standby returns NULL lsn
@@ -504,7 +499,7 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false).lsn, "5/5", "start backup");
+        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false, false).lsn, "5/5", "start backup");
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), 1000), ArchiveTimeoutError,
