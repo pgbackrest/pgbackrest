@@ -1014,17 +1014,6 @@ testRun(void)
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
 
-        // Create stanza
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
-        hrnCfgArgRawBool(argList, cfgOptOnline, false);
-        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
-
-        cmdStanzaCreate();
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
-
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
@@ -1124,6 +1113,17 @@ testRun(void)
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+
+        // Create stanza
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        cmdStanzaCreate();
+        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");

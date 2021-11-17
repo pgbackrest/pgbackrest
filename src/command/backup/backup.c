@@ -263,10 +263,13 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Get archive info
-    result->archiveInfo = infoArchiveLoadFile(
-            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
-    result->archiveId = infoArchiveId(result->archiveInfo);
+    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck))
+    {
+        result->archiveInfo = infoArchiveLoadFile(
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+                cfgOptionStrNull(cfgOptRepoCipherPass));
+        result->archiveId = infoArchiveId(result->archiveInfo);
+    }
 
     FUNCTION_LOG_RETURN(BACKUP_DATA, result);
 }
@@ -888,9 +891,8 @@ backupStart(BackupData *backupData)
                 protocolRemoteFree(backupData->pgIdxStandby);
             }
 
-            // Make sure that WAL segments are being archived. If archiving is not working then the backup will eventually fail
-            // so better to catch it as early as possible. This check only works reliably when restore points are available so skip
-            // if the segment to check is NULL.
+            // Check that WAL segments are being archived. If archiving is not working then the backup will eventually fail so
+            // better to catch it as early as possible. A segment to check may not be available on older versions of PostgreSQL.
             if (dbBackupStartResult.walSegmentCheck != NULL)
             {
                 LOG_INFO_FMT(
