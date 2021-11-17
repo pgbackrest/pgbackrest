@@ -1423,8 +1423,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         option.negate = true;
                     else if (!strEqZ(optionArg, "y"))
                         THROW_FMT(
-                                OptionInvalidValueError, "when using argument with option '--%s', argument must be 'y' or 'n'",
-                                strZ(optionName));
+                                OptionInvalidValueError,
+                                "when using argument with boolean option '--%s', argument must be 'y' or 'n'", strZ(optionName));
                 }
 
                 // If the option requires an argument

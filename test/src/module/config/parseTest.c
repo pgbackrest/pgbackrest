@@ -635,7 +635,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptOnline, "bogus");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "when using argument with option '--online', argument must be 'y' or 'n'");
+            "when using argument with boolean option '--online', argument must be 'y' or 'n'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("boolean option with negation argument");
