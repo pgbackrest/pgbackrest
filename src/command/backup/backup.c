@@ -888,10 +888,16 @@ backupStart(BackupData *backupData)
                 protocolRemoteFree(backupData->pgIdxStandby);
             }
 
-            // Make sure the prior WAL segment has been archived. If archiving is not working then the backup will eventually fail
-            // so better to catch it as early as possible. This check only works reliably when restore points are available.
+            // Make sure that WAL segments are being archived. If archiving is not working then the backup will eventually fail
+            // so better to catch it as early as possible. This check only works reliably when restore points are available so skip
+            // if the segment to check is NULL.
             if (dbBackupStartResult.walSegmentCheck != NULL)
             {
+                LOG_INFO_FMT(
+                    "check archive for %ssegment %s",
+                    strEq(result.walSegmentName, dbBackupStartResult.walSegmentCheck) ? "" : "prior ",
+                    strZ(dbBackupStartResult.walSegmentCheck));
+
                 walSegmentFind(
                     storageRepo(), backupData->archiveId, dbBackupStartResult.walSegmentCheck,
                     cfgOptionUInt64(cfgOptArchiveTimeout));
