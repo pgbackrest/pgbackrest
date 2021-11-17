@@ -388,6 +388,8 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
 
         if (archiveCheck && strEq(walSegmentCheck, walSegmentName))
         {
+            LOG_WARN("!!!SWITCHING");
+
             if (dbPgVersion(this) >= PG_VERSION_RESTORE_POINT)
             {
                 dbWalSwitch(this);
