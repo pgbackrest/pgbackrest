@@ -893,8 +893,7 @@ backupStart(BackupData *backupData)
             if (dbBackupStartResult.walSegmentCheck != NULL)
             {
                 walSegmentFind(
-                    storageRepo(), backupData->archiveId,
-                    walSegmentPrior(result.walSegmentName, backupData->walSegmentSize, backupData->version),
+                    storageRepo(), backupData->archiveId, dbBackupStartResult.walSegmentCheck,
                     cfgOptionUInt64(cfgOptArchiveTimeout));
             }
         }

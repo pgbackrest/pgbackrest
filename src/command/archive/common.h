@@ -99,9 +99,8 @@ String *walPath(const String *walFile, const String *pgPath, const String *comma
 // thing.
 String *walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout);
 
-// Get the next/prior WAL segment given a WAL segment and WAL segment size
+// Get the next WAL segment given a WAL segment and WAL segment size
 String *walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion);
-String *walSegmentPrior(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion);
 
 // Build a list of WAL segments based on a beginning WAL and number of WAL in the range (inclusive)
 StringList *walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range);

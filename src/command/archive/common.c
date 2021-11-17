@@ -518,50 +518,6 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
 }
 
 /**********************************************************************************************************************************/
-String *
-walSegmentPrior(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, walSegment);
-        FUNCTION_LOG_PARAM(SIZE, walSegmentSize);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
-    FUNCTION_LOG_END();
-
-    ASSERT(walSegment != NULL);
-    ASSERT(strSize(walSegment) == 24);
-    ASSERT(UINT32_MAX % walSegmentSize == walSegmentSize - 1);
-    ASSERT(pgVersion >= PG_VERSION_11 || walSegmentSize == 16 * 1024 * 1024);
-
-    // Extract WAL parts
-    uint32_t timeline = 0;
-    uint32_t major = 0;
-    uint32_t minor = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        timeline = (uint32_t)strtol(strZ(strSubN(walSegment, 0, 8)), NULL, 16);
-        major = (uint32_t)strtol(strZ(strSubN(walSegment, 8, 8)), NULL, 16);
-        minor = (uint32_t)strtol(strZ(strSubN(walSegment, 16, 8)), NULL, 16);
-
-        // Increment minor and adjust major dir on overflow
-        minor--;
-
-        if (minor > UINT32_MAX / walSegmentSize)
-        {
-            major--;
-            minor = (uint32_t)(UINT32_MAX / walSegmentSize);
-        }
-
-        // Special hack for PostgreSQL < 9.3 which skipped minor FF
-        if (minor == 0xFF && pgVersion < PG_VERSION_93)
-            minor = 0xFE;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING, strNewFmt("%08X%08X%08X", timeline, major, minor));
-}
-
-/**********************************************************************************************************************************/
 StringList *
 walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range)
 {
