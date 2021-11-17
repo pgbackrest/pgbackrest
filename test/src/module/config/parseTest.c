@@ -635,7 +635,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptOnline, "bogus");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "boolean option 'online' must be 'y' or 'n'");
+            "when using argument with option '--online', argument must be 'y' or 'n'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("boolean option with negation argument");
@@ -658,6 +658,28 @@ testRun(void)
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionRequiredError,
             "backup command requires option: stanza");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("negated boolean option with argument");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--no-neutral-umask=n");
+        strLstAddZ(argList, CFGCMD_BACKUP);
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "negated options cannot have an argument '--no-neutral-umask=n'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("negated boolean option with argument");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--no-neutral-umask=n");
+        strLstAddZ(argList, CFGCMD_BACKUP);
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "negated options cannot have an argument '--no-neutral-umask=n'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid command");

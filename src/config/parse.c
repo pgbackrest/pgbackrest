@@ -1411,14 +1411,20 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (!option.found)
                     THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
 
-                // Handle boolean option with argument
+                // Handle boolean option with argument(only y/n allowed)
                 if (parseRuleOption[option.id].type == cfgOptTypeBoolean && optionArg != NULL)
                 {
-                    // Is the option negated
+                    // Error on negated (--no-) options that also have an argument
+                    if (strncmp(strZ(optionName), OPTION_PREFIX_NEGATE, sizeof(OPTION_PREFIX_NEGATE) - 1) == 0)
+                        THROW_FMT(OptionInvalidError, "negated options cannot have an argument '--%s'", arg);
+
+                    // Validate argument/set negate when indicated
                     if (strEqZ(optionArg, "n"))
                         option.negate = true;
                     else if (!strEqZ(optionArg, "y"))
-                        THROW_FMT(OptionInvalidValueError, "boolean option '%s' must be 'y' or 'n'", strZ(optionName));
+                        THROW_FMT(
+                                OptionInvalidValueError, "when using argument with option '--%s', argument must be 'y' or 'n'",
+                                strZ(optionName));
                 }
 
                 // If the option requires an argument
@@ -1434,12 +1440,6 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         optionArg = strNewZ(argList[++argListIdx]);
                     }
                 }
-                // Else error if an argument was found with the option
-//
-// there are now no options that will not accept an argument
-//
-//                else if (optionArg != NULL)
-//                    THROW_FMT(OptionInvalidError, "option '%s' does not allow an argument", strZ(optionName));
 
                 // Error if this option is secure and cannot be passed on the command line
                 if (cfgParseOptionSecure(option.id))
