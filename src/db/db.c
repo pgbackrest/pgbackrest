@@ -375,7 +375,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
                 dbQueryColumn(
                     this,
                     strNewFmt(
-                        "select pg_catalog.pg_%sfile_name(pg_catalog.pg_current_%s_%s())::text",
+                        "select pg_catalog.pg_%sfile_name(pg_catalog.pg_current_%s_insert_%s())::text",
                         strZ(pgWalName(dbPgVersion(this))), strZ(pgWalName(dbPgVersion(this))),
                         strZ(pgLsnName(dbPgVersion(this))))));
         }
@@ -388,8 +388,6 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
 
         if (archiveCheck && strEq(walSegmentCheck, walSegmentName))
         {
-            LOG_WARN("!!!SWITCHING");
-
             if (dbPgVersion(this) >= PG_VERSION_RESTORE_POINT)
             {
                 dbWalSwitch(this);

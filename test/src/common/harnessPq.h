@@ -141,7 +141,7 @@ Macros for defining groups of functions that implement various queries and comma
 #define HRNPQ_MACRO_CURRENT_WAL_LE_96(sessionParam, walSegmentParam)                                                               \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param = "[\"select pg_catalog.pg_xlogfile_name(pg_catalog.pg_current_xlog_location())::text\"]", .resultInt = 1},         \
+        .param = "[\"select pg_catalog.pg_xlogfile_name(pg_catalog.pg_current_xlog_insert_location())::text\"]", .resultInt = 1},  \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
     {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
@@ -155,8 +155,8 @@ Macros for defining groups of functions that implement various queries and comma
 
 #define HRNPQ_MACRO_CURRENT_WAL_GE_10(sessionParam, walSegmentParam)                                                               \
     {.session = sessionParam,                                                                                                      \
-        .function = HRNPQ_SENDQUERY, .param = "[\"select pg_catalog.pg_walfile_name(pg_catalog.pg_current_wal_lsn())::text\"]",    \
-        .resultInt = 1},                                                                                                           \
+        .function = HRNPQ_SENDQUERY,                                                                                               \
+        .param = "[\"select pg_catalog.pg_walfile_name(pg_catalog.pg_current_wal_insert_lsn())::text\"]", .resultInt = 1},         \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
     {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
