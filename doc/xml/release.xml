@@ -111,6 +111,15 @@
 
                         <p>Fix typos and improve documentation for the <br-option>tablespace-map-all</br-option> option.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="david.christensen"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove obsolete statement about future multi-repository support.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-doc-list>
         </release>
