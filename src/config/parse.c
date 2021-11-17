@@ -1411,6 +1411,16 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (!option.found)
                     THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
 
+                // Handle boolean option with argument
+                if (parseRuleOption[option.id].type == cfgOptTypeBoolean && optionArg != NULL)
+                {
+                    // Is the option negated
+                    if (strEqZ(optionArg, "n"))
+                        option.negate = true;
+                    else if (!strEqZ(optionArg, "y"))
+                        THROW_FMT(OptionInvalidValueError, "boolean option '%s' must be 'y' or 'n'", strZ(optionName));
+                }
+
                 // If the option requires an argument
                 if (parseRuleOption[option.id].type != cfgOptTypeBoolean && !option.negate && !option.reset)
                 {
@@ -1425,8 +1435,11 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     }
                 }
                 // Else error if an argument was found with the option
-                else if (optionArg != NULL)
-                    THROW_FMT(OptionInvalidError, "option '%s' does not allow an argument", strZ(optionName));
+//
+// there are now no options that will not accept an argument
+//
+//                else if (optionArg != NULL)
+//                    THROW_FMT(OptionInvalidError, "option '%s' does not allow an argument", strZ(optionName));
 
                 // Error if this option is secure and cannot be passed on the command line
                 if (cfgParseOptionSecure(option.id))
