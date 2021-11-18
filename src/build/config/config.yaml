@@ -786,9 +786,6 @@ option:
     section: global
     type: boolean
     default: true
-    allow-list:
-      - y
-      - n
     command:
       archive-get: {}
       archive-push: {}
