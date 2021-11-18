@@ -363,6 +363,7 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
 
     FUNCTION_LOG_RETURN_STRUCT(result);
 }
+
 /**********************************************************************************************************************************/
 // Helper to build stop backup query
 static String *

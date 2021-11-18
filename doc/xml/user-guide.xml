@@ -780,7 +780,7 @@
 
             <p>Many option names have changed to improve consistency although the old names from <proper>v1</proper> are still accepted.  In general, <id>db-*</id> options have been renamed to <id>pg-*</id> and <id>backup-*</id>/<id>retention-*</id> options have been renamed to <id>repo-*</id> when appropriate.</p>
 
-            <p><postgres/> and repository options must be indexed when using the new names introduced in <proper>v2</proper>, e.g. <br-option>pg1-host</br-option>, <br-option>pg1-path</br-option>, <br-option>repo1-path</br-option>, <br-option>repo1-type</br-option>, etc.  Only one repository is allowed currently but more flexibility is planned for <proper>v2</proper>.</p>
+            <p><postgres/> and repository options must be indexed when using the new names introduced in <proper>v2</proper>, e.g. <br-option>pg1-host</br-option>, <br-option>pg1-path</br-option>, <br-option>repo1-path</br-option>, <br-option>repo1-type</br-option>, etc.</p>
         </section>
     </section>
 

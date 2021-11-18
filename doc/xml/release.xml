@@ -39,6 +39,9 @@
                             <github-pull-request id="1562"/>
                         </commit>
                         <commit subject="Update contributor for 6e635764."/>
+                        <commit subject="Include backup_label and tablespace_map file sizes in log output.">
+                            <github-pull-request id="1568"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="mahomed.hussein"/>
@@ -107,6 +110,15 @@
                         </release-item-contributor-list>
 
                         <p>Fix typos and improve documentation for the <br-option>tablespace-map-all</br-option> option.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="david.christensen"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove obsolete statement about future multi-repository support.</p>
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
