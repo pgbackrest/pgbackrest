@@ -892,7 +892,8 @@ backupStart(BackupData *backupData)
             }
 
             // Check that WAL segments are being archived. If archiving is not working then the backup will eventually fail so
-            // better to catch it as early as possible. A segment to check may not be available on older versions of PostgreSQL.
+            // better to catch it as early as possible. A segment to check may not be available on older versions of PostgreSQL or
+            // if archive-check is false.
             if (dbBackupStartResult.walSegmentCheck != NULL)
             {
                 LOG_INFO_FMT(
