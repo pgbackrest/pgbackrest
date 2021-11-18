@@ -119,11 +119,11 @@ command:
       local: {}
       remote: {}
 
+  server: {}
+
   server-ping:
     log-file: false
     parameter-allowed: true
-
-  server-start: {}
 
   stanza-create:
     command-role:
@@ -605,8 +605,8 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      server: {}
       server-ping: {}
-      server-start: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -835,7 +835,7 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
-      server-start: {}
+      server: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -907,40 +907,40 @@ option:
     section: global
     type: path
     command:
-      server-start: {}
+      server: {}
 
   tls-server-crl-file:
     section: global
     required: false
     type: path
     command:
-      server-start: {}
+      server: {}
 
   tls-server-cert-file:
     section: global
     type: path
     command:
-      server-start: {}
+      server: {}
 
   tls-server-key-file:
     section: global
     type: path
     command:
-      server-start: {}
+      server: {}
 
   tls-server-auth:
     section: global
     type: hash
     command:
-      server-start: {}
+      server: {}
 
   tls-server-address:
     section: global
     type: string
     default: localhost
     command:
+      server: {}
       server-ping: {}
-      server-start: {}
 
   tls-server-port:
     section: global
@@ -948,8 +948,8 @@ option:
     default: 8432
     allow-range: [1, 65535]
     command:
+      server: {}
       server-ping: {}
-      server-start: {}
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------

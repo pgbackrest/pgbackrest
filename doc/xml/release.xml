@@ -34,6 +34,19 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="152"/>
+                        <github-pull-request id="1570"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Check archive immediately after backup start.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Match backup log size with size reported by info command.">
                             <github-issue id="766"/>
                             <github-pull-request id="1562"/>
@@ -54,6 +67,19 @@
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <commit subject="Rename server-start command to server."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="andrew.lecuyer"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <proper>TLS</proper> server.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1549"/>
 
@@ -110,6 +136,15 @@
                         </release-item-contributor-list>
 
                         <p>Fix typos and improve documentation for the <br-option>tablespace-map-all</br-option> option.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="david.christensen"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove obsolete statement about future multi-repository support.</p>
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
@@ -277,7 +312,7 @@
                             <release-item-reviewer id="andrew.lecuyer"/>
                         </release-item-contributor-list>
 
-                        <p><proper>Add TLS</proper> server.</p>
+                        <p>Add <proper>TLS</proper> server.</p>
                     </release-item>
 
                     <release-item>

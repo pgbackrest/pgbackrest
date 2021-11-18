@@ -130,7 +130,7 @@ testRun(void)
                         StringList *argList = strLstNew();
                         hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
                         hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
-                        HRN_CFG_LOAD(cfgCmdServerStart, argList);
+                        HRN_CFG_LOAD(cfgCmdServer, argList);
 
                         // Init exit signal handlers
                         exitInit();
@@ -149,7 +149,7 @@ testRun(void)
 
                         // Add parameters to arg list required for a reload
                         strLstInsert(argList, 0, cfgExe());
-                        strLstAddZ(argList, CFGCMD_SERVER_START);
+                        strLstAddZ(argList, CFGCMD_SERVER);
 
                         TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");
 
@@ -243,7 +243,7 @@ testRun(void)
                         hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
                         hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "bogus=*");
                         hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
-                        HRN_CFG_LOAD(cfgCmdServerStart, argList);
+                        HRN_CFG_LOAD(cfgCmdServer, argList);
 
                         // Init exit signal handlers
                         exitInit();

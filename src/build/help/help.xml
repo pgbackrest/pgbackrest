@@ -2314,8 +2314,8 @@
             </command>
 
             <!-- =============================================================================================================== -->
-            <command id="server-start" name="Server Start">
-                <summary>Start <backrest/> server.</summary>
+            <command id="server" name="Server">
+                <summary><backrest/> server.</summary>
 
                 <text>
                     <p>The <backrest/> server allows access to remote hosts without using the <proper>SSH</proper> protocol.</p>

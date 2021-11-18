@@ -815,7 +815,7 @@ testRun(void)
 
                 StringList *argList = strLstDup(argListBase);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=db");
-                HRN_CFG_LOAD(cfgCmdServerStart, argList);
+                HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);
 
@@ -827,7 +827,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 argList = strLstDup(argListBase);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=bogus");
-                HRN_CFG_LOAD(cfgCmdServerStart, argList);
+                HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);
 
@@ -837,7 +837,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 argList = strLstDup(argListBase);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "bogus=*");
-                HRN_CFG_LOAD(cfgCmdServerStart, argList);
+                HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);
 
@@ -847,7 +847,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 argList = strLstDup(argListBase);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=db");
-                HRN_CFG_LOAD(cfgCmdServerStart, argList);
+                HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);
 
@@ -857,7 +857,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 argList = strLstDup(argListBase);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=*");
-                HRN_CFG_LOAD(cfgCmdServerStart, argList);
+                HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 socketSession = ioServerAccept(socketServer, NULL);
 
