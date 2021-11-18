@@ -660,7 +660,7 @@ testRun(void)
             "backup command requires option: stanza");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when negated boolean option with argument");
+        TEST_TITLE("error when negated boolean option with negative argument");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -671,15 +671,15 @@ testRun(void)
             "negated options cannot have an argument '--no-neutral-umask=n'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("negated boolean option with argument");
+        TEST_TITLE("negated boolean option with affirmative argument");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
-        strLstAddZ(argList, "--no-neutral-umask=n");
+        strLstAddZ(argList, "--no-online=y");
         strLstAddZ(argList, CFGCMD_BACKUP);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "negated options cannot have an argument '--no-neutral-umask=n'");
+            "negated options cannot have an argument '--no-online=y'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid command");
