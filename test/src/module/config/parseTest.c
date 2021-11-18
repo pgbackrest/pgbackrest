@@ -668,7 +668,7 @@ testRun(void)
         strLstAddZ(argList, CFGCMD_BACKUP);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "negated options cannot have an argument '--no-neutral-umask=n'");
+            "option 'no-neutral-umask' does not allow an argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when negated boolean option with affirmative argument");
@@ -679,7 +679,18 @@ testRun(void)
         strLstAddZ(argList, CFGCMD_BACKUP);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "negated options cannot have an argument '--no-online=y'");
+            "option 'no-online' does not allow an argument");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when argumentless option is passed with an argument");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--reset-pg1-host=xxx");
+        strLstAddZ(argList, CFGCMD_BACKUP);
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'reset-pg1-host' does not allow an argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid command");

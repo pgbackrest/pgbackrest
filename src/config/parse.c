@@ -1411,27 +1411,30 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (!option.found)
                     THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
 
-                // Handle boolean option with argument(only y/n allowed)
-                if (parseRuleOption[option.id].type == cfgOptTypeBoolean && optionArg != NULL)
+                // If the option may have an argument (arguments are optional for boolean options)
+                if (!option.negate && !option.reset)
                 {
-                    // Error on negated (--no-) options that also have an argument
-                    if (strncmp(strZ(optionName), OPTION_PREFIX_NEGATE, sizeof(OPTION_PREFIX_NEGATE) - 1) == 0)
-                        THROW_FMT(OptionInvalidError, "negated options cannot have an argument '--%s'", arg);
-
-                    // Validate argument/set negate when indicated
-                    if (strEqZ(optionArg, "n"))
-                        option.negate = true;
-                    else if (!strEqZ(optionArg, "y"))
-                        THROW_FMT(
-                                OptionInvalidValueError,
-                                "when using argument with boolean option '--%s', argument must be 'y' or 'n'", strZ(optionName));
-                }
-
-                // If the option requires an argument
-                if (parseRuleOption[option.id].type != cfgOptTypeBoolean && !option.negate && !option.reset)
-                {
+                    // Handle boolean (only y/n allowed as argument)
+                    if (parseRuleOption[option.id].type == cfgOptTypeBoolean)
+                    {
+                        if (optionArg != NULL)
+                        {
+                            // Validate argument/set negate when indicated
+                            if (strEqZ(optionArg, "n"))
+                            {
+                                option.negate = true;
+                            }
+                            else if (!strEqZ(optionArg, "y"))
+                            {
+                                THROW_FMT(
+                                    OptionInvalidValueError,
+                                    "when using argument with boolean option '--%s', argument must be 'y' or 'n'",
+                                    strZ(optionName));
+                            }
+                        }
+                    }
                     // If no argument was found with the option then try the next argument
-                    if (optionArg == NULL)
+                    else if (optionArg == NULL)
                     {
                         // Error if there are no more arguments in the list
                         if (argListIdx == argListSize - 1)
@@ -1440,6 +1443,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         optionArg = strNewZ(argList[++argListIdx]);
                     }
                 }
+                else if (optionArg != NULL)
+                    THROW_FMT(OptionInvalidError, "option '%s' does not allow an argument", strZ(optionName));
 
                 // Error if this option is secure and cannot be passed on the command line
                 if (cfgParseOptionSecure(option.id))
