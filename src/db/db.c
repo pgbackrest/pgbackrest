@@ -371,11 +371,10 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
 
         if (archiveCheck && strEq(walSegmentCheck, walSegmentName))
         {
-            // If the version supports restore points then we can force a WAL switch
+            // If the version supports restore points then force a WAL switch
             if (dbPgVersion(this) >= PG_VERSION_RESTORE_POINT)
             {
                 dbWalSwitch(this);
-                walSegmentCheck = walSegmentName;
             }
             // Else disable the check. All WAL will still be checked at the end of the backup.
             else
