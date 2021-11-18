@@ -671,7 +671,7 @@ testRun(void)
             "negated options cannot have an argument '--no-neutral-umask=n'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("negated boolean option with affirmative argument");
+        TEST_TITLE("error when negated boolean option with affirmative argument");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
