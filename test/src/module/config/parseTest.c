@@ -660,7 +660,7 @@ testRun(void)
             "backup command requires option: stanza");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("negated boolean option with argument");
+        TEST_TITLE("error when negated boolean option with argument");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
