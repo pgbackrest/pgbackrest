@@ -1417,19 +1417,15 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     // Handle boolean (only y/n allowed as argument)
                     if (parseRuleOption[option.id].type == cfgOptTypeBoolean)
                     {
+                        // Validate argument/set negate when argument present
                         if (optionArg != NULL)
                         {
-                            // Validate argument/set negate when indicated
                             if (strEqZ(optionArg, "n"))
-                            {
                                 option.negate = true;
-                            }
                             else if (!strEqZ(optionArg, "y"))
                             {
                                 THROW_FMT(
-                                    OptionInvalidValueError,
-                                    "when using argument with boolean option '--%s', argument must be 'y' or 'n'",
-                                    strZ(optionName));
+                                    OptionInvalidValueError, "boolean option '--%s' argument must be 'y' or 'n'", strZ(optionName));
                             }
                         }
                     }
@@ -1443,6 +1439,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         optionArg = strNewZ(argList[++argListIdx]);
                     }
                 }
+                // Else error if an argument was found with the option
                 else if (optionArg != NULL)
                     THROW_FMT(OptionInvalidError, "option '%s' does not allow an argument", strZ(optionName));
 
