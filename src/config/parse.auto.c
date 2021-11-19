@@ -6805,7 +6805,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
-        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -8768,7 +8767,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 /***********************************************************************************************************************************
 Option deprecations
 ***********************************************************************************************************************************/
-#define CFG_OPTION_DEPRECATE_TOTAL                                  40
+#define CFG_OPTION_DEPRECATE_TOTAL                                  39
 
 static const ParseRuleOptionDeprecate parseRuleOptionDeprecate[CFG_OPTION_DEPRECATE_TOTAL] =
 {
@@ -8990,13 +8989,6 @@ static const ParseRuleOptionDeprecate parseRuleOptionDeprecate[CFG_OPTION_DEPREC
     {
         .name = "repo-s3-key-secret",
         .id = cfgOptRepoS3KeySecret,
-        .unindexed = true,
-    },
-
-    // repo-s3-kms-key-id deprecation
-    {
-        .name = "repo-s3-kms-key-id",
-        .id = cfgOptRepoS3KmsKeyId,
         .unindexed = true,
     },
 
