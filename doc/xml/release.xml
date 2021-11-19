@@ -47,6 +47,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1571"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow y/n arguments for boolean command-line options.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Match backup log size with size reported by info command.">
                             <github-issue id="766"/>
                             <github-pull-request id="1562"/>
