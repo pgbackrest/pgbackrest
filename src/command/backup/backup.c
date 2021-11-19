@@ -980,7 +980,7 @@ typedef struct BackupStopResult
 } BackupStopResult;
 
 static BackupStopResult
-backupStop(BackupData *backupData, Manifest *manifest, uint64_t *backupSizeTotal)
+backupStop(BackupData *backupData, Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -1011,10 +1011,8 @@ backupStop(BackupData *backupData, Manifest *manifest, uint64_t *backupSizeTotal
             LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Save files returned by stop backup
-            *backupSizeTotal += backupFilePut(
-                backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
-            *backupSizeTotal += backupFilePut(
-                backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -2083,10 +2081,10 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherPassBackup);
 
         // Process the backup manifest
-        uint64_t backupSizeTotal = backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
+        backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
 
         // Stop the backup
-        BackupStopResult backupStopResult = backupStop(backupData, manifest, &backupSizeTotal);
+        BackupStopResult backupStopResult = backupStop(backupData, manifest);
 
         // Complete manifest
         manifestBuildComplete(
@@ -2113,9 +2111,12 @@ cmdBackup(void)
         backupComplete(infoBackup, manifest);
 
         // Backup info
+        const InfoBackupData *const infoBackupData = infoBackupDataByLabel(infoBackup,  manifestData(manifest)->backupLabel);
         LOG_INFO_FMT(
             "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
-            strZ(strSizeFormat(backupSizeTotal)), manifestFileTotal(manifest));
+            infoBackupData->backupInfoSizeDelta > 1048576 ? strZ(strSizeFormat(infoBackupData->backupInfoSizeDelta))
+            : strZ(strCatFmt(strNew(),"%s (%s)", strZ(strNewFmt("%" PRIu64 "B", infoBackupData->backupInfoSizeDelta)),
+            strZ(strSizeFormat(infoBackupData->backupInfoSizeDelta)))), manifestFileTotal(manifest));
     }
     MEM_CONTEXT_TEMP_END();
 
