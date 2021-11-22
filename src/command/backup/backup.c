@@ -2127,10 +2127,10 @@ cmdBackup(void)
         backupComplete(infoBackup, manifest);
 
         // Backup info
-        InfoBackupData *infoBackupDataPtr = infoBackupDataByLabel(infoBackup,  manifestData(manifest)->backupLabel);
         LOG_INFO_FMT(
             "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
-            strZ(strSizeFormat(infoBackupDataPtr->backupInfoSizeDelta)), manifestFileTotal(manifest));
+            strZ(strSizeFormat(infoBackupDataByLabel(infoBackup,  manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
+            manifestFileTotal(manifest));
     }
     MEM_CONTEXT_TEMP_END();
 
