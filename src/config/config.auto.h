@@ -22,8 +22,8 @@ Command constants
 #define CFGCMD_REPO_PUT                                             "repo-put"
 #define CFGCMD_REPO_RM                                              "repo-rm"
 #define CFGCMD_RESTORE                                              "restore"
+#define CFGCMD_SERVER                                               "server"
 #define CFGCMD_SERVER_PING                                          "server-ping"
-#define CFGCMD_SERVER_START                                         "server-start"
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
 #define CFGCMD_STANZA_DELETE                                        "stanza-delete"
 #define CFGCMD_STANZA_UPGRADE                                       "stanza-upgrade"
@@ -326,8 +326,8 @@ typedef enum
     cfgCmdRepoPut,
     cfgCmdRepoRm,
     cfgCmdRestore,
+    cfgCmdServer,
     cfgCmdServerPing,
-    cfgCmdServerStart,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,
     cfgCmdStanzaUpgrade,

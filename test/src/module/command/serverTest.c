@@ -117,7 +117,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=db");
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
-                HRN_CFG_LOAD(cfgCmdServerStart, argList);
+                HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 // Write a config file to demonstrate that settings are loaded
                 HRN_STORAGE_PUT_Z(storageTest, "pgbackrest.conf", "[global]\nrepo1-path=" TEST_PATH "/repo");
@@ -193,7 +193,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
                 hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "bogus=*");
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
-                HRN_CFG_LOAD(cfgCmdServerStart, argList);
+                HRN_CFG_LOAD(cfgCmdServer, argList);
 
                 // Get pid of this process to identify child process later
                 pid_t pid = getpid();
