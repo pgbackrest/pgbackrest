@@ -2111,12 +2111,10 @@ cmdBackup(void)
         backupComplete(infoBackup, manifest);
 
         // Backup info
-        const InfoBackupData *const infoBackupData = infoBackupDataByLabel(infoBackup,  manifestData(manifest)->backupLabel);
+        InfoBackupData *infoBackupDataPtr = infoBackupDataByLabel(infoBackup,  manifestData(manifest)->backupLabel);
         LOG_INFO_FMT(
             "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
-            infoBackupData->backupInfoSizeDelta > 1048576 ? strZ(strSizeFormat(infoBackupData->backupInfoSizeDelta))
-            : strZ(strCatFmt(strNew(),"%s (%s)", strZ(strNewFmt("%" PRIu64 "B", infoBackupData->backupInfoSizeDelta)),
-            strZ(strSizeFormat(infoBackupData->backupInfoSizeDelta)))), manifestFileTotal(manifest));
+            strZ(strSizeFormat(infoBackupDataPtr->backupInfoSizeDelta)), manifestFileTotal(manifest));
     }
     MEM_CONTEXT_TEMP_END();
 
