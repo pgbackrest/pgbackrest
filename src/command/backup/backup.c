@@ -1123,7 +1123,7 @@ Log the results of a job and throw errors
 static void
 backupJobResult(
     Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t *sizeProgress, uint64_t *sizeCopied)
+    const uint64_t sizeTotal, uint64_t *sizeProgress)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1133,7 +1133,6 @@ backupJobResult(
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
-        FUNCTION_LOG_PARAM_P(UINT64, sizeCopied);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1177,9 +1176,6 @@ backupJobResult(
             // Else if the repo matched the expect checksum, just log it
             else if (copyResult == backupCopyResultChecksum)
             {
-                // Increment size to account for checksum resumed file
-                *sizeCopied += copySize;
-
                 LOG_DETAIL_PID_FMT(
                     processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
             }
@@ -1194,9 +1190,6 @@ backupJobResult(
             // Else file was copied so update manifest
             else
             {
-                // Increment size of files copied
-                *sizeCopied += copySize;
-
                 // If the file had to be recopied then warn that there may be an issue with corruption in the repository
                 // ??? This should really be below the message below for more context -- can be moved after the migration
                 // ??? The name should be a pg path not manifest name -- can be fixed after the migration
@@ -1596,7 +1589,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
     FUNCTION_TEST_RETURN(result);
 }
 
-static uint64_t
+static void
 backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart, const String *cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1609,7 +1602,6 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     ASSERT(manifest != NULL);
 
     uint64_t sizeTotal = 0;
-    uint64_t sizeCopied = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1717,8 +1709,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
-                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
-                        fileRemove, job, sizeTotal, &sizeProgress, &sizeCopied);
+                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)), fileRemove, job,
+                            sizeTotal, &sizeProgress);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
@@ -1796,7 +1788,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(UINT64, sizeCopied);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
