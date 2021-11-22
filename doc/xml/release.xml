@@ -66,6 +66,9 @@
                         <commit subject="Include backup_label and tablespace_map file sizes in log output.">
                             <github-pull-request id="1568"/>
                         </commit>
+                        <commit subject="Use infoBackupDataByLabel() to log backup size.">
+                            <github-pull-request id="1573"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="mahomed.hussein"/>
