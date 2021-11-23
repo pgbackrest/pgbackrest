@@ -539,6 +539,55 @@ testRun(void)
         TEST_RESULT_STR_Z(dbBackupStop(db.primary).tablespaceMap, "TABLESPACE_MAP_DATA", "stop backup");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("PostgreSQL 14 - checkpoint timeout warning");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        // With start-fast being disabled, set db-timeout smaller than checkpoint_timeout to raise a warning
+        hrnCfgArgRawZ(argList, cfgOptDbTimeout, "299");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_14, TEST_PATH "/pg1", false, NULL, NULL),
+
+            // Start backup
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000010000000100000001"),
+            HRNPQ_MACRO_START_BACKUP_GE_10(1, false, "1/1", "000000010000000100000001"),
+
+            // Switch WAL segment so it can be checked
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
+            HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000010000000100000001"),
+
+            // Stop backup
+            HRNPQ_MACRO_STOP_BACKUP_GE_10(1, "1/1", "000000010000000100000001", true),
+
+            // Close primary
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
+        TEST_RESULT_STR_Z(backupStartResult.lsn, "1/1", "check lsn");
+        TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000100000001", "check wal segment name");
+        TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000010000000100000001", "check wal segment check");
+
+        TEST_RESULT_STR_Z(dbBackupStop(db.primary).tablespaceMap, "TABLESPACE_MAP_DATA", "stop backup");
+
+        TEST_RESULT_VOID(dbFree(db.primary), "free primary");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: start-fast is disabled and db-timeout (299s) is smaller than the checkpoint_timeout (300s) reported by the"
+            " database - timeout may occur before the backup actually starts");
     }
 
     // *****************************************************************************************************************************

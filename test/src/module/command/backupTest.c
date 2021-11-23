@@ -2580,8 +2580,6 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            // With start-fast being disabled, set db-timeout smaller than checkpoint_timeout to raise a warning
-            hrnCfgArgRawZ(argList, cfgOptDbTimeout, "299");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Update pg_control timestamp
@@ -2594,8 +2592,6 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
-                "P00   WARN: start-fast is disabled and db-timeout (299s) is smaller than the checkpoint_timeout (300s) reported by"
-                " the database - timeout may occur before the backup actually starts\n"
                 "P00   INFO: backup start archive = 0000002C05DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P00   INFO: check archive for segment 0000002C05DB8EB000000000\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
