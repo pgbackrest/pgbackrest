@@ -853,17 +853,6 @@ backupStart(BackupData *backupData)
             DbBackupStartResult dbBackupStartResult = dbBackupStart(
                 backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto));
 
-            // When the start-fast option is disabled and db-timeout is smaller than checkpoint_timeout, the command may timeout
-            // before the backup actually starts
-            if (!cfgOptionBool(cfgOptStartFast) &&
-                cfgOptionUInt64(cfgOptDbTimeout) <= dbCheckpointTimeout(backupData->dbPrimary))
-            {
-                LOG_WARN_FMT(
-                    CFGOPT_START_FAST " is disabled and " CFGOPT_DB_TIMEOUT " (%ss) is smaller than the checkpoint_timeout (%lus)"
-                    " reported by the database - timeout may occur before the backup actually starts",
-                    strZ(cfgOptionDisplay(cfgOptDbTimeout)), dbCheckpointTimeout(backupData->dbPrimary) / MSEC_PER_SEC);
-            }
-
             MEM_CONTEXT_PRIOR_BEGIN()
             {
                 result.lsn = strDup(dbBackupStartResult.lsn);

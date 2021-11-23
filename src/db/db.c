@@ -7,6 +7,7 @@ Database Client
 #include "common/log.h"
 #include "common/type/json.h"
 #include "common/wait.h"
+#include "config/config.h"
 #include "db/db.h"
 #include "db/protocol.h"
 #include "postgres/interface.h"
@@ -207,7 +208,10 @@ dbOpen(Db *this)
             memContextCallbackSet(this->pub.memContext, dbFreeResource, this);
         }
         else
+        {
             pgClientOpen(this->client);
+            this->pub.dbTimeout = pgClientTimeout(this->client);
+        }
 
         // Set search_path to prevent overrides of the functions we expect to call.  All queries should also be schema-qualified,
         // but this is an extra level protection.
@@ -353,6 +357,16 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
 
         // Start backup
         VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
+
+        // When the start-fast option is disabled and db-timeout is smaller than checkpoint_timeout, the command may timeout
+        // before the backup actually starts
+        if (!startFast && dbDbTimeout(this) <= dbCheckpointTimeout(this))
+        {
+            LOG_WARN_FMT(
+                CFGOPT_START_FAST " is disabled and " CFGOPT_DB_TIMEOUT " (%" PRIu64 "s) is smaller than the checkpoint_timeout (%"
+                PRIu64 "s) reported by the database - timeout may occur before the backup actually starts",
+                dbDbTimeout(this) / MSEC_PER_SEC, dbCheckpointTimeout(this) / MSEC_PER_SEC);
+        }
 
         // Return results
         MEM_CONTEXT_PRIOR_BEGIN()
