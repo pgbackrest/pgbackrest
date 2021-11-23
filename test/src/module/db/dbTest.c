@@ -70,6 +70,7 @@ testRun(void)
                 hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "testdb");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
                 hrnCfgArgRawZ(argList, cfgOptProcess, "0");
+                hrnCfgArgRawZ(argList, cfgOptDbTimeout, "777");
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleRemote);
 
                 // Set script
@@ -99,7 +100,11 @@ testRun(void)
                     protocolServerNew(STRDEF("db test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
                     "create server");
 
-                static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_DB_LIST};
+                static const ProtocolServerHandler commandHandler[] =
+                {
+                    PROTOCOL_SERVER_HANDLER_DB_LIST
+                    PROTOCOL_SERVER_HANDLER_OPTION_LIST
+                };
 
                 TEST_RESULT_VOID(
                     protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
@@ -150,6 +155,7 @@ testRun(void)
                         TEST_RESULT_VOID(dbOpen(db), "open db");
                         TEST_RESULT_UINT(db->remoteIdx, 1, "check idx");
                         TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "wal switch");
+                        TEST_RESULT_UINT(dbDbTimeout(db), 777000, "check timeout");
                         TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
                     }
                     FINALLY()
@@ -179,6 +185,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "backupdb");
+        hrnCfgArgRawZ(argList, cfgOptDbTimeout, "888");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -255,6 +262,8 @@ testRun(void)
 
         DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+
+        TEST_RESULT_UINT(dbDbTimeout(db.primary), 888000, "check timeout");
 
         DbBackupStartResult backupStartResult = {0};
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");

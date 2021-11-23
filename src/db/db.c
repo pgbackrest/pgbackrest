@@ -8,6 +8,7 @@ Database Client
 #include "common/type/json.h"
 #include "common/wait.h"
 #include "config/config.h"
+#include "config/protocol.h"
 #include "db/db.h"
 #include "db/protocol.h"
 #include "postgres/interface.h"
@@ -206,11 +207,15 @@ dbOpen(Db *this)
 
             // Set a callback to notify the remote when a connection is closed
             memContextCallbackSet(this->pub.memContext, dbFreeResource, this);
+
+            // Get db-timeout from the remote since it might be different than the local value
+            this->pub.dbTimeout = varUInt64Force(
+                varLstGet(configOptionRemote(this->remoteClient, varLstAdd(varLstNew(), varNewStrZ(CFGOPT_DB_TIMEOUT))), 0));
         }
         else
         {
             pgClientOpen(this->client);
-            this->pub.dbTimeout = pgClientTimeout(this->client);
+            this->pub.dbTimeout = cfgOptionUInt64(cfgOptDbTimeout);
         }
 
         // Set search_path to prevent overrides of the functions we expect to call.  All queries should also be schema-qualified,
