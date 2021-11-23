@@ -916,7 +916,7 @@ backupStart(BackupData *backupData)
 Stop the backup
 ***********************************************************************************************************************************/
 // Helper to write a file from a string to the repository and update the manifest
-static uint64_t
+static void
 backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, time_t timestamp, const String *content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -927,13 +927,9 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         FUNCTION_LOG_PARAM(STRING, content);
     FUNCTION_LOG_END();
 
-    uint64_t fileSize = 0;
-
     // Skip files with no content
     if (content != NULL)
     {
-        fileSize = strSize(content);
-
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Create file
@@ -996,7 +992,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN(UINT64, fileSize);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /*--------------------------------------------------------------------------------------------------------------------------------*/
