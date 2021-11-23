@@ -175,13 +175,6 @@ storageS3Auth(
         if (this->securityToken != NULL)
             httpHeaderPut(httpHeader, S3_HEADER_TOKEN_STR, this->securityToken);
 
-        // Set KMS key header if this is a write request
-        if (this->kmsKeyId != NULL && !strCmp(verb, HTTP_VERB_PUT_STR))
-        {
-            httpHeaderPut(httpHeader, S3_HEADER_SRVSDENC_STR, S3_HEADER_SRVSDENC_KMS_STR);
-            httpHeaderPut(httpHeader, S3_HEADER_SRVSDENC_KMSKEYID_STR, this->kmsKeyId);
-        }
-
         // Generate canonical request and signed headers
         const StringList *headerList = strLstSort(strLstDup(httpHeaderList(httpHeader)), sortOrderAsc);
         String *signedHeaders = NULL;
@@ -433,6 +426,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.sseKms);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -456,6 +450,13 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             httpHeaderAdd(
                 requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
                 strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
+        }
+
+        // Set KMS headers when requested
+        if (param.sseKms && this->kmsKeyId != NULL)
+        {
+            httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_STR, S3_HEADER_SRVSDENC_KMS_STR);
+            httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_KMSKEYID_STR, this->kmsKeyId);
         }
 
         // When using path-style URIs the bucket name needs to be prepended
@@ -560,12 +561,13 @@ storageS3Request(StorageS3 *this, const String *verb, const String *path, Storag
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+        FUNCTION_LOG_PARAM(BOOL, param.sseKms);
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
         HTTP_RESPONSE,
         storageS3ResponseP(
-            storageS3RequestAsyncP(this, verb, path, .query = param.query, .content = param.content),
+            storageS3RequestAsyncP(this, verb, path, .query = param.query, .content = param.content, .sseKms = param.sseKms),
             .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 
