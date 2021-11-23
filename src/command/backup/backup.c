@@ -881,7 +881,8 @@ backupStart(BackupData *backupData)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
-                dbReplayWait(backupData->dbStandby, result.lsn, cfgOptionUInt64(cfgOptArchiveTimeout));
+                dbReplayWait(
+                    backupData->dbStandby, result.lsn, dbBackupStartResult.timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
                 LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
 
                 // The standby db object won't be used anymore so free it
@@ -1840,7 +1841,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            unsigned int timeline = cvtZToUIntBase(strZ(strSubN(manifestData(manifest)->archiveStart, 0, 8)), 16);
+            uint32_t timeline = pgTimelineFromWalSegment(manifestData(manifest)->archiveStart);
             uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
             uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 

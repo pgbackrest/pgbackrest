@@ -384,6 +384,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         // Return results
         MEM_CONTEXT_PRIOR_BEGIN()
         {
+            result.timeline = pgTimelineFromWalSegment(walSegmentName);
             result.lsn = strDup(varStr(varLstGet(row, 0)));
             result.walSegmentName = strDup(walSegmentName);
             result.walSegmentCheck = strDup(walSegmentCheck);
@@ -519,16 +520,18 @@ dbList(Db *this)
 
 /**********************************************************************************************************************************/
 void
-dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
+dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targetTimeline, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
         FUNCTION_LOG_PARAM(STRING, targetLsn);
+        FUNCTION_LOG_PARAM(UINT, targetTimeline);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(targetLsn != NULL);
+    ASSERT(targetTimeline != 0);
     ASSERT(timeout > 0);
 
     MEM_CONTEXT_TEMP_BEGIN()

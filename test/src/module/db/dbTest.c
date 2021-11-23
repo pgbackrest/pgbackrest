@@ -255,6 +255,7 @@ testRun(void)
 
         DbBackupStartResult backupStartResult = {0};
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
+        TEST_RESULT_UINT(backupStartResult.timeline, 1, "check timeline");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "1/1", "start backup");
         TEST_RESULT_PTR(backupStartResult.walSegmentCheck, NULL, "WAL segment check");
 
@@ -379,6 +380,7 @@ testRun(void)
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, true), "start backup");
+        TEST_RESULT_UINT(backupStartResult.timeline, 1, "check timeline");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "3/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000300000003", "check wal segment name");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000010000000300000002", "check wal segment check");
@@ -429,7 +431,7 @@ testRun(void)
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
         TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false, false).lsn, "5/4", "start backup");
-        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), 1000), "sync standby");
+        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), 1, 1000), "sync standby");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
@@ -510,26 +512,27 @@ testRun(void)
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
+        TEST_RESULT_UINT(backupStartResult.timeline, 5, "check timeline");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "5/5", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000050000000500000005", "check wal segment name");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000050000000500000005", "check wal segment check");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 1000), ArchiveTimeoutError,
+            dbReplayWait(db.standby, STRDEF("5/5"), 1, 1000), ArchiveTimeoutError,
             "unable to query replay lsn on the standby using 'pg_catalog.pg_last_wal_replay_lsn()'\n"
             "HINT: Is this a standby?");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 200), ArchiveTimeoutError,
+            dbReplayWait(db.standby, STRDEF("5/5"), 1, 200), ArchiveTimeoutError,
             "timeout before standby replayed to 5/5 - only reached 5/3\n"
             "HINT: is replication running and current on the standby?\n"
             "HINT: disable the 'backup-standby' option to backup directly from the primary.");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 200), ArchiveTimeoutError,
+            dbReplayWait(db.standby, STRDEF("5/5"), 1, 200), ArchiveTimeoutError,
             "timeout before standby checkpoint lsn reached 5/5 - only reached 5/4");
 
-        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), 1000), "sync standby");
+        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), 1, 1000), "sync standby");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
 

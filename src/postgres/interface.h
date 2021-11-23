@@ -149,6 +149,9 @@ String *pgLsnToStr(uint64_t lsn);
 String *pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize);
 uint64_t pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize);
 
+// Get timeline from WAL segment name
+uint32_t pgTimelineFromWalSegment(const String *walSegment);
+
 // Convert a timeline and lsn range to a list of wal segments
 StringList *pgLsnRangeToWalSegmentList(
     unsigned int pgVersion, uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize);

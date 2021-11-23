@@ -17,6 +17,7 @@ Archive Common
 #include "common/regExp.h"
 #include "common/wait.h"
 #include "config/config.h"
+#include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 #include "storage/helper.h"
@@ -492,7 +493,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        timeline = (uint32_t)strtol(strZ(strSubN(walSegment, 0, 8)), NULL, 16);
+        timeline = pgTimelineFromWalSegment(walSegment);
         major = (uint32_t)strtol(strZ(strSubN(walSegment, 8, 8)), NULL, 16);
         minor = (uint32_t)strtol(strZ(strSubN(walSegment, 16, 8)), NULL, 16);
 

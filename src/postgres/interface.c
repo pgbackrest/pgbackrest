@@ -541,6 +541,25 @@ pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
 }
 
 /**********************************************************************************************************************************/
+uint32_t
+pgTimelineFromWalSegment(const String *const walSegment)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, walSegment);
+    FUNCTION_TEST_END();
+
+    ASSERT(walSegment != NULL);
+    ASSERT(strSize(walSegment) == 24);
+
+    char buffer[9];
+
+    strncpy(buffer, strZ(walSegment), sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+
+    FUNCTION_TEST_RETURN(cvtZToUIntBase(buffer, 16));
+}
+
+/**********************************************************************************************************************************/
 StringList *
 pgLsnRangeToWalSegmentList(
     unsigned int pgVersion, uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize)

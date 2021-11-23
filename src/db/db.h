@@ -67,9 +67,10 @@ Functions
 // Open the db connection
 void dbOpen(Db *this);
 
-// Start backup and return starting lsn and wal segment name
+// Start backup and return timeline, starting lsn, and wal segment info
 typedef struct DbBackupStartResult
 {
+    uint32_t timeline;                                              // Current timeline
     String *lsn;
     String *walSegmentName;
     String *walSegmentCheck;                                        // Segment used to check archiving, may be NULL
@@ -95,7 +96,7 @@ bool dbIsStandby(Db *this);
 VariantList *dbList(Db *this);
 
 // Waits for replay on the standby to equal the target LSN
-void dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout);
+void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
 
 // Epoch time on the PostgreSQL host in ms
 TimeMSec dbTimeMSec(Db *this);
