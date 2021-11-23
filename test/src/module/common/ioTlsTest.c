@@ -255,8 +255,8 @@ testRun(void)
             // ---------------------------------------------------------------------------------------------------------------------
             TEST_TITLE("connect to non-blocking socket to test write ready");
 
-            // Attempt connection
-            CHECK(connect(fd, hostBadAddress->ai_addr, hostBadAddress->ai_addrlen) == -1);
+            // Make sure the bad address does not work before using it for testing
+            ASSERT(connect(fd, hostBadAddress->ai_addr, hostBadAddress->ai_addrlen) == -1);
 
             // Create socket session and wait for timeout
             IoSession *session = NULL;
