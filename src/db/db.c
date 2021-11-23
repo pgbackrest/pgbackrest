@@ -311,12 +311,13 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
 }
 
 DbBackupStartResult
-dbBackupStart(Db *this, bool startFast, bool stopAuto)
+dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const bool archiveCheck)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
         FUNCTION_LOG_PARAM(BOOL, startFast);
         FUNCTION_LOG_PARAM(BOOL, stopAuto);
+        FUNCTION_LOG_PARAM(BOOL, archiveCheck);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -355,6 +356,20 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
             }
         }
 
+        // If archive check then get the current WAL segment
+        const String *walSegmentCheck = NULL;
+
+        if (archiveCheck)
+        {
+            walSegmentCheck = varStr(
+                dbQueryColumn(
+                    this,
+                    strNewFmt(
+                        "select pg_catalog.pg_%sfile_name(pg_catalog.pg_current_%s_insert_%s())::text",
+                        strZ(pgWalName(dbPgVersion(this))), strZ(pgWalName(dbPgVersion(this))),
+                        strZ(pgLsnName(dbPgVersion(this))))));
+        }
+
         // Start backup
         VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
 
@@ -368,11 +383,27 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
                 dbDbTimeout(this) / MSEC_PER_SEC, dbCheckpointTimeout(this) / MSEC_PER_SEC);
         }
 
+        // If archive check then make sure WAL segment was switched on start backup
+        const String *const walSegmentName = varStr(varLstGet(row, 1));
+
+        if (archiveCheck && strEq(walSegmentCheck, walSegmentName))
+        {
+            // If the version supports restore points then force a WAL switch
+            if (dbPgVersion(this) >= PG_VERSION_RESTORE_POINT)
+            {
+                dbWalSwitch(this);
+            }
+            // Else disable the check. All WAL will still be checked at the end of the backup.
+            else
+                walSegmentCheck = NULL;
+        }
+
         // Return results
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result.lsn = strDup(varStr(varLstGet(row, 0)));
-            result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
+            result.walSegmentName = strDup(walSegmentName);
+            result.walSegmentCheck = strDup(walSegmentCheck);
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -380,6 +411,7 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
 
     FUNCTION_LOG_RETURN_STRUCT(result);
 }
+
 /**********************************************************************************************************************************/
 // Helper to build stop backup query
 static String *

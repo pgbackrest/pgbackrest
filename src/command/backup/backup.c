@@ -148,6 +148,9 @@ typedef struct BackupData
     const Storage *storageStandby;                                  // Storage object for the standby
     const String *hostStandby;                                      // Host name of the standby
 
+    const InfoArchive *archiveInfo;                                 // Archive info
+    const String *archiveId;                                        // Archive where backup WAL will be stored
+
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
 } BackupData;
@@ -257,6 +260,15 @@ backupInit(const InfoBackup *infoBackup)
     {
         LOG_WARN(CFGOPT_CHECKSUM_PAGE " option set to true but checksums are not enabled on the cluster, resetting to false");
         cfgOptionSet(cfgOptChecksumPage, cfgSourceParam, BOOL_FALSE_VAR);
+    }
+
+    // Get archive info
+    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck))
+    {
+        result->archiveInfo = infoArchiveLoadFile(
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+                cfgOptionStrNull(cfgOptRepoCipherPass));
+        result->archiveId = infoArchiveId(result->archiveInfo);
     }
 
     FUNCTION_LOG_RETURN(BACKUP_DATA, result);
@@ -851,7 +863,8 @@ backupStart(BackupData *backupData)
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
             DbBackupStartResult dbBackupStartResult = dbBackupStart(
-                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto));
+                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto),
+                cfgOptionBool(cfgOptArchiveCheck));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -877,6 +890,21 @@ backupStart(BackupData *backupData)
                 // The standby protocol connection won't be used anymore so free it
                 protocolRemoteFree(backupData->pgIdxStandby);
             }
+
+            // Check that WAL segments are being archived. If archiving is not working then the backup will eventually fail so
+            // better to catch it as early as possible. A segment to check may not be available on older versions of PostgreSQL or
+            // if archive-check is false.
+            if (dbBackupStartResult.walSegmentCheck != NULL)
+            {
+                LOG_INFO_FMT(
+                    "check archive for %ssegment %s",
+                    strEq(result.walSegmentName, dbBackupStartResult.walSegmentCheck) ? "" : "prior ",
+                    strZ(dbBackupStartResult.walSegmentCheck));
+
+                walSegmentFind(
+                    storageRepo(), backupData->archiveId, dbBackupStartResult.walSegmentCheck,
+                    cfgOptionUInt64(cfgOptArchiveTimeout));
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -888,7 +916,7 @@ backupStart(BackupData *backupData)
 Stop the backup
 ***********************************************************************************************************************************/
 // Helper to write a file from a string to the repository and update the manifest
-static void
+static uint64_t
 backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, time_t timestamp, const String *content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -899,9 +927,13 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         FUNCTION_LOG_PARAM(STRING, content);
     FUNCTION_LOG_END();
 
+    uint64_t fileSize = 0;
+
     // Skip files with no content
     if (content != NULL)
     {
+        fileSize = strSize(content);
+
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Create file
@@ -964,7 +996,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(UINT64, fileSize);
 }
 
 /*--------------------------------------------------------------------------------------------------------------------------------*/
@@ -1119,7 +1151,7 @@ Log the results of a job and throw errors
 static void
 backupJobResult(
     Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t *sizeProgress, uint64_t *sizeCopied)
+    const uint64_t sizeTotal, uint64_t *sizeProgress)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1129,7 +1161,6 @@ backupJobResult(
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
-        FUNCTION_LOG_PARAM_P(UINT64, sizeCopied);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1173,9 +1204,6 @@ backupJobResult(
             // Else if the repo matched the expect checksum, just log it
             else if (copyResult == backupCopyResultChecksum)
             {
-                // Increment size to account for checksum resumed file
-                *sizeCopied += copySize;
-
                 LOG_DETAIL_PID_FMT(
                     processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
             }
@@ -1190,9 +1218,6 @@ backupJobResult(
             // Else file was copied so update manifest
             else
             {
-                // Increment size of files copied
-                *sizeCopied += copySize;
-
                 // If the file had to be recopied then warn that there may be an issue with corruption in the repository
                 // ??? This should really be below the message below for more context -- can be moved after the migration
                 // ??? The name should be a pg path not manifest name -- can be fixed after the migration
@@ -1592,7 +1617,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
     FUNCTION_TEST_RETURN(result);
 }
 
-static uint64_t
+static void
 backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart, const String *cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1605,7 +1630,6 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     ASSERT(manifest != NULL);
 
     uint64_t sizeTotal = 0;
-    uint64_t sizeCopied = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1713,8 +1737,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
-                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
-                        fileRemove, job, sizeTotal, &sizeProgress, &sizeCopied);
+                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)), fileRemove, job,
+                            sizeTotal, &sizeProgress);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
@@ -1792,18 +1816,18 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(UINT64, sizeCopied);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
 Check and copy WAL segments required to make the backup consistent
 ***********************************************************************************************************************************/
 static void
-backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const String *cipherPassBackup)
+backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(UINT, walSegmentSize);
         FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
     FUNCTION_LOG_END();
 
@@ -1821,8 +1845,8 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
             uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 
             LOG_INFO_FMT(
-                "check archive for segment(s) %s:%s", strZ(pgLsnToWalSegment(timeline, lsnStart, walSegmentSize)),
-                strZ(pgLsnToWalSegment(timeline, lsnStop, walSegmentSize)));
+                "check archive for segment(s) %s:%s", strZ(pgLsnToWalSegment(timeline, lsnStart, backupData->walSegmentSize)),
+                strZ(pgLsnToWalSegment(timeline, lsnStop, backupData->walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
             backupManifestSaveCopy(manifest, cipherPassBackup);
@@ -1831,13 +1855,8 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
             const ManifestPath *basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
 
             // Loop through all the segments in the lsn range
-            InfoArchive *infoArchive = infoArchiveLoadFile(
-                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-                cfgOptionStrNull(cfgOptRepoCipherPass));
-            const String *archiveId = infoArchiveId(infoArchive);
-
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-                manifestData(manifest)->pgVersion, timeline, lsnStart, lsnStop, walSegmentSize);
+                manifestData(manifest)->pgVersion, timeline, lsnStart, lsnStop, backupData->walSegmentSize);
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {
@@ -1847,7 +1866,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                     // Find the actual wal segment file in the archive
                     const String *archiveFile = walSegmentFind(
-                        storageRepo(), archiveId, walSegment,  cfgOptionUInt64(cfgOptArchiveTimeout));
+                        storageRepo(), backupData->archiveId, walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
                     if (cfgOptionBool(cfgOptArchiveCopy))
                     {
@@ -1860,13 +1879,14 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                         // Open the archive file
                         StorageRead *read = storageNewReadP(
-                            storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(archiveFile)));
+                            storageRepo(),
+                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(backupData->archiveId), strZ(archiveFile)));
                         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
 
                         // Decrypt with archive key if encrypted
                         cipherBlockFilterGroupAdd(
                             filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
-                            infoArchiveCipherPass(infoArchive));
+                            infoArchiveCipherPass(backupData->archiveInfo));
 
                         // Compress/decompress if archive and backup do not have the same compression settings
                         if (archiveCompressType != backupCompressType)
@@ -1908,7 +1928,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
                             .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
                             .user = basePath->user,
                             .group = basePath->group,
-                            .size = walSegmentSize,
+                            .size = backupData->walSegmentSize,
                             .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                             .timestamp = manifestData(manifest)->backupTimestampStop,
                         };
@@ -2077,7 +2097,7 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherPassBackup);
 
         // Process the backup manifest
-        uint64_t backupSizeTotal = backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
+        backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
 
         // Stop the backup
         BackupStopResult backupStopResult = backupStop(backupData, manifest);
@@ -2095,7 +2115,7 @@ cmdBackup(void)
         dbFree(backupData->dbPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
-        backupArchiveCheckCopy(manifest, backupData->walSegmentSize, cipherPassBackup);
+        backupArchiveCheckCopy(backupData, manifest, cipherPassBackup);
 
         // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
         // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to
@@ -2109,7 +2129,8 @@ cmdBackup(void)
         // Backup info
         LOG_INFO_FMT(
             "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
-            strZ(strSizeFormat(backupSizeTotal)), manifestFileTotal(manifest));
+            strZ(strSizeFormat(infoBackupDataByLabel(infoBackup,  manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
+            manifestFileTotal(manifest));
     }
     MEM_CONTEXT_TEMP_END();
 

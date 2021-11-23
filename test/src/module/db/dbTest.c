@@ -244,6 +244,7 @@ testRun(void)
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
 
             // Start backup with no start fast
+            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000100000001"),
             HRNPQ_MACRO_START_BACKUP_83(1, "1/1", "000000010000000100000001"),
 
             // Close primary
@@ -255,7 +256,10 @@ testRun(void)
         DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false).lsn, "1/1", "start backup");
+        DbBackupStartResult backupStartResult = {0};
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
+        TEST_RESULT_STR_Z(backupStartResult.lsn, "1/1", "start backup");
+        TEST_RESULT_PTR(backupStartResult.walSegmentCheck, NULL, "WAL segment check");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
@@ -294,12 +298,11 @@ testRun(void)
         TEST_RESULT_UINT(dbTimeMSec(db.primary), 1000, "check time");
 
         TEST_ERROR(
-            dbBackupStart(db.primary, false, false), LockAcquireError,
+            dbBackupStart(db.primary, false, false, false), LockAcquireError,
             "unable to acquire pgBackRest advisory lock\n"
             "HINT: is another pgBackRest backup already running on this cluster?");
 
-        DbBackupStartResult backupStartResult = {.lsn = NULL};
-        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true), "start backup");
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, false), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "2/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000200000003", "check wal segment name");
 
@@ -344,7 +347,7 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, true, true).lsn, "2/5", "start backup");
+        TEST_RESULT_STR_Z(dbBackupStart(db.primary, true, true, false).lsn, "2/5", "start backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: the cluster is already in backup mode but no pgBackRest backup process is running."
@@ -364,6 +367,7 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000300000002"),
             HRNPQ_MACRO_START_BACKUP_96(1, false, "3/3", "000000010000000300000003"),
 
             // Stop backup
@@ -377,9 +381,10 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
-        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true), "start backup");
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, true), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "3/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000300000003", "check wal segment name");
+        TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000010000000300000002", "check wal segment check");
 
         TEST_ASSIGN(backupStopResult, dbBackupStop(db.primary), "stop backup");
         TEST_RESULT_STR_Z(backupStopResult.lsn, "3/4", "check lsn");
@@ -426,7 +431,7 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false).lsn, "5/4", "start backup");
+        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false, false).lsn, "5/4", "start backup");
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), 1000), "sync standby");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
@@ -445,7 +450,12 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000050000000500000005"),
             HRNPQ_MACRO_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
+
+            // Switch WAL segment so it can be checked
+            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "5/5"),
+            HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000050000000500000005"),
 
             // Standby returns NULL lsn
             {.session = 2,
@@ -502,7 +512,10 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false).lsn, "5/5", "start backup");
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
+        TEST_RESULT_STR_Z(backupStartResult.lsn, "5/5", "check lsn");
+        TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000050000000500000005", "check wal segment name");
+        TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000050000000500000005", "check wal segment check");
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), 1000), ArchiveTimeoutError,

@@ -88,9 +88,10 @@ typedef struct DbBackupStartResult
 {
     String *lsn;
     String *walSegmentName;
+    String *walSegmentCheck;                                        // Segment used to check archiving, may be NULL
 } DbBackupStartResult;
 
-DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto);
+DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto, bool archiveCheck);
 
 // Stop backup and return starting lsn, wal segment name, backup label, and tablespace map
 typedef struct DbBackupStopResult

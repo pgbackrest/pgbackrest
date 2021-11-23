@@ -98,7 +98,7 @@ sub new
         $strName, $strContainer, $$oParam{strImage}, $$oParam{strUser}, testRunGet()->vm(),
         ["${strProjectPath}:${strProjectPath}", "${strTestPath}:${strTestPath}", "${strBinPath}:${strBinPath}:ro"], undef,
         $oParam->{bTls} ?
-            'server-start --log-level-console=debug --tls-server-ca-file=' . testRunGet()->basePath() . HOST_SERVER_CA .
+            'server --log-level-console=debug --tls-server-ca-file=' . testRunGet()->basePath() . HOST_SERVER_CA .
                 ' --tls-server-cert-file=' . testRunGet()->basePath() . HOST_SERVER_CERT . ' --tls-server-key-file=' .
                 testRunGet()->basePath() . HOST_SERVER_KEY . ' --tls-server-auth=pgbackrest-client=* --tls-server-address=0.0.0.0' :
             undef,
