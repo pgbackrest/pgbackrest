@@ -6,6 +6,7 @@ C Test Harness
 
 #include <inttypes.h>
 
+#include "common/assert.h"
 #include "common/debug.h"
 #include "common/error.h"
 
@@ -15,6 +16,21 @@ C Test Harness
 Constants
 ***********************************************************************************************************************************/
 #define BOGUS_STR                                                   "BOGUS"
+
+/***********************************************************************************************************************************
+Make sure ASSERT() always exists for tests to use, even when DEBUG is disabled for performance
+***********************************************************************************************************************************/
+#ifdef HRN_FEATURE_ASSERT
+    #undef ASSERT
+
+    #define ASSERT(condition)                                                                                                      \
+        do                                                                                                                         \
+        {                                                                                                                          \
+            if (!(condition))                                                                                                      \
+                THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                       \
+        }                                                                                                                          \
+        while (0)
+#endif
 
 /***********************************************************************************************************************************
 Functions
