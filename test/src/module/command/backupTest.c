@@ -402,6 +402,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
                 // Wait for standby to sync
+                HRNPQ_MACRO_TIMELINE(2, 1),
                 HRNPQ_MACRO_REPLAY_WAIT_96(2, lsnStartStr),
 
                 HRNPQ_MACRO_DONE()
@@ -428,6 +429,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
                 // Wait for standby to sync
+                HRNPQ_MACRO_TIMELINE(2, 1),
                 HRNPQ_MACRO_REPLAY_WAIT_96(2, lsnStartStr),
 
                 // Get copy start time

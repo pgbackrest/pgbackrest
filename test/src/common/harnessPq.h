@@ -183,6 +183,20 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
+#define HRNPQ_MACRO_TIMELINE(sessionParam, timelineParam)                                                                          \
+    {.session = sessionParam, .function = HRNPQ_SENDQUERY,                                                                         \
+        .param = "[\"select timeline_id::int from pg_catalog.pg_control_checkpoint()\"]", .resultInt = 1},                         \
+    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
+    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
+    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
+    {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
+    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 1},                                                          \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},                               \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = STRINGIFY(timelineParam)},                  \
+    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
+    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
+
 #define HRNPQ_MACRO_TIME_QUERY(sessionParam, timeParam)                                                                            \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY, .param = "[\"select (extract(epoch from clock_timestamp()) * 1000)::bigint\"]",               \
