@@ -536,6 +536,16 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Check that the timeline matches the primary
+        if (dbPgVersion(this) >= PG_VERSION_96)
+        {
+            const uint32_t actualTimeline = varUIntForce(
+                dbQueryColumn("select timeline_id::int from pg_catalog.pg_control_checkpoint()"));
+
+            if (actualTimeline != targetTimeline)
+                THROW_FMT(ArchiveTimeoutError, "standby is on timeline %u but expected %u", actualTimeline, targetTimeline);
+        }
+
         // Loop until lsn has been reached or timeout
         Wait *wait = waitNew(timeout);
         bool targetReached = false;
