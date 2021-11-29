@@ -189,6 +189,8 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Get database info when online
+    PgControl pgControl = {0};
+
     if (cfgOptionBool(cfgOptOnline))
     {
         bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
@@ -206,14 +208,17 @@ backupInit(const InfoBackup *infoBackup)
             result->storageStandby = storagePgIdx(result->pgIdxStandby);
             result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
+
+        // Get pg_control info from the primary
+        pgControl = dbPgControl(result->dbPrimary);
     }
+    // Else get pg_control info directly from the file
+    else
+        pgControl = pgControlFromFile(storagePgIdx(result->pgIdxPrimary));
 
     // Add primary info
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
     result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
-
-    // Get pg_control info from the primary
-    PgControl pgControl = pgControlFromFile(result->storagePrimary);
 
     result->version = pgControl.version;
     result->walSegmentSize = pgControl.walSegmentSize;
