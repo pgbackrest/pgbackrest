@@ -56,6 +56,10 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby only, repo local - fail to find primary database");
 
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
+
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", true, NULL, NULL),
@@ -71,12 +75,16 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/path/to/standby2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "repo.domain.com");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        HRN_STORAGE_PUT(
+            storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
 
         // Two standbys found but no primary
         harnessPqScriptSet((HarnessPq [])
@@ -112,7 +120,10 @@ testRun(void)
 
         // Only confirming we get passed the check for repoIsLocal || more than one pg-path configured
         TEST_ERROR(
-            cmdCheck(), FileMissingError, "unable to open missing file '" TEST_PATH "/pg/global/pg_control' for read");
+            cmdCheck(), DbMismatchError,
+            "version '9.2' and path '/pgdata' queried from cluster do not match version '9.2' and '" TEST_PATH "/pg' read from"
+                " '" TEST_PATH "/pg/global/pg_control'\n"
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup-standby set without standby");
@@ -134,8 +145,18 @@ testRun(void)
         });
 
         TEST_ERROR(
-            cmdCheck(), FileMissingError, "unable to open missing file '" TEST_PATH "/pg/global/pg_control' for read");
-        TEST_RESULT_LOG("P00   WARN: option 'backup-standby' is enabled but standby is not properly configured");
+            cmdCheck(), FileMissingError,
+            "unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or '" TEST_PATH
+                "/repo/archive/test1/archive.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info.copy' for read\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'backup-standby' is enabled but standby is not properly configured\n"
+            "P00   INFO: check repo1 configuration (primary)");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby and primary database - standby path doesn't match pg_control");
@@ -401,6 +422,13 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        HRN_STORAGE_PUT(
+            storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
+        HRN_STORAGE_PUT(
+            storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
 
         DbGetResult db = {0};
 
