@@ -2170,9 +2170,10 @@ testRun(void)
 
         {
             // Update pg_control
+            PgControl pgControl = {.version = PG_VERSION_96, .systemId = 1000000000000000960};
+
             HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}),
+                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl),
                 .timeModified = backupTimeStart);
 
             // Update version
@@ -2202,6 +2203,11 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptStartFast, true);
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Add pg_control to standby
+            HRN_STORAGE_PUT(
+                storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl),
+                .timeModified = backupTimeStart);
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
             // but no bytes will be copied.

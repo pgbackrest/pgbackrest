@@ -21,6 +21,9 @@ unsigned int hrnPgCatalogVersion(unsigned int pgVersion);
 // Create pg_control
 Buffer *hrnPgControlToBuffer(PgControl pgControl);
 
+// Write pg_control to file
+void hrnPgControlToFile(const Storage *storage, PgControl pgControl);
+
 // Create WAL for testing
 void hrnPgWalToBuffer(PgWal pgWal, Buffer *walBuffer);
 

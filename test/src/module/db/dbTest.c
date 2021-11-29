@@ -4,10 +4,12 @@ Test Database
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/type/json.h"
+#include "storage/remote/protocol.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/harnessLog.h"
+#include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
 
 /***********************************************************************************************************************************
@@ -99,7 +101,11 @@ testRun(void)
                     protocolServerNew(STRDEF("db test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE()),
                     "create server");
 
-                static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_DB_LIST};
+                static const ProtocolServerHandler commandHandler[] =
+                {
+                    PROTOCOL_SERVER_HANDLER_DB_LIST
+                    PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
+                };
 
                 TEST_RESULT_VOID(
                     protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
@@ -110,6 +116,17 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
+                // Set options
+                StringList *argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+                hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
+                hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "testdb");
+                hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1,  "1");
+                HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+                // Create control file
+                hrnPgControlToFile(storagePgIdxWrite(0), (PgControl){.version = PG_VERSION_93});
+
                 // Create client
                 ProtocolClient *client = NULL;
                 Db *db = NULL;
@@ -124,7 +141,7 @@ testRun(void)
                     // -------------------------------------------------------------------------------------------------------------
                     TEST_TITLE("open and free database");
 
-                    TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
+                    TEST_ASSIGN(db, dbNew(NULL, client, storagePgIdx(0), STRDEF("test")), "create db");
 
                     TRY_BEGIN()
                     {
@@ -143,7 +160,7 @@ testRun(void)
                     // -------------------------------------------------------------------------------------------------------------
                     TEST_TITLE("remote commands");
 
-                    TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
+                    TEST_ASSIGN(db, dbNew(NULL, client, storagePgIdx(0), STRDEF("test")), "create db");
 
                     TRY_BEGIN()
                     {
@@ -180,6 +197,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "backupdb");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // Create control file
+        hrnPgControlToFile(storagePgIdxWrite(0), (PgControl){.version = PG_VERSION_93});
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when unable to select any pg_settings");
@@ -404,6 +424,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
+        // Create control file
+        hrnPgControlToFile(storagePgIdxWrite(1), (PgControl){.version = PG_VERSION_93});
+
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
@@ -563,6 +586,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgUser, 1, "bob");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
+        // Create control file
+        hrnPgControlToFile(storagePgIdxWrite(0), (PgControl){.version = PG_VERSION_93});
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error connecting to primary");
 
@@ -645,6 +671,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // Create control file
+        hrnPgControlToFile(storagePgIdxWrite(1), (PgControl){.version = PG_VERSION_93});
 
         harnessPqScriptSet((HarnessPq [])
         {

@@ -28,6 +28,7 @@ struct Db
     PgClient *client;                                               // Local PostgreSQL client
     ProtocolClient *remoteClient;                                   // Protocol client for remote db queries
     unsigned int remoteIdx;                                         // Index provided by the remote on open for subsequent calls
+    const Storage *storage;                                         // PostgreSQL storage
     const String *applicationName;                                  // Used to identify this connection in PostgreSQL
 };
 
@@ -55,15 +56,17 @@ dbFreeResource(THIS_VOID)
 
 /**********************************************************************************************************************************/
 Db *
-dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationName)
+dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const storage, const String *applicationName)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, client);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, remoteClient);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, applicationName);
     FUNCTION_LOG_END();
 
     ASSERT((client != NULL && remoteClient == NULL) || (client == NULL && remoteClient != NULL));
+    ASSERT(storage != NULL);
     ASSERT(applicationName != NULL);
 
     Db *this = NULL;
@@ -79,6 +82,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationN
                 .memContext = memContextCurrent(),
             },
             .remoteClient = remoteClient,
+            .storage = storage,
             .applicationName = strDup(applicationName),
         };
 
@@ -260,6 +264,9 @@ dbOpen(Db *this)
         // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
         if (dbPgVersion(this) >= PG_VERSION_PARALLEL_QUERY)
             dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
+
+        // Get control file
+        this->pub.pgControl = pgControlFromFile(this->storage);
     }
     MEM_CONTEXT_TEMP_END();
 
