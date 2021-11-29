@@ -105,6 +105,9 @@ typedef struct PgControl
     uint64_t systemId;
     unsigned int catalogVersion;
 
+    uint64_t checkpoint;                                            // Last checkpoint LSN
+    uint32_t timeline;                                              // Current timeline
+
     unsigned int pageSize;
     unsigned int walSegmentSize;
 

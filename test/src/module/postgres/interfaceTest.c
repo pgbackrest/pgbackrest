@@ -67,13 +67,18 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageTest, controlFile),
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACE, .walSegmentSize = 1024 * 1024}));
+            hrnPgControlToBuffer(
+                (PgControl){
+                    .version = PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
+                    .walSegmentSize = 1024 * 1024}));
 
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v11");
         TEST_RESULT_UINT(info.systemId, 0xFACEFACE, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
         TEST_RESULT_UINT(info.catalogVersion, 201809051, "   check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xEEFFEEFFAABBAABB, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 47, "check timeline");
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
@@ -95,12 +100,15 @@ testRun(void)
             storageNewWriteP(storageTest, controlFile),
             hrnPgControlToBuffer(
                 (PgControl){
-                    .version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_83)}));
+                    .version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF, .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88,
+                    .catalogVersion = hrnPgCatalogVersion(PG_VERSION_83)}));
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
         TEST_RESULT_UINT(info.catalogVersion, 200711281, "   check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
     }
 
     // *****************************************************************************************************************************
