@@ -243,7 +243,7 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
             // Switch state to idle after error (server will do the same)
             this->state = protocolClientStateIdle;
 
-            CHECK(message != NULL && stack != NULL);
+            CHECK(FormatError, message != NULL && stack != NULL, "invalid error data");
 
             errorInternalThrow(type, __FILE__, __func__, __LINE__, strZ(message), strZ(stack));
         }
@@ -276,7 +276,7 @@ protocolClientDataGet(ProtocolClient *const this)
 
         protocolClientError(this, type, response);
 
-        CHECK(type == protocolMessageTypeData);
+        CHECK(FormatError, type == protocolMessageTypeData, "expected data message");
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -315,7 +315,7 @@ protocolClientDataEndGet(ProtocolClient *const this)
 
         protocolClientError(this, type, response);
 
-        CHECK(type == protocolMessageTypeDataEnd);
+        CHECK(FormatError, type == protocolMessageTypeDataEnd, "expected data end message");
 
         pckReadEndP(response);
 

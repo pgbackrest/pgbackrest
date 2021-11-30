@@ -382,7 +382,8 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             TRY_BEGIN()
             {
                 // Get list of authorized stanzas for this client
-                CHECK(cfgOptionTest(cfgOptTlsServerAuth));
+                CHECK(AssertError, cfgOptionTest(cfgOptTlsServerAuth), "missing auth data");
+
                 const String *const clientAuthList = strDup(
                     varStr(kvGet(cfgOptionKv(cfgOptTlsServerAuth), VARSTR(ioSessionPeerName(tlsSession)))));
 
@@ -392,7 +393,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 
                 // Get parameter list from the client and load it
                 const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
-                CHECK(command.id == PROTOCOL_COMMAND_CONFIG);
+                CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
 
                 StringList *const paramList = pckReadStrLstP(pckReadNew(command.param));
                 strLstInsert(paramList, 0, cfgExe());
@@ -753,7 +754,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
     if (cfgOptionTest(cfgOptProcess))
         processId = cfgOptionUInt(cfgOptProcess);
 
-    CHECK(hostIdx < protocolHelper.clientRemoteSize);
+    CHECK(AssertError, hostIdx < protocolHelper.clientRemoteSize, "invalid host");
 
     // Create protocol object
     ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[hostIdx];

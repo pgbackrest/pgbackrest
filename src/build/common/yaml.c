@@ -54,15 +54,15 @@ yamlNew(const Buffer *const buffer)
         *this = (Yaml){{0}};                                        // Extra braces are required for older gcc versions
 
         // Initialize parser context
-        CHECK(yaml_parser_initialize(&this->parser));
+        CHECK(ServiceError, yaml_parser_initialize(&this->parser), "unable to initialize yaml parser");
         memContextCallbackSet(objMemContext(this), yamlFreeResource, this);
 
         // Set yaml string
         yaml_parser_set_input_string(&this->parser, bufPtrConst(buffer), bufUsed(buffer));
 
         // Start document
-        CHECK(yamlEventNext(this).type == yamlEventTypeStreamBegin);
-        CHECK(yamlEventNext(this).type == yamlEventTypeDocBegin);
+        CHECK(FormatError, yamlEventNext(this).type == yamlEventTypeStreamBegin, "expected yaml stream begin");
+        CHECK(FormatError, yamlEventNext(this).type == yamlEventTypeDocBegin, "expected yaml document begin");
     }
     OBJ_NEW_END();
 
@@ -111,7 +111,7 @@ yamlEventType(yaml_event_type_t type)
             FUNCTION_TEST_RETURN(yamlEventTypeMapEnd);
 
         default:
-            CHECK(type == YAML_NO_EVENT);
+            CHECK(FormatError, type == YAML_NO_EVENT, "expected yaml no event");
             FUNCTION_TEST_RETURN(yamlEventTypeNone);
     }
 }
@@ -130,7 +130,7 @@ yamlEventNext(Yaml *this)
     if (!yaml_parser_parse(&this->parser, &event))
     {
         // These should always be set
-        CHECK(this->parser.problem_mark.line && this->parser.problem_mark.column);
+        CHECK(ServiceError, this->parser.problem_mark.line && this->parser.problem_mark.column, "invalid yaml error info");
 
         THROW_FMT(
             FormatError, "yaml parse error: %s at line: %lu column: %lu", this->parser.problem,

@@ -122,7 +122,7 @@ logLevelEnum(const StringId logLevelId)
             break;
 
     // Check that the log level was found
-    CHECK(result != LOG_LEVEL_TOTAL);
+    CHECK(AssertError, result != LOG_LEVEL_TOTAL, "invalid log level");
 
     FUNCTION_TEST_RETURN(result);
 }

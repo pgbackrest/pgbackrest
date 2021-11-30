@@ -303,7 +303,7 @@ strIdToZN(StringId strId, char *const buffer)
         // 6-bit decoding
         default:
         {
-            CHECK(bit == stringIdBit6);
+            ASSERT(bit == stringIdBit6);
 
             // Map to convert encoding to characters
             const char map[64] = "!abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

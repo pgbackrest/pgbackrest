@@ -14,7 +14,7 @@ int
 main(int argListSize, const char *argList[])
 {
     // Check parameters
-    CHECK(argListSize <= 2);
+    CHECK(ParamInvalidError, argListSize <= 2, "only one parameter allowed");
 
     // Initialize logging
     logInit(logLevelWarn, logLevelError, logLevelOff, false, 0, 1, false);

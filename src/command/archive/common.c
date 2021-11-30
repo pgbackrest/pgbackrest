@@ -274,7 +274,7 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
     THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
 
     // The first fork should exit with success.  If not, something went wrong during the second fork.
-    CHECK(WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0);
+    CHECK(ExecuteError, WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0, "error on first fork");
 
 #ifdef DEBUG_EXEC_TIME
     // If the process does not exit immediately then something probably went wrong with the double fork.  It's possible that this

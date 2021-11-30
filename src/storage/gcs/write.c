@@ -85,7 +85,7 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
 
     // Check the md5 hash
     const String *md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));
-    CHECK(md5base64 != NULL);
+    CHECK(FormatError, md5base64 != NULL, "MD5 missing");
 
     const String *md5actual = bufHex(bufNewDecode(encodeBase64, md5base64));
     const String *md5expected = pckReadStrP(pckReadNew(ioFilterResult(this->md5hash)));
@@ -175,7 +175,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
             MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
             {
                 this->uploadId = strDup(httpHeaderGet(httpResponseHeader(response), GCS_HEADER_UPLOAD_ID_STR));
-                CHECK(this->uploadId != NULL);
+                CHECK(FormatError, this->uploadId != NULL, "upload id missing");
             }
             MEM_CONTEXT_END();
         }

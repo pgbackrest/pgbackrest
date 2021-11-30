@@ -67,7 +67,7 @@ cmdServer(uint64_t connectionMax)
                 THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
 
                 // The first fork should exit with success. If not, something went wrong during the second fork.
-                CHECK(WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0);
+                CHECK(ExecuteError, WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0, "error on first fork");
             }
 
             // Free the socket since the child is now using it

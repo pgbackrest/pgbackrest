@@ -490,7 +490,7 @@ pgLsnFromStr(const String *lsn)
     {
         StringList *lsnPart = strLstNewSplit(lsn, FSLASH_STR);
 
-        CHECK(strLstSize(lsnPart) == 2);
+        CHECK(FormatError, strLstSize(lsnPart) == 2, "lsn requires two parts");
 
         result = (cvtZToUInt64Base(strZ(strLstGet(lsnPart, 0)), 16) << 32) + cvtZToUInt64Base(strZ(strLstGet(lsnPart, 1)), 16);
     }

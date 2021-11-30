@@ -346,11 +346,11 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
         {
 
             // Else allow list is inherited
-            CHECK(optList != NULL);
+            CHECK(AssertError, optList != NULL, "option list is NULL");
             yamlEventCheck(allowListVal, yamlEventTypeScalar);
 
             const BldCfgOptionRaw *const optInherit = lstFind(optList, &allowListVal.value);
-            CHECK(optInherit != NULL);
+            CHECK(AssertError, optInherit != NULL, "inherited option is NULL");
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -359,7 +359,7 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
             MEM_CONTEXT_PRIOR_END();
         }
 
-        CHECK(result != NULL);
+        CHECK(AssertError, result != NULL, "result is NULL");
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -461,7 +461,7 @@ bldCfgParseDepend(Yaml *const yaml, const List *const optList)
         else
         {
             // Else depend is inherited
-            CHECK(optList != NULL);
+            CHECK(AssertError, optList != NULL, "option list is NULL");
             yamlEventCheck(dependVal, yamlEventTypeScalar);
 
             const BldCfgOptionRaw *const optInherit = lstFind(optList, &dependVal.value);
@@ -543,7 +543,7 @@ bldCfgParseOptionDeprecate(Yaml *const yaml)
                 MEM_CONTEXT_PRIOR_END();
 
                 deprecate = lstFind(result, &name);
-                CHECK(deprecate != NULL);
+                CHECK(AssertError, deprecate != NULL, "deprecate is NULL");
             }
 
             // Set indexed/unindexed flags
@@ -700,11 +700,11 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const optList)
         // Else command list is inherited
         else
         {
-            CHECK(optList != NULL);
+            CHECK(AssertError, optList != NULL, "option list is NULL");
             yamlEventCheck(optCmdVal, yamlEventTypeScalar);
 
             const BldCfgOptionRaw *const optInherit = lstFind(optList, &optCmdVal.value);
-            CHECK(optInherit != NULL);
+            CHECK(AssertError, optInherit != NULL, "inherited option is NULL");
 
             result = optInherit->cmdList;
         }
@@ -797,7 +797,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     else if (strEqZ(optDef.value, "inherit"))
                     {
                         const BldCfgOptionRaw *const optInherit = lstFind(optListRaw, &optDefVal.value);
-                        CHECK(optInherit != NULL);
+                        CHECK(AssertError, optInherit != NULL, "inherited option is NULL");
 
                         optRaw = *optInherit;
                         optRaw.name = opt.value;
@@ -971,7 +971,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                         optCmd.roleList = cmd->roleList;
                 }
 
-                CHECK(optCmd.roleList != NULL);
+                CHECK(AssertError, optCmd.roleList != NULL, "role list is NULL");
 
                 MEM_CONTEXT_BEGIN(lstMemContext(cmdOptList))
                 {
@@ -992,7 +992,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
             }
 
             const BldCfgOption *const opt = lstGet(result, optRawIdx);
-            CHECK(strEq(opt->name, optRaw->name));
+            CHECK(AssertError, strEq(opt->name, optRaw->name), "option name does not equal raw option name");
 
             // Assigning to const pointers this way is definitely cheating, but since we allocated the memory and know exactly where
             // it is so this is the easiest way to avoid a lot of indirection due to the dependency of BldCfgOptionDepend on

@@ -75,13 +75,19 @@ storageNew(
     };
 
     // If path sync feature is enabled then path feature must be enabled
-    CHECK(!storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath));
+    CHECK(
+        AssertError, !storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath),
+        "path feature required");
 
     // If hardlink feature is enabled then path feature must be enabled
-    CHECK(!storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath));
+    CHECK(
+        AssertError, !storageFeature(this, storageFeatureHardLink) || storageFeature(this, storageFeaturePath),
+        "path feature required");
 
     // If symlink feature is enabled then path feature must be enabled
-    CHECK(!storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath));
+    CHECK(
+        AssertError, !storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath),
+        "path feature required");
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }

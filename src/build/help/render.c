@@ -133,7 +133,7 @@ bldHlpRenderHelpAutoCPack(const BldCfg bldCfg, const BldHlp bldHlp)
     {
         const BldCfgCommand *const cmd = lstGet(bldCfg.cmdList, cmdIdx);
         const BldHlpCommand *const cmdHlp = lstFind(bldHlp.cmdList, &cmd->name);
-        CHECK(cmdHlp != NULL);
+        CHECK(AssertError, cmdHlp != NULL, "command help is NULL");
 
         pckWriteBoolP(pack, cmd->internal);
         pckWriteStrP(pack, bldHlpRenderXml(cmdHlp->summary));
@@ -209,7 +209,7 @@ bldHlpRenderHelpAutoCPack(const BldCfg bldCfg, const BldHlp bldHlp)
             if (optCmd != NULL)
             {
                 const BldHlpCommand *const cmdHlp = lstFind(bldHlp.cmdList, &cmd->name);
-                CHECK(cmdHlp != NULL);
+                CHECK(AssertError, cmdHlp != NULL, "command help is NULL");
                 const BldHlpOption *const cmdOptHlp = cmdHlp->optList != NULL ? lstFind(cmdHlp->optList, &opt->name) : NULL;
 
                 if (opt->internal != optCmd->internal || cmdOptHlp != NULL)

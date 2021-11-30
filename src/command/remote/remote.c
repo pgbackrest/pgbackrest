@@ -41,7 +41,7 @@ cmdRemote(ProtocolServer *const server)
         TRY_BEGIN()
         {
             // Get the command. No need to check parameters since we know this is the first noop.
-            CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_NOOP);
+            CHECK(FormatError, protocolServerCommandGet(server).id == PROTOCOL_COMMAND_NOOP, "noop expected");
 
             // Only try the lock if this is process 0, i.e. the remote started from the main process
             if (cfgOptionUInt(cfgOptProcess) == 0)

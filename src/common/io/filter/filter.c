@@ -67,8 +67,8 @@ ioFilterProcessIn(IoFilter *this, const Buffer *input)
 
     ASSERT(this != NULL);
     ASSERT(this->pub.interface.in != NULL);
-    CHECK(input == NULL || !bufEmpty(input));
-    CHECK(!this->flushing || input == NULL);
+    CHECK(AssertError, input == NULL || !bufEmpty(input), "expected data or flush");
+    CHECK(AssertError, !this->flushing || input == NULL, "no data allowed after flush");
 
     if (input == NULL)
         this->flushing = true;
@@ -91,8 +91,8 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
     ASSERT(this != NULL);
     ASSERT(output != NULL);
     ASSERT(this->pub.interface.inOut != NULL);
-    CHECK(input == NULL || !bufEmpty(input));
-    CHECK(!this->flushing || input == NULL);
+    CHECK(AssertError, input == NULL || !bufEmpty(input), "expected data or flush");
+    CHECK(AssertError, !this->flushing || input == NULL, "no data allowed after flush");
 
     if (input == NULL && !this->flushing)
         this->flushing = true;
@@ -100,7 +100,8 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
     if (!ioFilterDone(this))
         this->pub.interface.inOut(this->pub.driver, input, output);
 
-    CHECK(!ioFilterInputSame(this) || !bufEmpty(output));
+    CHECK(AssertError, !ioFilterInputSame(this) || !bufEmpty(output), "expected input same or output");
+
     FUNCTION_TEST_RETURN_VOID();
 }
 
