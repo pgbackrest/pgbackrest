@@ -191,13 +191,13 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         pgData.id = 3;
         pgData.version = PG_VERSION_96;
-        pgData.systemId = 6399999999999999999;
+        pgData.systemId = HRN_PG_SYSTEMID_96;
         TEST_RESULT_VOID(infoPgAdd(infoPg, &pgData), "infoPgAdd");
 
         InfoPgData pgDataTest = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgDataTest.id, 3, "    id set");
         TEST_RESULT_INT(pgDataTest.version, PG_VERSION_96, "    version set");
-        TEST_RESULT_UINT(pgDataTest.systemId, 6399999999999999999, "    system-id set");
+        TEST_RESULT_UINT(pgDataTest.systemId, HRN_PG_SYSTEMID_96, "    system-id set");
 
         // infoPgDataToLog
         //--------------------------------------------------------------------------------------------------------------------------
