@@ -1843,13 +1843,13 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            uint32_t timeline = pgTimelineFromWalSegment(manifestData(manifest)->archiveStart);
             uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
             uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 
             LOG_INFO_FMT(
-                "check archive for segment(s) %s:%s", strZ(pgLsnToWalSegment(timeline, lsnStart, backupData->walSegmentSize)),
-                strZ(pgLsnToWalSegment(timeline, lsnStop, backupData->walSegmentSize)));
+                "check archive for segment(s) %s:%s",
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStart, backupData->walSegmentSize)),
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStop, backupData->walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
             backupManifestSaveCopy(manifest, cipherPassBackup);
@@ -1859,7 +1859,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
             // Loop through all the segments in the lsn range
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-                manifestData(manifest)->pgVersion, timeline, lsnStart, lsnStop, backupData->walSegmentSize);
+                manifestData(manifest)->pgVersion, backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {

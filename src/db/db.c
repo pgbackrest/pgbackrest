@@ -388,6 +388,14 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
                 walSegmentCheck = NULL;
         }
 
+        // Check that the WAL timeline matches what is in pg_control
+        if (pgTimelineFromWalSegment(walSegmentName) != dbPgControl(this).timeline)
+        {
+            THROW_FMT(
+                DbMismatchError, "WAL timeline %u does not match " PG_FILE_PGCONTROL " timeline %u",
+                pgTimelineFromWalSegment(walSegmentName), dbPgControl(this).timeline);
+        }
+
         // Return results
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -544,7 +552,16 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
     {
         // Check that the timeline matches the primary
         if (dbPgControl(this).timeline != targetTimeline)
-            THROW_FMT(ArchiveTimeoutError, "standby is on timeline %u but expected %u", dbPgControl(this).timeline, targetTimeline);
+            THROW_FMT(DbMismatchError, "standby is on timeline %u but expected %u", dbPgControl(this).timeline, targetTimeline);
+
+        // Standby checkpoint before the backup started must be <= the target LSN. If not, it indicates that the standby was ahead
+        // of the primary and cannot be following it.
+        if (dbPgControl(this).checkpoint > pgLsnFromStr(targetLsn))
+        {
+            THROW_FMT(
+                DbMismatchError, "standby checkpoint '%s' is ahead of ahead of target '%s'",
+                strZ(pgLsnToStr(dbPgControl(this).checkpoint)), strZ(targetLsn));
+        }
 
         // Loop until lsn has been reached or timeout
         Wait *wait = waitNew(timeout);

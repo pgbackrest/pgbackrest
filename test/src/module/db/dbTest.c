@@ -384,6 +384,11 @@ testRun(void)
             // Connect to primary
             HRNPQ_MACRO_OPEN_GE_96(1, "dbname='backupdb' port=5432", PG_VERSION_96, TEST_PATH "/pg1", false, NULL, NULL),
 
+            // Start backup with timeline error
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000020000000300000002"),
+            HRNPQ_MACRO_START_BACKUP_96(1, false, "3/3", "000000020000000300000003"),
+
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
             HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000300000002"),
@@ -399,6 +404,9 @@ testRun(void)
         });
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+
+        TEST_ERROR(
+            dbBackupStart(db.primary, false, true, true), DbMismatchError, "WAL timeline 2 does not match pg_control timeline 1");
 
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, true), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "3/3", "check lsn");
@@ -425,8 +433,10 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        hrnPgControlToFile(storagePgIdxWrite(0), (PgControl){.version = PG_VERSION_93, .timeline = 5});
-        hrnPgControlToFile(storagePgIdxWrite(1), (PgControl){.version = PG_VERSION_93, .timeline = 5});
+        PgControl pgControl = {.version = PG_VERSION_93, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/4"))};
+
+        hrnPgControlToFile(storagePgIdxWrite(0), pgControl);
+        hrnPgControlToFile(storagePgIdxWrite(1), pgControl);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -462,6 +472,12 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 10 start/stop backup from standby");
+
+        // Update control file
+        pgControl.checkpoint = pgLsnFromStr(STRDEF("5/5"));
+
+        hrnPgControlToFile(storagePgIdxWrite(0), pgControl);
+        hrnPgControlToFile(storagePgIdxWrite(1), pgControl);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -544,7 +560,10 @@ testRun(void)
         TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000050000000500000005", "check wal segment check");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 77, 1000), ArchiveTimeoutError, "standby is on timeline 5 but expected 77");
+            dbReplayWait(db.standby, STRDEF("5/5"), 77, 1000), DbMismatchError, "standby is on timeline 5 but expected 77");
+        TEST_ERROR(
+            dbReplayWait(db.standby, STRDEF("4/4"), 5, 1000), DbMismatchError,
+            "standby checkpoint '5/5' is ahead of ahead of target '4/4'");
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 1000), ArchiveTimeoutError,
