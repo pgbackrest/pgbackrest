@@ -151,8 +151,7 @@ testRun(void)
 
         // Create pg_control for standby
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
 
         // Standby database path doesn't match pg_control
         harnessPqScriptSet((HarnessPq [])
@@ -178,29 +177,29 @@ testRun(void)
         // Create pg_control for primary
         HRN_STORAGE_PUT(
             storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
 
         // Create info files
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
+            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
             "db-version=\"9.2\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_92_Z ",\"db-version\":\"9.2\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201608131\n"
             "db-control-version=920\n"
             "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
+            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
             "db-version=\"9.2\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":" HRN_PG_SYSTEMID_92_Z ","
                 "\"db-version\":\"9.2\"}\n");
 
         // Single repo config - error when checking archive mode setting on database
@@ -272,22 +271,22 @@ testRun(void)
             storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
+            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
             "db-version=\"9.2\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_92_Z ",\"db-version\":\"9.2\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201608131\n"
             "db-control-version=920\n"
             "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
+            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
             "db-version=\"9.2\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":" HRN_PG_SYSTEMID_92_Z ","
                 "\"db-version\":\"9.2\"}\n");
 
         // Error when WAL segment not found
@@ -574,7 +573,7 @@ testRun(void)
         // Create pg_control
         HRN_STORAGE_PUT(
             storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96}));
 
         // Create info files
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");
@@ -583,7 +582,7 @@ testRun(void)
         // Version mismatch
         TEST_ERROR(
             checkStanzaInfoPg(
-                storageRepoIdx(0), PG_VERSION_94, 6569239123849665679, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
+                storageRepoIdx(0), PG_VERSION_94, HRN_PG_SYSTEMID_94, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
                 cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
             FileInvalidError,
             "backup and archive info files exist but do not match the database\n"

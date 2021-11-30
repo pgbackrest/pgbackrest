@@ -72,7 +72,7 @@ testRun(void)
         Buffer *walBuffer = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}, walBuffer);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_10}, walBuffer);
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000002", walBuffer);
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000003", walBuffer);
@@ -105,8 +105,7 @@ testRun(void)
         TEST_TITLE("mismatched pg_control and archive.info - pg version");
 
         HRN_STORAGE_PUT(
-            storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 0xFACEFACEFACEFACE}));
+            storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96}));
 
         // Create incorrect archive info
         HRN_INFO_PUT(
@@ -120,8 +119,8 @@ testRun(void)
         TEST_ERROR(
             archivePushCheck(true), RepoInvalidError,
             "unable to find a valid repository:\n"
-            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version"
-                " 9.4, system-id 5555555555555555555"
+            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id " HRN_PG_SYSTEMID_96_Z " do not match repo1 stanza"
+                " version 9.4, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -139,8 +138,8 @@ testRun(void)
         TEST_ERROR(
             archivePushCheck(true), RepoInvalidError,
             "unable to find a valid repository:\n"
-            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version"
-                " 9.6, system-id 5555555555555555555"
+            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id " HRN_PG_SYSTEMID_96_Z " do not match repo1 stanza"
+                " version 9.6, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -153,13 +152,13 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n");
 
         ArchivePushCheckResult result = {0};
         TEST_ASSIGN(result, archivePushCheck(true), "get archive check result");
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
-        TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
+        TEST_RESULT_UINT(result.pgSystemId, HRN_PG_SYSTEMID_96, "check pg system id");
 
         ArchivePushFileRepoData *repoData = lstGet(result.repoList, 0);
         TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
@@ -183,7 +182,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n");
 
         // repo4 has incorrect info
         HRN_INFO_PUT(
@@ -197,10 +196,10 @@ testRun(void)
         TEST_ASSIGN(result, archivePushCheck(false), "get archive check result");
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
-        TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
+        TEST_RESULT_UINT(result.pgSystemId, HRN_PG_SYSTEMID_96, "check pg system id");
         TEST_RESULT_STRLST_Z(
             result.errorList,
-            "repo4: [ArchiveMismatchError] repo2 stanza version 9.6, system-id 18072658121562454734 do not match repo4 stanza"
+            "repo4: [ArchiveMismatchError] repo2 stanza version 9.6, system-id " HRN_PG_SYSTEMID_96_Z " do not match repo4 stanza"
                 " version 9.4, system-id 5555555555555555555\n"
             "HINT: are you archiving to the correct stanza?\n",
             "check error list");
@@ -222,12 +221,12 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
-            "2={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n");
+            "2={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n");
 
         TEST_ASSIGN(result, archivePushCheck(false), "get archive check result");
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
-        TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
+        TEST_RESULT_UINT(result.pgSystemId, HRN_PG_SYSTEMID_96, "check pg system id");
 
         repoData = lstGet(result.repoList, 0);
         TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
@@ -290,8 +289,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         HRN_STORAGE_PUT(
-            storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}));
+            storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11}));
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
@@ -299,13 +297,13 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}\n");
 
         // Generate WAL with incorrect headers and try to push them
         Buffer *walBuffer1 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer1, bufSize(walBuffer1));
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_10}, walBuffer1);
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer1);
 
@@ -313,19 +311,19 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
-            "WAL file '" TEST_PATH "/pg/pg_wal/000000010000000100000001' version 10, system-id 18072658121562454734 do not match"
-                " stanza version 11, system-id 18072658121562454734");
+            "WAL file '" TEST_PATH "/pg/pg_wal/000000010000000100000001' version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not"
+                " match stanza version 11, system-id " HRN_PG_SYSTEMID_11_Z "");
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAFECAFECAF}, walBuffer1);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 1}, walBuffer1);
         const char *walBuffer1Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer1)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer1);
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
-            "WAL file '" TEST_PATH "/pg/pg_wal/000000010000000100000001' version 11, system-id 17055110554209741999 do not match"
-                " stanza version 11, system-id 18072658121562454734");
+            "WAL file '" TEST_PATH "/pg/pg_wal/000000010000000100000001' version 11, system-id " HRN_PG_SYSTEMID_11_1_Z " do not"
+                " match stanza version 11, system-id " HRN_PG_SYSTEMID_11_Z);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("push by ignoring the invalid header");
@@ -350,13 +348,13 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11}, walBuffer1);
 
         // Check sha1 checksum against fixed values once to make sure they are not getting munged. After this we'll calculate them
         // directly from the buffers to reduce the cost of maintaining checksums.
         walBuffer1Sha1 = TEST_64BIT() ?
-            (TEST_BIG_ENDIAN() ? "1c5f963d720bb199d7935dbd315447ea2ec3feb2" : "aae7591a1dbc58f21d0d004886075094f622e6dd") :
-            "28a13fd8cf6fcd9f9a8108aed4c8bcc58040863a";
+            (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "858a9ef24b79468eb2a61543b58140addfede0fc") :
+            "044ec0576dc4e59d460aa3a8ac796ba4874ddff3";
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer1);
 
@@ -377,7 +375,7 @@ testRun(void)
         Buffer *walBuffer2 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer2, bufSize(walBuffer2));
         memset(bufPtr(walBuffer2), 0xFF, bufSize(walBuffer2));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer2);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11}, walBuffer2);
         const char *walBuffer2Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer2)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer2);
@@ -487,7 +485,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}",
+            "1={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}",
             .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpassphrase");
 
         // repo3 is not encrypted
@@ -497,7 +495,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}");
 
         // Push encrypted WAL segment
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
@@ -671,8 +669,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
 
-        HRN_STORAGE_PUT(storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}));
+        HRN_STORAGE_PUT(
+            storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_94}));
 
         HRN_INFO_PUT(
             storageTest, "repo/archive/test/archive.info",
@@ -680,7 +678,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":12297848147757817309,\"db-version\":\"9.4\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("async, ignore error file on first pass");
@@ -755,7 +753,7 @@ testRun(void)
         Buffer *walBuffer1 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer1, bufSize(walBuffer1));
         memset(bufPtr(walBuffer1), 0xFF, bufSize(walBuffer1));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer1);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94}, walBuffer1);
         const char *walBuffer1Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer1)));
 
         HRN_STORAGE_PUT(storagePgWrite(),"pg_xlog/000000010000000100000001", walBuffer1);
@@ -816,7 +814,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":12297848147757817309,\"db-version\":\"9.4\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n");
 
         // Recreate ready file for WAL 1
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000001.ready");
@@ -860,7 +858,7 @@ testRun(void)
         Buffer *walBuffer2 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer2, bufSize(walBuffer2));
         memset(bufPtr(walBuffer2), 0x0C, bufSize(walBuffer2));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer2);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94}, walBuffer2);
         const char *walBuffer2Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer2)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000002", walBuffer2);
@@ -909,7 +907,7 @@ testRun(void)
         Buffer *walBuffer3 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer3, bufSize(walBuffer3));
         memset(bufPtr(walBuffer3), 0x44, bufSize(walBuffer3));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer3);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_94}, walBuffer3);
         const char *walBuffer3Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer3)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000003", walBuffer3);

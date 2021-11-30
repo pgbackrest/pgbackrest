@@ -151,8 +151,7 @@ testRun(void)
         TEST_TITLE("no segments to find");
 
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10}));
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
@@ -160,7 +159,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
         strLstAddZ(argList, "000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
@@ -252,8 +251,8 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
-            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n"
+            "2={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
@@ -290,8 +289,8 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
-            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n"
+            "2={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
@@ -336,7 +335,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}\n");
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FE-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
@@ -352,7 +351,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
             "P00   WARN: repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '18072658121562454734'\n"
+                " '" HRN_PG_SYSTEMID_10_Z "'\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
 
@@ -360,13 +359,13 @@ testRun(void)
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok",
             "0\n"
             "repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-            " '18072658121562454734'",
+            " '" HRN_PG_SYSTEMID_10_Z "'",
             .remove = true);
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok",
             "0\n"
             "repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-            " '18072658121562454734'",
+            " '" HRN_PG_SYSTEMID_10_Z "'",
             .remove = true);
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
@@ -381,7 +380,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
         HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1", .mode = 0400);
 
@@ -479,7 +478,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"11\"}\n");
         HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(2), "10-1", .mode = 0400);
 
         HRN_STORAGE_PUT_EMPTY(
@@ -494,7 +493,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
             "P00   WARN: repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '18072658121562454734'\n"
+                " '" HRN_PG_SYSTEMID_10_Z "'\n"
             "P01   WARN: repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
                 " [FormatError] unexpected eof in compressed data\n"
             "P01 DETAIL: found 000000010000000200000000 in the repo2: 10-1 archive");
@@ -503,7 +502,7 @@ testRun(void)
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok",
             "0\n"
             "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '18072658121562454734'\n"
+                " '" HRN_PG_SYSTEMID_10_Z "'\n"
             "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
                 " [FormatError] unexpected eof in compressed data",
             .remove = true);
@@ -528,7 +527,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
             "P00   WARN: repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '18072658121562454734'\n"
+                " '" HRN_PG_SYSTEMID_10_Z "'\n"
             "P01   WARN: [FileReadError] raised from local-1 shim protocol: unable to get 000000010000000200000000:\n"
             "            repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
                 " [FormatError] unexpected eof in compressed data\n"
@@ -546,7 +545,7 @@ testRun(void)
                 " [FormatError] unexpected eof in compressed data\n"
             "[FileReadError] on retry after 0ms\n"
             "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '18072658121562454734'",
+                " '" HRN_PG_SYSTEMID_10_Z "'",
             .remove = true);
         TEST_STORAGE_LIST(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000200000000.pgbackrest.tmp\n", .remove = true);
@@ -625,8 +624,7 @@ testRun(void)
         TEST_TITLE("no valid repo");
 
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10}));
 
         strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .exeBogus = true);
@@ -783,8 +781,7 @@ testRun(void)
         TEST_TITLE("pg version does not match archive.info");
 
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11}));
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
@@ -792,7 +789,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}");
 
         argBaseList = strLstNew();
         hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH "/pg");
@@ -808,27 +805,26 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [ArchiveMismatchError] unable to retrieve the archive id for database version '11' and system-id"
-                " '18072658121562454734'");
+                " '" HRN_PG_SYSTEMID_11_Z "'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg system id does not match archive.info");
 
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0x8888888888888888}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1}));
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '9838263505978427528'");
+                " '" HRN_PG_SYSTEMID_10_1_Z "'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file is missing");
 
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10}));
 
         TEST_RESULT_INT(cmdArchiveGet(), 1, "get");
 
@@ -881,10 +877,10 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
-            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
-            "3={\"db-id\":10000000000000000000,\"db-version\":\"11\"}\n"
-            "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n"
+            "2={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n"
+            "3={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}\n"
+            "4={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
@@ -974,7 +970,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}",
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}",
             .cipherType = cipherTypeAes256Cbc);
 
         HRN_STORAGE_PUT(
@@ -1022,7 +1018,7 @@ testRun(void)
             "db-id=2\n"
             "\n"
             "[db:history]\n"
-            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+            "2={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}");
 
         HRN_STORAGE_PATH_CREATE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-2", .mode = 0400);
 
@@ -1117,7 +1113,7 @@ testRun(void)
             "db-id=2\n"
             "\n"
             "[db:history]\n"
-            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+            "2={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}");
 
         // Put a warning in the file to show that it was read and later overwritten
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "0\nshould not be output");

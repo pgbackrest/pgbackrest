@@ -1003,16 +1003,15 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_91, 1000000000000000910, hrnPgCatalogVersion(PG_VERSION_91), NULL)), ConfigError,
-             "option 'backup-standby' not valid for PostgreSQL < 9.2");
+            backupInit(infoBackupNew(PG_VERSION_91, HRN_PG_SYSTEMID_91, hrnPgCatalogVersion(PG_VERSION_91), NULL)),
+            ConfigError, "option 'backup-standby' not valid for PostgreSQL < 9.2");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn and reset when backup from standby used in offline mode");
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1024,7 +1023,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, hrnPgCatalogVersion(PG_VERSION_92), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_92, HRN_PG_SYSTEMID_92, hrnPgCatalogVersion(PG_VERSION_92), NULL)),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "check backup-standby");
 
@@ -1036,8 +1035,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10}));
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1048,14 +1046,16 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_11, 1000000000000001100, hrnPgCatalogVersion(PG_VERSION_11), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_11, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_11), NULL)),
             BackupMismatchError,
-            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 11, system-id 1000000000000001100\n"
+            "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 11, system-id"
+                " " HRN_PG_SYSTEMID_11_Z "\n"
             "HINT: is this the correct stanza?");
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_10, 1000000000000001100, hrnPgCatalogVersion(PG_VERSION_10), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_10, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_10), NULL)),
             BackupMismatchError,
-            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 10, system-id 1000000000000001100\n"
+            "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 10, system-id"
+                " " HRN_PG_SYSTEMID_11_Z "\n"
             "HINT: is this the correct stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1063,8 +1063,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_83}));
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1076,7 +1075,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, hrnPgCatalogVersion(PG_VERSION_83), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_83, HRN_PG_SYSTEMID_83, hrnPgCatalogVersion(PG_VERSION_83), NULL)),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "check start-fast");
 
@@ -1087,8 +1086,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84}));
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1100,7 +1098,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, hrnPgCatalogVersion(PG_VERSION_84), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_84, HRN_PG_SYSTEMID_84, hrnPgCatalogVersion(PG_VERSION_84), NULL)),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "check stop-auto");
 
@@ -1111,8 +1109,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93}));
 
         // Create stanza
         argList = strLstNew();
@@ -1142,7 +1139,8 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(
-            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
+            dbFree(
+                backupInit(infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
@@ -1155,7 +1153,7 @@ testRun(void)
         // Create pg_control with page checksums
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .pageChecksum = true}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .pageChecksum = true}));
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1174,14 +1172,14 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(
-            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
+            dbFree(
+                backupInit(infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
         // Create pg_control without page checksums
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1192,7 +1190,8 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(
-            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
+            dbFree(
+                backupInit(infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
     }
@@ -1205,8 +1204,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93}));
 
         // Create stanza
         StringList *argList = strLstNew();
@@ -1246,7 +1244,7 @@ testRun(void)
         });
 
         BackupData *backupData = backupInit(
-            infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL));
+            infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL));
 
         TEST_RESULT_INT(backupTime(backupData, true), 1575392588, "multiple tries for sleep");
         TEST_ERROR(backupTime(backupData, true), KernelError, "PostgreSQL clock has not advanced to the next second after 3 tries");
@@ -1485,8 +1483,7 @@ testRun(void)
 
         // Create pg_control
         HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84}));
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1538,8 +1535,8 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "749acedef8f8d5fe35fc20c0375657f876ccc38e" : "21e2ddc99cdf4cfca272eee4f38891146092e358") :
-                "8bb70506d988a8698d9e8cf90736ada23634571b");
+                (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "7ac45fd284c8b8aa84ec84927e95601023911b8e") :
+                "37689eebc90fa4bf25d34101e3193fb5b592295b");
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
@@ -1736,8 +1733,7 @@ testRun(void)
 
             // Create pg_control
             HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}),
+                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95}),
                 .timeModified = backupTimeStart);
 
             cmdStanzaCreate();
@@ -2169,8 +2165,7 @@ testRun(void)
         {
             // Update pg_control
             HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}),
+                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96}),
                 .timeModified = backupTimeStart);
 
             // Update version
@@ -2314,10 +2309,7 @@ testRun(void)
             // Update pg_control
             HRN_STORAGE_PUT(
                 storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer(
-                    (PgControl){
-                        .version = PG_VERSION_11, .systemId = 1000000000000001100, .pageChecksum = true,
-                        .walSegmentSize = 1024 * 1024}),
+                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 1024 * 1024}),
                 .timeModified = backupTimeStart);
 
             // Update version
