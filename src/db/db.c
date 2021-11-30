@@ -373,7 +373,8 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         // Start backup
         VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
 
-        // Make sure the backup start checkpoint was written to pg_control
+        // Make sure the backup start checkpoint was written to pg_control. This helps ensure that we have a consistent view of the
+        // storage with PostgreSQL.
         const PgControl pgControl = pgControlFromFile(this->storage);
         const String *const lsnStart = varStr(varLstGet(row, 0));
 
