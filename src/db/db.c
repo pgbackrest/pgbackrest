@@ -373,6 +373,17 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         // Start backup
         VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
 
+        // Make sure the backup start checkpoint was written to pg_control
+        const PgControl pgControl = pgControlFromFile(this->storage);
+        const String *const lsnStart = varStr(varLstGet(row, 0));
+
+        if (pgControl.checkpoint < pgLsnFromStr(lsnStart))
+        {
+            THROW_FMT(
+                DbMismatchError, "current checkpoint '%s' is less than backup start '%s'", strZ(pgLsnToStr(pgControl.checkpoint)),
+                strZ(lsnStart));
+        }
+
         // If archive check then make sure WAL segment was switched on start backup
         const String *const walSegmentName = varStr(varLstGet(row, 1));
 
@@ -399,7 +410,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         // Return results
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result.lsn = strDup(varStr(varLstGet(row, 0)));
+            result.lsn = strDup(lsnStart);
             result.walSegmentName = strDup(walSegmentName);
             result.walSegmentCheck = strDup(walSegmentCheck);
         }

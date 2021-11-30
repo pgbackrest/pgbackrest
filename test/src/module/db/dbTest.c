@@ -199,7 +199,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("1/1")));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when unable to select any pg_settings");
@@ -285,6 +285,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.5 start/stop backup");
 
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("2/3")));
+
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
@@ -340,6 +342,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.5 start/stop backup where backup is in progress");
 
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("2/5")));
+
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
@@ -379,6 +383,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.6 start/stop backup");
 
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("3/3")));
+
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
@@ -388,6 +394,11 @@ testRun(void)
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
             HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000020000000300000002"),
             HRNPQ_MACRO_START_BACKUP_96(1, false, "3/3", "000000020000000300000003"),
+
+            // Start backup with checkpoint error
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000400000003"),
+            HRNPQ_MACRO_START_BACKUP_96(1, false, "4/4", "000000010000000400000004"),
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -407,6 +418,9 @@ testRun(void)
 
         TEST_ERROR(
             dbBackupStart(db.primary, false, true, true), DbMismatchError, "WAL timeline 2 does not match pg_control timeline 1");
+        TEST_ERROR(
+            dbBackupStart(db.primary, false, true, true), DbMismatchError,
+            "current checkpoint '3/3' is less than backup start '4/4'");
 
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, true), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "3/3", "check lsn");
