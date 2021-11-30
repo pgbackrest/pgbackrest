@@ -80,7 +80,6 @@ void dbOpen(Db *this);
 // Start backup and return timeline, starting lsn, and wal segment info
 typedef struct DbBackupStartResult
 {
-    uint32_t timeline;                                              // Current timeline
     String *lsn;
     String *walSegmentName;
     String *walSegmentCheck;                                        // Segment used to check archiving, may be NULL

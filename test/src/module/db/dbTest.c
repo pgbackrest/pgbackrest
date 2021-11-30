@@ -273,9 +273,10 @@ testRun(void)
         DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
+        TEST_RESULT_UINT(dbPgControl(db.primary).timeline, 1, "check timeline");
+
         DbBackupStartResult backupStartResult = {0};
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
-        TEST_RESULT_UINT(backupStartResult.timeline, 1, "check timeline");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "1/1", "start backup");
         TEST_RESULT_PTR(backupStartResult.walSegmentCheck, NULL, "WAL segment check");
 
@@ -400,7 +401,6 @@ testRun(void)
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, true), "start backup");
-        TEST_RESULT_UINT(backupStartResult.timeline, 1, "check timeline");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "3/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000300000003", "check wal segment name");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000010000000300000002", "check wal segment check");
@@ -425,7 +425,8 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        hrnPgControlToFile(storagePgIdxWrite(1), (PgControl){.version = PG_VERSION_93});
+        hrnPgControlToFile(storagePgIdxWrite(0), (PgControl){.version = PG_VERSION_93, .timeline = 5});
+        hrnPgControlToFile(storagePgIdxWrite(1), (PgControl){.version = PG_VERSION_93, .timeline = 5});
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -454,7 +455,7 @@ testRun(void)
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
         TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false, false).lsn, "5/4", "start backup");
-        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), 1, 1000), "sync standby");
+        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), dbPgControl(db.primary).timeline, 1000), "sync standby");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
@@ -479,11 +480,7 @@ testRun(void)
             HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "5/5"),
             HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000050000000500000005"),
 
-            // Invalid timeline
-            HRNPQ_MACRO_TIMELINE(2, 77),
-
             // Standby returns NULL lsn
-            HRNPQ_MACRO_TIMELINE(2, 5),
             {.session = 2,
                 .function = HRNPQ_SENDQUERY,
                 .param =
@@ -506,20 +503,17 @@ testRun(void)
             {.session = 2, .function = HRNPQ_GETRESULT, .resultNull = true},
 
             // Timeout waiting for sync
-            HRNPQ_MACRO_TIMELINE(2, 5),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 250),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
 
             // Checkpoint target timeout waiting for sync
-            HRNPQ_MACRO_TIMELINE(2, 5),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", true, "5/5"),
             HRNPQ_MACRO_CHECKPOINT(2),
             HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 250),
             HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 0),
 
             // Wait for standby to sync
-            HRNPQ_MACRO_TIMELINE(2, 5),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
             HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
@@ -541,31 +535,33 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
+        TEST_RESULT_UINT(dbPgControl(db.primary).timeline, 5, "check primary timeline");
+        TEST_RESULT_UINT(dbPgControl(db.standby).timeline, 5, "check standby timeline");
+
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
-        TEST_RESULT_UINT(backupStartResult.timeline, 5, "check timeline");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "5/5", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000050000000500000005", "check wal segment name");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000050000000500000005", "check wal segment check");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 5, 1000), ArchiveTimeoutError, "standby is on timeline 77 but expected 5");
+            dbReplayWait(db.standby, STRDEF("5/5"), 77, 1000), ArchiveTimeoutError, "standby is on timeline 5 but expected 77");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 5, 1000), ArchiveTimeoutError,
+            dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 1000), ArchiveTimeoutError,
             "unable to query replay lsn on the standby using 'pg_catalog.pg_last_wal_replay_lsn()'\n"
             "HINT: Is this a standby?");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 5, 200), ArchiveTimeoutError,
+            dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 200), ArchiveTimeoutError,
             "timeout before standby replayed to 5/5 - only reached 5/3\n"
             "HINT: is replication running and current on the standby?\n"
             "HINT: disable the 'backup-standby' option to backup directly from the primary.");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 5, 200), ArchiveTimeoutError,
+            dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 200), ArchiveTimeoutError,
             "timeout before standby checkpoint lsn reached 5/5 - only reached 5/4");
 
-        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), 5, 1000), "sync standby");
+        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 1000), "sync standby");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
 

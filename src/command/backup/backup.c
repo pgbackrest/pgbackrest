@@ -151,6 +151,7 @@ typedef struct BackupData
     const InfoArchive *archiveInfo;                                 // Archive info
     const String *archiveId;                                        // Archive where backup WAL will be stored
 
+    unsigned int timeline;                                          // Primary timeline
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
 } BackupData;
@@ -220,6 +221,7 @@ backupInit(const InfoBackup *infoBackup)
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
     result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
 
+    result->timeline = pgControl.timeline;
     result->version = pgControl.version;
     result->walSegmentSize = pgControl.walSegmentSize;
 
@@ -886,8 +888,7 @@ backupStart(BackupData *backupData)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
-                dbReplayWait(
-                    backupData->dbStandby, result.lsn, dbBackupStartResult.timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
+                dbReplayWait(backupData->dbStandby, result.lsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
                 LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
 
                 // The standby db object won't be used anymore so free it

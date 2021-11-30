@@ -414,7 +414,6 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
                 // Wait for standby to sync
-                HRNPQ_MACRO_TIMELINE(2, 1),
                 HRNPQ_MACRO_REPLAY_WAIT_96(2, lsnStartStr),
 
                 HRNPQ_MACRO_DONE()
@@ -441,7 +440,6 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
                 // Wait for standby to sync
-                HRNPQ_MACRO_TIMELINE(2, 1),
                 HRNPQ_MACRO_REPLAY_WAIT_96(2, lsnStartStr),
 
                 // Get copy start time
@@ -1549,8 +1547,8 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "7ac45fd284c8b8aa84ec84927e95601023911b8e") :
-                "37689eebc90fa4bf25d34101e3193fb5b592295b");
+                (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "6c1435a9f3c24a020794f58945ada456cb1d3bbe") :
+                "d432aca683e0443e97cf0600ba3a5a9efd7586fd");
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
