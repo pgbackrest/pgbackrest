@@ -400,9 +400,11 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 
                     // There's a small chance that the prior manifest is old enough that backupOptionCompressLevel was not recorded.
                     // There's an even smaller chance that the user will also alter compression-type in this scenario right after
-                    // upgrading to a newer version. Because we judge this combination of events to be nearly impossible just assert
+                    // upgrading to a newer version. Because we judge this combination of events to be nearly impossible just check
                     // here so no test coverage is needed.
-                    CHECK(manifestPriorData->backupOptionCompressLevel != NULL);
+                    CHECK(
+                        FormatError, manifestPriorData->backupOptionCompressLevel != NULL,
+                        "compress-level missing in prior manifest");
 
                     // Set the compression level back to whatever was in the prior backup
                     cfgOptionSet(
@@ -1137,7 +1139,7 @@ backupJobResultPageChecksum(PackRead *const checksumPageResult)
         }
 
         // Check that the array was not empty
-        CHECK(first);
+        CHECK(FormatError, first, "page checksum result array is empty");
 
         // Output last page or page range
         backupJobResultPageChecksumOut(result, pageBegin, pageEnd);
@@ -1263,8 +1265,8 @@ backupJobResult(
                         else
                         {
                             // Format the page checksum errors
-                            CHECK(checksumPageErrorList != NULL);
-                            CHECK(!varLstEmpty(checksumPageErrorList));
+                            CHECK(FormatError, checksumPageErrorList != NULL, "page checksum error list is missing");
+                            CHECK(FormatError, !varLstEmpty(checksumPageErrorList), "page checksum error list is empty");
 
                             String *error = strNew();
                             unsigned int errorTotalMin = 0;
@@ -1460,8 +1462,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
                 do
                 {
-                    // A target should always be found
-                    CHECK(targetIdx < strLstSize(targetList));
+                    CHECK(AssertError, targetIdx < strLstSize(targetList), "backup target not found");
 
                     if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
                         break;

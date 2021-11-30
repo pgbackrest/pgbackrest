@@ -141,7 +141,7 @@ dbExec(Db *this, const String *command)
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    CHECK(dbQuery(this, command) == NULL);
+    CHECK(AssertError, dbQuery(this, command) == NULL, "exec returned data");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -162,8 +162,8 @@ dbQueryColumn(Db *this, const String *query)
 
     VariantList *result = dbQuery(this, query);
 
-    CHECK(varLstSize(result) == 1);
-    CHECK(varLstSize(varVarLst(varLstGet(result, 0))) == 1);
+    CHECK(AssertError, varLstSize(result) == 1, "query must return one column");
+    CHECK(AssertError, varLstSize(varVarLst(varLstGet(result, 0))) == 1, "query must return one row");
 
     FUNCTION_LOG_RETURN(VARIANT, varLstGet(varVarLst(varLstGet(result, 0)), 0));
 }
@@ -184,7 +184,7 @@ dbQueryRow(Db *this, const String *query)
 
     VariantList *result = dbQuery(this, query);
 
-    CHECK(varLstSize(result) == 1);
+    CHECK(AssertError, varLstSize(result) == 1, "query must return one row");
 
     FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(varLstGet(result, 0)));
 }
@@ -339,8 +339,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         // If stop-auto is enabled check for a running backup
         if (stopAuto)
         {
-            // Feature is not supported in PostgreSQL < 9.3
-            CHECK(dbPgVersion(this) >= PG_VERSION_93);
+            CHECK(AssertError, dbPgVersion(this) >= PG_VERSION_93, "feature not supported in PostgreSQL < " PG_VERSION_93_STR);
 
             // Feature is not needed for PostgreSQL >= 9.6 since backups are run in non-exclusive mode
             if (dbPgVersion(this) < PG_VERSION_96)

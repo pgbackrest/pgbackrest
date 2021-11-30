@@ -185,11 +185,8 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
 
         this->pub.info = infoNewLoad(read, infoPgLoadCallback, &loadData);
 
-        // History must include at least one item or the file is corrupt
-        CHECK(!lstEmpty(this->pub.history));
-
-        // If the current id was not found then the file is corrupt
-        CHECK(loadData.currentId > 0);
+        CHECK(FormatError, !lstEmpty(this->pub.history), "history is missing");
+        CHECK(FormatError, loadData.currentId > 0, "current id is missing");
 
         // Find the current history item
         for (unsigned int historyIdx = 0; historyIdx < lstSize(this->pub.history); historyIdx++)
@@ -198,8 +195,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
                 this->historyCurrent = historyIdx;
         }
 
-        // If the current id did not match the history list then the file is corrupt
-        CHECK(this->historyCurrent != UINT_MAX);
+        CHECK(FormatError, this->historyCurrent != UINT_MAX, "unable to find current id in history");
     }
     OBJ_NEW_END();
 

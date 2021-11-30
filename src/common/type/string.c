@@ -323,7 +323,7 @@ strResize(String *this, size_t requested)
     if (requested > this->pub.extra)
     {
         // Fixed size strings may not be resized
-        CHECK(!STR_IS_FIXED_BUFFER());
+        CHECK(AssertError, !STR_IS_FIXED_BUFFER(), "resize of fixed size string");
 
         // Check size
         CHECK_SIZE(strSize(this) + requested);

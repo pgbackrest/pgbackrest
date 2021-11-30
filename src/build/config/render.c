@@ -392,7 +392,7 @@ bldCfgRenderScalar(const String *const scalar, const String *const optType)
     }
     else
     {
-        CHECK(strEq(optType, OPT_TYPE_SIZE_STR) || strEq(optType, OPT_TYPE_INTEGER_STR));
+        CHECK(AssertError, strEq(optType, OPT_TYPE_SIZE_STR) || strEq(optType, OPT_TYPE_INTEGER_STR), "invalid type");
 
         value = cvtZToInt64(strZ(scalar));
     }
