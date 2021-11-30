@@ -56,8 +56,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby only, repo local - fail to find primary database");
 
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -81,9 +80,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        HRN_STORAGE_PUT(
-            storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
 
         // Two standbys found but no primary
         harnessPqScriptSet((HarnessPq [])
@@ -170,8 +167,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Create pg_control for standby
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
         // Standby database path doesn't match pg_control
         harnessPqScriptSet((HarnessPq [])
@@ -195,9 +191,7 @@ testRun(void)
         TEST_TITLE("standby and primary database - error on primary but standby check ok");
 
         // Create pg_control for primary
-        HRN_STORAGE_PUT(
-            storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
 
         // Create info files
         HRN_INFO_PUT(
@@ -421,12 +415,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        HRN_STORAGE_PUT(
-            storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
-        HRN_STORAGE_PUT(
-            storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
 
         DbGetResult db = {0};
 
@@ -598,9 +588,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96}));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_96);
 
         // Create info files
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");

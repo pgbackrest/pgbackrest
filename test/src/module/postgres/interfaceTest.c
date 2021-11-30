@@ -47,8 +47,6 @@ testRun(void)
         TEST_RESULT_UINT(pgInterface[0].version, PG_VERSION_MAX, "check max version");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        const String *controlFile = STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
-
         // Create a bogus control file
         Buffer *result = bufNew(HRN_PG_CONTROL_SIZE);
         memset(bufPtr(result), 0, bufSize(result));
@@ -65,12 +63,9 @@ testRun(void)
             "unexpected control version = 501 and catalog version = 19780101\nHINT: is this version of PostgreSQL supported?");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageTest, controlFile),
-            hrnPgControlToBuffer(
-                (PgControl){
-                    .version = PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
-                    .walSegmentSize = 1024 * 1024}));
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
+            .walSegmentSize = 1024 * 1024);
 
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v11");
@@ -81,27 +76,20 @@ testRun(void)
         TEST_RESULT_UINT(info.timeline, 47, "check timeline");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageTest, controlFile),
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .walSegmentSize = 1024 * 1024}));
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_93, .walSegmentSize = 1024 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest), FormatError, "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageTest, controlFile),
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95, .pageSize = 32 * 1024}));
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_95, .pageSize = 32 * 1024);
 
         TEST_ERROR(pgControlFromFile(storageTest), FormatError, "page size is 32768 but must be 8192");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageTest, controlFile),
-            hrnPgControlToBuffer(
-                (PgControl){
-                    .version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF, .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88,
-                    .catalogVersion = hrnPgCatalogVersion(PG_VERSION_83)}));
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_83, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_83),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");

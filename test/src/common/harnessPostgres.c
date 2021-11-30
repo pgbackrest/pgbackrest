@@ -254,24 +254,6 @@ hrnPgControlToBuffer(PgControl pgControl)
 
 /**********************************************************************************************************************************/
 void
-hrnPgControlToFile(const Storage *const storage, PgControl pgControl)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STORAGE, storage);
-        FUNCTION_HARNESS_PARAM(PG_CONTROL, pgControl);
-    FUNCTION_HARNESS_END();
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        storagePutP(storageNewWriteP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), hrnPgControlToBuffer(pgControl));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
 hrnPgWalToBuffer(PgWal pgWal, Buffer *walBuffer)
 {
     FUNCTION_HARNESS_BEGIN();

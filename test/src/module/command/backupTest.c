@@ -283,6 +283,9 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl),
         .timeModified = backupTimeStart);
 
+    // Update pg_control on primary with the backup time
+    HRN_PG_CONTROL_TIME(storagePgIdxWrite(0), backupTimeStart);
+
     // Write WAL segments to the archive
     // -----------------------------------------------------------------------------------------------------------------------------
     if (!param.noPriorWal)
@@ -1022,8 +1025,7 @@ testRun(void)
         TEST_TITLE("warn and reset when backup from standby used in offline mode");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1046,8 +1048,7 @@ testRun(void)
         TEST_TITLE("error when pg_control does not match stanza");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1074,8 +1075,7 @@ testRun(void)
         TEST_TITLE("reset start-fast when PostgreSQL < 8.4");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_83}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_83);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1097,8 +1097,7 @@ testRun(void)
         TEST_TITLE("reset stop-auto when PostgreSQL < 9.3");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_84);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1120,8 +1119,7 @@ testRun(void)
         TEST_TITLE("reset checksum-page when the cluster does not have checksums enabled");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         // Create stanza
         argList = strLstNew();
@@ -1163,9 +1161,7 @@ testRun(void)
         TEST_TITLE("ok if cluster checksums are enabled and checksum-page is any value");
 
         // Create pg_control with page checksums
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .pageChecksum = true}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93, .pageChecksum = true);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1190,8 +1186,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
         // Create pg_control without page checksums
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1215,8 +1210,7 @@ testRun(void)
         TEST_TITLE("sleep retries and stall error");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         // Create stanza
         StringList *argList = strLstNew();
@@ -1494,8 +1488,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_84);
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1744,9 +1737,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
             // Create pg_control
-            HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95}),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95);
 
             cmdStanzaCreate();
             TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -2175,11 +2166,7 @@ testRun(void)
 
         {
             // Update pg_control
-            PgControl pgControl = {.version = PG_VERSION_96};
-
-            HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_96_STR, .timeModified = backupTimeStart);
@@ -2210,9 +2197,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Add pg_control to standby
-            HRN_STORAGE_PUT(
-                storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
             // but no bytes will be copied.
@@ -2325,10 +2310,7 @@ testRun(void)
 
         {
             // Update pg_control
-            HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 1024 * 1024}),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 1024 * 1024);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
@@ -2551,9 +2533,9 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            // Set pg_control time to last backup time
+            // Preserve prior timestamp on pg_control
             testBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 2300000, .errorAfterStart = true);
-            HRN_STORAGE_TIME(storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, backupTimeStart);
+            HRN_PG_CONTROL_TIME(storagePg(), backupTimeStart);
 
             // Run backup
             TEST_ERROR(
@@ -2592,9 +2574,6 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-            // Update pg_control timestamp
-            HRN_STORAGE_TIME(storagePg(), "global/pg_control", backupTimeStart);
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
