@@ -2120,7 +2120,7 @@ testRun(void)
                     " from resumed backup\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/resume-ref.gz'"
                     " from resumed backup (reference in resumed manifest)\n"
-                "P01 DETAIL: backup file /home/vagrant/test/test-0/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/time-mismatch2 does not have expected checksum"
                     " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
