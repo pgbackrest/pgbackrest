@@ -104,8 +104,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mismatched pg_control and archive.info - pg version");
 
-        HRN_STORAGE_PUT(
-            storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
         // Create incorrect archive info
         HRN_INFO_PUT(
@@ -288,8 +287,7 @@ testRun(void)
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
-        HRN_STORAGE_PUT(
-            storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11);
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
@@ -669,8 +667,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
 
-        HRN_STORAGE_PUT(
-            storageTest, "pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_94}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94);
 
         HRN_INFO_PUT(
             storageTest, "repo/archive/test/archive.info",

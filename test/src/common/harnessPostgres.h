@@ -7,6 +7,8 @@ Harness for PostgreSQL Interface
 #include "postgres/interface.h"
 #include "postgres/version.h"
 
+#include "common/harnessStorage.h"
+
 /***********************************************************************************************************************************
 Control file size used to create pg_control
 ***********************************************************************************************************************************/
@@ -45,6 +47,19 @@ System id constants by version
 #define HRN_PG_SYSTEMID_13_Z                                        "10000000000000130000"
 #define HRN_PG_SYSTEMID_14                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_14)
 #define HRN_PG_SYSTEMID_14_Z                                        "10000000000000140000"
+
+/***********************************************************************************************************************************
+Put a control file to storage
+***********************************************************************************************************************************/
+#define HRN_PG_CONTROL_PUT(storageParam, versionParam, ...)                                                                        \
+    HRN_STORAGE_PUT(                                                                                                               \
+        storageParam, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = versionParam, __VA_ARGS__}))
+
+/***********************************************************************************************************************************
+Update control file time
+***********************************************************************************************************************************/
+#define HRN_PG_CONTROL_TIME(storageParam, timeParam, ...)                                                                          \
+    HRN_STORAGE_TIME(storageParam, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, timeParam)
 
 /***********************************************************************************************************************************
 Functions

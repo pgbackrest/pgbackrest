@@ -274,6 +274,9 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     const char *lsnStopStr = strZ(pgLsnToStr(lsnStop));
     const char *walSegmentStop = strZ(pgLsnToWalSegment(param.timeline, lsnStop, pgControl.walSegmentSize));
 
+    // Update pg_control on primary with the backup time
+    HRN_PG_CONTROL_TIME(storagePgIdxWrite(0), backupTimeStart);
+
     // Write WAL segments to the archive
     // -----------------------------------------------------------------------------------------------------------------------------
     if (!param.noPriorWal)
@@ -1010,8 +1013,7 @@ testRun(void)
         TEST_TITLE("warn and reset when backup from standby used in offline mode");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1034,8 +1036,7 @@ testRun(void)
         TEST_TITLE("error when pg_control does not match stanza");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1062,8 +1063,7 @@ testRun(void)
         TEST_TITLE("reset start-fast when PostgreSQL < 8.4");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_83}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_83);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1085,8 +1085,7 @@ testRun(void)
         TEST_TITLE("reset stop-auto when PostgreSQL < 9.3");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_84);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1108,8 +1107,7 @@ testRun(void)
         TEST_TITLE("reset checksum-page when the cluster does not have checksums enabled");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         // Create stanza
         argList = strLstNew();
@@ -1151,9 +1149,7 @@ testRun(void)
         TEST_TITLE("ok if cluster checksums are enabled and checksum-page is any value");
 
         // Create pg_control with page checksums
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .pageChecksum = true}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93, .pageChecksum = true);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1178,8 +1174,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
         // Create pg_control without page checksums
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1203,8 +1198,7 @@ testRun(void)
         TEST_TITLE("sleep retries and stall error");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         // Create stanza
         StringList *argList = strLstNew();
@@ -1482,8 +1476,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_84);
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1732,9 +1725,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
             // Create pg_control
-            HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95}),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95);
 
             cmdStanzaCreate();
             TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1981,7 +1972,7 @@ testRun(void)
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"size\":3"
                     ",\"timestamp\":1570000000}\n"
-                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570000000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570100000}\n"
                 "pg_data/not-in-resume={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
                     ",\"timestamp\":1570100000}\n"
                 "pg_data/pg_xlog/0000000105D95D3000000000={\"size\":16777216,\"timestamp\":1570100002}\n"
@@ -2139,7 +2130,7 @@ testRun(void)
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"reference\":\"20191003-105320F\""
                     ",\"size\":3,\"timestamp\":1570000000}\n"
-                "pg_data/global/pg_control={\"reference\":\"20191003-105320F\",\"size\":8192,\"timestamp\":1570000000}\n"
+                "pg_data/global/pg_control={\"reference\":\"20191003-105320F\",\"size\":8192,\"timestamp\":1570200000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
                     ",\"reference\":\"20191003-105320F\",\"size\":11,\"timestamp\":1570000000}\n"
                 "pg_data/resume-ref={\"size\":0,\"timestamp\":1570200000}\n"
@@ -2164,9 +2155,7 @@ testRun(void)
 
         {
             // Update pg_control
-            HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96}),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_96_STR, .timeModified = backupTimeStart);
@@ -2307,10 +2296,7 @@ testRun(void)
 
         {
             // Update pg_control
-            HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 1024 * 1024}),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 1024 * 1024);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
@@ -2522,8 +2508,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg_control not present");
 
-        backupTimeStart = BACKUP_EPOCH + 2300000;
-
         {
             // Load options
             StringList *argList = strLstNew();
@@ -2535,8 +2519,11 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
+            // Preserve prior timestamp on pg_control
+            testBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 2300000, .errorAfterStart = true);
+            HRN_PG_CONTROL_TIME(storagePg(), backupTimeStart);
+
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .errorAfterStart = true);
             TEST_ERROR(
                 cmdBackup(), FileMissingError,
                 "pg_control must be present in all online backups\n"
@@ -2573,9 +2560,6 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-            // Update pg_control timestamp
-            HRN_STORAGE_TIME(storagePg(), "global/pg_control", backupTimeStart);
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);

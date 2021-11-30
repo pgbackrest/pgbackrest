@@ -61,8 +61,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - one repo, no files exist");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -527,8 +526,7 @@ testRun(void)
         TEST_TITLE("pgControl and database match");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -566,9 +564,7 @@ testRun(void)
         TEST_TITLE("pg_control and version mismatch");
 
         // Create pg_control with different version
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_91}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_91);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -586,8 +582,7 @@ testRun(void)
         TEST_TITLE("pg_control and path mismatch");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -614,14 +609,10 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for primary
-        HRN_STORAGE_PUT(
-            storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92}));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
 
         // Create pg_control for standby
-        HRN_STORAGE_PUT(
-            storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_94}));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -661,8 +652,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         // Create pg_control for the rest of the tests
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-upgrade - info file mismatch: db-id");
@@ -909,8 +899,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for stanza-create
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza that will not be deleted");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'otherstanza' on repo1");
