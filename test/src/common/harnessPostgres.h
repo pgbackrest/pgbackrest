@@ -57,8 +57,8 @@ Buffer *hrnPgControlToBuffer(PgControl pgControl);
 
 // Write pg_control to file
 void hrnPgControlToFile(const Storage *storage, PgControl pgControl);
-// Get system id by version
 
+// Get system id by version
 __attribute__((always_inline)) static inline uint64_t
 hrnPgSystemId(const unsigned int pgVersion)
 {
