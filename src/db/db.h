@@ -77,7 +77,7 @@ Functions
 // Open the db connection
 void dbOpen(Db *this);
 
-// Start backup and return timeline, starting lsn, and wal segment info
+// Start backup and return starting lsn and wal segment name
 typedef struct DbBackupStartResult
 {
     String *lsn;
