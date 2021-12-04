@@ -570,8 +570,8 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
         if (dbPgControl(this).checkpoint > pgLsnFromStr(targetLsn))
         {
             THROW_FMT(
-                DbMismatchError, "standby checkpoint '%s' is ahead of ahead of target '%s'",
-                strZ(pgLsnToStr(dbPgControl(this).checkpoint)), strZ(targetLsn));
+                DbMismatchError, "standby checkpoint '%s' is ahead of target '%s'", strZ(pgLsnToStr(dbPgControl(this).checkpoint)),
+                strZ(targetLsn));
         }
 
         // Loop until lsn has been reached or timeout

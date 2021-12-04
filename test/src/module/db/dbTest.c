@@ -572,8 +572,7 @@ testRun(void)
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), 77, 1000), DbMismatchError, "standby is on timeline 5 but expected 77");
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("4/4"), 5, 1000), DbMismatchError,
-            "standby checkpoint '5/5' is ahead of ahead of target '4/4'");
+            dbReplayWait(db.standby, STRDEF("4/4"), 5, 1000), DbMismatchError, "standby checkpoint '5/5' is ahead of target '4/4'");
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 1000), ArchiveTimeoutError,
