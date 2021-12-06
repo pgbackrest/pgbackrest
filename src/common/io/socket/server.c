@@ -96,7 +96,7 @@ sckServerAccept(THIS_VOID, IoSession *const session)
 
         int serverSocket = accept(this->socket, (struct sockaddr *)&addr, &len);
 
-        if (serverSocket != -1) // {uncovered - !!!}
+        if (serverSocket != -1)
         {
             // Create socket session
             sckOptionSet(serverSocket);
@@ -110,7 +110,7 @@ sckServerAccept(THIS_VOID, IoSession *const session)
             statInc(SOCKET_STAT_SESSION_STR);
         }
         else
-            THROW_ON_SYS_ERROR(errno != EINTR, FileOpenError, "unable to accept socket"); // {uncovered - !!!}
+            THROW_ON_SYS_ERROR(errno != EINTR, FileOpenError, "unable to accept socket");
     }
     MEM_CONTEXT_TEMP_END();
 
