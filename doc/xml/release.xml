@@ -47,6 +47,18 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1581"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add timeline and checkpoint checks to backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1571"/>
 
                         <release-item-contributor-list>
