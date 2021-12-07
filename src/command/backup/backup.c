@@ -892,12 +892,6 @@ backupStart(BackupData *backupData)
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
                 dbReplayWait(backupData->dbStandby, result.lsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
                 LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
-
-                // The standby db object won't be used anymore so free it
-                dbFree(backupData->dbStandby);
-
-                // The standby protocol connection won't be used anymore so free it
-                protocolRemoteFree(backupData->pgIdxStandby);
             }
 
             // Check that WAL segments are being archived. If archiving is not working then the backup will eventually fail so
@@ -1364,6 +1358,30 @@ backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
 }
 
 /***********************************************************************************************************************************
+Check that clusters are alive and healthy
+***********************************************************************************************************************************/
+static void
+backupDbPing(const BackupData *const backupData, const bool force)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
+        FUNCTION_LOG_PARAM(BOOL, force);
+    FUNCTION_LOG_END();
+
+    ASSERT(backupData != NULL);
+
+    if (cfgOptionBool(cfgOptOnline))
+    {
+        dbPing(backupData->dbPrimary, force);
+
+        if (cfgOptionBool(cfgOptBackupStandby))
+            dbPing(backupData->dbStandby, force);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Process the backup manifest
 ***********************************************************************************************************************************/
 // Comparator to order ManifestFile objects by size then name
@@ -1748,6 +1766,9 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 // A keep-alive is required here for the remote holding open the backup connection
                 protocolKeepAlive();
 
+                // Check that clusters are alive and healthy
+                backupDbPing(backupData, false);
+
                 // Save the manifest periodically to preserve checksums for resume
                 if (sizeProgress - manifestSaveLast >= manifestSaveSize)
                 {
@@ -2103,8 +2124,21 @@ cmdBackup(void)
         // Process the backup manifest
         backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
 
+        // Check that clusters are alive and healthy
+        backupDbPing(backupData, true);
+
+        // The standby db object and protocol won't be used anymore so free them
+        if (cfgOptionBool(cfgOptBackupStandby))
+        {
+            dbFree(backupData->dbStandby);
+            protocolRemoteFree(backupData->pgIdxStandby);
+        }
+
         // Stop the backup
         BackupStopResult backupStopResult = backupStop(backupData, manifest);
+
+        // The primary db object won't be used anymore so free it
+        dbFree(backupData->dbPrimary);
 
         // Complete manifest
         manifestBuildComplete(
@@ -2114,9 +2148,6 @@ cmdBackup(void)
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
             cfgOptionUInt(cfgOptBufferSize), cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork),
             cfgOptionBool(cfgOptRepoHardlink), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
-
-        // The primary db object won't be used anymore so free it
-        dbFree(backupData->dbPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
         backupArchiveCheckCopy(backupData, manifest, cipherPassBackup);
