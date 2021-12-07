@@ -112,7 +112,7 @@ VariantList *dbList(Db *this);
 // Waits for replay on the standby to equal the target LSN
 void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
 
-// Check that the clusters are still present and correctly configured during the backup
+// Check that the cluster is alive and correctly configured during the backup
 void dbPing(Db *const this, bool force);
 
 // Epoch time on the PostgreSQL host in ms

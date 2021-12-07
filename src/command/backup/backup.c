@@ -1358,7 +1358,7 @@ backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
 }
 
 /***********************************************************************************************************************************
-Check that clusters are alive and healthy
+Check that the clusters are alive and correctly configured during the backup
 ***********************************************************************************************************************************/
 static void
 backupDbPing(const BackupData *const backupData, const bool force)
@@ -1766,7 +1766,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 // A keep-alive is required here for the remote holding open the backup connection
                 protocolKeepAlive();
 
-                // Check that clusters are alive and healthy
+                // Check that the clusters are alive and correctly configured during the backup
                 backupDbPing(backupData, false);
 
                 // Save the manifest periodically to preserve checksums for resume
@@ -2124,7 +2124,7 @@ cmdBackup(void)
         // Process the backup manifest
         backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
 
-        // Check that clusters are alive and healthy
+        // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
 
         // The standby db object and protocol won't be used anymore so free them
