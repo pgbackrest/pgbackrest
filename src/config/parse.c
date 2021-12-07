@@ -1411,11 +1411,26 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (!option.found)
                     THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
 
-                // If the option requires an argument
-                if (parseRuleOption[option.id].type != cfgOptTypeBoolean && !option.negate && !option.reset)
+                // If the option may have an argument (arguments are optional for boolean options)
+                if (!option.negate && !option.reset)
                 {
+                    // Handle boolean (only y/n allowed as argument)
+                    if (parseRuleOption[option.id].type == cfgOptTypeBoolean)
+                    {
+                        // Validate argument/set negate when argument present
+                        if (optionArg != NULL)
+                        {
+                            if (strEqZ(optionArg, "n"))
+                                option.negate = true;
+                            else if (!strEqZ(optionArg, "y"))
+                            {
+                                THROW_FMT(
+                                    OptionInvalidValueError, "boolean option '--%s' argument must be 'y' or 'n'", strZ(optionName));
+                            }
+                        }
+                    }
                     // If no argument was found with the option then try the next argument
-                    if (optionArg == NULL)
+                    else if (optionArg == NULL)
                     {
                         // Error if there are no more arguments in the list
                         if (argListIdx == argListSize - 1)

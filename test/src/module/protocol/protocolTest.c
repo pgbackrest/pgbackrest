@@ -950,7 +950,7 @@ testRun(void)
                 TEST_RESULT_VOID(protocolServerError(server, 39, STRDEF("very serious error"), STRDEF("stack")), "error put");
 
                 // Wait for exit
-                CHECK(protocolServerCommandGet(server).id == PROTOCOL_COMMAND_EXIT);
+                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "wait for exit");
             }
             HRN_FORK_CHILD_END();
 

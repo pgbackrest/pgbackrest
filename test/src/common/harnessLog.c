@@ -371,7 +371,7 @@ hrnLogReplace(void)
                     int diff = (int)strSize(replace) - (int)strSize(match);
 
                     // Make sure we won't overflow the buffer
-                    CHECK((size_t)((int)strlen(harnessLogBuffer) + diff) < sizeof(harnessLogBuffer) - 1);
+                    ASSERT((size_t)((int)strlen(harnessLogBuffer) + diff) < sizeof(harnessLogBuffer) - 1);
 
                     // Move data from end of string enough to make room for the replacement and copy replacement
                     memmove(end + diff, end, strlen(end) + 1);

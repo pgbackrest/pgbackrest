@@ -149,7 +149,7 @@ testRun(void)
         TEST_TITLE_FMT("list %d million files", TEST_SCALE);
 
         // One million files represents a fairly large cluster
-        CHECK(TEST_SCALE <= 2000);
+        ASSERT(TEST_SCALE <= 2000);
         uint64_t fileTotal = (uint64_t)1000000 * TEST_SCALE;
 
         HRN_FORK_BEGIN(.timeout = 60000)
@@ -225,7 +225,7 @@ testRun(void)
         ioBufferSizeSet(4 * 1024 * 1024);
 
         // 1MB is a fairly normal table size
-        CHECK(TEST_SCALE <= 1024 * 1024 * 1024);
+        ASSERT(TEST_SCALE <= 1024 * 1024 * 1024);
         uint64_t blockTotal = (uint64_t)1 * TEST_SCALE;
 
         // Set iteration

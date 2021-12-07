@@ -47,6 +47,29 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1581"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add timeline and checkpoint checks to backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1571"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow y/n arguments for boolean command-line options.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Match backup log size with size reported by info command.">
                             <github-issue id="766"/>
                             <github-pull-request id="1562"/>
@@ -55,6 +78,10 @@
                         <commit subject="Include backup_label and tablespace_map file sizes in log output.">
                             <github-pull-request id="1568"/>
                         </commit>
+                        <commit subject="Use infoBackupDataByLabel() to log backup size.">
+                            <github-pull-request id="1573"/>
+                        </commit>
+                        <commit subject="Revert changes to backupFilePut() made in 1e77fc3d."/>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="mahomed.hussein"/>
@@ -69,10 +96,14 @@
                 <release-development-list>
                     <release-item>
                         <commit subject="Rename server-start command to server."/>
+                        <commit subject="Add SIGTERM and SIGHUP handling to TLS server.">
+                            <github-pull-request id="1572"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="reid.thompson"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
                             <release-item-reviewer id="andrew.lecuyer"/>
                         </release-item-contributor-list>

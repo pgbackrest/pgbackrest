@@ -203,7 +203,7 @@ testRun(void)
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
-        CHECK(lstSize(list) == (unsigned int)testMax);
+        ASSERT(lstSize(list) == (unsigned int)testMax);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("search ascending sort");
@@ -211,7 +211,7 @@ testRun(void)
         lstSort(list, sortOrderAsc);
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("search descending sort");
@@ -219,7 +219,7 @@ testRun(void)
         lstSort(list, sortOrderDesc);
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

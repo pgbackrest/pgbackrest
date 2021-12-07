@@ -155,7 +155,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstFind()"))
     {
-        CHECK(TEST_SCALE <= 10000);
+        ASSERT(TEST_SCALE <= 10000);
         int testMax = 100000 * (int)TEST_SCALE;
 
         // Generate a large list of values (use int instead of string so there fewer allocations)
@@ -164,7 +164,7 @@ testRun(void)
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
-        CHECK(lstSize(list) == (unsigned int)testMax);
+        ASSERT(lstSize(list) == (unsigned int)testMax);
 
         TEST_LOG_FMT("generated %d item list", testMax);
 
@@ -174,7 +174,7 @@ testRun(void)
         TimeMSec timeBegin = timeMSec();
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
 
         TEST_LOG_FMT("asc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
 
@@ -184,7 +184,7 @@ testRun(void)
         timeBegin = timeMSec();
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
 
         TEST_LOG_FMT("desc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
     }
@@ -192,7 +192,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstRemoveIdx()"))
     {
-        CHECK(TEST_SCALE <= 10000);
+        ASSERT(TEST_SCALE <= 10000);
         int testMax = 1000000 * (int)TEST_SCALE;
 
         // Generate a large list of values (use int instead of string so there fewer allocations)
@@ -201,7 +201,7 @@ testRun(void)
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
-        CHECK(lstSize(list) == (unsigned int)testMax);
+        ASSERT(lstSize(list) == (unsigned int)testMax);
 
         TEST_LOG_FMT("generated %d item list", testMax);
 
@@ -213,13 +213,13 @@ testRun(void)
 
         TEST_LOG_FMT("remove completed in %ums", (unsigned int)(timeMSec() - timeBegin));
 
-        CHECK(lstEmpty(list));
+        ASSERT(lstEmpty(list));
     }
 
     // *****************************************************************************************************************************
     if (testBegin("iniLoad()"))
     {
-        CHECK(TEST_SCALE <= 10000);
+        ASSERT(TEST_SCALE <= 10000);
 
         String *iniStr = strCatZ(strNew(), "[section1]\n");
         unsigned int iniMax = 100000 * (unsigned int)TEST_SCALE;
@@ -242,7 +242,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("manifestNewBuild()/manifestNewLoad()/manifestSave()"))
     {
-        CHECK(TEST_SCALE <= 1000000);
+        ASSERT(TEST_SCALE <= 1000000);
 
         // Create a storage driver to test manifest build with an arbitrary number of files
         StorageTestManifestNewBuild driver =
@@ -314,7 +314,7 @@ testRun(void)
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFile *file = manifestFile(manifest, fileIdx);
-            CHECK(file == manifestFileFind(manifest, file->name));
+            ASSERT(file == manifestFileFind(manifest, file->name));
         }
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
@@ -324,7 +324,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("statistics collector"))
     {
-        CHECK(TEST_SCALE <= 1000000);
+        ASSERT(TEST_SCALE <= 1000000);
 
         // Setup a list of stats to use for testing
         #define TEST_STAT_TOTAL 100

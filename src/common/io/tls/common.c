@@ -60,10 +60,10 @@ tlsCertCommonName(X509 *const certificate)                                      
     FUNCTION_TEST_END();                                                                                            // {vm_covered}
 
     X509_NAME *const subjectName = X509_get_subject_name(certificate);                                              // {vm_covered}
-    CHECK(subjectName != NULL);                                                                                     // {vm_covered}
+    CHECK(FormatError, subjectName != NULL, "subject name is missing");                                             // {vm_covered}
 
     const int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);                        // {vm_covered}
-    CHECK(commonNameIndex >= 0);                                                                                    // {vm_covered}
+    CHECK(FormatError, commonNameIndex >= 0, "common name is missing");                                             // {vm_covered}
 
     String *result = tlsAsn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex)));     // {vm_covered}
 
@@ -78,7 +78,7 @@ tlsCertCommonName(X509 *const certificate)                                      
 static int
 tlsCertPwd(char *buffer, const int size, const int rwFlag, void *const userData)
 {
-    CHECK(size > 0);
+    CHECK(ServiceError, size > 0, "buffer has zero size");
     (void)rwFlag; (void)userData;
 
     // No password is currently supplied

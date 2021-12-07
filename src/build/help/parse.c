@@ -154,7 +154,7 @@ bldHlpValidate(const BldHlp bldHlp, const BldCfg bldCfg)
             {
                 const BldCfgOptionCommand *const optCmd = lstGet(opt->cmdList, optCmdListIdx);
                 const BldHlpCommand *const cmdHlp = lstFind(bldHlp.cmdList, &optCmd->name);
-                CHECK(cmdHlp != NULL);
+                CHECK(AssertError, cmdHlp != NULL, "command help is NULL");
 
                 // Only options with a command role of main require help
                 if (!strLstExists(optCmd->roleList, CMD_ROLE_MAIN_STR))

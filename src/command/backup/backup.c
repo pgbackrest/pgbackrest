@@ -151,6 +151,7 @@ typedef struct BackupData
     const InfoArchive *archiveInfo;                                 // Archive info
     const String *archiveId;                                        // Archive where backup WAL will be stored
 
+    unsigned int timeline;                                          // Primary timeline
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
 } BackupData;
@@ -189,6 +190,8 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Get database info when online
+    PgControl pgControl = {0};
+
     if (cfgOptionBool(cfgOptOnline))
     {
         bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
@@ -206,15 +209,19 @@ backupInit(const InfoBackup *infoBackup)
             result->storageStandby = storagePgIdx(result->pgIdxStandby);
             result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
+
+        // Get pg_control info from the primary
+        pgControl = dbPgControl(result->dbPrimary);
     }
+    // Else get pg_control info directly from the file
+    else
+        pgControl = pgControlFromFile(storagePgIdx(result->pgIdxPrimary));
 
     // Add primary info
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
     result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
 
-    // Get pg_control info from the primary
-    PgControl pgControl = pgControlFromFile(result->storagePrimary);
-
+    result->timeline = pgControl.timeline;
     result->version = pgControl.version;
     result->walSegmentSize = pgControl.walSegmentSize;
 
@@ -393,9 +400,11 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 
                     // There's a small chance that the prior manifest is old enough that backupOptionCompressLevel was not recorded.
                     // There's an even smaller chance that the user will also alter compression-type in this scenario right after
-                    // upgrading to a newer version. Because we judge this combination of events to be nearly impossible just assert
+                    // upgrading to a newer version. Because we judge this combination of events to be nearly impossible just check
                     // here so no test coverage is needed.
-                    CHECK(manifestPriorData->backupOptionCompressLevel != NULL);
+                    CHECK(
+                        FormatError, manifestPriorData->backupOptionCompressLevel != NULL,
+                        "compress-level missing in prior manifest");
 
                     // Set the compression level back to whatever was in the prior backup
                     cfgOptionSet(
@@ -881,7 +890,7 @@ backupStart(BackupData *backupData)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
-                dbReplayWait(backupData->dbStandby, result.lsn, cfgOptionUInt64(cfgOptArchiveTimeout));
+                dbReplayWait(backupData->dbStandby, result.lsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
                 LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
 
                 // The standby db object won't be used anymore so free it
@@ -916,7 +925,7 @@ backupStart(BackupData *backupData)
 Stop the backup
 ***********************************************************************************************************************************/
 // Helper to write a file from a string to the repository and update the manifest
-static uint64_t
+static void
 backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, time_t timestamp, const String *content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -927,13 +936,9 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         FUNCTION_LOG_PARAM(STRING, content);
     FUNCTION_LOG_END();
 
-    uint64_t fileSize = 0;
-
     // Skip files with no content
     if (content != NULL)
     {
-        fileSize = strSize(content);
-
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Create file
@@ -996,7 +1001,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN(UINT64, fileSize);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /*--------------------------------------------------------------------------------------------------------------------------------*/
@@ -1008,7 +1013,7 @@ typedef struct BackupStopResult
 } BackupStopResult;
 
 static BackupStopResult
-backupStop(BackupData *backupData, Manifest *manifest, uint64_t *backupSizeTotal)
+backupStop(BackupData *backupData, Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -1039,10 +1044,8 @@ backupStop(BackupData *backupData, Manifest *manifest, uint64_t *backupSizeTotal
             LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Save files returned by stop backup
-            *backupSizeTotal += backupFilePut(
-                backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
-            *backupSizeTotal += backupFilePut(
-                backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
+            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -1136,7 +1139,7 @@ backupJobResultPageChecksum(PackRead *const checksumPageResult)
         }
 
         // Check that the array was not empty
-        CHECK(first);
+        CHECK(FormatError, first, "page checksum result array is empty");
 
         // Output last page or page range
         backupJobResultPageChecksumOut(result, pageBegin, pageEnd);
@@ -1153,7 +1156,7 @@ Log the results of a job and throw errors
 static void
 backupJobResult(
     Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t *sizeProgress, uint64_t *sizeCopied)
+    const uint64_t sizeTotal, uint64_t *sizeProgress)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1163,7 +1166,6 @@ backupJobResult(
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
-        FUNCTION_LOG_PARAM_P(UINT64, sizeCopied);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1207,9 +1209,6 @@ backupJobResult(
             // Else if the repo matched the expect checksum, just log it
             else if (copyResult == backupCopyResultChecksum)
             {
-                // Increment size to account for checksum resumed file
-                *sizeCopied += copySize;
-
                 LOG_DETAIL_PID_FMT(
                     processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
             }
@@ -1224,9 +1223,6 @@ backupJobResult(
             // Else file was copied so update manifest
             else
             {
-                // Increment size of files copied
-                *sizeCopied += copySize;
-
                 // If the file had to be recopied then warn that there may be an issue with corruption in the repository
                 // ??? This should really be below the message below for more context -- can be moved after the migration
                 // ??? The name should be a pg path not manifest name -- can be fixed after the migration
@@ -1269,8 +1265,8 @@ backupJobResult(
                         else
                         {
                             // Format the page checksum errors
-                            CHECK(checksumPageErrorList != NULL);
-                            CHECK(!varLstEmpty(checksumPageErrorList));
+                            CHECK(FormatError, checksumPageErrorList != NULL, "page checksum error list is missing");
+                            CHECK(FormatError, !varLstEmpty(checksumPageErrorList), "page checksum error list is empty");
 
                             String *error = strNew();
                             unsigned int errorTotalMin = 0;
@@ -1466,8 +1462,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
                 do
                 {
-                    // A target should always be found
-                    CHECK(targetIdx < strLstSize(targetList));
+                    CHECK(AssertError, targetIdx < strLstSize(targetList), "backup target not found");
 
                     if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
                         break;
@@ -1626,7 +1621,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
     FUNCTION_TEST_RETURN(result);
 }
 
-static uint64_t
+static void
 backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart, const String *cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1639,7 +1634,6 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     ASSERT(manifest != NULL);
 
     uint64_t sizeTotal = 0;
-    uint64_t sizeCopied = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1747,8 +1741,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
-                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
-                        fileRemove, job, sizeTotal, &sizeProgress, &sizeCopied);
+                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)), fileRemove, job,
+                            sizeTotal, &sizeProgress);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
@@ -1826,7 +1820,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(UINT64, sizeCopied);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -1850,13 +1844,13 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            unsigned int timeline = cvtZToUIntBase(strZ(strSubN(manifestData(manifest)->archiveStart, 0, 8)), 16);
             uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
             uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 
             LOG_INFO_FMT(
-                "check archive for segment(s) %s:%s", strZ(pgLsnToWalSegment(timeline, lsnStart, backupData->walSegmentSize)),
-                strZ(pgLsnToWalSegment(timeline, lsnStop, backupData->walSegmentSize)));
+                "check archive for segment(s) %s:%s",
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStart, backupData->walSegmentSize)),
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStop, backupData->walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
             backupManifestSaveCopy(manifest, cipherPassBackup);
@@ -1866,7 +1860,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
             // Loop through all the segments in the lsn range
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-                manifestData(manifest)->pgVersion, timeline, lsnStart, lsnStop, backupData->walSegmentSize);
+                manifestData(manifest)->pgVersion, backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {
@@ -2107,10 +2101,10 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherPassBackup);
 
         // Process the backup manifest
-        uint64_t backupSizeTotal = backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
+        backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
 
         // Stop the backup
-        BackupStopResult backupStopResult = backupStop(backupData, manifest, &backupSizeTotal);
+        BackupStopResult backupStopResult = backupStop(backupData, manifest);
 
         // Complete manifest
         manifestBuildComplete(
@@ -2139,7 +2133,8 @@ cmdBackup(void)
         // Backup info
         LOG_INFO_FMT(
             "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
-            strZ(strSizeFormat(backupSizeTotal)), manifestFileTotal(manifest));
+            strZ(strSizeFormat(infoBackupDataByLabel(infoBackup,  manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
+            manifestFileTotal(manifest));
     }
     MEM_CONTEXT_TEMP_END();
 

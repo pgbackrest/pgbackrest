@@ -105,6 +105,9 @@ typedef struct PgControl
     uint64_t systemId;
     unsigned int catalogVersion;
 
+    uint64_t checkpoint;                                            // Last checkpoint LSN
+    uint32_t timeline;                                              // Current timeline
+
     unsigned int pageSize;
     unsigned int walSegmentSize;
 
@@ -148,6 +151,9 @@ String *pgLsnToStr(uint64_t lsn);
 // Convert a timeline and lsn to a wal segment and vice versa
 String *pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize);
 uint64_t pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize);
+
+// Get timeline from WAL segment name
+uint32_t pgTimelineFromWalSegment(const String *walSegment);
 
 // Convert a timeline and lsn range to a list of wal segments
 StringList *pgLsnRangeToWalSegmentList(

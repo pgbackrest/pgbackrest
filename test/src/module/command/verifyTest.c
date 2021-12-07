@@ -37,14 +37,14 @@ testRun(void)
         "db-catalog-version=201409291\n"                                                                                           \
         "db-control-version=942\n"                                                                                                 \
         "db-id=1\n"                                                                                                                \
-        "db-system-id=6625592122879095702\n"                                                                                       \
+        "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"                                                                                  \
         "db-version=\"9.4\"\n"
 
     #define TEST_BACKUP_DB2_11                                                                                                     \
         "db-catalog-version=201707211\n"                                                                                           \
         "db-control-version=1100\n"                                                                                                \
         "db-id=2\n"                                                                                                                \
-        "db-system-id=6626363367545678089\n"                                                                                       \
+        "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"                                                                                  \
         "db-version=\"11\"\n"
 
     #define TEST_BACKUP_DB1_CURRENT_FULL1                                                                                          \
@@ -77,11 +77,11 @@ testRun(void)
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
 
     #define TEST_BACKUP_DB1_HISTORY                                                                                                \
-        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"                     \
+        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":" HRN_PG_SYSTEMID_94_Z ","                \
             "\"db-version\":\"9.4\"}"
 
     #define TEST_BACKUP_DB2_HISTORY                                                                                                \
-        "2={\"db-catalog-version\":201707211,\"db-control-version\":1100,\"db-system-id\":6626363367545678089,"                    \
+        "2={\"db-catalog-version\":201707211,\"db-control-version\":1100,\"db-system-id\":" HRN_PG_SYSTEMID_11_Z ","               \
             "\"db-version\":\"11\"}"
 
     #define TEST_BACKUP_INFO_MULTI_HISTORY_BASE                                                                                    \
@@ -101,21 +101,21 @@ testRun(void)
     #define TEST_ARCHIVE_INFO_BASE                                                                                                 \
         "[db]\n"                                                                                                                   \
         "db-id=1\n"                                                                                                                \
-        "db-system-id=6625592122879095702\n"                                                                                       \
+        "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"                                                                                  \
         "db-version=\"9.4\"\n"                                                                                                     \
         "\n"                                                                                                                       \
         "[db:history]\n"                                                                                                           \
-        "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}"
+        "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}"
 
     #define TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE                                                                                   \
         "[db]\n"                                                                                                                   \
         "db-id=2\n"                                                                                                                \
-        "db-system-id=6626363367545678089\n"                                                                                       \
+        "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"                                                                                  \
         "db-version=\"11\"\n"                                                                                                      \
         "\n"                                                                                                                       \
         "[db:history]\n"                                                                                                           \
-        "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"                                                               \
-        "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}"
+        "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n"                                                          \
+        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"
 
     #define TEST_MANIFEST_HEADER                                                                                                   \
         "[backup]\n"                                                                                                               \
@@ -131,7 +131,7 @@ testRun(void)
         "db-catalog-version=201204301\n"                                                                                           \
         "db-control-version=922\n"                                                                                                 \
         "db-id=1\n"                                                                                                                \
-        "db-system-id=6625592122879095702\n"                                                                                       \
+        "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"                                                                                  \
         "db-version=\"9.2\"\n"
 
     #define TEST_MANIFEST_DB_94                                                                                                    \
@@ -140,7 +140,7 @@ testRun(void)
         "db-catalog-version=201409291\n"                                                                                           \
         "db-control-version=942\n"                                                                                                 \
         "db-id=1\n"                                                                                                                \
-        "db-system-id=6625592122879095702\n"                                                                                       \
+        "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"                                                                                  \
         "db-version=\"9.4\"\n"
 
     #define TEST_MANIFEST_OPTION_ALL                                                                                               \
@@ -257,7 +257,7 @@ testRun(void)
             "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy'"
                 " for read\n"
             "P00  ERROR: [028]: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.2, system-id "
-                "6625592122879095702) is not in the backup.info history, skipping");
+                HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun test with db-system-id invalid and no main");
@@ -305,7 +305,7 @@ testRun(void)
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
             "db-id=0\n"
-            "db-system-id=6625592122879095702\n"
+            "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"
             "db-version=\"9.4\"\n"
             TEST_MANIFEST_OPTION_ALL
             TEST_MANIFEST_TARGET
@@ -326,7 +326,7 @@ testRun(void)
             "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00   WARN: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
             "P00  ERROR: [028]: '20181119-152138F' may not be recoverable - PG data (id 0, version 9.4, system-id "
-                "6625592122879095702) is not in the backup.info history, skipping");
+                HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing main manifest, errored copy");
@@ -567,11 +567,11 @@ testRun(void)
             archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
+                "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
                 "db-version=\"11\"\n"
                 "\n"
                 "[db:history]\n"
-                "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}"))), "archive.info missing history");
+                "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))), "archive.info missing history");
 
         TEST_ERROR(
             verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
@@ -584,12 +584,12 @@ testRun(void)
             archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
+                "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
                 "db-version=\"11\"\n"
                 "\n"
                 "[db:history]\n"
                 "1={\"db-id\":6625592122879095777,\"db-version\":\"9.4\"}\n"
-                "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}"))), "archive.info history system id mismatch");
+                "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))), "archive.info history system id mismatch");
 
         TEST_ERROR(
             verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
@@ -602,12 +602,12 @@ testRun(void)
             archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
+                "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
                 "db-version=\"11\"\n"
                 "\n"
                 "[db:history]\n"
-                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.5\"}\n"
-                "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}"))), "archive.info history version mismatch");
+                "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.5\"}\n"
+                "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))), "archive.info history version mismatch");
 
         TEST_ERROR(
             verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
@@ -620,12 +620,12 @@ testRun(void)
             archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
                 "[db]\n"
                 "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
+                "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
                 "db-version=\"11\"\n"
                 "\n"
                 "[db:history]\n"
-                "3={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-                "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}"))), "archive.info history id mismatch");
+                "3={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n"
+                "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))), "archive.info history id mismatch");
 
         TEST_ERROR(
             verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
@@ -804,8 +804,8 @@ testRun(void)
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:ARCHIVE>/archive.info\n"
             "P00  ERROR: [029]: backup info file and archive info file do not match\n"
-            "            archive: id = 1, version = 9.4, system-id = 6625592122879095702\n"
-            "            backup : id = 2, version = 11, system-id = 6626363367545678089\n"
+            "            archive: id = 1, version = 9.4, system-id = " HRN_PG_SYSTEMID_94_Z "\n"
+            "            backup : id = 2, version = 11, system-id = " HRN_PG_SYSTEMID_11_Z "\n"
             "            HINT: this may be a symptom of repository corruption!");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -926,8 +926,7 @@ testRun(void)
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        hrnPgWalToBuffer(
-            (PgWal){.version = PG_VERSION_11, .systemId = 6626363367545678089, .size = 1024 * 1024}, walBuffer);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .size = 1024 * 1024}, walBuffer);
         const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
 
         HRN_STORAGE_PUT(
@@ -1419,8 +1418,7 @@ testRun(void)
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        hrnPgWalToBuffer(
-            (PgWal){.version = PG_VERSION_11, .systemId = 6626363367545678089, .size = 1024 * 1024}, walBuffer);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .size = 1024 * 1024}, walBuffer);
         const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
 
         HRN_STORAGE_PUT(

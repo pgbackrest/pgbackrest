@@ -394,7 +394,7 @@ restoreManifestValidate(Manifest *manifest, const String *backupSet)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If there are no files in the manifest then something has gone horribly wrong
-        CHECK(manifestFileTotal(manifest) > 0);
+        CHECK(FormatError, manifestFileTotal(manifest) > 0, "manifest missing files");
 
         // Sanity check to ensure the manifest has not been moved to a new directory
         const ManifestData *data = manifestData(manifest);
@@ -554,7 +554,7 @@ restoreManifestMap(Manifest *manifest)
                     const ManifestPath *const path = manifestPathFindDefault(manifest, manifestName, NULL);
                     const ManifestFile *const file = manifestFileFindDefault(manifest, manifestName, NULL);
 
-                    CHECK(path == NULL || file == NULL);
+                    CHECK(FormatError, path == NULL || file == NULL, "link may not be both file and path");
 
                     target = (ManifestTarget){.name = manifestName, .path = linkPath, .type = manifestTargetTypeLink};
 
@@ -590,7 +590,7 @@ restoreManifestMap(Manifest *manifest)
                     target.path = linkPath;
 
                 // The target must be a link since pg_data/ was prepended and pgdata is the only allowed path
-                CHECK(target.type == manifestTargetTypeLink);
+                CHECK(FormatError, target.type == manifestTargetTypeLink, "target must be a link");
 
                 // Error if the target is a tablespace
                 if (target.tablespaceId != 0)
@@ -1986,7 +1986,7 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
             do
             {
                 // A target should always be found
-                CHECK(targetIdx < strLstSize(targetList));
+                CHECK(FormatError, targetIdx < strLstSize(targetList), "backup target not found");
 
                 if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
                     break;

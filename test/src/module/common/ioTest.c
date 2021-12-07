@@ -677,8 +677,8 @@ testRun(void)
             THROW_ON_SYS_ERROR((flags = fcntl(fd, F_GETFL)) == -1, ProtocolError, "unable to get flags");
             THROW_ON_SYS_ERROR(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1, ProtocolError, "unable to set O_NONBLOCK");
 
-            // Attempt connection
-            CHECK(connect(fd, hostBadAddress->ai_addr, hostBadAddress->ai_addrlen) == -1);
+            // Make sure the bad address does not work before using it for testing
+            ASSERT(connect(fd, hostBadAddress->ai_addr, hostBadAddress->ai_addrlen) == -1);
 
             // Create file descriptor write and wait for timeout
             IoWrite *write = NULL;
