@@ -236,14 +236,11 @@ restoreBackupSet(void)
             repoIdxMax = repoIdxMin;
         }
 
-        // Initialize a backup candidate list
-        List *backupCandidateList = lstNewP(sizeof(RestoreBackupData));
-
+        // If the set option was not provided by the user but a time to recover was set, then we will need to search for a backup
+        // set that satisfies the time condition, else we will use the backup provided
         const String *backupSetRequested = NULL;
         time_t timeTargetEpoch = 0;
 
-        // If the set option was not provided by the user but a time to recover was set, then we will need to search for a backup
-        // set that satisfies the time condition, else we will use the backup provided
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
             if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_TIME)
@@ -314,18 +311,9 @@ restoreBackupSet(void)
                         }
                     }
 
-                    // If a backup was found on this repo matching the criteria for time then exit, else determine if the latest
-                    // backup from this repo might be used
+                    // If a backup was found on this repo matching the criteria for time then exit
                     if (found)
                         break;
-                    else
-                    {
-                        // If a backup was not yet found then set the latest from this repo as the backup that might be used
-                        RestoreBackupData candidate = restoreBackupData(
-                            latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
-
-                        lstAdd(backupCandidateList, &candidate);
-                    }
                 }
                 else
                 {
@@ -357,7 +345,7 @@ restoreBackupSet(void)
         {
             if (backupSetRequested != NULL)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
-            else if (timeTargetEpoch != 0 && lstSize(backupCandidateList) > 0)
+            else if (timeTargetEpoch != 0)
             {
                 THROW_FMT(
                     BackupSetInvalidError, "unable to find backup set with stop time less than '%s'",

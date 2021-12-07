@@ -610,7 +610,9 @@ testRun(void)
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
         HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
 
-        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
+        TEST_ERROR(
+            restoreBackupSet(), BackupSetInvalidError,
+            "unable to find backup set with stop time less than '2016-12-19 16:27:30-0500'");
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore\n"
             "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
