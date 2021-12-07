@@ -2137,9 +2137,6 @@ cmdBackup(void)
         // Stop the backup
         BackupStopResult backupStopResult = backupStop(backupData, manifest);
 
-        // The primary db object won't be used anymore so free it
-        dbFree(backupData->dbPrimary);
-
         // Complete manifest
         manifestBuildComplete(
             manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, backupStopResult.timestamp,
@@ -2148,6 +2145,9 @@ cmdBackup(void)
             !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
             cfgOptionUInt(cfgOptBufferSize), cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork),
             cfgOptionBool(cfgOptRepoHardlink), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
+
+        // The primary db object won't be used anymore so free it
+        dbFree(backupData->dbPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
         backupArchiveCheckCopy(backupData, manifest, cipherPassBackup);
