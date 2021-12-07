@@ -73,6 +73,8 @@ Read the version specific pg_control into a general data structure
         {                                                                                                                          \
             .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
             .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
+            .checkpoint = ((ControlFileData *)controlFile)->checkPoint,                                                            \
+            .timeline = ((ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                           \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
             .pageChecksum = ((ControlFileData *)controlFile)->data_checksum_version != 0,                                          \
@@ -92,6 +94,10 @@ Read the version specific pg_control into a general data structure
         {                                                                                                                          \
             .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
             .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
+            .checkpoint =                                                                                                          \
+                (uint64_t)((ControlFileData *)controlFile)->checkPoint.xlogid << 32 |                                              \
+                ((ControlFileData *)controlFile)->checkPoint.xrecoff,                                                              \
+            .timeline = ((ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                           \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
         };                                                                                                                         \

@@ -238,6 +238,8 @@ hrnPgControlToBuffer(PgControl pgControl)
     pgControl.catalogVersion = pgControl.catalogVersion == 0 ?
         hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;
     pgControl.systemId = pgControl.systemId < 100 ? hrnPgSystemId(pgControl.version) + pgControl.systemId : pgControl.systemId;
+    pgControl.checkpoint = pgControl.checkpoint == 0 ? 1 : pgControl.checkpoint;
+    pgControl.timeline = pgControl.timeline == 0 ? 1 : pgControl.timeline;
 
     // Create the buffer and clear it
     Buffer *result = bufNew(HRN_PG_CONTROL_SIZE);

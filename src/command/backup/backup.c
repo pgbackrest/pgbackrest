@@ -151,6 +151,7 @@ typedef struct BackupData
     const InfoArchive *archiveInfo;                                 // Archive info
     const String *archiveId;                                        // Archive where backup WAL will be stored
 
+    unsigned int timeline;                                          // Primary timeline
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
 } BackupData;
@@ -189,6 +190,8 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Get database info when online
+    PgControl pgControl = {0};
+
     if (cfgOptionBool(cfgOptOnline))
     {
         bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
@@ -206,15 +209,19 @@ backupInit(const InfoBackup *infoBackup)
             result->storageStandby = storagePgIdx(result->pgIdxStandby);
             result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
+
+        // Get pg_control info from the primary
+        pgControl = dbPgControl(result->dbPrimary);
     }
+    // Else get pg_control info directly from the file
+    else
+        pgControl = pgControlFromFile(storagePgIdx(result->pgIdxPrimary));
 
     // Add primary info
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
     result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
 
-    // Get pg_control info from the primary
-    PgControl pgControl = pgControlFromFile(result->storagePrimary);
-
+    result->timeline = pgControl.timeline;
     result->version = pgControl.version;
     result->walSegmentSize = pgControl.walSegmentSize;
 
@@ -883,7 +890,7 @@ backupStart(BackupData *backupData)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
-                dbReplayWait(backupData->dbStandby, result.lsn, cfgOptionUInt64(cfgOptArchiveTimeout));
+                dbReplayWait(backupData->dbStandby, result.lsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
                 LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
 
                 // The standby db object won't be used anymore so free it
@@ -1837,13 +1844,13 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            unsigned int timeline = cvtZToUIntBase(strZ(strSubN(manifestData(manifest)->archiveStart, 0, 8)), 16);
             uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
             uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 
             LOG_INFO_FMT(
-                "check archive for segment(s) %s:%s", strZ(pgLsnToWalSegment(timeline, lsnStart, backupData->walSegmentSize)),
-                strZ(pgLsnToWalSegment(timeline, lsnStop, backupData->walSegmentSize)));
+                "check archive for segment(s) %s:%s",
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStart, backupData->walSegmentSize)),
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStop, backupData->walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
             backupManifestSaveCopy(manifest, cipherPassBackup);
@@ -1853,7 +1860,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
             // Loop through all the segments in the lsn range
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-                manifestData(manifest)->pgVersion, timeline, lsnStart, lsnStop, backupData->walSegmentSize);
+                manifestData(manifest)->pgVersion, backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {
