@@ -28,6 +28,7 @@ struct Db
     PgClient *client;                                               // Local PostgreSQL client
     ProtocolClient *remoteClient;                                   // Protocol client for remote db queries
     unsigned int remoteIdx;                                         // Index provided by the remote on open for subsequent calls
+    const Storage *storage;                                         // PostgreSQL storage
     const String *applicationName;                                  // Used to identify this connection in PostgreSQL
 };
 
@@ -55,15 +56,17 @@ dbFreeResource(THIS_VOID)
 
 /**********************************************************************************************************************************/
 Db *
-dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationName)
+dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const storage, const String *applicationName)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, client);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, remoteClient);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, applicationName);
     FUNCTION_LOG_END();
 
     ASSERT((client != NULL && remoteClient == NULL) || (client == NULL && remoteClient != NULL));
+    ASSERT(storage != NULL);
     ASSERT(applicationName != NULL);
 
     Db *this = NULL;
@@ -79,6 +82,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationN
                 .memContext = memContextCurrent(),
             },
             .remoteClient = remoteClient,
+            .storage = storage,
             .applicationName = strDup(applicationName),
         };
 
@@ -137,7 +141,7 @@ dbExec(Db *this, const String *command)
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    CHECK(dbQuery(this, command) == NULL);
+    CHECK(AssertError, dbQuery(this, command) == NULL, "exec returned data");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -158,8 +162,8 @@ dbQueryColumn(Db *this, const String *query)
 
     VariantList *result = dbQuery(this, query);
 
-    CHECK(varLstSize(result) == 1);
-    CHECK(varLstSize(varVarLst(varLstGet(result, 0))) == 1);
+    CHECK(AssertError, varLstSize(result) == 1, "query must return one column");
+    CHECK(AssertError, varLstSize(varVarLst(varLstGet(result, 0))) == 1, "query must return one row");
 
     FUNCTION_LOG_RETURN(VARIANT, varLstGet(varVarLst(varLstGet(result, 0)), 0));
 }
@@ -180,7 +184,7 @@ dbQueryRow(Db *this, const String *query)
 
     VariantList *result = dbQuery(this, query);
 
-    CHECK(varLstSize(result) == 1);
+    CHECK(AssertError, varLstSize(result) == 1, "query must return one row");
 
     FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(varLstGet(result, 0)));
 }
@@ -260,6 +264,9 @@ dbOpen(Db *this)
         // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
         if (dbPgVersion(this) >= PG_VERSION_PARALLEL_QUERY)
             dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
+
+        // Get control file
+        this->pub.pgControl = pgControlFromFile(this->storage);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -332,8 +339,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         // If stop-auto is enabled check for a running backup
         if (stopAuto)
         {
-            // Feature is not supported in PostgreSQL < 9.3
-            CHECK(dbPgVersion(this) >= PG_VERSION_93);
+            CHECK(AssertError, dbPgVersion(this) >= PG_VERSION_93, "feature not supported in PostgreSQL < " PG_VERSION_93_STR);
 
             // Feature is not needed for PostgreSQL >= 9.6 since backups are run in non-exclusive mode
             if (dbPgVersion(this) < PG_VERSION_96)
@@ -366,6 +372,18 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         // Start backup
         VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
 
+        // Make sure the backup start checkpoint was written to pg_control. This helps ensure that we have a consistent view of the
+        // storage with PostgreSQL.
+        const PgControl pgControl = pgControlFromFile(this->storage);
+        const String *const lsnStart = varStr(varLstGet(row, 0));
+
+        if (pgControl.checkpoint < pgLsnFromStr(lsnStart))
+        {
+            THROW_FMT(
+                DbMismatchError, "current checkpoint '%s' is less than backup start '%s'", strZ(pgLsnToStr(pgControl.checkpoint)),
+                strZ(lsnStart));
+        }
+
         // If archive check then make sure WAL segment was switched on start backup
         const String *const walSegmentName = varStr(varLstGet(row, 1));
 
@@ -381,10 +399,18 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
                 walSegmentCheck = NULL;
         }
 
+        // Check that the WAL timeline matches what is in pg_control
+        if (pgTimelineFromWalSegment(walSegmentName) != dbPgControl(this).timeline)
+        {
+            THROW_FMT(
+                DbMismatchError, "WAL timeline %u does not match " PG_FILE_PGCONTROL " timeline %u",
+                pgTimelineFromWalSegment(walSegmentName), dbPgControl(this).timeline);
+        }
+
         // Return results
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result.lsn = strDup(varStr(varLstGet(row, 0)));
+            result.lsn = strDup(lsnStart);
             result.walSegmentName = strDup(walSegmentName);
             result.walSegmentCheck = strDup(walSegmentCheck);
         }
@@ -519,20 +545,35 @@ dbList(Db *this)
 
 /**********************************************************************************************************************************/
 void
-dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout)
+dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targetTimeline, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
         FUNCTION_LOG_PARAM(STRING, targetLsn);
+        FUNCTION_LOG_PARAM(UINT, targetTimeline);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(targetLsn != NULL);
+    ASSERT(targetTimeline != 0);
     ASSERT(timeout > 0);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Check that the timeline matches the primary
+        if (dbPgControl(this).timeline != targetTimeline)
+            THROW_FMT(DbMismatchError, "standby is on timeline %u but expected %u", dbPgControl(this).timeline, targetTimeline);
+
+        // Standby checkpoint before the backup started must be <= the target LSN. If not, it indicates that the standby was ahead
+        // of the primary and cannot be following it.
+        if (dbPgControl(this).checkpoint > pgLsnFromStr(targetLsn))
+        {
+            THROW_FMT(
+                DbMismatchError, "standby checkpoint '%s' is ahead of target '%s'", strZ(pgLsnToStr(dbPgControl(this).checkpoint)),
+                strZ(targetLsn));
+        }
+
         // Loop until lsn has been reached or timeout
         Wait *wait = waitNew(timeout);
         bool targetReached = false;

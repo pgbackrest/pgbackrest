@@ -50,10 +50,10 @@ pgValidate(void)
             DbGetResult dbObject = dbGet(false, true, false);
 
             // Get the pgControl information from the pg*-path deemed to be the primary
-            result = pgControlFromFile(storagePgIdx(dbObject.primaryIdx));
+            result = dbPgControl(dbObject.primary);
 
             // Check the user configured path and version against the database
-            checkDbConfig(result.version, dbObject.primaryIdx, dbObject.primary, false);
+            checkDbConfig(dbPgControl(dbObject.primary).version, dbObject.primaryIdx, dbObject.primary, false);
         }
         // If the database is not online, assume that pg1 is the primary
         else

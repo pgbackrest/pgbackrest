@@ -998,8 +998,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 // Else it must be a file or special (since we have already checked if it is a link)
                 else
                 {
-                    // Tablespace links should never be to a file
-                    CHECK(target.tablespaceId == 0);
+                    CHECK(FormatError, target.tablespaceId == 0, "tablespace links to a file");
 
                     // Identify target as a file
                     target.path = strPath(info->linkDestination);
@@ -1548,7 +1547,7 @@ manifestOwnerGet(const Variant *owner)
     // If bool then it should be false.  This indicates that the owner could not be mapped to a name during the backup.
     if (varType(owner) == varTypeBool)
     {
-        CHECK(!varBool(owner));
+        CHECK(FormatError, !varBool(owner), "owner bool must be false");
         FUNCTION_TEST_RETURN(NULL);
     }
 
@@ -1569,7 +1568,7 @@ manifestOwnerDefaultGet(const Variant *ownerDefault)
     if (varType(ownerDefault) == varTypeBool)
     {
         // Value must be false
-        CHECK(!varBool(ownerDefault));
+        CHECK(FormatError, !varBool(ownerDefault), "owner bool must be false");
         FUNCTION_TEST_RETURN(BOOL_FALSE_VAR);
     }
 

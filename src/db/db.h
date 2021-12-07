@@ -9,7 +9,9 @@ expected to be embedded in this object.
 
 #include "common/type/object.h"
 #include "postgres/client.h"
+#include "postgres/interface.h"
 #include "protocol/client.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -19,7 +21,7 @@ typedef struct Db Db;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationName);
+Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *storage, const String *applicationName);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -27,6 +29,7 @@ Getters/Setters
 typedef struct DbPub
 {
     MemContext *memContext;                                         // Mem context
+    PgControl pgControl;                                            // Control info
     const String *archiveMode;                                      // The archive_mode reported by the database
     const String *archiveCommand;                                   // The archive_command reported by the database
     const String *pgDataPath;                                       // Data directory reported by the database
@@ -45,6 +48,13 @@ __attribute__((always_inline)) static inline const String *
 dbArchiveCommand(const Db *const this)
 {
     return THIS_PUB(Db)->archiveCommand;
+}
+
+// Control data
+__attribute__((always_inline)) static inline PgControl
+dbPgControl(const Db *const this)
+{
+    return THIS_PUB(Db)->pgControl;
 }
 
 // Data path loaded from the data_directory GUC
@@ -95,7 +105,7 @@ bool dbIsStandby(Db *this);
 VariantList *dbList(Db *this);
 
 // Waits for replay on the standby to equal the target LSN
-void dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout);
+void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
 
 // Epoch time on the PostgreSQL host in ms
 TimeMSec dbTimeMSec(Db *this);

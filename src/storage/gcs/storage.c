@@ -138,13 +138,13 @@ storageGcsAuthToken(HttpRequest *request, time_t timeBegin)
     {
         // Get token
         result.tokenType = strDup(varStr(kvGet(kvResponse, GCS_JSON_TOKEN_TYPE_VAR)));
-        CHECK(result.tokenType != NULL);
+        CHECK(FormatError, result.tokenType != NULL, "token type missing");
         result.token = strDup(varStr(kvGet(kvResponse, GCS_JSON_ACCESS_TOKEN_VAR)));
-        CHECK(result.token != NULL);
+        CHECK(FormatError, result.token != NULL, "access token missing");
 
         // Get expiration
         const Variant *const expiresIn = kvGet(kvResponse, GCS_JSON_EXPIRES_IN_VAR);
-        CHECK(expiresIn != NULL);
+        CHECK(FormatError, expiresIn != NULL, "expiry missing");
 
         result.timeExpire = timeBegin + (time_t)varInt64Force(expiresIn);
     }
@@ -648,7 +648,7 @@ storageGcsListInternal(
                     for (unsigned int fileIdx = 0; fileIdx < varLstSize(fileList); fileIdx++)
                     {
                         const KeyValue *file = varKv(varLstGet(fileList, fileIdx));
-                        CHECK(file != NULL);
+                        CHECK(FormatError, file != NULL, "file missing");
 
                         // Get file name
                         StorageInfo info =
@@ -658,7 +658,7 @@ storageGcsListInternal(
                             .exists = true,
                         };
 
-                        CHECK(info.name != NULL);
+                        CHECK(FormatError, info.name != NULL, "file name missing");
 
                         // Strip off the base prefix when present
                         if (!strEmpty(basePrefix))
@@ -968,7 +968,7 @@ storageGcsNew(
                 driver->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
                 const String *const uri = varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR));
 
-                CHECK(driver->credential != NULL && driver->privateKey != NULL && uri != NULL);
+                CHECK(FormatError, driver->credential != NULL && driver->privateKey != NULL && uri != NULL, "credentials missing");
 
                 driver->authUrl = httpUrlNewParseP(uri, .type = httpProtocolTypeHttps);
 

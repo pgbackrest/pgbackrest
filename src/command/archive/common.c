@@ -17,6 +17,7 @@ Archive Common
 #include "common/regExp.h"
 #include "common/wait.h"
 #include "config/config.h"
+#include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 #include "storage/helper.h"
@@ -274,7 +275,7 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
     THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
 
     // The first fork should exit with success.  If not, something went wrong during the second fork.
-    CHECK(WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0);
+    CHECK(ExecuteError, WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0, "error on first fork");
 
 #ifdef DEBUG_EXEC_TIME
     // If the process does not exit immediately then something probably went wrong with the double fork.  It's possible that this
@@ -492,7 +493,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        timeline = (uint32_t)strtol(strZ(strSubN(walSegment, 0, 8)), NULL, 16);
+        timeline = pgTimelineFromWalSegment(walSegment);
         major = (uint32_t)strtol(strZ(strSubN(walSegment, 8, 8)), NULL, 16);
         minor = (uint32_t)strtol(strZ(strSubN(walSegment, 16, 8)), NULL, 16);
 

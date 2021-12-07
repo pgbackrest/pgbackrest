@@ -267,8 +267,7 @@ tlsSessionWrite(THIS_VOID, const Buffer *buffer)
 
         result = tlsSessionResult(this, SSL_write(this->session, bufPtrConst(buffer), (int)bufUsed(buffer)), false);
 
-        // Either a retry or all data was written
-        CHECK(result == 0 || (size_t)result == bufUsed(buffer));
+        CHECK(ServiceError, result == 0 || (size_t)result == bufUsed(buffer), "expected retry or complete write");
     }
 
     FUNCTION_LOG_RETURN_VOID();
