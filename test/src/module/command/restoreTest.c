@@ -434,12 +434,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid target time format");
 
-        TEST_RESULT_INT(getEpoch(STRDEF("Tue, 15 Nov 1994 12:45:26")), 0, "invalid date time format");
-        TEST_RESULT_LOG(
-            "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
-            " latest backup set will be used\n"
-            "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
-            " (+/- HH or HHMM or HH:MM) - if timezone is omitted, local time is assumed (for UTC use +00)");
+        TEST_ERROR(
+            getEpoch(STRDEF("Tue, 15 Nov 1994 12:45:26")), FormatError,
+            "automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26'\n"
+            "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM) - if"
+                " timezone is omitted, local time is assumed (for UTC use +00)");
 
         setenv("TZ", "UTC", true);
     }
@@ -551,23 +550,17 @@ testRun(void)
             "\n"
             TEST_RESTORE_BACKUP_INFO_DB);
 
-        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
-        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "default to latest backup set");
-        TEST_RESULT_UINT(backupData.repoIdx, 0, "repo1 chosen because of priority order");
-        TEST_RESULT_LOG(
-            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', repo1: latest backup set"
-            " will be used");
+        TEST_ERROR(
+            restoreBackupSet(), BackupSetInvalidError,
+            "unable to find backup set with stop time less than '2016-12-19 16:27:30-0500'");
 
         // Request repo2 - latest from repo2 will be chosen
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
-        TEST_RESULT_STR_Z(backupData.backupSet, "20201212-201243F", "default to latest backup set");
-        TEST_RESULT_UINT(backupData.repoIdx, 1, "repo2 chosen because repo option set");
-        TEST_RESULT_LOG(
-            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', repo2: latest backup set"
-            " will be used");
+        TEST_ERROR(
+            restoreBackupSet(), BackupSetInvalidError,
+            "unable to find backup set with stop time less than '2016-12-19 16:27:30-0500'");
 
         // Switch paths so newest on repo1
         argList = strLstNew();
@@ -580,12 +573,9 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
-        TEST_RESULT_STR_Z(backupData.backupSet, "20201212-201243F", "default to latest backup set");
-        TEST_RESULT_UINT(backupData.repoIdx, 0, "repo1 chosen because of priority order");
-        TEST_RESULT_LOG(
-            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', repo1: latest backup set"
-            " will be used");
+        TEST_ERROR(
+            restoreBackupSet(), BackupSetInvalidError,
+            "unable to find backup set with stop time less than '2016-12-19 16:27:30-0500'");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");
@@ -597,14 +587,11 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
-        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "time invalid format, default latest");
-        TEST_RESULT_UINT(backupData.repoIdx, 0, "repo1 chosen because of priority order");
-        TEST_RESULT_LOG(
-            "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
-            " latest backup set will be used\n"
-            "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
-            " (+/- HH or HHMM or HH:MM) - if timezone is omitted, local time is assumed (for UTC use +00)");
+        TEST_ERROR(
+            restoreBackupSet(), FormatError,
+            "automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26'\n"
+            "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM) - if"
+                " timezone is omitted, local time is assumed (for UTC use +00)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("target time, multi repo, no candidates found");

@@ -167,10 +167,11 @@ getEpoch(const String *targetTime)
         }
         else
         {
-            LOG_WARN_FMT(
-                "automatic backup set selection cannot be performed with provided time '%s', latest backup set will be used"
-                "\nHINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
-                " - if timezone is omitted, local time is assumed (for UTC use +00)",
+            THROW_FMT(
+                FormatError,
+                "automatic backup set selection cannot be performed with provided time '%s'\n"
+                "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
+                    " - if timezone is omitted, local time is assumed (for UTC use +00)",
                 strZ(targetTime));
         }
     }
@@ -358,15 +359,9 @@ restoreBackupSet(void)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
             else if (timeTargetEpoch != 0 && lstSize(backupCandidateList) > 0)
             {
-                // Since the repos were scanned in priority order, use the first candidate found
-                result = restoreBackupData(
-                    ((RestoreBackupData *)lstGet(backupCandidateList, 0))->backupSet,
-                    ((RestoreBackupData *)lstGet(backupCandidateList, 0))->repoIdx,
-                    ((RestoreBackupData *)lstGet(backupCandidateList, 0))->backupCipherPass);
-
-                LOG_WARN_FMT(
-                    "unable to find backup set with stop time less than '%s', repo%u: latest backup set will be used",
-                    strZ(cfgOptionDisplay(cfgOptTarget)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, result.repoIdx));
+                THROW_FMT(
+                    BackupSetInvalidError, "unable to find backup set with stop time less than '%s'",
+                    strZ(cfgOptionDisplay(cfgOptTarget)));
             }
             else
                 THROW(BackupSetInvalidError, "no backup set found to restore");
