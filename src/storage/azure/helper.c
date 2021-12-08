@@ -25,6 +25,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
     HttpUrl *url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx), .type = httpProtocolTypeHttps);
     const String *endpoint = httpUrlHost(url);
     unsigned int port = httpUrlPort(url);
+
     StorageAzureUriStyle uriStyle = (StorageAzureUriStyle)cfgOptionIdxStrId(cfgOptRepoAzureUriStyle, repoIdx);
 
     // If the host is set then set it as the endpoint. The host option is used to set path-style URIs when working with Azurite.

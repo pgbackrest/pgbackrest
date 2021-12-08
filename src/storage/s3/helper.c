@@ -36,7 +36,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
 
     const String *host = NULL;
 
-    // If the host option was set explicitly then use it and port if appended
+    // If host was specified then use it and port if appended
     if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
     {
         const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
@@ -44,7 +44,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         port = httpUrlPort(url);
     }
 
-    // If the port option was set explicitly then use it in preference to appended ports
+    // If port was specified, overwrite the parsed/default port
     if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
         port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
@@ -76,7 +76,6 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), STR(webIdTokenFileZ))));
     }
 
-LOG_DEBUG_FMT("jrt passed host %s", strZNull(host));
     Storage *const result = storageS3New(
         cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
         cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint, (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
