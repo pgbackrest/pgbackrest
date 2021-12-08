@@ -521,7 +521,7 @@ testRun(void)
         TEST_RESULT_UINT(backupData.repoIdx, 0, "backup set found, repo1");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("target time, multi repo, latest used");
+        TEST_TITLE("target time, multi repo");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");

@@ -315,9 +315,9 @@ restoreBackupSet(void)
                     if (found)
                         break;
                 }
+                // Else use backup set found
                 else
                 {
-                    // If the recovery type was not time (or time provided was not valid), then use the latest backup from this repo
                     result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                     break;
                 }
