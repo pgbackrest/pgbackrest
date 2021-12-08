@@ -72,11 +72,8 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
                 THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
         }
 
-        // Validate the standby database config
-        PgControl pgControl = pgControlFromFile(storagePgIdx(dbGroup.standbyIdx));
-
         // Check the user configured path and version against the database
-        checkDbConfig(pgControl.version, dbGroup.standbyIdx, dbGroup.standby, true);
+        checkDbConfig(dbPgControl(dbGroup.standby).version, dbGroup.standbyIdx, dbGroup.standby, true);
 
         // Check each repository configured
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
@@ -88,8 +85,8 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
-                storageRepo, pgControl.version, pgControl.systemId, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                storageRepo, dbPgControl(dbGroup.standby).version, dbPgControl(dbGroup.standby).systemId,
+                cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
         }
 
         LOG_INFO("switch wal not performed because this is a standby");
@@ -116,11 +113,8 @@ checkPrimary(const DbGetResult dbGroup)
     // If a primary is defined, check the configuration and perform a WAL switch and make sure the WAL is archived
     if (dbGroup.primary != NULL)
     {
-        // Validate the primary database config
-        PgControl pgControl = pgControlFromFile(storagePgIdx(dbGroup.primaryIdx));
-
         // Check the user configured path and version against the database
-        checkDbConfig(pgControl.version, dbGroup.primaryIdx, dbGroup.primary, false);
+        checkDbConfig(dbPgControl(dbGroup.primary).version, dbGroup.primaryIdx, dbGroup.primary, false);
 
         // Check configuration of each repo
         const String **repoArchiveId = memNew(sizeof(String *) * cfgOptionGroupIdxTotal(cfgOptGrpRepo));
@@ -134,8 +128,8 @@ checkPrimary(const DbGetResult dbGroup)
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
-                storageRepo, pgControl.version, pgControl.systemId, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                storageRepo, dbPgControl(dbGroup.primary).version, dbPgControl(dbGroup.primary).systemId,
+                cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
             // Attempt to load the archive info file and retrieve the archiveId
             InfoArchive *archiveInfo = infoArchiveLoadFile(

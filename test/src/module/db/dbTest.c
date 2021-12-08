@@ -4,10 +4,12 @@ Test Database
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/type/json.h"
+#include "storage/remote/protocol.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/harnessLog.h"
+#include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
 
 /***********************************************************************************************************************************
@@ -104,6 +106,7 @@ testRun(void)
                 {
                     PROTOCOL_SERVER_HANDLER_DB_LIST
                     PROTOCOL_SERVER_HANDLER_OPTION_LIST
+                    PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
                 };
 
                 TEST_RESULT_VOID(
@@ -115,6 +118,17 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
+                // Set options
+                StringList *argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+                hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
+                hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "testdb");
+                hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1,  "1");
+                HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+                // Create control file
+                HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93);
+
                 // Create client
                 ProtocolClient *client = NULL;
                 Db *db = NULL;
@@ -129,7 +143,7 @@ testRun(void)
                     // -------------------------------------------------------------------------------------------------------------
                     TEST_TITLE("open and free database");
 
-                    TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
+                    TEST_ASSIGN(db, dbNew(NULL, client, storagePgIdx(0), STRDEF("test")), "create db");
 
                     TRY_BEGIN()
                     {
@@ -148,7 +162,7 @@ testRun(void)
                     // -------------------------------------------------------------------------------------------------------------
                     TEST_TITLE("remote commands");
 
-                    TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
+                    TEST_ASSIGN(db, dbNew(NULL, client, storagePgIdx(0), STRDEF("test")), "create db");
 
                     TRY_BEGIN()
                     {
@@ -187,6 +201,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "backupdb");
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "888");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // Create control file
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("1/1")));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when unable to select any pg_settings");
@@ -264,6 +281,7 @@ testRun(void)
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
         TEST_RESULT_UINT(dbDbTimeout(db.primary), 888000, "check timeout");
+        TEST_RESULT_UINT(dbPgControl(db.primary).timeline, 1, "check timeline");
 
         DbBackupStartResult backupStartResult = {0};
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
@@ -274,6 +292,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.5 start/stop backup");
+
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("2/3")));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -330,6 +350,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.5 start/stop backup where backup is in progress");
 
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("2/5")));
+
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
@@ -369,10 +391,22 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.6 start/stop backup");
 
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("3/3")));
+
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
             HRNPQ_MACRO_OPEN_GE_96(1, "dbname='backupdb' port=5432", PG_VERSION_96, TEST_PATH "/pg1", false, NULL, NULL),
+
+            // Start backup with timeline error
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000020000000300000002"),
+            HRNPQ_MACRO_START_BACKUP_96(1, false, "3/3", "000000020000000300000003"),
+
+            // Start backup with checkpoint error
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000400000003"),
+            HRNPQ_MACRO_START_BACKUP_96(1, false, "4/4", "000000010000000400000004"),
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -389,6 +423,12 @@ testRun(void)
         });
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+
+        TEST_ERROR(
+            dbBackupStart(db.primary, false, true, true), DbMismatchError, "WAL timeline 2 does not match pg_control timeline 1");
+        TEST_ERROR(
+            dbBackupStart(db.primary, false, true, true), DbMismatchError,
+            "current checkpoint '3/3' is less than backup start '4/4'");
 
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, true), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "3/3", "check lsn");
@@ -413,6 +453,10 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // Create control file
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/4")));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_93, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/4")));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -441,13 +485,17 @@ testRun(void)
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
         TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false, false).lsn, "5/4", "start backup");
-        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), 1000), "sync standby");
+        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), dbPgControl(db.primary).timeline, 1000), "sync standby");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 10 start/stop backup from standby");
+
+        // Update control file
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/5")));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_93, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/5")));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -521,27 +569,35 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
 
+        TEST_RESULT_UINT(dbPgControl(db.primary).timeline, 5, "check primary timeline");
+        TEST_RESULT_UINT(dbPgControl(db.standby).timeline, 5, "check standby timeline");
+
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "5/5", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000050000000500000005", "check wal segment name");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000050000000500000005", "check wal segment check");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 1000), ArchiveTimeoutError,
+            dbReplayWait(db.standby, STRDEF("5/5"), 77, 1000), DbMismatchError, "standby is on timeline 5 but expected 77");
+        TEST_ERROR(
+            dbReplayWait(db.standby, STRDEF("4/4"), 5, 1000), DbMismatchError, "standby checkpoint '5/5' is ahead of target '4/4'");
+
+        TEST_ERROR(
+            dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 1000), ArchiveTimeoutError,
             "unable to query replay lsn on the standby using 'pg_catalog.pg_last_wal_replay_lsn()'\n"
             "HINT: Is this a standby?");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 200), ArchiveTimeoutError,
+            dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 200), ArchiveTimeoutError,
             "timeout before standby replayed to 5/5 - only reached 5/3\n"
             "HINT: is replication running and current on the standby?\n"
             "HINT: disable the 'backup-standby' option to backup directly from the primary.");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 200), ArchiveTimeoutError,
+            dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 200), ArchiveTimeoutError,
             "timeout before standby checkpoint lsn reached 5/5 - only reached 5/4");
 
-        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), 1000), "sync standby");
+        TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 1000), "sync standby");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
 
@@ -567,15 +623,8 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000010000000100000001"),
-            HRNPQ_MACRO_START_BACKUP_GE_10(1, false, "1/1", "000000010000000100000001"),
-
-            // Switch WAL segment so it can be checked
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
-            HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000010000000100000001"),
-
-            // Stop backup
-            HRNPQ_MACRO_STOP_BACKUP_GE_10(1, "1/1", "000000010000000100000001", true),
+            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000050000000500000004"),
+            HRNPQ_MACRO_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
 
             // Close primary
             HRNPQ_MACRO_CLOSE(1),
@@ -584,19 +633,14 @@ testRun(void)
         });
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
-
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
-        TEST_RESULT_STR_Z(backupStartResult.lsn, "1/1", "check lsn");
-        TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000100000001", "check wal segment name");
-        TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000010000000100000001", "check wal segment check");
 
-        TEST_RESULT_STR_Z(dbBackupStop(db.primary).tablespaceMap, "TABLESPACE_MAP_DATA", "stop backup");
+        TEST_RESULT_LOG(
+            "P00   WARN: start-fast is disabled and db-timeout (299s) is smaller than the PostgreSQL checkpoint_timeout (300s) -"
+                " timeout may occur before the backup starts");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
-        TEST_RESULT_LOG(
-            "P00   WARN: start-fast is disabled and db-timeout (299s) is smaller than the checkpoint_timeout (300s) reported by the"
-            " database - timeout may occur before the backup actually starts");
     }
 
     // *****************************************************************************************************************************
@@ -610,6 +654,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgUser, 1, "bob");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // Create control file
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error connecting to primary");
@@ -693,6 +740,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // Create control file
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_93);
 
         harnessPqScriptSet((HarnessPq [])
         {

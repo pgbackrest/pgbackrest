@@ -127,7 +127,7 @@ pgClientOpen(PgClient *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    CHECK(this->connection == NULL);
+    CHECK(AssertError, this->connection == NULL, "invalid connection");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -175,7 +175,7 @@ pgClientQuery(PgClient *this, const String *query)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    CHECK(this->connection != NULL);
+    CHECK(AssertError, this->connection != NULL, "invalid connection");
     ASSERT(query != NULL);
 
     VariantList *result = NULL;
@@ -319,8 +319,7 @@ pgClientQuery(PgClient *this, const String *query)
             // Free the result
             PQclear(pgResult);
 
-            // Need to get a NULL result to complete the request
-            CHECK(PQgetResult(this->connection) == NULL);
+            CHECK(ServiceError, PQgetResult(this->connection) == NULL, "NULL result required to complete request");
         }
         TRY_END();
 
