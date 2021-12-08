@@ -128,6 +128,15 @@ static const char *const testClientBadCa =
     "-----END CERTIFICATE-----";
 
 /***********************************************************************************************************************************
+Test signal handler that does nothing
+***********************************************************************************************************************************/
+static void
+testSignalHandler(const int signalType)
+{
+    (void)signalType;
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -299,7 +308,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("SocketClient"))
+    if (testBegin("SocketClient/SocketServer"))
     {
         IoClient *client = NULL;
 
@@ -311,6 +320,37 @@ testRun(void)
         // This address should not be in use in a test environment -- if it is the test will fail
         TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), hrnServerPort(0), 100, 100), "new client");
         TEST_ERROR_FMT(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", hrnServerPort(0));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sckServerAccept() returns NULL on interrupt");
+
+        HRN_FORK_BEGIN(.timeout = 5000)
+        {
+            HRN_FORK_CHILD_BEGIN(.prefix = "sighup server")
+            {
+                // Ignore SIGHUP
+                sigaction(SIGHUP, &(struct sigaction){.sa_handler = testSignalHandler}, NULL);
+
+                // Wait for connection. Use port 1 to avoid port conflicts later.
+                IoServer *server = sckServerNew(STRDEF("127.0.0.1"), hrnServerPort(1), 5000);
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                TEST_RESULT_PTR(ioServerAccept(server, NULL), NULL, "connection interrupted");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "sighup client")
+            {
+                // Wait for client to be ready but also sleep a bit more to allow accept to initialize
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+                sleep(1);
+
+                // Send SIGHUP and the client should exit
+                kill(HRN_FORK_PROCESS_ID(0), SIGHUP);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
     }
 
     // Additional coverage not provided by testing with actual certificates

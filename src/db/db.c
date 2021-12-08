@@ -7,6 +7,8 @@ Database Client
 #include "common/log.h"
 #include "common/type/json.h"
 #include "common/wait.h"
+#include "config/config.h"
+#include "config/protocol.h"
 #include "db/db.h"
 #include "db/protocol.h"
 #include "postgres/interface.h"
@@ -18,6 +20,7 @@ Database Client
 Constants
 ***********************************************************************************************************************************/
 #define PG_BACKUP_ADVISORY_LOCK                                     "12340078987004321"
+#define DB_PING_SEC                                                 30
 
 /***********************************************************************************************************************************
 Object type
@@ -30,6 +33,7 @@ struct Db
     unsigned int remoteIdx;                                         // Index provided by the remote on open for subsequent calls
     const Storage *storage;                                         // PostgreSQL storage
     const String *applicationName;                                  // Used to identify this connection in PostgreSQL
+    time_t pingTimeLast;                                            // Last time cluster was pinged
 };
 
 /***********************************************************************************************************************************
@@ -189,6 +193,26 @@ dbQueryRow(Db *this, const String *query)
     FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(varLstGet(result, 0)));
 }
 
+/***********************************************************************************************************************************
+Is the cluster in recovery?
+***********************************************************************************************************************************/
+static bool
+dbIsInRecovery(Db *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = false;
+
+    if (dbPgVersion(this) >= PG_VERSION_HOT_STANDBY)
+        result = varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()")));
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
 /**********************************************************************************************************************************/
 void
 dbOpen(Db *this)
@@ -209,9 +233,16 @@ dbOpen(Db *this)
 
             // Set a callback to notify the remote when a connection is closed
             memContextCallbackSet(this->pub.memContext, dbFreeResource, this);
+
+            // Get db-timeout from the remote since it might be different than the local value
+            this->pub.dbTimeout = varUInt64Force(
+                varLstGet(configOptionRemote(this->remoteClient, varLstAdd(varLstNew(), varNewStrZ(CFGOPT_DB_TIMEOUT))), 0));
         }
         else
+        {
             pgClientOpen(this->client);
+            this->pub.dbTimeout = cfgOptionUInt64(cfgOptDbTimeout);
+        }
 
         // Set search_path to prevent overrides of the functions we expect to call.  All queries should also be schema-qualified,
         // but this is an extra level protection.
@@ -227,7 +258,8 @@ dbOpen(Db *this)
                 "select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                 " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
                 " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
-                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text"));
+                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
+                " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4"));
 
         // Check that none of the return values are null, which indicates the user cannot select some rows in pg_settings
         for (unsigned int columnIdx = 0; columnIdx < varLstSize(row); columnIdx++)
@@ -248,11 +280,13 @@ dbOpen(Db *this)
 
         // Store the data directory that PostgreSQL is running in, the archive mode, and archive command. These can be compared to
         // the configured pgBackRest directory, and archive settings checked for validity, when validating the configuration.
+        // Also store the checkpoint timeout to warn in case a backup is requested without using the start-fast option.
         MEM_CONTEXT_BEGIN(this->pub.memContext)
         {
             this->pub.pgDataPath = strDup(varStr(varLstGet(row, 1)));
             this->pub.archiveMode = strDup(varStr(varLstGet(row, 2)));
             this->pub.archiveCommand = strDup(varStr(varLstGet(row, 3)));
+            this->pub.checkpointTimeout = (TimeMSec)(varUIntForce(varLstGet(row, 4))) * MSEC_PER_SEC;
         }
         MEM_CONTEXT_END();
 
@@ -264,6 +298,9 @@ dbOpen(Db *this)
         // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
         if (dbPgVersion(this) >= PG_VERSION_PARALLEL_QUERY)
             dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
+
+        // Is the cluster a standby?
+        this->pub.standby = dbIsInRecovery(this);
 
         // Get control file
         this->pub.pgControl = pgControlFromFile(this->storage);
@@ -353,6 +390,16 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
                     dbBackupStop(this);
                 }
             }
+        }
+
+        // When the start-fast option is disabled and db-timeout is smaller than checkpoint_timeout, the command may timeout
+        // before the backup actually starts
+        if (!startFast && dbDbTimeout(this) <= dbCheckpointTimeout(this))
+        {
+            LOG_WARN_FMT(
+                CFGOPT_START_FAST " is disabled and " CFGOPT_DB_TIMEOUT " (%" PRIu64 "s) is smaller than the " PG_NAME
+                    " checkpoint_timeout (%" PRIu64 "s) - timeout may occur before the backup starts",
+                dbDbTimeout(this) / MSEC_PER_SEC, dbCheckpointTimeout(this) / MSEC_PER_SEC);
         }
 
         // If archive check then get the current WAL segment
@@ -512,26 +559,6 @@ dbBackupStop(Db *this)
 }
 
 /**********************************************************************************************************************************/
-bool
-dbIsStandby(Db *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(DB, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    bool result = false;
-
-    if (dbPgVersion(this) >= PG_VERSION_HOT_STANDBY)
-    {
-        result = varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()")));
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
 VariantList *
 dbList(Db *this)
 {
@@ -677,6 +704,54 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
                     ArchiveTimeoutError, "timeout before standby checkpoint lsn reached %s - only reached %s", strZ(targetLsn),
                     strZ(checkpointLsn));
             }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+dbPing(Db *const this, const bool force)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(BOOL, force);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Ping if forced or interval has elapsed
+        time_t timeNow = time(NULL);
+
+        if (force || timeNow - this->pingTimeLast > DB_PING_SEC)
+        {
+            // Make sure recovery state has not changed for versions that support recovery
+            if (dbPgVersion(this) >= PG_VERSION_90)
+            {
+                if (dbIsInRecovery(this) != dbIsStandby(this))
+                {
+                    // If this is the standby then it must have been promoted
+                    if (dbIsStandby(this))
+                    {
+                        THROW(
+                            DbMismatchError,
+                            "standby is no longer is recovery\n"
+                            "HINT: was the standby promoted during the backup?");
+                    }
+                    // Else if a primary then something has gone seriously wrong
+                    else
+                        THROW(AssertError, "primary has switched to recovery");
+                }
+            }
+            // Else just make sure the cluster is still running
+            else
+                dbTimeMSec(this);
+
+            this->pingTimeLast = timeNow;
         }
     }
     MEM_CONTEXT_TEMP_END();
