@@ -35,6 +35,8 @@ typedef struct DbPub
     const String *pgDataPath;                                       // Data directory reported by the database
     bool standby;                                                   // Is the cluster a standby?
     unsigned int pgVersion;                                         // Version as reported by the database
+    TimeMSec checkpointTimeout;                                     // The checkpoint timeout reported by the database
+    TimeMSec dbTimeout;                                             // Database timeout for statements/queries from PG client
 } DbPub;
 
 // Archive mode loaded from the archive_mode GUC
@@ -77,6 +79,20 @@ __attribute__((always_inline)) static inline unsigned int
 dbPgVersion(const Db *const this)
 {
     return THIS_PUB(Db)->pgVersion;
+}
+
+// Checkpoint timeout loaded from the checkpoint_timeout GUC
+__attribute__((always_inline)) static inline TimeMSec
+dbCheckpointTimeout(const Db *const this)
+{
+    return THIS_PUB(Db)->checkpointTimeout;
+}
+
+// Database timeout from main/remote process
+__attribute__((always_inline)) static inline TimeMSec
+dbDbTimeout(const Db *const this)
+{
+    return THIS_PUB(Db)->dbTimeout;
 }
 
 /***********************************************************************************************************************************

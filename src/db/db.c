@@ -7,6 +7,8 @@ Database Client
 #include "common/log.h"
 #include "common/type/json.h"
 #include "common/wait.h"
+#include "config/config.h"
+#include "config/protocol.h"
 #include "db/db.h"
 #include "db/protocol.h"
 #include "postgres/interface.h"
@@ -231,9 +233,16 @@ dbOpen(Db *this)
 
             // Set a callback to notify the remote when a connection is closed
             memContextCallbackSet(this->pub.memContext, dbFreeResource, this);
+
+            // Get db-timeout from the remote since it might be different than the local value
+            this->pub.dbTimeout = varUInt64Force(
+                varLstGet(configOptionRemote(this->remoteClient, varLstAdd(varLstNew(), varNewStrZ(CFGOPT_DB_TIMEOUT))), 0));
         }
         else
+        {
             pgClientOpen(this->client);
+            this->pub.dbTimeout = cfgOptionUInt64(cfgOptDbTimeout);
+        }
 
         // Set search_path to prevent overrides of the functions we expect to call.  All queries should also be schema-qualified,
         // but this is an extra level protection.
@@ -249,7 +258,8 @@ dbOpen(Db *this)
                 "select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                 " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
                 " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
-                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text"));
+                " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
+                " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4"));
 
         // Check that none of the return values are null, which indicates the user cannot select some rows in pg_settings
         for (unsigned int columnIdx = 0; columnIdx < varLstSize(row); columnIdx++)
@@ -270,11 +280,13 @@ dbOpen(Db *this)
 
         // Store the data directory that PostgreSQL is running in, the archive mode, and archive command. These can be compared to
         // the configured pgBackRest directory, and archive settings checked for validity, when validating the configuration.
+        // Also store the checkpoint timeout to warn in case a backup is requested without using the start-fast option.
         MEM_CONTEXT_BEGIN(this->pub.memContext)
         {
             this->pub.pgDataPath = strDup(varStr(varLstGet(row, 1)));
             this->pub.archiveMode = strDup(varStr(varLstGet(row, 2)));
             this->pub.archiveCommand = strDup(varStr(varLstGet(row, 3)));
+            this->pub.checkpointTimeout = (TimeMSec)(varUIntForce(varLstGet(row, 4))) * MSEC_PER_SEC;
         }
         MEM_CONTEXT_END();
 
@@ -378,6 +390,16 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
                     dbBackupStop(this);
                 }
             }
+        }
+
+        // When the start-fast option is disabled and db-timeout is smaller than checkpoint_timeout, the command may timeout
+        // before the backup actually starts
+        if (!startFast && dbDbTimeout(this) <= dbCheckpointTimeout(this))
+        {
+            LOG_WARN_FMT(
+                CFGOPT_START_FAST " is disabled and " CFGOPT_DB_TIMEOUT " (%" PRIu64 "s) is smaller than the " PG_NAME
+                    " checkpoint_timeout (%" PRIu64 "s) - timeout may occur before the backup starts",
+                dbDbTimeout(this) / MSEC_PER_SEC, dbCheckpointTimeout(this) / MSEC_PER_SEC);
         }
 
         // If archive check then get the current WAL segment

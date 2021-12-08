@@ -72,6 +72,7 @@ testRun(void)
                 hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "testdb");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
                 hrnCfgArgRawZ(argList, cfgOptProcess, "0");
+                hrnCfgArgRawZ(argList, cfgOptDbTimeout, "777");
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleRemote);
 
                 // Set script
@@ -104,6 +105,7 @@ testRun(void)
                 static const ProtocolServerHandler commandHandler[] =
                 {
                     PROTOCOL_SERVER_HANDLER_DB_LIST
+                    PROTOCOL_SERVER_HANDLER_OPTION_LIST
                     PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
                 };
 
@@ -167,6 +169,7 @@ testRun(void)
                         TEST_RESULT_VOID(dbOpen(db), "open db");
                         TEST_RESULT_UINT(db->remoteIdx, 1, "check idx");
                         TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "wal switch");
+                        TEST_RESULT_UINT(dbDbTimeout(db), 777000, "check timeout");
                         TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
                     }
                     FINALLY()
@@ -196,6 +199,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "backupdb");
+        hrnCfgArgRawZ(argList, cfgOptDbTimeout, "888");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
@@ -216,23 +220,26 @@ testRun(void)
                 "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                     " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
                     " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
-                    " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text\"]",
+                    " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
+                    " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4\"]",
                 .resultInt = 1},
             {.session = 1, .function = HRNPQ_CONSUMEINPUT},
             {.session = 1, .function = HRNPQ_ISBUSY},
             {.session = 1, .function = HRNPQ_GETRESULT},
             {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
             {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
-            {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 4},
+            {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 5},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_TEXT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[4]", .resultInt = HRNPQ_TYPE_INT},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "0"},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "value"},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = "value"},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = ""},
             {.session = 1, .function = HRNPQ_GETISNULL, .param = "[0,3]", .resultInt = 1},
+            {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,4]", .resultZ = "300"},
             {.session = 1, .function = HRNPQ_CLEAR},
             {.session = 1, .function = HRNPQ_GETRESULT, .resultNull = true},
 
@@ -276,6 +283,7 @@ testRun(void)
         DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
+        TEST_RESULT_UINT(dbDbTimeout(db.primary), 888000, "check timeout");
         TEST_RESULT_UINT(dbPgControl(db.primary).timeline, 1, "check timeline");
 
         DbBackupStartResult backupStartResult = {0};
@@ -627,6 +635,43 @@ testRun(void)
         TEST_RESULT_STR_Z(dbBackupStop(db.primary).tablespaceMap, "TABLESPACE_MAP_DATA", "stop backup");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("PostgreSQL 14 - checkpoint timeout warning");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        // With start-fast being disabled, set db-timeout smaller than checkpoint_timeout to raise a warning
+        hrnCfgArgRawZ(argList, cfgOptDbTimeout, "299");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_14, TEST_PATH "/pg1", false, NULL, NULL),
+
+            // Start backup
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000050000000500000004"),
+            HRNPQ_MACRO_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
+
+            // Close primary
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: start-fast is disabled and db-timeout (299s) is smaller than the PostgreSQL checkpoint_timeout (300s) -"
+                " timeout may occur before the backup starts");
+
+        TEST_RESULT_VOID(dbFree(db.primary), "free primary");
+
     }
 
     // *****************************************************************************************************************************
