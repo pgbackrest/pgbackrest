@@ -345,6 +345,10 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
+                // Ping
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+
                 // Stop backup
                 HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
 
@@ -375,6 +379,10 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 // Get copy start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+                // Ping
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
 
                 // Stop backup
                 HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
@@ -449,6 +457,12 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
+                // Ping
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
+
                 // Stop backup
                 HRNPQ_MACRO_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false),
 
@@ -515,6 +529,10 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 // Get copy start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+                // Ping
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
 
                 // Stop backup
                 HRNPQ_MACRO_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, true),

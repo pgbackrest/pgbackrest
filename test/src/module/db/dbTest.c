@@ -271,6 +271,9 @@ testRun(void)
             HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000100000001"),
             HRNPQ_MACRO_START_BACKUP_83(1, "1/1", "000000010000000100000001"),
 
+            // Ping
+            HRNPQ_MACRO_TIME_QUERY(1, 0),
+
             // Close primary
             HRNPQ_MACRO_CLOSE(1),
 
@@ -287,6 +290,8 @@ testRun(void)
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "1/1", "start backup");
         TEST_RESULT_PTR(backupStartResult.walSegmentCheck, NULL, "WAL segment check");
+
+        TEST_RESULT_VOID(dbPing(db.primary, false), "ping cluster");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
@@ -473,6 +478,16 @@ testRun(void)
             // Wait for standby to sync
             HRNPQ_MACRO_REPLAY_WAIT_LE_95(2, "5/4"),
 
+            // Ping
+            HRNPQ_MACRO_IS_STANDBY_QUERY(1, true),
+            HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+            HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+
+            HRNPQ_MACRO_IS_STANDBY_QUERY(2, false),
+            HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
+            HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
+            HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
+
             // Close standby
             HRNPQ_MACRO_CLOSE(2),
 
@@ -486,6 +501,22 @@ testRun(void)
 
         TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false, false).lsn, "5/4", "start backup");
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), dbPgControl(db.primary).timeline, 1000), "sync standby");
+
+        TEST_ERROR(dbPing(db.primary, false), AssertError, "primary has switched to recovery");
+        TEST_RESULT_VOID(dbPing(db.primary, false), "ping primary cluster");
+        TEST_RESULT_VOID(dbPing(db.primary, false), "ping primary cluster (noop)");
+        TEST_RESULT_VOID(dbPing(db.primary, true), "ping primary cluster (force)");
+
+        TEST_ERROR(
+            dbPing(db.standby, false), DbMismatchError,
+            "standby is no longer is recovery\n"
+            "HINT: was the standby promoted during the backup?");
+        TEST_RESULT_VOID(dbPing(db.standby, false), "ping standby cluster");
+        TEST_RESULT_VOID(dbPing(db.standby, false), "ping standby cluster (noop)");
+        TEST_RESULT_VOID(dbPing(db.standby, true), "ping standby cluster (force)");
+
+        db.standby->pingTimeLast -= DB_PING_SEC * 2;
+        TEST_RESULT_VOID(dbPing(db.standby, false), "ping standby cluster");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");

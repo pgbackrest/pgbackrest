@@ -33,6 +33,7 @@ typedef struct DbPub
     const String *archiveMode;                                      // The archive_mode reported by the database
     const String *archiveCommand;                                   // The archive_command reported by the database
     const String *pgDataPath;                                       // Data directory reported by the database
+    bool standby;                                                   // Is the cluster a standby?
     unsigned int pgVersion;                                         // Version as reported by the database
     TimeMSec checkpointTimeout;                                     // The checkpoint timeout reported by the database
     TimeMSec dbTimeout;                                             // Database timeout for statements/queries from PG client
@@ -64,6 +65,13 @@ __attribute__((always_inline)) static inline const String *
 dbPgDataPath(const Db *const this)
 {
     return THIS_PUB(Db)->pgDataPath;
+}
+
+// Is the cluster a standby?
+__attribute__((always_inline)) static inline bool
+dbIsStandby(const Db *const this)
+{
+    return THIS_PUB(Db)->standby;
 }
 
 // Version loaded from the server_version_num GUC
@@ -114,14 +122,14 @@ typedef struct DbBackupStopResult
 
 DbBackupStopResult dbBackupStop(Db *this);
 
-// Is this cluster a standby?
-bool dbIsStandby(Db *this);
-
 // Get list of databases in the cluster: select oid, datname, datlastsysoid from pg_database
 VariantList *dbList(Db *this);
 
 // Waits for replay on the standby to equal the target LSN
 void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
+
+// Check that the cluster is alive and correctly configured during the backup
+void dbPing(Db *const this, bool force);
 
 // Epoch time on the PostgreSQL host in ms
 TimeMSec dbTimeMSec(Db *this);

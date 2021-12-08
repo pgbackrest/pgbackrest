@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Server Command
 ***********************************************************************************************************************************/
+#include "common/exit.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
 
@@ -26,7 +27,7 @@ testRun(void)
     {
         TEST_TITLE("server");
 
-        HRN_FORK_BEGIN(.timeout = 5000)
+        HRN_FORK_BEGIN(.timeout = 15000)
         {
             HRN_FORK_CHILD_BEGIN(.prefix = "client repo")
             {
@@ -109,27 +110,72 @@ testRun(void)
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_PARENT_BEGIN(.prefix = "server")
+            HRN_FORK_PARENT_BEGIN(.prefix = "client control")
             {
-                StringList *argList = strLstNew();
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCaFile, HRN_SERVER_CA);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCertFile, HRN_SERVER_CERT);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "pgbackrest-client=db");
-                hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
-                HRN_CFG_LOAD(cfgCmdServer, argList);
+                HRN_FORK_BEGIN(.timeout = 15000)
+                {
+                    HRN_FORK_CHILD_BEGIN(.prefix = "server")
+                    {
+                        // Write a config file to demonstrate that options are loaded and reloaded
+                        HRN_STORAGE_PUT_Z(
+                            storageTest,
+                            "pgbackrest.conf",
+                            "[global]\n"
+                            CFGOPT_TLS_SERVER_CA_FILE "=" HRN_SERVER_CA "\n"
+                            CFGOPT_TLS_SERVER_CERT_FILE "=" HRN_SERVER_CERT "\n"
+                            CFGOPT_TLS_SERVER_KEY_FILE "=" HRN_SERVER_KEY "\n"
+                            CFGOPT_TLS_SERVER_AUTH "=pgbackrest-client=db\n"
+                            "repo1-path=" TEST_PATH "/repo\n");
 
-                // Write a config file to demonstrate that settings are loaded
-                HRN_STORAGE_PUT_Z(storageTest, "pgbackrest.conf", "[global]\nrepo1-path=" TEST_PATH "/repo");
+                        StringList *argList = strLstNew();
+                        hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
+                        hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                        HRN_CFG_LOAD(cfgCmdServer, argList);
 
-                // Get pid of this process to identify child process later
-                pid_t pid = getpid();
+                        // Init exit signal handlers
+                        exitInit();
 
-                TEST_RESULT_VOID(cmdServer(3), "server");
+                        // No log testing needed
+                        harnessLogLevelSet(logLevelError);
 
-                // If this is a child process then exit immediately
-                if (pid != getpid())
-                    exit(0);
+                        // Add a fake pid to ensure SIGTERM is sent to unterminated children
+                        cmdServerInit();
+
+                        int fakePid = INT_MAX;
+                        lstAdd(serverLocal.processList, &fakePid);
+
+                        // Get pid of this process to identify child process later
+                        pid_t pid = getpid();
+
+                        // Add parameters to arg list required for a reload
+                        strLstInsert(argList, 0, cfgExe());
+                        strLstAddZ(argList, CFGCMD_SERVER);
+
+                        TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");
+
+                        // If this is a child process then exit immediately
+                        if (pid != getpid())
+                        {
+                            HRN_FORK_CHILD_NOTIFY_PUT();
+                            exit(0);
+                        }
+                    }
+                    HRN_FORK_CHILD_END();
+
+                    HRN_FORK_PARENT_BEGIN(.prefix = "server control")
+                    {
+                        // Wait for forked server processes to exit
+                        HRN_FORK_PARENT_NOTIFY_GET(0);
+                        kill(HRN_FORK_PROCESS_ID(0), SIGHUP);
+                        HRN_FORK_PARENT_NOTIFY_GET(0);
+                        HRN_FORK_PARENT_NOTIFY_GET(0);
+
+                        // Send term to server processes
+                        kill(HRN_FORK_PROCESS_ID(0), SIGTERM);
+                    }
+                    HRN_FORK_PARENT_END();
+                }
+                HRN_FORK_END();
 
                 // Wait for both child processes to exit
                 HRN_FORK_PARENT_NOTIFY_GET(0);
@@ -157,7 +203,7 @@ testRun(void)
 
         TEST_ERROR(cmdServerPing(), ParamInvalidError, "extra parameters found");
 
-        HRN_FORK_BEGIN(.timeout = 5000)
+        HRN_FORK_BEGIN(.timeout = 15000)
         {
 
             HRN_FORK_CHILD_BEGIN(.prefix = "client")
@@ -185,24 +231,52 @@ testRun(void)
             }
             HRN_FORK_CHILD_END();
 
-            HRN_FORK_PARENT_BEGIN(.prefix = "server")
+            HRN_FORK_PARENT_BEGIN(.prefix = "client control")
             {
-                StringList *argList = strLstNew();
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCaFile, HRN_SERVER_CA);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerCertFile, HRN_SERVER_CERT);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
-                hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "bogus=*");
-                hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
-                HRN_CFG_LOAD(cfgCmdServer, argList);
+                HRN_FORK_BEGIN(.timeout = 15000)
+                {
+                    HRN_FORK_CHILD_BEGIN(.prefix = "server")
+                    {
+                        StringList *argList = strLstNew();
+                        hrnCfgArgRawZ(argList, cfgOptTlsServerCaFile, HRN_SERVER_CA);
+                        hrnCfgArgRawZ(argList, cfgOptTlsServerCertFile, HRN_SERVER_CERT);
+                        hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
+                        hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "bogus=*");
+                        hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                        HRN_CFG_LOAD(cfgCmdServer, argList);
 
-                // Get pid of this process to identify child process later
-                pid_t pid = getpid();
+                        // Init exit signal handlers
+                        exitInit();
 
-                TEST_RESULT_VOID(cmdServer(2), "server");
+                        // No log testing needed
+                        harnessLogLevelSet(logLevelError);
 
-                // If this is a child process then exit immediately
-                if (pid != getpid())
-                    exit(0);
+                        // Get pid of this process to identify child process later
+                        pid_t pid = getpid();
+
+                        TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");
+
+                        // If this is a child process then exit immediately
+                        if (pid != getpid())
+                        {
+                            HRN_FORK_CHILD_NOTIFY_PUT();
+                            exit(0);
+                        }
+                    }
+                    HRN_FORK_CHILD_END();
+
+                    HRN_FORK_PARENT_BEGIN(.prefix = "server control")
+                    {
+                        // Wait for forked child processes to exit
+                        HRN_FORK_PARENT_NOTIFY_GET(0);
+                        HRN_FORK_PARENT_NOTIFY_GET(0);
+
+                        // Send term to child processes
+                        kill(HRN_FORK_PROCESS_ID(0), SIGTERM);
+                    }
+                    HRN_FORK_PARENT_END();
+                }
+                HRN_FORK_END();
 
                 // Wait for child process to exit
                 HRN_FORK_PARENT_NOTIFY_GET(0);
