@@ -16,6 +16,10 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.37dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: If the <cmd>restore</cmd> command is unable to find a backup that matches a specified time target then an error will be thrown, whereas before a warning was logged.</p>
+                </text>
+
                 <release-feature-list>
                     <release-item>
                         <github-issue id="1537"/>
@@ -67,6 +71,20 @@
                         </release-item-contributor-list>
 
                         <p>Check that clusters are alive and correctly configured during a backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1582"/>
+                        <github-pull-request id="1586"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="douglas.j.hunley"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="douglas.j.hunley"/>
+                        </release-item-contributor-list>
+
+                        <p>Error when <cmd>restore</cmd> is unable to find a backup to match the time target.</p>
                     </release-item>
 
                     <release-item>
