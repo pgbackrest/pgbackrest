@@ -478,7 +478,7 @@ testRun(void)
                     storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "HTTP request failed with 301:\n"
                         "*** Path/Query ***:\n"
-                        "/latest/meta-data/iam/security-credentials\n"
+                        "GET /latest/meta-data/iam/security-credentials\n"
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
                         "host: %s",
@@ -519,7 +519,7 @@ testRun(void)
                     storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "HTTP request failed with 300:\n"
                         "*** Path/Query ***:\n"
-                        "/latest/meta-data/iam/security-credentials/credrole\n"
+                        "GET /latest/meta-data/iam/security-credentials/credrole\n"
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
                         "host: %s",
@@ -583,7 +583,7 @@ testRun(void)
                     ioReadOpen(storageReadIo(read)), ProtocolError,
                     "HTTP request failed with 303:\n"
                     "*** Path/Query ***:\n"
-                    "/file.txt\n"
+                    "GET /file.txt\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 0\n"
@@ -730,7 +730,7 @@ testRun(void)
                     storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), ProtocolError,
                     "HTTP request failed with 200 (OK):\n"
                     "*** Path/Query ***:\n"
-                    "/file.txt?uploadId=WxRt\n"
+                    "POST /file.txt?uploadId=WxRt\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 205\n"
@@ -926,7 +926,7 @@ testRun(void)
                 TEST_ERROR(storageListP(s3, STRDEF("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
                     "*** Path/Query ***:\n"
-                    "/?delimiter=%2F&list-type=2\n"
+                    "GET /?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 0\n"
@@ -950,7 +950,7 @@ testRun(void)
                 TEST_ERROR(storageListP(s3, STRDEF("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
                     "*** Path/Query ***:\n"
-                    "/?delimiter=%2F&list-type=2\n"
+                    "GET /?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 0\n"

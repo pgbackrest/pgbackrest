@@ -98,6 +98,16 @@
                         <p>Add warning when <pg-setting>checkpoint_timeout</pg-setting> exceeds <br-option>db-timeout</br-option>.</p>
                     </release-item>
 
+                    <release-item>
+                        <github-pull-request id="1566"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="christoph.berg"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add verb to HTTP error output.</p>
+                    </release-item>
 
                     <release-item>
                         <github-pull-request id="1571"/>
@@ -10460,7 +10470,7 @@
 
         <contributor id="christoph.berg">
             <contributor-name-display>Christoph Berg</contributor-name-display>
-            <contributor-id type="github">ChristophBerg</contributor-id>
+            <contributor-id type="github">df7cb</contributor-id>
         </contributor>
 
         <contributor id="christophe.cavallie">

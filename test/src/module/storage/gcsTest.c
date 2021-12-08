@@ -478,7 +478,7 @@ testRun(void)
                     ioReadOpen(storageReadIo(read)), ProtocolError,
                     "HTTP request failed with 303:\n"
                     "*** Path/Query ***:\n"
-                    "/storage/v1/b/bucket/o/file.txt?alt=media\n"
+                    "GET /storage/v1/b/bucket/o/file.txt?alt=media\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 0\n"
@@ -501,7 +501,7 @@ testRun(void)
                     storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
                     "HTTP request failed with 403 (Forbidden):\n"
                     "*** Path/Query ***:\n"
-                    "/upload/storage/v1/b/bucket/o?fields=md5Hash%%2Csize&name=file.txt&uploadType=media\n"
+                    "POST /upload/storage/v1/b/bucket/o?fields=md5Hash%%2Csize&name=file.txt&uploadType=media\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 4\n"
@@ -634,7 +634,7 @@ testRun(void)
                     storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("12345678901234567")), ProtocolError,
                     "HTTP request failed with 403 (Forbidden):\n"
                     "*** Path/Query ***:\n"
-                    "/upload/storage/v1/b/bucket/o?name=file.txt&uploadType=resumable&upload_id=<redacted>\n"
+                    "PUT /upload/storage/v1/b/bucket/o?name=file.txt&uploadType=resumable&upload_id=<redacted>\n"
                     "*** Request Headers ***:\n"
                     "content-length: 16\n"
                     "content-range: bytes 0-15/*\n"
