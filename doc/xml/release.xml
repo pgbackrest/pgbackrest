@@ -77,7 +77,7 @@
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
-                        <p>Add warning when <pg-setting>checkpoint_timeout</pg-setting> exceeds <br-option>protocol-timeout</br-option>.</p>
+                        <p>Add warning when <pg-setting>checkpoint_timeout</pg-setting> exceeds <br-option>db-timeout</br-option>.</p>
                     </release-item>
 
 
