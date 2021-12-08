@@ -59,6 +59,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1584"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Check that clusters are alive and correctly configured during a backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1571"/>
 
                         <release-item-contributor-list>
