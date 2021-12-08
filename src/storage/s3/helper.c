@@ -6,6 +6,7 @@ S3 Storage Helper
 #include <stdlib.h>
 
 #include "common/debug.h"
+#include "common/io/http/url.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -24,12 +25,24 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
 
     ASSERT(cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == STORAGE_S3_TYPE);
 
-    // Set the default port
-    unsigned int port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
+    // Parse the endpoint url
+    HttpUrl *url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeHttps);
 
-    // Extract port from the endpoint and host if it is present
-    const String *const endPoint = cfgOptionIdxHostPort(cfgOptRepoS3Endpoint, repoIdx, &port);
-    const String *const host = cfgOptionIdxHostPort(cfgOptRepoStorageHost, repoIdx, &port);
+    // Set the endpoint
+    const String *const endPoint = httpUrlHost(url);
+
+    // Set the appended or default port
+    unsigned int port = httpUrlPort(url);
+
+    const String *host = NULL;
+
+    // If the host option was set explicitly then use it and port if appended
+    if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
+    {
+        const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+        host = httpUrlHost(url);
+        port = httpUrlPort(url);
+    }
 
     // If the port option was set explicitly then use it in preference to appended ports
     if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
@@ -63,6 +76,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), STR(webIdTokenFileZ))));
     }
 
+LOG_DEBUG_FMT("jrt passed host %s", strZNull(host));
     Storage *const result = storageS3New(
         cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
         cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint, (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
