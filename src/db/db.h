@@ -88,7 +88,7 @@ dbCheckpointTimeout(const Db *const this)
     return THIS_PUB(Db)->checkpointTimeout;
 }
 
-// Database timeout from PG client process
+// Database timeout from main/remote process
 __attribute__((always_inline)) static inline TimeMSec
 dbDbTimeout(const Db *const this)
 {
