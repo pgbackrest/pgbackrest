@@ -367,6 +367,16 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
             }
         }
 
+        // When the start-fast option is disabled and db-timeout is smaller than checkpoint_timeout, the command may timeout
+        // before the backup actually starts
+        if (!startFast && dbDbTimeout(this) <= dbCheckpointTimeout(this))
+        {
+            LOG_WARN_FMT(
+                CFGOPT_START_FAST " is disabled and " CFGOPT_DB_TIMEOUT " (%" PRIu64 "s) is smaller than the " PG_NAME
+                    " checkpoint_timeout (%" PRIu64 "s) - timeout may occur before the backup starts",
+                dbDbTimeout(this) / MSEC_PER_SEC, dbCheckpointTimeout(this) / MSEC_PER_SEC);
+        }
+
         // If archive check then get the current WAL segment
         const String *walSegmentCheck = NULL;
 
@@ -383,16 +393,6 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
 
         // Start backup
         VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
-
-        // When the start-fast option is disabled and db-timeout is smaller than checkpoint_timeout, the command may timeout
-        // before the backup actually starts
-        if (!startFast && dbDbTimeout(this) <= dbCheckpointTimeout(this))
-        {
-            LOG_WARN_FMT(
-                CFGOPT_START_FAST " is disabled and " CFGOPT_DB_TIMEOUT " (%" PRIu64 "s) is smaller than the checkpoint_timeout (%"
-                PRIu64 "s) reported by the database - timeout may occur before the backup actually starts",
-                dbDbTimeout(this) / MSEC_PER_SEC, dbCheckpointTimeout(this) / MSEC_PER_SEC);
-        }
 
         // Make sure the backup start checkpoint was written to pg_control. This helps ensure that we have a consistent view of the
         // storage with PostgreSQL.
