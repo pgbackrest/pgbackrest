@@ -1153,7 +1153,7 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3UriStyle, storageS3UriStylePath);
-                hrnCfgArgRaw(argList, cfgOptRepoStorageHost, host);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "https://%s", strZ(host));
                 hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
