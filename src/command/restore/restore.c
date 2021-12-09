@@ -167,10 +167,11 @@ getEpoch(const String *targetTime)
         }
         else
         {
-            LOG_WARN_FMT(
-                "automatic backup set selection cannot be performed with provided time '%s', latest backup set will be used"
-                "\nHINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
-                " - if timezone is omitted, local time is assumed (for UTC use +00)",
+            THROW_FMT(
+                FormatError,
+                "automatic backup set selection cannot be performed with provided time '%s'\n"
+                "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
+                    " - if timezone is omitted, local time is assumed (for UTC use +00)",
                 strZ(targetTime));
         }
     }
@@ -235,14 +236,11 @@ restoreBackupSet(void)
             repoIdxMax = repoIdxMin;
         }
 
-        // Initialize a backup candidate list
-        List *backupCandidateList = lstNewP(sizeof(RestoreBackupData));
-
+        // If the set option was not provided by the user but a time to recover was set, then we will need to search for a backup
+        // set that satisfies the time condition, else we will use the backup provided
         const String *backupSetRequested = NULL;
         time_t timeTargetEpoch = 0;
 
-        // If the set option was not provided by the user but a time to recover was set, then we will need to search for a backup
-        // set that satisfies the time condition, else we will use the backup provided
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
             if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_TIME)
@@ -313,22 +311,13 @@ restoreBackupSet(void)
                         }
                     }
 
-                    // If a backup was found on this repo matching the criteria for time then exit, else determine if the latest
-                    // backup from this repo might be used
+                    // If a backup was found on this repo matching the criteria for time then exit
                     if (found)
                         break;
-                    else
-                    {
-                        // If a backup was not yet found then set the latest from this repo as the backup that might be used
-                        RestoreBackupData candidate = restoreBackupData(
-                            latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
-
-                        lstAdd(backupCandidateList, &candidate);
-                    }
                 }
+                // Else use backup set found
                 else
                 {
-                    // If the recovery type was not time (or time provided was not valid), then use the latest backup from this repo
                     result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                     break;
                 }
@@ -356,17 +345,11 @@ restoreBackupSet(void)
         {
             if (backupSetRequested != NULL)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
-            else if (timeTargetEpoch != 0 && lstSize(backupCandidateList) > 0)
+            else if (timeTargetEpoch != 0)
             {
-                // Since the repos were scanned in priority order, use the first candidate found
-                result = restoreBackupData(
-                    ((RestoreBackupData *)lstGet(backupCandidateList, 0))->backupSet,
-                    ((RestoreBackupData *)lstGet(backupCandidateList, 0))->repoIdx,
-                    ((RestoreBackupData *)lstGet(backupCandidateList, 0))->backupCipherPass);
-
-                LOG_WARN_FMT(
-                    "unable to find backup set with stop time less than '%s', repo%u: latest backup set will be used",
-                    strZ(cfgOptionDisplay(cfgOptTarget)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, result.repoIdx));
+                THROW_FMT(
+                    BackupSetInvalidError, "unable to find backup set with stop time less than '%s'",
+                    strZ(cfgOptionDisplay(cfgOptTarget)));
             }
             else
                 THROW(BackupSetInvalidError, "no backup set found to restore");
@@ -394,7 +377,7 @@ restoreManifestValidate(Manifest *manifest, const String *backupSet)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If there are no files in the manifest then something has gone horribly wrong
-        CHECK(manifestFileTotal(manifest) > 0);
+        CHECK(FormatError, manifestFileTotal(manifest) > 0, "manifest missing files");
 
         // Sanity check to ensure the manifest has not been moved to a new directory
         const ManifestData *data = manifestData(manifest);
@@ -554,7 +537,7 @@ restoreManifestMap(Manifest *manifest)
                     const ManifestPath *const path = manifestPathFindDefault(manifest, manifestName, NULL);
                     const ManifestFile *const file = manifestFileFindDefault(manifest, manifestName, NULL);
 
-                    CHECK(path == NULL || file == NULL);
+                    CHECK(FormatError, path == NULL || file == NULL, "link may not be both file and path");
 
                     target = (ManifestTarget){.name = manifestName, .path = linkPath, .type = manifestTargetTypeLink};
 
@@ -590,7 +573,7 @@ restoreManifestMap(Manifest *manifest)
                     target.path = linkPath;
 
                 // The target must be a link since pg_data/ was prepended and pgdata is the only allowed path
-                CHECK(target.type == manifestTargetTypeLink);
+                CHECK(FormatError, target.type == manifestTargetTypeLink, "target must be a link");
 
                 // Error if the target is a tablespace
                 if (target.tablespaceId != 0)
@@ -1986,7 +1969,7 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
             do
             {
                 // A target should always be found
-                CHECK(targetIdx < strLstSize(targetList));
+                CHECK(FormatError, targetIdx < strLstSize(targetList), "backup target not found");
 
                 if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
                     break;

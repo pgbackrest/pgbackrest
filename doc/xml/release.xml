@@ -16,6 +16,10 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.37dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: If the <cmd>restore</cmd> command is unable to find a backup that matches a specified time target then an error will be thrown, whereas before a warning was logged.</p>
+                </text>
+
                 <release-feature-list>
                     <release-item>
                         <github-issue id="1537"/>
@@ -47,6 +51,65 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1581"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add timeline and checkpoint checks to backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1584"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Check that clusters are alive and correctly configured during a backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1582"/>
+                        <github-pull-request id="1586"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="douglas.j.hunley"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="douglas.j.hunley"/>
+                        </release-item-contributor-list>
+
+                        <p>Error when <cmd>restore</cmd> is unable to find a backup to match the time target.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1564"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add warning when <pg-setting>checkpoint_timeout</pg-setting> exceeds <br-option>db-timeout</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1566"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="christoph.berg"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add verb to HTTP error output.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1571"/>
 
                         <release-item-contributor-list>
@@ -69,6 +132,7 @@
                         <commit subject="Use infoBackupDataByLabel() to log backup size.">
                             <github-pull-request id="1573"/>
                         </commit>
+                        <commit subject="Revert changes to backupFilePut() made in 1e77fc3d."/>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="mahomed.hussein"/>
@@ -83,10 +147,14 @@
                 <release-development-list>
                     <release-item>
                         <commit subject="Rename server-start command to server."/>
+                        <commit subject="Add SIGTERM and SIGHUP handling to TLS server.">
+                            <github-pull-request id="1572"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="reid.thompson"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
                             <release-item-reviewer id="andrew.lecuyer"/>
                         </release-item-contributor-list>
@@ -10402,7 +10470,7 @@
 
         <contributor id="christoph.berg">
             <contributor-name-display>Christoph Berg</contributor-name-display>
-            <contributor-id type="github">ChristophBerg</contributor-id>
+            <contributor-id type="github">df7cb</contributor-id>
         </contributor>
 
         <contributor id="christophe.cavallie">

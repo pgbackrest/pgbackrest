@@ -45,6 +45,11 @@ Create a pg_control file
             .system_identifier = pgControl.systemId,                                                                               \
             .pg_control_version = PG_CONTROL_VERSION,                                                                              \
             .catalog_version_no = pgControl.catalogVersion,                                                                        \
+            .checkPoint = pgControl.checkpoint,                                                                                    \
+            .checkPointCopy =                                                                                                      \
+            {                                                                                                                      \
+                .ThisTimeLineID = pgControl.timeline,                                                                              \
+            },                                                                                                                     \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
             .data_checksum_version = pgControl.pageChecksum,                                                                       \
@@ -65,6 +70,15 @@ Create a pg_control file
             .system_identifier = pgControl.systemId,                                                                               \
             .pg_control_version = PG_CONTROL_VERSION,                                                                              \
             .catalog_version_no = pgControl.catalogVersion,                                                                        \
+            .checkPoint =                                                                                                          \
+            {                                                                                                                      \
+                .xlogid = (uint32_t)(pgControl.checkpoint >> 32),                                                                  \
+                .xrecoff = (uint32_t)(pgControl.checkpoint & 0xFFFFFFFF),                                                          \
+            },                                                                                                                     \
+            .checkPointCopy =                                                                                                      \
+            {                                                                                                                      \
+                .ThisTimeLineID = pgControl.timeline,                                                                              \
+            },                                                                                                                     \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
         };                                                                                                                         \

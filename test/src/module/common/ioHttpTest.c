@@ -581,7 +581,7 @@ testRun(void)
                     httpRequestError(request, response), ProtocolError,
                     "HTTP request failed with 404 (Not Found):\n"
                     "*** Path/Query ***:\n"
-                    "/");
+                    "GET /");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error with content");
@@ -612,7 +612,7 @@ testRun(void)
                     httpRequestError(request, response), ProtocolError,
                     "HTTP request failed with 403:\n"
                     "*** Path/Query ***:\n"
-                    "/?a=b\n"
+                    "GET /?a=b\n"
                     "*** Request Headers ***:\n"
                     "hdr1: 1\n"
                     "hdr2: <redacted>\n"

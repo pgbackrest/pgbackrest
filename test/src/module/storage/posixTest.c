@@ -1545,7 +1545,7 @@ testRun(void)
         static const StorageHelper storageHelperListError[] = {{.type = STORAGE_POSIX_TYPE}, STORAGE_END_HELPER};
         storageHelperInit(storageHelperListError);
 
-        TEST_ERROR(storageRepoGet(0, true), AssertError, "check 'type == STORAGE_POSIX_TYPE' failed");
+        TEST_ERROR(storageRepoGet(0, true), AssertError, "invalid storage type");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storage configuration");

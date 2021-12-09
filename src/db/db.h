@@ -9,7 +9,9 @@ expected to be embedded in this object.
 
 #include "common/type/object.h"
 #include "postgres/client.h"
+#include "postgres/interface.h"
 #include "protocol/client.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -19,7 +21,7 @@ typedef struct Db Db;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationName);
+Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *storage, const String *applicationName);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -27,10 +29,14 @@ Getters/Setters
 typedef struct DbPub
 {
     MemContext *memContext;                                         // Mem context
+    PgControl pgControl;                                            // Control info
     const String *archiveMode;                                      // The archive_mode reported by the database
     const String *archiveCommand;                                   // The archive_command reported by the database
     const String *pgDataPath;                                       // Data directory reported by the database
+    bool standby;                                                   // Is the cluster a standby?
     unsigned int pgVersion;                                         // Version as reported by the database
+    TimeMSec checkpointTimeout;                                     // The checkpoint timeout reported by the database
+    TimeMSec dbTimeout;                                             // Database timeout for statements/queries from PG client
 } DbPub;
 
 // Archive mode loaded from the archive_mode GUC
@@ -47,6 +53,13 @@ dbArchiveCommand(const Db *const this)
     return THIS_PUB(Db)->archiveCommand;
 }
 
+// Control data
+__attribute__((always_inline)) static inline PgControl
+dbPgControl(const Db *const this)
+{
+    return THIS_PUB(Db)->pgControl;
+}
+
 // Data path loaded from the data_directory GUC
 __attribute__((always_inline)) static inline const String *
 dbPgDataPath(const Db *const this)
@@ -54,11 +67,32 @@ dbPgDataPath(const Db *const this)
     return THIS_PUB(Db)->pgDataPath;
 }
 
+// Is the cluster a standby?
+__attribute__((always_inline)) static inline bool
+dbIsStandby(const Db *const this)
+{
+    return THIS_PUB(Db)->standby;
+}
+
 // Version loaded from the server_version_num GUC
 __attribute__((always_inline)) static inline unsigned int
 dbPgVersion(const Db *const this)
 {
     return THIS_PUB(Db)->pgVersion;
+}
+
+// Checkpoint timeout loaded from the checkpoint_timeout GUC
+__attribute__((always_inline)) static inline TimeMSec
+dbCheckpointTimeout(const Db *const this)
+{
+    return THIS_PUB(Db)->checkpointTimeout;
+}
+
+// Database timeout from main/remote process
+__attribute__((always_inline)) static inline TimeMSec
+dbDbTimeout(const Db *const this)
+{
+    return THIS_PUB(Db)->dbTimeout;
 }
 
 /***********************************************************************************************************************************
@@ -88,14 +122,14 @@ typedef struct DbBackupStopResult
 
 DbBackupStopResult dbBackupStop(Db *this);
 
-// Is this cluster a standby?
-bool dbIsStandby(Db *this);
-
 // Get list of databases in the cluster: select oid, datname, datlastsysoid from pg_database
 VariantList *dbList(Db *this);
 
 // Waits for replay on the standby to equal the target LSN
-void dbReplayWait(Db *this, const String *targetLsn, TimeMSec timeout);
+void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
+
+// Check that the cluster is alive and correctly configured during the backup
+void dbPing(Db *const this, bool force);
 
 // Epoch time on the PostgreSQL host in ms
 TimeMSec dbTimeMSec(Db *this);

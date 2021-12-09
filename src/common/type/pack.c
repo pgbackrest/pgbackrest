@@ -553,7 +553,9 @@ pckReadTagNext(PackRead *this)
         if (this->tagNextTypeMap == 0xF)
             this->tagNextTypeMap = (unsigned int)pckReadU64Internal(this) + 0xF;
 
-        CHECK(this->tagNextTypeMap < PACK_TYPE_MAP_SIZE && packTypeMapData[this->tagNextTypeMap].type != 0);
+        CHECK(
+            FormatError, this->tagNextTypeMap < PACK_TYPE_MAP_SIZE && packTypeMapData[this->tagNextTypeMap].type != 0,
+            "invalid tag type");
 
         // If the value can contain multiple bits (e.g. integer)
         if (packTypeMapData[this->tagNextTypeMap].valueMultiBit)
@@ -1267,7 +1269,7 @@ pckReadEnd(PackRead *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    CHECK(this->tagStack.depth == 0);
+    CHECK(FormatError, this->tagStack.depth == 0, "invalid pack end read in container");
 
     // Make sure we are at the end of the pack
     unsigned int id = UINT_MAX - 1;
@@ -1463,7 +1465,7 @@ pckWriteTag(PackWrite *this, PackTypeMap typeMap, unsigned int id, uint64_t valu
     }
     // Else the id must be greater than the last one
     else
-        CHECK(id > this->tagStack.top->idLast);
+        CHECK(AssertError, id > this->tagStack.top->idLast, "field id must be greater than last id");
 
     // Clear NULLs now that field id has been calculated
     this->tagStack.top->nullTotal = 0;

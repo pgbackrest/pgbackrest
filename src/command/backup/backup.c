@@ -151,6 +151,7 @@ typedef struct BackupData
     const InfoArchive *archiveInfo;                                 // Archive info
     const String *archiveId;                                        // Archive where backup WAL will be stored
 
+    unsigned int timeline;                                          // Primary timeline
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
 } BackupData;
@@ -189,6 +190,8 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Get database info when online
+    PgControl pgControl = {0};
+
     if (cfgOptionBool(cfgOptOnline))
     {
         bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
@@ -206,15 +209,19 @@ backupInit(const InfoBackup *infoBackup)
             result->storageStandby = storagePgIdx(result->pgIdxStandby);
             result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
+
+        // Get pg_control info from the primary
+        pgControl = dbPgControl(result->dbPrimary);
     }
+    // Else get pg_control info directly from the file
+    else
+        pgControl = pgControlFromFile(storagePgIdx(result->pgIdxPrimary));
 
     // Add primary info
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
     result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
 
-    // Get pg_control info from the primary
-    PgControl pgControl = pgControlFromFile(result->storagePrimary);
-
+    result->timeline = pgControl.timeline;
     result->version = pgControl.version;
     result->walSegmentSize = pgControl.walSegmentSize;
 
@@ -393,9 +400,11 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 
                     // There's a small chance that the prior manifest is old enough that backupOptionCompressLevel was not recorded.
                     // There's an even smaller chance that the user will also alter compression-type in this scenario right after
-                    // upgrading to a newer version. Because we judge this combination of events to be nearly impossible just assert
+                    // upgrading to a newer version. Because we judge this combination of events to be nearly impossible just check
                     // here so no test coverage is needed.
-                    CHECK(manifestPriorData->backupOptionCompressLevel != NULL);
+                    CHECK(
+                        FormatError, manifestPriorData->backupOptionCompressLevel != NULL,
+                        "compress-level missing in prior manifest");
 
                     // Set the compression level back to whatever was in the prior backup
                     cfgOptionSet(
@@ -881,14 +890,8 @@ backupStart(BackupData *backupData)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
-                dbReplayWait(backupData->dbStandby, result.lsn, cfgOptionUInt64(cfgOptArchiveTimeout));
+                dbReplayWait(backupData->dbStandby, result.lsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
                 LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
-
-                // The standby db object won't be used anymore so free it
-                dbFree(backupData->dbStandby);
-
-                // The standby protocol connection won't be used anymore so free it
-                protocolRemoteFree(backupData->pgIdxStandby);
             }
 
             // Check that WAL segments are being archived. If archiving is not working then the backup will eventually fail so
@@ -916,7 +919,7 @@ backupStart(BackupData *backupData)
 Stop the backup
 ***********************************************************************************************************************************/
 // Helper to write a file from a string to the repository and update the manifest
-static uint64_t
+static void
 backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, time_t timestamp, const String *content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -927,13 +930,9 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         FUNCTION_LOG_PARAM(STRING, content);
     FUNCTION_LOG_END();
 
-    uint64_t fileSize = 0;
-
     // Skip files with no content
     if (content != NULL)
     {
-        fileSize = strSize(content);
-
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Create file
@@ -996,7 +995,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN(UINT64, fileSize);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /*--------------------------------------------------------------------------------------------------------------------------------*/
@@ -1134,7 +1133,7 @@ backupJobResultPageChecksum(PackRead *const checksumPageResult)
         }
 
         // Check that the array was not empty
-        CHECK(first);
+        CHECK(FormatError, first, "page checksum result array is empty");
 
         // Output last page or page range
         backupJobResultPageChecksumOut(result, pageBegin, pageEnd);
@@ -1260,8 +1259,8 @@ backupJobResult(
                         else
                         {
                             // Format the page checksum errors
-                            CHECK(checksumPageErrorList != NULL);
-                            CHECK(!varLstEmpty(checksumPageErrorList));
+                            CHECK(FormatError, checksumPageErrorList != NULL, "page checksum error list is missing");
+                            CHECK(FormatError, !varLstEmpty(checksumPageErrorList), "page checksum error list is empty");
 
                             String *error = strNew();
                             unsigned int errorTotalMin = 0;
@@ -1354,6 +1353,30 @@ backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
         manifestSave(manifest, write);
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Check that the clusters are alive and correctly configured during the backup
+***********************************************************************************************************************************/
+static void
+backupDbPing(const BackupData *const backupData, const bool force)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
+        FUNCTION_LOG_PARAM(BOOL, force);
+    FUNCTION_LOG_END();
+
+    ASSERT(backupData != NULL);
+
+    if (cfgOptionBool(cfgOptOnline))
+    {
+        dbPing(backupData->dbPrimary, force);
+
+        if (cfgOptionBool(cfgOptBackupStandby))
+            dbPing(backupData->dbStandby, force);
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -1457,8 +1480,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
                 do
                 {
-                    // A target should always be found
-                    CHECK(targetIdx < strLstSize(targetList));
+                    CHECK(AssertError, targetIdx < strLstSize(targetList), "backup target not found");
 
                     if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
                         break;
@@ -1744,6 +1766,9 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 // A keep-alive is required here for the remote holding open the backup connection
                 protocolKeepAlive();
 
+                // Check that the clusters are alive and correctly configured during the backup
+                backupDbPing(backupData, false);
+
                 // Save the manifest periodically to preserve checksums for resume
                 if (sizeProgress - manifestSaveLast >= manifestSaveSize)
                 {
@@ -1840,13 +1865,13 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            unsigned int timeline = cvtZToUIntBase(strZ(strSubN(manifestData(manifest)->archiveStart, 0, 8)), 16);
             uint64_t lsnStart = pgLsnFromStr(manifestData(manifest)->lsnStart);
             uint64_t lsnStop = pgLsnFromStr(manifestData(manifest)->lsnStop);
 
             LOG_INFO_FMT(
-                "check archive for segment(s) %s:%s", strZ(pgLsnToWalSegment(timeline, lsnStart, backupData->walSegmentSize)),
-                strZ(pgLsnToWalSegment(timeline, lsnStop, backupData->walSegmentSize)));
+                "check archive for segment(s) %s:%s",
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStart, backupData->walSegmentSize)),
+                strZ(pgLsnToWalSegment(backupData->timeline, lsnStop, backupData->walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
             backupManifestSaveCopy(manifest, cipherPassBackup);
@@ -1856,7 +1881,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
             // Loop through all the segments in the lsn range
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-                manifestData(manifest)->pgVersion, timeline, lsnStart, lsnStop, backupData->walSegmentSize);
+                manifestData(manifest)->pgVersion, backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {
@@ -2098,6 +2123,16 @@ cmdBackup(void)
 
         // Process the backup manifest
         backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);
+
+        // Check that the clusters are alive and correctly configured after the backup
+        backupDbPing(backupData, true);
+
+        // The standby db object and protocol won't be used anymore so free them
+        if (cfgOptionBool(cfgOptBackupStandby))
+        {
+            dbFree(backupData->dbStandby);
+            protocolRemoteFree(backupData->pgIdxStandby);
+        }
 
         // Stop the backup
         BackupStopResult backupStopResult = backupStop(backupData, manifest);

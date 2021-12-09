@@ -39,7 +39,7 @@ sub coverageLCovConfigGenerate
     my $bCoverageSummary = shift;
 
     my $strBranchFilter =
-        'OBJECT_DEFINE_[A-Z0-9_]+\(|\s{4}[A-Z][A-Z0-9_]+\([^\?]*\)|\s{4}(ASSERT|assert|switch\s)\(|\{\+{0,1}' .
+        'OBJECT_DEFINE_[A-Z0-9_]+\(|\s{4}[A-Z][A-Z0-9_]+\([^\?]*\)|\s{4}(ASSERT|CHECK|assert|switch\s)\(|\{\+{0,1}' .
         ($bCoverageSummary ? 'uncoverable_branch' : 'uncover(ed|able)_branch');
     my $strLineFilter =
         '\{\+{0,1}' . ($bCoverageSummary ? 'uncoverable' : '(uncover(ed|able)' . ($bContainer ? '' : '|vm_covered') . ')') . '[^_]';
@@ -54,7 +54,7 @@ sub coverageLCovConfigGenerate
         "#\n" .
         '# OBJECT_DEFINE_[A-Z0-9_]+\( - exclude object definitions' . "\n" .
         '# \s{4}[A-Z][A-Z0-9_]+\([^\?]*\) - exclude macros that do not take a conditional parameter and are not themselves a parameter' . "\n" .
-        '# ASSERT/(|assert\( - exclude asserts since it usually not possible to trigger both branches' . "\n" .
+        '# ASSERT/(|CHECK/(|assert\( - exclude asserts/checks since it usually not possible to trigger both branches' . "\n" .
         '# switch \( - lcov requires default: to show complete coverage but --Wswitch-enum enforces all enum values be present' . "\n" .
         "lcov_excl_br_line=${strBranchFilter}\n" .
         "\n" .
