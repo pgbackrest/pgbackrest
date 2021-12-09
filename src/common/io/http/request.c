@@ -252,7 +252,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     // Output path/query
     strCatZ(error, ":\n*** Path/Query ***:");
 
-    strCatFmt(error, "\n%s", strZ(httpRequestPath(this)));
+    strCatFmt(error, "\n%s %s", strZ(httpRequestVerb(this)), strZ(httpRequestPath(this)));
 
     if (httpRequestQuery(this) != NULL)
         strCatFmt(error, "?%s", strZ(httpQueryRenderP(httpRequestQuery(this), .redact = true)));

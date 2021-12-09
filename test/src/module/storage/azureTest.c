@@ -373,7 +373,7 @@ testRun(void)
                     ioReadOpen(storageReadIo(read)), ProtocolError,
                     "HTTP request failed with 303:\n"
                     "*** Path/Query ***:\n"
-                    "/account/container/file.txt\n"
+                    "GET /account/container/file.txt\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 0\n"
@@ -396,7 +396,7 @@ testRun(void)
                     storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
                     "HTTP request failed with 403 (Forbidden):\n"
                     "*** Path/Query ***:\n"
-                    "/account/container/file.txt\n"
+                    "PUT /account/container/file.txt\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 4\n"
@@ -780,7 +780,7 @@ testRun(void)
                     storagePathRemoveP(storage, STRDEF("/"), .recurse = true), ProtocolError,
                     "HTTP request failed with 403 (Forbidden):\n"
                     "*** Path/Query ***:\n"
-                    "/account/container?comp=list&restype=container&sig=<redacted>\n"
+                    "GET /account/container?comp=list&restype=container&sig=<redacted>\n"
                     "*** Request Headers ***:\n"
                     "content-length: 0\n"
                     "host: %s",
