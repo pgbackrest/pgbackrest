@@ -366,8 +366,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("socket client"))
+    if (testBegin("SocketClient"))
     {
+        // This test must be done here because the problem with variables being clobbered after a long jump is only present in
+        // optimized builds, so the unit test will not notice if the volatile keyword goes missing in sckClientOpen(). Since the
+        // performance tests are built with optimization is it more likely to be caught here.
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create socket with error to check for leaks");
 
