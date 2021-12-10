@@ -8,15 +8,19 @@ These starting values can then be scaled up for profiling and stress testing as 
 running out of memory on the test systems or taking an undue amount of time.  It should be noted that in this context scaling to
 1000 is nowhere near turning it up to 11.
 ***********************************************************************************************************************************/
+#include <unistd.h>
+
 #include "common/ini.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/socket/client.h"
 #include "common/stat.h"
 #include "common/time.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
 #include "info/manifest.h"
 #include "postgres/version.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessInfo.h"
 #include "common/harnessStorage.h"
@@ -359,6 +363,22 @@ testRun(void)
                 varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal,
                 strZ(strNewFmt("check stat %u", statIdx)));
         }
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("socket client"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create socket with error to check for leaks");
+
+        const Storage *const storageFd = storagePosixNewP(strNewFmt("/proc/%d/fd", getpid()));
+        unsigned int fdBefore = strLstSize(storageListP(storageFd, NULL));
+
+        TEST_ERROR(
+            ioClientOpen(sckClientNew(STRDEF("172.31.255.255"), 7777, 0, 0)), HostConnectError,
+            "timeout connecting to '172.31.255.255:7777'");
+
+        TEST_RESULT_UINT(strLstSize(storageListP(storageFd, NULL)), fdBefore, "socket was freed");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
