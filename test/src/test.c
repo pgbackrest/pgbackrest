@@ -17,7 +17,6 @@ the includes which are required for the test code.
 /***********************************************************************************************************************************
 The test code is included directly so it can freely interact with the included C files
 ***********************************************************************************************************************************/
-// #include <dirent.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -134,38 +133,6 @@ main - run the tests
 int
 main(int argListSize, const char *argList[])
 {
-    // {
-    //     char buffer[1024];
-    //     sprintf(buffer, "/proc/%d/fd", getpid());
-
-    //     DIR *dir = opendir(buffer);
-
-    //     if (dir == NULL)
-    //         exit(5);
-
-    //     char dirFd[1024];
-    //     sprintf(dirFd, "%d", dirfd(dir));
-
-    //     struct dirent *dirEntry = readdir(dir);
-    //     unsigned int dirTotal = 0;
-
-    //     while (dirEntry != NULL)
-    //     {
-    //         if (strcmp(dirEntry->d_name, ".") != 0 && strcmp(dirEntry->d_name, "..") != 0 && strcmp(dirEntry->d_name, dirFd) != 0)
-    //         {
-    //             printf("DIR %s\n", dirEntry->d_name);
-    //             dirTotal++;
-    //         }
-
-    //         dirEntry = readdir(dir);
-    //     }
-
-    //     printf("HANDLES OPEN %u\n", dirTotal);
-    //     fflush(stdout);
-
-    //     closedir(dir);
-    // }
-
     // Basic sanity test on input parameters
     if (argListSize == 0 || argList[0] == NULL)
     {
@@ -297,38 +264,6 @@ main(int argListSize, const char *argList[])
 #endif
     TRY_END();
 #endif
-
-    // {
-    //     char buffer[1024];
-    //     sprintf(buffer, "/proc/%d/fd", getpid());
-
-    //     DIR *dir = opendir(buffer);
-
-    //     if (dir == NULL)
-    //         exit(5);
-
-    //     char dirFd[1024];
-    //     sprintf(dirFd, "%d", dirfd(dir));
-
-    //     struct dirent *dirEntry = readdir(dir);
-    //     unsigned int dirTotal = 0;
-
-    //     while (dirEntry != NULL)
-    //     {
-    //         if (strcmp(dirEntry->d_name, ".") != 0 && strcmp(dirEntry->d_name, "..") != 0 && strcmp(dirEntry->d_name, dirFd) != 0)
-    //         {
-    //             printf("DIR %s\n", dirEntry->d_name);
-    //             dirTotal++;
-    //         }
-
-    //         dirEntry = readdir(dir);
-    //     }
-
-    //     printf("HANDLES OPEN %u\n", dirTotal);
-    //     fflush(stdout);
-
-    //     closedir(dir);
-    // }
 
     FUNCTION_HARNESS_RETURN(INT, result);
 }
