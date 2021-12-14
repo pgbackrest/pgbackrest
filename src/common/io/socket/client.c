@@ -78,7 +78,7 @@ sckClientOpen(THIS_VOID)
         {
             // Assume there will be no retry
             retry = false;
-            int fd = -1;
+            volatile int fd = -1;
 
             TRY_BEGIN()
             {
