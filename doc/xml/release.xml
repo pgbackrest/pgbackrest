@@ -20,6 +20,34 @@
                     <p><b>IMPORTANT NOTE</b>: If the <cmd>restore</cmd> command is unable to find a backup that matches a specified time target then an error will be thrown, whereas before a warning was logged.</p>
                 </text>
 
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1588"/>
+                        <github-pull-request id="1589"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="younes.alhroub"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <cmd>restore</cmd> delta link mapping when path/file already exists.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1593"/>
+                        <github-pull-request id="1594"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="james.coleman"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix socket leak on connection retries.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <github-issue id="1537"/>
