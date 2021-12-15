@@ -34,9 +34,9 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
     // Set the appended or default port
     unsigned int port = httpUrlPort(url);
 
-    const String *host = NULL;
 
     // If host was specified then use it and port if appended
+    const String *host = NULL;
     if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
     {
         const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
