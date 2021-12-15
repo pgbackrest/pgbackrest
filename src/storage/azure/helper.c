@@ -44,7 +44,6 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
     // If port was specified, overwrite the parsed/default port
     if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
         port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
-LOG_DEBUG_FMT("jrt uriStyle = %u", uriStyle);
 
     Storage *const result = storageAzureNew(
         cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
