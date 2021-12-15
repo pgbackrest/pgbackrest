@@ -400,7 +400,7 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="setup-ssh-intro">
-        <p><backrest/> requires passwordless SSH to enable communication between the hosts.</p>
+        <p><backrest/> can use passwordless SSH to enable communication between the hosts. It is also possible to use TLS, see <link url="user-guide-rhel.html#repo-host/setup-tls">Setup TLS</link>.</p>
     </block-define>
 
     <block-define id="setup-tls">
@@ -2521,15 +2521,15 @@
         <section if="{[protocol-tls]}" id="setup-tls">
             <title>Setup TLS Server</title>
 
-            <p>!!!</p>
+            <p><backrest/> can use TLS with client certificates to enable communication between the hosts. It is also possible to use SSH, see <link url="user-guide.html#repo-host/setup-ssh">Setup SSH</link>.</p>
+
+            <p><backrest/> expects client/server certificates to be generated in the same way as <postgres/>. See <link url="https://www.postgresql.org/docs/current/ssl-tcp.html#SSL-CERTIFICATE-CREATION">TLS Certificate Creation</link> for detailed instructions on generating certificates.</p>
 
             <block if="{[protocol-tls]}" id="setup-tls">
                 <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="setup-tls-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="setup-tls-group">{[br-group]}</block-variable-replace>
             </block>
-
-            <p>!!!</p>
 
             <block if="{[protocol-tls]}" id="setup-tls">
                 <block-variable-replace key="setup-tls-host">{[host-pg1]}</block-variable-replace>
@@ -2821,8 +2821,6 @@
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
-
-            <p>!!!</p>
 
             <block if="{[protocol-tls]}" id="setup-tls">
                 <block-variable-replace key="setup-tls-host">{[host-pg2]}</block-variable-replace>
