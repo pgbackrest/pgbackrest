@@ -400,7 +400,7 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="setup-ssh-intro">
-        <p><backrest/> can use passwordless SSH to enable communication between the hosts. It is also possible to use TLS, see <link url="user-guide-rhel.html#repo-host/setup-tls">Setup TLS</link>.</p>
+        <p><backrest/> can use passwordless SSH to enable communication between the hosts. It is also possible to use TLS, see <link url="user-guide-rhel.html#repo-host/config">Setup TLS</link>.</p>
     </block-define>
 
     <block-define id="setup-tls">
@@ -2373,9 +2373,48 @@
             </block>
         </section>
 
+        <section if="{[protocol-ssh]}" id="setup-ssh">
+            <title>Setup Passwordless SSH</title>
+
+            <block id="setup-ssh-intro">
+                <!-- ??? Bogus variable is set because the syntax currently requires at least one -->
+                <block-variable-replace key="bogus"></block-variable-replace>
+            </block>
+
+            <execute-list host="{[host-repo1]}">
+                <title>Create <host>{[host-repo1]}</host> host key pair</title>
+
+                <execute user="{[br-user]}">
+                    <exe-cmd>mkdir -m 750 {[br-home-path]}/.ssh</exe-cmd>
+                </execute>
+                <execute user="{[br-user]}">
+                    <exe-cmd>ssh-keygen -f {[br-home-path]}/.ssh/id_rsa
+                        -t rsa -b 4096 -N ""</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <block id="setup-ssh">
+                <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user-home-path">{[pg-home-path]}</block-variable-replace>
+            </block>
+
+            <admonition type="note">ssh has been configured to only allow <backrest/> to be run via passwordless ssh.  This enhances security in the event that one of the service accounts is hijacked.</admonition>
+
+            <!-- <block if="{[pg-version]} >= 11" id="setup-ssh">
+                <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user">pgbackrest</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user-home-path">{[br-home-path]}</block-variable-replace>
+            </block> -->
+        </section>
+
         <!-- SECTION => REPOSITORY HOST - INSTALL/CONFIGURE -->
         <section id="config">
             <title>Configuration</title>
+
+            <p if="{[protocol-tls]}"><backrest/> can use TLS with client certificates to enable communication between the hosts. It is also possible to use SSH, see <link url="user-guide.html#repo-host/setup-ssh">Setup SSH</link>.</p>
+
+            <p if="{[protocol-tls]}"><backrest/> expects client/server certificates to be generated in the same way as <postgres/>. See <link url="https://www.postgresql.org/docs/current/ssl-tcp.html">Secure TCP/IP Connections with TLS</link> for detailed instructions on generating certificates.</p>
 
             <backrest-config host="{[host-repo1]}" show="n" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
                 <title>Configure the <backrest/> repository path</title>
@@ -2416,6 +2455,7 @@
                 <title>Configure <br-option>repo1-host</br-option>/<br-option>repo1-host-user</br-option></title>
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
+
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
 
                 <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-type">tls</backrest-config-option>
@@ -2483,47 +2523,10 @@
             </block>
         </section>
 
-        <section if="{[protocol-ssh]}" id="setup-ssh">
-            <title>Setup Passwordless SSH</title>
-
-            <block id="setup-ssh-intro">
-                <!-- ??? Bogus variable is set because the syntax currently requires at least one -->
-                <block-variable-replace key="bogus"></block-variable-replace>
-            </block>
-
-            <execute-list host="{[host-repo1]}">
-                <title>Create <host>{[host-repo1]}</host> host key pair</title>
-
-                <execute user="{[br-user]}">
-                    <exe-cmd>mkdir -m 750 {[br-home-path]}/.ssh</exe-cmd>
-                </execute>
-                <execute user="{[br-user]}">
-                    <exe-cmd>ssh-keygen -f {[br-home-path]}/.ssh/id_rsa
-                        -t rsa -b 4096 -N ""</exe-cmd>
-                </execute>
-            </execute-list>
-
-            <block id="setup-ssh">
-                <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
-                <block-variable-replace key="setup-ssh-user">postgres</block-variable-replace>
-                <block-variable-replace key="setup-ssh-user-home-path">{[pg-home-path]}</block-variable-replace>
-            </block>
-
-            <admonition type="note">ssh has been configured to only allow <backrest/> to be run via passwordless ssh.  This enhances security in the event that one of the service accounts is hijacked.</admonition>
-
-            <!-- <block if="{[pg-version]} >= 11" id="setup-ssh">
-                <block-variable-replace key="setup-ssh-host">{[host-pg1]}</block-variable-replace>
-                <block-variable-replace key="setup-ssh-user">pgbackrest</block-variable-replace>
-                <block-variable-replace key="setup-ssh-user-home-path">{[br-home-path]}</block-variable-replace>
-            </block> -->
-        </section>
-
         <section if="{[protocol-tls]}" id="setup-tls">
             <title>Setup TLS Server</title>
 
-            <p><backrest/> can use TLS with client certificates to enable communication between the hosts. It is also possible to use SSH, see <link url="user-guide.html#repo-host/setup-ssh">Setup SSH</link>.</p>
-
-            <p><backrest/> expects client/server certificates to be generated in the same way as <postgres/>. See <link url="https://www.postgresql.org/docs/current/ssl-tcp.html#SSL-CERTIFICATE-CREATION">TLS Certificate Creation</link> for detailed instructions on generating certificates.</p>
+            <p>The <backrest/> TLS server must be configured and started on each host.</p>
 
             <block if="{[protocol-tls]}" id="setup-tls">
                 <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
@@ -2803,6 +2806,7 @@
                 <title>Configure <backrest/> on the standby</title>
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
+
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
 
                 <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-type">tls</backrest-config-option>
