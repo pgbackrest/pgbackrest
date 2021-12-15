@@ -50,6 +50,26 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Rename server-start command to server."/>
+                        <commit subject="Add SIGTERM and SIGHUP handling to TLS server.">
+                            <github-pull-request id="1572"/>
+                        </commit>
+                        <commit subject="Add TLS server documention.">
+                            <github-pull-request id="1597"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="andrew.lecuyer"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <proper>TLS</proper> server.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1537"/>
                         <github-pull-request id="1540"/>
 
@@ -173,23 +193,6 @@
                 </release-improvement-list>
 
                 <release-development-list>
-                    <release-item>
-                        <commit subject="Rename server-start command to server."/>
-                        <commit subject="Add SIGTERM and SIGHUP handling to TLS server.">
-                            <github-pull-request id="1572"/>
-                        </commit>
-
-                        <release-item-contributor-list>
-                            <release-item-contributor id="david.steele"/>
-                            <release-item-reviewer id="stephen.frost"/>
-                            <release-item-reviewer id="reid.thompson"/>
-                            <!-- Actually tester, but we don't have a tag for that yet -->
-                            <release-item-reviewer id="andrew.lecuyer"/>
-                        </release-item-contributor-list>
-
-                        <p>Add <proper>TLS</proper> server.</p>
-                    </release-item>
-
                     <release-item>
                         <github-pull-request id="1549"/>
 
