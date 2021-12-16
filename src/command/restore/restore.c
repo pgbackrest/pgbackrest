@@ -923,7 +923,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         {
             const ManifestFile *manifestFile = manifestFileFindDefault(cleanData->manifest, manifestName, NULL);
 
-            if (manifestFile != NULL)
+            if (manifestFile != NULL && manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
             {
                 restoreCleanOwnership(pgPath, manifestFile->user, manifestFile->group, info->userId, info->groupId, false);
                 restoreCleanMode(pgPath, manifestFile->mode, info);
@@ -964,7 +964,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
         {
             const ManifestPath *manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
 
-            if (manifestPath != NULL)
+            if (manifestPath != NULL && manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
             {
                 // Check ownership/permissions
                 restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info->userId, info->groupId, false);
