@@ -22,7 +22,8 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
 
     ASSERT(cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == STORAGE_AZURE_TYPE);
 
-    HttpUrl *url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx), .type = httpProtocolTypeHttps);
+    // Parse the endpoint url
+    const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx), .type = httpProtocolTypeHttps);
     const String *endpoint = httpUrlHost(url);
     unsigned int port = httpUrlPort(url);
 
@@ -34,6 +35,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
     if (cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx) != NULL)
     {
         const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+
         endpoint = httpUrlHost(url);
         port = httpUrlPort(url);
 

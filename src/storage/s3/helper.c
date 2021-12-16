@@ -26,20 +26,17 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
     ASSERT(cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == STORAGE_S3_TYPE);
 
     // Parse the endpoint url
-    HttpUrl *url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeHttps);
-
-    // Set the endpoint
+    const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeHttps);
     const String *const endPoint = httpUrlHost(url);
-
-    // Set the appended or default port
     unsigned int port = httpUrlPort(url);
-
 
     // If host was specified then use it and port if appended
     const String *host = NULL;
+
     if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
     {
         const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+
         host = httpUrlHost(url);
         port = httpUrlPort(url);
     }
