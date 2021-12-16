@@ -30,7 +30,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
     const String *const endPoint = httpUrlHost(url);
     unsigned int port = httpUrlPort(url);
 
-    // If host was specified then use it and port if appended
+    // If host was specified then use it
     const String *host = NULL;
 
     if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
