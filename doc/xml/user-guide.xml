@@ -60,6 +60,10 @@
         <variable key="fake-cert-path-relative">resource/fake-cert</variable>
         <variable key="fake-cert-path">{[host-repo-path]}/doc/{[fake-cert-path-relative]}</variable>
 
+        <!-- Protocol type (ssh/tls) used for remotes -->
+        <variable key="protocol-ssh">'{[os-type]}' eq '{[os-debian]}'</variable>
+        <variable key="protocol-tls">'{[os-type]}' eq '{[os-rhel]}'</variable>
+
         <!-- Path where builds are performed -->
         <variable key="build-path">/build</variable>
         <variable key="build-br-path">{[build-path]}/pgbackrest-release-{[version]}</variable>
@@ -346,7 +350,7 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim findutils dnf-plugins-core 2>&amp;1
+        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core 2>&amp;1
 
         # Enable PowerTools repository (only available on RHEL8)
         RUN dnf config-manager --set-enabled powertools || true
@@ -396,7 +400,72 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="setup-ssh-intro">
-        <p><backrest/> requires passwordless SSH to enable communication between the hosts.</p>
+        <p><backrest/> can use passwordless SSH to enable communication between the hosts. It is also possible to use TLS, see <link url="user-guide-rhel.html#repo-host/config">Setup TLS</link>.</p>
+    </block-define>
+
+    <block-define id="setup-tls">
+        <execute-list host="{[setup-tls-host]}">
+            <title>Setup pgBackRest Server</title>
+
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>
+                    mkdir -p -m 770 /etc/pgbackrest/cert &amp;&amp;
+                    cp {[pgbackrest-repo-path]}/doc/{[fake-cert-path-relative]}/ca.crt
+                        /etc/pgbackrest/cert/ca.crt &amp;&amp;
+
+                    openssl genrsa -out /etc/pgbackrest/cert/server.key 2048 2>&amp;1 &amp;&amp;
+                    chmod 600 /etc/pgbackrest/cert/server.key &amp;&amp;
+                    openssl req -new -sha256 -nodes -out /etc/pgbackrest/cert/server.csr
+                        -key /etc/pgbackrest/cert/server.key -subj "/CN={[setup-tls-host]}" 2>&amp;1 &amp;&amp;
+                    openssl x509 -req -in /etc/pgbackrest/cert/server.csr
+                        -CA /etc/pgbackrest/cert/ca.crt
+                        -CAkey {[pgbackrest-repo-path]}/doc/{[fake-cert-path-relative]}/ca.key -CAcreateserial
+                        -out /etc/pgbackrest/cert/server.crt -days 9 2>&amp;1 &amp;&amp;
+
+                    openssl genrsa -out /etc/pgbackrest/cert/client.key 2048 2>&amp;1 &amp;&amp;
+                    chmod 600 /etc/pgbackrest/cert/client.key &amp;&amp;
+                    openssl req -new -sha256 -nodes -out /etc/pgbackrest/cert/client.csr
+                        -key /etc/pgbackrest/cert/client.key -subj "/CN=pgbackrest-client" 2>&amp;1 &amp;&amp;
+                    openssl x509 -req -in /etc/pgbackrest/cert/client.csr
+                        -CA /etc/pgbackrest/cert/ca.crt
+                        -CAkey {[pgbackrest-repo-path]}/doc/{[fake-cert-path-relative]}/ca.key -CAcreateserial
+                        -out /etc/pgbackrest/cert/client.crt -days 9 2>&amp;1 &amp;&amp;
+
+                    chown -R {[setup-tls-user]} /etc/pgbackrest/cert
+                </exe-cmd>
+            </execute>
+
+            <execute user="root" user-force="y" show="n">
+                <exe-cmd>
+                    echo '[Unit]' | tee /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'Description=pgBackRest Server' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'After=network.target' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'StartLimitIntervalSec=0' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo '[Service]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'Type=simple' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'Restart=always' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'RestartSec=1' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'User={[setup-tls-user]}' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'ExecStart=/usr/bin/pgbackrest server' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'ExecReload=kill -HUP $MAINPID' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo '[Install]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'WantedBy=multi-user.target' | tee -a /etc/systemd/system/pgbackrest.service
+                </exe-cmd>
+            </execute>
+            <execute user="root" output="y">
+                <exe-cmd>cat /etc/systemd/system/pgbackrest.service</exe-cmd>
+            </execute>
+
+            <execute user="root">
+                <exe-cmd>systemctl enable pgbackrest</exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+            <execute user="root">
+                <exe-cmd>systemctl start pgbackrest</exe-cmd>
+            </execute>
+        </execute-list>
     </block-define>
 
     <block-define id="setup-ssh">
@@ -2304,7 +2373,7 @@
             </block>
         </section>
 
-        <section id="setup-ssh">
+        <section if="{[protocol-ssh]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
@@ -2343,6 +2412,10 @@
         <section id="config">
             <title>Configuration</title>
 
+            <p if="{[protocol-tls]}"><backrest/> can use TLS with client certificates to enable communication between the hosts. It is also possible to use SSH, see <link url="user-guide.html#repo-host/setup-ssh">Setup SSH</link>.</p>
+
+            <p if="{[protocol-tls]}"><backrest/> expects client/server certificates to be generated in the same way as <postgres/>. See <link url="https://www.postgresql.org/docs/current/ssl-tcp.html">Secure TCP/IP Connections with TLS</link> for detailed instructions on generating certificates.</p>
+
             <backrest-config host="{[host-repo1]}" show="n" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
                 <title>Configure the <backrest/> repository path</title>
 
@@ -2357,6 +2430,17 @@
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
                 <backrest-config-option section="demo" key="pg1-host">{[host-pg1]}</backrest-config-option>
                 <!-- <backrest-config-option if="{[pg-version]} >= 11" section="demo" key="pg1-host-user">{[br-user]}</backrest-config-option> -->
+
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg1-host-type">tls</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-address">*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
@@ -2373,6 +2457,17 @@
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
 
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-type">tls</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-address">*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
@@ -2426,6 +2521,28 @@
                 <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
             </block>
+        </section>
+
+        <section if="{[protocol-tls]}" id="setup-tls">
+            <title>Setup TLS Server</title>
+
+            <p>The <backrest/> TLS server must be configured and started on each host.</p>
+
+            <block if="{[protocol-tls]}" id="setup-tls">
+                <block-variable-replace key="setup-tls-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-group">{[br-group]}</block-variable-replace>
+            </block>
+
+            <block if="{[protocol-tls]}" id="setup-tls">
+                <block-variable-replace key="setup-tls-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
+            </block>
+        </section>
+
+        <section id="stanza-create">
+            <title>Create and Check Stanza</title>
 
             <p if="!{[object-any-all]}">Create the stanza in the new repository.</p>
 
@@ -2656,7 +2773,7 @@
         </section>
 
         <!-- SECTION => REPLICATION - SETUP-SSH -->
-        <section id="setup-ssh">
+        <section if="{[protocol-ssh]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
 
             <block id="setup-ssh-intro">
@@ -2692,11 +2809,28 @@
 
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
 
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-type">tls</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-address">*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
+
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
+
+            <block if="{[protocol-tls]}" id="setup-tls">
+                <block-variable-replace key="setup-tls-host">{[host-pg2]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
+            </block>
 
             <p if="{[os-type-is-debian]}">The demo cluster must be created (even though it will be overwritten on restore) in order to create the <postgres/> configuration files.</p>
 
@@ -3162,7 +3296,12 @@
             <title>Configure <br-option>pg2-host</br-option>/<br-option>pg2-host-user</br-option> and <br-option>pg2-path</br-option></title>
 
             <backrest-config-option section="demo" key="pg2-path">{[pg-path]}</backrest-config-option>
+            <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg2-host-type">tls</backrest-config-option>
             <backrest-config-option section="demo" key="pg2-host">{[host-pg2]}</backrest-config-option>
+            <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg2-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+            <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg2-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+            <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg2-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+
             <!-- <backrest-config-option if="{[pg-version]} >= 11" section="demo"
                 key="pg2-host-user">{[br-user]}</backrest-config-option> -->
 

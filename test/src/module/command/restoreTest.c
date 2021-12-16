@@ -2712,6 +2712,14 @@ testRun(void)
         // Write recovery.conf so we don't get a preserve warning
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_RECOVERYCONF, "Some Settings");
 
+        // Covert pg_wal to a path so it will be removed
+        HRN_STORAGE_REMOVE(storagePgWrite(), "pg_wal");
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal");
+
+        // Covert pg_hba.conf to a path so it will be removed
+        HRN_STORAGE_REMOVE(storagePgWrite(), "pg_hba.conf");
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "pg_hba.conf", BOGUS_STR);
+
         // Update the manifest with online = true to test recovery start time logging
         manifest->pub.data.backupOptionOnline = true;
         manifest->pub.data.backupTimestampStart = 1482182958;
@@ -2740,10 +2748,14 @@ testRun(void)
             "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
             "P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/pg_hba.conf'\n"
+            "P00 DETAIL: remove invalid path '" TEST_PATH "/pg/pg_wal'\n"
             "P00 DETAIL: remove invalid link '" TEST_PATH "/pg/pg_xact'\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/wal'\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_10_201707211'\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_wal' to '../wal'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, 74%)"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"

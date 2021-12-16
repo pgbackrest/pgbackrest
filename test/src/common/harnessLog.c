@@ -426,6 +426,9 @@ harnessLogFinal(void)
     harnessLogLoad(logFile);
     hrnLogReplace();
 
+    // Close expect log file
+    close(logFdFile);
+
     if (strcmp(harnessLogBuffer, "") != 0)
         THROW_FMT(AssertError, "\n\nexpected log to be empty but actual log was:\n\n%s\n\n", harnessLogBuffer);
 
