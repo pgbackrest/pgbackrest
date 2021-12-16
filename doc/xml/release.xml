@@ -54,7 +54,7 @@
                         <commit subject="Add SIGTERM and SIGHUP handling to TLS server.">
                             <github-pull-request id="1572"/>
                         </commit>
-                        <commit subject="Add TLS server documention.">
+                        <commit subject="Add TLS server documentation.">
                             <github-pull-request id="1597"/>
                         </commit>
 
