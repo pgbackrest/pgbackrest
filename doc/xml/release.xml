@@ -136,6 +136,18 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1560"/>
+                        <github-pull-request id="1591"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Parse protocol/port in <proper>S3</proper>/<proper>Azure</proper> endpoints.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1564"/>
 
                         <release-item-contributor-list>
