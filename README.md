@@ -18,7 +18,7 @@ Utilizing multiple cores for compression makes it possible to achieve 1TB/hr raw
 
 ### Local or Remote Operation
 
-A custom protocol allows pgBackRest to backup, restore, and archive locally or remotely via SSH with minimal configuration. An interface to query PostgreSQL is also provided via the protocol layer so that remote access to PostgreSQL is never required, which enhances security.
+A custom protocol allows pgBackRest to backup, restore, and archive locally or remotely via TLS/SSH with minimal configuration. An interface to query PostgreSQL is also provided via the protocol layer so that remote access to PostgreSQL is never required, which enhances security.
 
 ### Multiple Repositories
 

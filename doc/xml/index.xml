@@ -50,7 +50,7 @@
         <section id="local-or-remote">
             <title>Local or Remote Operation</title>
 
-            <p>A custom protocol allows <backrest/> to backup, restore, and archive locally or remotely via SSH with minimal configuration.  An interface to query <postgres/> is also provided via the protocol layer so that remote access to <postgres/> is never required, which enhances security.</p>
+            <p>A custom protocol allows <backrest/> to backup, restore, and archive locally or remotely via TLS/SSH with minimal configuration. An interface to query <postgres/> is also provided via the protocol layer so that remote access to <postgres/> is never required, which enhances security.</p>
         </section>
 
         <section id="multi-repo">
