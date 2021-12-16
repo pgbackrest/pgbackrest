@@ -206,13 +206,157 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storage with host but force host-style uri");
 
-        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host");
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "https://test-host");
         hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStyleHost);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
         TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".test-host", "check host");
         TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "check path prefix");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with https protocol, appended port, uristylepath");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "https://test-host:443");
+        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStylePath);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, "test-host", "check host");
+        TEST_RESULT_STR_Z(
+            ((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_ACCOUNT "/" TEST_CONTAINER, "check path prefix");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with no protocol, appended port, uristylepath");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host:443");
+        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStylePath);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, "test-host", "check host");
+        TEST_RESULT_STR_Z(
+            ((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_ACCOUNT "/" TEST_CONTAINER, "check path prefix");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with https protocol, appended port, uristylehost");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "https://test-host:443");
+        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStyleHost);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".test-host", "check host");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "check path prefix");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with no protocol, appended port, uristylehost");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host:443");
+        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStyleHost);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".test-host", "check host");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "check path prefix");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with no protocol, with appended port, default uristyle ");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host:443");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, "test-host", "check host");
+        TEST_RESULT_STR_Z(
+            ((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_ACCOUNT "/" TEST_CONTAINER, "check path prefix");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with no protocol, specified port, uristylehost");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host");
+        hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", (const unsigned int) 443);
+        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStyleHost);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".test-host", "check host");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "check path prefix");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with no protocol, appended port, specified port");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host:8443");
+        hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", (const unsigned int) 8443);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, "test-host", "check host");
+        TEST_RESULT_STR_Z(
+            ((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_ACCOUNT "/" TEST_CONTAINER, "check path prefix");
     }
 
     // *****************************************************************************************************************************
@@ -302,8 +446,7 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-                hrnCfgArgRaw(argList, cfgOptRepoStorageHost, hrnServerHost());
-                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "https://%s:%u", strZ(hrnServerHost()), hrnServerPort(0));
                 hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
