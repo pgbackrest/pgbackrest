@@ -303,6 +303,11 @@ option:
     command:
       info: {}
       repo-ls: {}
+      verify:
+        default: none
+        allow-list:
+          - text
+          - none
     allow-list:
       - text
       - json
