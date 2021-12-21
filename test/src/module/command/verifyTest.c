@@ -1540,7 +1540,7 @@ testRun(void)
         // Set log detail level to capture ranges (there should be none)
         harnessLogLevelSet(logLevelDetail);
 
-        // Verify text output with no verify
+        // Verify text output with no verify errors
         unsigned int errorTotal = 0;
         String *result = NULL;
         result = verifyProcess(&errorTotal);
