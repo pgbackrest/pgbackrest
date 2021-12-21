@@ -1635,11 +1635,11 @@ verifyProcess(unsigned int *errorTotal)
 /***********************************************************************************************************************************
 Format the text result
 ***********************************************************************************************************************************/
-static const String *
-verifyOutputText(String *verifyresult)
+static String *
+verifyOutputText(const String *verifyresult)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM(STRING, verifyresult);                    // Pointer to overall job error total
+        FUNCTION_TEST_PARAM(STRING, verifyresult);                  // Result string from verifyProcess()
     FUNCTION_LOG_END();
 
     String *result = NULL;
