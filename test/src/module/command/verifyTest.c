@@ -891,7 +891,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdVerify(), verifyProcess() - errors"))
+    if (testBegin("cmdVerify(), verifyProcess(), verifyOutputText() - errors"))
     {
         //--------------------------------------------------------------------------------------------------------------------------
         // Load Parameters with multi-repo
@@ -1004,24 +1004,25 @@ testRun(void)
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("text output, valid info files, WAL files present, no backups");
+        TEST_TITLE("verifyOutputText(), text output, with verify failures");
 
         hrnCfgArgRawZ(argList, cfgOptOutput, "text");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         harnessLogLevelReset();
 
+        // Verify text output with verify failures
         errorTotal = 0;
         String *result = NULL;
-        result =verifyProcess(&errorTotal);
+        result = verifyProcess(&errorTotal);
         TEST_RESULT_STR_Z(
-            verifyOutputText(result),
+            verifyOutputText(result, &errorTotal),
             "Stanza: db\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
             "  backup: none found\n",
-            "verify text output");
+            "verify text output with failures");
 
         TEST_RESULT_LOG(
             "P00   WARN: no backups exist in the repo\n"
@@ -1063,16 +1064,17 @@ testRun(void)
                 "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("none output, valid info files, start next timeline");
+        TEST_TITLE("verifyOutputText(), none output, with verify failures");
 
         hrnCfgArgRawZ(argList, cfgOptOutput, "none");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         errorTotal = 0;
         result = NULL;
-        result =verifyProcess(&errorTotal);
+        result = verifyProcess(&errorTotal);
 
-        TEST_RESULT_STR_Z( verifyOutputText(result), "", "verify none output");
+        // Verify none output
+        TEST_RESULT_STR_Z(verifyOutputText(result, &errorTotal), "", "verify none output");
 
         TEST_RESULT_LOG(
             "P01  ERROR: [028]: invalid checksum "
@@ -1488,6 +1490,72 @@ testRun(void)
             "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
             "              backup: 20201119-163000F, status: valid, total files checked: 1, total valid files: 1\n"
             "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("verifyProcess(), verifyOutputText()"))
+    {
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Load Parameters with multi-repo
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // Store valid archive/backup info files
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "valid archive.info.copy");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyOutputText(), text output, with no verify failures");
+
+        #define TEST_NO_CURRENT_BACKUP                                                                                             \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "no current backups");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP, .comment = "no current backups copy");
+
+        // Create WAL file with just header info and small WAL size
+        Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
+        bufUsedSet(walBuffer, bufSize(walBuffer));
+        memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .size = 1024 * 1024}, walBuffer);
+        const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1)), walBuffer,
+            .comment = "valid WAL");
+
+        // Set log detail level to capture ranges (there should be none)
+        harnessLogLevelSet(logLevelDetail);
+
+        // Verify text output with no verify
+        unsigned int errorTotal = 0;
+        String *result = NULL;
+        result = verifyProcess(&errorTotal);
+        TEST_RESULT_STR_Z(
+            verifyOutputText(result, &errorTotal),
+            "Stanza: db\n"
+            "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: none found\n"
+            "Verify command completed successfully\n",
+            "verify text output with no failures");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: no backups exist in the repo\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFE, wal stop: 000000020000000700000FFE");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

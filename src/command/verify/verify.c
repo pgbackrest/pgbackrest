@@ -1636,7 +1636,7 @@ verifyProcess(unsigned int *errorTotal)
 Format the text result
 ***********************************************************************************************************************************/
 static String *
-verifyOutputText(const String *verifyresult)
+verifyOutputText(const String *verifyresult, const unsigned int *errorTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_TEST_PARAM(STRING, verifyresult);                  // Result string from verifyProcess()
@@ -1651,8 +1651,12 @@ verifyOutputText(const String *verifyresult)
         if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
         {
             strCat(resultStr, strNewFmt("Stanza: %s", strZ(cfgOptionStr(cfgOptStanza))));
-            strCat(resultStr, strSub(verifyresult, (unsigned int)strChr(verifyresult, ':') + 1));
-            strCat(resultStr, LF_STR);
+            strCatFmt(resultStr, "%s%s", strZ(strSub(verifyresult, (unsigned int)strChr(verifyresult, ':') + 1)), strZ(LF_STR));
+
+            if (*errorTotal == 0)
+            {
+                strCatFmt(resultStr, "%s%s", "Verify command completed successfully", strZ(LF_STR));
+            }
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -1682,7 +1686,7 @@ cmdVerify(void)
             LOG_INFO_FMT("%s", strZ(result));
 
         // Output results to console if requested
-        ioFdWriteOneStr(STDOUT_FILENO, verifyOutputText(result));
+        ioFdWriteOneStr(STDOUT_FILENO, verifyOutputText(result, &errorTotal));
 
         // Throw an error if any encountered
         if (errorTotal > 0)
