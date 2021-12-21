@@ -41,6 +41,7 @@ VARIANT_STRDEF_STATIC(BACKUP_KEY_DATABASE_REF_VAR,                  "database-re
 VARIANT_STRDEF_STATIC(BACKUP_KEY_INFO_VAR,                          "info");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LABEL_VAR,                         "label");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LINK_VAR,                          "link");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_LSN_VAR,                           "lsn");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_PRIOR_VAR,                         "prior");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_REFERENCE_VAR,                     "reference");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_TABLESPACE_VAR,                    "tablespace");
@@ -453,6 +454,11 @@ backupListAdd(
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
     if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
     {
+        // Add start/stop backup lsn info
+        KeyValue *lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
+        kvPut(lsnInfo, KEY_START_VAR, (backupData->backupLsnStart != NULL ? VARSTR(backupData->backupLsnStart) : NULL));
+        kvPut(lsnInfo, KEY_STOP_VAR, (backupData->backupLsnStart != NULL ? VARSTR(backupData->backupLsnStart) : NULL));
+
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
 
@@ -820,6 +826,19 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         }
         else
             strCatZ(resultStr, "n/a\n");
+
+        if (kvGet(backupInfo, BACKUP_KEY_LSN_VAR) != NULL)
+        {
+            KeyValue *lsnInfo = varKv(kvGet(backupInfo, BACKUP_KEY_LSN_VAR));
+
+            if (kvGet(lsnInfo, KEY_START_VAR) != NULL && kvGet(lsnInfo, KEY_STOP_VAR) != NULL)
+            {
+                strCatFmt(
+                    resultStr, "            lsn start/stop: %s / %s\n",
+                    strZ(varStr(kvGet(lsnInfo, KEY_START_VAR))),
+                    strZ(varStr(kvGet(lsnInfo, KEY_STOP_VAR))));
+            }
+        }
 
         KeyValue *info = varKv(kvGet(backupInfo, BACKUP_KEY_INFO_VAR));
 
