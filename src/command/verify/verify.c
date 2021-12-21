@@ -1632,6 +1632,40 @@ verifyProcess(unsigned int *errorTotal)
     FUNCTION_LOG_RETURN(STRING, result);
 }
 
+/***********************************************************************************************************************************
+Format the text result
+***********************************************************************************************************************************/
+static const String *
+verifyOutputText(String *verifyresult)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_TEST_PARAM(STRING, verifyresult);                    // Pointer to overall job error total
+    FUNCTION_LOG_END();
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *resultStr = strNew();
+
+        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
+        {
+            strCat(resultStr, strNewFmt("Stanza: %s", strZ(cfgOptionStr(cfgOptStanza))));
+            strCat(resultStr, strSub(verifyresult, (unsigned int)strChr(verifyresult, ':') + 1));
+            strCat(resultStr, LF_STR);
+        }
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(resultStr) ;
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
 /**********************************************************************************************************************************/
 void
 cmdVerify(void)
@@ -1646,6 +1680,9 @@ cmdVerify(void)
         // Output results if any
         if (strSize(result) > 0)
             LOG_INFO_FMT("%s", strZ(result));
+
+        // Output results to console if requested
+        ioFdWriteOneStr(STDOUT_FILENO, verifyOutputText(result));
 
         // Throw an error if any encountered
         if (errorTotal > 0)

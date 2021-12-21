@@ -1004,6 +1004,35 @@ testRun(void)
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("text output, valid info files, WAL files present, no backups");
+
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        harnessLogLevelReset();
+
+        errorTotal = 0;
+        String *result = NULL;
+        result =verifyProcess(&errorTotal);
+        TEST_RESULT_STR_Z(
+            verifyOutputText(result),
+            "Stanza: db\n"
+            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
+            "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
+            "  backup: none found\n",
+            "verify text output");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: no backups exist in the repo\n"
+            "P00   WARN: archive path '9.4-1' is empty\n"
+            "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
+            "P01  ERROR: [028]: invalid checksum "
+                "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01  ERROR: [028]: invalid size "
+                "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
+
+        //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, start next timeline");
 
         // Load Parameters - single default repo
@@ -1027,6 +1056,24 @@ testRun(void)
         harnessLogLevelSet(logLevelError);
 
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
+        TEST_RESULT_LOG(
+            "P01  ERROR: [028]: invalid checksum "
+                "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01  ERROR: [028]: invalid size "
+                "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("none output, valid info files, start next timeline");
+
+        hrnCfgArgRawZ(argList, cfgOptOutput, "none");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        errorTotal = 0;
+        result = NULL;
+        result =verifyProcess(&errorTotal);
+
+        TEST_RESULT_STR_Z( verifyOutputText(result), "", "verify none output");
+
         TEST_RESULT_LOG(
             "P01  ERROR: [028]: invalid checksum "
                 "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
