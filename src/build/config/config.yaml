@@ -151,7 +151,6 @@ command:
     command-role:
       local: {}
       remote: {}
-    internal: true
 
   version:
     log-file: false
