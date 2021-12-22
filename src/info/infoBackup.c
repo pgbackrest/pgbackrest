@@ -248,8 +248,11 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
 
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR, VARSTR(backupData.backupArchiveStart));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR, VARSTR(backupData.backupArchiveStop));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_LSN_START_VAR, VARSTR(backupData.backupLsnStart));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR, VARSTR(backupData.backupLsnStop));
+
+            if (backupData.backupLsnStart != NULL)
+                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_LSN_START_VAR, VARSTR(backupData.backupLsnStart));
+            if (backupData.backupLsnStop != NULL)
+                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR, VARSTR(backupData.backupLsnStop));
 
             if (backupData.backupPrior != NULL)
                 kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR, VARSTR(backupData.backupPrior));

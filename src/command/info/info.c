@@ -457,7 +457,7 @@ backupListAdd(
         // Add start/stop backup lsn info
         KeyValue *lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
         kvPut(lsnInfo, KEY_START_VAR, (backupData->backupLsnStart != NULL ? VARSTR(backupData->backupLsnStart) : NULL));
-        kvPut(lsnInfo, KEY_STOP_VAR, (backupData->backupLsnStart != NULL ? VARSTR(backupData->backupLsnStart) : NULL));
+        kvPut(lsnInfo, KEY_STOP_VAR, (backupData->backupLsnStop != NULL ? VARSTR(backupData->backupLsnStop) : NULL));
 
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
