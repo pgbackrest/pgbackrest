@@ -740,8 +740,7 @@ sub run
         # it does not seem worth the effort to automate.
         $oHostDbPrimary->restore(
             undef, $strIncrBackup,
-            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_STANDBY : CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                strTargetTimeline => 4, iRepo => $iRepoTotal});
+            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_STANDBY, strTargetTimeline => 4, iRepo => $iRepoTotal});
 
         $oHostDbPrimary->clusterStart({bHotStandby => true});
         $oHostDbPrimary->sqlSelectOneTest('select message from test', $strTimelineMessage, {iTimeout => 120});
