@@ -99,8 +99,7 @@ sub dbFileCreate
     # Get tablespace path if this is a tablespace
     my $strPgPath;
 
-    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90 &&
-        index($strTarget, DB_PATH_PGTBLSPC . '/') == 0)
+    if (index($strTarget, DB_PATH_PGTBLSPC . '/') == 0)
     {
         my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
 
@@ -185,9 +184,8 @@ sub manifestDbPathGet
     # Determine the manifest key
     my $strDbPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_PATH};
 
-    # If target is a tablespace and pg version >= 9.0
-    if (defined(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_TABLESPACE_ID}) &&
-        $$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90)
+    # If target is a tablespace
+    if (defined(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_TABLESPACE_ID}))
     {
         my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
 
@@ -299,9 +297,8 @@ sub manifestKeyGet
     # Determine the manifest key
     my $strManifestKey = $strTarget;
 
-    # If target is a tablespace and pg version >= 9.0
-    if (defined(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_TABLESPACE_ID}) &&
-        $$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90)
+    # If target is a tablespace
+    if (defined(${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_TABLESPACE_ID}))
     {
         my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
 
@@ -566,15 +563,11 @@ sub manifestTablespaceCreate
     # Create the tablespace path if it does not exist
     my $strTablespacePath = $strLinkPath;
     my $strPathTarget = $strTarget;
+    my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
+    my $strTablespaceId = 'PG_' . ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} . "_${iCatalog}";
 
-    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90)
-    {
-        my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
-        my $strTablespaceId = 'PG_' . ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} . "_${iCatalog}";
-
-        $strTablespacePath .= "/${strTablespaceId}";
-        $strPathTarget .= "/${strTablespaceId}";
-    }
+    $strTablespacePath .= "/${strTablespaceId}";
+    $strPathTarget .= "/${strTablespaceId}";
 
     if (!-e $strTablespacePath)
     {
@@ -666,8 +659,7 @@ sub dbPathCreate
     my $strFinalPath = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget}{&MANIFEST_SUBKEY_PATH};
 
     # Get tablespace path if this is a tablespace
-    if ($$oManifestRef{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} >= PG_VERSION_90 &&
-        index($strTarget, DB_PATH_PGTBLSPC . '/') == 0)
+    if (index($strTarget, DB_PATH_PGTBLSPC . '/') == 0)
     {
         my $iCatalog = ${$oManifestRef}{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_CATALOG};
 

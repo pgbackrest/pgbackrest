@@ -1090,28 +1090,6 @@ testRun(void)
             "HINT: is this the correct stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("reset start-fast when PostgreSQL < 8.4");
-
-        // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_83);
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        hrnCfgArgRawBool(argList, cfgOptOnline, false);
-        hrnCfgArgRawBool(argList, cfgOptStartFast, true);
-        HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-        TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_83, HRN_PG_SYSTEMID_83, hrnPgCatalogVersion(PG_VERSION_83), NULL)),
-            "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "check start-fast");
-
-        TEST_RESULT_LOG("P00   WARN: start-fast option is only available in PostgreSQL >= 8.4");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reset stop-auto when PostgreSQL < 9.3");
 
         // Create pg_control

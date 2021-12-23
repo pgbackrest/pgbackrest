@@ -167,20 +167,6 @@ static const HrnPgInterface hrnPgInterface[] =
         .control = hrnPgInterfaceControl090,
         .wal = hrnPgInterfaceWal090,
     },
-    {
-        .version = PG_VERSION_84,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion084,
-        .control = hrnPgInterfaceControl084,
-        .wal = hrnPgInterfaceWal084,
-    },
-    {
-        .version = PG_VERSION_83,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion083,
-        .control = hrnPgInterfaceControl083,
-        .wal = hrnPgInterfaceWal083,
-    },
 };
 
 /***********************************************************************************************************************************

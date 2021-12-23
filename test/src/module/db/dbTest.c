@@ -257,45 +257,6 @@ testRun(void)
             "            HINT: is the pg_read_all_settings role assigned for PostgreSQL >= 10?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("PostgreSQL 8.3 start backup with no start fast");
-
-        harnessPqScriptSet((HarnessPq [])
-        {
-            // Connect to primary
-            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='backupdb' port=5432", PG_VERSION_83, TEST_PATH "/pg1", NULL, NULL),
-
-            // Get advisory lock
-            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-
-            // Start backup with no start fast
-            HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000100000001"),
-            HRNPQ_MACRO_START_BACKUP_83(1, "1/1", "000000010000000100000001"),
-
-            // Ping
-            HRNPQ_MACRO_TIME_QUERY(1, 0),
-
-            // Close primary
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
-
-        DbGetResult db = {0};
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
-
-        TEST_RESULT_UINT(dbDbTimeout(db.primary), 888000, "check timeout");
-        TEST_RESULT_UINT(dbPgControl(db.primary).timeline, 1, "check timeline");
-
-        DbBackupStartResult backupStartResult = {0};
-        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
-        TEST_RESULT_STR_Z(backupStartResult.lsn, "1/1", "start backup");
-        TEST_RESULT_PTR(backupStartResult.walSegmentCheck, NULL, "WAL segment check");
-
-        TEST_RESULT_VOID(dbPing(db.primary, false), "ping cluster");
-
-        TEST_RESULT_VOID(dbFree(db.primary), "free primary");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.5 start/stop backup");
 
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_93, .checkpoint = pgLsnFromStr(STRDEF("2/3")));

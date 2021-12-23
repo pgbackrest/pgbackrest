@@ -291,8 +291,7 @@ dbOpen(Db *this)
         MEM_CONTEXT_END();
 
         // Set application name to help identify the backup session
-        if (dbPgVersion(this) >= PG_VERSION_APPLICATION_NAME)
-            dbExec(this, strNewFmt("set application_name = '%s'", strZ(this->applicationName)));
+        dbExec(this, strNewFmt("set application_name = '%s'", strZ(this->applicationName)));
 
         // There is no need to have parallelism enabled in a backup session. In particular, 9.6 marks pg_stop_backup() as
         // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
@@ -334,7 +333,7 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
         strCatFmt(result, ", " TRUE_Z);
     }
     // Else start backup at the next scheduled checkpoint
-    else if (pgVersion >= PG_VERSION_84)
+    else
         strCatFmt(result, ", " FALSE_Z);
 
     // Use non-exclusive backup mode when available
@@ -729,27 +728,21 @@ dbPing(Db *const this, const bool force)
 
         if (force || timeNow - this->pingTimeLast > DB_PING_SEC)
         {
-            // Make sure recovery state has not changed for versions that support recovery
-            if (dbPgVersion(this) >= PG_VERSION_90)
+            // Make sure recovery state has not changed
+            if (dbIsInRecovery(this) != dbIsStandby(this))
             {
-                if (dbIsInRecovery(this) != dbIsStandby(this))
+                // If this is the standby then it must have been promoted
+                if (dbIsStandby(this))
                 {
-                    // If this is the standby then it must have been promoted
-                    if (dbIsStandby(this))
-                    {
-                        THROW(
-                            DbMismatchError,
-                            "standby is no longer is recovery\n"
-                            "HINT: was the standby promoted during the backup?");
-                    }
-                    // Else if a primary then something has gone seriously wrong
-                    else
-                        THROW(AssertError, "primary has switched to recovery");
+                    THROW(
+                        DbMismatchError,
+                        "standby is no longer is recovery\n"
+                        "HINT: was the standby promoted during the backup?");
                 }
+                // Else if a primary then something has gone seriously wrong
+                else
+                    THROW(AssertError, "primary has switched to recovery");
             }
-            // Else just make sure the cluster is still running
-            else
-                dbTimeMSec(this);
 
             this->pingTimeLast = timeNow;
         }

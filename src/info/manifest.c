@@ -700,7 +700,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 }
 
                 // Skip pg_notify/* since these files cannot be reused on recovery
-                if (strEqZ(info->name, PG_PATH_PGNOTIFY) && pgVersion >= PG_VERSION_90)
+                if (strEqZ(info->name, PG_PATH_PGNOTIFY))
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
@@ -729,7 +729,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
                 // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
                 // created there
-                if (strEqZ(info->name, PG_PATH_PGSTATTMP) && pgVersion >= PG_VERSION_84)
+                if (strEqZ(info->name, PG_PATH_PGSTATTMP) && pgVersion)
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
@@ -781,7 +781,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             // the creating process id as the extension can exist so skip that as well.  This seems to be a bug in PostgreSQL since
             // the temp file should be removed on startup.  Use regExpMatchOne() here instead of preparing a regexp in advance since
             // the likelihood of needing the regexp should be very small.
-            if ((pgVersion <= PG_VERSION_84 || buildData.dbPath) && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
+            if (buildData.dbPath && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
                 (strSize(info->name) == sizeof(PG_FILE_PGINTERNALINIT) - 1 ||
                     regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1))))
             {
@@ -1092,19 +1092,15 @@ manifestNewBuild(
                 .pgPath = storagePathP(storagePg, NULL),
             };
 
-            // We won't identify db paths for PostgreSQL < 9.0.  This means that temp relations will not be excluded but it doesn't
-            // seem worth supporting this feature on such old versions of PostgreSQL.
+            // Build expressions to identify databases paths and temp relations
             // ---------------------------------------------------------------------------------------------------------------------
-            if (pgVersion >= PG_VERSION_90)
-            {
-                ASSERT(buildData.tablespaceId != NULL);
+            ASSERT(buildData.tablespaceId != NULL);
 
-                // Expression to identify database paths
-                buildData.dbPathExp = regExpNew(strNewFmt("^" DB_PATH_EXP "$", strZ(buildData.tablespaceId)));
+            // Expression to identify database paths
+            buildData.dbPathExp = regExpNew(strNewFmt("^" DB_PATH_EXP "$", strZ(buildData.tablespaceId)));
 
-                // Expression to find temp relations
-                buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
-            }
+            // Expression to find temp relations
+            buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
 
             // Build expression to identify files that can be copied from the standby when standby backup is supported
             // ---------------------------------------------------------------------------------------------------------------------
