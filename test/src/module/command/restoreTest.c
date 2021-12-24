@@ -2292,7 +2292,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P00 DETAIL: sync path '/home/docker/test/test-0/pg/pg_tblspc/1/PG_9.0_201008051'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.0_201008051'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
             "P00   INFO: restore size = 8B, file total = 3");
