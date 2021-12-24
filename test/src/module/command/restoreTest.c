@@ -2032,35 +2032,11 @@ testRun(void)
                 storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_90_STR "\n",
                 .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
-            // pg_tblspc/1
-            manifestTargetAdd(
-                manifest, &(ManifestTarget){
-                    .type = manifestTargetTypeLink, .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"),
-                    .path = STRDEF(TEST_PATH "/ts/1"), .tablespaceId = 1, .tablespaceName = STRDEF("ts1")});
+            // pg_tblspc
             manifestPathAdd(
                 manifest, &(ManifestPath){
                     .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC), .mode = 0700, .group = groupName(),
                     .user = userName()});
-            manifestPathAdd(
-                manifest, &(ManifestPath){
-                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC), .mode = 0700, .group = groupName(), .user = userName()});
-            manifestPathAdd(
-                manifest, &(ManifestPath){
-                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"), .mode = 0700, .group = groupName(), .user = userName()});
-            manifestPathAdd(
-                manifest, &(ManifestPath){
-                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/PG_9.0_201008051"), .mode = 0700, .group = groupName(),
-                    .user = userName()});
-            manifestLinkAdd(
-                manifest, &(ManifestLink){
-                    .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/1"),
-                    .destination = STRDEF(TEST_PATH "/ts/1"), .group = groupName(), .user = userName()});
-
-            // pg_tblspc/1/16384 path
-            manifestPathAdd(
-                manifest, &(ManifestPath){
-                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384"), .mode = 0700,
-                    .group = groupName(), .user = userName()});
 
             // Always sort
             lstSort(manifest->pub.targetList, sortOrderAsc);
@@ -2111,18 +2087,12 @@ testRun(void)
             "            HINT: has a stanza-create been performed?\n"
             "P00   INFO: repo2: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
-            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.0_201008051' exists\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
-            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
-            "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100%%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
             "P00   INFO: write " TEST_PATH "/pg/recovery.conf\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.0_201008051'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
             "P00   INFO: restore size = 4B, file total = 1",
@@ -2136,14 +2106,7 @@ testRun(void)
             ". {path}\n"
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
-            "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n");
-
-        testRestoreCompare(
-            storagePg(), STRDEF("pg_tblspc/1"), manifest,
-            ". {link, d=" TEST_PATH "/ts/1}\n"
-            "16384 {path}\n"
-            "PG_9.0_201008051 {path}\n");
+            "pg_tblspc {path}\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with delta force");
@@ -2180,7 +2143,6 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "BOG\n", .modeFile = 0600, .timeModified = 1482182860);
 
         // Change destination of tablespace link
-        HRN_STORAGE_REMOVE(storagePgWrite(), "pg_tblspc/1", .errorOnMissing = true);
         THROW_ON_SYS_ERROR(
             symlink("/bogus", strZ(strNewFmt("%s/pg_tblspc/1", strZ(pgPath)))) == -1, FileOpenError,
             "unable to create symlink");
@@ -2194,6 +2156,32 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);
+
+            // pg_tblspc/1
+            manifestTargetAdd(
+                manifest, &(ManifestTarget){
+                    .type = manifestTargetTypeLink, .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"),
+                    .path = STRDEF(TEST_PATH "/ts/1"), .tablespaceId = 1, .tablespaceName = STRDEF("ts1")});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC), .mode = 0700, .group = groupName(), .user = userName()});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"), .mode = 0700, .group = groupName(), .user = userName()});
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/PG_9.0_201008051"), .mode = 0700, .group = groupName(),
+                    .user = userName()});
+            manifestLinkAdd(
+                manifest, &(ManifestLink){
+                    .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/1"),
+                    .destination = STRDEF(TEST_PATH "/ts/1"), .group = groupName(), .user = userName()});
+
+            // pg_tblspc/1/16384 path
+            manifestPathAdd(
+                manifest, &(ManifestPath){
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384"), .mode = 0700,
+                    .group = groupName(), .user = userName()});
 
             // pg_tblspc/1/16384/PG_VERSION
             manifestFileAdd(
@@ -2235,8 +2223,8 @@ testRun(void)
             "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/bogus-file'\n"
             "P00 DETAIL: remove link '" TEST_PATH "/pg/pg_tblspc/1' because destination changed\n"
             "P00 DETAIL: remove special file '" TEST_PATH "/pg/pipe'\n"
-            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_9.0_201008051'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
                 " (4B, 50%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
