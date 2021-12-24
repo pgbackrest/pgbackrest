@@ -337,7 +337,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
                 HRNPQ_MACRO_IS_IN_BACKUP(1, false),
-                HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_START_BACKUP_LE_95(1, param.startFast, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
@@ -372,7 +372,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
                 HRNPQ_MACRO_IS_IN_BACKUP(1, false),
                 HRNPQ_MACRO_CURRENT_WAL_LE_96(1, walSegmentPrior),
-                HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_START_BACKUP_LE_95(1, param.startFast, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 

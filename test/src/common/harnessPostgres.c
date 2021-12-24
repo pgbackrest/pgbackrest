@@ -11,14 +11,6 @@ Harness for PostgreSQL Interface
 /***********************************************************************************************************************************
 Interface definition
 ***********************************************************************************************************************************/
-uint32_t hrnPgInterfaceCatalogVersion083(void);
-void hrnPgInterfaceControl083(PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal083(PgWal pgWal, unsigned char *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion084(void);
-void hrnPgInterfaceControl084(PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal084(PgWal pgWal, unsigned char *buffer);
-
 uint32_t hrnPgInterfaceCatalogVersion090(void);
 void hrnPgInterfaceControl090(PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal090(PgWal pgWal, unsigned char *buffer);

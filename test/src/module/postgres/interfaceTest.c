@@ -28,7 +28,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_11), "11", "infoPgVersionToString 11");
         TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_96), "9.6", "infoPgVersionToString 9.6");
-        TEST_RESULT_STR_Z(pgVersionToStr(83456), "8.34", "infoPgVersionToString 83456");
+        TEST_RESULT_STR_Z(pgVersionToStr(93456), "9.34", "infoPgVersionToString 93456");
     }
 
     // *****************************************************************************************************************************
@@ -91,7 +91,7 @@ testRun(void)
             storageTest, PG_VERSION_90, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_90),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_90, "   check version");
         TEST_RESULT_UINT(info.catalogVersion, 201008051, "   check catalog version");
