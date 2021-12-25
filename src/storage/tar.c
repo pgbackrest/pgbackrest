@@ -113,7 +113,7 @@ tarHdrWriteU64(char *const field, unsigned int fieldSize, uint64_t value)
     FUNCTION_TEST_END();
 
     // Use octal with trailing space when there is enough space
-    if (value < (((uint64_t)1) << ((fieldSize - 1) * 3)))
+    if (value < (uint64_t)1 << (fieldSize - 1) * 3)
     {
         field[--fieldSize] = ' ';
 
@@ -130,7 +130,7 @@ tarHdrWriteU64(char *const field, unsigned int fieldSize, uint64_t value)
 
         while (fieldSize > 1)
         {
-            field[--fieldSize] = (value & 255);
+            field[--fieldSize] = (char)value;
             value >>= 8;
         }
     }
@@ -192,6 +192,7 @@ tarHdrNew(const TarHeaderNewParam param)
             tarHdrWriteU64(this->data.uid, TAR_HEADER_DATA_UID_SIZE, param.userId);
             tarHdrWriteU64(this->data.gid, TAR_HEADER_DATA_GID_SIZE, param.groupId);
 
+            (void)tarHdrReadU64; // !!!
 
             // /* Mod Time 12 */
             // print_tar_number(&h[136], 12, mtime);

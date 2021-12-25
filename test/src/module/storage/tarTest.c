@@ -59,6 +59,21 @@ testRun(void)
         TEST_RESULT_UINT(tarHdrReadU64(header->data.gid, TAR_HEADER_DATA_GID_SIZE), 777777777, "check data gid");
 
         TEST_RESULT_STR_Z(tarHdrToLog(header), "{name: test, size: 18446744073709551615}", "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("check range");
+
+        // char field[12];
+
+        // for (uint64_t idx = 0; idx < 1000000; idx++)
+        // {
+        //     memset(field, 0, sizeof(field));
+
+        //     tarHdrWriteU64(field, sizeof(field), idx);
+
+        //     if (tarHdrReadU64(field, sizeof(field)) != idx)
+        //         THROW_FMT(AssertError, "failed on %" PRIu64, idx);
+        // }
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
