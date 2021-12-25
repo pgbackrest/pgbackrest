@@ -173,7 +173,8 @@ SRCS = \
 	storage/s3/helper.c \
 	storage/s3/read.c \
 	storage/s3/storage.c \
-	storage/s3/write.c
+	storage/s3/write.c \
+	storage/tar.c
 
 ####################################################################################################################################
 # Compiler options
