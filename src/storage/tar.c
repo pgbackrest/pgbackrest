@@ -16,31 +16,42 @@ Adapted from PostgreSQL src/port/tar.c and https://www.gnu.org/software/tar/manu
 /***********************************************************************************************************************************
 Tar header data
 ***********************************************************************************************************************************/
-#define TAR_HEADER_DATA_NAME_SIZE                                   100
-#define TAR_HEADER_DATA_MODE_SIZE                                   8
-#define TAR_HEADER_DATA_UID_SIZE                                    8
-#define TAR_HEADER_DATA_GID_SIZE                                    8
-#define TAR_HEADER_DATA_SIZE_SIZE                                   12
-#define TAR_HEADER_DATA_MTIME_SIZE                                  12
+#define TAR_HEADER_NAME_SIZE                                        100
+#define TAR_HEADER_MODE_SIZE                                        8
+#define TAR_HEADER_UID_SIZE                                         8
+#define TAR_HEADER_GID_SIZE                                         8
+#define TAR_HEADER_SIZE_SIZE                                        12
+#define TAR_HEADER_MTIME_SIZE                                       12
+#define TAR_HEADER_VERSION_SIZE                                     2
+#define TAR_HEADER_UNAME_SIZE                                       32
+#define TAR_HEADER_GNAME_SIZE                                       32
+#define TAR_HEADER_DEVMAJOR_SIZE                                    8
+#define TAR_HEADER_DEVMINOR_SIZE                                    8
+
+#define TAR_HEADER_TYPEFLAG_FILE                                    '0'
+
+#define TAR_HEADER_MAGIC                                            "ustar"
+#define TAR_HEADER_VERSION                                          "00"
 
 typedef struct TarHeaderData
 {
-  char name[TAR_HEADER_DATA_NAME_SIZE];
-  char mode[TAR_HEADER_DATA_MODE_SIZE];
-  char uid[TAR_HEADER_DATA_UID_SIZE];
-  char gid[TAR_HEADER_DATA_GID_SIZE];
-  char size[TAR_HEADER_DATA_SIZE_SIZE];
-  char mtime[TAR_HEADER_DATA_MTIME_SIZE];
+  char name[TAR_HEADER_NAME_SIZE];
+  char mode[TAR_HEADER_MODE_SIZE];
+  char uid[TAR_HEADER_UID_SIZE];
+  char gid[TAR_HEADER_GID_SIZE];
+  char size[TAR_HEADER_SIZE_SIZE];
+  char mtime[TAR_HEADER_MTIME_SIZE];
   char chksum[8];
   char typeflag;
   char linkname[100];
   char magic[6];
-  char version[2];
-  char uname[32];
-  char gname[32];
-  char devmajor[8];
-  char devminor[8];
+  char version[TAR_HEADER_VERSION_SIZE];
+  char uname[TAR_HEADER_UNAME_SIZE];
+  char gname[TAR_HEADER_GNAME_SIZE];
+  char devmajor[TAR_HEADER_DEVMAJOR_SIZE];
+  char devminor[TAR_HEADER_DEVMINOR_SIZE];
   char prefix[155];
+  char padding[12];
 } TarHeaderData;
 
 /***********************************************************************************************************************************
@@ -174,70 +185,54 @@ tarHdrNew(const TarHeaderNewParam param)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Name
-            if (strSize(tarHdrName(this)) >= TAR_HEADER_DATA_NAME_SIZE)
+            if (strSize(tarHdrName(this)) >= TAR_HEADER_NAME_SIZE)
                 THROW_FMT(FormatError, "file name '%s' is too long for the tar format", strZ(tarHdrName(this)));
 
-            strncpy(this->data.name, strZ(tarHdrName(this)), TAR_HEADER_DATA_NAME_SIZE);
+            strncpy(this->data.name, strZ(tarHdrName(this)), TAR_HEADER_NAME_SIZE - 1);
 
             // Size
-            tarHdrWriteU64(this->data.size, TAR_HEADER_DATA_SIZE_SIZE, param.size);
+            tarHdrWriteU64(this->data.size, TAR_HEADER_SIZE_SIZE, param.size);
 
             // Time modified
-            tarHdrWriteU64(this->data.mtime, TAR_HEADER_DATA_MTIME_SIZE, (uint64_t)param.timeModified);
+            tarHdrWriteU64(this->data.mtime, TAR_HEADER_MTIME_SIZE, (uint64_t)param.timeModified);
 
             // Mode (do not include the file type bits, e.g. S_IFMT)
-            tarHdrWriteU64(this->data.mode, TAR_HEADER_DATA_MODE_SIZE, param.mode & 07777);
+            tarHdrWriteU64(this->data.mode, TAR_HEADER_MODE_SIZE, param.mode & 07777);
 
             // User and group
-            tarHdrWriteU64(this->data.uid, TAR_HEADER_DATA_UID_SIZE, param.userId);
-            tarHdrWriteU64(this->data.gid, TAR_HEADER_DATA_GID_SIZE, param.groupId);
+            tarHdrWriteU64(this->data.uid, TAR_HEADER_UID_SIZE, param.userId);
+            tarHdrWriteU64(this->data.gid, TAR_HEADER_GID_SIZE, param.groupId);
+
+            if (param.user != NULL)
+            {
+                if (strSize(param.user) >= TAR_HEADER_UNAME_SIZE)
+                    THROW_FMT(FormatError, "user '%s' is too long for the tar format", strZ(param.user));
+
+                strncpy(this->data.uname, strZ(param.user), TAR_HEADER_UNAME_SIZE - 1);
+            }
+
+            if (param.group != NULL)
+            {
+                if (strSize(param.group) >= TAR_HEADER_GNAME_SIZE)
+                    THROW_FMT(FormatError, "group '%s' is too long for the tar format", strZ(param.group));
+
+                strncpy(this->data.gname, strZ(param.group), TAR_HEADER_GNAME_SIZE - 1);
+            }
 
             (void)tarHdrReadU64; // !!!
 
-            // /* Mod Time 12 */
-            // print_tar_number(&h[136], 12, mtime);
+            // File type
+            this->data.typeflag = TAR_HEADER_TYPEFLAG_FILE;
 
-            // /* Checksum 8 cannot be calculated until we've filled all other fields */
+            // Magic and version
+            strcpy(this->data.magic, TAR_HEADER_MAGIC);
+            memcpy(this->data.version, TAR_HEADER_VERSION, TAR_HEADER_VERSION_SIZE);
 
-            // if (linktarget != NULL)
-            // {
-            //     /* Type - Symbolic link */
-            //     h[156] = '2';
-            //     /* Link Name 100 */
-            //     strlcpy(&h[157], linktarget, 100);
-            // }
-            // else if (S_ISDIR(mode))
-            // {
-            //     /* Type - directory */
-            //     h[156] = '5';
-            // }
-            // else
-            // {
-            //     /* Type - regular file */
-            //     h[156] = '0';
-            // }
-
-            // /* Magic 6 */
-            // strcpy(&h[257], "ustar");
-
-            // /* Version 2 */
-            // memcpy(&h[263], "00", 2);
-
-            // /* User 32 */
-            // /* XXX: Do we need to care about setting correct username? */
-            // strlcpy(&h[265], "postgres", 32);
-
-            // /* Group 32 */
-            // /* XXX: Do we need to care about setting correct group name? */
-            // strlcpy(&h[297], "postgres", 32);
-
-            // /* Major Dev 8 */
+            // Major/minor device
             // print_tar_number(&h[329], 8, 0);
 
             // /* Minor Dev 8 */
             // print_tar_number(&h[337], 8, 0);
-
-            // /* Prefix 155 - not used, leave as nulls */
 
             // /* Finally, compute and insert the checksum */
             // print_tar_number(&h[148], 8, tarChecksum(h));
