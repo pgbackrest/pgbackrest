@@ -22,6 +22,7 @@ Tar header data
 #define TAR_HEADER_GID_SIZE                                         8
 #define TAR_HEADER_SIZE_SIZE                                        12
 #define TAR_HEADER_MTIME_SIZE                                       12
+#define TAR_HEADER_CHKSUM_SIZE                                      8
 #define TAR_HEADER_VERSION_SIZE                                     2
 #define TAR_HEADER_UNAME_SIZE                                       32
 #define TAR_HEADER_GNAME_SIZE                                       32
@@ -33,6 +34,9 @@ Tar header data
 #define TAR_HEADER_MAGIC                                            "ustar"
 #define TAR_HEADER_VERSION                                          "00"
 
+#define TAR_HEADER_DEVMAJOR                                         0
+#define TAR_HEADER_DEVMINOR                                         0
+
 typedef struct TarHeaderData
 {
   char name[TAR_HEADER_NAME_SIZE];
@@ -41,7 +45,7 @@ typedef struct TarHeaderData
   char gid[TAR_HEADER_GID_SIZE];
   char size[TAR_HEADER_SIZE_SIZE];
   char mtime[TAR_HEADER_MTIME_SIZE];
-  char chksum[8];
+  char chksum[TAR_HEADER_CHKSUM_SIZE];
   char typeflag;
   char linkname[100];
   char magic[6];
@@ -51,7 +55,7 @@ typedef struct TarHeaderData
   char devmajor[TAR_HEADER_DEVMAJOR_SIZE];
   char devminor[TAR_HEADER_DEVMINOR_SIZE];
   char prefix[155];
-  char padding[12];
+  char padding[12];                                                 // Make the struct exactly 512 bytes
 } TarHeaderData;
 
 /***********************************************************************************************************************************
@@ -149,6 +153,30 @@ tarHdrWriteU64(char *const field, unsigned int fieldSize, uint64_t value)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Calculate the tar checksum for a header
+***********************************************************************************************************************************/
+static unsigned int
+tarHdrChecksum(unsigned char *data)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+    FUNCTION_TEST_END();
+
+    // Initialize checksum with checksum bytes as spaces
+	unsigned int result = TAR_HEADER_CHKSUM_SIZE * ' ';
+
+	// Per POSIX, the checksum is the simple sum of all bytes in the header, treating the bytes as unsigned, and treating the
+    // checksum field (at offset 148) as though it contained 8 spaces
+	for (unsigned int headerIdx = 0; headerIdx < sizeof(TarHeaderData); headerIdx++)
+    {
+		if (headerIdx < 148 || headerIdx >= 156)
+			result += data[headerIdx];
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 /**********************************************************************************************************************************/
 TarHeader *
 tarHdrNew(const TarHeaderNewParam param)
@@ -229,19 +257,65 @@ tarHdrNew(const TarHeaderNewParam param)
             memcpy(this->data.version, TAR_HEADER_VERSION, TAR_HEADER_VERSION_SIZE);
 
             // Major/minor device
-            // print_tar_number(&h[329], 8, 0);
+            tarHdrWriteU64(this->data.devmajor, TAR_HEADER_DEVMAJOR_SIZE, TAR_HEADER_DEVMAJOR);
+            tarHdrWriteU64(this->data.devminor, TAR_HEADER_DEVMINOR_SIZE, TAR_HEADER_DEVMINOR);
 
-            // /* Minor Dev 8 */
-            // print_tar_number(&h[337], 8, 0);
-
-            // /* Finally, compute and insert the checksum */
-            // print_tar_number(&h[148], 8, tarChecksum(h));
+            // Add checksum
+            tarHdrWriteU64(this->data.chksum, TAR_HEADER_CHKSUM_SIZE, tarHdrChecksum((unsigned char *)&this->data));
         }
         MEM_CONTEXT_TEMP_END();
     }
     OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+void
+tarHdrWrite(const TarHeader *const this, IoWrite *const write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TAR_HEADER, this);
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+    FUNCTION_TEST_END();
+
+    ioWrite(write, BUF(&this->data, sizeof(TarHeaderData)));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+tarHdrWritePadding(const TarHeader *const this, IoWrite *const write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TAR_HEADER, this);
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+    FUNCTION_TEST_END();
+
+    if (this->pub.size % sizeof(TarHeaderData) != 0)
+    {
+        unsigned char padding[sizeof(TarHeaderData)] = {0};
+
+        ioWrite(write, BUF(padding, sizeof(TarHeaderData) - (this->pub.size % sizeof(TarHeaderData))));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+tarWritePadding(IoWrite *const write)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+    FUNCTION_TEST_END();
+
+    unsigned char padding[sizeof(TarHeaderData) * 2] = {0};
+
+    ioWrite(write, BUF(padding, sizeof(padding)));
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

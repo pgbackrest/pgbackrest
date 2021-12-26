@@ -11,6 +11,7 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct TarHeader TarHeader;
 
+#include "common/io/write.h"
 #include "common/type/param.h"
 #include "common/type/object.h"
 #include "common/type/string.h"
@@ -60,6 +61,15 @@ tarHdrSize(const TarHeader *const this)
 }
 
 /***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Write tar header
+void tarHdrWrite(const TarHeader *this, IoWrite *write);
+
+// Write file padding
+void tarHdrWritePadding(const TarHeader *this, IoWrite *write);
+
+/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
@@ -69,13 +79,19 @@ tarHdrFree(TarHeader *const this)
 }
 
 /***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
+// Write final padding at end of tar
+void tarWritePadding(IoWrite *write);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 String *tarHdrToLog(const TarHeader *this);
 
-#define FUNCTION_LOG_HTTP_URL_TYPE                                                                                                 \
+#define FUNCTION_LOG_TAR_HEADER_TYPE                                                                                               \
     TarHeader *
-#define FUNCTION_LOG_HTTP_URL_FORMAT(value, buffer, bufferSize)                                                                    \
+#define FUNCTION_LOG_TAR_HEADER_FORMAT(value, buffer, bufferSize)                                                                  \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, tarHdrToLog, buffer, bufferSize)
 
 #endif
