@@ -123,9 +123,6 @@ testRun(void)
 
         // Check tar contents
         TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF("test.tar")).size, 4608, "check tar size");
-        TEST_RESULT_STR_Z(
-            bufHex(cryptoHashOne(STRDEF(HASH_TYPE_SHA1), storageGetP(storageNewReadP(storageTest, STRDEF("test.tar"))))),
-            "0cb67755005b2192ff6f8a55800a19266a8db88e", "check tar hash");
 
         HarnessStorageInfoListCallbackData callbackData = {.content = strNew(), .rootPathOmit = true};
 

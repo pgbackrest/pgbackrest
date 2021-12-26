@@ -297,7 +297,7 @@ tarHdrWritePadding(const TarHeader *const this, IoWrite *const write)
     {
         unsigned char padding[sizeof(TarHeaderData)] = {0};
 
-        ioWrite(write, BUF(padding, sizeof(TarHeaderData) - (this->pub.size % sizeof(TarHeaderData))));
+        ioWrite(write, BUF(padding, sizeof(TarHeaderData) - (size_t)(this->pub.size % sizeof(TarHeaderData))));
     }
 
     FUNCTION_TEST_RETURN_VOID();
