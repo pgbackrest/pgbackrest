@@ -95,17 +95,17 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteStr(write, STR(file1)), "write file1 contents");
         TEST_RESULT_VOID(tarHdrWritePadding(header, write), "write file1 padding");
 
-        unsigned char file2[1024];
-        memset(file2, 'x', sizeof(file2));
+        char file2[1025] = {0};
+        memset(file2, 'x', sizeof(file2) - 1);
 
         TEST_ASSIGN(
-            header, tarHdrNewP(.name = STRDEF("file2"), .size = sizeof(file2), .timeModified = 1640460256, .mode = 0640,
+            header, tarHdrNewP(.name = STRDEF("file2"), .size = sizeof(file2) - 1, .timeModified = 1640460256, .mode = 0640,
             .userId = 0, .user = STRDEF(TEST_USER), .groupId = 0, .group = STRDEF(TEST_USER)), "file with user/group");
         TEST_RESULT_VOID(tarHdrWrite(header, write), "write file2 header");
-        TEST_RESULT_VOID(ioWrite(write, BUF(file2, sizeof(file2))), "write file2 contents");
+        TEST_RESULT_VOID(ioWriteStr(write, STR(file2)), "write file2 contents");
         TEST_RESULT_VOID(tarHdrWritePadding(header, write), "write file2 padding");
 
-        char file3[] = "file3test";
+        char file3[] = "file33test";
         TEST_ASSIGN(
             header, tarHdrNewP(.name = STRDEF("file3"), .size = sizeof(file3) - 1, .timeModified = 1640460257, .mode = 0600),
             "file with root user/group");
@@ -128,13 +128,17 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storageInfoListP(storageTest, STRDEF("extract"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
-            "tar extract contents");
+            "tar extract content");
         TEST_RESULT_STR_Z(
             callbackData.content,
             "file1 {file, s=9, m=0600, t=1640460255, u=" TEST_USER ", g=" TEST_GROUP "}\n"
             "file2 {file, s=1024, m=0640, t=1640460256, u=" TEST_USER ", g=" TEST_GROUP "}\n"
-            "file3 {file, s=9, m=0600, t=1640460257, u=" TEST_USER ", g=" TEST_GROUP "}\n",
+            "file3 {file, s=10, m=0600, t=1640460257, u=" TEST_USER ", g=" TEST_GROUP "}\n",
             "check content");
+
+        TEST_STORAGE_GET(storageTest, "extract/file1", file1);
+        TEST_STORAGE_GET(storageTest, "extract/file2", file2);
+        TEST_STORAGE_GET(storageTest, "extract/file3", file3);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
