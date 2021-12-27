@@ -2362,6 +2362,16 @@
 
                         <example>text</example>
                     </option>
+                    <!-- OPERATION - VERIFY COMMAND - VERBOSE OPTION -->
+                    <option id="verbose" name="Verbose">
+                        <summary>Output verbose result.</summary>
+
+                        <text>
+                            <p>Verbose defaults to false and provides a minimal verify passed/verify failed response. True provides a more detailed response. </p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
                 </option-list>
             </command>
 

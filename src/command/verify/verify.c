@@ -1647,15 +1647,34 @@ verifyOutputText(const String *verifyresult, const unsigned int *errorTotal)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *resultStr = strNew();
+        String *status = strNew();
+
+        if (*errorTotal == 0)
+            strCatFmt(status,"%s%s",  strZ(strNewZ("All archives and backups passed verification.")), LF_Z);
+        else
+        {
+            strCatFmt(
+                status,
+                "%s%s",
+                strZ(strNewZ("One or more archive or backup contains errors. Invoke verify with verbose option for more details.")),
+                LF_Z);
+        }
 
         if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
         {
-            strCat(resultStr, strNewFmt("Stanza: %s", strZ(cfgOptionStr(cfgOptStanza))));
-            strCatFmt(resultStr, "%s%s", strZ(strSub(verifyresult, (unsigned int)strChr(verifyresult, ':') + 1)), strZ(LF_STR));
-
-            if (*errorTotal == 0)
+            // Output verbose response if requested
+            if (cfgOptionBool(cfgOptVerbose))
             {
-                strCatFmt(resultStr, "%s%s", "Verify command completed successfully", strZ(LF_STR));
+                strCat(resultStr, strNewFmt("Stanza: %s", strZ(cfgOptionStr(cfgOptStanza))));
+                strCat(resultStr, strNewFmt("%sStatus: %s", LF_Z, strZ(status)));
+                strCatFmt(
+                    resultStr, "%s%s", strZ(strSub(verifyresult, (unsigned int)strChr(verifyresult, ':') + 1)), LF_Z);
+            }
+            else
+            {
+                strCatFmt(
+                    resultStr, "%s%s%s", strZ(strNewFmt("Stanza: %s", strZ(cfgOptionStr(cfgOptStanza)))), LF_Z,
+                    strZ(strNewFmt("Status: %s", strZ(status))));
             }
         }
 

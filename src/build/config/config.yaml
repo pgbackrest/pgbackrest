@@ -448,6 +448,14 @@ option:
     command-role:
       main: {}
 
+  verbose:
+    type: boolean
+    default: false
+    command:
+     verify: {}
+    command-role:
+      main: {}
+
   # Command-line only local/remote options
   #---------------------------------------------------------------------------------------------------------------------------------
   exec-id:

@@ -1007,6 +1007,7 @@ testRun(void)
         TEST_TITLE("verifyOutputText(), text output, with verify failures");
 
         hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         harnessLogLevelReset();
@@ -1018,6 +1019,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             verifyOutputText(result, &errorTotal),
             "Stanza: db\n"
+            "Status: One or more archive or backup contains errors. Invoke verify with verbose option for more details.\n"
+            "\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
@@ -1547,10 +1550,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             verifyOutputText(result, &errorTotal),
             "Stanza: db\n"
-            "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
-            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
-            "  backup: none found\n"
-            "Verify command completed successfully\n",
+            "Status: All archives and backups passed verification.\n",
             "verify text output with no failures");
 
         TEST_RESULT_LOG(
