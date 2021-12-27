@@ -3018,10 +3018,31 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTIONAL
         (
+            PARSE_RULE_OPTIONAL_GROUP
+            (
+                PARSE_RULE_FILTER_CMD
+                (
+                    PARSE_RULE_VAL_CMD(cfgCmdVerify),
+                ),
+
+                PARSE_RULE_OPTIONAL_ALLOW_LIST
+                (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdText),
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdNone),
+                ),
+
+                PARSE_RULE_OPTIONAL_DEFAULT
+                (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdNone),
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_none_QT),
+                ),
+            ),
+
             PARSE_RULE_OPTIONAL_GROUP
             (
                 PARSE_RULE_OPTIONAL_ALLOW_LIST
@@ -8685,6 +8706,31 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),
         ),
     ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("verbose"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTIONAL
+        (
+            PARSE_RULE_OPTIONAL_GROUP
+            (
+                PARSE_RULE_OPTIONAL_DEFAULT
+                (
+                    PARSE_RULE_VAL_BOOL_FALSE,
+                ),
+            ),
+        ),
+    ),
 };
 
 /***********************************************************************************************************************************
@@ -9075,6 +9121,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptTlsServerKeyFile,
     cfgOptTlsServerPort,
     cfgOptType,
+    cfgOptVerbose,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
     cfgOptArchiveModeCheck,
