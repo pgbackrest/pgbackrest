@@ -1384,7 +1384,34 @@ backupDbPing(const BackupData *const backupData, const bool force)
 /***********************************************************************************************************************************
 Process the backup manifest
 ***********************************************************************************************************************************/
+// !!!
+// static size_t
+// backupProcessQueueComparatorPathSize(const ManifestFile *const file)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+//     FUNCTION_TEST_END();
+
+//     const char *const ptr = strrchr(strZ(file->name), '/');
+//     CHECK(ptr != NULL);
+
+//     FUNCTION_TEST_RETURN(ptr - strZ(file->name));
+// }
+
 // Comparator to order ManifestFile objects by size then name
+// static bool backupProcessQueueComparatorSortTar = false;
+
+// !!! NOTES
+// - 100MB default file size
+//
+// - Order by all files greater than file size (these will all end up in their own file) and then by modified time descending. The
+// idea is to make files that were changed at a similar time to get the smallest number of files and reduce the number of files that
+// restore needs to look at.
+// - If no files were modified, no bundle is created (this is needed for delta backup)
+// - How about if the files are fed to backup one by one, but on retry it will remember all files previously processed and send
+// updates for them if needed. The problem here is still how to know when to end. SO NOT VERY GOOD.
+// - Seems like incrementals might use as many files as fulls in the worst case
+
 static int
 backupProcessQueueComparator(const void *item1, const void *item2)
 {
@@ -1395,6 +1422,31 @@ backupProcessQueueComparator(const void *item1, const void *item2)
 
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
+
+    // !!!
+    // if (backupProcessQueueComparatorSortTar)
+    // {
+    //     // If the path differs then that's enough to determine order
+    //     ASSERT(strChr((*(ManifestFile **)item1)->name, '/') != -1);
+    //     ASSERT(strChr((*(ManifestFile **)item2)->name, '/') != -1);
+
+    //     size_t pathSize1 = (size_t)(strrchr(strZ((*(ManifestFile **)item1)->name), '/') - strZ((*(ManifestFile **)item1)->name));
+    //     size_t pathSize2 = (size_t)(strrchr(strZ((*(ManifestFile **)item2)->name), '/') - strZ((*(ManifestFile **)item2)->name));
+
+    //     // THROW_FMT(AssertError, "path %s (%zu), path %s (%zu)", strZ((*(ManifestFile **)item1)->name), pathSize1, strZ((*(ManifestFile **)item2)->name), pathSize2);
+
+    //     int result = strncmp(
+    //         strZ((*(ManifestFile **)item2)->name), strZ((*(ManifestFile **)item1)->name),
+    //         pathSize1 < pathSize2 ? pathSize1 : pathSize2);
+
+    //     if (result != 0)
+    //         FUNCTION_TEST_RETURN(result);
+
+    //     if (pathSize1 > pathSize2)
+    //         FUNCTION_TEST_RETURN(-1);
+    //     else if (pathSize1 < pathSize2)
+    //         FUNCTION_TEST_RETURN(1);
+    // }
 
     // If the size differs then that's enough to determine order
     if ((*(ManifestFile **)item1)->size < (*(ManifestFile **)item2)->size)

@@ -2576,6 +2576,7 @@ testRun(void)
         TEST_TITLE("online 11 incr backup with tablespaces");
 
         backupTimeStart = BACKUP_EPOCH + 2400000;
+        // backupProcessQueueComparatorSortTar = true; // !!!
 
         {
             // Load options
