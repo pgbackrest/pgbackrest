@@ -1650,6 +1650,13 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
                 PackWrite *const param = protocolCommandParam(command);
 
+                pckWriteU32P(param, jobData->compressType);
+                pckWriteI32P(param, jobData->compressLevel);
+                pckWriteStrP(param, jobData->backupLabel);
+                pckWriteBoolP(param, jobData->delta);
+                pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
+                pckWriteStrP(param, jobData->cipherSubPass);
+
                 pckWriteStrP(param, manifestPathPg(file->name));
                 pckWriteBoolP(param, !strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file->size);
@@ -1659,12 +1666,6 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteU64P(param, jobData->lsnStart);
                 pckWriteStrP(param, file->name);
                 pckWriteBoolP(param, file->reference != NULL);
-                pckWriteU32P(param, jobData->compressType);
-                pckWriteI32P(param, jobData->compressLevel);
-                pckWriteStrP(param, jobData->backupLabel);
-                pckWriteBoolP(param, jobData->delta);
-                pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
-                pckWriteStrP(param, jobData->cipherSubPass);
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);

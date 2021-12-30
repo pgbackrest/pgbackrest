@@ -27,16 +27,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Backup file
-        const String *const pgFile = pckReadStrP(param);
-        const bool pgFileIgnoreMissing = pckReadBoolP(param);
-        const uint64_t pgFileSize = pckReadU64P(param);
-        const bool pgFileCopyExactSize = pckReadBoolP(param);
-        const String *const pgFileChecksum = pckReadStrP(param);
-        const bool pgFileChecksumPage = pckReadBoolP(param);
-        const uint64_t pgFileChecksumPageLsnLimit = pckReadU64P(param);
-        const String *const repoFile = pckReadStrP(param);
-        const bool repoFileHasReference = pckReadBoolP(param);
+        // Backup options that apply to all files
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const int repoFileCompressLevel = pckReadI32P(param);
         const String *const backupLabel = pckReadStrP(param);
@@ -44,10 +35,27 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         const CipherType cipherType = (CipherType)pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
 
+        // Build the file list
+        List *fileList = lstNewP(sizeof(BackupFile));
+
+        while (!pckReadNullP(param))
+        {
+            BackupFile file = {.pgFile = pckReadStrP(param)};
+            file.pgFileIgnoreMissing = pckReadBoolP(param);
+            file.pgFileSize = pckReadU64P(param);
+            file.pgFileCopyExactSize = pckReadBoolP(param);
+            file.pgFileChecksum = pckReadStrP(param);
+            file.pgFileChecksumPage = pckReadBoolP(param);
+            file.pgFileChecksumPageLsnLimit = pckReadU64P(param);
+            file.repoFile = pckReadStrP(param);
+            file.repoFileHasReference = pckReadBoolP(param);
+
+            lstAdd(fileList, &file);
+        }
+
+        // Backup file
         const BackupFileResult result = backupFile(
-            pgFile, pgFileIgnoreMissing, pgFileSize, pgFileCopyExactSize, pgFileChecksum, pgFileChecksumPage,
-            pgFileChecksumPageLsnLimit, repoFile, repoFileHasReference, repoFileCompressType, repoFileCompressLevel,
-            backupLabel, delta, cipherType, cipherPass);
+            repoFileCompressType, repoFileCompressLevel, backupLabel, delta, cipherType, cipherPass, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();
