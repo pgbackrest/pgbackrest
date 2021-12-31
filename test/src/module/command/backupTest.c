@@ -2827,7 +2827,11 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
+            hrnCfgArgRawBool(argList, cfgOptBundle, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Set to a smaller value than the defaults allow
+            cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(8192));
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
@@ -2840,8 +2844,8 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000002C05DB8EB000000000\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
                 "            HINT: this is normal after restoring from backup or promoting a standby.\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191027-181320F\n"

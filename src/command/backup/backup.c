@@ -1412,6 +1412,9 @@ Process the backup manifest
 // updates for them if needed. The problem here is still how to know when to end. SO NOT VERY GOOD.
 // - Seems like incrementals might use as many files as fulls in the worst case
 
+static bool backupProcessQueueComparatorBundle;
+static uint64_t backupProcessQueueComparatorBundleSize;
+
 static int
 backupProcessQueueComparator(const void *item1, const void *item2)
 {
@@ -1449,12 +1452,25 @@ backupProcessQueueComparator(const void *item1, const void *item2)
     // }
 
     // If the size differs then that's enough to determine order
-    if ((*(ManifestFile **)item1)->size < (*(ManifestFile **)item2)->size)
-        FUNCTION_TEST_RETURN(-1);
-    else if ((*(ManifestFile **)item1)->size > (*(ManifestFile **)item2)->size)
-        FUNCTION_TEST_RETURN(1);
+    if (!backupProcessQueueComparatorBundle || (*(ManifestFile **)item1)->size >= backupProcessQueueComparatorBundleSize ||
+        (*(ManifestFile **)item2)->size >= backupProcessQueueComparatorBundleSize)
+    {
+        if ((*(ManifestFile **)item1)->size < (*(ManifestFile **)item2)->size)
+            FUNCTION_TEST_RETURN(-1);
+        else if ((*(ManifestFile **)item1)->size > (*(ManifestFile **)item2)->size)
+            FUNCTION_TEST_RETURN(1);
+    }
 
-    // If size is the same then use name to generate a deterministic ordering (names must be unique)
+    // !!!
+    if (backupProcessQueueComparatorBundle)
+    {
+        if ((*(ManifestFile **)item1)->timestamp > (*(ManifestFile **)item2)->timestamp)
+            FUNCTION_TEST_RETURN(-1);
+        else if ((*(ManifestFile **)item1)->timestamp < (*(ManifestFile **)item2)->timestamp) // {+uncovered !!!}
+            FUNCTION_TEST_RETURN(1);
+    }
+
+    // If size/time is the same then use name to generate a deterministic ordering (names must be unique)
     FUNCTION_TEST_RETURN(strCmp((*(ManifestFile **)item1)->name, (*(ManifestFile **)item2)->name));
 }
 
@@ -1494,6 +1510,9 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
         MEM_CONTEXT_BEGIN(lstMemContext(*queueList))
         {
+            backupProcessQueueComparatorBundle = cfgOptionBool(cfgOptBundle);
+            backupProcessQueueComparatorBundleSize = cfgOptionUInt64(cfgOptBundleSize);
+
             for (unsigned int queueIdx = 0; queueIdx < strLstSize(targetList) + queueOffset; queueIdx++)
             {
                 List *queue = lstNewP(sizeof(ManifestFile *), .comparator = backupProcessQueueComparator);
