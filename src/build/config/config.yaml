@@ -1102,6 +1102,25 @@ option:
     command-role:
       main: {}
 
+  bundle:
+    section: global
+    type: boolean
+    default: false
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
+  bundle-size:
+    section: global
+    type: size
+    default: 100MiB
+    allow-range: [1MiB, 1PiB]
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
   checksum-page:
     section: global
     type: boolean

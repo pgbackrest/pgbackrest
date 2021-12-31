@@ -53,6 +53,8 @@ Option constants
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
 #define CFGOPT_BACKUP_STANDBY                                       "backup-standby"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
+#define CFGOPT_BUNDLE                                               "bundle"
+#define CFGOPT_BUNDLE_SIZE                                          "bundle-size"
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
 #define CFGOPT_CIPHER_PASS                                          "cipher-pass"
 #define CFGOPT_CMD                                                  "cmd"
@@ -126,7 +128,7 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            149
+#define CFG_OPTION_TOTAL                                            151
 
 /***********************************************************************************************************************************
 Option value constants
@@ -363,6 +365,8 @@ typedef enum
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
+    cfgOptBundle,
+    cfgOptBundleSize,
     cfgOptChecksumPage,
     cfgOptCipherPass,
     cfgOptCmd,

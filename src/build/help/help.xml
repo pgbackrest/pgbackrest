@@ -1098,6 +1098,28 @@
                         <example>y</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="bundle" name="!!!">
+                        <summary>!!!.</summary>
+
+                        <text>
+                            <p>!!!.</p>
+                        </text>
+
+                        <example>y</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="bundle-size" name="!!!">
+                        <summary>!!!.</summary>
+
+                        <text>
+                            <p>!!!.</p>
+                        </text>
+
+                        <example>10MiB</example>
+                    </config-key>
+
                     <!-- CONFIG - BACKUP SECTION - CHECKSUM-PAGE KEY -->
                     <config-key id="checksum-page" name="Page Checksums">
                         <summary>Validate data page checksums.</summary>
