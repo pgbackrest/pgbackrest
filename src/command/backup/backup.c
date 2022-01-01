@@ -1173,143 +1173,146 @@ backupJobResult(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             const unsigned int processId = protocolParallelJobProcessId(job);
-
             PackRead *const jobResult = protocolParallelJobResult(job);
-            const ManifestFile *const file = manifestFileFind(manifest, pckReadStrP(jobResult));
-            const BackupCopyResult copyResult = (BackupCopyResult)pckReadU32P(jobResult);
-            const uint64_t copySize = pckReadU64P(jobResult);
-            const uint64_t repoSize = pckReadU64P(jobResult);
-            const String *const copyChecksum = pckReadStrP(jobResult);
-            PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
 
-            // Increment backup copy progress
-            *sizeProgress += copySize;
+            while (!pckReadNullP(jobResult))
+            {
+                const ManifestFile *const file = manifestFileFind(manifest, pckReadStrP(jobResult));
+                const BackupCopyResult copyResult = (BackupCopyResult)pckReadU32P(jobResult);
+                const uint64_t copySize = pckReadU64P(jobResult);
+                const uint64_t repoSize = pckReadU64P(jobResult);
+                const String *const copyChecksum = pckReadStrP(jobResult);
+                PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
 
-            // Create log file name
-            const String *const fileName = storagePathP(storagePg, manifestPathPg(file->name));
-            const String *fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strZ(host), strZ(fileName));
+                // Increment backup copy progress
+                *sizeProgress += copySize;
 
-            // Format log strings
-            const String *const logProgress =
-                strNewFmt(
-                    "%s, %" PRIu64 "%%", strZ(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : *sizeProgress * 100 / sizeTotal);
-            const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
+                // Create log file name
+                const String *const fileName = storagePathP(storagePg, manifestPathPg(file->name));
+                const String *fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strZ(host), strZ(fileName));
 
-            // If the file is in a prior backup and nothing changed, just log it
-            if (copyResult == backupCopyResultNoOp)
-            {
-                LOG_DETAIL_PID_FMT(
-                    processId, "match file from prior backup %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
-            }
-            // Else if the repo matched the expect checksum, just log it
-            else if (copyResult == backupCopyResultChecksum)
-            {
-                LOG_DETAIL_PID_FMT(
-                    processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
-            }
-            // Else if the file was removed during backup add it to the list of files to be removed from the manifest when the
-            // backup is complete.  It can't be removed right now because that will invalidate the pointers that are being used for
-            // processing.
-            else if (copyResult == backupCopyResultSkip)
-            {
-                LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strZ(fileLog));
-                strLstAdd(fileRemove, file->name);
-            }
-            // Else file was copied so update manifest
-            else
-            {
-                // If the file had to be recopied then warn that there may be an issue with corruption in the repository
-                // ??? This should really be below the message below for more context -- can be moved after the migration
-                // ??? The name should be a pg path not manifest name -- can be fixed after the migration
-                if (copyResult == backupCopyResultReCopy)
+                // Format log strings
+                const String *const logProgress =
+                    strNewFmt(
+                        "%s, %" PRIu64 "%%", strZ(strSizeFormat(copySize)), sizeTotal == 0 ? 100 : *sizeProgress * 100 / sizeTotal);
+                const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
+
+                // If the file is in a prior backup and nothing changed, just log it
+                if (copyResult == backupCopyResultNoOp)
                 {
-                    LOG_WARN_FMT(
-                        "resumed backup file %s does not have expected checksum %s. The file will be recopied and backup will"
-                        " continue but this may be an issue unless the resumed backup path in the repository is known to be"
-                        " corrupted.\n"
-                        "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
-                        strZ(file->name), file->checksumSha1);
+                    LOG_DETAIL_PID_FMT(
+                        processId, "match file from prior backup %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
                 }
-
-                LOG_DETAIL_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
-
-                // If the file had page checksums calculated during the copy
-                ASSERT((!file->checksumPage && checksumPageResult == NULL) || (file->checksumPage && checksumPageResult != NULL));
-
-                bool checksumPageError = false;
-                const VariantList *checksumPageErrorList = NULL;
-
-                if (checksumPageResult != NULL)
+                // Else if the repo matched the expect checksum, just log it
+                else if (copyResult == backupCopyResultChecksum)
                 {
-                    checksumPageErrorList = backupJobResultPageChecksum(checksumPageResult);
-
-                    // If the checksum was valid
-                    if (!pckReadBoolP(checksumPageResult))
+                    LOG_DETAIL_PID_FMT(
+                        processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+                }
+                // Else if the file was removed during backup add it to the list of files to be removed from the manifest when the
+                // backup is complete.  It can't be removed right now because that will invalidate the pointers that are being used for
+                // processing.
+                else if (copyResult == backupCopyResultSkip)
+                {
+                    LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strZ(fileLog));
+                    strLstAdd(fileRemove, file->name);
+                }
+                // Else file was copied so update manifest
+                else
+                {
+                    // If the file had to be recopied then warn that there may be an issue with corruption in the repository
+                    // ??? This should really be below the message below for more context -- can be moved after the migration
+                    // ??? The name should be a pg path not manifest name -- can be fixed after the migration
+                    if (copyResult == backupCopyResultReCopy)
                     {
-                        checksumPageError = true;
+                        LOG_WARN_FMT(
+                            "resumed backup file %s does not have expected checksum %s. The file will be recopied and backup will"
+                            " continue but this may be an issue unless the resumed backup path in the repository is known to be"
+                            " corrupted.\n"
+                            "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
+                            strZ(file->name), file->checksumSha1);
+                    }
 
+                    LOG_DETAIL_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+
+                    // If the file had page checksums calculated during the copy
+                    ASSERT((!file->checksumPage && checksumPageResult == NULL) || (file->checksumPage && checksumPageResult != NULL));
+
+                    bool checksumPageError = false;
+                    const VariantList *checksumPageErrorList = NULL;
+
+                    if (checksumPageResult != NULL)
+                    {
+                        checksumPageErrorList = backupJobResultPageChecksum(checksumPageResult);
+
+                        // If the checksum was valid
                         if (!pckReadBoolP(checksumPageResult))
                         {
-                            checksumPageErrorList = NULL;
+                            checksumPageError = true;
 
-                            // ??? Update formatting after migration
-                            LOG_WARN_FMT(
-                                "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
-                                strZ(fileLog), copySize, PG_PAGE_SIZE_DEFAULT);
-                        }
-                        else
-                        {
-                            // Format the page checksum errors
-                            CHECK(FormatError, checksumPageErrorList != NULL, "page checksum error list is missing");
-                            CHECK(FormatError, !varLstEmpty(checksumPageErrorList), "page checksum error list is empty");
-
-                            String *error = strNew();
-                            unsigned int errorTotalMin = 0;
-
-                            for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
+                            if (!pckReadBoolP(checksumPageResult))
                             {
-                                const Variant *const errorItem = varLstGet(checksumPageErrorList, errorIdx);
+                                checksumPageErrorList = NULL;
 
-                                // Add a comma if this is not the first item
-                                if (errorIdx != 0)
-                                    strCatZ(error, ", ");
-
-                                // If an error range
-                                if (varType(errorItem) == varTypeVariantList)
-                                {
-                                    const VariantList *const errorItemList = varVarLst(errorItem);
-                                    ASSERT(varLstSize(errorItemList) == 2);
-
-                                    strCatFmt(
-                                        error, "%" PRIu64 "-%" PRIu64, varUInt64(varLstGet(errorItemList, 0)),
-                                        varUInt64(varLstGet(errorItemList, 1)));
-                                    errorTotalMin += 2;
-                                }
-                                // Else a single error
-                                else
-                                {
-                                    ASSERT(varType(errorItem) == varTypeUInt64);
-
-                                    strCatFmt(error, "%" PRIu64, varUInt64(errorItem));
-                                    errorTotalMin++;
-                                }
+                                // ??? Update formatting after migration
+                                LOG_WARN_FMT(
+                                    "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
+                                    strZ(fileLog), copySize, PG_PAGE_SIZE_DEFAULT);
                             }
+                            else
+                            {
+                                // Format the page checksum errors
+                                CHECK(FormatError, checksumPageErrorList != NULL, "page checksum error list is missing");
+                                CHECK(FormatError, !varLstEmpty(checksumPageErrorList), "page checksum error list is empty");
 
-                            // Make message plural when appropriate
-                            const String *const plural = errorTotalMin > 1 ? STRDEF("s") : EMPTY_STR;
+                                String *error = strNew();
+                                unsigned int errorTotalMin = 0;
 
-                            // ??? Update formatting after migration
-                            LOG_WARN_FMT(
-                                "invalid page checksum%s found in file %s at page%s %s", strZ(plural), strZ(fileLog), strZ(plural),
-                                strZ(error));
+                                for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
+                                {
+                                    const Variant *const errorItem = varLstGet(checksumPageErrorList, errorIdx);
+
+                                    // Add a comma if this is not the first item
+                                    if (errorIdx != 0)
+                                        strCatZ(error, ", ");
+
+                                    // If an error range
+                                    if (varType(errorItem) == varTypeVariantList)
+                                    {
+                                        const VariantList *const errorItemList = varVarLst(errorItem);
+                                        ASSERT(varLstSize(errorItemList) == 2);
+
+                                        strCatFmt(
+                                            error, "%" PRIu64 "-%" PRIu64, varUInt64(varLstGet(errorItemList, 0)),
+                                            varUInt64(varLstGet(errorItemList, 1)));
+                                        errorTotalMin += 2;
+                                    }
+                                    // Else a single error
+                                    else
+                                    {
+                                        ASSERT(varType(errorItem) == varTypeUInt64);
+
+                                        strCatFmt(error, "%" PRIu64, varUInt64(errorItem));
+                                        errorTotalMin++;
+                                    }
+                                }
+
+                                // Make message plural when appropriate
+                                const String *const plural = errorTotalMin > 1 ? STRDEF("s") : EMPTY_STR;
+
+                                // ??? Update formatting after migration
+                                LOG_WARN_FMT(
+                                    "invalid page checksum%s found in file %s at page%s %s", strZ(plural), strZ(fileLog), strZ(plural),
+                                    strZ(error));
+                            }
                         }
                     }
-                }
 
-                // Update file info and remove any reference to the file's existence in a prior backup
-                manifestFileUpdate(
-                    manifest, file->name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file->checksumPage,
-                    checksumPageError, checksumPageErrorList);
+                    // Update file info and remove any reference to the file's existence in a prior backup
+                    manifestFileUpdate(
+                        manifest, file->name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file->checksumPage,
+                        checksumPageError, checksumPageErrorList);
+                }
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1425,9 +1428,10 @@ backupProcessQueueComparator(const void *item1, const void *item2)
 
 // Helper to generate the backup queues
 static uint64_t
-backupProcessQueue(Manifest *manifest, List **queueList)
+backupProcessQueue(const BackupData *const backupData, Manifest *const manifest, List **queueList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM_P(LIST, queueList);
     FUNCTION_LOG_END();
@@ -1491,6 +1495,8 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             {
                 manifestFileUpdate(
                     manifest, file->name, 0, 0, strZ(HASH_TYPE_SHA1_ZERO_STR), VARSTR(NULL), file->checksumPage, false, NULL);
+                LOG_DETAIL_FMT(
+                    "store zero-length file %s", strZ(storagePathP(backupData->storagePrimary, manifestPathPg(file->name))));
 
                 continue;
             }
@@ -1621,25 +1627,34 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
             0 : (int)(clientIdx % (lstSize(jobData->queueList) - queueOffset));
         int queueEnd = queueIdx;
 
+        // Create backup job
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
+        PackWrite *const param = protocolCommandParam(command);
+        uint64_t fileTotal = 0;
+        uint64_t fileSize = 0;
+
+        pckWriteU64P(param, jobData->bundle ? jobData->bundleId : 0);
+        pckWriteU32P(param, jobData->compressType);
+        pckWriteI32P(param, jobData->compressLevel);
+        pckWriteStrP(param, jobData->backupLabel);
+        pckWriteBoolP(param, jobData->delta);
+        pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
+        pckWriteStrP(param, jobData->cipherSubPass);
+
         do
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
 
-            if (!lstEmpty(queue))
+            while (!lstEmpty(queue))
             {
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
-                // Create backup job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
-                PackWrite *const param = protocolCommandParam(command);
+                // if (jobData->bundle)
+                //     LOG_DEBUG_FMT("!!!JOB BUNDLE %" PRIu64 " FILE %s SIZE %" PRIu64, jobData->bundleId, strZ(file->name), file->size);
 
-                pckWriteU64P(param, jobData->bundle ? jobData->bundleId : 0);
-                pckWriteU32P(param, jobData->compressType);
-                pckWriteI32P(param, jobData->compressLevel);
-                pckWriteStrP(param, jobData->backupLabel);
-                pckWriteBoolP(param, jobData->delta);
-                pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
-                pckWriteStrP(param, jobData->cipherSubPass);
+                // !!! BREAK WHEN...
+                if (fileTotal > 0 && (!jobData->bundle || fileSize + file->size > jobData->bundleSize))
+                    break;
 
                 pckWriteStrP(param, manifestPathPg(file->name));
                 pckWriteBoolP(param, !strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
@@ -1651,18 +1666,26 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteStrP(param, file->name);
                 pckWriteBoolP(param, file->reference != NULL);
 
+                fileTotal++;
+                fileSize += file->size;
+
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);
+            }
 
+            if (fileTotal > 0)
+            {
                 // Assign job to result
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
                     result = protocolParallelJobNew(VARUINT64(jobData->bundleId), command);
                     jobData->bundleId++;
+
+                    // if (jobData->bundle)
+                    //     LOG_DEBUG_FMT("!!!JOB WITH %" PRIu64 " files", fileTotal);
                 }
                 MEM_CONTEXT_PRIOR_END();
 
-                // Break out of the loop early since we found a job
                 break;
             }
 
@@ -1755,7 +1778,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         }
 
         // Generate processing queues
-        sizeTotal = backupProcessQueue(manifest, &jobData.queueList);
+        sizeTotal = backupProcessQueue(backupData, manifest, &jobData.queueList);
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(

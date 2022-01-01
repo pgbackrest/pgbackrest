@@ -2949,11 +2949,19 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "1");
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
+            hrnCfgArgRawZ(argList, cfgOptBufferSize, "16K");
             hrnCfgArgRawBool(argList, cfgOptBundle, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            // Set to a smaller value than the defaults allow
+            // Set to a smaller values than the defaults allow
             cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(8192));
+
+            // Zeroed file which passes page checksums
+            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
@@ -2963,11 +2971,12 @@ testRun(void)
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P00   INFO: check archive for segment 0000000105DB8EB000000000\n"
+                "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
-                // "P01 DETAIL: backup file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB8EB000000001, lsn = 5db8eb0/180000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
@@ -2976,7 +2985,7 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB8EB000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB8EB000000001 to backup\n"
                 "P00   INFO: new backup label = 20191030-014640F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 9");
+                "P00   INFO: full backup size = [SIZE], file total = 10");
         }
     }
 
