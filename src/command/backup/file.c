@@ -35,7 +35,7 @@ segmentNumber(const String *pgFile)
 }
 
 /**********************************************************************************************************************************/
-BackupFileResult
+List *
 backupFile(
     const CompressType repoFileCompressType, const int repoFileCompressLevel, const String *const backupLabel, const bool delta,
     const CipherType cipherType, const String *const cipherPass, const List *const fileList)
@@ -61,10 +61,13 @@ backupFile(
     ASSERT(file->repoFile != NULL);
 
     // Backup file results
-    BackupFileResult result = {.backupCopyResult = backupCopyResultCopy};
+    List *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        result = lstNewP(sizeof(BackupFileResult));
+        BackupFileResult *fileResult = lstAdd(result, &(BackupFileResult){.backupCopyResult = backupCopyResultCopy});
+
         // Generate complete repo path and add compression extension if needed
         const String *repoPathFile = strNewFmt(
             STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupLabel), strZ(file->repoFile), strZ(compressExtStr(repoFileCompressType)));
@@ -105,19 +108,19 @@ backupFile(
                         // If it matches and is a reference to a previous backup then no need to copy the file
                         if (file->repoFileHasReference)
                         {
-                            MEM_CONTEXT_PRIOR_BEGIN()
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
-                                result.backupCopyResult = backupCopyResultNoOp;
-                                result.copySize = pgTestSize;
-                                result.copyChecksum = strDup(pgTestChecksum);
+                                fileResult->backupCopyResult = backupCopyResultNoOp;
+                                fileResult->copySize = pgTestSize;
+                                fileResult->copyChecksum = strDup(pgTestChecksum);
                             }
-                            MEM_CONTEXT_PRIOR_END();
+                            MEM_CONTEXT_END();
                         }
                     }
                 }
                 // Else the source file is missing from the database so skip this file
                 else
-                    result.backupCopyResult = backupCopyResultSkip;
+                    fileResult->backupCopyResult = backupCopyResultSkip;
             }
 
             // If this is not a delta backup or it is and the file exists and the checksum from the DB matches, then also test the
@@ -127,7 +130,7 @@ backupFile(
             {
                 // If this is a delta backup and the file is missing from the DB, then remove it from the repo (backupManifestUpdate
                 // will remove it from the manifest)
-                if (result.backupCopyResult == backupCopyResultSkip)
+                if (fileResult->backupCopyResult == backupCopyResultSkip)
                 {
                     storageRemoveP(storageRepoWrite(), repoPathFile);
                 }
@@ -163,22 +166,22 @@ backupFile(
                         // No need to recopy if checksum/size match
                         if (file->pgFileSize == pgTestSize && strEq(file->pgFileChecksum, pgTestChecksum))
                         {
-                            MEM_CONTEXT_PRIOR_BEGIN()
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
-                                result.backupCopyResult = backupCopyResultChecksum;
-                                result.copySize = pgTestSize;
-                                result.copyChecksum = strDup(pgTestChecksum);
+                                fileResult->backupCopyResult = backupCopyResultChecksum;
+                                fileResult->copySize = pgTestSize;
+                                fileResult->copyChecksum = strDup(pgTestChecksum);
                             }
-                            MEM_CONTEXT_PRIOR_END();
+                            MEM_CONTEXT_END();
                         }
                         // Else recopy when repo file is not as expected
                         else
-                            result.backupCopyResult = backupCopyResultReCopy;
+                            fileResult->backupCopyResult = backupCopyResultReCopy;
                     }
                     // Recopy on any kind of error
                     CATCH_ANY()
                     {
-                        result.backupCopyResult = backupCopyResultReCopy;
+                        fileResult->backupCopyResult = backupCopyResultReCopy;
                     }
                     TRY_END();
                 }
@@ -186,7 +189,7 @@ backupFile(
         }
 
         // Copy the file
-        if (result.backupCopyResult == backupCopyResultCopy || result.backupCopyResult == backupCopyResultReCopy)
+        if (fileResult->backupCopyResult == backupCopyResultCopy || fileResult->backupCopyResult == backupCopyResultReCopy)
         {
             // Is the file compressible during the copy?
             bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
@@ -233,28 +236,28 @@ backupFile(
             // Open the source and destination and copy the file
             if (storageCopy(read, write))
             {
-                MEM_CONTEXT_PRIOR_BEGIN()
+                MEM_CONTEXT_BEGIN(lstMemContext(result))
                 {
                     // Get sizes and checksum
-                    result.copySize = pckReadU64P(
+                    fileResult->copySize = pckReadU64P(
                         ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE));
-                    result.copyChecksum = strDup(
+                    fileResult->copyChecksum = strDup(
                         pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
-                    result.repoSize =
+                    fileResult->repoSize =
                         pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(storageWriteIo(write)), SIZE_FILTER_TYPE));
 
                     // Get results of page checksum validation
                     if (file->pgFileChecksumPage)
                     {
-                        result.pageChecksumResult = pckDup(
+                        fileResult->pageChecksumResult = pckDup(
                             ioFilterGroupResultPackP(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE));
                     }
                 }
-                MEM_CONTEXT_PRIOR_END();
+                MEM_CONTEXT_END();
             }
             // Else if source file is missing and the read setup indicated ignore a missing file, the database removed it so skip it
             else
-                result.backupCopyResult = backupCopyResultSkip;
+                fileResult->backupCopyResult = backupCopyResultSkip;
         }
 
         // If the file was copied get the repo size only if the storage can store the files with a different size than what was
@@ -262,12 +265,14 @@ backupFile(
         // and this cannot be calculated in stream.
         //
         // If the file was checksummed then get the size in all cases since we don't already have it.
-        if (((result.backupCopyResult == backupCopyResultCopy || result.backupCopyResult == backupCopyResultReCopy) &&
+        if (((fileResult->backupCopyResult == backupCopyResultCopy || fileResult->backupCopyResult == backupCopyResultReCopy) &&
                 storageFeature(storageRepo(), storageFeatureCompress)) ||
-            result.backupCopyResult == backupCopyResultChecksum)
+            fileResult->backupCopyResult == backupCopyResultChecksum)
         {
-            result.repoSize = storageInfoP(storageRepo(), repoPathFile).size;
+            fileResult->repoSize = storageInfoP(storageRepo(), repoPathFile).size;
         }
+
+        lstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

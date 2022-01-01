@@ -54,16 +54,22 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         // Backup file
-        const BackupFileResult result = backupFile(
+        const List *const result = backupFile(
             repoFileCompressType, repoFileCompressLevel, backupLabel, delta, cipherType, cipherPass, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();
-        pckWriteU32P(resultPack, result.backupCopyResult);
-        pckWriteU64P(resultPack, result.copySize);
-        pckWriteU64P(resultPack, result.repoSize);
-        pckWriteStrP(resultPack, result.copyChecksum);
-        pckWritePackP(resultPack, result.pageChecksumResult);
+
+        for (unsigned int resultIdx = 0; resultIdx < lstSize(result); resultIdx++)
+        {
+            const BackupFileResult *const fileResult = lstGet(result, resultIdx);
+
+            pckWriteU32P(resultPack, fileResult->backupCopyResult);
+            pckWriteU64P(resultPack, fileResult->copySize);
+            pckWriteU64P(resultPack, fileResult->repoSize);
+            pckWriteStrP(resultPack, fileResult->copyChecksum);
+            pckWritePackP(resultPack, fileResult->pageChecksumResult);
+        }
 
         protocolServerDataPut(server, resultPack);
         protocolServerDataEndPut(server);

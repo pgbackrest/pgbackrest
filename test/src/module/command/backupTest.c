@@ -565,22 +565,22 @@ testRun(void)
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    const String *pgFile = STRDEF("testfile");
-    const String *missingFile = STRDEF("missing");
-    const String *backupLabel = STRDEF("20190718-155825F");
-    const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
-    BackupFileResult result = {0};
-
     // *****************************************************************************************************************************
     if (testBegin("segmentNumber()"))
     {
-        TEST_RESULT_UINT(segmentNumber(pgFile), 0, "No segment number");
-        TEST_RESULT_UINT(segmentNumber(strNewFmt("%s.123", strZ(pgFile))), 123, "Segment number");
+        TEST_RESULT_UINT(segmentNumber(STRDEF("999")), 0, "No segment number");
+        TEST_RESULT_UINT(segmentNumber(STRDEF("999.123")), 123, "Segment number");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("backupFile()"))
     {
+        const String *pgFile = STRDEF("testfile");
+        const String *missingFile = STRDEF("missing");
+        const String *backupLabel = STRDEF("20190718-155825F");
+        const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
+        BackupFileResult result = {0};
+
         // Load Parameters
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -613,7 +613,8 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "pg file missing, ignoreMissing=true, no delta");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy/repo size 0");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
@@ -670,7 +671,8 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "pg file exists and shrunk, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
 
         ((Storage *)storageRepo())->pub.interface.feature = feature;
@@ -710,7 +712,8 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "file checksummed with pageChecksum enabled");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
@@ -739,7 +742,10 @@ testRun(void)
 
         lstAdd(fileList, &file);
 
-        TEST_ASSIGN(result, backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), "backup file");
+        TEST_ASSIGN(
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
+            "backup file");
         TEST_RESULT_UINT(result.copySize, 12, "copy size");
         TEST_RESULT_UINT(result.repoSize, 12, "repo size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
@@ -769,7 +775,8 @@ testRun(void)
 
         // File exists in repo and db, pg checksum match, delta set, ignoreMissing false, hasReference - NOOP
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "file in db and repo, checksum equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 0, "repo size not set since already exists in repo");
@@ -800,7 +807,8 @@ testRun(void)
 
         // File exists in repo and db, pg checksum mismatch, delta set, ignoreMissing false, hasReference - COPY
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "file in db and repo, pg checksum not equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
@@ -831,7 +839,8 @@ testRun(void)
 
         // File exists in repo and pg, pg checksum same, pg size passed is different, delta set, ignoreMissing false, hasReference
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 12, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 12, "repo=pgFile size");
@@ -863,7 +872,8 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", "testfile\n", .comment = "resumed file is missing in repo");
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "backup 9 bytes of pgfile to file to resume in repo");
         TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
@@ -901,7 +911,8 @@ testRun(void)
 
         // Delta set, ignoreMissing false, no hasReference
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
@@ -931,7 +942,8 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=0 size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
@@ -961,7 +973,8 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ASSIGN(
-            result, backupFile(compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "pg file exists, no checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
@@ -993,7 +1006,8 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ASSIGN(
-            result, backupFile(compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
@@ -1028,7 +1042,8 @@ testRun(void)
 
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList),
+            result,
+            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "zero-sized pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=pgFile size 0");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
@@ -1040,13 +1055,12 @@ testRun(void)
             "testfile.gz\n"
             "zerofile\n",
             .comment = "copy zero file to repo success");
-    }
 
-    // *****************************************************************************************************************************
-    if (testBegin("backupFile() - encrypt"))
-    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy file to encrypted repo");
+
         // Load Parameters
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
@@ -1059,12 +1073,9 @@ testRun(void)
         // Create the pg path and pg file to backup
         HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("copy file to encrypted repo");
+        fileList = lstNewP(sizeof(BackupFile));
 
-        List *fileList = lstNewP(sizeof(BackupFile));
-
-        BackupFile file =
+        file = (BackupFile)
         {
             .pgFile = pgFile,
             .pgFileIgnoreMissing = false,
@@ -1081,7 +1092,9 @@ testRun(void)
 
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList),
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
@@ -1114,7 +1127,9 @@ testRun(void)
 
         // Delta but pgFile does not match size passed, prior checksum, no compression, no pageChecksum, delta, no hasReference
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList),
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 8, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
@@ -1146,7 +1161,9 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList),
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "pg and repo file exists, checksum mismatch, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
@@ -1178,7 +1195,9 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ASSIGN(
-            result, backupFile(compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList),
+            result,
+            *(BackupFileResult *)lstGet(
+                backupFile(compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "backup file");
 
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
