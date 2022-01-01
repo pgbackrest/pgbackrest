@@ -1511,7 +1511,9 @@ backupProcessQueue(Manifest *manifest, List **queueList)
         MEM_CONTEXT_BEGIN(lstMemContext(*queueList))
         {
             backupProcessQueueComparatorBundle = cfgOptionBool(cfgOptBundle);
-            backupProcessQueueComparatorBundleSize = cfgOptionUInt64(cfgOptBundleSize);
+
+            if (backupProcessQueueComparatorBundle)
+                backupProcessQueueComparatorBundleSize = cfgOptionUInt64(cfgOptBundleSize);
 
             for (unsigned int queueIdx = 0; queueIdx < strLstSize(targetList) + queueOffset; queueIdx++)
             {
@@ -1630,6 +1632,8 @@ typedef struct BackupJobData
     const int compressLevel;                                        // Compress level if backup is compressed
     const bool delta;                                               // Is this a checksum delta backup?
     const uint64_t lsnStart;                                        // Starting lsn for the backup
+    const bool bundle;                                              // Bundle files?
+    const uint64_t bundleSize;                                      // Target bundle size
 
     List *queueList;                                                // List of processing queues
 } BackupJobData;
@@ -1657,6 +1661,17 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
             0 : (int)(clientIdx % (lstSize(jobData->queueList) - queueOffset));
         int queueEnd = queueIdx;
 
+        // Create backup job
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
+        PackWrite *const param = protocolCommandParam(command);
+
+        pckWriteU32P(param, jobData->compressType);
+        pckWriteI32P(param, jobData->compressLevel);
+        pckWriteStrP(param, jobData->backupLabel);
+        pckWriteBoolP(param, jobData->delta);
+        pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
+        pckWriteStrP(param, jobData->cipherSubPass);
+
         do
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
@@ -1664,17 +1679,6 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
             if (!lstEmpty(queue))
             {
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
-
-                // Create backup job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
-                PackWrite *const param = protocolCommandParam(command);
-
-                pckWriteU32P(param, jobData->compressType);
-                pckWriteI32P(param, jobData->compressLevel);
-                pckWriteStrP(param, jobData->backupLabel);
-                pckWriteBoolP(param, jobData->delta);
-                pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
-                pckWriteStrP(param, jobData->cipherSubPass);
 
                 pckWriteStrP(param, manifestPathPg(file->name));
                 pckWriteBoolP(param, !strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
@@ -1784,6 +1788,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
+            .bundle = cfgOptionBool(cfgOptBundle),
+            .bundleSize = cfgOptionTest(cfgOptBundleSize) ? cfgOptionUInt64(cfgOptBundleSize) : 0,
         };
 
         sizeTotal = backupProcessQueue(manifest, &jobData.queueList);
