@@ -28,6 +28,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Backup options that apply to all files
+        const uint64_t bundleId = pckReadU64P(param);
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const int repoFileCompressLevel = pckReadI32P(param);
         const String *const backupLabel = pckReadStrP(param);
@@ -55,7 +56,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Backup file
         const List *const result = backupFile(
-            repoFileCompressType, repoFileCompressLevel, backupLabel, delta, cipherType, cipherPass, fileList);
+            bundleId, repoFileCompressType, repoFileCompressLevel, backupLabel, delta, cipherType, cipherPass, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();
@@ -64,6 +65,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         {
             const BackupFileResult *const fileResult = lstGet(result, resultIdx);
 
+            pckWriteStrP(resultPack, fileResult->repoFile);
             pckWriteU32P(resultPack, fileResult->backupCopyResult);
             pckWriteU64P(resultPack, fileResult->copySize);
             pckWriteU64P(resultPack, fileResult->repoSize);

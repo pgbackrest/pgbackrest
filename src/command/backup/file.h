@@ -40,6 +40,7 @@ typedef struct BackupFile
 // Copy a file from the PostgreSQL data directory to the repository
 typedef struct BackupFileResult
 {
+    const String *repoFile;                                         // Repo file
     BackupCopyResult backupCopyResult;
     uint64_t copySize;
     String *copyChecksum;
@@ -48,7 +49,7 @@ typedef struct BackupFileResult
 } BackupFileResult;
 
 List *backupFile(
-    CompressType repoFileCompressType, int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType,
-    const String *cipherPass, const List *fileList);
+    uint64_t bundleId, CompressType repoFileCompressType, int repoFileCompressLevel, const String *backupLabel, bool delta,
+    CipherType cipherType, const String *cipherPass, const List *fileList);
 
 #endif

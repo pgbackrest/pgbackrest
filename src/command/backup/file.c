@@ -37,10 +37,12 @@ segmentNumber(const String *pgFile)
 /**********************************************************************************************************************************/
 List *
 backupFile(
-    const CompressType repoFileCompressType, const int repoFileCompressLevel, const String *const backupLabel, const bool delta,
-    const CipherType cipherType, const String *const cipherPass, const List *const fileList)
+    const uint64_t bundleId, const CompressType repoFileCompressType, const int repoFileCompressLevel,
+    const String *const backupLabel, const bool delta, const CipherType cipherType, const String *const cipherPass,
+    const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle if (zero of none)
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT,  repoFileCompressLevel);            // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING, backupLabel);                    // Label of current backup
@@ -66,11 +68,15 @@ backupFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         result = lstNewP(sizeof(BackupFileResult));
-        BackupFileResult *fileResult = lstAdd(result, &(BackupFileResult){.backupCopyResult = backupCopyResultCopy});
+        BackupFileResult *fileResult = lstAdd(
+            result, &(BackupFileResult){.repoFile = file->repoFile, .backupCopyResult = backupCopyResultCopy});
 
         // Generate complete repo path and add compression extension if needed
-        const String *repoPathFile = strNewFmt(
-            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupLabel), strZ(file->repoFile), strZ(compressExtStr(repoFileCompressType)));
+        const String *repoPathFile = bundleId == 0 ?
+            strNewFmt(
+                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupLabel), strZ(file->repoFile),
+                strZ(compressExtStr(repoFileCompressType))) :
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_TARGET_PGDATA "/%" PRIu64 ".bnd", strZ(backupLabel), bundleId);
 
         // If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo, else
         // just check the repo.
@@ -128,6 +134,9 @@ backupFile(
             // be corruption in the repo, so recopy
             if (!delta || !file->repoFileHasReference)
             {
+                // !!!
+                ASSERT(bundleId == 0);
+
                 // If this is a delta backup and the file is missing from the DB, then remove it from the repo (backupManifestUpdate
                 // will remove it from the manifest)
                 if (fileResult->backupCopyResult == backupCopyResultSkip)

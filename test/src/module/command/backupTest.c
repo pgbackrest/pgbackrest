@@ -614,7 +614,7 @@ testRun(void)
 
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "pg file missing, ignoreMissing=true, no delta");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy/repo size 0");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
@@ -640,7 +640,7 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ERROR(
-            backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), FileMissingError,
+            backupFile(0, compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), FileMissingError,
             "unable to open missing file '" TEST_PATH "/pg/missing' for read");
 
         // Create a pg file to backup
@@ -672,7 +672,7 @@ testRun(void)
 
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "pg file exists and shrunk, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
 
         ((Storage *)storageRepo())->pub.interface.feature = feature;
@@ -713,7 +713,7 @@ testRun(void)
 
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "file checksummed with pageChecksum enabled");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
@@ -744,7 +744,7 @@ testRun(void)
 
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "backup file");
         TEST_RESULT_UINT(result.copySize, 12, "copy size");
         TEST_RESULT_UINT(result.repoSize, 12, "repo size");
@@ -776,7 +776,7 @@ testRun(void)
         // File exists in repo and db, pg checksum match, delta set, ignoreMissing false, hasReference - NOOP
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "file in db and repo, checksum equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 0, "repo size not set since already exists in repo");
@@ -808,7 +808,7 @@ testRun(void)
         // File exists in repo and db, pg checksum mismatch, delta set, ignoreMissing false, hasReference - COPY
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "file in db and repo, pg checksum not equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
@@ -840,7 +840,7 @@ testRun(void)
         // File exists in repo and pg, pg checksum same, pg size passed is different, delta set, ignoreMissing false, hasReference
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 12, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 12, "repo=pgFile size");
@@ -873,7 +873,7 @@ testRun(void)
             storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", "testfile\n", .comment = "resumed file is missing in repo");
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "backup 9 bytes of pgfile to file to resume in repo");
         TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
@@ -912,7 +912,7 @@ testRun(void)
         // Delta set, ignoreMissing false, no hasReference
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
@@ -943,7 +943,7 @@ testRun(void)
 
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL, fileList), 0),
             "file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=0 size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
@@ -974,7 +974,7 @@ testRun(void)
 
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "pg file exists, no checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
@@ -1007,7 +1007,7 @@ testRun(void)
 
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeGz, 3, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
@@ -1043,7 +1043,7 @@ testRun(void)
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
             result,
-            *(BackupFileResult *)lstGet(backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
+            *(BackupFileResult *)lstGet(backupFile(0, compressTypeNone, 1, backupLabel, false, cipherTypeNone, NULL, fileList), 0),
             "zero-sized pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=pgFile size 0");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
@@ -1094,7 +1094,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(compressTypeNone, 1, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
+                backupFile(0, compressTypeNone, 1, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
@@ -1129,7 +1129,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
+                backupFile(0, compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 8, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
@@ -1163,7 +1163,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
+                backupFile(0, compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "pg and repo file exists, checksum mismatch, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
@@ -1197,7 +1197,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
+                backupFile(0, compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "backup file");
 
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
@@ -1703,7 +1703,7 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, NULL), AssertError, "error message");
+        TEST_ERROR(backupJobResult((Manifest *)1, NULL, storageTest, strLstNew(), job, 0, NULL), AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report host/100% progress on noop result");
@@ -1712,6 +1712,7 @@ testRun(void)
         job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(strIdFromZ("x")));
 
         PackWrite *const resultPack = protocolPackNew();
+        pckWriteStrP(resultPack, STRDEF("pg_data/test"));
         pckWriteU32P(resultPack, backupCopyResultNoOp);
         pckWriteU64P(resultPack, 0);
         pckWriteU64P(resultPack, 0);
@@ -1734,9 +1735,9 @@ testRun(void)
         uint64_t sizeProgress = 0;
 
         TEST_RESULT_VOID(
-            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, &sizeProgress), "log noop result");
+            backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, 0, &sizeProgress), "log noop result");
 
-        TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:log-test (0B, 100%)");
+        TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100%)");
     }
 
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
@@ -2830,7 +2831,6 @@ testRun(void)
         TEST_TITLE("online 11 incr backup with tablespaces");
 
         backupTimeStart = BACKUP_EPOCH + 2400000;
-        // backupProcessQueueComparatorSortTar = true; // !!!
 
         {
             // Load options
@@ -2846,11 +2846,7 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-            hrnCfgArgRawBool(argList, cfgOptBundle, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-            // Set to a smaller value than the defaults allow
-            cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(8192));
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
@@ -2863,8 +2859,8 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000002C05DB8EB000000000\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
                 "            HINT: this is normal after restoring from backup or promoting a standby.\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191027-181320F\n"
@@ -2936,6 +2932,51 @@ testRun(void)
                 "pg_tblspc/32768/PG_11_201809051={}\n"
                 "pg_tblspc/32768/PG_11_201809051/1={}\n",
                 "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 full backup with tablespaces and bundles");
+
+        backupTimeStart = BACKUP_EPOCH + 2400000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "1");
+            hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
+            hrnCfgArgRawBool(argList, cfgOptBundle, true);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Set to a smaller value than the defaults allow
+            cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(8192));
+
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            TEST_RESULT_VOID(cmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DB8EB000000000, lsn = 5db8eb0/0\n"
+                "P00   INFO: check archive for segment 0000000105DB8EB000000000\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                // "P01 DETAIL: backup file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
+                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DB8EB000000001, lsn = 5db8eb0/180000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00   INFO: check archive for segment(s) 0000000105DB8EB000000000:0000000105DB8EB000000001\n"
+                "P00 DETAIL: copy segment 0000000105DB8EB000000000 to backup\n"
+                "P00 DETAIL: copy segment 0000000105DB8EB000000001 to backup\n"
+                "P00   INFO: new backup label = 20191030-014640F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 9");
         }
     }
 
