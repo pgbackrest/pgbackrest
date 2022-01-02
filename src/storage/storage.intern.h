@@ -30,6 +30,7 @@ Error messages
 #define STORAGE_ERROR_READ_CLOSE                                    "unable to close file '%s' after read"
 #define STORAGE_ERROR_READ_OPEN                                     "unable to open file '%s' for read"
 #define STORAGE_ERROR_READ_MISSING                                  "unable to open missing file '%s' for read"
+#define STORAGE_ERROR_READ_SEEK                                     "unable to seek in file '%s'"
 
 #define STORAGE_ERROR_INFO                                          "unable to get info for path/file '%s'"
 #define STORAGE_ERROR_INFO_MISSING                                  "unable to get info for missing path/file '%s'"
@@ -88,6 +89,9 @@ typedef struct StorageInterfaceNewReadParam
 
     // Is the file compressible? This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
+
+    // Where to start reading in the file
+    const uint64_t offset;
 
     // Limit bytes read from the file. NULL for no limit.
     const Variant *limit;

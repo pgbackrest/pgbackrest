@@ -24,6 +24,7 @@ typedef struct StorageReadPosix
 
     int fd;                                                         // File descriptor
     uint64_t current;                                               // Current bytes read from file
+    uint64_t offset;                                                // Where to start reading from the file
     uint64_t limit;                                                 // Limit bytes to be read from file (UINT64_MAX for no limit)
     bool eof;
 } StorageReadPosix;
@@ -93,6 +94,14 @@ storageReadPosixOpen(THIS_VOID)
     {
         memContextCallbackSet(THIS_MEM_CONTEXT(), storageReadPosixFreeResource, this);
         result = true;
+    }
+
+    // Seek to offset
+    if (this->offset != 0)
+    {
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(this->fd, (off_t)this->offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
+            strZ(this->interface.name));
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -203,11 +212,14 @@ storageReadPosixFd(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 StorageRead *
-storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing, const Variant *limit)
+storageReadPosixNew(
+    StoragePosix *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
+    const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
@@ -223,6 +235,7 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
         {
             .storage = storage,
             .fd = -1,
+            .offset = offset,
 
             // Rather than enable/disable limit checking just use a big number when there is no limit.  We can feel pretty confident
             // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during

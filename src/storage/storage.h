@@ -147,6 +147,9 @@ typedef struct StorageNewReadParam
     bool ignoreMissing;
     bool compressible;
 
+    // Where to start reading in the file
+    const uint64_t offset;
+
     // Limit bytes to read from the file (must be varTypeUInt64). NULL for no limit.
     const Variant *limit;
 } StorageNewReadParam;

@@ -89,6 +89,8 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
                 lstAdd(fileList, &file);
             }
 
+            // Check files
+            // ---------------------------------------------------------------------------------------------------------------------
             for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
             {
                 ManifestFile *const file = *(ManifestFile **)lstGet(fileList, fileIdx);
@@ -134,7 +136,12 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
                 }
 
                 if (data->manifestData->backupOptionCompressType != compressTypeNone)
-                    ((ManifestFile *)file)->sizeRepo = file->size;
+                    file->sizeRepo = file->size;
+
+                // Bundle id/offset are too noisy so remove them. They are checked size/checksum and listed with the files.
+                // -----------------------------------------------------------------------------------------------------------------
+                file->bundleId = 0;
+                file->bundleOffset = 0;
 
                 // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from the
                 // test output.
@@ -143,7 +150,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
                     strBeginsWith(
                         file->name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(data->manifestData->pgVersion)))))
                 {
-                    ((ManifestFile *)file)->checksumSha1[0] = '\0';
+                    file->checksumSha1[0] = '\0';
                 }
 
                 strCatZ(data->content, "}\n");
@@ -3049,14 +3056,14 @@ testRun(void)
                     ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"bni\":4,\"bno\":31,\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2,\"timestamp\":1572200000}\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2,\"timestamp\":1572200000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17,\"timestamp\":1572400002}\n"
-                "pg_data/base/1/1={\"bni\":2,\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true,\"master\":false,\"size\":8192,\"timestamp\":1572200000}\n"
-                "pg_data/base/1/2={\"bni\":1,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"master\":false,\"size\":24576,\"timestamp\":1572400000}\n"
-                "pg_data/global/pg_control={\"bni\":3,\"size\":8192,\"timestamp\":1572400000}\n"
+                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true,\"master\":false,\"size\":8192,\"timestamp\":1572200000}\n"
+                "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"master\":false,\"size\":24576,\"timestamp\":1572400000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000000={\"size\":1048576,\"timestamp\":1572400002}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000001={\"size\":1048576,\"timestamp\":1572400002}\n"
-                "pg_data/postgresql.conf={\"bni\":4,\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11,\"timestamp\":1570000000}\n"
+                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11,\"timestamp\":1570000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19,\"timestamp\":1572400002}\n"
                 "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"master\":false,\"size\":0,\"timestamp\":1572200000}\n"
                 "\n"
