@@ -175,7 +175,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("sparse-zero"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("sparse-zero"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, TEST_USER_STR,
                 TEST_GROUP_STR, 0, true, false, NULL),
             false, "zero sparse 1TB file");
@@ -186,7 +186,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("normal-zero"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("normal-zero"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 false, false, NULL),
             true, "zero-length file");
@@ -202,7 +202,7 @@ testRun(void)
 
         TEST_ERROR(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
                 STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 false, false, STRDEF("badpass")),
             ChecksumError,
@@ -218,7 +218,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
                 STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 false, false, STRDEF("badpass")),
             true, "copy file");
@@ -242,7 +242,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             true, "sha1 delta missing");
@@ -256,7 +256,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             false, "sha1 delta existing");
@@ -265,7 +265,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
                 1557432155, true, true, NULL),
             false, "sha1 delta force existing");
@@ -278,7 +278,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             true, "sha1 delta existing, size differs");
@@ -288,7 +288,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
                 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
@@ -302,7 +302,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             true, "sha1 delta existing, content differs");
@@ -312,14 +312,14 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
                 1557432155, true, true, NULL),
             true, "delta force existing, timestamp differs");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
                 1557432153, true, true, NULL),
             true, "delta force existing, timestamp after copy time");
@@ -329,7 +329,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
                 true, false, NULL),
             false, "sha1 delta existing, content differs");
