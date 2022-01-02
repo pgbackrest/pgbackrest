@@ -2383,10 +2383,11 @@ testRun(void)
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                    .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            HRN_STORAGE_PUT_Z(
+                storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1", PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\n");
 
             // base directory
             manifestPathAdd(
@@ -2404,10 +2405,10 @@ testRun(void)
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                    .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 4,
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+            // File was already written as part of bundle 1 above
 
             // base/1/2
             fileBuffer = bufNew(8192);

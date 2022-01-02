@@ -48,7 +48,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
         const String *const cipherPass = pckReadStrP(param);
 
         const bool result = restoreFile(
-            repoFile, repoIdx, bundleId, repoSize, bundleOffset, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum,
+            repoFile, repoIdx, bundleId, bundleOffset, repoSize, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum,
             pgFileZero, pgFileSize, pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce,
             cipherPass);
 
