@@ -1660,7 +1660,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                     file.checksumPageErrorList = varVarLst(checksumPageErrorList);
             }
 
-            // !!!
+            // Bundle info
             file.bundleId = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_BUNDLE_ID_VAR, VARUINT64(0)));
 
             if (file.bundleId != 0)
@@ -2309,7 +2309,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 const ManifestFile *file = manifestFile(manifest, fileIdx);
                 KeyValue *fileKv = kvNew();
 
-                // !!!
+                // Bundle info
                 if (file->bundleId != 0)
                 {
                     kvPut(fileKv, MANIFEST_KEY_BUNDLE_ID_VAR, VARUINT64(file->bundleId));

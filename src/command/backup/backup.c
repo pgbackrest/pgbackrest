@@ -1420,7 +1420,7 @@ backupProcessQueueComparator(const void *item1, const void *item2)
     {
         if ((*(ManifestFile **)item1)->timestamp > (*(ManifestFile **)item2)->timestamp)
             FUNCTION_TEST_RETURN(-1);
-        else if ((*(ManifestFile **)item1)->timestamp < (*(ManifestFile **)item2)->timestamp) // {+uncovered !!!}
+        else if ((*(ManifestFile **)item1)->timestamp < (*(ManifestFile **)item2)->timestamp)
             FUNCTION_TEST_RETURN(1);
     }
 

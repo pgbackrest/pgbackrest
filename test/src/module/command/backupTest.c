@@ -102,9 +102,9 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
                 // Calculate checksum/size and decompress if needed
                 // -----------------------------------------------------------------------------------------------------------------
-                if (!bundle)
-                {
-                StorageRead *read = storageNewReadP(data->storage, strNewFmt("%s/%s", strZ(data->path), strZ(info->name)));
+                StorageRead *read = storageNewReadP(
+                    data->storage, strNewFmt("%s/%s", strZ(data->path), strZ(info->name)), .offset = file->bundleOffset,
+                    .limit = VARUINT64(file->sizeRepo));
 
                 if (data->manifestData->backupOptionCompressType != compressTypeNone)
                 {
@@ -130,9 +130,11 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
                 if (size != file->size)
                     THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file->name));
 
-                if (info->size != file->sizeRepo)
-                    THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file->name));
-
+                // Repo size can only be compared to file size when not bundled
+                if (!bundle)
+                {
+                    if (info->size != file->sizeRepo)
+                        THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file->name));
                 }
 
                 if (data->manifestData->backupOptionCompressType != compressTypeNone)
@@ -3010,6 +3012,10 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
 
+            // Old files
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.auto.conf", "CONFIGSTUFF2", .timeModified = 1500000000);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "stuff.conf", "CONFIGSTUFF3", .timeModified = 1500000000);
+
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
             TEST_RESULT_VOID(cmdBackup(), "backup");
@@ -3022,6 +3028,8 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/stuff.conf (12B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.auto.conf (12B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
@@ -3032,17 +3040,19 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB8EB000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB8EB000000001 to backup\n"
                 "P00   INFO: new backup label = 20191030-014640F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 10");
+                "P00   INFO: full backup size = [SIZE], file total = 12");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191030-014640F}\n"
                 "bundle {path}\n"
-                "bundle/1/pg_data/base/1/2 {file}\n"
-                "bundle/2/pg_data/base/1/1 {file}\n"
-                "bundle/3/pg_data/global/pg_control {file}\n"
-                "bundle/4/pg_data/PG_VERSION {file}\n"
-                "bundle/4/pg_data/postgresql.conf {file}\n"
+                "bundle/1/pg_data/base/1/2 {file, s=24576}\n"
+                "bundle/2/pg_data/base/1/1 {file, s=8192}\n"
+                "bundle/3/pg_data/global/pg_control {file, s=8192}\n"
+                "bundle/4/pg_data/PG_VERSION {file, s=2}\n"
+                "bundle/4/pg_data/postgresql.auto.conf {file, s=12}\n"
+                "bundle/4/pg_data/postgresql.conf {file, s=11}\n"
+                "bundle/4/pg_data/stuff.conf {file, s=12}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/pg_wal {path}\n"
@@ -3063,7 +3073,9 @@ testRun(void)
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000000={\"size\":1048576,\"timestamp\":1572400002}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000001={\"size\":1048576,\"timestamp\":1572400002}\n"
+                "pg_data/postgresql.auto.conf={\"checksum\":\"e873a5cb5a67e48761e7b619c531311404facdce\",\"size\":12,\"timestamp\":1500000000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11,\"timestamp\":1570000000}\n"
+                "pg_data/stuff.conf={\"checksum\":\"55a9d0d18b77789c7722abe72aa905e2dc85bb5d\",\"size\":12,\"timestamp\":1500000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19,\"timestamp\":1572400002}\n"
                 "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"master\":false,\"size\":0,\"timestamp\":1572200000}\n"
                 "\n"
