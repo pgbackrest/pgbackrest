@@ -182,17 +182,6 @@ testRun(void)
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("normal-zero file");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("normal-zero"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                false, false, NULL),
-            true, "zero-length file");
-        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "check size");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressed encrypted repo file - fail");
 
         HRN_STORAGE_PUT_Z(
@@ -323,16 +312,6 @@ testRun(void)
                 STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
                 1557432153, true, true, NULL),
             true, "delta force existing, timestamp after copy time");
-
-        // Change the existing file to zero-length
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "delta");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                repoFile1, repoIdx, 0, 0, 0, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
-            false, "sha1 delta existing, content differs");
     }
 
     // *****************************************************************************************************************************
@@ -2228,9 +2207,9 @@ testRun(void)
             "P00 DETAIL: remove special file '" TEST_PATH "/pg/pipe'\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
+            "P00 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
                 " (4B, 50%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
@@ -2284,8 +2263,8 @@ testRun(void)
             "P00 DETAIL: check '" TEST_PATH "/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1'\n"
+            "P00 DETAIL: restore file " TEST_PATH "/pg/tablespace_map - exists and is zero size\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 50%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
@@ -2615,6 +2594,7 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_xact' to '../xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
+            "P00 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%) checksum"
                 " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, 74%) checksum"
@@ -2633,7 +2613,6 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (4B, 99%) checksum"
                 " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, 100%)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2721,6 +2700,12 @@ testRun(void)
         HRN_STORAGE_REMOVE(storagePgWrite(), "pg_hba.conf");
         HRN_STORAGE_PUT_Z(storagePgWrite(), "pg_hba.conf", BOGUS_STR);
 
+        // Add file with size that should be zero-length
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "global/999", BOGUS_STR);
+
+        // Munge modified time so it is fixed
+        HRN_STORAGE_TIME(storagePgWrite(), "base/32768/PG_VERSION", 0);
+
         // Update the manifest with online = true to test recovery start time logging
         manifest->pub.data.backupOptionOnline = true;
         manifest->pub.data.backupTimestampStart = 1482182958;
@@ -2749,6 +2734,7 @@ testRun(void)
             "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
             "P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: update mode for '" TEST_PATH "/pg/global/999' to 0600\n"
             "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/pg_hba.conf'\n"
             "P00 DETAIL: remove invalid path '" TEST_PATH "/pg/pg_wal'\n"
             "P00 DETAIL: remove invalid link '" TEST_PATH "/pg/pg_xact'\n"
@@ -2757,6 +2743,7 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_wal' to '../wal'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
+            "P00 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B)\n"
             "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, 74%)"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
@@ -2776,7 +2763,6 @@ testRun(void)
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (4B, 100%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, 100%)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"

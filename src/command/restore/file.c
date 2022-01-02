@@ -52,6 +52,7 @@ restoreFile(
     ASSERT(repoFile != NULL);
     ASSERT(repoFileReference != NULL);
     ASSERT(pgFile != NULL);
+    ASSERT(pgFileSize != 0);
 
     // Was the file copied?
     bool result = true;
@@ -85,16 +86,12 @@ restoreFile(
                         // Generate checksum for the file if size is not zero
                         IoRead *read = NULL;
 
-                        if (info.size != 0)
-                        {
-                            read = storageReadIo(storageNewReadP(storagePgWrite(), pgFile));
-                            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
-                            ioReadDrain(read);
-                        }
+                        read = storageReadIo(storageNewReadP(storagePgWrite(), pgFile));
+                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+                        ioReadDrain(read);
 
                         // If size and checksum are equal then no need to copy the file
-                        if (pgFileSize == 0 ||
-                            strEq(
+                        if (strEq(
                                 pgFileChecksum,
                                 pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
                         {
@@ -124,21 +121,18 @@ restoreFile(
                 storagePgWrite(), pgFile, .modeFile = pgFileMode, .user = pgFileUser, .group = pgFileGroup,
                 .timeModified = pgFileModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
 
-            // If size is zero/sparse no need to actually copy
-            if (pgFileSize == 0 || pgFileZero)
+            // If size is sparse no need to actually copy
+            if (pgFileZero)
             {
                 ioWriteOpen(storageWriteIo(pgFileWrite));
 
                 // Truncate the file to specified length (note in this case the file with grow, not shrink)
-                if (pgFileZero)
-                {
-                    THROW_ON_SYS_ERROR_FMT(
-                        ftruncate(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)pgFileSize) == -1, FileWriteError,
-                        "unable to truncate '%s'", strZ(pgFile));
+                THROW_ON_SYS_ERROR_FMT(
+                    ftruncate(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)pgFileSize) == -1, FileWriteError,
+                    "unable to truncate '%s'", strZ(pgFile));
 
-                    // Report the file as not copied
-                    result = false;
-                }
+                // Report the file as not copied
+                result = false;
 
                 ioWriteClose(storageWriteIo(pgFileWrite));
             }

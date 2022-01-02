@@ -1919,9 +1919,10 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
 }
 
 static uint64_t
-restoreProcessQueue(Manifest *manifest, List **queueList)
+restoreProcessQueue(const Storage *const storagePg, Manifest *const manifest, List **queueList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM_P(LIST, queueList);
     FUNCTION_LOG_END();
@@ -1962,6 +1963,29 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFile *file = manifestFile(manifest, fileIdx);
+
+            // Create zero-length files
+            if (file->size == 0)
+            {
+                String *const pgName = storagePathP(storagePg, manifestPathPg(file->name));
+                StorageInfo info = storageInfoP(storagePg, pgName, .ignoreMissing = true);
+
+                if (!info.exists || info.size != 0)
+                {
+                    storagePutP(
+                        storageNewWriteP(
+                            storagePg, pgName, .timeModified = file->timestamp, .modeFile = file->mode, .user = file->user,
+                            .group = file->group, .noAtomic = true, .noCreatePath = true, .noSyncPath = true),
+                        BUFSTRDEF(""));
+
+                    LOG_DETAIL_FMT("restore file %s (0B)", strZ(pgName));
+                }
+                else
+                    LOG_DETAIL_FMT("restore file %s - exists and is zero size", strZ(pgName));
+
+                strFree(pgName);
+                continue;
+            }
 
             // Find the target that contains this file
             unsigned int targetIdx = 0;
@@ -2078,19 +2102,12 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                         log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file->size,
                         (uint64_t)file->timestamp);
                 }
-                // Else a checksum delta or file is zero-length
+                // Else the file matched the manifest checksum so did not need to be copied
                 else
                 {
-                    strCatZ(log, "exists and ");
+                    ASSERT(file->size != 0);
 
-                    // No need to copy zero-length files
-                    if (file->size == 0)
-                    {
-                        strCatZ(log, "is zero size");
-                    }
-                    // The file matched the manifest checksum so did not need to be copied
-                    else
-                        strCatZ(log, "matches backup");
+                    strCatZ(log, "exists and matches backup");
                 }
             }
 
@@ -2098,8 +2115,8 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             sizeRestored += file->size;
             strCatFmt(log, " (%s, %" PRIu64 "%%)", strZ(strSizeFormat(file->size)), sizeRestored * 100 / sizeTotal);
 
-            // If not zero-length add the checksum
-            if (file->size != 0 && !zeroed)
+            // If not zeroed add the checksum
+            if (!zeroed)
                 strCatFmt(log, " checksum %s", file->checksumSha1);
 
             LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
@@ -2188,7 +2205,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 pckWriteU64P(param, file->bundleId);
                 pckWriteU64P(param, file->bundleOffset);
                 pckWriteU64P(param, file->sizeRepo);
-                pckWriteStrP(param, file->reference != NULL ? file->reference : manifestData(jobData->manifest)->backupLabel);
+                pckWriteStrP(param, file->reference != NULL ? file->reference : manifestData(jobData->manifest)->backupLabel); // {uncovered !!!}
                 pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
                 pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file->name));
                 pckWriteStrP(param, STR(file->checksumSha1));
@@ -2305,7 +2322,7 @@ cmdRestore(void)
         restoreCleanBuild(jobData.manifest);
 
         // Generate processing queues
-        uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
+        uint64_t sizeTotal = restoreProcessQueue(storagePgWrite(), jobData.manifest, &jobData.queueList);
 
         // Save manifest to the data directory so we can restart a delta restore even if the PG_VERSION file is missing
         manifestSave(jobData.manifest, storageWriteIo(storageNewWriteP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR)));
