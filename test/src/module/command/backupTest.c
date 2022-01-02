@@ -2998,7 +2998,7 @@ testRun(void)
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 "--------\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"/home/vagrant/test/test-0/pg1\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                 "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
                     ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                 "\n"
