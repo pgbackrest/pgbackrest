@@ -67,6 +67,10 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
     STRING_STATIC(MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,           MANIFEST_KEY_BACKUP_TIMESTAMP_STOP);
 #define MANIFEST_KEY_BACKUP_TYPE                                    "backup-type"
     STRING_STATIC(MANIFEST_KEY_BACKUP_TYPE_STR,                     MANIFEST_KEY_BACKUP_TYPE);
+#define MANIFEST_KEY_BUNDLE_ID                                      "bni"
+    VARIANT_STRDEF_STATIC(MANIFEST_KEY_BUNDLE_ID_VAR,               MANIFEST_KEY_BUNDLE_ID);
+#define MANIFEST_KEY_BUNDLE_OFFSET                                  "bno"
+    VARIANT_STRDEF_STATIC(MANIFEST_KEY_BUNDLE_OFFSET_VAR,           MANIFEST_KEY_BUNDLE_OFFSET);
 #define MANIFEST_KEY_CHECKSUM                                       "checksum"
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_VAR,                MANIFEST_KEY_CHECKSUM);
 #define MANIFEST_KEY_CHECKSUM_PAGE                                  "checksum-page"
@@ -218,6 +222,8 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
     {
         ManifestFile fileAdd =
         {
+            .bundleId = file->bundleId,
+            .bundleOffset = file->bundleOffset,
             .checksumPage = file->checksumPage,
             .checksumPageError = file->checksumPageError,
             .checksumPageErrorList = varLstDup(file->checksumPageErrorList),
@@ -1415,7 +1421,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 manifestFileUpdate(
                     this, file->name, file->size, filePrior->sizeRepo, filePrior->checksumSha1,
                     VARSTR(filePrior->reference != NULL ? filePrior->reference : manifestPrior->pub.data.backupLabel),
-                    filePrior->checksumPage, filePrior->checksumPageError, filePrior->checksumPageErrorList);
+                    filePrior->checksumPage, filePrior->checksumPageError, filePrior->checksumPageErrorList,
+                    filePrior->bundleId, filePrior->bundleOffset);
             }
         }
     }
@@ -1652,6 +1659,12 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 if (checksumPageErrorList != NULL)
                     file.checksumPageErrorList = varVarLst(checksumPageErrorList);
             }
+
+            // !!!
+            file.bundleId = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_BUNDLE_ID_VAR, VARUINT64(0)));
+
+            if (file.bundleId != 0)
+                file.bundleOffset = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_BUNDLE_OFFSET_VAR, VARUINT64(0)));
 
             if (kvKeyExists(fileKv, MANIFEST_KEY_GROUP_VAR))
             {
@@ -2296,6 +2309,15 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 const ManifestFile *file = manifestFile(manifest, fileIdx);
                 KeyValue *fileKv = kvNew();
 
+                // !!!
+                if (file->bundleId != 0)
+                {
+                    kvPut(fileKv, MANIFEST_KEY_BUNDLE_ID_VAR, VARUINT64(file->bundleId));
+
+                    if (file->bundleOffset != 0)
+                        kvPut(fileKv, MANIFEST_KEY_BUNDLE_OFFSET_VAR, VARUINT64(file->bundleOffset));
+                }
+
                 // Save if the file size is not zero and the checksum exists.  The checksum might not exist if this is a partial
                 // save performed during a backup.
                 if (file->size != 0 && file->checksumSha1[0] != 0)
@@ -2640,7 +2662,8 @@ manifestFileRemove(const Manifest *this, const String *name)
 void
 manifestFileUpdate(
     Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList)
+    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList, const uint64_t bundleId,
+    const uint64_t bundleOffset)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -2652,6 +2675,8 @@ manifestFileUpdate(
         FUNCTION_TEST_PARAM(BOOL, checksumPage);
         FUNCTION_TEST_PARAM(BOOL, checksumPageError);
         FUNCTION_TEST_PARAM(VARIANT_LIST, checksumPageErrorList);
+        FUNCTION_TEST_PARAM(UINT64, bundleId);
+        FUNCTION_TEST_PARAM(UINT64, bundleOffset);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -2685,6 +2710,10 @@ manifestFileUpdate(
         file->checksumPage = checksumPage;
         file->checksumPageError = checksumPageError;
         file->checksumPageErrorList = varLstDup(checksumPageErrorList);
+
+        // Update bundle info
+        file->bundleId = bundleId;
+        file->bundleOffset = bundleOffset;
     }
     MEM_CONTEXT_END();
 

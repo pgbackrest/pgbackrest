@@ -76,30 +76,33 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
             // Check against the manifest
             // ---------------------------------------------------------------------------------------------------------------------
-            const ManifestFile *file = manifestFileFind(data->manifest, manifestName);
-
-            // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the same
-            // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
-            // compression.
-            if (size != file->size)
-                THROW_FMT(AssertError, "'%s' size does match manifest", strZ(manifestName));
-
-            if (info->size != file->sizeRepo)
-                THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(manifestName));
-
-            if (data->manifestData->backupOptionCompressType != compressTypeNone)
-                ((ManifestFile *)file)->sizeRepo = file->size;
-
-            // Test the checksum. pg_control and WAL headers have different checksums depending on cpu architecture so remove
-            // the checksum from the test output.
-            if (!strEqZ(checksum, file->checksumSha1))
-                THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(manifestName));
-
-            if (strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-                strBeginsWith(
-                    manifestName, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(data->manifestData->pgVersion)))))
+            if (!strBeginsWithZ(info->name, "bundle/"))
             {
-                ((ManifestFile *)file)->checksumSha1[0] = '\0';
+                const ManifestFile *file = manifestFileFind(data->manifest, manifestName);
+
+                // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the same
+                // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
+                // compression.
+                if (size != file->size)
+                    THROW_FMT(AssertError, "'%s' size does match manifest", strZ(manifestName));
+
+                if (info->size != file->sizeRepo)
+                    THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(manifestName));
+
+                if (data->manifestData->backupOptionCompressType != compressTypeNone)
+                    ((ManifestFile *)file)->sizeRepo = file->size;
+
+                // Test the checksum. pg_control and WAL headers have different checksums depending on cpu architecture so remove
+                // the checksum from the test output.
+                if (!strEqZ(checksum, file->checksumSha1))
+                    THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(manifestName));
+
+                if (strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+                    strBeginsWith(
+                        manifestName, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(data->manifestData->pgVersion)))))
+                {
+                    ((ManifestFile *)file)->checksumSha1[0] = '\0';
+                }
             }
 
             // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
@@ -126,7 +129,8 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
             // Check against the manifest
             // ---------------------------------------------------------------------------------------------------------------------
-            manifestPathFind(data->manifest, info->name);
+            if (!strEq(info->name, STRDEF("bundle"))) // !!!
+                manifestPathFind(data->manifest, info->name);
 
             // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
             // mode and current user/group.
@@ -165,6 +169,8 @@ testBackupValidate(const Storage *storage, const String *path)
         // -------------------------------------------------------------------------------------------------------------------------
         Manifest *manifest = manifestLoadFile(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), cipherTypeNone, NULL);
 
+        if (!storagePathExistsP(storage, strNewFmt("%s/bundle", strZ(path)))) // !!!
+        {
         TestBackupValidateCallbackData callbackData =
         {
             .storage = storage,
@@ -175,6 +181,7 @@ testBackupValidate(const Storage *storage, const String *path)
         };
 
         storageInfoListP(storage, path, testBackupValidateCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc);
+        }
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
         if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path))))
@@ -2986,6 +2993,42 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB8EB000000001 to backup\n"
                 "P00   INFO: new backup label = 20191030-014640F\n"
                 "P00   INFO: full backup size = [SIZE], file total = 10");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/home/vagrant/test/test-0/pg1\",\"type\":\"path\"}\n"
+                "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
+                    ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"repo-size\":22,\"size\":2,\"timestamp\":1572200000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"repo-size\":37,\"size\":17,\"timestamp\":1572400002}\n"
+                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true,\"master\":false,\"repo-size\":43,\"size\":8192,\"timestamp\":1572200000}\n"
+                "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"master\":false,\"repo-size\":59,\"size\":24576,\"timestamp\":1572400000}\n"
+                "pg_data/global/pg_control={\"checksum\":\"27c6e607565325c769d23a9bd216963711e1fa81\",\"repo-size\":98,\"size\":8192,\"timestamp\":1572400000}\n"
+                "pg_data/pg_wal/0000000105DB8EB000000000={\"checksum\":\"981cf6d1592321994948de89cc3d0d352516ccb4\",\"repo-size\":4635,\"size\":1048576,\"timestamp\":1572400002}\n"
+                "pg_data/pg_wal/0000000105DB8EB000000001={\"checksum\":\"981cf6d1592321994948de89cc3d0d352516ccb4\",\"repo-size\":4635,\"size\":1048576,\"timestamp\":1572400002}\n"
+                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"repo-size\":31,\"size\":11,\"timestamp\":1570000000}\n"
+                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"repo-size\":39,\"size\":19,\"timestamp\":1572400002}\n"
+                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"master\":false,\"size\":0,\"timestamp\":1572200000}\n"
+                "\n"
+                "[target:link]\n"
+                "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n"
+                "pg_data/pg_tblspc={}\n"
+                "pg_data/pg_wal={}\n"
+                "pg_tblspc={}\n"
+                "pg_tblspc/32768={}\n"
+                "pg_tblspc/32768/PG_11_201809051={}\n"
+                "pg_tblspc/32768/PG_11_201809051/1={}\n",
+                "compare file list");
         }
     }
 

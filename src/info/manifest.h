@@ -101,6 +101,8 @@ typedef struct ManifestFile
     const String *user;                                             // User name
     const String *group;                                            // Group name
     const String *reference;                                        // Reference to a prior backup
+    uint64_t bundleId;                                              // Bundle id
+    uint64_t bundleOffset;                                          // Bundle offset
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
@@ -287,7 +289,7 @@ manifestFileTotal(const Manifest *const this)
 // Update a file with new data
 void manifestFileUpdate(
     Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList);
+    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList, uint64_t bundleId, uint64_t bundleOffset);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters

@@ -612,7 +612,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             {
                 manifestFileUpdate(
                     resumeData->manifest, manifestName, file->size, fileResume->sizeRepo, fileResume->checksumSha1, NULL,
-                    fileResume->checksumPage, fileResume->checksumPageError, fileResume->checksumPageErrorList);
+                    fileResume->checksumPage, fileResume->checksumPageError, fileResume->checksumPageErrorList, 0, 0);
             }
 
             // Remove the file if it could not be resumed
@@ -1311,7 +1311,7 @@ backupJobResult(
                     // Update file info and remove any reference to the file's existence in a prior backup
                     manifestFileUpdate(
                         manifest, file->name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file->checksumPage,
-                        checksumPageError, checksumPageErrorList);
+                        checksumPageError, checksumPageErrorList, 0, 0);
                 }
             }
         }
@@ -1494,7 +1494,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             if (bundle && file->size == 0)
             {
                 manifestFileUpdate(
-                    manifest, file->name, 0, 0, strZ(HASH_TYPE_SHA1_ZERO_STR), VARSTR(NULL), file->checksumPage, false, NULL);
+                    manifest, file->name, 0, 0, strZ(HASH_TYPE_SHA1_ZERO_STR), VARSTR(NULL), file->checksumPage, false, NULL, 0, 0);
                 LOG_DETAIL_FMT(
                     "store zero-length file %s", strZ(storagePathP(backupData->storagePrimary, manifestPathPg(file->name))));
 
