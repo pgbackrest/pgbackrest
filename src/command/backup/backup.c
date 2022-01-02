@@ -1173,6 +1173,7 @@ backupJobResult(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             const unsigned int processId = protocolParallelJobProcessId(job);
+            const uint64_t bundleId = cfgOptionBool(cfgOptBundle) ? varUInt64(protocolParallelJobKey(job)) : 0;
             PackRead *const jobResult = protocolParallelJobResult(job);
 
             while (!pckReadNullP(jobResult))
@@ -1180,6 +1181,7 @@ backupJobResult(
                 const ManifestFile *const file = manifestFileFind(manifest, pckReadStrP(jobResult));
                 const BackupCopyResult copyResult = (BackupCopyResult)pckReadU32P(jobResult);
                 const uint64_t copySize = pckReadU64P(jobResult);
+                const uint64_t bundleOffset = pckReadU64P(jobResult);
                 const uint64_t repoSize = pckReadU64P(jobResult);
                 const String *const copyChecksum = pckReadStrP(jobResult);
                 PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
@@ -1311,7 +1313,7 @@ backupJobResult(
                     // Update file info and remove any reference to the file's existence in a prior backup
                     manifestFileUpdate(
                         manifest, file->name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file->checksumPage,
-                        checksumPageError, checksumPageErrorList, 0, 0);
+                        checksumPageError, checksumPageErrorList, bundleId, bundleOffset);
                 }
             }
         }

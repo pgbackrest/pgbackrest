@@ -208,6 +208,7 @@ backupFile(
 
         // Copy the files
         StorageWrite *write = NULL;
+        uint64_t bundleOffset = 0;
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
@@ -282,6 +283,7 @@ backupFile(
                         // Get sizes and checksum
                         fileResult->copySize = pckReadU64P(
                             ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE));
+                        fileResult->bundleOffset = bundleOffset;
                         fileResult->copyChecksum = strDup(
                             pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
 
@@ -293,6 +295,8 @@ backupFile(
                         }
                     }
                     MEM_CONTEXT_END();
+
+                    bundleOffset += fileResult->repoSize;
                 }
                 // Else if source file is missing and the read setup indicated ignore a missing file, the database removed it so
                 // skip it
@@ -309,6 +313,7 @@ backupFile(
         {
             BackupFileResult *const fileResult = lstGet(result, fileIdx);
 
+            // !!! THIS IS NOT GOOD BECAUSE WE NEED THE BUNDLE SIZE AND REPO SIZE TO MATCH EXACTLY
             // If the file was copied get the repo size only if the storage can store the files with a different size than what was
             // written. This has to be checked after the file is at rest because filesystem compression may affect the actual repo
             // size and this cannot be calculated in stream.

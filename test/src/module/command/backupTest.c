@@ -42,90 +42,123 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
         (strEqZ(info->name, BACKUP_MANIFEST_FILE) || strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT)))
         return;
 
-    // Get manifest name
-    const String *manifestName = info->name;
-
-    strCatFmt(data->content, "%s {", strZ(info->name));
-
     switch (info->type)
     {
         case storageTypeFile:
         {
-            strCatZ(data->content, "file");
-
-            // Calculate checksum/size and decompress if needed
+            // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
+            // mode and current user/group.
             // ---------------------------------------------------------------------------------------------------------------------
-            StorageRead *read = storageNewReadP(
-                data->storage, data->path != NULL ? strNewFmt("%s/%s", strZ(data->path), strZ(info->name)) : info->name);
+            if (info->mode != 0640)
+                THROW_FMT(AssertError, "'%s' mode is not 0640", strZ(info->name));
 
-            if (data->manifestData->backupOptionCompressType != compressTypeNone)
+            if (!strEq(info->user, TEST_USER_STR))
+                THROW_FMT(AssertError, "'%s' user should be '" TEST_USER "'", strZ(info->name));
+
+            if (!strEq(info->group, TEST_GROUP_STR))
+                THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(info->name));
+
+            // Build file list (needed because bundles can contain multiple files)
+            // ---------------------------------------------------------------------------------------------------------------------
+            List *const fileList = lstNewP(sizeof(ManifestFile *));
+            bool bundle = strBeginsWithZ(info->name, "bundle/");
+
+            if (bundle)
             {
-                ioFilterGroupAdd(
-                    ioReadFilterGroup(storageReadIo(read)), decompressFilter(data->manifestData->backupOptionCompressType));
-                manifestName = strSubN(
-                    info->name, 0, strSize(info->name) - strSize(compressExtStr(data->manifestData->backupOptionCompressType)));
+                const uint64_t bundleId = cvtZToUInt64(strZ(strSub(info->name, sizeof("bundle"))));
+
+                for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(data->manifest); fileIdx++)
+                {
+                    const ManifestFile *const file = manifestFile(data->manifest, fileIdx);
+
+                    if (file->bundleId == bundleId)
+                        lstAdd(fileList, &file);
+                }
+            }
+            else
+            {
+                const String *manifestName = info->name;
+
+                if (data->manifestData->backupOptionCompressType != compressTypeNone)
+                {
+                    manifestName = strSubN(
+                        info->name, 0, strSize(info->name) - strSize(compressExtStr(data->manifestData->backupOptionCompressType)));
+                }
+
+                const ManifestFile *const file = manifestFileFind(data->manifest, manifestName);
+                lstAdd(fileList, &file);
             }
 
-            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
-
-            uint64_t size = bufUsed(storageGetP(read));
-            const String *checksum = pckReadStrP(
-                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
-
-            strCatFmt(data->content, ", s=%" PRIu64, size);
-
-            // Check against the manifest
-            // ---------------------------------------------------------------------------------------------------------------------
-            if (!strBeginsWithZ(info->name, "bundle/"))
+            for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
             {
-                const ManifestFile *file = manifestFileFind(data->manifest, manifestName);
+                ManifestFile *const file = *(ManifestFile **)lstGet(fileList, fileIdx);
 
-                // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the same
-                // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
-                // compression.
+                if (bundle)
+                    strCatFmt(data->content, "%s/%s {file", strZ(info->name), strZ(file->name));
+                else
+                    strCatFmt(data->content, "%s {file", strZ(info->name));
+
+                // Calculate checksum/size and decompress if needed
+                // -----------------------------------------------------------------------------------------------------------------
+                if (!bundle)
+                {
+                StorageRead *read = storageNewReadP(data->storage, strNewFmt("%s/%s", strZ(data->path), strZ(info->name)));
+
+                if (data->manifestData->backupOptionCompressType != compressTypeNone)
+                {
+                    ioFilterGroupAdd(
+                        ioReadFilterGroup(storageReadIo(read)), decompressFilter(data->manifestData->backupOptionCompressType));
+                }
+
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
+
+                uint64_t size = bufUsed(storageGetP(read));
+                const String *checksum = pckReadStrP(
+                    ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
+
+                strCatFmt(data->content, ", s=%" PRIu64, size);
+
+                if (!strEqZ(checksum, file->checksumSha1))
+                    THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file->name));
+
+                // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the
+                // same compression algorithm can give slightly different results based on the version so repo-size is not
+                // deterministic for compression.
+                // -----------------------------------------------------------------------------------------------------------------
                 if (size != file->size)
-                    THROW_FMT(AssertError, "'%s' size does match manifest", strZ(manifestName));
+                    THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file->name));
 
                 if (info->size != file->sizeRepo)
-                    THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(manifestName));
+                    THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file->name));
+
+                }
 
                 if (data->manifestData->backupOptionCompressType != compressTypeNone)
                     ((ManifestFile *)file)->sizeRepo = file->size;
 
-                // Test the checksum. pg_control and WAL headers have different checksums depending on cpu architecture so remove
-                // the checksum from the test output.
-                if (!strEqZ(checksum, file->checksumSha1))
-                    THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(manifestName));
-
-                if (strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+                // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from the
+                // test output.
+                // -----------------------------------------------------------------------------------------------------------------
+                if (strEqZ(file->name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
                     strBeginsWith(
-                        manifestName, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(data->manifestData->pgVersion)))))
+                        file->name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(data->manifestData->pgVersion)))))
                 {
                     ((ManifestFile *)file)->checksumSha1[0] = '\0';
                 }
+
+                strCatZ(data->content, "}\n");
             }
-
-            // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
-            // mode and current user/group.
-            if (info->mode != 0640)
-                THROW_FMT(AssertError, "'%s' mode is not 0640", strZ(manifestName));
-
-            if (!strEq(info->user, TEST_USER_STR))
-                THROW_FMT(AssertError, "'%s' user should be '" TEST_USER "'", strZ(manifestName));
-
-            if (!strEq(info->group, TEST_GROUP_STR))
-                THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(manifestName));
 
             break;
         }
 
         case storageTypeLink:
-            strCatFmt(data->content, "link, d=%s", strZ(info->linkDestination));
+            strCatFmt(data->content, "%s {link, d=%s}\n", strZ(info->name), strZ(info->linkDestination));
             break;
 
         case storageTypePath:
         {
-            strCatZ(data->content, "path");
+            strCatFmt(data->content, "%s {path", strZ(info->name));
 
             // Check against the manifest
             // ---------------------------------------------------------------------------------------------------------------------
@@ -143,6 +176,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             if (!strEq(info->group, TEST_GROUP_STR))
                 THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(info->name));
 
+            strCatZ(data->content, "}\n");
             break;
         }
 
@@ -150,7 +184,6 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             THROW_FMT(AssertError, "unexpected special file '%s'", strZ(info->name));
     }
 
-    strCatZ(data->content, "}\n");
 }
 
 static String *
@@ -161,6 +194,9 @@ testBackupValidate(const Storage *storage, const String *path)
         FUNCTION_HARNESS_PARAM(STRING, path);
     FUNCTION_HARNESS_END();
 
+    ASSERT(storage != NULL);
+    ASSERT(path != NULL);
+
     String *result = strNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -169,8 +205,6 @@ testBackupValidate(const Storage *storage, const String *path)
         // -------------------------------------------------------------------------------------------------------------------------
         Manifest *manifest = manifestLoadFile(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), cipherTypeNone, NULL);
 
-        if (!storagePathExistsP(storage, strNewFmt("%s/bundle", strZ(path)))) // !!!
-        {
         TestBackupValidateCallbackData callbackData =
         {
             .storage = storage,
@@ -181,7 +215,6 @@ testBackupValidate(const Storage *storage, const String *path)
         };
 
         storageInfoListP(storage, path, testBackupValidateCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc);
-        }
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
         if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path))))
@@ -2996,6 +3029,19 @@ testRun(void)
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ". {link, d=20191030-014640F}\n"
+                "bundle {path}\n"
+                "bundle/1/pg_data/base/1/2 {file}\n"
+                "bundle/2/pg_data/base/1/1 {file}\n"
+                "bundle/3/pg_data/global/pg_control {file}\n"
+                "bundle/4/pg_data/PG_VERSION {file}\n"
+                "bundle/4/pg_data/postgresql.conf {file}\n"
+                "pg_data {path}\n"
+                "pg_data/backup_label.gz {file, s=17}\n"
+                "pg_data/pg_wal {path}\n"
+                "pg_data/pg_wal/0000000105DB8EB000000000.gz {file, s=1048576}\n"
+                "pg_data/pg_wal/0000000105DB8EB000000001.gz {file, s=1048576}\n"
+                "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -3003,15 +3049,15 @@ testRun(void)
                     ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"repo-size\":22,\"size\":2,\"timestamp\":1572200000}\n"
-                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"repo-size\":37,\"size\":17,\"timestamp\":1572400002}\n"
-                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true,\"master\":false,\"repo-size\":43,\"size\":8192,\"timestamp\":1572200000}\n"
-                "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"master\":false,\"repo-size\":59,\"size\":24576,\"timestamp\":1572400000}\n"
-                "pg_data/global/pg_control={\"checksum\":\"27c6e607565325c769d23a9bd216963711e1fa81\",\"repo-size\":98,\"size\":8192,\"timestamp\":1572400000}\n"
-                "pg_data/pg_wal/0000000105DB8EB000000000={\"checksum\":\"981cf6d1592321994948de89cc3d0d352516ccb4\",\"repo-size\":4635,\"size\":1048576,\"timestamp\":1572400002}\n"
-                "pg_data/pg_wal/0000000105DB8EB000000001={\"checksum\":\"981cf6d1592321994948de89cc3d0d352516ccb4\",\"repo-size\":4635,\"size\":1048576,\"timestamp\":1572400002}\n"
-                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"repo-size\":31,\"size\":11,\"timestamp\":1570000000}\n"
-                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"repo-size\":39,\"size\":19,\"timestamp\":1572400002}\n"
+                "pg_data/PG_VERSION={\"bni\":4,\"bno\":31,\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2,\"timestamp\":1572200000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17,\"timestamp\":1572400002}\n"
+                "pg_data/base/1/1={\"bni\":2,\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true,\"master\":false,\"size\":8192,\"timestamp\":1572200000}\n"
+                "pg_data/base/1/2={\"bni\":1,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"master\":false,\"size\":24576,\"timestamp\":1572400000}\n"
+                "pg_data/global/pg_control={\"bni\":3,\"size\":8192,\"timestamp\":1572400000}\n"
+                "pg_data/pg_wal/0000000105DB8EB000000000={\"size\":1048576,\"timestamp\":1572400002}\n"
+                "pg_data/pg_wal/0000000105DB8EB000000001={\"size\":1048576,\"timestamp\":1572400002}\n"
+                "pg_data/postgresql.conf={\"bni\":4,\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11,\"timestamp\":1570000000}\n"
+                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19,\"timestamp\":1572400002}\n"
                 "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"master\":false,\"size\":0,\"timestamp\":1572200000}\n"
                 "\n"
                 "[target:link]\n"
