@@ -14,6 +14,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.38dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2022-01-03" version="2.37" title="TLS Server">
             <release-core-list>
                 <text>

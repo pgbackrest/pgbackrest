@@ -1,5 +1,10 @@
 [
     {
+        "commit": "f18f2d9991da29533ad8e9859074c4f39185420f",
+        "date": "2022-01-03 08:43:55 -0500",
+        "subject": "v2.37: TLS Server"
+    },
+    {
         "commit": "62fbee72ad319f92c9410ac8dbab2f81fe945a36",
         "date": "2022-01-01 10:50:16 -0500",
         "subject": "Update LICENSE.txt and PostgreSQL copyright for 2022."
