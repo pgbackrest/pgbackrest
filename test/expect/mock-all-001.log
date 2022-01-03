@@ -525,6 +525,8 @@ P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.conf'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.done'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/pg_stat'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base/pg_clog'
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base/zero_from_start - exists and is zero size
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -541,8 +543,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION - 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/zero_from_start - exists and is zero size (0B, 100%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
 P00   INFO: write [TEST_PATH]/db-primary/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base'
@@ -587,6 +587,8 @@ P00 DETAIL: update ownership for '[TEST_PATH]/db-primary/db/base/base/1/PG_VERSI
 P00 DETAIL: update ownership for '[TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/pg_stat'
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base/zero_from_start - exists and is zero size
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -603,8 +605,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION - 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/zero_from_start - exists and is zero size (0B, 100%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
 P00   INFO: write [TEST_PATH]/db-primary/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base'
@@ -649,6 +649,8 @@ P00 DETAIL: remove link '[TEST_PATH]/db-primary/db/base/pg_stat' because destina
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/pg_stat'
 P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base/pg_stat' to '../pg_stat'
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base/zero_from_start - exists and is zero size
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -665,8 +667,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION - 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/PG_VERSION - exists and matches backup (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/zero_from_start - exists and is zero size (0B, 100%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 100%)
 P00   INFO: write [TEST_PATH]/db-primary/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/pg_config'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base'
@@ -715,6 +715,8 @@ P00 DETAIL: remove invalid link '[TEST_PATH]/db-primary/db/base/pg_stat'
 P00 DETAIL: remove invalid link '[TEST_PATH]/db-primary/db/base/postgresql.conf'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.conf'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base/pg_stat'
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base/zero_from_start - exists and is zero size
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33001 - exists and matches size 65536 and modification time [MODIFICATION-TIME-1] (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -731,8 +733,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/PG_VERSION - 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-1] (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-1] (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/PG_VERSION - exists and matches size 3 and modification time [MODIFICATION-TIME-1] (3B, 100%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/zero_from_start - exists and matches size 0 and modification time [MODIFICATION-TIME-1] (0B, 100%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/special-!_.*'()&!@;:+,? - exists and matches size 0 and modification time [MODIFICATION-TIME-1] (0B, 100%)
 P00   INFO: write [TEST_PATH]/db-primary/db/base/recovery.conf
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base'
 P00 DETAIL: sync path '[TEST_PATH]/db-primary/db/base/base'
@@ -1424,6 +1424,9 @@ P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/1' to '[T
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384'
 P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespace/ts2-2'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? (0B)
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start (0B)
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B)
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1440,9 +1443,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? (0B, 99%)
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: write [TEST_PATH]/db-primary/db/base-2/recovery.conf
@@ -1494,6 +1494,9 @@ P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/bas
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/tablespace/ts1-2/[TS_PATH-1]'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/tablespace/ts2-2/[TS_PATH-1]'
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt - exists and is zero size
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -1510,9 +1513,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt - exists and is zero size (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start - exists and is zero size (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 99%)
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt - exists and matches backup (7B, 99%) checksum d85de07d6421d90aa9191c11c889bfde43680f0f
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt - exists and matches backup (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: write [TEST_PATH]/db-primary/db/base-2/recovery.conf
@@ -2831,6 +2831,9 @@ P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/base-2'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/tablespace/ts2-2/[TS_PATH-1]'
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt - exists and is zero size
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%)
@@ -2848,9 +2851,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt - exists and is zero size (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start - exists and is zero size (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 99%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%)
 P01 DETAIL: restore zeroed file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%)
 P00   INFO: write [TEST_PATH]/db-primary/db/base-2/recovery.conf
@@ -2897,6 +2897,9 @@ P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/base-2'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/tablespace/ts2-2/[TS_PATH-1]'
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start - exists and is zero size
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt - exists and is zero size
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -2914,9 +2917,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/PG_VERSION 
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/PG_VERSION - exists and matches backup (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zerosize.txt - exists and is zero size (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/zero_from_start - exists and is zero size (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/special-!_.*'()&!@;:+,? - exists and is zero size (0B, 99%)
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: write [TEST_PATH]/db-primary/db/base-2/recovery.conf
@@ -2987,6 +2987,9 @@ P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/pg_subtrans'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc'
 P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768'
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/special-!_.*'()&!@;:+,? (0B)
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/zero_from_start (0B)
+P00 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/zerosize.txt (0B)
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
@@ -3004,9 +3007,6 @@ P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/PG_VER
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/16384/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/1/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/PG_VERSION (3B, 99%) checksum 184473f470864e067ee3a22e64b47b0a1c356f29
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/zerosize.txt (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/zero_from_start (0B, 99%)
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/special-!_.*'()&!@;:+,? (0B, 99%)
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt (12B, 99%) checksum dfcb8679956b734706cf87259d50c88f83e80e66
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt (7B, 100%) checksum dc7f76e43c46101b47acc55ae4d593a9e6983578
 P00   INFO: write [TEST_PATH]/db-primary/db/base-2/base/recovery.conf
