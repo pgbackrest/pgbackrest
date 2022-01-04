@@ -1,5 +1,311 @@
 [
     {
+        "commit": "f18f2d9991da29533ad8e9859074c4f39185420f",
+        "date": "2022-01-03 08:43:55 -0500",
+        "subject": "v2.37: TLS Server"
+    },
+    {
+        "commit": "62fbee72ad319f92c9410ac8dbab2f81fe945a36",
+        "date": "2022-01-01 10:50:16 -0500",
+        "subject": "Update LICENSE.txt and PostgreSQL copyright for 2022."
+    },
+    {
+        "commit": "d6ebf6e2d67331a838f53beda1c186c527b56a8e",
+        "date": "2021-12-30 18:54:36 -0500",
+        "subject": "Remove dead test code."
+    },
+    {
+        "commit": "fccb7f7dd45c6c373d0cfa74b90d69ca483aa3af",
+        "date": "2021-12-28 17:39:22 -0500",
+        "subject": "Add release note regarding IANA approval of the default TLS port."
+    },
+    {
+        "commit": "6a12458440168f13cb05d70f36ea54b1860e390c",
+        "date": "2021-12-16 10:30:59 -0500",
+        "subject": "Parse protocol/port in S3/Azure endpoints.",
+        "body": "Utilize httpUrlNewParseP() to parse endpoint and port from the URL in the S3 and Azure helpers to avoid issues where protocol was not expected to be part of the URL."
+    },
+    {
+        "commit": "f06101de77a980c7e4115762f2fc301280aa4127",
+        "date": "2021-12-16 09:47:04 -0500",
+        "subject": "Add TLS server documentation.",
+        "body": "Add documentation and make the feature visible."
+    },
+    {
+        "commit": "615bdff4030a31bfedfe7df04676e3948ec9c2c0",
+        "date": "2021-12-14 14:53:41 -0500",
+        "subject": "Fix socket leak on connection retries.",
+        "body": "This leak was caused by the file descriptor variable getting clobbered after a long jump. Mark it as volatile to fix.\r\n\r\nTesting this is a bit complex because the issue only happens in optimized builds, if at all. Put the test into the performance suite, which is always optimized, until a better idea presents itself."
+    },
+    {
+        "commit": "a73fe4eb966f9685f6e4179c397a10c1e7f15f19",
+        "date": "2021-12-10 15:53:40 -0500",
+        "subject": "Fix restore delta link mapping when path/file already exists.",
+        "body": "If a path/file was remapped to a link using either --link-map or --link-all there would be no affect if the path/file already existed. If a link existed it would be properly updated and converting a link to a path/file also worked.\r\n\r\nThe issue happened during delta cleanup, which failed to check if the existing path/file had been remapped to a link.\r\n\r\nAdd checks for newly mapped path/file links and remove the old path/file we required."
+    },
+    {
+        "commit": "19a7ec69debfe6587fcc1163451896590c96bf21",
+        "date": "2021-12-10 15:04:55 -0500",
+        "subject": "Close expect log file when unit test completes.",
+        "body": "This did not cause any issues, but it is better to explicitly close open files."
+    },
+    {
+        "commit": "c38e2d31709804eb4b9125a15ad84c8fc813f366",
+        "date": "2021-12-08 15:00:19 -0500",
+        "subject": "Add verb to HTTP error output.",
+        "body": "This makes it easier to debug HTTP errors."
+    },
+    {
+        "commit": "be4ac3923cb77873da298a30aca5d847b3c635af",
+        "date": "2021-12-08 13:57:26 -0500",
+        "subject": "Error when restore is unable to find a backup to match the time target.",
+        "body": "This was previously a warning but the warning is easy to miss so a lot of time may be lost restoring and recovering a backup that will not hit the target.\r\n\r\nSince this is technically a breaking change, add an \"important note\" about the change to the release."
+    },
+    {
+        "commit": "672330593789f07aaad90bbafcd2597cbc602686",
+        "date": "2021-12-08 12:29:20 -0500",
+        "subject": "Add warning when checkpoint_timeout exceeds db-timeout.",
+        "body": "In the backup command, add a warning if start-fast is disabled and the PostgreSQL checkpoint_timeout is greater than db-timeout.\r\n\r\nIn such cases, we might timeout before the checkpoint occurs and the backup really starts."
+    },
+    {
+        "commit": "bd2ba802db11c505ec69943fa81b2b379073fbf4",
+        "date": "2021-12-08 10:16:41 -0500",
+        "subject": "Check that clusters are alive and correctly configured during a backup.",
+        "body": "Fail the backup if a cluster stops or the standby is promoted. Previously, shutting down the primary would cause an error but it was not detected until the end of the backup. Now the error will happen sooner and a promotion on the standby will also cause an error."
+    },
+    {
+        "commit": "7b3ea883c7c010aafbeb14d150d073a113b703e4",
+        "date": "2021-12-07 18:18:43 -0500",
+        "subject": "Add SIGTERM and SIGHUP handling to TLS server.",
+        "body": "SIGHUP allows the configuration to be reloaded. Note that the configuration will not be updated in child processes that have already started.\r\n\r\nSIGTERM terminates the server process gracefully and sends SIGTERM to all child processes. This also gives the tests an easy way to stop the server."
+    },
+    {
+        "commit": "49145d72bac16498cdbf5eeb3cd6128ea0be0667",
+        "date": "2021-12-07 09:21:07 -0500",
+        "subject": "Add timeline and checkpoint checks to backup.",
+        "body": "Add the following checks:\r\n\r\n* Checkpoint is updated in pg_control after pg_start_backup(). This helps ensure that PostgreSQL and pgBackRest have a consistent view of the storage and that PGDATA paths match.\r\n* Timeline of backup start WAL file matches pg_control. Hard to see how this one could get hit, but we have the power...\r\n* Standby is on the same timeline as the primary. If not, this standby is not following the primary.\r\n* Last standby checkpoint is not greater than the backup checkpoint. If so, this standby is not following the primary.\r\n\r\nThis also requires some additional plumbing to read/write timeline/checkpoint from pg_control and parse timelines from WAL filenames. There were some changes in the backup tests caused by the fact that pg_control now has different contents for each backup.\r\n\r\nThe check to ensure that the required checkpoint was reached on the standby should also be updated to use pg_control (it currently uses pg_control_checkpoint()), but that requires non-trivial changes to the test harness and will need to wait."
+    },
+    {
+        "commit": "9c76056dd0d1d2b07a89646b087c5c8d36ab97f5",
+        "date": "2021-11-30 16:21:15 -0500",
+        "subject": "Add error type and message to CHECK() macro.",
+        "body": "A CHECK() worked exactly like ASSERT() except that it was compiled into production code. However, over time many checks have been added that should not throw AssertError, which should be reserved for probable coding errors.\n\nAllow the error code to be specified so other error types can be thrown. Also add a human-readable message since many of these could be seen by users even when there is no coding error.\n\nUpdate coverage exceptions for CHECK() to match ASSERT() since all conditions will never be covered."
+    },
+    {
+        "commit": "0895cfcdf7d3f15b8029f73ed62c6094d30724b3",
+        "date": "2021-11-30 13:23:11 -0500",
+        "subject": "Add HRN_PG_CONTROL_PUT() and HRN_PG_CONTROL_TIME().",
+        "body": "These macros simplify management of pg_control test files.\n\nCentralize time updates for pg_control in the command/backup module. This caused some time updates in the logs.\n\nFinally, move the postgres module after the storage module so it can use storage macros."
+    },
+    {
+        "commit": "01ac6b6cac86ea857e54a3b1c45077df1e128a75",
+        "date": "2021-11-30 08:28:36 -0500",
+        "subject": "Autogenerate test system identifiers.",
+        "body": "hrnPgControlToBuffer() and hrnPgWalToBuffer() now generate the system id based on the version of Postgres. If a value less than 100 is specified for systemId then it will be added to the default system id so there can be multiple ids for a single version of PostgreSQL.\n\nAdd constants to represent version system ids in tests. These will eventually be auto-generated.\n\nThis changes some checksums and we no longer have big-endian tests systems, so X those checksums out so it is obvious they are no longer valid."
+    },
+    {
+        "commit": "3f7409019df112ec50efb6c3db6f7780c9a63c87",
+        "date": "2021-11-24 16:09:45 -0500",
+        "subject": "Ensure ASSERT() macro is always available in test modules.",
+        "body": "Tests that run without DEBUG for performance did not have ASSERT() and were using CHECK() instead.\n\nInstead ensure that the ASSERT() macro is always available in tests."
+    },
+    {
+        "commit": "dcb4f09d8315e92c0877b589f3fa9b7f0fa65f93",
+        "date": "2021-11-23 09:37:12 -0500",
+        "subject": "Revert changes to backupFilePut() made in 1e77fc3d.",
+        "body": "These changes were made obsolete by a3d7a23a."
+    },
+    {
+        "commit": "7e35245dc3416238a84a43abbecdf976170dea91",
+        "date": "2021-11-23 08:07:31 -0500",
+        "subject": "Use ASSERT() or TEST_RESULT*() instead of CHECK() in test modules."
+    },
+    {
+        "commit": "a3d7a23a9d90611a3d31947598fbea240b250710",
+        "date": "2021-11-22 12:52:37 -0500",
+        "subject": "Use infoBackupDataByLabel() to log backup size.",
+        "body": "Eliminate summing and passing of copied files sizes for logging backup size.\r\n\r\nInstead, utilize infoBackupDataByLabel() to pull the backup size for the log message."
+    },
+    {
+        "commit": "1a0560d363d28737befb8c222647783d4fc2ca29",
+        "date": "2021-11-19 12:22:09 -0500",
+        "subject": "Allow y/n arguments for boolean command-line options.",
+        "body": "This allows boolean boolean command-line options to work like their config file equivalents.\r\n\r\nAt least for now this behavior will remain undocumented since all examples in the documentation will continue to use the standard syntax. The idea is that it will \"just work\" when options are copied out of config files rather than generating an error."
+    },
+    {
+        "commit": "2d963ce9471808172f879916c3f3accc35f14d56",
+        "date": "2021-11-18 17:23:11 -0500",
+        "subject": "Rename server-start command to server."
+    },
+    {
+        "commit": "1f14f45dfb0d1677a695719381cbd5a8a3c6c986",
+        "date": "2021-11-18 16:18:10 -0500",
+        "subject": "Check archive immediately after backup start.",
+        "body": "Previously the archive was only checked at the end of the backup to ensure all WAL required to make the backup consistent was present. The problem was that if archiving was not functioning then the backup had to complete before the user found out, which could be a while if the database was large enough.\r\n\r\nAdd an archive check immediately after backup start so failures are reported earlier.\r\n\r\nThe trick is to determine which WAL to check. If the repo is new there may not be any WAL in it and pg_start_backup() will not switch the WAL segment if it is empty. These are both likely scenarios when setting up and/or testing pgBackRest.\r\n\r\nIf the WAL segment is switched by pg_start_backup(), then check the archive for the segment that was detected prior to backup start. This should be common on normal running clusters with regular activity. Note that this might not be the segment immediately prior to the backup start segment if WAL volume is high.\r\n\r\nIf pg_start_backup() did not switch the WAL then we can force a switch on PostgreSQL >= 9.3 by creating a restore point. In that case the WAL to check will be the backup start WAL. This is most likely to happen on idle systems, during testing, or immediately after a repo switch.\r\n\r\nAn advantage of this approach other than earlier notification is that the backup directory will not be created so no resume will be attempted on the next backup.\r\n\r\nNote that some additional churn was created in backup.c because the load of archive.info needs to be done earlier."
+    },
+    {
+        "commit": "dea752477ab8e812cdbd717eb2091baf3f5d0906",
+        "date": "2021-11-17 16:39:04 -0500",
+        "subject": "Remove obsolete statement about future multi-repository support."
+    },
+    {
+        "commit": "0949b4d35fdd04c55927eb6a107d881376dbe73c",
+        "date": "2021-11-16 18:26:21 -0500",
+        "subject": "Add linefeed and remove space."
+    },
+    {
+        "commit": "809f0bbc638cdd95540e2257383147919f82e8f9",
+        "date": "2021-11-16 11:34:53 -0500",
+        "subject": "Add infoBackupLabelExists().",
+        "body": "This is easier to read than using infoBackupDataByLabel() != NULL.\n\nIt also allows an assertion to be added to infoBackupDataByLabel() to ensure that a NULL return value is not used unsafely."
+    },
+    {
+        "commit": "1e77fc3d75490b7a1b6a0b31be9298c995ec672f",
+        "date": "2021-11-16 10:21:32 -0500",
+        "subject": "Include backup_label and tablespace_map file sizes in log output.",
+        "body": "In cases where they are returned by postgres, include backup_label and tablespace_map file sizes in the backup size value output in the log."
+    },
+    {
+        "commit": "6b5322cdad7163d91b43d37d9d8eeaa39ac7f214",
+        "date": "2021-11-16 09:27:15 -0500",
+        "subject": "Add findutils package to RHEL 8 documentation container.",
+        "body": "This package was dropped from the most recent Rocky Linux 8 image."
+    },
+    {
+        "commit": "df89eff429e9b8fbc68d9e9895badf9719fd31d2",
+        "date": "2021-11-15 16:53:41 -0500",
+        "subject": "Fix typos and improve documentation for the tablespace-map-all option."
+    },
+    {
+        "commit": "fcae9d35038d454c674921c65beb02b195981480",
+        "date": "2021-11-15 16:42:46 -0500",
+        "subject": "Fix parameter test logging in parseOptionIdxValue()."
+    },
+    {
+        "commit": "b3a5f7a8e27768c445458e47dad626609814fbb7",
+        "date": "2021-11-15 14:32:22 -0500",
+        "subject": "Add tablespace_map file to command/backup test module.",
+        "body": "The code worked fine but better to have explicit tests for this file."
+    },
+    {
+        "commit": "e62ba8e85eaf469052960c4fd71ffaf26c1a1baa",
+        "date": "2021-11-12 17:15:45 -0500",
+        "subject": "Add path to pgbench used for stress test in user guide.",
+        "body": "This allows the stress test to run on RHEL."
+    },
+    {
+        "commit": "43cfa9cef776360e592882c0b787704dbeb36cb3",
+        "date": "2021-11-10 12:14:41 -0500",
+        "subject": "Revive archive performance test.",
+        "body": "This test was lost due to a syntax issue in a58635ac.\n\nUpdate the test to use system() to better mimic what postgres does and add logging so pgBackRest timing can be determined."
+    },
+    {
+        "commit": "dd96c29f963609fad38dac3349d7fa41e40722bb",
+        "date": "2021-11-10 07:53:46 -0500",
+        "subject": "Refactor postgres/client module with inline getters/setters.",
+        "body": "Extend the pattern introduced in 79a2d02 to the postgres/client module."
+    },
+    {
+        "commit": "afe77e76e0adf948138d797e227a6f4c7d47c2eb",
+        "date": "2021-11-10 07:31:02 -0500",
+        "subject": "Update contributor for 6e635764."
+    },
+    {
+        "commit": "6e635764a66278d5a8c2b4d30b23063bc3923067",
+        "date": "2021-11-09 13:24:56 -0500",
+        "subject": "Match backup log size with size reported by info command.",
+        "body": "Properly log the size of files copied during the backup, matching the backup size returned from the info command.\r\n\r\nIn the reference issue, the incremental backup after switchover logs the size of all files evaluated rather than only the size of the files copied in the backup."
+    },
+    {
+        "commit": "d05d6b87142347cb4891304833db389dcf7f9a81",
+        "date": "2021-11-08 09:39:58 -0500",
+        "subject": "Do not delete manifests individually during stanza delete.",
+        "body": "This appears to have been an attempt to not delete files that we don't recognize, but it only works in narrow cases and could leave the user is a position of not being able to complete the stanza delete without manual intervention. It seems better just to proceed with the delete, especially since the info files have already been removed.\n\nIn addition, deleting the manifests individually could be slow on object stores if there were a very large number of backups."
+    },
+    {
+        "commit": "bb03b3f41942d0b781931092a76877ad309001ef",
+        "date": "2021-11-04 09:44:31 -0400",
+        "subject": "Refactor switch statements in strIdBitFromZN().",
+        "body": "Coverity does not like fall-throughs either to or from the default case so refactor to avoid that."
+    },
+    {
+        "commit": "676b9d95dd2467d4bddd402b5cd2b4f445c71944",
+        "date": "2021-11-04 08:19:18 -0400",
+        "subject": "Optional parameters for tlsClientNew().",
+        "body": "There are a number of optional parameters with the same type so this makes them easier to track and reduces churn when new ones are added."
+    },
+    {
+        "commit": "038abaa71d816cc87b382bd81d3df62ddec9455a",
+        "date": "2021-11-03 15:23:08 -0400",
+        "subject": "Display size option default and allowed values with appropriate units.",
+        "body": "Size option default and allowed values were displayed in bytes, which was confusing for the user.\r\n\r\nThis also lays the groundwork for adding units to time options.\r\n\r\nMove option parsing functions into a common module so they can be used from the build module."
+    },
+    {
+        "commit": "1b93a772369bbb3a936099e0d9d5cc79bad1e0f6",
+        "date": "2021-11-03 12:14:17 -0400",
+        "subject": "Use void * instead of List * to avoid Coverity false positives.",
+        "body": "Coverity complains that this should be \"List\" but that is clearly not correct."
+    },
+    {
+        "commit": "2a576477b316238473525e56bc8fc8ea5790455f",
+        "date": "2021-11-03 11:36:34 -0400",
+        "subject": "Add --cmd option.",
+        "body": "Allows users to provide an executable to be used when pgbackrest generates command strings that expect to invoke pgbackrest. These generated commands are written to files by pgbackrest, e.g. recovery.conf."
+    },
+    {
+        "commit": "c5b5b5880619d0994ab4a8feb3f60ab52170b61b",
+        "date": "2021-11-03 10:36:31 -0400",
+        "subject": "Simplify error handler.",
+        "body": "The error handler used a loop to process try, catch, and finally blocks. This worked fine but static analysis tools like Coverity did not understand that the finally block would always run and so there were false positives about double-free, unfreed resource, etc.\r\n\r\nThis implementation removes the loop, which simplifies everything, and makes it clear that the finally block will always run. This cuts down on Coverity false positives.\r\n\r\nThis implementation also catches lack of coverage on empty catch blocks so a few test fixes were committed separately in d74fe7a.\r\n\r\nA small refactor in backup.c is required because gcc 10.3.1 on Fedora 33 complains that the reason variable may be used uninitialized. It's not clear why this is the case, but reducing the scope of the TRY block fixes the issue."
+    },
+    {
+        "commit": "cff961ede7e41fa8035ffe7451a22eb5ea0e46c1",
+        "date": "2021-11-03 07:38:06 -0400",
+        "subject": "Centralize logic to build value lists during config rendering.",
+        "body": "This reduces duplication and makes it easier to add new types."
+    },
+    {
+        "commit": "7f6c513be925c77bc6a177408efcf79f624ffc94",
+        "date": "2021-11-03 07:27:26 -0400",
+        "subject": "Add StringId as an option type.",
+        "body": "Rather the converting String to StringIds at runtime, store defaults in StringId format in parse.auto.c and convert user input to StringId during parsing."
+    },
+    {
+        "commit": "b13844086d419dc3070bcce4e918b2353bf4887c",
+        "date": "2021-11-01 17:35:19 -0400",
+        "subject": "Use cfgOptionStrId() instead of cfgOptionStr() where appropriate.",
+        "body": "The compress-type, repo-type and log-level-* options have allow lists, which means it is more efficient to treat them as StringIds.\r\n\r\nFor compress-type and log-level-* also update the functions that convert them to enums."
+    },
+    {
+        "commit": "b237d0cd592bbc6c6ee9280fb7aed264bf79eb9d",
+        "date": "2021-11-01 10:43:08 -0400",
+        "subject": "Remove placeholder bz2 helper data.",
+        "body": "This placeholder data should have been removed when bz2 support was added in a021c9fe053."
+    },
+    {
+        "commit": "f4e281399a81835821547ea5c78ed7a189914d3d",
+        "date": "2021-11-01 10:27:57 -0400",
+        "subject": "Remove unused protocol log level.",
+        "body": "This log level was used in the Perl code but was never ported to C."
+    },
+    {
+        "commit": "bc352fa6a8cff7cc08b6c7f3cdfac664d2b0805f",
+        "date": "2021-11-01 10:08:56 -0400",
+        "subject": "Simplify strIdFrom*() functions.",
+        "body": "The strIdFrom*() forced the caller to pick an encoding, which led to a number of TRY...CATCH blocks in the code. In practice the caller does not care which encoding is used as long as the string is valid for some encoding.\r\n\r\nUpdate the strIdFrom*() function to try all possible encodings and only throw an error when the string is not valid for any of them."
+    },
+    {
+        "commit": "a92d7938197d1035e362390ce467ae827cbae051",
+        "date": "2021-11-01 09:11:43 -0400",
+        "subject": "Update automake version.",
+        "body": "There were no changes to install.sh in this version."
+    },
+    {
+        "commit": "904b897f5e89542784af64b364a49205e7a6e040",
+        "date": "2021-11-01 09:03:42 -0400",
+        "subject": "Begin v2.37 development."
+    },
+    {
         "commit": "42fd6ce4e09ee92614cfbfb6766d9c3a6ba9cc1a",
         "date": "2021-11-01 08:59:14 -0400",
         "subject": "v2.36: Minor Bug Fixes and Improvements"
