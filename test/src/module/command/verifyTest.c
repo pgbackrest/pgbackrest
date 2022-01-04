@@ -1019,7 +1019,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             verifyOutputText(result, &errorTotal),
             "stanza: db\n"
-            "status: error (one or more archive or backup contains errors)\n"
+            "status: error (one or more archive(s) or backup(s) contains errors)\n"
             "\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
@@ -1273,7 +1273,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             verifyOutputText(result, &errorTotal),
             "stanza: db\n"
-            "status: error (one or more archive or backup contains errors)\n",
+            "status: error (one or more archive(s) or backup(s) contains errors)\n",
             "verify text output, not verbose, with failures");
 
         TEST_RESULT_LOG(
