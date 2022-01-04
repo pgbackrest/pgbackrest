@@ -2113,7 +2113,7 @@
 
                     <p>When PITR of <br-option>{[dash]}-type=time</br-option> is specified, then the target time must be specified with the <br-option>{[dash]}-target</br-option> option. If a backup is not specified via the <br-option>{[dash]}-set</br-option> option, then the configured repositories will be checked, in order, for a backup that contains the requested time. If no backup can be found, the latest backup from the first repository containing backups will be used. For other types of PITR, e.g. <id>xid</id>, the <br-option>{[dash]}-set</br-option> option must be provided if the target is prior to the latest backup. See <link page="user-guide" section="/pitr">Point-in-Time Recovery</link> for more details and examples.</p>
 
-                    <p>Replication slots are not included per recommendation of the <postgres/> documentation. See the <postgres/> documentation: <link url="https://www.postgresql.org/docs/current/continuous-archiving.html#BACKUP-LOWLEVEL-BASE-BACKUP">Making a Base Backup Using the Low Level API</link> (subsection Backing Up The Data Directory) for more information.</p>
+                    <p>Replication slots are not included per recommendation of the <postgres/> documentation. See the <postgres/> documentation: <link url="https://www.postgresql.org/docs/current/continuous-archiving.html#BACKUP-LOWLEVEL-BASE-BACKUP-DATA">Backing Up The Data Directory</link> for more information.</p>
                 </text>
 
                 <option-list>
