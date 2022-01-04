@@ -1004,7 +1004,7 @@ testRun(void)
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verifyOutputText(), text output, with verify failures");
+        TEST_TITLE("verifyOutputText(), text output, verbose, with verify failures");
 
         hrnCfgArgRawZ(argList, cfgOptOutput, "text");
         hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
@@ -1012,20 +1012,20 @@ testRun(void)
 
         harnessLogLevelReset();
 
-        // Verify text output with verify failures
+        // Verify text output, verbose, with verify failures
         errorTotal = 0;
         String *result = NULL;
         result = verifyProcess(&errorTotal);
         TEST_RESULT_STR_Z(
             verifyOutputText(result, &errorTotal),
-            "Stanza: db\n"
-            "Status: One or more archive or backup contains errors. Invoke verify with verbose option for more details.\n"
+            "stanza: db\n"
+            "status: error (one or more archive or backup contains errors)\n"
             "\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
             "  backup: none found\n",
-            "verify text output with failures");
+            "verify text output, verbose, with failures");
 
         TEST_RESULT_LOG(
             "P00   WARN: no backups exist in the repo\n"
@@ -1257,7 +1257,51 @@ testRun(void)
                 "                missing: 1, checksum invalid: 1, size invalid: 0, other: 1\n"
                 "              backup: 20181119-153000F, status: in-progress, total files checked: 0, total valid files: 0");
 
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyOutputText(), text output, not verbose, with verify failures");
+
         harnessLogLevelReset();
+
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        errorTotal = 0;
+        result = NULL;
+        result = verifyProcess(&errorTotal);
+
+        // Verify text output, not verbose, with failures
+        TEST_RESULT_STR_Z(
+            verifyOutputText(result, &errorTotal),
+            "stanza: db\n"
+            "status: error (one or more archive or backup contains errors)\n",
+            "verify text output, not verbose, with failures");
+
+        TEST_RESULT_LOG(
+                "P00   WARN: archive path '9.4-1' is empty\n"
+                "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
+                "P01  ERROR: [028]: invalid checksum "
+                    "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+                "P01  ERROR: [028]: invalid size "
+                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
+                "P01  ERROR: [039]: invalid result "
+                    "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
+                    "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db/"
+                    "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
+                    " [13] Permission denied\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest' for read\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest.copy'"
+                    " for read\n"
+                "P00   WARN: manifest missing for '20181119-152800F' - backup may have expired\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152810F/backup.manifest.copy'"
+                    " for read\n"
+                "P00  ERROR: [028]: backup '20181119-152810F' manifest does not contain any target files to verify\n"
+                "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+                "P01  ERROR: [028]: file missing '20181119-152900F_20181119-152909D/pg_data/testmissing'\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-153000F/backup.manifest' for read\n"
+                "P00   INFO: backup '20181119-153000F' appears to be in progress, skipping\n"
+                "P01  ERROR: [039]: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
+                    " unable to open file '" TEST_PATH "/repo/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13]"
+                    " Permission denied");
     }
 
     // *****************************************************************************************************************************
@@ -1496,7 +1540,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("verifyProcess(), verifyOutputText()"))
+    if (testBegin("verifyProcess(), verifyOutputText(), text"))
     {
         //--------------------------------------------------------------------------------------------------------------------------
         // Load Parameters with multi-repo
@@ -1513,7 +1557,7 @@ testRun(void)
             .comment = "valid archive.info.copy");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verifyOutputText(), text output, with no verify failures");
+        TEST_TITLE("verifyOutputText(), text output, not verbose, with no verify failures");
 
         #define TEST_NO_CURRENT_BACKUP                                                                                             \
             "[db]\n"                                                                                                               \
@@ -1549,9 +1593,76 @@ testRun(void)
         result = verifyProcess(&errorTotal);
         TEST_RESULT_STR_Z(
             verifyOutputText(result, &errorTotal),
-            "Stanza: db\n"
-            "Status: All archives and backups passed verification.\n",
-            "verify text output with no failures");
+            "",
+            "verify text output, not verbose, with no failures");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: no backups exist in the repo\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFE, wal stop: 000000020000000700000FFE");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("verifyProcess(), verifyOutputText(), text, verbose"))
+    {
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Load Parameters with multi-repo
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // Store valid archive/backup info files
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "valid archive.info.copy");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyOutputText(), text output, verbose with no verify failures");
+
+        #define TEST_NO_CURRENT_BACKUP                                                                                             \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "no current backups");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP, .comment = "no current backups copy");
+
+        // Create WAL file with just header info and small WAL size
+        Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
+        bufUsedSet(walBuffer, bufSize(walBuffer));
+        memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .size = 1024 * 1024}, walBuffer);
+        const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1)), walBuffer,
+            .comment = "valid WAL");
+
+        // Set log detail level to capture ranges (there should be none)
+        harnessLogLevelSet(logLevelDetail);
+
+        // Verify text output with no verify errors
+        unsigned int errorTotal = 0;
+        String *result = NULL;
+        result = verifyProcess(&errorTotal);
+        TEST_RESULT_STR_Z(
+            verifyOutputText(result, &errorTotal),
+            "stanza: db\n"
+            "status: ok\n"
+            "\n"
+            "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: none found\n",
+            "verify text output, verbose, with no failures");
 
         TEST_RESULT_LOG(
             "P00   WARN: no backups exist in the repo\n"

@@ -30,6 +30,12 @@ Verify the contents of the repository.
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+Constants
+***********************************************************************************************************************************/
+#define VERIFY_STATUS_OK                                            "ok"
+#define VERIFY_STATUS_ERROR                                         "error"
+
+/***********************************************************************************************************************************
 Data Types and Structures
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_VERIFY_ARCHIVE_RESULT_TYPE                                                                                    \
@@ -1647,40 +1653,34 @@ verifyOutputText(const String *verifyresult, const unsigned int *errorTotal)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *resultStr = strNew();
-        String *status = strNew();
-
-        if (*errorTotal == 0)
-            strCatFmt(status,"%s%s",  strZ(strNewZ("All archives and backups passed verification.")), LF_Z);
-        else
-        {
-            strCatFmt(
-                status,
-                "%s%s",
-                strZ(strNewZ("One or more archive or backup contains errors. Invoke verify with verbose option for more details.")),
-                LF_Z);
-        }
 
         if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
         {
-            // Output verbose response if requested
+            String *status = strNew();
+
+            if (*errorTotal == 0)
+                strCatFmt(status, "%s%s", VERIFY_STATUS_OK, LF_Z);
+            else
+                strCatFmt(status, "%s%s", VERIFY_STATUS_ERROR " (one or more archive(s) or backup(s) contains errors)", LF_Z);
+
+            // Output verbose response if requested otherwise only output on error
             if (cfgOptionBool(cfgOptVerbose))
             {
-                strCat(resultStr, strNewFmt("Stanza: %s", strZ(cfgOptionStr(cfgOptStanza))));
-                strCat(resultStr, strNewFmt("%sStatus: %s", LF_Z, strZ(status)));
-                strCatFmt(
-                    resultStr, "%s%s", strZ(strSub(verifyresult, (unsigned int)strChr(verifyresult, ':') + 1)), LF_Z);
+                strCat(resultStr, strNewFmt("stanza: %s", strZ(cfgOptionStr(cfgOptStanza))));
+                strCat(resultStr, strNewFmt("%sstatus: %s", LF_Z, strZ(status)));
+                strCatFmt(resultStr, "%s%s", strZ(strSub(verifyresult, (unsigned int)strChr(verifyresult, ':') + 1)), LF_Z);
             }
-            else
+            else if (*errorTotal != 0)
             {
                 strCatFmt(
-                    resultStr, "%s%s%s", strZ(strNewFmt("Stanza: %s", strZ(cfgOptionStr(cfgOptStanza)))), LF_Z,
-                    strZ(strNewFmt("Status: %s", strZ(status))));
+                    resultStr, "%s%s%s", strZ(strNewFmt("stanza: %s", strZ(cfgOptionStr(cfgOptStanza)))), LF_Z,
+                    strZ(strNewFmt("status: %s", strZ(status))));
             }
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = strDup(resultStr) ;
+            result = strDup(resultStr);
         }
         MEM_CONTEXT_PRIOR_END();
     }
