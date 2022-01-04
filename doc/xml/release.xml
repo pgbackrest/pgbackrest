@@ -14,10 +14,15 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.37dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.38dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2022-01-03" version="2.37" title="TLS Server">
             <release-core-list>
                 <text>
                     <p><b>IMPORTANT NOTE</b>: If the <cmd>restore</cmd> command is unable to find a backup that matches a specified time target then an error will be thrown, whereas before a warning was logged.</p>
+
+                    <p><b>IMPORTANT NOTE</b>: The default <proper>TLS</proper> server port has not yet been approved by <proper>IANA</proper> and is subject to change once the approval process is complete.</p>
                 </text>
 
                 <release-bug-list>

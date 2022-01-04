@@ -665,23 +665,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit");
 
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(8));              // pgFileSize
-        varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
-        varLstAdd(paramList, NULL);                         // pgFileChecksum
-        varLstAdd(paramList, varNewBool(true));             // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0xFFFFFFFFFFFFFFFF)); // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
-        varLstAdd(paramList, NULL);                         // cipherSubPass
-
         TEST_ASSIGN(
             result,
             backupFile(
