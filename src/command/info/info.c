@@ -455,9 +455,12 @@ backupListAdd(
     if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
     {
         // Add start/stop backup lsn info
-        KeyValue *lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
-        kvPut(lsnInfo, KEY_START_VAR, (backupData->backupLsnStart != NULL ? VARSTR(backupData->backupLsnStart) : NULL));
-        kvPut(lsnInfo, KEY_STOP_VAR, (backupData->backupLsnStop != NULL ? VARSTR(backupData->backupLsnStop) : NULL));
+        if (backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
+        {
+            KeyValue *lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
+            kvPut(lsnInfo, KEY_START_VAR, VARSTR(backupData->backupLsnStart));
+            kvPut(lsnInfo, KEY_STOP_VAR, VARSTR(backupData->backupLsnStop));
+        }
 
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
@@ -831,13 +834,10 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         {
             KeyValue *lsnInfo = varKv(kvGet(backupInfo, BACKUP_KEY_LSN_VAR));
 
-            if (kvGet(lsnInfo, KEY_START_VAR) != NULL && kvGet(lsnInfo, KEY_STOP_VAR) != NULL)
-            {
-                strCatFmt(
-                    resultStr, "            lsn start/stop: %s / %s\n",
-                    strZ(varStr(kvGet(lsnInfo, KEY_START_VAR))),
-                    strZ(varStr(kvGet(lsnInfo, KEY_STOP_VAR))));
-            }
+            strCatFmt(
+                resultStr, "            lsn start/stop: %s / %s\n",
+                strZ(varStr(kvGet(lsnInfo, KEY_START_VAR))),
+                strZ(varStr(kvGet(lsnInfo, KEY_STOP_VAR))));
         }
 
         KeyValue *info = varKv(kvGet(backupInfo, BACKUP_KEY_INFO_VAR));
