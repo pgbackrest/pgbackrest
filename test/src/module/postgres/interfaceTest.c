@@ -228,7 +228,7 @@ testRun(void)
         hrnPgWalToBuffer((PgWal){.version = PG_VERSION_90, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
-        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest), "get wal info v8.3");
+        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest), "get wal info v9.0");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_90, "   check version");
         TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
