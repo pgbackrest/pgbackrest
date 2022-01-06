@@ -30,7 +30,7 @@ Error messages
 #define STORAGE_ERROR_READ_CLOSE                                    "unable to close file '%s' after read"
 #define STORAGE_ERROR_READ_OPEN                                     "unable to open file '%s' for read"
 #define STORAGE_ERROR_READ_MISSING                                  "unable to open missing file '%s' for read"
-#define STORAGE_ERROR_READ_SEEK                                     "unable to seek in file '%s'"
+#define STORAGE_ERROR_READ_SEEK                                     "unable to seek to %" PRIu64 " in file '%s'"
 
 #define STORAGE_ERROR_INFO                                          "unable to get info for path/file '%s'"
 #define STORAGE_ERROR_INFO_MISSING                                  "unable to get info for missing path/file '%s'"

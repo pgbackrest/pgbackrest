@@ -1032,6 +1032,13 @@ testRun(void)
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid read offset bytes");
+
+        TEST_ERROR(
+            storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = UINT64_MAX)), FileOpenError,
+            "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt': [22] Invalid argument");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read limited bytes");
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .limit = VARUINT64(7))), "get");

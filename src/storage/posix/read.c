@@ -101,7 +101,7 @@ storageReadPosixOpen(THIS_VOID)
     {
         THROW_ON_SYS_ERROR_FMT(
             lseek(this->fd, (off_t)this->offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
-            strZ(this->interface.name));
+            this->offset, strZ(this->interface.name));
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
