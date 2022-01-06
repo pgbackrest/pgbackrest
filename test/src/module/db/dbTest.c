@@ -509,7 +509,7 @@ testRun(void)
 
         TEST_ERROR(
             dbPing(db.standby, false), DbMismatchError,
-            "standby is no longer is recovery\n"
+            "standby is no longer in recovery\n"
             "HINT: was the standby promoted during the backup?");
         TEST_RESULT_VOID(dbPing(db.standby, false), "ping standby cluster");
         TEST_RESULT_VOID(dbPing(db.standby, false), "ping standby cluster (noop)");
