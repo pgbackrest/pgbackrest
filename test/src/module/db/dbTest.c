@@ -81,13 +81,15 @@ testRun(void)
                     HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
                     HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, TEST_PATH "/pg", NULL, NULL),
+                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_90, TEST_PATH "/pg", NULL, NULL),
+                    HRNPQ_MACRO_SET_APPLICATION_NAME(1),
                     HRNPQ_MACRO_CLOSE(1),
 
                     HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
                     HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
-                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, TEST_PATH "/pg", NULL, NULL),
+                    HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_90, TEST_PATH "/pg", NULL, NULL),
+                    HRNPQ_MACRO_SET_APPLICATION_NAME(1),
                     HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
                     HRNPQ_MACRO_CLOSE(1),
 
@@ -143,7 +145,7 @@ testRun(void)
                     // -------------------------------------------------------------------------------------------------------------
                     TEST_TITLE("open and free database");
 
-                    TEST_ASSIGN(db, dbNew(NULL, client, storagePgIdx(0), STRDEF("test")), "create db");
+                    TEST_ASSIGN(db, dbNew(NULL, client, storagePgIdx(0), STRDEF(PROJECT_NAME " [" CFGCMD_BACKUP "]")), "create db");
 
                     TRY_BEGIN()
                     {
@@ -162,7 +164,7 @@ testRun(void)
                     // -------------------------------------------------------------------------------------------------------------
                     TEST_TITLE("remote commands");
 
-                    TEST_ASSIGN(db, dbNew(NULL, client, storagePgIdx(0), STRDEF("test")), "create db");
+                    TEST_ASSIGN(db, dbNew(NULL, client, storagePgIdx(0), STRDEF(PROJECT_NAME " [" CFGCMD_BACKUP "]")), "create db");
 
                     TRY_BEGIN()
                     {
@@ -257,22 +259,19 @@ testRun(void)
             "            HINT: is the pg_read_all_settings role assigned for PostgreSQL >= 10?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("PostgreSQL 8.3 start backup with no start fast");
+        TEST_TITLE("PostgreSQL 9.0 start backup with no WAL switch");
 
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='backupdb' port=5432", PG_VERSION_83, TEST_PATH "/pg1", NULL, NULL),
+            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='backupdb' port=5432", PG_VERSION_90, TEST_PATH "/pg1", NULL, NULL),
 
             // Get advisory lock
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
 
-            // Start backup with no start fast
+            // Start backup with no wal switch
             HRNPQ_MACRO_CURRENT_WAL_LE_96(1, "000000010000000100000001"),
-            HRNPQ_MACRO_START_BACKUP_83(1, "1/1", "000000010000000100000001"),
-
-            // Ping
-            HRNPQ_MACRO_TIME_QUERY(1, 0),
+            HRNPQ_MACRO_START_BACKUP_LE_95(1, false, "1/1", "000000010000000100000001"),
 
             // Close primary
             HRNPQ_MACRO_CLOSE(1),
@@ -314,7 +313,7 @@ testRun(void)
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
             HRNPQ_MACRO_IS_IN_BACKUP(1, false),
-            HRNPQ_MACRO_START_BACKUP_84_95(1, false, "2/3", "000000010000000200000003"),
+            HRNPQ_MACRO_START_BACKUP_LE_95(1, false, "2/3", "000000010000000200000003"),
             HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
             HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
@@ -370,7 +369,7 @@ testRun(void)
             HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "1/1", "000000010000000100000001"),
 
             // Start backup
-            HRNPQ_MACRO_START_BACKUP_84_95(1, true, "2/5", "000000010000000200000005"),
+            HRNPQ_MACRO_START_BACKUP_LE_95(1, true, "2/5", "000000010000000200000005"),
 
             // Stop backup
             HRNPQ_MACRO_STOP_BACKUP_LE_95(1, "2/6", "000000010000000200000006"),
@@ -473,7 +472,7 @@ testRun(void)
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
-            HRNPQ_MACRO_START_BACKUP_84_95(1, false, "5/4", "000000050000000500000004"),
+            HRNPQ_MACRO_START_BACKUP_LE_95(1, false, "5/4", "000000050000000500000004"),
 
             // Wait for standby to sync
             HRNPQ_MACRO_REPLAY_WAIT_LE_95(2, "5/4"),
@@ -745,7 +744,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_84, TEST_PATH "/pg1", NULL, NULL),
+            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_90, TEST_PATH "/pg1", NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -756,7 +755,7 @@ testRun(void)
         TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
         TEST_RESULT_INT(result.standbyIdx, 0, "check standby id");
         TEST_RESULT_BOOL(result.standby == NULL, true, "check standby");
-        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_84, "version set");
+        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_90, "version set");
         TEST_RESULT_STR_Z(dbPgDataPath(result.primary), TEST_PATH "/pg1", "path set");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
@@ -777,8 +776,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432", PG_VERSION_84, TEST_PATH "/pg1", NULL, NULL),
-            HRNPQ_MACRO_OPEN_LE_91(8, "dbname='postgres' port=5433", PG_VERSION_84, TEST_PATH "/pg8", NULL, NULL),
+            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432", PG_VERSION_90, TEST_PATH "/pg1", NULL, NULL),
+            HRNPQ_MACRO_OPEN_LE_91(8, "dbname='postgres' port=5433", PG_VERSION_90, TEST_PATH "/pg8", NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_CLOSE(8),

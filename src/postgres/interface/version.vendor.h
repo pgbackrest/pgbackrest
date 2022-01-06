@@ -31,7 +31,7 @@ Types from src/include/c.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 typedef int64_t int64;
 
@@ -41,7 +41,7 @@ typedef int64_t int64;
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 /* MultiXactId must be equivalent to TransactionId, to fit in t_xmax */
 typedef TransactionId MultiXactId;
@@ -52,7 +52,7 @@ typedef TransactionId MultiXactId;
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 typedef uint32 MultiXactOffset;
 
@@ -66,7 +66,7 @@ Types from src/include/pgtime.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_84
+#elif PG_VERSION >= PG_VERSION_90
 
 /*
  * The API of this library is generally similar to the corresponding
@@ -85,7 +85,7 @@ Types from src/include/postgres_ext.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 /*
  * Object ID is a fundamental type in Postgres.
@@ -106,7 +106,7 @@ Types from src/include/port/pg_crc32.h
 
 typedef uint32 pg_crc32c;
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 typedef uint32 pg_crc32;
 
@@ -128,7 +128,7 @@ Types from src/include/access/xlogdefs.h
  */
 typedef uint64 XLogRecPtr;
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 /*
  * Pointer to a location in the XLOG.  These pointers are 64 bits wide,
@@ -157,7 +157,7 @@ typedef struct XLogRecPtr
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 /*
  * TimeLineID (TLI) - identifies different database histories to prevent
@@ -342,33 +342,6 @@ Types from src/include/catalog/catversion.h
 /*							yyyymmddN */
 #define CATALOG_VERSION_NO	201008051
 
-#elif PG_VERSION >= PG_VERSION_84
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	200904091
-
-
-#elif PG_VERSION >= PG_VERSION_83
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	200711281
-
 #endif
 
 /***********************************************************************************************************************************
@@ -445,16 +418,6 @@ Types from src/include/catalog/pg_control.h
 
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	903
-
-#elif PG_VERSION >= PG_VERSION_84
-
-/* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	843
-
-#elif PG_VERSION >= PG_VERSION_83
-
-/* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	833
 
 #endif
 
@@ -723,44 +686,6 @@ typedef struct CheckPoint
 	TransactionId oldestActiveXid;
 } CheckPoint;
 
-#elif PG_VERSION >= PG_VERSION_84
-
-/*
- * Body of CheckPoint XLOG records.  This is declared here because we keep
- * a copy of the latest one in pg_control for possible disaster recovery.
- */
-typedef struct CheckPoint
-{
-	XLogRecPtr	redo;			/* next RecPtr available when we began to
-								 * create CheckPoint (i.e. REDO start point) */
-	TimeLineID	ThisTimeLineID; /* current TLI */
-	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
-	TransactionId nextXid;		/* next free XID */
-	Oid			nextOid;		/* next free OID */
-	MultiXactId nextMulti;		/* next free MultiXactId */
-	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
-	pg_time_t	time;			/* time stamp of checkpoint */
-} CheckPoint;
-
-#elif PG_VERSION >= PG_VERSION_83
-
-/*
- * Body of CheckPoint XLOG records.  This is declared here because we keep
- * a copy of the latest one in pg_control for possible disaster recovery.
- */
-typedef struct CheckPoint
-{
-	XLogRecPtr	redo;			/* next RecPtr available when we began to
-								 * create CheckPoint (i.e. REDO start point) */
-	TimeLineID	ThisTimeLineID; /* current TLI */
-	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
-	TransactionId nextXid;		/* next free XID */
-	Oid			nextOid;		/* next free OID */
-	MultiXactId nextMulti;		/* next free MultiXactId */
-	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
-	time_t		time;			/* time stamp of checkpoint */
-} CheckPoint;
-
 #endif
 
 // DBState enum
@@ -784,7 +709,7 @@ typedef enum DBState
 	DB_IN_PRODUCTION
 } DBState;
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 /* System status indicator */
 typedef enum DBState
@@ -796,18 +721,6 @@ typedef enum DBState
 	DB_IN_ARCHIVE_RECOVERY,
 	DB_IN_PRODUCTION
 } DBState;
-
-#endif
-
-// LOCALE_NAME_BUFLEN define
-// ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_84
-
-#elif PG_VERSION >= PG_VERSION_83
-
-#define LOCALE_NAME_BUFLEN	128
 
 #endif
 
@@ -2033,183 +1946,6 @@ typedef struct ControlFileData
 	pg_crc32	crc;
 } ControlFileData;
 
-#elif PG_VERSION >= PG_VERSION_84
-
-/*
- * Contents of pg_control.
- *
- * NOTE: try to keep this under 512 bytes so that it will fit on one physical
- * sector of typical disk drives.  This reduces the odds of corruption due to
- * power failure midway through a write.
- */
-typedef struct ControlFileData
-{
-	/*
-	 * Unique system identifier --- to ensure we match up xlog files with the
-	 * installation that produced them.
-	 */
-	uint64		system_identifier;
-
-	/*
-	 * Version identifier information.  Keep these fields at the same offset,
-	 * especially pg_control_version; they won't be real useful if they move
-	 * around.  (For historical reasons they must be 8 bytes into the file
-	 * rather than immediately at the front.)
-	 *
-	 * pg_control_version identifies the format of pg_control itself.
-	 * catalog_version_no identifies the format of the system catalogs.
-	 *
-	 * There are additional version identifiers in individual files; for
-	 * example, WAL logs contain per-page magic numbers that can serve as
-	 * version cues for the WAL log.
-	 */
-	uint32		pg_control_version;		/* PG_CONTROL_VERSION */
-	uint32		catalog_version_no;		/* see catversion.h */
-
-	/*
-	 * System status data
-	 */
-	DBState		state;			/* see enum above */
-	pg_time_t	time;			/* time stamp of last pg_control update */
-	XLogRecPtr	checkPoint;		/* last check point record ptr */
-	XLogRecPtr	prevCheckPoint; /* previous check point record ptr */
-
-	CheckPoint	checkPointCopy; /* copy of last check point record */
-
-	XLogRecPtr	minRecoveryPoint;		/* must replay xlog to here */
-
-	/*
-	 * This data is used to check for hardware-architecture compatibility of
-	 * the database and the backend executable.  We need not check endianness
-	 * explicitly, since the pg_control version will surely look wrong to a
-	 * machine of different endianness, but we do need to worry about MAXALIGN
-	 * and floating-point format.  (Note: storage layout nominally also
-	 * depends on SHORTALIGN and INTALIGN, but in practice these are the same
-	 * on all architectures of interest.)
-	 *
-	 * Testing just one double value is not a very bulletproof test for
-	 * floating-point compatibility, but it will catch most cases.
-	 */
-	uint32		maxAlign;		/* alignment requirement for tuples */
-	double		floatFormat;	/* constant 1234567.0 */
-#define FLOATFORMAT_VALUE	1234567.0
-
-	/*
-	 * This data is used to make sure that configuration of this database is
-	 * compatible with the backend executable.
-	 */
-	uint32		blcksz;			/* data block size for this DB */
-	uint32		relseg_size;	/* blocks per segment of large relation */
-
-	uint32		xlog_blcksz;	/* block size within WAL files */
-	uint32		xlog_seg_size;	/* size of each WAL segment */
-
-	uint32		nameDataLen;	/* catalog name field width */
-	uint32		indexMaxKeys;	/* max number of columns in an index */
-
-	uint32		toast_max_chunk_size;	/* chunk size in TOAST tables */
-
-	/* flag indicating internal format of timestamp, interval, time */
-	bool		enableIntTimes; /* int64 storage enabled? */
-
-	/* flags indicating pass-by-value status of various types */
-	bool		float4ByVal;	/* float4 pass-by-value? */
-	bool		float8ByVal;	/* float8, int8, etc pass-by-value? */
-
-	/* CRC of all above ... MUST BE LAST! */
-	pg_crc32	crc;
-} ControlFileData;
-
-#elif PG_VERSION >= PG_VERSION_83
-
-/*
- * Contents of pg_control.
- *
- * NOTE: try to keep this under 512 bytes so that it will fit on one physical
- * sector of typical disk drives.  This reduces the odds of corruption due to
- * power failure midway through a write.  Currently it fits comfortably,
- * but we could probably reduce LOCALE_NAME_BUFLEN if things get tight.
- */
-
-typedef struct ControlFileData
-{
-	/*
-	 * Unique system identifier --- to ensure we match up xlog files with the
-	 * installation that produced them.
-	 */
-	uint64		system_identifier;
-
-	/*
-	 * Version identifier information.	Keep these fields at the same offset,
-	 * especially pg_control_version; they won't be real useful if they move
-	 * around.	(For historical reasons they must be 8 bytes into the file
-	 * rather than immediately at the front.)
-	 *
-	 * pg_control_version identifies the format of pg_control itself.
-	 * catalog_version_no identifies the format of the system catalogs.
-	 *
-	 * There are additional version identifiers in individual files; for
-	 * example, WAL logs contain per-page magic numbers that can serve as
-	 * version cues for the WAL log.
-	 */
-	uint32		pg_control_version;		/* PG_CONTROL_VERSION */
-	uint32		catalog_version_no;		/* see catversion.h */
-
-	/*
-	 * System status data
-	 */
-	DBState		state;			/* see enum above */
-	time_t		time;			/* time stamp of last pg_control update */
-	XLogRecPtr	checkPoint;		/* last check point record ptr */
-	XLogRecPtr	prevCheckPoint; /* previous check point record ptr */
-
-	CheckPoint	checkPointCopy; /* copy of last check point record */
-
-	XLogRecPtr	minRecoveryPoint;		/* must replay xlog to here */
-
-	/*
-	 * This data is used to check for hardware-architecture compatibility of
-	 * the database and the backend executable.  We need not check endianness
-	 * explicitly, since the pg_control version will surely look wrong to a
-	 * machine of different endianness, but we do need to worry about MAXALIGN
-	 * and floating-point format.  (Note: storage layout nominally also
-	 * depends on SHORTALIGN and INTALIGN, but in practice these are the same
-	 * on all architectures of interest.)
-	 *
-	 * Testing just one double value is not a very bulletproof test for
-	 * floating-point compatibility, but it will catch most cases.
-	 */
-	uint32		maxAlign;		/* alignment requirement for tuples */
-	double		floatFormat;	/* constant 1234567.0 */
-#define FLOATFORMAT_VALUE	1234567.0
-
-	/*
-	 * This data is used to make sure that configuration of this database is
-	 * compatible with the backend executable.
-	 */
-	uint32		blcksz;			/* data block size for this DB */
-	uint32		relseg_size;	/* blocks per segment of large relation */
-
-	uint32		xlog_blcksz;	/* block size within WAL files */
-	uint32		xlog_seg_size;	/* size of each WAL segment */
-
-	uint32		nameDataLen;	/* catalog name field width */
-	uint32		indexMaxKeys;	/* max number of columns in an index */
-
-	uint32		toast_max_chunk_size;	/* chunk size in TOAST tables */
-
-	/* flag indicating internal format of timestamp, interval, time */
-	uint32		enableIntTimes; /* int64 storage enabled? */
-
-	/* active locales */
-	uint32		localeBuflen;
-	char		lc_collate[LOCALE_NAME_BUFLEN];
-	char		lc_ctype[LOCALE_NAME_BUFLEN];
-
-	/* CRC of all above ... MUST BE LAST! */
-	pg_crc32	crc;
-} ControlFileData;
-
 #endif
 
 /***********************************************************************************************************************************
@@ -2268,14 +2004,6 @@ Types from src/include/access/xlog_internal.h
 
 #define XLOG_PAGE_MAGIC 0xD064	/* can be used as WAL version indicator */
 
-#elif PG_VERSION >= PG_VERSION_84
-
-#define XLOG_PAGE_MAGIC 0xD063	/* can be used as WAL version indicator */
-
-#elif PG_VERSION >= PG_VERSION_83
-
-#define XLOG_PAGE_MAGIC 0xD062	/* can be used as WAL version indicator */
-
 #endif
 
 // XLogPageHeaderData type
@@ -2327,7 +2055,7 @@ typedef struct XLogPageHeaderData
 	uint32		xlp_rem_len;	/* total len of remaining data for record */
 } XLogPageHeaderData;
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 /*
  * Each page of XLOG file has a header like this:
@@ -2346,7 +2074,7 @@ typedef struct XLogPageHeaderData
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 /*
  * When the XLP_LONG_HEADER flag is set, we store additional fields in the
@@ -2367,7 +2095,7 @@ typedef struct XLogLongPageHeaderData
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 /* This flag indicates a "long" page header */
 #define XLP_LONG_HEADER				0x0002
