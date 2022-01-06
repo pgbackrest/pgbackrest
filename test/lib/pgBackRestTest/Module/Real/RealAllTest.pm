@@ -52,8 +52,6 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => PG_VERSION_83, repoDest => HOST_DB_PRIMARY, tls => 0, storage => POSIX, encrypt => 0, compress => NONE, repo => 2},
-        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, tls => 1, storage => AZURE, encrypt => 1, compress =>   GZ, repo => 1},
         {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, tls => 0, storage =>   GCS, encrypt => 1, compress =>  BZ2, repo => 2},
         {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>   GZ, repo => 1},
         {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress => NONE, repo => 1},
@@ -572,34 +570,22 @@ sub run
         # The tablespace path should exist and have files in it
         my $strTablespacePath = $oHostDbPrimary->tablespacePath(1);
 
-        # Version <= 8.4 always places a PG_VERSION file in the tablespace
-        if ($oHostDbPrimary->pgVersion() <= PG_VERSION_84)
-        {
-            if (!storageTest()->exists("${strTablespacePath}/" . DB_FILE_PGVERSION))
-            {
-                confess &log(ASSERT, "unable to find '" . DB_FILE_PGVERSION . "' in tablespace path '${strTablespacePath}'");
-            }
-        }
-        # Version >= 9.0 creates a special path using the version and catalog number
-        else
-        {
-            # Backup info will have the catalog number
-            my $oBackupInfo = new pgBackRestDoc::Common::Ini(
-                storageRepo(), $oHostBackup->repoBackupPath(FILE_BACKUP_INFO),
-                {bLoad => false, strContent => ${storageRepo()->get($oHostBackup->repoBackupPath(FILE_BACKUP_INFO))}});
+        # Backup info will have the catalog number
+        my $oBackupInfo = new pgBackRestDoc::Common::Ini(
+            storageRepo(), $oHostBackup->repoBackupPath(FILE_BACKUP_INFO),
+            {bLoad => false, strContent => ${storageRepo()->get($oHostBackup->repoBackupPath(FILE_BACKUP_INFO))}});
 
-            # Construct the special path
-            $strTablespacePath .=
-                '/PG_' . $oHostDbPrimary->pgVersion() . qw{_} . $oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG);
+        # Construct the special path
+        $strTablespacePath .=
+            '/PG_' . $oHostDbPrimary->pgVersion() . qw{_} . $oBackupInfo->get(INFO_BACKUP_SECTION_DB, INFO_BACKUP_KEY_CATALOG);
 
-            # Check that path exists
-            if (!storageTest()->pathExists($strTablespacePath))
-            {
-                confess &log(ASSERT, "unable to find tablespace path '${strTablespacePath}'");
-            }
+        # Check that path exists
+        if (!storageTest()->pathExists($strTablespacePath))
+        {
+            confess &log(ASSERT, "unable to find tablespace path '${strTablespacePath}'");
         }
 
-        # Make sure there are some files in the tablespace path (exclude PG_VERSION if <= 8.4 since that was tested above)
+        # Make sure there are some files in the tablespace path
         if (grep(!/^PG\_VERSION$/i, storageTest()->list($strTablespacePath)) == 0)
         {
             confess &log(ASSERT, "no files found in tablespace path '${strTablespacePath}'");
@@ -614,15 +600,7 @@ sub run
         $oHostDbPrimary->sqlExecute('drop database test2', {bAutoCommit => true});
 
         # The test table lives in ts1 so it needs to be moved or dropped
-        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_90)
-        {
-            $oHostDbPrimary->sqlExecute('alter table test set tablespace pg_default');
-        }
-        # Drop for older versions
-        else
-        {
-            $oHostDbPrimary->sqlExecute('drop table test');
-        }
+        $oHostDbPrimary->sqlExecute('alter table test set tablespace pg_default');
 
         # And drop the tablespace
         $oHostDbPrimary->sqlExecute('drop database test3', {bAutoCommit => true});
@@ -753,25 +731,19 @@ sub run
 
         # Restore (restore type = default, timeline = created by type = xid, inclusive recovery)
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($oHostDbPrimary->pgVersion() >= PG_VERSION_84)
-        {
-            &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_DEFAULT);
+        &log(INFO, '    testing recovery type = ' . CFGOPTVAL_RESTORE_TYPE_DEFAULT);
 
-            $oHostDbPrimary->clusterStop();
+        $oHostDbPrimary->clusterStop();
 
-            # The timeline to use for this test is subject to change based on tests being added or removed above.  The best thing
-            # would be to automatically grab the timeline after the restore, but since this test has been stable for a long time
-            # it does not seem worth the effort to automate.
-            $oHostDbPrimary->restore(
-                undef, $strIncrBackup,
-                {bDelta => true,
-                    strType => $oHostDbPrimary->pgVersion() >= PG_VERSION_90 ?
-                        CFGOPTVAL_RESTORE_TYPE_STANDBY : CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                    strTargetTimeline => 4, iRepo => $iRepoTotal});
+        # The timeline to use for this test is subject to change based on tests being added or removed above.  The best thing
+        # would be to automatically grab the timeline after the restore, but since this test has been stable for a long time
+        # it does not seem worth the effort to automate.
+        $oHostDbPrimary->restore(
+            undef, $strIncrBackup,
+            {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_STANDBY, strTargetTimeline => 4, iRepo => $iRepoTotal});
 
-            $oHostDbPrimary->clusterStart({bHotStandby => true});
-            $oHostDbPrimary->sqlSelectOneTest('select message from test', $strTimelineMessage, {iTimeout => 120});
-        }
+        $oHostDbPrimary->clusterStart({bHotStandby => true});
+        $oHostDbPrimary->sqlSelectOneTest('select message from test', $strTimelineMessage, {iTimeout => 120});
 
         # Stop clusters to catch any errors in the postgres log
         #---------------------------------------------------------------------------------------------------------------------------

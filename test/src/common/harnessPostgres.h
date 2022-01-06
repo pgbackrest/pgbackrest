@@ -17,10 +17,6 @@ Control file size used to create pg_control
 /***********************************************************************************************************************************
 System id constants by version
 ***********************************************************************************************************************************/
-#define HRN_PG_SYSTEMID_83                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_83)
-#define HRN_PG_SYSTEMID_83_Z                                        "10000000000000080300"
-#define HRN_PG_SYSTEMID_84                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_84)
-#define HRN_PG_SYSTEMID_84_Z                                        "10000000000000080400"
 #define HRN_PG_SYSTEMID_90                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_90)
 #define HRN_PG_SYSTEMID_90_Z                                        "10000000000000090000"
 #define HRN_PG_SYSTEMID_91                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_91)

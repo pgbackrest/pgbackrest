@@ -235,18 +235,11 @@ backupInit(const InfoBackup *infoBackup)
             strZ(pgVersionToStr(infoPg.version)), infoPg.systemId);
     }
 
-    // Only allow stop auto in PostgreSQL >= 9.3 and <= 9.5
+    // Only allow stop auto in PostgreSQL >= 9.3
     if (cfgOptionBool(cfgOptStopAuto) && result->version < PG_VERSION_93)
     {
         LOG_WARN(CFGOPT_STOP_AUTO " option is only available in " PG_NAME " >= " PG_VERSION_93_STR);
         cfgOptionSet(cfgOptStopAuto, cfgSourceParam, BOOL_FALSE_VAR);
-    }
-
-    // Only allow start-fast option for PostgreSQL >= 8.4
-    if (cfgOptionBool(cfgOptStartFast) && result->version < PG_VERSION_84)
-    {
-        LOG_WARN(CFGOPT_START_FAST " option is only available in " PG_NAME " >= " PG_VERSION_84_STR);
-        cfgOptionSet(cfgOptStartFast, cfgSourceParam, BOOL_FALSE_VAR);
     }
 
     // If checksum page is not explicitly set then automatically enable it when checksums are available

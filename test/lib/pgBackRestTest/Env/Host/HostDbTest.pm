@@ -429,10 +429,7 @@ sub clusterStart
         $strCommand .= " -c archive_command=true";
     }
 
-    if ($self->pgVersion() >= PG_VERSION_90)
-    {
-        $strCommand .= ' -c wal_level=hot_standby -c hot_standby=' . ($bHotStandby ? 'on' : 'off');
-    }
+    $strCommand .= ' -c wal_level=hot_standby -c hot_standby=' . ($bHotStandby ? 'on' : 'off');
 
     # Force parallel mode on to make sure we are disabling it and there are no issues. This is important for testing that 9.6
     # works since pg_stop_backup() is marked parallel safe and will error if run in a worker.

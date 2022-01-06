@@ -1427,14 +1427,6 @@ src/postgres/interface/static.vendor.h:
   class: core/vendor
   type: c/h
 
-src/postgres/interface/v083.c:
-  class: core
-  type: c
-
-src/postgres/interface/v084.c:
-  class: core
-  type: c
-
 src/postgres/interface/v090.c:
   class: core
   type: c
@@ -2046,14 +2038,6 @@ test/src/common/harnessPostgres.c:
 test/src/common/harnessPostgres.h:
   class: test/harness
   type: c/h
-
-test/src/common/harnessPostgres/harness083.c:
-  class: test/harness
-  type: c
-
-test/src/common/harnessPostgres/harness084.c:
-  class: test/harness
-  type: c
 
 test/src/common/harnessPostgres/harness090.c:
   class: test/harness

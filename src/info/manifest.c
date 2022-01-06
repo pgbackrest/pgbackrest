@@ -706,7 +706,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 }
 
                 // Skip pg_notify/* since these files cannot be reused on recovery
-                if (strEqZ(info->name, PG_PATH_PGNOTIFY) && pgVersion >= PG_VERSION_90)
+                if (strEqZ(info->name, PG_PATH_PGNOTIFY))
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
@@ -735,7 +735,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
                 // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
                 // created there
-                if (strEqZ(info->name, PG_PATH_PGSTATTMP) && pgVersion >= PG_VERSION_84)
+                if (strEqZ(info->name, PG_PATH_PGSTATTMP))
                 {
                     FUNCTION_TEST_RETURN_VOID();
                     return;
@@ -761,9 +761,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             ManifestBuildData buildDataSub = buildData;
             buildDataSub.manifestParentName = manifestName;
             buildDataSub.pgPath = strNewFmt("%s/%s", strZ(buildData.pgPath), strZ(info->name));
-
-            if (buildData.dbPathExp != NULL)
-                buildDataSub.dbPath = regExpMatch(buildData.dbPathExp, manifestName);
+            buildDataSub.dbPath = regExpMatch(buildData.dbPathExp, manifestName);
 
             storageInfoListP(
                 buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
@@ -787,7 +785,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             // the creating process id as the extension can exist so skip that as well.  This seems to be a bug in PostgreSQL since
             // the temp file should be removed on startup.  Use regExpMatchOne() here instead of preparing a regexp in advance since
             // the likelihood of needing the regexp should be very small.
-            if ((pgVersion <= PG_VERSION_84 || buildData.dbPath) && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
+            if (buildData.dbPath && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
                 (strSize(info->name) == sizeof(PG_FILE_PGINTERNALINIT) - 1 ||
                     regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1))))
             {
@@ -959,32 +957,27 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     manifestPathAdd(buildData.manifest, &path);
                 }
 
-                // If the tablespace id is present then the tablespace link destination path is not the path where data will be
-                // stored so we can just store it as a dummy path.
-                if (buildData.tablespaceId != NULL)
+                // The tablespace link destination path is not the path where data will be stored so we can just store it as a dummy
+                // path. This is because PostgreSQL creates a subpath with the version/catalog number so that multiple versions of
+                // PostgreSQL can share a tablespace, which makes upgrades easier.
+                const ManifestPath *pathTblSpc = manifestPathFind(
+                    buildData.manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC));
+
+                ManifestPath path =
                 {
-                    const ManifestPath *pathTblSpc = manifestPathFind(
-                        buildData.manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC));
+                    .name = manifestName,
+                    .mode = pathTblSpc->mode,
+                    .user = pathTblSpc->user,
+                    .group = pathTblSpc->group,
+                };
 
-                    ManifestPath path =
-                    {
-                        .name = manifestName,
-                        .mode = pathTblSpc->mode,
-                        .user = pathTblSpc->user,
-                        .group = pathTblSpc->group,
-                    };
+                manifestPathAdd(buildData.manifest, &path);
 
-                    manifestPathAdd(buildData.manifest, &path);
-
-                    // Update build structure to reflect the path added above and the tablespace id
-                    buildData.manifestParentName = manifestName;
-                    manifestName = strNewFmt("%s/%s", strZ(manifestName), strZ(buildData.tablespaceId));
-                    buildData.pgPath = strNewFmt("%s/%s", strZ(buildData.pgPath), strZ(info->name));
-                    linkName = buildData.tablespaceId;
-                }
-                // If no tablespace id then parent manifest name is the tablespace directory
-                else
-                    buildData.manifestParentName = MANIFEST_TARGET_PGTBLSPC_STR;
+                // Update build structure to reflect the path added above and the tablespace id
+                buildData.manifestParentName = manifestName;
+                manifestName = strNewFmt("%s/%s", strZ(manifestName), strZ(buildData.tablespaceId));
+                buildData.pgPath = strNewFmt("%s/%s", strZ(buildData.pgPath), strZ(info->name));
+                linkName = buildData.tablespaceId;
             }
 
             // Add info about the linked file/path
@@ -1098,19 +1091,15 @@ manifestNewBuild(
                 .pgPath = storagePathP(storagePg, NULL),
             };
 
-            // We won't identify db paths for PostgreSQL < 9.0.  This means that temp relations will not be excluded but it doesn't
-            // seem worth supporting this feature on such old versions of PostgreSQL.
+            // Build expressions to identify databases paths and temp relations
             // ---------------------------------------------------------------------------------------------------------------------
-            if (pgVersion >= PG_VERSION_90)
-            {
-                ASSERT(buildData.tablespaceId != NULL);
+            ASSERT(buildData.tablespaceId != NULL);
 
-                // Expression to identify database paths
-                buildData.dbPathExp = regExpNew(strNewFmt("^" DB_PATH_EXP "$", strZ(buildData.tablespaceId)));
+            // Expression to identify database paths
+            buildData.dbPathExp = regExpNew(strNewFmt("^" DB_PATH_EXP "$", strZ(buildData.tablespaceId)));
 
-                // Expression to find temp relations
-                buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
-            }
+            // Expression to find temp relations
+            buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
 
             // Build expression to identify files that can be copied from the standby when standby backup is supported
             // ---------------------------------------------------------------------------------------------------------------------
