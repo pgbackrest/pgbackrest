@@ -736,7 +736,7 @@ dbPing(Db *const this, const bool force)
                 {
                     THROW(
                         DbMismatchError,
-                        "standby is no longer is recovery\n"
+                        "standby is no longer in recovery\n"
                         "HINT: was the standby promoted during the backup?");
                 }
                 // Else if a primary then something has gone seriously wrong

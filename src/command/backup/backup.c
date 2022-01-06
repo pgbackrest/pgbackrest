@@ -235,7 +235,7 @@ backupInit(const InfoBackup *infoBackup)
             strZ(pgVersionToStr(infoPg.version)), infoPg.systemId);
     }
 
-    // Only allow stop auto in PostgreSQL >= 9.3 and <= 9.5
+    // Only allow stop auto in PostgreSQL >= 9.3
     if (cfgOptionBool(cfgOptStopAuto) && result->version < PG_VERSION_93)
     {
         LOG_WARN(CFGOPT_STOP_AUTO " option is only available in " PG_NAME " >= " PG_VERSION_93_STR);
