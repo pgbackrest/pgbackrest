@@ -1267,6 +1267,14 @@ src/common/wait.h:
   class: core
   type: c/h
 
+src/config/common.c:
+  class: core
+  type: c
+
+src/config/common.h:
+  class: core
+  type: c/h
+
 src/config/config.auto.h:
   class: core/auto
   type: c/h
