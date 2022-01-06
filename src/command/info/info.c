@@ -451,17 +451,18 @@ backupListAdd(
     if (backupData->backupError != NULL)
         kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, backupData->backupError);
 
+    // Add start/stop backup lsn info to json output or --set text
+    if ((backupLabel != NULL || cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON) &&
+         backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
+    {
+        KeyValue *lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
+        kvPut(lsnInfo, KEY_START_VAR, VARSTR(backupData->backupLsnStart));
+        kvPut(lsnInfo, KEY_STOP_VAR, VARSTR(backupData->backupLsnStop));
+    }
+
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
     if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
     {
-        // Add start/stop backup lsn info
-        if (backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
-        {
-            KeyValue *lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
-            kvPut(lsnInfo, KEY_START_VAR, VARSTR(backupData->backupLsnStart));
-            kvPut(lsnInfo, KEY_STOP_VAR, VARSTR(backupData->backupLsnStop));
-        }
-
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
 
