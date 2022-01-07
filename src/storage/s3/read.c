@@ -52,8 +52,20 @@ storageReadS3Open(THIS_VOID)
     // Request the file
     MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
+        HttpHeader *header = NULL;
+
+        if (this->interface.offset != 0 || this->interface.limit != NULL)
+        {
+            String *const range = strCatFmt(strNew(), HTTP_HEADER_RANGE_BYTES "=%" PRIu64 "-", this->interface.offset);
+
+            if (this->interface.limit != NULL)
+                strCatFmt(range, "%" PRIu64, this->interface.offset + varUInt64(this->interface.limit) - 1);
+
+            header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_RANGE_STR, range);
+        }
+
         this->httpResponse = storageS3RequestP(
-            this->storage, HTTP_VERB_GET_STR, this->interface.name, .allowMissing = true, .contentIo = true);
+            this->storage, HTTP_VERB_GET_STR, this->interface.name, .header = header, .allowMissing = true, .contentIo = true);
     }
     MEM_CONTEXT_END();
 
@@ -109,16 +121,20 @@ storageReadS3Eof(THIS_VOID)
 
 /**********************************************************************************************************************************/
 StorageRead *
-storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
+storageReadS3New(
+    StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(UINT64, offset);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
+    ASSERT(limit == NULL || varUInt64(limit) > 0);
 
     StorageRead *this = NULL;
 
@@ -135,6 +151,8 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
                 .type = STORAGE_S3_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .offset = offset,
+                .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {

@@ -1159,7 +1159,8 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(
-                file, storageReadMove(storageNewReadP(storageTest, fileName, .limit = VARUINT64(44)), memContextPrior()),
+                file,
+                storageReadMove(storageNewReadP(storageTest, fileName, .limit = VARUINT64(44)), memContextPrior()),
                 "new read file");
         }
         MEM_CONTEXT_TEMP_END();
@@ -1167,6 +1168,7 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_RESULT_STR(storageReadName(file), fileName, "check file name");
         TEST_RESULT_UINT(storageReadType(file), STORAGE_POSIX_TYPE, "check file type");
+        TEST_RESULT_UINT(storageReadOffset(file), 0, "check offset");
         TEST_RESULT_UINT(varUInt64(storageReadLimit(file)), 44, "check limit");
 
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");

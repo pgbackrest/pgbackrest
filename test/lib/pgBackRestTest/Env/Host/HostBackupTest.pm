@@ -1189,6 +1189,11 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-timestamp'} = 'n';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'buffer-size'} = '64k';
 
+    if ($oParam->{strStorage} eq S3 || $oParam->{strStorage} eq POSIX)
+    {
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'bundle'} = 'y';
+    }
+
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'lock-path'} = $self->lockPath();
 
@@ -2085,9 +2090,13 @@ sub restoreCompare
                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{size});
         }
 
-        # Remove repo-size from the manifest.  ??? This could be improved to get actual sizes from the backup.
+        # Remove repo-size, bno, bni from the manifest
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bni");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bni"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bno");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bno"});
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {

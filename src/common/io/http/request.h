@@ -58,6 +58,9 @@ HTTP Constants
     STRING_DECLARE(HTTP_HEADER_HOST_STR);
 #define HTTP_HEADER_LAST_MODIFIED                                   "last-modified"
     STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
+#define HTTP_HEADER_RANGE                                           "range"
+    STRING_DECLARE(HTTP_HEADER_RANGE_STR);
+#define HTTP_HEADER_RANGE_BYTES                                     "bytes"
 
 /***********************************************************************************************************************************
 Constructors

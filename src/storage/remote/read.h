@@ -13,6 +13,6 @@ Constructors
 ***********************************************************************************************************************************/
 StorageRead *storageReadRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
-    unsigned int compressLevel, const Variant *limit);
+    unsigned int compressLevel, uint64_t offset, const Variant *limit);
 
 #endif

@@ -621,7 +621,6 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(storageFeature(this, storageFeatureLimitRead) || param.limit == NULL);
     ASSERT(param.limit == NULL || varType(param.limit) == varTypeUInt64);
 
     StorageRead *result = NULL;

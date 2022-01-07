@@ -27,6 +27,7 @@ typedef struct TestRequestParam
     const char *content;
     const char *accessKey;
     const char *securityToken;
+    const char *range;
 } TestRequestParam;
 
 #define testRequestP(write, s3, verb, path, ...)                                                                                   \
@@ -64,7 +65,12 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
         if (param.content != NULL)
             strCatZ(request, "content-md5;");
 
-        strCatZ(request, "host;x-amz-content-sha256;x-amz-date");
+        strCatZ(request, "host;");
+
+        if (param.range != NULL)
+            strCatZ(request, "range;");
+
+        strCatZ(request, "x-amz-content-sha256;x-amz-date");
 
         if (securityToken != NULL)
             strCatZ(request, ";x-amz-security-token");
@@ -93,6 +99,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     }
     else
         strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
+
+    // Add range
+    if (param.range != NULL)
+        strCatFmt(request, "range:bytes=%s\r\n", param.range);
 
     // Add content checksum and date if s3 service
     if (s3 != NULL)
@@ -417,13 +427,34 @@ testRun(void)
                     "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file");
+                TEST_TITLE("get file with offset and limit");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "1-21");
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt")))), "this is a sample file", "get file");
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with offset");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "44-");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .offset = 44))),
+                    "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "0-20");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .limit = VARUINT64(21)))),
+                    "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");

@@ -24,7 +24,6 @@ typedef struct StorageReadPosix
 
     int fd;                                                         // File descriptor
     uint64_t current;                                               // Current bytes read from file
-    uint64_t offset;                                                // Where to start reading from the file
     uint64_t limit;                                                 // Limit bytes to be read from file (UINT64_MAX for no limit)
     bool eof;
 } StorageReadPosix;
@@ -97,11 +96,11 @@ storageReadPosixOpen(THIS_VOID)
     }
 
     // Seek to offset
-    if (this->offset != 0)
+    if (this->interface.offset != 0)
     {
         THROW_ON_SYS_ERROR_FMT(
-            lseek(this->fd, (off_t)this->offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
-            this->offset, strZ(this->interface.name));
+            lseek(this->fd, (off_t)this->interface.offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
+            this->interface.offset, strZ(this->interface.name));
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -235,7 +234,6 @@ storageReadPosixNew(
         {
             .storage = storage,
             .fd = -1,
-            .offset = offset,
 
             // Rather than enable/disable limit checking just use a big number when there is no limit.  We can feel pretty confident
             // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during
@@ -247,6 +245,7 @@ storageReadPosixNew(
                 .type = STORAGE_POSIX_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .offset = offset,
                 .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)

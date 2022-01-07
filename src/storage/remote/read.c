@@ -74,6 +74,7 @@ storageReadRemoteOpen(THIS_VOID)
 
         pckWriteStrP(param, this->interface.name);
         pckWriteBoolP(param, this->interface.ignoreMissing);
+        pckWriteU64P(param, this->interface.offset);
         pckWriteStrP(param, jsonFromVar(this->interface.limit));
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
@@ -207,16 +208,17 @@ storageReadRemoteEof(THIS_VOID)
 /**********************************************************************************************************************************/
 StorageRead *
 storageReadRemoteNew(
-    StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
-    unsigned int compressLevel, const Variant *limit)
+    StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool ignoreMissing,
+    const bool compressible, const unsigned int compressLevel, const uint64_t offset, const Variant *const limit)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
+        FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
@@ -242,6 +244,7 @@ storageReadRemoteNew(
                 .compressible = compressible,
                 .compressLevel = compressLevel,
                 .ignoreMissing = ignoreMissing,
+                .offset = offset,
                 .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
