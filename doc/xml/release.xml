@@ -18,6 +18,17 @@
             <release-core-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-pull-request id="1610"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add backup LSNs to <cmd>info</cmd> command output.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1611"/>
 
                         <release-item-contributor-list>
