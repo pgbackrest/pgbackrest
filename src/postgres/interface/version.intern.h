@@ -22,7 +22,7 @@ Determine if the supplied pg_control is for this version of PostgreSQL
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #ifdef CATALOG_VERSION_NO_MAX
 
@@ -81,7 +81,7 @@ Read the version specific pg_control into a general data structure
         };                                                                                                                         \
     }
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_CONTROL(version)                                                                                              \
     PgControl                                                                                                                      \
@@ -110,7 +110,7 @@ Get the control version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_CONTROL_VERSION(version)                                                                                      \
     uint32_t                                                                                                                       \
@@ -126,7 +126,7 @@ Determine if the supplied WAL is for this version of PostgreSQL
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_WAL_IS(version)                                                                                               \
     bool                                                                                                                           \
@@ -144,7 +144,7 @@ Read the version specific WAL header into a general data structure
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_WAL(version)                                                                                                  \
     PgWal                                                                                                                          \
