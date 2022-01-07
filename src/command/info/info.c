@@ -452,8 +452,9 @@ backupListAdd(
         kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, backupData->backupError);
 
     // Add start/stop backup lsn info to json output or --set text
-    if ((backupLabel != NULL || cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON) &&
-         backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
+    if (((backupLabel != NULL && strEq(backupData->backupLabel, backupLabel)) ||
+        cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON) &&
+        backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
     {
         KeyValue *lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
         kvPut(lsnInfo, KEY_START_VAR, VARSTR(backupData->backupLsnStart));
