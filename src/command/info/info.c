@@ -396,6 +396,10 @@ backupListAdd(
 
     Variant *backupInfo = varNewKv(kvNew());
 
+    // Flags used to decide what data to add
+    const bool outputJson = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
+    const bool backupLabelMatch = backupLabel != NULL && strEq(backupData->backupLabel, backupLabel);
+
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
     kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(strIdToStr(backupData->backupType)));
@@ -452,17 +456,15 @@ backupListAdd(
         kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, backupData->backupError);
 
     // Add start/stop backup lsn info to json output or --set text
-    if (((backupLabel != NULL && strEq(backupData->backupLabel, backupLabel)) ||
-        cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON) &&
-        backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
+    if ((outputJson || backupLabelMatch) && backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
     {
-        KeyValue *lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
+        KeyValue *const lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
         kvPut(lsnInfo, KEY_START_VAR, VARSTR(backupData->backupLsnStart));
         kvPut(lsnInfo, KEY_STOP_VAR, VARSTR(backupData->backupLsnStop));
     }
 
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
-    if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
+    if (backupLabelMatch)
     {
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
@@ -832,10 +834,10 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         else
             strCatZ(resultStr, "n/a\n");
 
-        if (kvGet(backupInfo, BACKUP_KEY_LSN_VAR) != NULL)
-        {
-            KeyValue *lsnInfo = varKv(kvGet(backupInfo, BACKUP_KEY_LSN_VAR));
+        const KeyValue *const lsnInfo = varKv(kvGet(backupInfo, BACKUP_KEY_LSN_VAR));
 
+        if (lsnInfo != NULL)
+        {
             strCatFmt(
                 resultStr, "            lsn start/stop: %s / %s\n",
                 strZ(varStr(kvGet(lsnInfo, KEY_START_VAR))),
