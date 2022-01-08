@@ -49,9 +49,9 @@ storageReadS3Open(THIS_VOID)
 
     bool result = false;
 
-    // Request the file
     MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
+        // Add offset and/or limit
         HttpHeader *header = NULL;
 
         if (this->interface.offset != 0 || this->interface.limit != NULL)
@@ -64,6 +64,7 @@ storageReadS3Open(THIS_VOID)
             header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_RANGE_STR, range);
         }
 
+        // Request the file
         this->httpResponse = storageS3RequestP(
             this->storage, HTTP_VERB_GET_STR, this->interface.name, .header = header, .allowMissing = true, .contentIo = true);
     }

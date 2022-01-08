@@ -211,7 +211,7 @@ storageReadRemoteNew(
     StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool ignoreMissing,
     const bool compressible, const unsigned int compressLevel, const uint64_t offset, const Variant *const limit)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
         FUNCTION_LOG_PARAM(STRING, name);

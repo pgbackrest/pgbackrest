@@ -1190,7 +1190,8 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-timestamp'} = 'n';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'buffer-size'} = '64k';
 
-    if ($oParam->{strStorage} eq S3 || $oParam->{strStorage} eq POSIX)
+    if (!$self->synthetic() &&
+        ($oParam->{strStorage} eq AZURE || $oParam->{strStorage} eq S3 || $oParam->{strStorage} eq POSIX))
     {
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'bundle'} = 'y';
     }
