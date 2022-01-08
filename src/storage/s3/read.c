@@ -49,24 +49,13 @@ storageReadS3Open(THIS_VOID)
 
     bool result = false;
 
+    // Request the file
     MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
-        // Add offset and/or limit
-        HttpHeader *header = NULL;
-
-        if (this->interface.offset != 0 || this->interface.limit != NULL)
-        {
-            String *const range = strCatFmt(strNew(), HTTP_HEADER_RANGE_BYTES "=%" PRIu64 "-", this->interface.offset);
-
-            if (this->interface.limit != NULL)
-                strCatFmt(range, "%" PRIu64, this->interface.offset + varUInt64(this->interface.limit) - 1);
-
-            header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_RANGE_STR, range);
-        }
-
-        // Request the file
         this->httpResponse = storageS3RequestP(
-            this->storage, HTTP_VERB_GET_STR, this->interface.name, .header = header, .allowMissing = true, .contentIo = true);
+            this->storage, HTTP_VERB_GET_STR, this->interface.name,
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+            .allowMissing = true, .contentIo = true);
     }
     MEM_CONTEXT_END();
 

@@ -1190,10 +1190,11 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-timestamp'} = 'n';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'buffer-size'} = '64k';
 
-    if (!$self->synthetic() &&
-        ($oParam->{strStorage} eq AZURE || $oParam->{strStorage} eq S3 || $oParam->{strStorage} eq POSIX))
+    if (!$self->synthetic())
     {
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'bundle'} = 'y';
+        # Set bundle size smaller for testing and because FakeGCS does not do multi-part upload
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'bundle-size'} = '1MiB';
     }
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();

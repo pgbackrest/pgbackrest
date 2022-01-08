@@ -437,26 +437,6 @@ testRun(void)
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file with offset");
-
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "44-");
-                testResponseP(service, .content = "this is a sample file");
-
-                TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .offset = 44))),
-                    "this is a sample file", "get file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file with limit");
-
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "0-20");
-                testResponseP(service, .content = "this is a sample file");
-
-                TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .limit = VARUINT64(21)))),
-                    "this is a sample file", "get file");
-
-                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/file0.txt");
