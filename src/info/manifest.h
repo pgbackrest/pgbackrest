@@ -49,6 +49,7 @@ typedef struct ManifestData
     time_t backupTimestampStart;                                    // When did the backup start?
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
+    bool bundle;                                                    // Does the backup bundle files?
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
@@ -154,7 +155,7 @@ Constructors
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
 Manifest *manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage,
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
     const StringList *excludeList, const VariantList *tablespaceList);
 
 // Load a manifest from IO

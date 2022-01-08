@@ -271,7 +271,8 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(testContext)
         {
-            TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, NULL, NULL), "build files");
+            TEST_ASSIGN(
+                manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, false, NULL, NULL), "build files");
         }
         MEM_CONTEXT_END();
 

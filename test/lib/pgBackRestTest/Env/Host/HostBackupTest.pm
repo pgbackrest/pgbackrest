@@ -413,7 +413,8 @@ sub backupEnd
         # Make sure tablespace links are correct
         if ($self->hasLink())
         {
-            if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink())
+            if (($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink()) &&
+                !$oExpectedManifest->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'})
             {
                 my $hTablespaceManifest = storageTest()->manifest(
                     $self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC));
@@ -2158,6 +2159,8 @@ sub restoreCompare
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef,
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BUFFER_SIZE, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_COMPRESS, undef,
@@ -2224,6 +2227,8 @@ sub restoreCompare
         $oActualManifest->set(
             MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef,
             $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE});
+        $oActualManifest->set(
+            MANIFEST_SECTION_BACKUP, 'backup-bundle', undef, $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
 
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef,
                               ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LSN_START});

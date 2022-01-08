@@ -2061,7 +2061,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -2149,7 +2149,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -2334,7 +2334,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeDiff;

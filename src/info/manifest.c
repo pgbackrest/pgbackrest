@@ -51,6 +51,8 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
     STRING_STATIC(MANIFEST_KEY_BACKUP_ARCHIVE_START_STR,            MANIFEST_KEY_BACKUP_ARCHIVE_START);
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
     STRING_STATIC(MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR,             MANIFEST_KEY_BACKUP_ARCHIVE_STOP);
+#define MANIFEST_KEY_BACKUP_BUNDLE                                  "backup-bundle"
+    STRING_STATIC(MANIFEST_KEY_BACKUP_BUNDLE_STR,                   MANIFEST_KEY_BACKUP_BUNDLE);
 #define MANIFEST_KEY_BACKUP_LABEL                                   "backup-label"
     STRING_STATIC(MANIFEST_KEY_BACKUP_LABEL_STR,                    MANIFEST_KEY_BACKUP_LABEL);
 #define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
@@ -1044,8 +1046,8 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
 Manifest *
 manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage,
-    const StringList *excludeList, const VariantList *tablespaceList)
+    const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const bool online,
+    const bool checksumPage, const bool bundle, const StringList *const excludeList, const VariantList *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
@@ -1053,6 +1055,7 @@ manifestNewBuild(
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
         FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
+        FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
         FUNCTION_LOG_PARAM(VARIANT_LIST, tablespaceList);
     FUNCTION_LOG_END();
@@ -1073,6 +1076,7 @@ manifestNewBuild(
         this->pub.data.backupType = backupTypeFull;
         this->pub.data.backupOptionOnline = online;
         this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
+        this->pub.data.bundle = bundle;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1850,6 +1854,8 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 manifest->pub.data.archiveStart = strDup(varStr(value));
             else if (strEq(key, MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR))
                 manifest->pub.data.archiveStop = strDup(varStr(value));
+            else if (strEq(key, MANIFEST_KEY_BACKUP_BUNDLE_STR))
+                manifest->pub.data.bundle = varBool(value);
             else if (strEq(key, MANIFEST_KEY_BACKUP_LABEL_STR))
                 manifest->pub.data.backupLabel = strDup(varStr(value));
             else if (strEq(key, MANIFEST_KEY_BACKUP_LSN_START_STR))
@@ -2095,6 +2101,9 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR,
                 jsonFromStr(manifest->pub.data.archiveStop));
         }
+
+        infoSaveValue(
+            infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_BUNDLE_STR, jsonFromBool(manifest->pub.data.bundle));
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LABEL_STR,
