@@ -565,22 +565,22 @@ testRun(void)
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    const String *pgFile = STRDEF("testfile");
-    const String *missingFile = STRDEF("missing");
-    const String *backupLabel = STRDEF("20190718-155825F");
-    const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
-    BackupFileResult result = {0};
-
     // *****************************************************************************************************************************
     if (testBegin("segmentNumber()"))
     {
-        TEST_RESULT_UINT(segmentNumber(pgFile), 0, "No segment number");
-        TEST_RESULT_UINT(segmentNumber(strNewFmt("%s.123", strZ(pgFile))), 123, "Segment number");
+        TEST_RESULT_UINT(segmentNumber(STRDEF("999")), 0, "No segment number");
+        TEST_RESULT_UINT(segmentNumber(STRDEF("999.123")), 123, "Segment number");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("backupFile()"))
     {
+        const String *pgFile = STRDEF("testfile");
+        const String *missingFile = STRDEF("missing");
+        const String *backupLabel = STRDEF("20190718-155825F");
+        const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
+        BackupFileResult result = {0};
+
         // Load Parameters
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -844,13 +844,12 @@ testRun(void)
             "testfile.gz\n"
             "zerofile\n",
             .comment = "copy zero file to repo success");
-    }
 
-    // *****************************************************************************************************************************
-    if (testBegin("backupFile() - encrypt"))
-    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy file to encrypted repo");
+
         // Load Parameters
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
@@ -862,9 +861,6 @@ testRun(void)
 
         // Create the pg path and pg file to backup
         HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("copy file to encrypted repo");
 
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
