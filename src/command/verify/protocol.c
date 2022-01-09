@@ -28,11 +28,15 @@ verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
     {
         // Verify file
         const String *const filePathName = pckReadStrP(param);
+        const uint64_t bundleId = pckReadU64P(param);
+        const uint64_t bundleOffset = pckReadU64P(param);
+        const uint64_t bundleSize = pckReadU64P(param);
         const String *const fileChecksum = pckReadStrP(param);
         const uint64_t fileSize = pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
 
-        const VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
+        const VerifyResult result = verifyFile(
+            filePathName, bundleId, bundleOffset, bundleSize, fileChecksum, fileSize, cipherPass);
 
         // Return result
         protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), result));

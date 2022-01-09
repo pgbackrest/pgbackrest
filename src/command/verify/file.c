@@ -17,10 +17,14 @@ Verify File
 /**********************************************************************************************************************************/
 VerifyResult
 verifyFile(
-    const String *filePathName, const String *fileChecksum, uint64_t fileSize, const String *cipherPass)
+    const String *const filePathName, const uint64_t bundleId, const uint64_t bundleOffset, const uint64_t bundleSize,
+    const String *const fileChecksum, const uint64_t fileSize, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
+        FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle id (0 for none)
+        FUNCTION_LOG_PARAM(UINT64, bundleOffset);                   // Bundle offset (if bundleId != 0)
+        FUNCTION_LOG_PARAM(UINT64, bundleSize);                     // Bundle size (if bundleId != 0)
         FUNCTION_LOG_PARAM(STRING, fileChecksum);                   // Checksum for the file
         FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
