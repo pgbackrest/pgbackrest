@@ -245,6 +245,9 @@ backupFile(
                         cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
                 }
 
+                // Add size filter last to calculate repo size
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
+
                 // Open the source and destination and copy the file
                 if (ioReadOpen(storageReadIo(read)))
                 {
@@ -265,8 +268,6 @@ backupFile(
                     {
                         ioRead(storageReadIo(read), buffer);
                         ioWrite(storageWriteIo(write), buffer);
-
-                        fileResult->repoSize += bufUsed(buffer);
                         bufUsedZero(buffer);
                     }
                     while (!ioReadEof(storageReadIo(read))); // {uncovered !!!}
@@ -278,10 +279,12 @@ backupFile(
                     {
                         // Get sizes and checksum
                         fileResult->copySize = pckReadU64P(
-                            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE));
+                            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 0));
                         fileResult->bundleOffset = bundleOffset;
                         fileResult->copyChecksum = strDup(
                             pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
+                        fileResult->repoSize = pckReadU64P(
+                            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 1));
 
                         // Get results of page checksum validation
                         if (file->pgFileChecksumPage)
