@@ -100,8 +100,8 @@ void
 ioCopy(IoRead *const source, IoWrite *const destination)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_READ, read);
-        FUNCTION_TEST_PARAM(IO_READ, write);
+        FUNCTION_TEST_PARAM(IO_READ, source);
+        FUNCTION_TEST_PARAM(IO_WRITE, destination);
     FUNCTION_TEST_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
