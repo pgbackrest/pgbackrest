@@ -171,7 +171,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
             // Check against the manifest
             // ---------------------------------------------------------------------------------------------------------------------
-            if (!strEq(info->name, STRDEF("bundle"))) // !!!
+            if (!strEq(info->name, STRDEF("bundle")))
                 manifestPathFind(data->manifest, info->name);
 
             // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
@@ -1590,7 +1590,7 @@ testRun(void)
 
         TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
 
-        TEST_RESULT_LOG("P00   WARN: backup '20191003-105320F' cannot be resumed: resume is disabled");
+        TEST_RESULT_LOG("P00   INFO: backup '20191003-105320F' cannot be resumed: resume is disabled");
 
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
@@ -1716,6 +1716,30 @@ testRun(void)
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifestResume->pub.data.backupOptionCompressType = compressTypeNone;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when bundling");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        hrnCfgArgRawBool(argList, cfgOptBundle, true);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        manifestSave(
+            manifestResume,
+            storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
+
+        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG("P00   INFO: backup '20191003-105320F' cannot be resumed: resume is disabled");
+
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
     }
 
     // *****************************************************************************************************************************
@@ -1730,7 +1754,8 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, NULL, storageTest, strLstNew(), job, 0, NULL), AssertError, "error message");
+        TEST_ERROR(
+            backupJobResult((Manifest *)1, NULL, storageTest, strLstNew(), job, false, 0, NULL), AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report host/100% progress on noop result");
@@ -1762,7 +1787,7 @@ testRun(void)
         uint64_t sizeProgress = 0;
 
         TEST_RESULT_VOID(
-            backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, 0, &sizeProgress), "log noop result");
+            backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress), "log noop result");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100%)");
     }
@@ -2981,7 +3006,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Set to a smaller values than the defaults allow
-            cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(8192));
+            cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
 
             // Zeroed file which passes page checksums
             Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
@@ -2993,6 +3018,13 @@ testRun(void)
             // Old files
             HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.auto.conf", "CONFIGSTUFF2", .timeModified = 1500000000);
             HRN_STORAGE_PUT_Z(storagePgWrite(), "stuff.conf", "CONFIGSTUFF3", .timeModified = 1500000000);
+
+            // File that will get skipped while bundling smaller files and end up a bundle by itself
+            Buffer *bigish = bufNew(PG_PAGE_SIZE_DEFAULT - 1);
+            memset(bufPtr(bigish), 0, bufSize(bigish));
+            bufUsedSet(bigish, bufSize(bigish));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "bigish.dat", bigish, .timeModified = 1500000001);
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
@@ -3010,6 +3042,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.auto.conf (12B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/bigish.dat (8.0KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB8EB000000001, lsn = 5db8eb0/180000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
@@ -3018,7 +3051,7 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB8EB000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB8EB000000001 to backup\n"
                 "P00   INFO: new backup label = 20191030-014640F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 12");
+                "P00   INFO: full backup size = [SIZE], file total = 13");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3031,6 +3064,7 @@ testRun(void)
                 "bundle/4/pg_data/postgresql.auto.conf {file, s=12}\n"
                 "bundle/4/pg_data/postgresql.conf {file, s=11}\n"
                 "bundle/4/pg_data/stuff.conf {file, s=12}\n"
+                "bundle/5/pg_data/bigish.dat {file, s=8191}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/pg_wal {path}\n"
@@ -3044,18 +3078,29 @@ testRun(void)
                     ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2,\"timestamp\":1572200000}\n"
-                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17,\"timestamp\":1572400002}\n"
-                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true,\"master\":false,\"size\":8192,\"timestamp\":1572200000}\n"
-                "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"master\":false,\"size\":24576,\"timestamp\":1572400000}\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
+                    ",\"timestamp\":1572200000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1572400002}\n"
+                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
+                    ",\"mas""ter\":false,\"size\":8192,\"timestamp\":1572200000}\n"
+                "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true"
+                    ",\"mas""ter\":false,\"size\":24576,\"timestamp\":1572400000}\n"
+                "pg_data/bigish.dat={\"checksum\":\"3e5175386be683d2f231f3fa3eab892a799082f7\",\"size\":8191"
+                    ",\"timestamp\":1500000001}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000000={\"size\":1048576,\"timestamp\":1572400002}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000001={\"size\":1048576,\"timestamp\":1572400002}\n"
-                "pg_data/postgresql.auto.conf={\"checksum\":\"e873a5cb5a67e48761e7b619c531311404facdce\",\"size\":12,\"timestamp\":1500000000}\n"
-                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11,\"timestamp\":1570000000}\n"
-                "pg_data/stuff.conf={\"checksum\":\"55a9d0d18b77789c7722abe72aa905e2dc85bb5d\",\"size\":12,\"timestamp\":1500000000}\n"
-                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19,\"timestamp\":1572400002}\n"
-                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"master\":false,\"size\":0,\"timestamp\":1572200000}\n"
+                "pg_data/postgresql.auto.conf={\"checksum\":\"e873a5cb5a67e48761e7b619c531311404facdce\",\"size\":12"
+                    ",\"timestamp\":1500000000}\n"
+                "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
+                    ",\"timestamp\":1570000000}\n"
+                "pg_data/stuff.conf={\"checksum\":\"55a9d0d18b77789c7722abe72aa905e2dc85bb5d\",\"size\":12"
+                    ",\"timestamp\":1500000000}\n"
+                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
+                    ",\"timestamp\":1572400002}\n"
+                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"mas""ter\":false,\"size\":0"
+                    ",\"timestamp\":1572200000}\n"
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"

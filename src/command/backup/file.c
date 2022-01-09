@@ -56,12 +56,6 @@ backupFile(
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
     ASSERT(fileList != NULL && !lstEmpty(fileList));
 
-    // !!! GET THE FILE -- NEEDS TO BE A LOOP
-    const BackupFile *const file = lstGet(fileList, 0);
-
-    ASSERT(file->pgFile != NULL);
-    ASSERT(file->repoFile != NULL);
-
     // Backup file results
     List *result = NULL;
 
@@ -70,7 +64,7 @@ backupFile(
         // Generate complete repo path and add compression extension if needed
         const String *repoPathFile = bundleId == 0 ?
             strNewFmt(
-                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupLabel), strZ(file->repoFile),
+                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupLabel), strZ(((BackupFile *)lstGet(fileList, 0))->repoFile),
                 strZ(compressExtStr(repoFileCompressType))) :
             strNewFmt(STORAGE_REPO_BACKUP "/%s/bundle/%" PRIu64, strZ(backupLabel), bundleId);
 
@@ -79,6 +73,9 @@ backupFile(
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
             const BackupFile *const file = lstGet(fileList, fileIdx);
+            ASSERT(file->pgFile != NULL);
+            ASSERT(file->repoFile != NULL);
+
             BackupFileResult *const fileResult = lstAdd(
                 result, &(BackupFileResult){.repoFile = file->repoFile, .backupCopyResult = backupCopyResultCopy});
 
@@ -138,8 +135,7 @@ backupFile(
                 // there may be corruption in the repo, so recopy
                 if (!delta || !file->repoFileHasReference)
                 {
-                    // !!!
-                    ASSERT(bundleId == 0);
+                    CHECK(AssertError, bundleId == 0, "bundle is not valid for resume");
 
                     // If this is a delta backup and the file is missing from the DB, then remove it from the repo
                     // (backupManifestUpdate will remove it from the manifest)

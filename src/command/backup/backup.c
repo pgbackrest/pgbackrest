@@ -667,6 +667,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
             // Resumable backups do not have backup.manifest
             if (!storageExistsP(storageRepo(), manifestFile))
             {
+                const bool resume = cfgOptionTest(cfgOptResume) && cfgOptionBool(cfgOptResume);
                 bool usable = false;
                 const String *reason = STRDEF("partially deleted by prior resume or invalid");
                 Manifest *manifestResume = NULL;
@@ -678,7 +679,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
 
                     // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
                     // occurs then the backup will be considered unusable and a resume will not be attempted.
-                    if (cfgOptionBool(cfgOptResume))
+                    if (resume)
                     {
                         TRY_BEGIN()
                         {
@@ -744,7 +745,9 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 // Else warn and remove the unusable backup
                 else
                 {
-                    LOG_WARN_FMT("backup '%s' cannot be resumed: %s", strZ(backupLabel), strZ(reason));
+                    LOG_FMT(
+                        resume ? logLevelWarn : logLevelInfo, 0, "backup '%s' cannot be resumed: %s", strZ(backupLabel),
+                        strZ(reason));
 
                     storagePathRemoveP(
                         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel)), .recurse = true);
@@ -1142,8 +1145,8 @@ Log the results of a job and throw errors
 ***********************************************************************************************************************************/
 static void
 backupJobResult(
-    Manifest *manifest, const String *host, const Storage *const storagePg, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t *sizeProgress)
+    Manifest *const manifest, const String *const host, const Storage *const storagePg, StringList *const fileRemove,
+    ProtocolParallelJob *const job, const bool bundle, const uint64_t sizeTotal, uint64_t *const sizeProgress)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1151,6 +1154,7 @@ backupJobResult(
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(STRING_LIST, fileRemove);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
+        FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
     FUNCTION_LOG_END();
@@ -1166,7 +1170,7 @@ backupJobResult(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             const unsigned int processId = protocolParallelJobProcessId(job);
-            const uint64_t bundleId = cfgOptionBool(cfgOptBundle) ? varUInt64(protocolParallelJobKey(job)) : 0;
+            const uint64_t bundleId = bundle ? varUInt64(protocolParallelJobKey(job)) : 0;
             PackRead *const jobResult = protocolParallelJobResult(job);
 
             while (!pckReadNullP(jobResult))
@@ -1639,17 +1643,18 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
         do
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
+            unsigned int fileIdx = 0;
 
-            while (!lstEmpty(queue))
+            while (fileIdx < lstSize(queue))
             {
-                const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
+                const ManifestFile *file = *(ManifestFile **)lstGet(queue, fileIdx);
 
-                // if (jobData->bundle)
-                //     LOG_DEBUG_FMT("!!!JOB BUNDLE %" PRIu64 " FILE %s SIZE %" PRIu64, jobData->bundleId, strZ(file->name), file->size);
-
-                // !!! BREAK WHEN...
-                if (fileTotal > 0 && (!jobData->bundle || fileSize + file->size > jobData->bundleSize))
-                    break;
+                // Continue if the next file would make the bundle too large. There may be a smaller one that will fit.
+                if (fileTotal > 0 && fileSize + file->size >= jobData->bundleSize)
+                {
+                    fileIdx++;
+                    continue;
+                }
 
                 pckWriteStrP(param, manifestPathPg(file->name));
                 pckWriteBoolP(param, !strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
@@ -1665,7 +1670,11 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 fileSize += file->size;
 
                 // Remove job from the queue
-                lstRemoveIdx(queue, 0);
+                lstRemoveIdx(queue, fileIdx);
+
+                // Break if not bundling or bundle size has been reached
+                if (!jobData->bundle || fileSize >= jobData->bundleSize)
+                    break;
             }
 
             if (fileTotal > 0)
@@ -1675,9 +1684,6 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 {
                     result = protocolParallelJobNew(VARUINT64(jobData->bundleId), command);
                     jobData->bundleId++;
-
-                    // if (jobData->bundle)
-                    //     LOG_DEBUG_FMT("!!!JOB WITH %" PRIu64 " files", fileTotal);
                 }
                 MEM_CONTEXT_PRIOR_END();
 
@@ -1817,7 +1823,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         manifest,
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
-                        fileRemove, job, sizeTotal, &sizeProgress);
+                        fileRemove, job, jobData.bundle, sizeTotal, &sizeProgress);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
