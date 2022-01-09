@@ -61,15 +61,7 @@ storagePutProcess(IoRead *source)
         ioWriteOpen(storageWriteIo(destination));
 
         // Copy data from source to destination
-        Buffer *buffer = bufNew(ioBufferSize());
-
-        do
-        {
-            ioRead(source, buffer);
-            ioWrite(storageWriteIo(destination), buffer);
-            bufUsedZero(buffer);
-        }
-        while (!ioReadEof(source));
+        ioCopy(source, storageWriteIo(destination));
 
         // Close the source and destination
         ioReadClose(source);

@@ -468,6 +468,23 @@ testRun(void)
         ioReadOpen(read);
         TEST_RESULT_STR_Z(ioReadLineParam(read, true), "1234", "read line without eof");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("ioCopy()");
+
+        ioBufferSizeSet(4);
+
+        bufferRead = ioBufferReadNew(BUFSTRDEF("a test string"));
+        ioReadOpen(bufferRead);
+
+        buffer = bufNew(0);
+        IoWrite *bufferWrite = ioBufferWriteNew(buffer);
+        ioWriteOpen(bufferWrite);
+
+        TEST_RESULT_VOID(ioCopy(bufferRead, bufferWrite), "copy buffer");
+        TEST_RESULT_VOID(ioWriteClose(bufferWrite), "close write");
+
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "a test string", "check buffer");
+
         // Read IO into a buffer
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(8);
