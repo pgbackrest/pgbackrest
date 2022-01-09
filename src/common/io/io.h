@@ -9,11 +9,15 @@ Common IO functions.
 #include <stddef.h>
 
 #include <common/io/read.h>
+#include <common/io/write.h>
 #include <common/time.h>
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Copy data from source to destination (both must be open and neither will be closed)
+void ioCopy(IoRead *source, IoWrite *destination);
+
 // Read all IO into a buffer
 Buffer *ioReadBuf(IoRead *read);
 

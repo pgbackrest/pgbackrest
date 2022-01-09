@@ -245,7 +245,7 @@ backupFile(
                         cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
                 }
 
-                // Add size filter last to calculate repo size
+                    // Add size filter last to calculate repo size
                 ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
 
                 // Open the source and destination and copy the file
@@ -262,15 +262,7 @@ backupFile(
                     }
 
                     // Copy data from source to destination
-                    Buffer *buffer = bufNew(ioBufferSize());
-
-                    do
-                    {
-                        ioRead(storageReadIo(read), buffer);
-                        ioWrite(storageWriteIo(write), buffer);
-                        bufUsedZero(buffer);
-                    }
-                    while (!ioReadEof(storageReadIo(read))); // {uncovered !!!}
+                    ioCopy(storageReadIo(read), storageWriteIo(write));
 
                     // Close the source
                     ioReadClose(storageReadIo(read));

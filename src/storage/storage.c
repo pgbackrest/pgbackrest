@@ -115,15 +115,7 @@ storageCopy(StorageRead *source, StorageWrite *destination)
             ioWriteOpen(storageWriteIo(destination));
 
             // Copy data from source to destination
-            Buffer *read = bufNew(ioBufferSize());
-
-            do
-            {
-                ioRead(storageReadIo(source), read);
-                ioWrite(storageWriteIo(destination), read);
-                bufUsedZero(read);
-            }
-            while (!ioReadEof(storageReadIo(source)));
+            ioCopy(storageReadIo(source), storageWriteIo(destination));
 
             // Close the source and destination files
             ioReadClose(storageReadIo(source));
