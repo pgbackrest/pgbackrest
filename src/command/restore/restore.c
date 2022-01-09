@@ -2189,7 +2189,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 pckWriteU64P(param, file->bundleId);
                 pckWriteU64P(param, file->bundleOffset);
                 pckWriteU64P(param, file->sizeRepo);
-                pckWriteStrP(param, file->reference != NULL ? file->reference : manifestData(jobData->manifest)->backupLabel); // {uncovered !!!}
+                pckWriteStrP(param, file->reference != NULL ? file->reference : manifestData(jobData->manifest)->backupLabel);
                 pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
                 pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file->name));
                 pckWriteStrP(param, STR(file->checksumSha1));

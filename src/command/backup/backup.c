@@ -1408,7 +1408,7 @@ backupProcessQueueComparator(const void *item1, const void *item2)
             FUNCTION_TEST_RETURN(1);
     }
 
-    // !!!
+    // If bundling order by time ascending so that older files are bundled with older files and newer with newer
     if (backupProcessQueueComparatorBundle)
     {
         if ((*(ManifestFile **)item1)->timestamp > (*(ManifestFile **)item2)->timestamp)
@@ -1485,7 +1485,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             if (file->reference != NULL && (!delta || file->size == 0))
                 continue;
 
-            // !!!
+            // If bundling store zero-length files immediately in the manifest without copying them
             if (bundle && file->size == 0)
             {
                 manifestFileUpdate(
@@ -1891,7 +1891,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             {
                 const String *const path = strNewFmt("%s/%s", strZ(backupPathExp), strZ(manifestPath(manifest, pathIdx)->name));
 
-                // !!! CHECK THIS LOGIC
+                // Always sync the path if it exists or if the backup is full (without bundling) or hardlinked. In the latter cases
+                // the directory should always exist so we want to error if it does not.
                 if ((backupType == backupTypeFull && !jobData.bundle) || hardLink || storagePathExistsP(storageRepo(), path))
                     storagePathSyncP(storageRepoWrite(), path);
             }
