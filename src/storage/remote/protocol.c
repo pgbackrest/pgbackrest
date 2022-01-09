@@ -355,12 +355,13 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
     {
         const String *file = pckReadStrP(param);
         bool ignoreMissing = pckReadBoolP(param);
+        const uint64_t offset = pckReadU64P(param);
         const Variant *limit = jsonToVar(pckReadStrP(param));
         const Pack *const filter = pckReadPackP(param);
 
         // Create the read object
         IoRead *fileRead = storageReadIo(
-            storageInterfaceNewReadP(storageRemoteProtocolLocal.driver, file, ignoreMissing, .limit = limit));
+            storageInterfaceNewReadP(storageRemoteProtocolLocal.driver, file, ignoreMissing, .offset = offset, .limit = limit));
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioReadFilterGroup(fileRead), filter);

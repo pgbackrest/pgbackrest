@@ -32,6 +32,7 @@ typedef struct TestRequestParam
     VAR_PARAM_HEADER;
     const char *content;
     const char *blobType;
+    const char *range;
 } TestRequestParam;
 
 #define testRequestP(write, verb, path, ...)                                                                                       \
@@ -85,6 +86,10 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
 
     // Add host
     strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
+
+    // Add range
+    if (param.range != NULL)
+        strCatFmt(request, "range:bytes=%s\r\n", param.range);
 
     // Add blob type
     if (param.blobType != NULL)
@@ -484,13 +489,14 @@ testRun(void)
                     "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file");
+                TEST_TITLE("get file with offset and limit");
 
-                testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                testRequestP(service, HTTP_VERB_GET, "/file.txt", .range = "1-21");
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "this is a sample file", "get file");
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
