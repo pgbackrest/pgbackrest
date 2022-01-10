@@ -254,7 +254,7 @@ testRun(void)
         TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
 
         TEST_RESULT_LOG(
-            "P00   WARN: unable to check pg-1: [DbQueryError] unable to select some rows from pg_settings\n"
+            "P00   WARN: unable to check pg1: [DbQueryError] unable to select some rows from pg_settings\n"
             "            HINT: is the backup running as the postgres user?\n"
             "            HINT: is the pg_read_all_settings role assigned for PostgreSQL >= 10?");
 
@@ -702,7 +702,7 @@ testRun(void)
 
         TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to check pg-1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
+            "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
                 " error");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -846,7 +846,7 @@ testRun(void)
         {
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg1", true, NULL, NULL),
 
-            // pg-4 error
+            // pg4 error
             {.session = 4, .function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
             {.session = 4, .function = HRNPQ_STATUS, .resultInt = CONNECTION_BAD},
             {.session = 4, .function = HRNPQ_ERRORMESSAGE, .resultZ = "error"},
@@ -867,8 +867,8 @@ testRun(void)
 
         hrnLogReplaceAdd("(could not connect to server|connection to server on socket).*$", NULL, "PG ERROR", false);
         TEST_RESULT_LOG(
-            "P00   WARN: unable to check pg-4: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error\n"
-            "P00   WARN: unable to check pg-5: [DbConnectError] raised from remote-0 ssh protocol on 'localhost':"
+            "P00   WARN: unable to check pg4: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error\n"
+            "P00   WARN: unable to check pg5: [DbConnectError] raised from remote-0 ssh protocol on 'localhost':"
                 " unable to connect to 'dbname='postgres' port=5432': [PG ERROR]");
 
         TEST_RESULT_INT(result.primaryIdx, 3, "check primary idx");

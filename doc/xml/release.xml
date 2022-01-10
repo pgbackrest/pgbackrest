@@ -40,6 +40,18 @@
                         <p>Remove support for <proper>PostgreSQL</proper> <id>8.3</id>/<id>8.4</id>.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Fix inconsistent group display names in messages."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Configuration refactoring.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>
