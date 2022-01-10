@@ -25,7 +25,7 @@ typedef struct ConfigOptionGroupData
     bool indexDefaultExists;                                        // Is there a default index for non-indexed functions?
     unsigned int indexDefault;                                      // Default index (usually 0)
     unsigned int *indexMap;                                         // List of index to key index mappings
-    const String **indexDisplay;                                    // List of index display names
+    const String **indexName;                                       // List of index names
 } ConfigOptionGroupData;
 
 // Option data

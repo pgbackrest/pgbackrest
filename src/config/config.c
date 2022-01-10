@@ -250,22 +250,22 @@ cfgOptionGroupName(const ConfigOptionGroup groupId, const unsigned int groupIdx)
     ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
     ASSERT(groupIdx < configLocal->optionGroup[groupId].indexTotal);
 
-    // Generate display names for the group the first time one is requested
+    // Generate names for the group the first time one is requested
     ConfigOptionGroupData *const group = &configLocal->optionGroup[groupId];
 
-    if (group->indexDisplay == NULL)
+    if (group->indexName == NULL)
     {
         MEM_CONTEXT_BEGIN(configLocal->memContext)
         {
-            group->indexDisplay = memNew(sizeof(String *) * group->indexTotal);
+            group->indexName = memNew(sizeof(String *) * group->indexTotal);
 
             for (unsigned int groupIdx = 0; groupIdx < group->indexTotal; groupIdx++)
-                group->indexDisplay[groupIdx] = strNewFmt("%s%u", group->name, group->indexMap[groupIdx] + 1);
+                group->indexName[groupIdx] = strNewFmt("%s%u", group->name, group->indexMap[groupIdx] + 1);
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(strZ(group->indexDisplay[groupIdx]));
+    FUNCTION_TEST_RETURN(strZ(group->indexName[groupIdx]));
 }
 
 /**********************************************************************************************************************************/
