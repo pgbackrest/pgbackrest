@@ -44,6 +44,7 @@
                 <release-development-list>
                     <release-item>
                         <commit subject="Fix inconsistent group display names in messages."/>
+                        <commit subject="Dynamically allocate index to key index map."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

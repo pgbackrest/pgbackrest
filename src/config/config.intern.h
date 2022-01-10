@@ -13,11 +13,6 @@ The general-purpose functions for querying the current configuration are found i
 #include "config/parse.h"
 
 /***********************************************************************************************************************************
-The maximum number of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
-***********************************************************************************************************************************/
-#define CFG_OPTION_KEY_MAX                                          256
-
-/***********************************************************************************************************************************
 Configuration data. These structures are not directly user-created or accessible. configParse() creates the structures and uses
 cfgInit() to load it as the current configuration. Various cfg*() functions provide access.
 ***********************************************************************************************************************************/
@@ -66,7 +61,7 @@ typedef struct Config
         unsigned int indexTotal;                                    // Total number of indexes with values in option group
         bool indexDefaultExists;                                    // Is there a default index for non-indexed functions?
         unsigned int indexDefault;                                  // Default index (usually 0)
-        unsigned int indexMap[CFG_OPTION_KEY_MAX];                  // List of index to key index mappings
+        unsigned int *indexMap;                                     // List of index to key index mappings
     } optionGroup[CFG_OPTION_GROUP_TOTAL];
 
     // Option data
