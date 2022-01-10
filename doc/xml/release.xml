@@ -47,6 +47,7 @@
                         <commit subject="Dynamically allocate index to key index map."/>
                         <commit subject="Replace cfgOptionGroupIdxToKey() with cfgOptionGroupName()."/>
                         <commit subject="Improve implementation of cfgOptionIdxName()."/>
+                        <commit subject="Refactor option and option group config structs."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

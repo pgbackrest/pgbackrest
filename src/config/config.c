@@ -251,23 +251,21 @@ cfgOptionGroupName(const ConfigOptionGroup groupId, const unsigned int groupIdx)
     ASSERT(groupIdx < configLocal->optionGroup[groupId].indexTotal);
 
     // Generate display names for the group the first time one is requested
-    if (configLocal->optionGroup[groupId].indexDisplay == NULL)
+    ConfigOptionGroupData *const group = &configLocal->optionGroup[groupId];
+
+    if (group->indexDisplay == NULL)
     {
         MEM_CONTEXT_BEGIN(configLocal->memContext)
         {
-            configLocal->optionGroup[groupId].indexDisplay = memNew(
-                sizeof(String *) * configLocal->optionGroup[groupId].indexTotal);
+            group->indexDisplay = memNew(sizeof(String *) * group->indexTotal);
 
-            for (unsigned int groupIdx = 0; groupIdx < configLocal->optionGroup[groupId].indexTotal; groupIdx++)
-            {
-                configLocal->optionGroup[groupId].indexDisplay[groupIdx] = strNewFmt(
-                    "%s%u", configLocal->optionGroup[groupId].name, configLocal->optionGroup[groupId].indexMap[groupIdx] + 1);
-            }
+            for (unsigned int groupIdx = 0; groupIdx < group->indexTotal; groupIdx++)
+                group->indexDisplay[groupIdx] = strNewFmt("%s%u", group->name, group->indexMap[groupIdx] + 1);
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(strZ(configLocal->optionGroup[groupId].indexDisplay[groupIdx]));
+    FUNCTION_TEST_RETURN(strZ(group->indexDisplay[groupIdx]));
 }
 
 /**********************************************************************************************************************************/
@@ -391,8 +389,9 @@ cfgOptionIdxDefault(ConfigOption optionId)
     ASSERT(
         !configLocal->option[optionId].group || configLocal->optionGroup[configLocal->option[optionId].groupId].indexDefaultExists);
 
-    FUNCTION_TEST_RETURN(
-        configLocal->option[optionId].group ? configLocal->optionGroup[configLocal->option[optionId].groupId].indexDefault : 0);
+    const ConfigOptionData *const option = &configLocal->option[optionId];
+
+    FUNCTION_TEST_RETURN(option->group ? configLocal->optionGroup[option->groupId].indexDefault : 0);
 }
 
 /**********************************************************************************************************************************/
@@ -406,8 +405,9 @@ cfgOptionIdxTotal(ConfigOption optionId)
     ASSERT(configLocal != NULL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(
-        configLocal->option[optionId].group ? configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal : 1);
+    const ConfigOptionData *const option = &configLocal->option[optionId];
+
+    FUNCTION_TEST_RETURN(option->group ? configLocal->optionGroup[option->groupId].indexTotal : 1);
 }
 
 /**********************************************************************************************************************************/
@@ -421,10 +421,12 @@ cfgOptionDefault(ConfigOption optionId)
     ASSERT(configLocal != NULL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    if (configLocal->option[optionId].defaultValue == NULL)
-        configLocal->option[optionId].defaultValue = cfgParseOptionDefault(cfgCommand(), optionId);
+    ConfigOptionData *const option = &configLocal->option[optionId];
 
-    FUNCTION_TEST_RETURN(configLocal->option[optionId].defaultValue);
+    if (option->defaultValue == NULL)
+        option->defaultValue = cfgParseOptionDefault(cfgCommand(), optionId);
+
+    FUNCTION_TEST_RETURN(option->defaultValue);
 }
 
 void
@@ -446,16 +448,19 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
         defaultValue = varDup(defaultValue);
 
         // Set the default value
-        configLocal->option[optionId].defaultValue = varStr(defaultValue);
+        ConfigOptionData *const option = &configLocal->option[optionId];
+        option->defaultValue = varStr(defaultValue);
 
         // Copy the value to option indexes that are marked as default so the default can be retrieved quickly
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIdxTotal(optionId); optionIdx++)
         {
-            if (configLocal->option[optionId].index[optionIdx].source == cfgSourceDefault)
+            ConfigOptionValue *const optionValue = &option->index[optionIdx];
+
+            if (optionValue->source == cfgSourceDefault)
             {
-                configLocal->option[optionId].index[optionIdx].set = true;
-                configLocal->option[optionId].index[optionIdx].value.string = varStr(defaultValue);
-                configLocal->option[optionId].index[optionIdx].display = NULL;
+                optionValue->set = true;
+                optionValue->value.string = varStr(defaultValue);
+                optionValue->display = NULL;
             }
         }
     }
@@ -665,34 +670,33 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
             configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
     // If an indexed option
-    if (configLocal->option[optionId].group)
+    ConfigOptionData *const option = &configLocal->option[optionId];
+
+    if (option->group)
     {
+        const ConfigOptionGroupData *const group = &configLocal->optionGroup[option->groupId];
+
         // Generate indexed names for the option the first time one is requested
-        if (configLocal->option[optionId].indexName == NULL)
+        if (option->indexName == NULL)
         {
             MEM_CONTEXT_BEGIN(configLocal->memContext)
             {
-                const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal;
+                option->indexName = memNew(sizeof(String *) * group->indexTotal);
 
-                configLocal->option[optionId].indexName = memNew(sizeof(String *) * indexTotal);
-
-                for (unsigned int optionIdx = 0; optionIdx < indexTotal; optionIdx++)
+                for (unsigned int optionIdx = 0; optionIdx < group->indexTotal; optionIdx++)
                 {
-                    configLocal->option[optionId].indexName[optionIdx] = strNewFmt(
-                        "%s%u%s", configLocal->optionGroup[configLocal->option[optionId].groupId].name,
-                        configLocal->optionGroup[configLocal->option[optionId].groupId].indexMap[optionIdx] + 1,
-                        configLocal->option[optionId].name +
-                            strlen(configLocal->optionGroup[configLocal->option[optionId].groupId].name));
+                    option->indexName[optionIdx] = strNewFmt(
+                        "%s%u%s", group->name, group->indexMap[optionIdx] + 1, option->name + strlen(group->name));
                 }
             }
             MEM_CONTEXT_END();
         }
 
-        FUNCTION_TEST_RETURN(strZ(configLocal->option[optionId].indexName[optionIdx]));
+        FUNCTION_TEST_RETURN(strZ(option->indexName[optionIdx]));
     }
 
     // Else not indexed
-    FUNCTION_TEST_RETURN(configLocal->option[optionId].name);
+    FUNCTION_TEST_RETURN(option->name);
 }
 
 /**********************************************************************************************************************************/
@@ -778,15 +782,16 @@ cfgOptionIdxInternal(
         THROW_FMT(AssertError, "option '%s' is not valid for the current command", cfgOptionIdxName(optionId, optionIdx));
 
     // If the option is not NULL then check it is the requested type
-    const ConfigOptionValue *const result = &configLocal->option[optionId].index[optionIdx];
+    ConfigOptionData *const option = &configLocal->option[optionId];
+    ConfigOptionValue *const result = &option->index[optionIdx];
 
     if (result->set)
     {
-        if (configLocal->option[optionId].dataType != typeRequested)
+        if (option->dataType != typeRequested)
         {
             THROW_FMT(
                 AssertError, "option '%s' is type %u but %u was requested", cfgOptionIdxName(optionId, optionIdx),
-                configLocal->option[optionId].dataType, typeRequested);
+                option->dataType, typeRequested);
         }
     }
     // Else check the option is allowed to be NULL
@@ -810,31 +815,35 @@ cfgOptionIdxVar(const ConfigOption optionId, const unsigned int optionIdx)
         (configLocal->option[optionId].group && optionIdx <
             configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
-    if (configLocal->option[optionId].index[optionIdx].set)
+    const ConfigOptionData *const option = &configLocal->option[optionId];
+
+    if (option->index[optionIdx].set)
     {
-        switch (configLocal->option[optionId].dataType)
+        const ConfigOptionValueType *const optionValueType = &option->index[optionIdx].value;
+
+        switch (option->dataType)
         {
             case cfgOptDataTypeBoolean:
-                FUNCTION_TEST_RETURN(varNewBool(configLocal->option[optionId].index[optionIdx].value.boolean));
+                FUNCTION_TEST_RETURN(varNewBool(optionValueType->boolean));
 
             case cfgOptDataTypeHash:
-                FUNCTION_TEST_RETURN(varNewKv(kvDup(configLocal->option[optionId].index[optionIdx].value.keyValue)));
+                FUNCTION_TEST_RETURN(varNewKv(kvDup(optionValueType->keyValue)));
 
             case cfgOptDataTypeInteger:
-                FUNCTION_TEST_RETURN(varNewInt64(configLocal->option[optionId].index[optionIdx].value.integer));
+                FUNCTION_TEST_RETURN(varNewInt64(optionValueType->integer));
 
             case cfgOptDataTypeList:
-                FUNCTION_TEST_RETURN(varNewVarLst(configLocal->option[optionId].index[optionIdx].value.list));
+                FUNCTION_TEST_RETURN(varNewVarLst(optionValueType->list));
 
             case cfgOptDataTypeStringId:
-                FUNCTION_TEST_RETURN(varNewUInt64(configLocal->option[optionId].index[optionIdx].value.stringId));
+                FUNCTION_TEST_RETURN(varNewUInt64(optionValueType->stringId));
 
             default:
-                ASSERT(configLocal->option[optionId].dataType == cfgOptDataTypeString);
+                ASSERT(option->dataType == cfgOptDataTypeString);
                 break;
         }
 
-        FUNCTION_TEST_RETURN(varNewStr(configLocal->option[optionId].index[optionIdx].value.string));
+        FUNCTION_TEST_RETURN(varNewStr(optionValueType->string));
     }
 
     FUNCTION_TEST_RETURN(NULL);
@@ -1016,19 +1025,23 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
             configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
     // Set the source
-    configLocal->option[optionId].index[optionIdx].source = source;
+    ConfigOptionData *const option = &configLocal->option[optionId];
+    ConfigOptionValue *const optionValue = &option->index[optionIdx];
+    optionValue->source = source;
 
     // Only set value if it is not null
+    ConfigOptionValueType *const optionValueType = &optionValue->value;
+
     if (value != NULL)
     {
-        switch (configLocal->option[optionId].dataType)
+        switch (option->dataType)
         {
             case cfgOptDataTypeBoolean:
-                configLocal->option[optionId].index[optionIdx].value.boolean = varBool(value);
+                optionValueType->boolean = varBool(value);
                 break;
 
             case cfgOptDataTypeInteger:
-                configLocal->option[optionId].index[optionIdx].value.integer = varInt64(value);
+                optionValueType->integer = varInt64(value);
                 break;
 
             case cfgOptDataTypeString:
@@ -1037,7 +1050,7 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                 {
                     MEM_CONTEXT_BEGIN(configLocal->memContext)
                     {
-                        configLocal->option[optionId].index[optionIdx].value.string = strDup(varStr(value));
+                        optionValueType->string = strDup(varStr(value));
                     }
                     MEM_CONTEXT_END();
                 }
@@ -1053,29 +1066,30 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
             case cfgOptDataTypeStringId:
             {
                 if (varType(value) == varTypeUInt64)
-                    configLocal->option[optionId].index[optionIdx].value.stringId = varUInt64(value);
+                    optionValueType->stringId = varUInt64(value);
                 else
-                    configLocal->option[optionId].index[optionIdx].value.stringId = strIdFromStr(varStr(value));
+                    optionValueType->stringId = strIdFromStr(varStr(value));
 
                 break;
             }
 
             default:
-                THROW_FMT(AssertError, "set not available for option data type %u", configLocal->option[optionId].dataType);
+                THROW_FMT(AssertError, "set not available for option data type %u", option->dataType);
         }
 
-        configLocal->option[optionId].index[optionIdx].set = true;
+        optionValue->set = true;
     }
     else
     {
-        configLocal->option[optionId].index[optionIdx].set = false;
+        optionValue->set = false;
 
         // Pointer values need to be set to null since they can be accessed when the option is not set, e.g. cfgOptionStrNull().
-        configLocal->option[optionId].index[optionIdx].value.string = NULL;
+        // Setting string to NULL suffices to set the other pointers in the union to NULL.
+        optionValueType->string = NULL;
     }
 
     // Clear the display value, which will be generated when needed
-    configLocal->option[optionId].index[optionIdx].display = NULL;
+    optionValue->display = NULL;
 
     FUNCTION_TEST_RETURN_VOID();
 }
