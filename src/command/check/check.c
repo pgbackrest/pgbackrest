@@ -78,7 +78,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
         // Check each repository configured
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            LOG_INFO_FMT(CFGCMD_CHECK " repo%u (standby)", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+            LOG_INFO_FMT(CFGCMD_CHECK " %s (standby)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
             const Storage *storageRepo = storageRepoIdx(repoIdx);
@@ -121,7 +121,7 @@ checkPrimary(const DbGetResult dbGroup)
 
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            LOG_INFO_FMT(CFGCMD_CHECK " repo%u configuration (primary)", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+            LOG_INFO_FMT(CFGCMD_CHECK " %s configuration (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
             const Storage *storageRepo = storageRepoIdx(repoIdx);
@@ -145,16 +145,16 @@ checkPrimary(const DbGetResult dbGroup)
         // Wait for the WAL to appear in each repo
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            LOG_INFO_FMT(CFGCMD_CHECK " repo%u archive for WAL (primary)", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+            LOG_INFO_FMT(CFGCMD_CHECK " %s archive for WAL (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             const Storage *storageRepo = storageRepoIdx(repoIdx);
             const String *walSegmentFile = walSegmentFind(
                 storageRepo, repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             LOG_INFO_FMT(
-                "WAL segment %s successfully archived to '%s' on repo%u", strZ(walSegment),
+                "WAL segment %s successfully archived to '%s' on %s", strZ(walSegment),
                 strZ(storagePathP(storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]),
-                strZ(walSegmentFile)))), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                strZ(walSegmentFile)))), cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
         }
 
         dbFree(dbGroup.primary);

@@ -1687,6 +1687,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "pg1-host was reset");
         TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 0, "pg1 is default");
         TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "pg2 is index 2");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpPg, 1), "pg2", "pg2 group display");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpPg, 0), "pg1", "pg1 group display (cached)");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "default pg-path");
         TEST_RESULT_STR_Z(varStr(cfgOptionVar(cfgOptPgPath)), "/path/to/db", "default pg-path as variant");
         TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), true, "pg group is valid");

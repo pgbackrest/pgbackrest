@@ -238,6 +238,39 @@ cfgOptionGroup(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
+const char *
+cfgOptionGroupName(const ConfigOptionGroup groupId, const unsigned int groupIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, groupId);
+        FUNCTION_TEST_PARAM(UINT, groupIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(configLocal != NULL);
+    ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
+    ASSERT(groupIdx < configLocal->optionGroup[groupId].indexTotal);
+
+    // Generate display names for the group the first time one is requested
+    if (configLocal->optionGroup[groupId].indexDisplay == NULL)
+    {
+        MEM_CONTEXT_BEGIN(configLocal->memContext)
+        {
+            configLocal->optionGroup[groupId].indexDisplay = memNew(
+                sizeof(String *) * configLocal->optionGroup[groupId].indexTotal);
+
+            for (unsigned int groupIdx = 0; groupIdx < configLocal->optionGroup[groupId].indexTotal; groupIdx++)
+            {
+                configLocal->optionGroup[groupId].indexDisplay[groupIdx] = strNewFmt(
+                    "%s%u", configLocal->optionGroup[groupId].name, configLocal->optionGroup[groupId].indexMap[groupIdx] + 1);
+            }
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN(strZ(configLocal->optionGroup[groupId].indexDisplay[groupIdx]));
+}
+
+/**********************************************************************************************************************************/
 unsigned int
 cfgOptionGroupId(ConfigOption optionId)
 {

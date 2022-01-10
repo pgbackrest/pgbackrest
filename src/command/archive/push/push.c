@@ -250,10 +250,10 @@ archivePushCheck(bool pgPathSet)
                             ArchiveMismatchError,
                             "%s version %s, system-id %" PRIu64 " do not match %s stanza version %s, system-id %" PRIu64
                             "\nHINT: are you archiving to the correct stanza?",
-                            pgPathSet ? PG_NAME : strZ(strNewFmt("repo%u stanza", cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0))),
+                            pgPathSet ? PG_NAME : strZ(strNewFmt("%s stanza", cfgOptionGroupName(cfgOptGrpRepo, 0))),
                             strZ(pgVersionToStr(result.pgVersion)), result.pgSystemId,
-                            strZ(strNewFmt("repo%u", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx))),
-                            strZ(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId);
+                            cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(pgVersionToStr(archiveInfo.version)),
+                            archiveInfo.systemId);
                     }
                 }
 
@@ -279,8 +279,7 @@ archivePushCheck(bool pgPathSet)
                 strLstAdd(
                     result.errorList,
                     strNewFmt(
-                        "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()),
-                        errorMessage()));
+                        "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
             }
             TRY_END();
         }

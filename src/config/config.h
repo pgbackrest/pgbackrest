@@ -80,12 +80,14 @@ const StringList *cfgCommandParam(void);
 /***********************************************************************************************************************************
 Option Group Functions
 ***********************************************************************************************************************************/
+// Format group name for display to the user. Useful for messages that do not show an option name but must use an group name that
+// the user will recognize.
+const char *cfgOptionGroupName(ConfigOptionGroup groupId, unsigned int groupIdx);
+
 // Get the default index for this group, i.e. the index that will be used if a non-indexed function like cfgOptionTest() is called.
 unsigned int cfgOptionGroupIdxDefault(ConfigOptionGroup groupId);
 
-// Convert the group index to a key, i.e. the key that was used in the original configuration file, command-line, etc. Useful for
-// messages that do not show an option name but must use an index that the user will recognize. It is preferrable to generate an
-// option name with cfgOptionIdxName() when possible.
+// Convert the group index to a key, i.e. the key that was used in the original configuration file, command-line, etc.
 unsigned int cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int groupIdx);
 
 // Total indexes, 0 if the group is not valid. Will be the total configured indexes, no matter which raw indexes were used during
