@@ -664,18 +664,34 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
         (configLocal->option[optionId].group && optionIdx <
             configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
+    // If an indexed option
     if (configLocal->option[optionId].group)
     {
-        // This is somewhat less than ideal since memory is being allocated with each call, rather than caching prior results. In
-        // practice the number of allocations should be quite small so we'll ignore this for now.
-        String *name = strNewFmt(
-            "%s%u%s", configLocal->optionGroup[configLocal->option[optionId].groupId].name,
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexMap[optionIdx] + 1,
-            configLocal->option[optionId].name + strlen(configLocal->optionGroup[configLocal->option[optionId].groupId].name));
+        // Generate indexed names for the option the first time one is requested
+        if (configLocal->option[optionId].indexName == NULL)
+        {
+            MEM_CONTEXT_BEGIN(configLocal->memContext)
+            {
+                const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal;
 
-        FUNCTION_TEST_RETURN(strZ(name));
+                configLocal->option[optionId].indexName = memNew(sizeof(String *) * indexTotal);
+
+                for (unsigned int optionIdx = 0; optionIdx < indexTotal; optionIdx++)
+                {
+                    configLocal->option[optionId].indexName[optionIdx] = strNewFmt(
+                        "%s%u%s", configLocal->optionGroup[configLocal->option[optionId].groupId].name,
+                        configLocal->optionGroup[configLocal->option[optionId].groupId].indexMap[optionIdx] + 1,
+                        configLocal->option[optionId].name +
+                            strlen(configLocal->optionGroup[configLocal->option[optionId].groupId].name));
+                }
+            }
+            MEM_CONTEXT_END();
+        }
+
+        FUNCTION_TEST_RETURN(strZ(configLocal->option[optionId].indexName[optionIdx]));
     }
 
+    // Else not indexed
     FUNCTION_TEST_RETURN(configLocal->option[optionId].name);
 }
 

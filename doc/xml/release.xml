@@ -46,6 +46,7 @@
                         <commit subject="Fix inconsistent group display names in messages."/>
                         <commit subject="Dynamically allocate index to key index map."/>
                         <commit subject="Replace cfgOptionGroupIdxToKey() with cfgOptionGroupName()."/>
+                        <commit subject="Improve implementation of cfgOptionIdxName()."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

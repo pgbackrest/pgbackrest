@@ -75,6 +75,7 @@ typedef struct Config
         ConfigOptionDataType dataType;                              // Underlying data type
         const String *defaultValue;                                 // Default value
         ConfigOptionValue *index;                                   // List of indexed values (only 1 unless the option is indexed)
+        const String **indexName;                                   // Index names (e.g. repo1-path, repo2-path)
     } option[CFG_OPTION_TOTAL];
 } Config;
 
