@@ -252,10 +252,6 @@ const String *cfgExe(void);
 // more efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 
-// Parse a host option and extract the host and port (if it exists)
-String *cfgOptionHostPort(ConfigOption optionId, unsigned int *port);
-String *cfgOptionIdxHostPort(ConfigOption optionId, unsigned int optionIdx, unsigned int *port);
-
 // Was the option negated?
 bool cfgOptionNegate(ConfigOption optionId);
 bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx);
