@@ -266,8 +266,7 @@ restoreBackupSet(void)
             }
             CATCH_ANY()
             {
-                LOG_WARN_FMT(
-                    "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage());
+                LOG_WARN_FMT("%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage());
             }
             TRY_END();
 
@@ -278,7 +277,7 @@ restoreBackupSet(void)
             if (infoBackupDataTotal(infoBackup) == 0)
             {
                 LOG_WARN_FMT(
-                    "repo%u: [%s] no backup sets to restore", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                    "%s: [%s] no backup sets to restore", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
                     errorTypeName(&BackupSetInvalidError));
                 continue;
             }
@@ -2254,7 +2253,7 @@ cmdRestore(void)
 
         // Log the backup set to restore. If the backup was online then append the time recovery will start from.
         String *const message = strCatFmt(
-            strNew(), "repo%u: restore backup set %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, backupData.repoIdx),
+            strNew(), "%s: restore backup set %s", cfgOptionGroupName(cfgOptGrpRepo, backupData.repoIdx),
             strZ(backupData.backupSet));
 
         if (manifestData(jobData.manifest)->backupOptionOnline)

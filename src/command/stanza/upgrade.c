@@ -41,8 +41,8 @@ cmdStanzaUpgrade(void)
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
             LOG_INFO_FMT(
-                CFGCMD_STANZA_UPGRADE " for stanza '%s' on repo%u", strZ(cfgOptionDisplay(cfgOptStanza)),
-                cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                CFGCMD_STANZA_UPGRADE " for stanza '%s' on %s", strZ(cfgOptionDisplay(cfgOptStanza)),
+                cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             const Storage *storageRepoReadStanza = storageRepoIdx(repoIdx);
             const Storage *storageRepoWriteStanza = storageRepoIdxWrite(repoIdx);
@@ -100,8 +100,8 @@ cmdStanzaUpgrade(void)
             if (!(infoArchiveUpgrade || infoBackupUpgrade))
             {
                 LOG_INFO_FMT(
-                    "stanza '%s' on repo%u is already up to date", strZ(cfgOptionDisplay(cfgOptStanza)),
-                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                    "stanza '%s' on %s is already up to date", strZ(cfgOptionDisplay(cfgOptStanza)),
+                    cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
             }
         }
     }

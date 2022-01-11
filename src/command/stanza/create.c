@@ -44,8 +44,8 @@ cmdStanzaCreate(void)
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
             LOG_INFO_FMT(
-                CFGCMD_STANZA_CREATE " for stanza '%s' on repo%u", strZ(cfgOptionDisplay(cfgOptStanza)),
-                cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                CFGCMD_STANZA_CREATE " for stanza '%s' on %s", strZ(cfgOptionDisplay(cfgOptStanza)),
+                cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             const Storage *storageRepoReadStanza = storageRepoIdx(repoIdx);
             const Storage *storageRepoWriteStanza = storageRepoIdxWrite(repoIdx);
@@ -133,8 +133,8 @@ cmdStanzaCreate(void)
                 if (sourceFile == NULL)
                 {
                     LOG_INFO_FMT(
-                        "stanza '%s' already exists on repo%u and is valid", strZ(cfgOptionDisplay(cfgOptStanza)),
-                        cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                        "stanza '%s' already exists on %s and is valid", strZ(cfgOptionDisplay(cfgOptStanza)),
+                        cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
                 }
             }
             // Else if both .info and corresponding .copy file are missing for one but not the other, then error - the user will
@@ -143,11 +143,11 @@ cmdStanzaCreate(void)
             {
                 THROW_FMT(
                     FileMissingError,
-                    "%s on repo%u\n"
+                    "%s on %s\n"
                         "HINT: this may be a symptom of repository corruption!",
                     ((archiveInfoFileExists || archiveInfoFileCopyExists) ?
                         "archive.info exists but backup.info is missing" : "backup.info exists but archive.info is missing"),
-                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                    cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
             }
         }
     }
