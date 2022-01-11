@@ -33,6 +33,7 @@ STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_
 STRING_EXTERN(HTTP_HEADER_DATE_STR,                                 HTTP_HEADER_DATE);
 STRING_EXTERN(HTTP_HEADER_HOST_STR,                                 HTTP_HEADER_HOST);
 STRING_EXTERN(HTTP_HEADER_LAST_MODIFIED_STR,                        HTTP_HEADER_LAST_MODIFIED);
+STRING_EXTERN(HTTP_HEADER_RANGE_STR,                                HTTP_HEADER_RANGE);
 #define HTTP_HEADER_USER_AGENT                                      "user-agent"
 
 // 5xx errors that should always be retried
@@ -252,7 +253,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     // Output path/query
     strCatZ(error, ":\n*** Path/Query ***:");
 
-    strCatFmt(error, "\n%s", strZ(httpRequestPath(this)));
+    strCatFmt(error, "\n%s %s", strZ(httpRequestVerb(this)), strZ(httpRequestPath(this)));
 
     if (httpRequestQuery(this) != NULL)
         strCatFmt(error, "?%s", strZ(httpQueryRenderP(httpRequestQuery(this), .redact = true)));

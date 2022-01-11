@@ -20,7 +20,7 @@ Help Command
 #include "version.h"
 
 /***********************************************************************************************************************************
-Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
+Define the console width - use a fixed width of 80 since this should be safe on virtually all consoles
 ***********************************************************************************************************************************/
 #define CONSOLE_WIDTH                                               80
 
@@ -390,7 +390,9 @@ helpRender(const Buffer *const helpData)
             if (strLstEmpty(cfgCommandParam()))
             {
                 // Output command summary and description. Add a warning for internal commands.
-                CHECK(commandData[commandId].summary != NULL && commandData[commandId].description != NULL);
+                CHECK(
+                    AssertError, commandData[commandId].summary != NULL && commandData[commandId].description != NULL,
+                    "command help missing");
 
                 strCatFmt(
                     result,
@@ -502,7 +504,9 @@ helpRender(const Buffer *const helpData)
                     THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
 
                 // Output option summary and description. Add a warning for internal options.
-                CHECK(optionData[option.id].summary != NULL && optionData[option.id].description != NULL);
+                CHECK(
+                    AssertError, optionData[option.id].summary != NULL && optionData[option.id].description != NULL,
+                    "option help missing");
 
                 strCatFmt(
                     result,

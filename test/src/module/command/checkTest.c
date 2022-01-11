@@ -51,10 +51,12 @@ testRun(void)
 
         TEST_ERROR(cmdCheck(), ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to check pg-1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
+            "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby only, repo local - fail to find primary database");
+
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -71,12 +73,14 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/path/to/standby2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "repo.domain.com");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
 
         // Two standbys found but no primary
         harnessPqScriptSet((HarnessPq [])
@@ -112,7 +116,10 @@ testRun(void)
 
         // Only confirming we get passed the check for repoIsLocal || more than one pg-path configured
         TEST_ERROR(
-            cmdCheck(), FileMissingError, "unable to open missing file '" TEST_PATH "/pg/global/pg_control' for read");
+            cmdCheck(), DbMismatchError,
+            "version '9.2' and path '/pgdata' queried from cluster do not match version '9.2' and '" TEST_PATH "/pg' read from"
+                " '" TEST_PATH "/pg/global/pg_control'\n"
+            "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup-standby set without standby");
@@ -134,8 +141,18 @@ testRun(void)
         });
 
         TEST_ERROR(
-            cmdCheck(), FileMissingError, "unable to open missing file '" TEST_PATH "/pg/global/pg_control' for read");
-        TEST_RESULT_LOG("P00   WARN: option 'backup-standby' is enabled but standby is not properly configured");
+            cmdCheck(), FileMissingError,
+            "unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or '" TEST_PATH
+                "/repo/archive/test1/archive.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info.copy' for read\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'backup-standby' is enabled but standby is not properly configured\n"
+            "P00   INFO: check repo1 configuration (primary)");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby and primary database - standby path doesn't match pg_control");
@@ -150,9 +167,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Create pg_control for standby
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
         // Standby database path doesn't match pg_control
         harnessPqScriptSet((HarnessPq [])
@@ -176,31 +191,29 @@ testRun(void)
         TEST_TITLE("standby and primary database - error on primary but standby check ok");
 
         // Create pg_control for primary
-        HRN_STORAGE_PUT(
-            storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
 
         // Create info files
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
+            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
             "db-version=\"9.2\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_92_Z ",\"db-version\":\"9.2\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201608131\n"
             "db-control-version=920\n"
             "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
+            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
             "db-version=\"9.2\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":" HRN_PG_SYSTEMID_92_Z ","
                 "\"db-version\":\"9.2\"}\n");
 
         // Single repo config - error when checking archive mode setting on database
@@ -272,22 +285,22 @@ testRun(void)
             storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
+            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
             "db-version=\"9.2\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_92_Z ",\"db-version\":\"9.2\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
             "[db]\n"
             "db-catalog-version=201608131\n"
             "db-control-version=920\n"
             "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
+            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
             "db-version=\"9.2\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":" HRN_PG_SYSTEMID_92_Z ","
                 "\"db-version\":\"9.2\"}\n");
 
         // Error when WAL segment not found
@@ -401,6 +414,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
 
         DbGetResult db = {0};
 
@@ -572,9 +588,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_96);
 
         // Create info files
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");
@@ -583,7 +597,7 @@ testRun(void)
         // Version mismatch
         TEST_ERROR(
             checkStanzaInfoPg(
-                storageRepoIdx(0), PG_VERSION_94, 6569239123849665679, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
+                storageRepoIdx(0), PG_VERSION_94, HRN_PG_SYSTEMID_94, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
                 cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
             FileInvalidError,
             "backup and archive info files exist but do not match the database\n"

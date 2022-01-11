@@ -95,6 +95,14 @@ storageReadPosixOpen(THIS_VOID)
         result = true;
     }
 
+    // Seek to offset
+    if (this->interface.offset != 0)
+    {
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(this->fd, (off_t)this->interface.offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
+            this->interface.offset, strZ(this->interface.name));
+    }
+
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
@@ -203,11 +211,14 @@ storageReadPosixFd(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 StorageRead *
-storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissing, const Variant *limit)
+storageReadPosixNew(
+    StoragePosix *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
+    const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
@@ -234,6 +245,7 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
                 .type = STORAGE_POSIX_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .offset = offset,
                 .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)

@@ -263,6 +263,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     // Set archive timeout really small to save time on errors
     cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewInt64(100));
 
+    // Set LSN and WAL start/stop
     uint64_t lsnStart = ((uint64_t)backupTimeStart & 0xFFFFFF00) << 28;
     uint64_t lsnStop =
         lsnStart + ((param.walTotal == 0 ? 0 : param.walTotal - 1) * pgControl.walSegmentSize) + (pgControl.walSegmentSize / 2);
@@ -273,6 +274,17 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     const char *walSegmentStart = strZ(pgLsnToWalSegment(param.timeline, lsnStart, pgControl.walSegmentSize));
     const char *lsnStopStr = strZ(pgLsnToStr(lsnStop));
     const char *walSegmentStop = strZ(pgLsnToWalSegment(param.timeline, lsnStop, pgControl.walSegmentSize));
+
+    // Save pg_control with updated info
+    pgControl.checkpoint = lsnStart;
+    pgControl.timeline = param.timeline;
+
+    HRN_STORAGE_PUT(
+        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl),
+        .timeModified = backupTimeStart);
+
+    // Update pg_control on primary with the backup time
+    HRN_PG_CONTROL_TIME(storagePgIdxWrite(0), backupTimeStart);
 
     // Write WAL segments to the archive
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -325,13 +337,17 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
                 HRNPQ_MACRO_IS_IN_BACKUP(1, false),
-                HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_START_BACKUP_LE_95(1, param.startFast, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
                 // Get copy start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+                // Ping
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
 
                 // Stop backup
                 HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
@@ -356,13 +372,17 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
                 HRNPQ_MACRO_IS_IN_BACKUP(1, false),
                 HRNPQ_MACRO_CURRENT_WAL_LE_96(1, walSegmentPrior),
-                HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_START_BACKUP_LE_95(1, param.startFast, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
                 // Get copy start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+                // Ping
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
 
                 // Stop backup
                 HRNPQ_MACRO_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop),
@@ -380,6 +400,9 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         ASSERT(param.backupStandby);
         ASSERT(!param.errorAfterStart);
         ASSERT(!param.noArchiveCheck);
+
+        // Save pg_control with updated info
+        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl));
 
         if (param.noPriorWal)
         {
@@ -433,6 +456,12 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 // Get copy start time
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
+
+                // Ping
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(2, true),
 
                 // Stop backup
                 HRNPQ_MACRO_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, false),
@@ -501,6 +530,10 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 999),
                 HRNPQ_MACRO_TIME_QUERY(1, (int64_t)backupTimeStart * 1000 + 1000),
 
+                // Ping
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+                HRNPQ_MACRO_IS_STANDBY_QUERY(1, false),
+
                 // Stop backup
                 HRNPQ_MACRO_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, true),
 
@@ -532,22 +565,22 @@ testRun(void)
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    const String *pgFile = STRDEF("testfile");
-    const String *missingFile = STRDEF("missing");
-    const String *backupLabel = STRDEF("20190718-155825F");
-    const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
-    BackupFileResult result = {0};
-
     // *****************************************************************************************************************************
     if (testBegin("segmentNumber()"))
     {
-        TEST_RESULT_UINT(segmentNumber(pgFile), 0, "No segment number");
-        TEST_RESULT_UINT(segmentNumber(strNewFmt("%s.123", strZ(pgFile))), 123, "Segment number");
+        TEST_RESULT_UINT(segmentNumber(STRDEF("999")), 0, "No segment number");
+        TEST_RESULT_UINT(segmentNumber(STRDEF("999.123")), 123, "Segment number");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("backupFile()"))
     {
+        const String *pgFile = STRDEF("testfile");
+        const String *missingFile = STRDEF("missing");
+        const String *backupLabel = STRDEF("20190718-155825F");
+        const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
+        BackupFileResult result = {0};
+
         // Load Parameters
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -631,23 +664,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit");
-
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(8));              // pgFileSize
-        varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
-        varLstAdd(paramList, NULL);                         // pgFileChecksum
-        varLstAdd(paramList, varNewBool(true));             // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0xFFFFFFFFFFFFFFFF)); // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
-        varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_ASSIGN(
             result,
@@ -828,13 +844,12 @@ testRun(void)
             "testfile.gz\n"
             "zerofile\n",
             .comment = "copy zero file to repo success");
-    }
 
-    // *****************************************************************************************************************************
-    if (testBegin("backupFile() - encrypt"))
-    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy file to encrypted repo");
+
         // Load Parameters
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
@@ -846,9 +861,6 @@ testRun(void)
 
         // Create the pg path and pg file to backup
         HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("copy file to encrypted repo");
 
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
@@ -1003,16 +1015,14 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_91, 1000000000000000910, hrnPgCatalogVersion(PG_VERSION_91), NULL)), ConfigError,
-             "option 'backup-standby' not valid for PostgreSQL < 9.2");
+            backupInit(infoBackupNew(PG_VERSION_91, HRN_PG_SYSTEMID_91, hrnPgCatalogVersion(PG_VERSION_91), NULL)),
+            ConfigError, "option 'backup-standby' not valid for PostgreSQL < 9.2");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn and reset when backup from standby used in offline mode");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1024,7 +1034,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, hrnPgCatalogVersion(PG_VERSION_92), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_92, HRN_PG_SYSTEMID_92, hrnPgCatalogVersion(PG_VERSION_92), NULL)),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "check backup-standby");
 
@@ -1035,9 +1045,7 @@ testRun(void)
         TEST_TITLE("error when pg_control does not match stanza");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1048,47 +1056,23 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_11, 1000000000000001100, hrnPgCatalogVersion(PG_VERSION_11), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_11, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_11), NULL)),
             BackupMismatchError,
-            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 11, system-id 1000000000000001100\n"
+            "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 11, system-id"
+                " " HRN_PG_SYSTEMID_11_Z "\n"
             "HINT: is this the correct stanza?");
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_10, 1000000000000001100, hrnPgCatalogVersion(PG_VERSION_10), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_10, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_10), NULL)),
             BackupMismatchError,
-            "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 10, system-id 1000000000000001100\n"
+            "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 10, system-id"
+                " " HRN_PG_SYSTEMID_11_Z "\n"
             "HINT: is this the correct stanza?");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("reset start-fast when PostgreSQL < 8.4");
-
-        // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830}));
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        hrnCfgArgRawBool(argList, cfgOptOnline, false);
-        hrnCfgArgRawBool(argList, cfgOptStartFast, true);
-        HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-        TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, hrnPgCatalogVersion(PG_VERSION_83), NULL)),
-            "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "check start-fast");
-
-        TEST_RESULT_LOG("P00   WARN: start-fast option is only available in PostgreSQL >= 8.4");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reset stop-auto when PostgreSQL < 9.3");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_90);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1100,7 +1084,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, hrnPgCatalogVersion(PG_VERSION_84), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_90, HRN_PG_SYSTEMID_90, hrnPgCatalogVersion(PG_VERSION_90), NULL)),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "check stop-auto");
 
@@ -1110,9 +1094,7 @@ testRun(void)
         TEST_TITLE("reset checksum-page when the cluster does not have checksums enabled");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         // Create stanza
         argList = strLstNew();
@@ -1142,7 +1124,8 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(
-            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
+            dbFree(
+                backupInit(infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
@@ -1153,9 +1136,7 @@ testRun(void)
         TEST_TITLE("ok if cluster checksums are enabled and checksum-page is any value");
 
         // Create pg_control with page checksums
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .pageChecksum = true}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93, .pageChecksum = true);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1174,14 +1155,13 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(
-            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
+            dbFree(
+                backupInit(infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
         // Create pg_control without page checksums
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1192,7 +1172,8 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(
-            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
+            dbFree(
+                backupInit(infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
     }
@@ -1204,9 +1185,7 @@ testRun(void)
         TEST_TITLE("sleep retries and stall error");
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         // Create stanza
         StringList *argList = strLstNew();
@@ -1246,7 +1225,7 @@ testRun(void)
         });
 
         BackupData *backupData = backupInit(
-            infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL));
+            infoBackupNew(PG_VERSION_93, HRN_PG_SYSTEMID_93, hrnPgCatalogVersion(PG_VERSION_93), NULL));
 
         TEST_RESULT_INT(backupTime(backupData, true), 1575392588, "multiple tries for sleep");
         TEST_ERROR(backupTime(backupData, true), KernelError, "PostgreSQL clock has not advanced to the next second after 3 tries");
@@ -1427,7 +1406,7 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, NULL, NULL), AssertError, "error message");
+        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, NULL), AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report host/100% progress on noop result");
@@ -1456,10 +1435,9 @@ testRun(void)
         OBJ_NEW_END();
 
         uint64_t sizeProgress = 0;
-        uint64_t sizeCopied = 0;
 
         TEST_RESULT_VOID(
-            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, &sizeProgress, &sizeCopied), "log noop result");
+            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, &sizeProgress), "log noop result");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:log-test (0B, 100%)");
     }
@@ -1485,9 +1463,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_STORAGE_PUT(
-            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_90);
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1539,8 +1515,8 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "749acedef8f8d5fe35fc20c0375657f876ccc38e" : "21e2ddc99cdf4cfca272eee4f38891146092e358") :
-                "8bb70506d988a8698d9e8cf90736ada23634571b");
+                (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "b7ec43e4646f5d06c95881df0c572630a1221377") :
+                "f21ff9abdcd1ec2f600d4ee8e5792c9b61eb2e37");
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
@@ -1736,10 +1712,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
             // Create pg_control
-            HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95);
 
             cmdStanzaCreate();
             TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1986,7 +1959,7 @@ testRun(void)
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"size\":3"
                     ",\"timestamp\":1570000000}\n"
-                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570000000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570100000}\n"
                 "pg_data/not-in-resume={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
                     ",\"timestamp\":1570100000}\n"
                 "pg_data/pg_xlog/0000000105D95D3000000000={\"size\":16777216,\"timestamp\":1570100002}\n"
@@ -2107,7 +2080,7 @@ testRun(void)
                     " from resumed backup\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/resume-ref.gz'"
                     " from resumed backup (reference in resumed manifest)\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/time-mismatch2 does not have expected checksum"
                     " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
@@ -2117,7 +2090,6 @@ testRun(void)
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/resume-ref (0B, [PCT])\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191003-105320F\n"
-                "P00 DETAIL: hardlink pg_data/global/pg_control to 20191003-105320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
@@ -2144,7 +2116,7 @@ testRun(void)
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"reference\":\"20191003-105320F\""
                     ",\"size\":3,\"timestamp\":1570000000}\n"
-                "pg_data/global/pg_control={\"reference\":\"20191003-105320F\",\"size\":8192,\"timestamp\":1570000000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570200000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
                     ",\"reference\":\"20191003-105320F\",\"size\":11,\"timestamp\":1570000000}\n"
                 "pg_data/resume-ref={\"size\":0,\"timestamp\":1570200000}\n"
@@ -2169,10 +2141,7 @@ testRun(void)
 
         {
             // Update pg_control
-            HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_96_STR, .timeModified = backupTimeStart);
@@ -2201,6 +2170,9 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptStartFast, true);
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Add pg_control to standby
+            HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
             // but no bytes will be copied.
@@ -2313,13 +2285,7 @@ testRun(void)
 
         {
             // Update pg_control
-            HRN_STORAGE_PUT(
-                storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-                hrnPgControlToBuffer(
-                    (PgControl){
-                        .version = PG_VERSION_11, .systemId = 1000000000000001100, .pageChecksum = true,
-                        .walSegmentSize = 1024 * 1024}),
-                .timeModified = backupTimeStart);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 1024 * 1024);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
@@ -2531,8 +2497,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg_control not present");
 
-        backupTimeStart = BACKUP_EPOCH + 2300000;
-
         {
             // Load options
             StringList *argList = strLstNew();
@@ -2544,8 +2508,11 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
+            // Preserve prior timestamp on pg_control
+            testBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 2300000, .errorAfterStart = true);
+            HRN_PG_CONTROL_TIME(storagePg(), backupTimeStart);
+
             // Run backup
-            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .errorAfterStart = true);
             TEST_ERROR(
                 cmdBackup(), FileMissingError,
                 "pg_control must be present in all online backups\n"
@@ -2583,9 +2550,6 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            // Update pg_control timestamp
-            HRN_STORAGE_TIME(storagePg(), "global/pg_control", backupTimeStart);
-
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
             TEST_RESULT_VOID(cmdBackup(), "backup");
@@ -2597,13 +2561,12 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000002C05DB8EB000000000\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
                 "            HINT: this is normal after restoring from backup or promoting a standby.\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/base/1/1 to 20191027-181320F\n"
-                "P00 DETAIL: hardlink pg_data/global/pg_control to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
@@ -2648,7 +2611,7 @@ testRun(void)
                     ",\"timestamp\":1572400002}\n"
                 "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
                     ",\"mas""ter\":false,\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572200000}\n"
-                "pg_data/global/pg_control={\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572400000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
                     ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"

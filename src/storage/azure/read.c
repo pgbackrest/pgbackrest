@@ -50,7 +50,9 @@ storageReadAzureOpen(THIS_VOID)
     MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
         this->httpResponse = storageAzureRequestP(
-            this->storage, HTTP_VERB_GET_STR, .path = this->interface.name, .allowMissing = true, .contentIo = true);
+            this->storage, HTTP_VERB_GET_STR, .path = this->interface.name,
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+            .allowMissing = true, .contentIo = true);
     }
     MEM_CONTEXT_END();
 
@@ -106,12 +108,16 @@ storageReadAzureEof(THIS_VOID)
 
 /**********************************************************************************************************************************/
 StorageRead *
-storageReadAzureNew(StorageAzure *storage, const String *name, bool ignoreMissing)
+storageReadAzureNew(
+    StorageAzure *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
+    const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(UINT64, offset);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -132,6 +138,8 @@ storageReadAzureNew(StorageAzure *storage, const String *name, bool ignoreMissin
                 .type = STORAGE_AZURE_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .offset = offset,
+                .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {

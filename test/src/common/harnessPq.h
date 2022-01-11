@@ -68,24 +68,27 @@ Macros for defining groups of functions that implement various queries and comma
         "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"                          \
             " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"                                   \
             " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"                                     \
-            " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text\"]",                               \
+            " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"                                  \
+            " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4\"]",                            \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
     {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
     {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
     {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
-    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 4},                                                          \
+    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 5},                                                          \
     {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},                               \
     {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},                              \
     {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},                              \
     {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_TEXT},                              \
+    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[4]", .resultInt = HRNPQ_TYPE_INT},                               \
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = STRINGIFY(versionParam)},                   \
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = pgPathParam},                               \
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = archiveMode == NULL ? "on"                  \
         : archiveMode},                                                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,3]", .resultZ = archiveCommand == NULL ? PROJECT_BIN        \
         : archiveCommand},                                                                                                         \
+    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,4]", .resultZ = STRINGIFY(300)},                            \
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
@@ -229,28 +232,7 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
-#define HRNPQ_MACRO_START_BACKUP_83(sessionParam, lsnParam, walSegmentNameParam)                                                   \
-    {.session = sessionParam,                                                                                                      \
-        .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param =                                                                                                                   \
-            "[\"select lsn::text as lsn,\\n"                                                                                       \
-            "       pg_catalog.pg_xlogfile_name(lsn)::text as wal_segment_name\\n"                                                 \
-            "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp) as lsn\"]",                   \
-        .resultInt = 1},                                                                                                           \
-    {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
-    {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \
-    {.session = sessionParam, .function = HRNPQ_GETRESULT},                                                                        \
-    {.session = sessionParam, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                       \
-    {.session = sessionParam, .function = HRNPQ_NTUPLES, .resultInt = 1},                                                          \
-    {.session = sessionParam, .function = HRNPQ_NFIELDS, .resultInt = 2},                                                          \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_TEXT},                              \
-    {.session = sessionParam, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},                              \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = lsnParam},                                  \
-    {.session = sessionParam, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = walSegmentNameParam},                       \
-    {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
-    {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
-
-#define HRNPQ_MACRO_START_BACKUP_84_95(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                                \
+#define HRNPQ_MACRO_START_BACKUP_LE_95(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                                \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
         .param = strZ(strNewFmt(                                                                                                   \
@@ -539,7 +521,8 @@ Macros to simplify dbOpen() for specific database versions
     HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
     HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
     HRNPQ_MACRO_SET_CLIENT_ENCODING(sessionParam),                                                                                 \
-    HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, pgVersion, pgPathParam, archiveMode, archiveCommand)
+    HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, pgVersion, pgPathParam, archiveMode, archiveCommand),                                 \
+    HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam)
 
 #define HRNPQ_MACRO_OPEN_GE_92(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)      \
     HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \

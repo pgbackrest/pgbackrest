@@ -198,26 +198,6 @@ static const PgInterface pgInterface[] =
         .walIs = pgInterfaceWalIs090,
         .wal = pgInterfaceWal090,
     },
-    {
-        .version = PG_VERSION_84,
-
-        .controlIs = pgInterfaceControlIs084,
-        .control = pgInterfaceControl084,
-        .controlVersion = pgInterfaceControlVersion084,
-
-        .walIs = pgInterfaceWalIs084,
-        .wal = pgInterfaceWal084,
-    },
-    {
-        .version = PG_VERSION_83,
-
-        .controlIs = pgInterfaceControlIs083,
-        .control = pgInterfaceControl083,
-        .controlVersion = pgInterfaceControlVersion083,
-
-        .walIs = pgInterfaceWalIs083,
-        .wal = pgInterfaceWal083,
-    },
 };
 
 // Total PostgreSQL versions in pgInterface
@@ -458,20 +438,17 @@ pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
 
     String *result = NULL;
 
-    if (pgVersion >= PG_VERSION_90)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            String *pgVersionStr = pgVersionToStr(pgVersion);
+        String *pgVersionStr = pgVersionToStr(pgVersion);
 
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                result = strNewFmt("PG_%s_%u", strZ(pgVersionStr), pgCatalogVersion);
-            }
-            MEM_CONTEXT_PRIOR_END();
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strNewFmt("PG_%s_%u", strZ(pgVersionStr), pgCatalogVersion);
         }
-        MEM_CONTEXT_TEMP_END();
+        MEM_CONTEXT_PRIOR_END();
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -490,7 +467,7 @@ pgLsnFromStr(const String *lsn)
     {
         StringList *lsnPart = strLstNewSplit(lsn, FSLASH_STR);
 
-        CHECK(strLstSize(lsnPart) == 2);
+        CHECK(FormatError, strLstSize(lsnPart) == 2, "lsn requires two parts");
 
         result = (cvtZToUInt64Base(strZ(strLstGet(lsnPart, 0)), 16) << 32) + cvtZToUInt64Base(strZ(strLstGet(lsnPart, 1)), 16);
     }
@@ -538,6 +515,25 @@ pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
     FUNCTION_TEST_RETURN(
         (cvtZToUInt64Base(strZ(strSubN(walSegment, 8, 8)), 16) << 32) +
         (cvtZToUInt64Base(strZ(strSubN(walSegment, 16, 8)), 16) * walSegmentSize));
+}
+
+/**********************************************************************************************************************************/
+uint32_t
+pgTimelineFromWalSegment(const String *const walSegment)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, walSegment);
+    FUNCTION_TEST_END();
+
+    ASSERT(walSegment != NULL);
+    ASSERT(strSize(walSegment) == 24);
+
+    char buffer[9];
+
+    strncpy(buffer, strZ(walSegment), sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+
+    FUNCTION_TEST_RETURN(cvtZToUIntBase(buffer, 16));
 }
 
 /**********************************************************************************************************************************/

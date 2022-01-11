@@ -27,6 +27,11 @@ Define global section name
 #define CFGDEF_SECTION_GLOBAL                                       "global"
 
 /***********************************************************************************************************************************
+The maximum number of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
+***********************************************************************************************************************************/
+#define CFG_OPTION_KEY_MAX                                          256
+
+/***********************************************************************************************************************************
 Section enum - defines which sections of the config an option can appear in
 ***********************************************************************************************************************************/
 typedef enum
@@ -1411,11 +1416,26 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (!option.found)
                     THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
 
-                // If the option requires an argument
-                if (parseRuleOption[option.id].type != cfgOptTypeBoolean && !option.negate && !option.reset)
+                // If the option may have an argument (arguments are optional for boolean options)
+                if (!option.negate && !option.reset)
                 {
+                    // Handle boolean (only y/n allowed as argument)
+                    if (parseRuleOption[option.id].type == cfgOptTypeBoolean)
+                    {
+                        // Validate argument/set negate when argument present
+                        if (optionArg != NULL)
+                        {
+                            if (strEqZ(optionArg, "n"))
+                                option.negate = true;
+                            else if (!strEqZ(optionArg, "y"))
+                            {
+                                THROW_FMT(
+                                    OptionInvalidValueError, "boolean option '--%s' argument must be 'y' or 'n'", strZ(optionName));
+                            }
+                        }
+                    }
                     // If no argument was found with the option then try the next argument
-                    if (optionArg == NULL)
+                    else if (optionArg == NULL)
                     {
                         // Error if there are no more arguments in the list
                         if (argListIdx == argListSize - 1)
@@ -1912,11 +1932,21 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (!config->optionGroup[groupId].valid)
                     continue;
 
+                // Allocate memory for the index to key index map
+                MEM_CONTEXT_BEGIN(config->memContext)
+                {
+                    config->optionGroup[groupId].indexMap = memNew(
+                        sizeof(unsigned int) *
+                        (config->optionGroup[groupId].indexTotal == 0 ? 1 : config->optionGroup[groupId].indexTotal));
+                }
+                MEM_CONTEXT_END();
+
                 // If no values were found in any index then use index 0 since all valid groups must have at least one index. This
                 // may lead to an error unless all options in the group have defaults but that will be resolved later.
                 if (config->optionGroup[groupId].indexTotal == 0)
                 {
                     config->optionGroup[groupId].indexTotal = 1;
+                    config->optionGroup[groupId].indexMap[0] = 0;
                 }
                 // Else write the key to index map for the group. This allows translation from keys to indexes and vice versa.
                 else
@@ -1930,8 +1960,11 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     {
                         optionKeyIdx = 1;
                         optionIdxMax = 1;
+
+                        config->optionGroup[groupId].indexMap[0] = 0;
                     }
 
+                    // Write keys into the index map
                     for (; optionKeyIdx < CFG_OPTION_KEY_MAX; optionKeyIdx++)
                     {
                         if (groupIdxMap[groupId][optionKeyIdx])

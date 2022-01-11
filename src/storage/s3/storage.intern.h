@@ -19,6 +19,7 @@ Functions
 typedef struct StorageS3RequestAsyncParam
 {
     VAR_PARAM_HEADER;
+    const HttpHeader *header;                                       // Headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
     bool sseKms;                                                    // Enable server-side encryption?
@@ -46,6 +47,7 @@ HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam par
 typedef struct StorageS3RequestParam
 {
     VAR_PARAM_HEADER;
+    const HttpHeader *header;                                       // Headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
     bool allowMissing;                                              // Allow missing files (caller can check response code)

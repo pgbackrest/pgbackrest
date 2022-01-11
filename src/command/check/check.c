@@ -72,24 +72,21 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
                 THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
         }
 
-        // Validate the standby database config
-        PgControl pgControl = pgControlFromFile(storagePgIdx(dbGroup.standbyIdx));
-
         // Check the user configured path and version against the database
-        checkDbConfig(pgControl.version, dbGroup.standbyIdx, dbGroup.standby, true);
+        checkDbConfig(dbPgControl(dbGroup.standby).version, dbGroup.standbyIdx, dbGroup.standby, true);
 
         // Check each repository configured
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            LOG_INFO_FMT(CFGCMD_CHECK " repo%u (standby)", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+            LOG_INFO_FMT(CFGCMD_CHECK " %s (standby)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
             const Storage *storageRepo = storageRepoIdx(repoIdx);
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
-                storageRepo, pgControl.version, pgControl.systemId, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                storageRepo, dbPgControl(dbGroup.standby).version, dbPgControl(dbGroup.standby).systemId,
+                cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
         }
 
         LOG_INFO("switch wal not performed because this is a standby");
@@ -116,26 +113,23 @@ checkPrimary(const DbGetResult dbGroup)
     // If a primary is defined, check the configuration and perform a WAL switch and make sure the WAL is archived
     if (dbGroup.primary != NULL)
     {
-        // Validate the primary database config
-        PgControl pgControl = pgControlFromFile(storagePgIdx(dbGroup.primaryIdx));
-
         // Check the user configured path and version against the database
-        checkDbConfig(pgControl.version, dbGroup.primaryIdx, dbGroup.primary, false);
+        checkDbConfig(dbPgControl(dbGroup.primary).version, dbGroup.primaryIdx, dbGroup.primary, false);
 
         // Check configuration of each repo
         const String **repoArchiveId = memNew(sizeof(String *) * cfgOptionGroupIdxTotal(cfgOptGrpRepo));
 
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            LOG_INFO_FMT(CFGCMD_CHECK " repo%u configuration (primary)", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+            LOG_INFO_FMT(CFGCMD_CHECK " %s configuration (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
             const Storage *storageRepo = storageRepoIdx(repoIdx);
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
-                storageRepo, pgControl.version, pgControl.systemId, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                storageRepo, dbPgControl(dbGroup.primary).version, dbPgControl(dbGroup.primary).systemId,
+                cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
             // Attempt to load the archive info file and retrieve the archiveId
             InfoArchive *archiveInfo = infoArchiveLoadFile(
@@ -151,16 +145,16 @@ checkPrimary(const DbGetResult dbGroup)
         // Wait for the WAL to appear in each repo
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            LOG_INFO_FMT(CFGCMD_CHECK " repo%u archive for WAL (primary)", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+            LOG_INFO_FMT(CFGCMD_CHECK " %s archive for WAL (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             const Storage *storageRepo = storageRepoIdx(repoIdx);
             const String *walSegmentFile = walSegmentFind(
                 storageRepo, repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             LOG_INFO_FMT(
-                "WAL segment %s successfully archived to '%s' on repo%u", strZ(walSegment),
+                "WAL segment %s successfully archived to '%s' on %s", strZ(walSegment),
                 strZ(storagePathP(storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]),
-                strZ(walSegmentFile)))), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                strZ(walSegmentFile)))), cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
         }
 
         dbFree(dbGroup.primary);

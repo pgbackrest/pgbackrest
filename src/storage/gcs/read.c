@@ -56,7 +56,9 @@ storageReadGcsOpen(THIS_VOID)
     MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {
         this->httpResponse = storageGcsRequestP(
-            this->storage, HTTP_VERB_GET_STR, .object = this->interface.name, .allowMissing = true, .contentIo = true,
+            this->storage, HTTP_VERB_GET_STR, .object = this->interface.name,
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+            .allowMissing = true, .contentIo = true,
             .query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_ALT_STR, GCS_QUERY_MEDIA_STR));
     }
     MEM_CONTEXT_END();
@@ -113,12 +115,16 @@ storageReadGcsEof(THIS_VOID)
 
 /**********************************************************************************************************************************/
 StorageRead *
-storageReadGcsNew(StorageGcs *storage, const String *name, bool ignoreMissing)
+storageReadGcsNew(
+    StorageGcs *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
+    const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_GCS, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(UINT64, offset);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -139,6 +145,8 @@ storageReadGcsNew(StorageGcs *storage, const String *name, bool ignoreMissing)
                 .type = STORAGE_GCS_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
+                .offset = offset,
+                .limit = varDup(limit),
 
                 .ioInterface = (IoReadInterface)
                 {

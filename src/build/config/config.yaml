@@ -119,11 +119,9 @@ command:
       local: {}
       remote: {}
 
-  server:
-    internal: true
+  server: {}
 
   server-ping:
-    internal: true
     log-file: false
     parameter-allowed: true
 
@@ -906,59 +904,45 @@ option:
     depend: tcp-keep-alive-count
 
   tls-server-ca-file:
-    internal: true
     section: global
     type: path
     command:
-      server:
-        internal: false
+      server: {}
 
   tls-server-cert-file:
-    internal: true
     section: global
     type: path
     command:
-      server:
-        internal: false
+      server: {}
 
   tls-server-key-file:
-    internal: true
     section: global
     type: path
     command:
-      server:
-        internal: false
+      server: {}
 
   tls-server-auth:
-    internal: true
     section: global
     type: hash
     command:
-      server:
-        internal: false
+      server: {}
 
   tls-server-address:
-    internal: true
     section: global
     type: string
     default: localhost
     command:
-      server:
-        internal: false
-      server-ping:
-        internal: false
+      server: {}
+      server-ping: {}
 
   tls-server-port:
-    internal: true
     section: global
     type: integer
     default: 8432
     allow-range: [1, 65535]
     command:
-      server:
-        internal: false
-      server-ping:
-        internal: false
+      server: {}
+      server-ping: {}
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
@@ -1337,7 +1321,6 @@ option:
       db?-host: {}
 
   pg-host-cert-file:
-    internal: true
     section: global
     group: pg
     type: string
@@ -1422,7 +1405,6 @@ option:
       db?-user: {}
 
   pg-host-type:
-    internal: true
     section: global
     group: pg
     type: string-id
@@ -1817,7 +1799,6 @@ option:
       hardlink: {}
 
   repo-host-type:
-    internal: true
     section: global
     group: repo
     type: string-id
@@ -1850,7 +1831,6 @@ option:
       backup-host: {}
 
   repo-host-cert-file:
-    internal: true
     section: global
     group: repo
     type: string

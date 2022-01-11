@@ -335,15 +335,15 @@ storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
     {
         // Check the code field for errors
         const Variant *code = kvGetDefault(credential, S3_JSON_TAG_CODE_VAR, VARSTRDEF("code field is missing"));
-        CHECK(code != NULL);
+        CHECK(FormatError, code != NULL, "error code missing");
 
         if (!varEq(code, S3_JSON_VALUE_SUCCESS_VAR))
             THROW_FMT(FormatError, "unable to retrieve temporary credentials: %s", strZ(varStr(code)));
 
         // Make sure the required values are present
-        CHECK(kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR) != NULL);
-        CHECK(kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR) != NULL);
-        CHECK(kvGet(credential, S3_JSON_TAG_TOKEN_VAR) != NULL);
+        CHECK(FormatError, kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR) != NULL, "access key missing");
+        CHECK(FormatError, kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR) != NULL, "secret access key missing");
+        CHECK(FormatError, kvGet(credential, S3_JSON_TAG_TOKEN_VAR) != NULL, "token missing");
 
         // Copy credentials
         this->accessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR)));
@@ -353,7 +353,7 @@ storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
     MEM_CONTEXT_END();
 
     // Update expiration time
-    CHECK(kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR) != NULL);
+    CHECK(FormatError, kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR) != NULL, "expiration missing");
     this->credExpirationTime = storageS3CvtTime(varStr(kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR)));
 
     FUNCTION_LOG_RETURN_VOID();
@@ -387,7 +387,7 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
         this->credHttpClient, HTTP_VERB_GET_STR, FSLASH_STR, .header = header, .query = query);
     HttpResponse *const response = httpRequestResponse(request, true);
 
-    CHECK(httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND);
+    CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
 
     // Copy credentials
     const XmlNode *const xmlCred =
@@ -424,6 +424,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
@@ -437,7 +438,8 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        HttpHeader *requestHeader = httpHeaderNew(this->headerRedactList);
+        HttpHeader *requestHeader = param.header == NULL ?
+            httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
         // Set content length
         httpHeaderAdd(
@@ -557,6 +559,7 @@ storageS3Request(StorageS3 *this, const String *verb, const String *path, Storag
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
@@ -567,7 +570,8 @@ storageS3Request(StorageS3 *this, const String *verb, const String *path, Storag
     FUNCTION_LOG_RETURN(
         HTTP_RESPONSE,
         storageS3ResponseP(
-            storageS3RequestAsyncP(this, verb, path, .query = param.query, .content = param.content, .sseKms = param.sseKms),
+            storageS3RequestAsyncP(
+                this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms),
             .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 
@@ -653,7 +657,7 @@ storageS3ListInternal(
                 }
                 // Else get the response immediately from a sync request
                 else
-                    response = storageS3RequestP(this, HTTP_VERB_GET_STR, FSLASH_STR, query);
+                    response = storageS3RequestP(this, HTTP_VERB_GET_STR, FSLASH_STR, .query = query);
 
                 XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
@@ -668,7 +672,7 @@ storageS3ListInternal(
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        request = storageS3RequestAsyncP(this, HTTP_VERB_GET_STR, FSLASH_STR, query);
+                        request = storageS3RequestAsyncP(this, HTTP_VERB_GET_STR, FSLASH_STR, .query = query);
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
@@ -767,11 +771,11 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
         const HttpHeader *httpHeader = httpResponseHeader(httpResponse);
 
         const String *const contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
-        CHECK(contentLength != NULL);
+        CHECK(FormatError, contentLength != NULL, "content length missing");
         result.size = cvtZToUInt64(strZ(contentLength));
 
         const String *const lastModified = httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR);
-        CHECK(lastModified != NULL);
+        CHECK(FormatError, lastModified != NULL, "last modified missing");
         result.timeModified = httpDateToTime(lastModified);
     }
 
@@ -814,13 +818,14 @@ storageS3NewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInter
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(UINT64, param.offset);
+        FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadS3New(this, file, ignoreMissing));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadS3New(this, file, ignoreMissing, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/

@@ -92,7 +92,7 @@ ArchiveGetFileResult archiveGetFile(
                 strLstAdd(
                     result.warnList,
                     strNewFmt(
-                        "repo%u: %s [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, actual->repoIdx), strZ(actual->file),
+                        "%s: %s [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, actual->repoIdx), strZ(actual->file),
                         errorTypeName(errorType()), errorMessage()));
             }
             MEM_CONTEXT_PRIOR_END();

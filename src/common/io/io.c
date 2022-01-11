@@ -96,6 +96,32 @@ ioReadBuf(IoRead *read)
 }
 
 /**********************************************************************************************************************************/
+void
+ioCopy(IoRead *const source, IoWrite *const destination)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, source);
+        FUNCTION_TEST_PARAM(IO_WRITE, destination);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        Buffer *const buffer = bufNew(ioBufferSize());
+
+        do
+        {
+            ioRead(source, buffer);
+            ioWrite(destination, buffer);
+            bufUsedZero(buffer);
+        }
+        while (!ioReadEof(source));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 bool
 ioReadDrain(IoRead *read)
 {

@@ -119,7 +119,7 @@ protocolServerCommandGet(ProtocolServer *const this)
         PackRead *const command = pckReadNewIo(this->read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(command);
 
-        CHECK(type == protocolMessageTypeCommand);
+        CHECK(FormatError, type == protocolMessageTypeCommand, "expected command message");
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -314,7 +314,7 @@ protocolServerDataGet(ProtocolServer *const this)
         PackRead *data = pckReadNewIo(this->read);
         ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(data);
 
-        CHECK(type == protocolMessageTypeData);
+        CHECK(FormatError, type == protocolMessageTypeData, "expected data message");
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

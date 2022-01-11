@@ -9,18 +9,6 @@ PostgreSQL Version Interface
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-bool pgInterfaceControlIs083(const unsigned char *controlFile);
-PgControl pgInterfaceControl083(const unsigned char *controlFile);
-uint32_t pgInterfaceControlVersion083(void);
-bool pgInterfaceWalIs083(const unsigned char *walFile);
-PgWal pgInterfaceWal083(const unsigned char *controlFile);
-
-bool pgInterfaceControlIs084(const unsigned char *controlFile);
-PgControl pgInterfaceControl084(const unsigned char *controlFile);
-uint32_t pgInterfaceControlVersion084(void);
-bool pgInterfaceWalIs084(const unsigned char *walFile);
-PgWal pgInterfaceWal084(const unsigned char *controlFile);
-
 bool pgInterfaceControlIs090(const unsigned char *controlFile);
 PgControl pgInterfaceControl090(const unsigned char *controlFile);
 uint32_t pgInterfaceControlVersion090(void);

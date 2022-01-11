@@ -381,7 +381,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
         // If no helper was found it try Posix
         if (result == NULL)
         {
-            CHECK(type == STORAGE_POSIX_TYPE);
+            CHECK(AssertError, type == STORAGE_POSIX_TYPE, "invalid storage type");
 
             result = storagePosixNewP(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression);

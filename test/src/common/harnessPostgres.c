@@ -11,14 +11,6 @@ Harness for PostgreSQL Interface
 /***********************************************************************************************************************************
 Interface definition
 ***********************************************************************************************************************************/
-uint32_t hrnPgInterfaceCatalogVersion083(void);
-void hrnPgInterfaceControl083(PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal083(PgWal pgWal, unsigned char *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion084(void);
-void hrnPgInterfaceControl084(PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal084(PgWal pgWal, unsigned char *buffer);
-
 uint32_t hrnPgInterfaceCatalogVersion090(void);
 void hrnPgInterfaceControl090(PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal090(PgWal pgWal, unsigned char *buffer);
@@ -167,20 +159,6 @@ static const HrnPgInterface hrnPgInterface[] =
         .control = hrnPgInterfaceControl090,
         .wal = hrnPgInterfaceWal090,
     },
-    {
-        .version = PG_VERSION_84,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion084,
-        .control = hrnPgInterfaceControl084,
-        .wal = hrnPgInterfaceWal084,
-    },
-    {
-        .version = PG_VERSION_83,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion083,
-        .control = hrnPgInterfaceControl083,
-        .wal = hrnPgInterfaceWal083,
-    },
 };
 
 /***********************************************************************************************************************************
@@ -230,11 +208,16 @@ hrnPgControlToBuffer(PgControl pgControl)
         FUNCTION_HARNESS_PARAM(PG_CONTROL, pgControl);
     FUNCTION_HARNESS_END();
 
+    ASSERT(pgControl.version != 0);
+
     // Set defaults if values are not passed
     pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : pgControl.pageSize;
     pgControl.walSegmentSize = pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize;
     pgControl.catalogVersion = pgControl.catalogVersion == 0 ?
         hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;
+    pgControl.systemId = pgControl.systemId < 100 ? hrnPgSystemId(pgControl.version) + pgControl.systemId : pgControl.systemId;
+    pgControl.checkpoint = pgControl.checkpoint == 0 ? 1 : pgControl.checkpoint;
+    pgControl.timeline = pgControl.timeline == 0 ? 1 : pgControl.timeline;
 
     // Create the buffer and clear it
     Buffer *result = bufNew(HRN_PG_CONTROL_SIZE);
@@ -261,6 +244,10 @@ hrnPgWalToBuffer(PgWal pgWal, Buffer *walBuffer)
     // Set default WAL segment size if not specified
     if (pgWal.size == 0)
         pgWal.size = PG_WAL_SEGMENT_SIZE_DEFAULT;
+
+    // Set default system id if not specified
+    if (pgWal.systemId < 100)
+        pgWal.systemId = hrnPgSystemId(pgWal.version) + pgWal.systemId;
 
     // Generate WAL
     hrnPgInterfaceVersion(pgWal.version)->wal(pgWal, bufPtr(walBuffer));

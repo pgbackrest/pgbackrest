@@ -157,15 +157,7 @@ storageGetProcess(IoWrite *destination)
             ioWriteOpen(destination);
 
             // Copy data from source to destination
-            Buffer *buffer = bufNew(ioBufferSize());
-
-            do
-            {
-                ioRead(source, buffer);
-                ioWrite(destination, buffer);
-                bufUsedZero(buffer);
-            }
-            while (!ioReadEof(source));
+            ioCopy(source, destination);
 
             // Close the source and destination
             ioReadClose(source);

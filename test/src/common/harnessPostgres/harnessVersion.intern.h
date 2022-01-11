@@ -16,7 +16,7 @@ Get the catalog version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                  \
     uint32_t                                                                                                                       \
@@ -45,13 +45,18 @@ Create a pg_control file
             .system_identifier = pgControl.systemId,                                                                               \
             .pg_control_version = PG_CONTROL_VERSION,                                                                              \
             .catalog_version_no = pgControl.catalogVersion,                                                                        \
+            .checkPoint = pgControl.checkpoint,                                                                                    \
+            .checkPointCopy =                                                                                                      \
+            {                                                                                                                      \
+                .ThisTimeLineID = pgControl.timeline,                                                                              \
+            },                                                                                                                     \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
             .data_checksum_version = pgControl.pageChecksum,                                                                       \
         };                                                                                                                         \
     }
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
@@ -65,6 +70,15 @@ Create a pg_control file
             .system_identifier = pgControl.systemId,                                                                               \
             .pg_control_version = PG_CONTROL_VERSION,                                                                              \
             .catalog_version_no = pgControl.catalogVersion,                                                                        \
+            .checkPoint =                                                                                                          \
+            {                                                                                                                      \
+                .xlogid = (uint32_t)(pgControl.checkpoint >> 32),                                                                  \
+                .xrecoff = (uint32_t)(pgControl.checkpoint & 0xFFFFFFFF),                                                          \
+            },                                                                                                                     \
+            .checkPointCopy =                                                                                                      \
+            {                                                                                                                      \
+                .ThisTimeLineID = pgControl.timeline,                                                                              \
+            },                                                                                                                     \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
         };                                                                                                                         \
@@ -77,7 +91,7 @@ Create a WAL file
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
     void                                                                                                                           \

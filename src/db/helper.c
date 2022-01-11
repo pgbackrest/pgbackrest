@@ -8,6 +8,7 @@ Database Helper
 #include "db/helper.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
+#include "storage/helper.h"
 #include "version.h"
 
 /**********************************************************************************************************************************/
@@ -34,10 +35,10 @@ dbGetIdx(unsigned int pgIdx)
                     cfgOptionIdxStrNull(cfgOptPgSocketPath, pgIdx), cfgOptionIdxUInt(cfgOptPgPort, pgIdx),
                     cfgOptionIdxStr(cfgOptPgDatabase, pgIdx), cfgOptionIdxStrNull(cfgOptPgUser, pgIdx),
                     cfgOptionUInt64(cfgOptDbTimeout)),
-                NULL, applicationName);
+                NULL, storagePgIdx(pgIdx), applicationName);
         }
         else
-            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx), applicationName);
+            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx), storagePgIdx(pgIdx), applicationName);
 
         dbMove(result, memContextPrior());
     }
@@ -88,7 +89,7 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
             CATCH_ANY()
             {
                 LOG_WARN_FMT(
-                    "unable to check pg-%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpPg, pgIdx), errorTypeName(errorType()),
+                    "unable to check %s: [%s] %s", cfgOptionGroupName(cfgOptGrpPg, pgIdx), errorTypeName(errorType()),
                     errorMessage());
                 db = NULL;
             }

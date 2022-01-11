@@ -42,6 +42,9 @@ httpHeaderMove(HttpHeader *const this, MemContext *const parentNew)
 // Put a header
 HttpHeader *httpHeaderPut(HttpHeader *this, const String *header, const String *value);
 
+// Put range header when needed
+HttpHeader *httpHeaderPutRange(HttpHeader *this, uint64_t offset, const Variant *limit);
+
 // Should the header be redacted when logging?
 bool httpHeaderRedact(const HttpHeader *this, const String *key);
 

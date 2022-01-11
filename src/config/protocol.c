@@ -31,7 +31,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
         while (pckReadNext(param))
         {
             CfgParseOptionResult option = cfgParseOptionP(pckReadStrP(param));
-            CHECK(option.found);
+            CHECK(AssertError, option.found, "option not found");
 
             varLstAdd(optionList, varDup(cfgOptionIdxVar(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
         }

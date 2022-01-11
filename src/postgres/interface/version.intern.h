@@ -22,7 +22,7 @@ Determine if the supplied pg_control is for this version of PostgreSQL
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #ifdef CATALOG_VERSION_NO_MAX
 
@@ -73,13 +73,15 @@ Read the version specific pg_control into a general data structure
         {                                                                                                                          \
             .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
             .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
+            .checkpoint = ((ControlFileData *)controlFile)->checkPoint,                                                            \
+            .timeline = ((ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                           \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
             .pageChecksum = ((ControlFileData *)controlFile)->data_checksum_version != 0,                                          \
         };                                                                                                                         \
     }
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_CONTROL(version)                                                                                              \
     PgControl                                                                                                                      \
@@ -92,6 +94,10 @@ Read the version specific pg_control into a general data structure
         {                                                                                                                          \
             .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
             .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
+            .checkpoint =                                                                                                          \
+                (uint64_t)((ControlFileData *)controlFile)->checkPoint.xlogid << 32 |                                              \
+                ((ControlFileData *)controlFile)->checkPoint.xrecoff,                                                              \
+            .timeline = ((ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                           \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
         };                                                                                                                         \
@@ -104,7 +110,7 @@ Get the control version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_CONTROL_VERSION(version)                                                                                      \
     uint32_t                                                                                                                       \
@@ -120,7 +126,7 @@ Determine if the supplied WAL is for this version of PostgreSQL
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_WAL_IS(version)                                                                                               \
     bool                                                                                                                           \
@@ -138,7 +144,7 @@ Read the version specific WAL header into a general data structure
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_83
+#elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_WAL(version)                                                                                                  \
     PgWal                                                                                                                          \

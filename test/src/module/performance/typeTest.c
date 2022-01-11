@@ -8,15 +8,19 @@ These starting values can then be scaled up for profiling and stress testing as 
 running out of memory on the test systems or taking an undue amount of time.  It should be noted that in this context scaling to
 1000 is nowhere near turning it up to 11.
 ***********************************************************************************************************************************/
+#include <unistd.h>
+
 #include "common/ini.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/socket/client.h"
 #include "common/stat.h"
 #include "common/time.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
 #include "info/manifest.h"
 #include "postgres/version.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessInfo.h"
 #include "common/harnessStorage.h"
@@ -155,7 +159,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstFind()"))
     {
-        CHECK(TEST_SCALE <= 10000);
+        ASSERT(TEST_SCALE <= 10000);
         int testMax = 100000 * (int)TEST_SCALE;
 
         // Generate a large list of values (use int instead of string so there fewer allocations)
@@ -164,7 +168,7 @@ testRun(void)
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
-        CHECK(lstSize(list) == (unsigned int)testMax);
+        ASSERT(lstSize(list) == (unsigned int)testMax);
 
         TEST_LOG_FMT("generated %d item list", testMax);
 
@@ -174,7 +178,7 @@ testRun(void)
         TimeMSec timeBegin = timeMSec();
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
 
         TEST_LOG_FMT("asc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
 
@@ -184,7 +188,7 @@ testRun(void)
         timeBegin = timeMSec();
 
         for (int listIdx = 0; listIdx < testMax; listIdx++)
-            CHECK(*(int *)lstFind(list, &listIdx) == listIdx);
+            ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
 
         TEST_LOG_FMT("desc search completed in %ums", (unsigned int)(timeMSec() - timeBegin));
     }
@@ -192,7 +196,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstRemoveIdx()"))
     {
-        CHECK(TEST_SCALE <= 10000);
+        ASSERT(TEST_SCALE <= 10000);
         int testMax = 1000000 * (int)TEST_SCALE;
 
         // Generate a large list of values (use int instead of string so there fewer allocations)
@@ -201,7 +205,7 @@ testRun(void)
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
-        CHECK(lstSize(list) == (unsigned int)testMax);
+        ASSERT(lstSize(list) == (unsigned int)testMax);
 
         TEST_LOG_FMT("generated %d item list", testMax);
 
@@ -213,13 +217,13 @@ testRun(void)
 
         TEST_LOG_FMT("remove completed in %ums", (unsigned int)(timeMSec() - timeBegin));
 
-        CHECK(lstEmpty(list));
+        ASSERT(lstEmpty(list));
     }
 
     // *****************************************************************************************************************************
     if (testBegin("iniLoad()"))
     {
-        CHECK(TEST_SCALE <= 10000);
+        ASSERT(TEST_SCALE <= 10000);
 
         String *iniStr = strCatZ(strNew(), "[section1]\n");
         unsigned int iniMax = 100000 * (unsigned int)TEST_SCALE;
@@ -242,7 +246,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("manifestNewBuild()/manifestNewLoad()/manifestSave()"))
     {
-        CHECK(TEST_SCALE <= 1000000);
+        ASSERT(TEST_SCALE <= 1000000);
 
         // Create a storage driver to test manifest build with an arbitrary number of files
         StorageTestManifestNewBuild driver =
@@ -314,7 +318,7 @@ testRun(void)
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFile *file = manifestFile(manifest, fileIdx);
-            CHECK(file == manifestFileFind(manifest, file->name));
+            ASSERT(file == manifestFileFind(manifest, file->name));
         }
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
@@ -324,7 +328,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("statistics collector"))
     {
-        CHECK(TEST_SCALE <= 1000000);
+        ASSERT(TEST_SCALE <= 1000000);
 
         // Setup a list of stats to use for testing
         #define TEST_STAT_TOTAL 100
@@ -359,6 +363,25 @@ testRun(void)
                 varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal,
                 strZ(strNewFmt("check stat %u", statIdx)));
         }
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("SocketClient"))
+    {
+        // This test must be done here because the problem with variables being clobbered after a long jump is only present in
+        // optimized builds, so the unit test will not notice if the volatile keyword goes missing in sckClientOpen(). Since the
+        // performance tests are built with optimization is it more likely to be caught here.
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create socket with error to check for leaks");
+
+        const Storage *const storageFd = storagePosixNewP(strNewFmt("/proc/%d/fd", getpid()));
+        unsigned int fdBefore = strLstSize(storageListP(storageFd, NULL));
+
+        TEST_ERROR(
+            ioClientOpen(sckClientNew(STRDEF("172.31.255.255"), 7777, 0, 0)), HostConnectError,
+            "timeout connecting to '172.31.255.255:7777'");
+
+        TEST_RESULT_UINT(strLstSize(storageListP(storageFd, NULL)), fdBefore, "socket was freed");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

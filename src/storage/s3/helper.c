@@ -6,6 +6,7 @@ S3 Storage Helper
 #include <stdlib.h>
 
 #include "common/debug.h"
+#include "common/io/http/url.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -24,14 +25,23 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
 
     ASSERT(cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == STORAGE_S3_TYPE);
 
-    // Set the default port
-    unsigned int port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
+    // Parse the endpoint url
+    const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeHttps);
+    const String *const endPoint = httpUrlHost(url);
+    unsigned int port = httpUrlPort(url);
 
-    // Extract port from the endpoint and host if it is present
-    const String *const endPoint = cfgOptionIdxHostPort(cfgOptRepoS3Endpoint, repoIdx, &port);
-    const String *const host = cfgOptionIdxHostPort(cfgOptRepoStorageHost, repoIdx, &port);
+    // If host was specified then use it
+    const String *host = NULL;
 
-    // If the port option was set explicitly then use it in preference to appended ports
+    if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
+    {
+        const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+
+        host = httpUrlHost(url);
+        port = httpUrlPort(url);
+    }
+
+    // If port was specified, overwrite the parsed/default port
     if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
         port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
