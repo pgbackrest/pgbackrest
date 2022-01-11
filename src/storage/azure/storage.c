@@ -142,6 +142,7 @@ storageAzureAuth(
             // Generate string to sign
             const String *contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
             const String *contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
+            const String *const range = httpHeaderGet(httpHeader, HTTP_HEADER_RANGE_STR);
 
             const String *stringToSign = strNewFmt(
                 "%s\n"                                                  // verb
@@ -155,12 +156,13 @@ storageAzureAuth(
                 "\n"                                                    // If-Match
                 "\n"                                                    // If-None-Match
                 "\n"                                                    // If-Unmodified-Since
-                "\n"                                                    // range
+                "%s\n"                                                  // range
                 "%s"                                                    // Canonicalized headers
                 "/%s%s"                                                 // Canonicalized account/path
                 "%s",                                                   // Canonicalized query
                 strZ(verb), strEq(contentLength, ZERO_STR) ? "" : strZ(contentLength), contentMd5 == NULL ? "" : strZ(contentMd5),
-                strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(path), strZ(queryCanonical));
+                strZ(dateTime), range == NULL ? "" : strZ(range), strZ(headerCanonical), strZ(this->account), strZ(path),
+                strZ(queryCanonical));
 
             // Generate authorization header
             httpHeaderPut(
@@ -537,13 +539,14 @@ storageAzureNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageIn
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(UINT64, param.offset);
+        FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadAzureNew(this, file, ignoreMissing));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadAzureNew(this, file, ignoreMissing, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/

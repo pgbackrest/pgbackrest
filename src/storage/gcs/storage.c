@@ -761,13 +761,14 @@ storageGcsNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInte
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(UINT64, param.offset);
+        FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadGcsNew(this, file, ignoreMissing));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadGcsNew(this, file, ignoreMissing, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
