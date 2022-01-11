@@ -16,6 +16,22 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.38dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="1430"/>
+                        <github-pull-request id="1567"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="christoph.berg"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="tharinduamila-insta"/>
+                        </release-item-contributor-list>
+
+                        <p>Add support for <proper>AWS</proper> <proper>S3</proper> server-side encryption using <proper>KMS</proper>.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-pull-request id="1610"/>
@@ -11193,6 +11209,11 @@
         <contributor id="tomasz.kontusz">
             <contributor-name-display>Tomasz Kontusz</contributor-name-display>
             <contributor-id type="github">ktosiek</contributor-id>
+        </contributor>
+
+        <contributor id="tharinduamila-insta">
+            <contributor-name-display>tharinduamila-insta</contributor-name-display>
+            <contributor-id type="github">tharinduamila-insta</contributor-id>
         </contributor>
 
         <contributor id="thomas.flatley">
