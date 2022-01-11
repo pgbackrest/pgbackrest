@@ -43,6 +43,17 @@
 
                 <release-development-list>
                     <release-item>
+                        <commit subject="Add read range to all storage drivers."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve small file support.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Fix inconsistent group display names in messages."/>
                         <commit subject="Dynamically allocate index to key index map."/>
                         <commit subject="Replace cfgOptionGroupIdxToKey() with cfgOptionGroupName()."/>
