@@ -865,10 +865,10 @@
 
                     <!-- CONFIG - REPO SECTION - REPO-S3-KMS-KEY-ID KEY -->
                     <config-key id="repo-s3-kms-key-id" name="S3 Repository KMS Key ID">
-                        <summary>S3 repository KMS key ID.</summary>
+                        <summary>S3 repository KMS key.</summary>
 
                         <text>
-                            <p>Setting this option enables S3 server-side encryption using the given AWS key management service key ID.</p>
+                            <p>Setting this option enables S3 server-side encryption using the specified AWS key management service key.</p>
                         </text>
 
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
