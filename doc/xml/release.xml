@@ -77,6 +77,7 @@
                         <commit subject="Refactor option and option group config structs."/>
                         <commit subject="Remove obsolete cfgOptionHostPort()/cfgOptionIdxHostPort()."/>
                         <commit subject="Rename ConfigOptionGroupData.indexDisplay to indexName."/>
+                        <commit subject="cfgOptionGroupName() replacement missed in aced5d47."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

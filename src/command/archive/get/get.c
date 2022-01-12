@@ -297,7 +297,7 @@ archiveGetFind(
 
                         if (repoKey != repoKeyLast)
                         {
-                            strCatFmt(message, "\nrepo%u:", repoKey);
+                            strCatFmt(message, "\n%s:", cfgOptionGroupName(cfgOptGrpRepo, file->repoIdx));
                             repoKeyLast = repoKey;
                             first = true;
                         }
