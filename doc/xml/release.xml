@@ -40,6 +40,36 @@
                         <p>Remove support for <proper>PostgreSQL</proper> <id>8.3</id>/<id>8.4</id>.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Add read range to all storage drivers."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve small file support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Fix inconsistent group display names in messages."/>
+                        <commit subject="Dynamically allocate index to key index map."/>
+                        <commit subject="Replace cfgOptionGroupIdxToKey() with cfgOptionGroupName()."/>
+                        <commit subject="Improve implementation of cfgOptionIdxName()."/>
+                        <commit subject="Refactor option and option group config structs."/>
+                        <commit subject="Remove obsolete cfgOptionHostPort()/cfgOptionIdxHostPort()."/>
+                        <commit subject="Rename ConfigOptionGroupData.indexDisplay to indexName."/>
+                        <commit subject="cfgOptionGroupName() replacement missed in aced5d47."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Configuration refactoring.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>

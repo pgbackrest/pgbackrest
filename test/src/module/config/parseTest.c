@@ -1552,37 +1552,6 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("port can be parsed from hostname");
-
-        unsigned int port = 55555;
-
-        cfgOptionSet(cfgOptRepoStorageHost, cfgSourceConfig, varNewStrZ("host.com")) ;
-        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoStorageHost, &port), "host.com", "check plain host");
-        TEST_RESULT_UINT(port, 55555, "check that port was not updated");
-
-        cfgOptionSet(cfgOptRepoStorageHost, cfgSourceConfig, varNewStrZ("myhost.com:777")) ;
-        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoStorageHost, &port), "myhost.com", "check host with port");
-        TEST_RESULT_UINT(port, 777, "check that port was updated");
-
-        cfgOptionSet(cfgOptRepoS3Endpoint, cfgSourceConfig, NULL);
-        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Endpoint, &port), NULL, "check null host");
-        TEST_RESULT_UINT(port, 777, "check that port was not updated");
-
-        cfgOptionSet(cfgOptRepoStorageHost, cfgSourceConfig, varNewStrZ("myhost.com:777:888")) ;
-        TEST_ERROR(
-            cfgOptionHostPort(cfgOptRepoStorageHost, &port), OptionInvalidError,
-            "'myhost.com:777:888' is not valid for option 'repo1-storage-host'"
-                "\nHINT: is more than one port specified?");
-        TEST_RESULT_UINT(port, 777, "check that port was not updated");
-
-        cfgOptionSet(cfgOptRepoS3Endpoint, cfgSourceConfig, varNewStrZ("myendpoint.com:ZZZ"));
-        TEST_ERROR(
-            cfgOptionHostPort(cfgOptRepoS3Endpoint, &port), OptionInvalidError,
-            "'myendpoint.com:ZZZ' is not valid for option 'repo1-s3-endpoint'"
-                "\nHINT: port is not a positive integer.");
-        TEST_RESULT_UINT(port, 777, "check that port was not updated");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("global is a valid stanza prefix");
 
         storagePutP(
@@ -1687,6 +1656,10 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "pg1-host was reset");
         TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 0, "pg1 is default");
         TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "pg2 is index 2");
+        TEST_RESULT_Z(cfgOptionIdxName(cfgOptPgPath, 0), "pg1-path", "pg1-path option name");
+        TEST_RESULT_Z(cfgOptionIdxName(cfgOptPgPath, 1), "pg2-path", "pg2-path option name");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpPg, 1), "pg2", "pg2 group display");
+        TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpPg, 0), "pg1", "pg1 group display (cached)");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "default pg-path");
         TEST_RESULT_STR_Z(varStr(cfgOptionVar(cfgOptPgPath)), "/path/to/db", "default pg-path as variant");
         TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), true, "pg group is valid");
@@ -1969,6 +1942,9 @@ testRun(void)
             "option 'pg1-path' must be set with String variant");
         TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, VARSTRDEF("/new")), "set pg1-path");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/new", "check pg1-path");
+
+        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, NULL), "set pg1-path to NULL");
+        TEST_RESULT_STR_Z(cfgOptionIdxStrNull(cfgOptPgPath, 0), NULL, "check pg1-path");
 
         TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARUINT64(STRID5("preserve", 0x2da45996500))), "set type");
         TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("preserve", 0x2da45996500), "check type");

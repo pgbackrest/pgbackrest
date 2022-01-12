@@ -89,7 +89,7 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
             CATCH_ANY()
             {
                 LOG_WARN_FMT(
-                    "unable to check pg-%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpPg, pgIdx), errorTypeName(errorType()),
+                    "unable to check %s: [%s] %s", cfgOptionGroupName(cfgOptGrpPg, pgIdx), errorTypeName(errorType()),
                     errorMessage());
                 db = NULL;
             }

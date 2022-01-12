@@ -2134,8 +2134,8 @@ cmdBackup(void)
         if (!cfgOptionTest(cfgOptRepo) && cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
         {
             LOG_INFO_FMT(
-                "repo option not specified, defaulting to repo%u",
-                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+                "repo option not specified, defaulting to %s",
+                cfgOptionGroupName(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
         }
 
         // Load backup.info
