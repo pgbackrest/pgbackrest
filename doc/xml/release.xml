@@ -25,7 +25,7 @@
                             <release-item-contributor id="christoph.berg"/>
                             <release-item-reviewer id="david.steele"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
-                            <release-item-reviewer id="tharinduamila-insta"/>
+                            <release-item-reviewer id="tharindu.amila"/>
                         </release-item-contributor-list>
 
                         <p>Add support for <proper>AWS</proper> <proper>S3</proper> server-side encryption using <proper>KMS</proper>.</p>
@@ -11211,8 +11211,8 @@
             <contributor-id type="github">ktosiek</contributor-id>
         </contributor>
 
-        <contributor id="tharinduamila-insta">
-            <contributor-name-display>tharinduamila-insta</contributor-name-display>
+        <contributor id="tharindu.amila">
+            <contributor-name-display>Tharindu Amila</contributor-name-display>
             <contributor-id type="github">tharinduamila-insta</contributor-id>
         </contributor>
 
