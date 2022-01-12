@@ -91,19 +91,26 @@ File type
 ***********************************************************************************************************************************/
 typedef struct ManifestFile
 {
+    // Sort
     const String *name;                                             // File name (must be first member in struct)
-    bool primary:1;                                                 // Should this file be copied from the primary?
-    bool checksumPage:1;                                            // Does this file have page checksums?
-    bool checksumPageError:1;                                       // Is there an error in the page checksum?
-    mode_t mode;                                                    // File mode
+    uint64_t size;                                                  // Original size
+    time_t timestamp;                                               // Original timestamp
+
+    // Backup
+    bool primary;                                                   // Should this file be copied from the primary?
+    bool checksumPage;                                              // Does this file have page checksums?
     char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
-    const VariantList *checksumPageErrorList;                       // List of page checksum errors if there are any
+    const String *reference;                                        // Reference to a prior backup
+
+    // Restore
+    mode_t mode;                                                    // File mode
     const String *user;                                             // User name
     const String *group;                                            // Group name
-    const String *reference;                                        // Reference to a prior backup
-    uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
-    time_t timestamp;                                               // Original timestamp
+
+    // Info
+    bool checksumPageError;                                         // Is there an error in the page checksum?
+    const VariantList *checksumPageErrorList;                       // List of page checksum errors if there are any
 } ManifestFile;
 
 /***********************************************************************************************************************************

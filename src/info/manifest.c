@@ -202,6 +202,46 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// static void *
+// manifestFilePack(const Manifest *const this, const ManifestFile *const file)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_TEST_PARAM(MANIFEST, this);
+//         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+//     FUNCTION_TEST_END();
+
+//     PackWrite *result = NULL;
+
+//     MEM_CONTEXT_TEMP_BEGIN()
+//     {
+//         PackWrite *const pack = pckWriteNewP(.size = 512);
+
+//         // Backup
+//         pckWriteStrP(pack, file->name);
+//         pckWriteBoolP(pack, file->primary);
+//         pckWriteBoolP(pack, file->checksumPage);
+//         pckWriteStrP(pack, STR(file->checksumSha1));
+//         pckWriteU64P(pack, file->size);
+//         pckWriteTimeP(pack, file->timestamp);
+//         pckWritePtrP(pack, file->reference);
+
+//         // Restore
+//         pckWriteModeP(pack, file->mode);
+//         pckWritePtrP(pack, file->user);
+//         pckWritePtrP(pack, file->group);
+
+//         // Info
+//         pckWriteU64P(pack, file->sizeRepo);
+//         pckWriteBoolP(pack, file->checksumPageError);
+//         pckWriteStrP(pack, jsonFromVar(varNewVarLst(file->checksumPageErrorList)));
+
+//         result = pckWriteMove(pack, memContextPrior());
+//     }
+//     MEM_CONTEXT_TEMP_END();
+
+//     FUNCTION_TEST_RETURN(result);
+// }
+
 void
 manifestFileAdd(Manifest *this, const ManifestFile *file)
 {
@@ -255,6 +295,7 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
             }
         }
 
+        // (void)manifestFilePack; !!!
         lstAdd(this->pub.fileList, &fileAdd);
     }
     MEM_CONTEXT_END();
