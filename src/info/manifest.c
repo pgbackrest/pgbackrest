@@ -202,45 +202,101 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-// static void *
-// manifestFilePack(const Manifest *const this, const ManifestFile *const file)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(MANIFEST, this);
-//         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
-//     FUNCTION_TEST_END();
+static void *
+manifestFilePack(const ManifestFile *const file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
 
-//     PackWrite *result = NULL;
+    PackWrite *result = NULL;
 
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         PackWrite *const pack = pckWriteNewP(.size = 512);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const pack = pckWriteNewP(.size = 512);
 
-//         // Backup
-//         pckWriteStrP(pack, file->name);
-//         pckWriteBoolP(pack, file->primary);
-//         pckWriteBoolP(pack, file->checksumPage);
-//         pckWriteStrP(pack, STR(file->checksumSha1));
-//         pckWriteU64P(pack, file->size);
-//         pckWriteTimeP(pack, file->timestamp);
-//         pckWritePtrP(pack, file->reference);
+        // Backup
+        pckWriteStrP(pack, file->name);
+        pckWriteBoolP(pack, file->primary);
+        pckWriteBoolP(pack, file->checksumPage);
+        pckWriteStrP(pack, STR(file->checksumSha1));
+        pckWriteU64P(pack, file->size);
+        pckWriteTimeP(pack, file->timestamp);
+        pckWritePtrP(pack, file->reference);
 
-//         // Restore
-//         pckWriteModeP(pack, file->mode);
-//         pckWritePtrP(pack, file->user);
-//         pckWritePtrP(pack, file->group);
+        // Restore
+        pckWriteModeP(pack, file->mode);
+        pckWritePtrP(pack, file->user);
+        pckWritePtrP(pack, file->group);
 
-//         // Info
-//         pckWriteU64P(pack, file->sizeRepo);
-//         pckWriteBoolP(pack, file->checksumPageError);
-//         pckWriteStrP(pack, jsonFromVar(varNewVarLst(file->checksumPageErrorList)));
+        // Info
+        pckWriteU64P(pack, file->sizeRepo);
+        pckWriteBoolP(pack, file->checksumPageError);
+        pckWriteStrP(pack, jsonFromVar(varNewVarLst(file->checksumPageErrorList)));
 
-//         result = pckWriteMove(pack, memContextPrior());
-//     }
-//     MEM_CONTEXT_TEMP_END();
+        result = pckMove(pckWriteResult(pack), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
 
-//     FUNCTION_TEST_RETURN(result);
-// }
+    FUNCTION_TEST_RETURN(result);
+}
+
+ManifestFile
+manifestFileUnpack(const void *const filePack)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, filePack);
+    FUNCTION_TEST_END();
+
+    ManifestFile result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // !!! ADD DEBUG FUNCTION TO ENSURE THERE ARE NO ALLOCATIONS -- MAYBE ADD THIS AS A BLOCK?
+
+        PackRead *const pack = pckReadNew(filePack);
+
+        // Backup
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.name = pckReadStrP(pack);
+        }
+        MEM_CONTEXT_PRIOR_END();
+
+        result.primary = pckReadBoolP(pack);
+        result.checksumPage = pckReadBoolP(pack);
+
+        strncpy(result.checksumSha1, strZ(pckReadStrP(pack)), HASH_TYPE_SHA1_SIZE_HEX);
+        result.checksumSha1[HASH_TYPE_SHA1_SIZE_HEX] = '\0';
+
+        result.size = pckReadU64P(pack);
+        result.timestamp = pckReadTimeP(pack);
+        result.reference = pckReadPtrP(pack);
+
+        // Restore
+        result.mode = pckReadModeP(pack);
+        result.user = pckReadPtrP(pack);
+        result.group = pckReadPtrP(pack);
+
+        // Info
+        result.sizeRepo = pckReadU64P(pack);
+        result.checksumPageError = pckReadBoolP(pack);
+
+        const String *const checksumPageErrorList = pckReadStrP(pack);
+
+        if (checksumPageErrorList != NULL)
+        {
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.checksumPageErrorList = varVarLst(jsonToVar(checksumPageErrorList));
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
 
 void
 manifestFileAdd(Manifest *this, const ManifestFile *file)
@@ -295,8 +351,10 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
             }
         }
 
-        // (void)manifestFilePack; !!!
-        lstAdd(this->pub.fileList, &fileAdd);
+        // (void) manifestFileUnpack; // !!!
+        // (void)manifestFilePack; // !!!
+        const void *const filePack = manifestFilePack(&fileAdd);
+        lstAdd(this->pub.fileList, &filePack);
     }
     MEM_CONTEXT_END();
 
@@ -1435,17 +1493,17 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->pub.fileList); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(this, fileIdx);
-            const ManifestFile *filePrior = manifestFileFindDefault(manifestPrior, file->name, NULL);
+            const ManifestFile file = manifestFile(this, fileIdx);
+            const ManifestFile filePrior = manifestFileFindDefault(manifestPrior, file.name, NULL);
 
             // Check if prior file can be used
-            if (filePrior != NULL && file->size == filePrior->size &&
-                (delta || file->size == 0 || file->timestamp == filePrior->timestamp))
+            if (filePrior != NULL && file.size == filePrior.size &&
+                (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
             {
                 manifestFileUpdate(
-                    this, file->name, file->size, filePrior->sizeRepo, filePrior->checksumSha1,
-                    VARSTR(filePrior->reference != NULL ? filePrior->reference : manifestPrior->pub.data.backupLabel),
-                    filePrior->checksumPage, filePrior->checksumPageError, filePrior->checksumPageErrorList);
+                    this, file.name, file.size, filePrior.sizeRepo, filePrior.checksumSha1,
+                    VARSTR(filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel),
+                    filePrior.checksumPage, filePrior.checksumPageError, filePrior.checksumPageErrorList);
             }
         }
     }
@@ -1996,20 +2054,28 @@ manifestNewLoad(IoRead *read)
         // Process file defaults
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
         {
-            ManifestFile *file = lstGet(this->pub.fileList, fileIdx);
+            void **filePack = lstGet(this->pub.fileList, fileIdx);
+            ManifestFile file = manifestFileUnpack(*filePack, fileIdx));
             ManifestLoadFound *found = lstGet(loadData.fileFoundList, fileIdx);
 
             if (!found->group)
-                file->group = manifestOwnerCache(this, manifestOwnerGet(loadData.fileGroupDefault));
+                file.group = manifestOwnerCache(this, manifestOwnerGet(loadData.fileGroupDefault));
 
             if (!found->mode)
-                file->mode = loadData.fileModeDefault;
+                file.mode = loadData.fileModeDefault;
 
             if (!found->primary)
-                file->primary = loadData.filePrimaryDefault;
+                file.primary = loadData.filePrimaryDefault;
 
             if (!found->user)
-                file->user = manifestOwnerCache(this, manifestOwnerGet(loadData.fileUserDefault));
+                file.user = manifestOwnerCache(this, manifestOwnerGet(loadData.fileUserDefault));
+
+            MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
+            {
+                memFree(*filePack);
+                *filePack = manifestFilePack(&file);
+            }
+            MEM_CONTEXT_END();
         }
 
         // Process link defaults
@@ -2631,7 +2697,7 @@ manifestDbFind(const Manifest *this, const String *name)
 /***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
-const ManifestFile *
+ManifestFile
 manifestFileFind(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -2642,10 +2708,12 @@ manifestFileFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestFile *result = lstFind(this->pub.fileList, &name);
+    void **filePack = lstFind(this->pub.fileList, &name);
 
-    if (result == NULL)
+    if (filePack == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strZ(name));
+
+    const ManifestFile result = manifestFileUnpack(*filePack);
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -2690,31 +2758,43 @@ manifestFileUpdate(
         (!checksumPage && !checksumPageError && checksumPageErrorList == NULL) ||
         (checksumPage && !checksumPageError && checksumPageErrorList == NULL) || (checksumPage && checksumPageError));
 
-    ManifestFile *file = (ManifestFile *)manifestFileFind(this, name);
-
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
+        void **filePack = lstFind(this->pub.fileList, &name);
+
+        if (filePack == NULL)
+            THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strZ(name));
+
+        ManifestFile file = manifestFileUnpack(*filePack, fileIdx));
+
         // Update reference if set
         if (reference != NULL)
         {
             if (varStr(reference) == NULL)
-                file->reference = NULL;
+                file.reference = NULL;
             else
-                file->reference = strLstAddIfMissing(this->referenceList, varStr(reference));
+                file.reference = strLstAddIfMissing(this->referenceList, varStr(reference));
         }
 
         // Update checksum if set
         if (checksumSha1 != NULL)
-            memcpy(file->checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+            memcpy(file.checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
 
         // Update repo size
-        file->size = size;
-        file->sizeRepo = sizeRepo;
+        file.size = size;
+        file.sizeRepo = sizeRepo;
 
         // Update checksum page info
-        file->checksumPage = checksumPage;
-        file->checksumPageError = checksumPageError;
-        file->checksumPageErrorList = varLstDup(checksumPageErrorList);
+        file.checksumPage = checksumPage;
+        file.checksumPageError = checksumPageError;
+        file.checksumPageErrorList = varLstDup(checksumPageErrorList);
+
+        MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
+        {
+            memFree(*filePack);
+            *filePack = manifestFilePack(&file);
+        }
+        MEM_CONTEXT_END();
     }
     MEM_CONTEXT_END();
 
