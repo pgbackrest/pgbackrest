@@ -139,7 +139,8 @@ testRun(void)
         TEST_ERROR(lockRelease(true), AssertError, "no lock is held by this process");
         TEST_RESULT_BOOL(lockRelease(false), false, "release when there is no lock");
         TEST_RESULT_BOOL(
-            writeLockPercentageComplete(TEST_PATH_STR, stanza, STRDEF("1-test"), 85.58389), false, "no lockMemContext");
+            writeLockPercentageComplete(TEST_PATH_STR, stanza, STRDEF("1-test"), 85.58389), false,
+            "% complete write fails when no lockMemContext");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, STRDEF("1-test"), 0, true), "archive lock by file");
