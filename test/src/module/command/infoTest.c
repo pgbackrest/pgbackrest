@@ -654,6 +654,7 @@ testRun(void)
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000003\","
             "\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-lsn-start\":\"285/89000028\",\"backup-lsn-stop\":\"285/89001F88\","
             "\"backup-prior\":\"20181119-152138F_20181119-152152D\","
             "\"backup-reference\":[\"20181119-152138F\",\"20181119-152138F_20181119-152152D\"],"
             "\"backup-timestamp-start\":1542640915,\"backup-timestamp-stop\":1542640917,\"backup-type\":\"incr\","
@@ -672,6 +673,7 @@ testRun(void)
             "\"backup-archive-start\":\"000000010000000000000005\",\"backup-archive-stop\":\"000000010000000000000005\","
             "\"backup-error\":false,\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-lsn-start\":\"285/89000028\","
             "\"backup-prior\":\"20201116-155000F\",\"backup-reference\":[\"20201116-155000F\"],"
             "\"backup-timestamp-start\":1605799260,\"backup-timestamp-stop\":1605799263,\"backup-type\":\"incr\","
             "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
@@ -1149,6 +1151,9 @@ testRun(void)
                                         "\"size\":20162900"
                                     "},"
                                     "\"label\":\"20181119-152138F_20181119-152155I\","
+                                    "\"lsn\":{"
+                                        "\"start\":\"285/89000028\","
+                                        "\"stop\":\"285/89001F88\"},"
                                     "\"prior\":\"20181119-152138F_20181119-152152D\","
                                     "\"reference\":["
                                         "\"20181119-152138F\","
@@ -1588,6 +1593,7 @@ testRun(void)
             "        incr backup: 20181119-152138F_20181119-152155I\n"
             "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
+            "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
@@ -1701,6 +1707,7 @@ testRun(void)
             "        incr backup: 20181119-152138F_20181119-152155I\n"
             "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
+            "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
@@ -1738,7 +1745,7 @@ testRun(void)
         "pg_data/special={\"mas""ter\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 
         HRN_INFO_PUT(
-             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE,
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET_NO_LINK
             TEST_MANIFEST_NO_DB
@@ -1762,11 +1769,51 @@ testRun(void)
             "        incr backup: 20181119-152138F_20181119-152155I\n"
             "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
+            "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: none\n",
             "text - backup set requested, no db and no checksum error");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup set requested with missing backup lsn stop location");
+
+        argList2 = strLstDup(argListTextStanzaOpt);
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20201116-155000F_20201119-152100I");
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20201116-155000F_20201119-152100I/" BACKUP_MANIFEST_FILE,
+            TEST_MANIFEST_HEADER2
+            TEST_MANIFEST_TARGET_NO_LINK
+            TEST_MANIFEST_NO_DB
+            TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest - without lsn info in header");
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: ok\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
+            "\n"
+            "        incr backup: 20201116-155000F_20201119-152100I\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
+            "            database size: 19.2MB, database backup size: 8.2KB\n"
+            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20201116-155000F\n"
+            "            database list: none\n",
+            "text - backup set requested, no lsn start/stop location");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: stanza found");

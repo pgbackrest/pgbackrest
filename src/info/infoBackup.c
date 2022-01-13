@@ -38,6 +38,8 @@ VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR,    "backup-info
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR, "backup-info-repo-size-delta");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR,         "backup-info-size");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR,   "backup-info-size-delta");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_LSN_START_VAR,         "backup-lsn-start");
+VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR,          "backup-lsn-stop");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_PRIOR_VAR,             "backup-prior");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR,         "backup-reference");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR,   "backup-timestamp-start");
@@ -159,6 +161,8 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
                 // Possible NULL values
                 .backupArchiveStart = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR))),
                 .backupArchiveStop = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR))),
+                .backupLsnStart = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_LSN_START_VAR))),
+                .backupLsnStop = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR))),
                 .backupPrior = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR))),
                 .backupReference =
                     kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR) != NULL ?
@@ -244,6 +248,11 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
 
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR, VARSTR(backupData.backupArchiveStart));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR, VARSTR(backupData.backupArchiveStop));
+
+            if (backupData.backupLsnStart != NULL)
+                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_LSN_START_VAR, VARSTR(backupData.backupLsnStart));
+            if (backupData.backupLsnStop != NULL)
+                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR, VARSTR(backupData.backupLsnStop));
 
             if (backupData.backupPrior != NULL)
                 kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR, VARSTR(backupData.backupPrior));
@@ -399,6 +408,8 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
                 .backupArchiveStart = strDup(manData->archiveStart),
                 .backupArchiveStop = strDup(manData->archiveStop),
+                .backupLsnStart = strDup(manData->lsnStart),
+                .backupLsnStop = strDup(manData->lsnStop),
 
                 .optionArchiveCheck = manData->backupOptionArchiveCheck,
                 .optionArchiveCopy = manData->backupOptionArchiveCopy,

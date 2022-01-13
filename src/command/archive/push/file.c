@@ -40,8 +40,7 @@ archivePushErrorAdd(StringList *errorList, unsigned int repoIdx)
 
     strLstAdd(
         errorList,
-        strNewFmt(
-            "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+        strNewFmt("%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -200,9 +199,9 @@ archivePushFile(
                             strLstAdd(
                                 result.warnList,
                                 strNewFmt(
-                                    "WAL file '%s' already exists in the repo%u archive with the same checksum"
+                                    "WAL file '%s' already exists in the %s archive with the same checksum"
                                     "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                    strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoData->repoIdx)));
+                                    strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx)));
                         }
                         MEM_CONTEXT_PRIOR_END();
 
@@ -214,8 +213,8 @@ archivePushFile(
                     else
                     {
                         THROW_FMT(
-                            ArchiveDuplicateError, "WAL file '%s' already exists in the repo%u archive with a different checksum",
-                            strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoData->repoIdx));
+                            ArchiveDuplicateError, "WAL file '%s' already exists in the %s archive with a different checksum",
+                            strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx));
                     }
                 }
                 // Else the repo needs a copy

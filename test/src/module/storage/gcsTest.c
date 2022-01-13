@@ -72,8 +72,9 @@ typedef struct TestRequestParam
     bool noAuth;
     const char *object;
     const char *query;
-    const char *range;
+    const char *contentRange;
     const char *content;
+    const char *range;
 } TestRequestParam;
 
 #define testRequestP(write, verb, ...)                                                                                             \
@@ -104,11 +105,15 @@ testRequest(IoWrite *write, const char *verb, TestRequestParam param)
     strCatFmt(request, "content-length:%zu\r\n", param.content == NULL ? 0 : strlen(param.content));
 
     // Add content-range
-    if (param.range != NULL)
-        strCatFmt(request, "content-range:bytes %s\r\n", param.range);
+    if (param.contentRange != NULL)
+        strCatFmt(request, "content-range:bytes %s\r\n", param.contentRange);
 
     // Add host
     strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
+
+    // Add range
+    if (param.range != NULL)
+        strCatFmt(request, "range:bytes=%s\r\n", param.range);
 
     // Complete headers
     strCatZ(request, "\r\n");
@@ -408,13 +413,14 @@ testRun(void)
                     "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file");
+                TEST_TITLE("get file with offset and limit");
 
-                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media");
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "1-21");
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "this is a sample file", "get file");
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to auto auth");
@@ -577,13 +583,13 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid1", .range = "0-15/*",
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "0-15/*",
                     .content = "1234567890123456");
                 testResponseP(service, .code = 308);
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .range = "16-31/32",
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "16-31/32",
                     .content = "7890123456789012");
                 testResponseP(service, .content = "{\"md5Hash\":\"dnF5x6K/8ZZRzpfSlMMM+w==\",\"size\":\"32\"}");
 
@@ -598,18 +604,18 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .range = "0-15/*",
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
                     .content = "1234567890123456");
                 testResponseP(service, .code = 503);
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .range = "0-15/*",
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
                     .content = "1234567890123456");
                 testResponseP(service, .code = 308);
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .range = "16-19/20",
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "16-19/20",
                     .content = "7890");
                 testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
 
@@ -624,7 +630,7 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid3", .range = "0-15/*",
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid3", .contentRange = "0-15/*",
                     .content = "1234567890123456");
                 testResponseP(service, .code = 403);
 

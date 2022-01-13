@@ -20,7 +20,7 @@ Help Command
 #include "version.h"
 
 /***********************************************************************************************************************************
-Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
+Define the console width - use a fixed width of 80 since this should be safe on virtually all consoles
 ***********************************************************************************************************************************/
 #define CONSOLE_WIDTH                                               80
 

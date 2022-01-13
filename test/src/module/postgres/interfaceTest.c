@@ -28,14 +28,14 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_11), "11", "infoPgVersionToString 11");
         TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_96), "9.6", "infoPgVersionToString 9.6");
-        TEST_RESULT_STR_Z(pgVersionToStr(83456), "8.34", "infoPgVersionToString 83456");
+        TEST_RESULT_STR_Z(pgVersionToStr(93456), "9.34", "infoPgVersionToString 93456");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("pgControlVersion()"))
     {
         TEST_ERROR(pgControlVersion(70300), AssertError, "invalid PostgreSQL version 70300");
-        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_83), 833, "8.3 control version");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_90), 903, "9.0 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
     }
 
@@ -88,13 +88,13 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_83, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_83),
+            storageTest, PG_VERSION_90, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_90),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
-        TEST_RESULT_UINT(info.catalogVersion, 200711281, "   check catalog version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_90, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201008051, "   check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
     }
@@ -157,7 +157,6 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_96), "location", "check location name");
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_10), "lsn", "check lsn name");
 
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_84, 200904091), NULL, "check 8.4 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_90, 201008051), "PG_9.0_201008051", "check 9.0 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94, 999999999), "PG_9.4_999999999", "check 9.4 tablespace id");
 
@@ -220,18 +219,18 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
         hrnPgWalToBuffer(
-            (PgWal){.version = PG_VERSION_83, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
+            (PgWal){.version = PG_VERSION_90, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
 
         TEST_ERROR(pgWalFromBuffer(result), FormatError, "wal segment size is 33554432 but must be 16777216 for PostgreSQL <= 10");
 
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_83, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_90, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
-        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest), "get wal info v8.3");
+        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest), "get wal info v9.0");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_90, "   check version");
         TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
     }
 

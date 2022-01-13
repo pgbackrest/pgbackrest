@@ -396,8 +396,6 @@ unit:
           - command/command
           - postgres/interface
           - postgres/interface/page
-          - postgres/interface/v083
-          - postgres/interface/v084
           - postgres/interface/v090
           - postgres/interface/v091
           - postgres/interface/v092
@@ -820,7 +818,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
-        total: 10
+        total: 9
 
         coverage:
           - command/backup/backup

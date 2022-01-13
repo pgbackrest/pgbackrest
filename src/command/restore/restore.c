@@ -266,8 +266,7 @@ restoreBackupSet(void)
             }
             CATCH_ANY()
             {
-                LOG_WARN_FMT(
-                    "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage());
+                LOG_WARN_FMT("%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage());
             }
             TRY_END();
 
@@ -278,7 +277,7 @@ restoreBackupSet(void)
             if (infoBackupDataTotal(infoBackup) == 0)
             {
                 LOG_WARN_FMT(
-                    "repo%u: [%s] no backup sets to restore", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                    "%s: [%s] no backup sets to restore", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
                     errorTypeName(&BackupSetInvalidError));
                 continue;
             }
@@ -1060,12 +1059,8 @@ restoreCleanBuild(Manifest *manifest)
                 const String *tablespaceId = pgTablespaceId(
                     manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
 
-                // Only PostgreSQL >= 9.0 has tablespace indentifiers
-                if (tablespaceId != NULL)
-                {
-                    cleanData->targetName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(tablespaceId));
-                    cleanData->targetPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(tablespaceId));
-                }
+                cleanData->targetName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(tablespaceId));
+                cleanData->targetPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(tablespaceId));
             }
 
             strLstSort(cleanData->fileIgnore, sortOrderAsc);
@@ -1304,17 +1299,10 @@ restoreSelectiveExpression(Manifest *manifest)
             RegExp *baseRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/[0-9]+/" PG_FILE_PGVERSION));
 
             // Generate tablespace expression
-            RegExp *tablespaceRegExp = NULL;
             const String *tablespaceId = pgTablespaceId(
                 manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
-
-            if (tablespaceId == NULL)
-                tablespaceRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/[0-9]+/" PG_FILE_PGVERSION));
-            else
-            {
-                tablespaceRegExp = regExpNew(
+            RegExp *tablespaceRegExp = regExpNew(
                     strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
-            }
 
             // Generate a list of databases in base or in a tablespace and get all standard system databases, even in cases where
             // users have recreated them
@@ -1458,12 +1446,7 @@ restoreSelectiveExpression(Manifest *manifest)
                         const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
                         if (target->tablespaceId != 0)
-                        {
-                            if (tablespaceId == NULL)
-                                strCatFmt(expression, "|(^%s/%s/)", strZ(target->name), strZ(db));
-                            else
-                                strCatFmt(expression, "|(^%s/%s/%s/)", strZ(target->name), strZ(tablespaceId), strZ(db));
-                        }
+                            strCatFmt(expression, "|(^%s/%s/%s/)", strZ(target->name), strZ(tablespaceId), strZ(db));
                     }
                 }
             }
@@ -2270,7 +2253,7 @@ cmdRestore(void)
 
         // Log the backup set to restore. If the backup was online then append the time recovery will start from.
         String *const message = strCatFmt(
-            strNew(), "repo%u: restore backup set %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, backupData.repoIdx),
+            strNew(), "%s: restore backup set %s", cfgOptionGroupName(cfgOptGrpRepo, backupData.repoIdx),
             strZ(backupData.backupSet));
 
         if (manifestData(jobData.manifest)->backupOptionOnline)

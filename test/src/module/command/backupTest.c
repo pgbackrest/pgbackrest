@@ -337,7 +337,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
                 HRNPQ_MACRO_IS_IN_BACKUP(1, false),
-                HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_START_BACKUP_LE_95(1, param.startFast, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
@@ -372,7 +372,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
                 HRNPQ_MACRO_IS_IN_BACKUP(1, false),
                 HRNPQ_MACRO_CURRENT_WAL_LE_96(1, walSegmentPrior),
-                HRNPQ_MACRO_START_BACKUP_84_95(1, param.startFast, lsnStartStr, walSegmentStart),
+                HRNPQ_MACRO_START_BACKUP_LE_95(1, param.startFast, lsnStartStr, walSegmentStart),
                 HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_0(1),
 
@@ -565,22 +565,22 @@ testRun(void)
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
-    const String *pgFile = STRDEF("testfile");
-    const String *missingFile = STRDEF("missing");
-    const String *backupLabel = STRDEF("20190718-155825F");
-    const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
-    BackupFileResult result = {0};
-
     // *****************************************************************************************************************************
     if (testBegin("segmentNumber()"))
     {
-        TEST_RESULT_UINT(segmentNumber(pgFile), 0, "No segment number");
-        TEST_RESULT_UINT(segmentNumber(strNewFmt("%s.123", strZ(pgFile))), 123, "Segment number");
+        TEST_RESULT_UINT(segmentNumber(STRDEF("999")), 0, "No segment number");
+        TEST_RESULT_UINT(segmentNumber(STRDEF("999.123")), 123, "Segment number");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("backupFile()"))
     {
+        const String *pgFile = STRDEF("testfile");
+        const String *missingFile = STRDEF("missing");
+        const String *backupLabel = STRDEF("20190718-155825F");
+        const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
+        BackupFileResult result = {0};
+
         // Load Parameters
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -664,23 +664,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit");
-
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(8));              // pgFileSize
-        varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
-        varLstAdd(paramList, NULL);                         // pgFileChecksum
-        varLstAdd(paramList, varNewBool(true));             // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0xFFFFFFFFFFFFFFFF)); // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
-        varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_ASSIGN(
             result,
@@ -861,13 +844,12 @@ testRun(void)
             "testfile.gz\n"
             "zerofile\n",
             .comment = "copy zero file to repo success");
-    }
 
-    // *****************************************************************************************************************************
-    if (testBegin("backupFile() - encrypt"))
-    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy file to encrypted repo");
+
         // Load Parameters
-        StringList *argList = strLstNew();
+        argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
@@ -879,9 +861,6 @@ testRun(void)
 
         // Create the pg path and pg file to backup
         HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("copy file to encrypted repo");
 
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
@@ -1090,32 +1069,10 @@ testRun(void)
             "HINT: is this the correct stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("reset start-fast when PostgreSQL < 8.4");
-
-        // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_83);
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        hrnCfgArgRawBool(argList, cfgOptOnline, false);
-        hrnCfgArgRawBool(argList, cfgOptStartFast, true);
-        HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-        TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_83, HRN_PG_SYSTEMID_83, hrnPgCatalogVersion(PG_VERSION_83), NULL)),
-            "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "check start-fast");
-
-        TEST_RESULT_LOG("P00   WARN: start-fast option is only available in PostgreSQL >= 8.4");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reset stop-auto when PostgreSQL < 9.3");
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_84);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_90);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1127,7 +1084,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_84, HRN_PG_SYSTEMID_84, hrnPgCatalogVersion(PG_VERSION_84), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_90, HRN_PG_SYSTEMID_90, hrnPgCatalogVersion(PG_VERSION_90), NULL)),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "check stop-auto");
 
@@ -1512,7 +1469,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_84);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_90);
 
         cmdStanzaCreate();
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
@@ -1564,8 +1521,8 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "6c1435a9f3c24a020794f58945ada456cb1d3bbe") :
-                "d432aca683e0443e97cf0600ba3a5a9efd7586fd");
+                (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "b7ec43e4646f5d06c95881df0c572630a1221377") :
+                "f21ff9abdcd1ec2f600d4ee8e5792c9b61eb2e37");
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);

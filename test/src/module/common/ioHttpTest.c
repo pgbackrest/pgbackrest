@@ -77,7 +77,18 @@ testRun(void)
         TEST_RESULT_STR_Z(httpHeaderGet(header, STRDEF("key2")), "value2a, value2b", "get value");
         TEST_RESULT_STR(httpHeaderGet(header, STRDEF(BOGUS_STR)), NULL, "get missing value");
 
-        TEST_RESULT_STR_Z(httpHeaderToLog(header), "{key1: 'value1', key2: 'value2a, value2b'}", "log output");
+        TEST_RESULT_STR(httpHeaderGet(httpHeaderPutRange(header, 0, NULL), HTTP_HEADER_RANGE_STR), NULL, "do not put range header");
+        TEST_RESULT_STR_Z(
+            httpHeaderGet(httpHeaderPutRange(header, 1, VARUINT64(21)), HTTP_HEADER_RANGE_STR), "bytes=1-21",
+            "put range header with offset and limit");
+        TEST_RESULT_STR_Z(
+            httpHeaderGet(httpHeaderPutRange(header, 0, VARUINT64(21)), HTTP_HEADER_RANGE_STR), "bytes=0-20",
+            "put range header with offset and limit");
+        TEST_RESULT_STR_Z(
+            httpHeaderGet(httpHeaderPutRange(header, 44, NULL), HTTP_HEADER_RANGE_STR), "bytes=44-",
+            "put range header with offset");
+
+        TEST_RESULT_STR_Z(httpHeaderToLog(header), "{key1: 'value1', key2: 'value2a, value2b', range: 'bytes=44-'}", "log output");
 
         TEST_RESULT_VOID(httpHeaderFree(header), "free header");
 

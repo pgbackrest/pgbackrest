@@ -1174,8 +1174,6 @@
 
                         <text>
                             <p>Forces a checkpoint (by passing <id>y</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately. Otherwise the backup will start after the next regular checkpoint.</p>
-
-                            <p>This feature only works in <postgres/> &gt;= <id>8.4</id>.</p>
                         </text>
 
                         <example>y</example>
@@ -2112,6 +2110,8 @@
                     <p>The restore command automatically defaults to selecting the latest backup from the first repository where backups exist (see <link page="user-guide" section="/quickstart/perform-restore">Quick Start - Restore a Backup</link>). The order in which the repositories are checked is dictated by the <file>pgbackrest.conf</file> (e.g. repo1 will be checked before repo2). To select from a specific repository, the <br-option>{[dash]}-repo</br-option> option can be passed (e.g. <br-option>{[dash]}-repo=1</br-option>). The <br-option>{[dash]}-set</br-option> option can be passed if a backup other than the latest is desired.</p>
 
                     <p>When PITR of <br-option>{[dash]}-type=time</br-option> is specified, then the target time must be specified with the <br-option>{[dash]}-target</br-option> option. If a backup is not specified via the <br-option>{[dash]}-set</br-option> option, then the configured repositories will be checked, in order, for a backup that contains the requested time. If no backup can be found, the latest backup from the first repository containing backups will be used. For other types of PITR, e.g. <id>xid</id>, the <br-option>{[dash]}-set</br-option> option must be provided if the target is prior to the latest backup. See <link page="user-guide" section="/pitr">Point-in-Time Recovery</link> for more details and examples.</p>
+
+                    <p>Replication slots are not included per recommendation of <postgres/>. See <link url="https://www.postgresql.org/docs/current/continuous-archiving.html#BACKUP-LOWLEVEL-BASE-BACKUP-DATA">Backing Up The Data Directory</link> in the <postgres/> documentation for more information.</p>
                 </text>
 
                 <option-list>

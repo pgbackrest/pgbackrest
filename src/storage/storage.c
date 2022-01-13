@@ -115,15 +115,7 @@ storageCopy(StorageRead *source, StorageWrite *destination)
             ioWriteOpen(storageWriteIo(destination));
 
             // Copy data from source to destination
-            Buffer *read = bufNew(ioBufferSize());
-
-            do
-            {
-                ioRead(storageReadIo(source), read);
-                ioWrite(storageWriteIo(destination), read);
-                bufUsedZero(read);
-            }
-            while (!ioReadEof(storageReadIo(source)));
+            ioCopy(storageReadIo(source), storageWriteIo(destination));
 
             // Close the source and destination files
             ioReadClose(storageReadIo(source));
@@ -616,11 +608,11 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
+        FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(storageFeature(this, storageFeatureLimitRead) || param.limit == NULL);
     ASSERT(param.limit == NULL || varType(param.limit) == varTypeUInt64);
 
     StorageRead *result = NULL;
@@ -630,7 +622,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
         result = storageReadMove(
             storageInterfaceNewReadP(
                 storageDriver(this), storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible,
-                .limit = param.limit),
+                .offset = param.offset, .limit = param.limit),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

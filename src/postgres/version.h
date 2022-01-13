@@ -12,8 +12,6 @@ PostgreSQL name
 /***********************************************************************************************************************************
 PostgreSQL version constants
 ***********************************************************************************************************************************/
-#define PG_VERSION_83                                                80300
-#define PG_VERSION_84                                                80400
 #define PG_VERSION_90                                                90000
 #define PG_VERSION_91                                                90100
 #define PG_VERSION_92                                                90200
@@ -32,9 +30,6 @@ PostgreSQL version constants
 /***********************************************************************************************************************************
 Version where various PostgreSQL capabilities were introduced
 ***********************************************************************************************************************************/
-// application_name can be set to show the application name in pg_stat_activity
-#define PG_VERSION_APPLICATION_NAME                                 PG_VERSION_90
-
 // pg_is_in_recovery() supported
 #define PG_VERSION_HOT_STANDBY                                      PG_VERSION_91
 
@@ -65,8 +60,6 @@ Version where various PostgreSQL capabilities were introduced
 /***********************************************************************************************************************************
 PostgreSQL version string constants for use in error messages
 ***********************************************************************************************************************************/
-#define PG_VERSION_83_STR                                            "8.3"
-#define PG_VERSION_84_STR                                            "8.4"
 #define PG_VERSION_90_STR                                            "9.0"
 #define PG_VERSION_91_STR                                            "9.1"
 #define PG_VERSION_92_STR                                            "9.2"
