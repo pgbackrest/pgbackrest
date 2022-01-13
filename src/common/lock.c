@@ -13,6 +13,7 @@ Lock Handler
 #include "common/io/fdWrite.h"
 #include "common/lock.h"
 #include "common/log.h"
+#include "common/type/json.h"
 #include "common/memContext.h"
 #include "common/wait.h"
 #include "storage/helper.h"
@@ -25,6 +26,8 @@ Constants
 // Indicates a lock that was made by matching exec-id rather than holding an actual lock. This disguishes it from -1, which is a
 // general system error.
 #define LOCK_ON_EXEC_ID                                             -2
+VARIANT_STRDEF_STATIC(EXEC_ID_VAR,                                  "execId");
+VARIANT_STRDEF_STATIC(PERCENTAGE_COMPLETE_VAR,                      "percentageComplete");
 
 /***********************************************************************************************************************************
 Lock type names
@@ -110,7 +113,7 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
                     // Parse the file and see if the exec id matches
                     const StringList *parse = strLstNewSplitZ(strNewZN(buffer, (size_t)actualBytes), LF_Z);
 
-                    if (strLstSize(parse) == 3 && strEq(strLstGet(parse, 1), execId))
+                    if (strLstSize(parse) == 3 && strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), EXEC_ID_VAR)), execId))
                         result = LOCK_ON_EXEC_ID;
                     else
                         result = -1;
@@ -142,8 +145,12 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
         }
         else if (result != LOCK_ON_EXEC_ID)
         {
-            // Write pid of the current process
-            ioFdWriteOneStr(result, strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(execId)));
+            // Prepare kv store to write as json
+            KeyValue *keyValue = kvNew();
+            kvPut(keyValue, EXEC_ID_VAR, varNewStr(execId));
+
+            // Write pid and execID of the current process
+            ioFdWriteOneStr(result, strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -279,4 +286,59 @@ lockRelease(bool failOnNoLock)
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+bool
+writeLockPercentageComplete(const String *lockPath, const String *stanza, const String *execId, const double percentageComplete)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+    FUNCTION_LOG_PARAM(STRING, stanza);
+    FUNCTION_LOG_PARAM(STRING, execId);
+    FUNCTION_LOG_PARAM(DOUBLE, percentageComplete);
+    FUNCTION_LOG_END();
+
+    ASSERT(lockPath != NULL);
+    ASSERT(stanza != NULL);
+    ASSERT(execId != NULL);
+
+    bool status = false;
+
+    // This context should already exist, noop if it doesn't
+    if (lockMemContext != NULL)
+    {
+        MEM_CONTEXT_BEGIN(lockMemContext)
+        {
+            // We are only interested in the backup lock file
+            const String *const lockFPtr = strNewFmt(
+                    "%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockTypeBackup]);
+
+            // If backup lock file exists, locate the file descriptor and update the content of the file.
+            if (storageExistsP(storageLocal(), lockFPtr))
+            {
+                LockType lockMin = lockTypeHeld == lockTypeAll ? lockTypeArchive : lockTypeHeld;
+                LockType lockMax = lockTypeHeld == lockTypeAll ? (lockTypeAll - 1) : lockTypeHeld;
+                for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
+                {
+                    if (strEq(lockFile[lockIdx], lockFPtr))
+                    {
+                        // Build kv for second line json
+                        KeyValue *keyValue = kvNew();
+                        kvPut(keyValue, EXEC_ID_VAR, varNewStr(execId));
+                        const String *const percentageCompleteStr = strNewFmt("%.2lf", percentageComplete);
+                        kvPut(keyValue, PERCENTAGE_COMPLETE_VAR, varNewStr(percentageCompleteStr));
+
+                        // Move to the beginning of the file, and overwrite the contents with the udpated data
+                        lseek(lockFd[lockIdx], 0, SEEK_SET);
+                        ioFdWriteOneStr(lockFd[lockIdx], strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))));
+
+                        status = true;
+                    }
+                }
+            }
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, status);
 }

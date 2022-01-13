@@ -1449,7 +1449,11 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, NULL), AssertError, "error message");
+        double currentPercentageComplete = 0.0;
+        TEST_ERROR(
+            backupJobResult(
+                (Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, NULL, &currentPercentageComplete), AssertError,
+                "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report host/100% progress on noop result");
@@ -1478,9 +1482,11 @@ testRun(void)
         OBJ_NEW_END();
 
         uint64_t sizeProgress = 0;
-
+        currentPercentageComplete = 0.0;
         TEST_RESULT_VOID(
-            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, &sizeProgress), "log noop result");
+            backupJobResult(
+                manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, &sizeProgress, &currentPercentageComplete),
+                "log noop result");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:log-test (0B, 100%)");
     }
