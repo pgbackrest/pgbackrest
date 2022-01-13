@@ -297,6 +297,7 @@ testRun(void)
             "  --repo-s3-key                    S3 repository access key\n"
             "  --repo-s3-key-secret             S3 repository secret access key\n"
             "  --repo-s3-key-type               S3 repository key type [default=shared]\n"
+            "  --repo-s3-kms-key-id             S3 repository KMS key\n"
             "  --repo-s3-region                 S3 repository region\n"
             "  --repo-s3-role                   S3 repository role\n"
             "  --repo-s3-token                  S3 repository security token\n"
