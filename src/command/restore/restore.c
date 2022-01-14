@@ -533,22 +533,22 @@ restoreManifestMap(Manifest *manifest)
                 if (target.name == NULL)
                 {
                     // Is the specified link a file or a path? Error if they both match.
-                    const ManifestPath *const path = manifestPathFindDefault(manifest, manifestName, NULL);
-                    const ManifestFile *const file = manifestFileFindDefault(manifest, manifestName, NULL);
+                    const bool pathExists = manifestPathFindDefault(manifest, manifestName, NULL) != NULL;
+                    const bool fileExists = manifestFileExists(manifest, manifestName);
 
-                    CHECK(FormatError, path == NULL || file == NULL, "link may not be both file and path");
+                    CHECK(FormatError, !pathExists || !fileExists, "link may not be both file and path");
 
                     target = (ManifestTarget){.name = manifestName, .path = linkPath, .type = manifestTargetTypeLink};
 
                     // If a file
-                    if (file != NULL)
+                    if (fileExists)
                     {
                         // File needs to be set so the file/path is updated later but set it to something invalid just in case it
                         // it does not get updated due to a regression
                         target.file = DOT_STR;
                     }
                     // Else error if not a path
-                    else if (path == NULL)
+                    else if (!pathExists)
                     {
                         THROW_FMT(
                             LinkMapError,
@@ -654,39 +654,39 @@ restoreManifestMap(Manifest *manifest)
 Check ownership of items in the manifest
 ***********************************************************************************************************************************/
 // Helper to get list of owners from a file/link/path list
-#define RESTORE_MANIFEST_OWNER_GET(type)                                                                                           \
+#define RESTORE_MANIFEST_OWNER_GET(type, deref)                                                                                    \
     for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
     {                                                                                                                              \
-        Manifest##type *item = (Manifest##type *)manifest##type(manifest, itemIdx);                                                \
+        Manifest##type item = deref manifest##type(manifest, itemIdx);                                                             \
                                                                                                                                    \
-        if (item->user == NULL)                                                                                                    \
+        if (item.user == NULL)                                                                                                     \
             userNull = true;                                                                                                       \
         else                                                                                                                       \
-            strLstAddIfMissing(userList, item->user);                                                                              \
+            strLstAddIfMissing(userList, item.user);                                                                               \
                                                                                                                                    \
-        if (item->group == NULL)                                                                                                   \
+        if (item.group == NULL)                                                                                                    \
             groupNull = true;                                                                                                      \
         else                                                                                                                       \
-            strLstAddIfMissing(groupList, item->group);                                                                            \
+            strLstAddIfMissing(groupList, item.group);                                                                             \
                                                                                                                                    \
         if (!userRoot())                                                                                                           \
         {                                                                                                                          \
-            item->user = NULL;                                                                                                     \
-            item->group = NULL;                                                                                                    \
+            item.user = NULL;                                                                                                      \
+            item.group = NULL;                                                                                                     \
         }                                                                                                                          \
     }
 
 // Helper to update an owner in a file/link/path list
-#define RESTORE_MANIFEST_OWNER_NULL_UPDATE(type, user, group)                                                                      \
+#define RESTORE_MANIFEST_OWNER_NULL_UPDATE(type, user, group, deref)                                                               \
     for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
     {                                                                                                                              \
-        Manifest##type *item = (Manifest##type *)manifest##type(manifest, itemIdx);                                                \
+        Manifest##type item =  deref manifest##type(manifest, itemIdx);                                                            \
                                                                                                                                    \
-        if (item->user == NULL)                                                                                                    \
-            item->user = user;                                                                                                     \
+        if (item.user == NULL)                                                                                                     \
+            item.user = user;                                                                                                      \
                                                                                                                                    \
-        if (item->group == NULL)                                                                                                   \
-            item->group = group;                                                                                                   \
+        if (item.group == NULL)                                                                                                    \
+            item.group = group;                                                                                                    \
     }
 
 // Helper to warn when an owner is missing and must be remapped
@@ -724,9 +724,9 @@ restoreManifestOwner(Manifest *manifest)
         bool groupNull = false;
         StringList *groupList = strLstNew();
 
-        RESTORE_MANIFEST_OWNER_GET(File);
-        RESTORE_MANIFEST_OWNER_GET(Link);
-        RESTORE_MANIFEST_OWNER_GET(Path);
+        RESTORE_MANIFEST_OWNER_GET(File, );
+        RESTORE_MANIFEST_OWNER_GET(Link, *(ManifestLink *));
+        RESTORE_MANIFEST_OWNER_GET(Path, *(ManifestPath *));
 
         // Update users and groups in the manifest (this can only be done as root)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -755,9 +755,9 @@ restoreManifestOwner(Manifest *manifest)
                     const String *user = strDup(pathInfo.user);
                     const String *group = strDup(pathInfo.group);
 
-                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(File, user, group)
-                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Link, user, group)
-                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Path, user, group)
+                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(File, user, group, )
+                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Link, user, group, *(ManifestLink *))
+                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Path, user, group, *(ManifestPath *))
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
@@ -920,12 +920,13 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
     {
         case storageTypeFile:
         {
-            const ManifestFile *manifestFile = manifestFileFindDefault(cleanData->manifest, manifestName, NULL);
-
-            if (manifestFile != NULL && manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
+            if (manifestFileExists(cleanData->manifest, manifestName) &&
+                manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
             {
-                restoreCleanOwnership(pgPath, manifestFile->user, manifestFile->group, info->userId, info->groupId, false);
-                restoreCleanMode(pgPath, manifestFile->mode, info);
+                const ManifestFile manifestFile = manifestFileFind(cleanData->manifest, manifestName);
+
+                restoreCleanOwnership(pgPath, manifestFile.user, manifestFile.group, info->userId, info->groupId, false);
+                restoreCleanMode(pgPath, manifestFile.mode, info);
             }
             else
             {
@@ -1123,7 +1124,7 @@ restoreCleanBuild(Manifest *manifest)
 
         // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links will be
         // created after paths are cleaned.
-        if (manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP), NULL) != NULL &&
+        if (manifestFileExists(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)) &&
             manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
         {
             LOG_DETAIL_FMT("skip '" PG_FILE_TABLESPACEMAP "' -- tablespace links will be created based on mappings");
@@ -1132,7 +1133,7 @@ restoreCleanBuild(Manifest *manifest)
 
         // Skip postgresql.auto.conf if preserve is set and the PostgreSQL version supports recovery GUCs
         if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC && cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE &&
-            manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF), NULL) != NULL)
+            manifestFileExists(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)))
         {
             LOG_DETAIL_FMT("skip '" PG_FILE_POSTGRESQLAUTOCONF "' -- recovery type is preserve");
             manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF));
@@ -1325,11 +1326,11 @@ restoreSelectiveExpression(Manifest *manifest)
 
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
-                const ManifestFile *file = manifestFile(manifest, fileIdx);
+                const ManifestFile file = manifestFile(manifest, fileIdx);
 
-                if (regExpMatch(baseRegExp, file->name) || regExpMatch(tablespaceRegExp, file->name))
+                if (regExpMatch(baseRegExp, file.name) || regExpMatch(tablespaceRegExp, file.name))
                 {
-                    String *dbId = strBase(strPath(file->name));
+                    String *dbId = strBase(strPath(file.name));
 
                     // In the highly unlikely event that a system database was somehow added after the backup began, it will only be
                     // found in the file list and not the manifest db section, so add it to the system database list
@@ -1944,7 +1945,8 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         // Now put all files into the processing queues
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
+            const void *const filePack = manifestFilePack(manifest, fileIdx);
+            const ManifestFile file = manifestFileUnpack(filePack);
 
             // Find the target that contains this file
             unsigned int targetIdx = 0;
@@ -1954,7 +1956,7 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
                 // A target should always be found
                 CHECK(FormatError, targetIdx < strLstSize(targetList), "backup target not found");
 
-                if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
+                if (strBeginsWith(file.name, strLstGet(targetList, targetIdx)))
                     break;
 
                 targetIdx++;
@@ -1962,10 +1964,10 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
             while (1);
 
             // Add file to queue
-            lstAdd(*(List **)lstGet(*queueList, targetIdx), &file);
+            lstAdd(*(List **)lstGet(*queueList, targetIdx), &filePack);
 
             // Add size to total
-            result += file->size;
+            result += file.size;
         }
 
         // Sort the queues
@@ -2036,8 +2038,8 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const ManifestFile *file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
-            bool zeroed = restoreFileZeroed(file->name, zeroExp);
+            const ManifestFile file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
+            bool zeroed = restoreFileZeroed(file.name, zeroExp);
             bool copy = pckReadBoolP(protocolParallelJobResult(job));
 
             String *log = strCatZ(strNew(), "restore");
@@ -2047,7 +2049,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                 strCatZ(log, " zeroed");
 
             // Add filename
-            strCatFmt(log, " file %s", strZ(restoreFilePgPath(manifest, file->name)));
+            strCatFmt(log, " file %s", strZ(restoreFilePgPath(manifest, file.name)));
 
             // If not copied and not zeroed add details to explain why it was not copied
             if (!copy && !zeroed)
@@ -2058,8 +2060,8 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                 if (cfgOptionBool(cfgOptForce))
                 {
                     strCatFmt(
-                        log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file->size,
-                        (uint64_t)file->timestamp);
+                        log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file.size,
+                        (uint64_t)file.timestamp);
                 }
                 // Else a checksum delta or file is zero-length
                 else
@@ -2067,7 +2069,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                     strCatZ(log, "exists and ");
 
                     // No need to copy zero-length files
-                    if (file->size == 0)
+                    if (file.size == 0)
                     {
                         strCatZ(log, "is zero size");
                     }
@@ -2078,12 +2080,12 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             }
 
             // Add size and percent complete
-            sizeRestored += file->size;
-            strCatFmt(log, " (%s, %" PRIu64 "%%)", strZ(strSizeFormat(file->size)), sizeRestored * 100 / sizeTotal);
+            sizeRestored += file.size;
+            strCatFmt(log, " (%s, %" PRIu64 "%%)", strZ(strSizeFormat(file.size)), sizeRestored * 100 / sizeTotal);
 
             // If not zero-length add the checksum
-            if (file->size != 0 && !zeroed)
-                strCatFmt(log, " checksum %s", file->checksumSha1);
+            if (file.size != 0 && !zeroed)
+                strCatFmt(log, " checksum %s", file.checksumSha1);
 
             LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
         }
@@ -2160,24 +2162,24 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
             if (!lstEmpty(queue))
             {
-                const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
+                const ManifestFile file = manifestFileUnpack(*(ManifestFile **)lstGet(queue, 0));
 
                 // Create restore job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
                 PackWrite *const param = protocolCommandParam(command);
 
-                pckWriteStrP(param, file->name);
+                pckWriteStrP(param, file.name);
                 pckWriteU32P(param, jobData->repoIdx);
-                pckWriteStrP(param, file->reference != NULL ? file->reference : manifestData(jobData->manifest)->backupLabel);
+                pckWriteStrP(param, file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel);
                 pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
-                pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file->name));
-                pckWriteStrP(param, STR(file->checksumSha1));
-                pckWriteBoolP(param, restoreFileZeroed(file->name, jobData->zeroExp));
-                pckWriteU64P(param, file->size);
-                pckWriteTimeP(param, file->timestamp);
-                pckWriteModeP(param, file->mode);
-                pckWriteStrP(param, file->user);
-                pckWriteStrP(param, file->group);
+                pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
+                pckWriteStrP(param, STR(file.checksumSha1));
+                pckWriteBoolP(param, restoreFileZeroed(file.name, jobData->zeroExp));
+                pckWriteU64P(param, file.size);
+                pckWriteTimeP(param, file.timestamp);
+                pckWriteModeP(param, file.mode);
+                pckWriteStrP(param, file.user);
+                pckWriteStrP(param, file.group);
                 pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
                 pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
                 pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
@@ -2189,7 +2191,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 // Assign job to result
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = protocolParallelJobNew(VARSTR(file->name), command);
+                    result = protocolParallelJobNew(VARSTR(file.name), command);
                 }
                 MEM_CONTEXT_PRIOR_END();
 

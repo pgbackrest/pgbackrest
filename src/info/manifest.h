@@ -266,21 +266,29 @@ manifestDbTotal(const Manifest *const this)
 /***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
+ManifestFile manifestFileUnpack(const void *filePack);
+
+__attribute__((always_inline)) static inline const void *
+manifestFilePack(const Manifest *const this, const unsigned int fileIdx)
+{
+    return (void *)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
+}
+
 __attribute__((always_inline)) static inline ManifestFile
 manifestFile(const Manifest *const this, const unsigned int fileIdx)
 {
-    return lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
+    return manifestFileUnpack(manifestFilePack(this, fileIdx));
 }
 
 void manifestFileAdd(Manifest *this, const ManifestFile *file);
 ManifestFile manifestFileFind(const Manifest *this, const String *name);
 
 // If the file requested is not found in the list, return the default passed rather than throw an error
-ManifestFile *
-manifestFileFindDefault(const Manifest *const this, const String *const name, const ManifestFile *const fileDefault)
+__attribute__((always_inline)) static inline bool
+manifestFileExists(const Manifest *const this, const String *const name)
 {
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(THIS_PUB(Manifest)->fileList, &name, (void *)fileDefault);
+    return lstFindDefault(THIS_PUB(Manifest)->fileList, &name, NULL) != NULL;
 }
 
 void manifestFileRemove(const Manifest *this, const String *name);

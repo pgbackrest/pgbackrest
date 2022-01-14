@@ -76,7 +76,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
             // Check against the manifest
             // ---------------------------------------------------------------------------------------------------------------------
-            const ManifestFile *file = manifestFileFind(data->manifest, manifestName);
+            ManifestFile *const file = lstFind(data->manifest->pub.fileList, &manifestName);
 
             // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the same
             // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
@@ -1748,8 +1748,9 @@ testRun(void)
                 storagePg(), PG_FILE_PGVERSION, storageRepoWrite(),
                 strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(resumeLabel))));
 
+            const String *manifestName = STRDEF("pg_data/PG_VERSION");
             strcpy(
-                ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/PG_VERSION")))->checksumSha1,
+                ((ManifestFile *)lstFind(manifestResume->pub.fileList, &manifestName))->checksumSha1,
                 "06d06bb31b570b94d7b4325f511f853dbe771c21");
 
             // Save the resume manifest
@@ -1841,7 +1842,8 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strZ(resumeLabel))));
 
-            ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/global/pg_control")))->checksumSha1[0] = 0;
+            const String *manifestName = STRDEF("pg_data/global/pg_control");
+            ((ManifestFile *)lstFind(manifestResume->pub.fileList, &manifestName))->checksumSha1[0] = 0;
 
             // Size does not match between cluster and resume manifest
             HRN_STORAGE_PUT_Z(storagePgWrite(), "size-mismatch", "TEST", .timeModified = backupTimeStart);

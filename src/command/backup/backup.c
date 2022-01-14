@@ -575,37 +575,43 @@ void backupResumeCallback(void *data, const StorageInfo *info)
             if (fileCompressType != compressTypeNone)
                 manifestName = compressExtStrip(manifestName, fileCompressType);
 
-            // Find the file in both manifests
-            const ManifestFile *file = manifestFileFindDefault(resumeData->manifest, manifestName, NULL);
-            const ManifestFile *fileResume = manifestFileFindDefault(resumeData->manifestResume, manifestName, NULL);
-
             // Check if the file can be resumed or must be removed
             const char *removeReason = NULL;
 
             if (fileCompressType != resumeData->compressType)
                 removeReason = "mismatched compression type";
-            else if (file == NULL)
+            else if (!manifestFileExists(resumeData->manifest, manifestName))
                 removeReason = "missing in manifest";
-            else if (file->reference != NULL)
-                removeReason = "reference in manifest";
-            else if (fileResume == NULL)
-                removeReason = "missing in resumed manifest";
-            else if (fileResume->reference != NULL)
-                removeReason = "reference in resumed manifest";
-            else if (fileResume->checksumSha1[0] == '\0')
-                removeReason = "no checksum in resumed manifest";
-            else if (file->size != fileResume->size)
-                removeReason = "mismatched size";
-            else if (!resumeData->delta && file->timestamp != fileResume->timestamp)
-                removeReason = "mismatched timestamp";
-            else if (file->size == 0)
-                // ??? don't resume zero size files because Perl wouldn't -- this can be removed after the migration)
-                removeReason = "zero size";
             else
             {
-                manifestFileUpdate(
-                    resumeData->manifest, manifestName, file->size, fileResume->sizeRepo, fileResume->checksumSha1, NULL,
-                    fileResume->checksumPage, fileResume->checksumPageError, fileResume->checksumPageErrorList);
+                const ManifestFile file = manifestFileFind(resumeData->manifest, manifestName);
+
+                if (file.reference != NULL)
+                    removeReason = "reference in manifest";
+                else if (!manifestFileExists(resumeData->manifestResume, manifestName))
+                    removeReason = "missing in resumed manifest";
+                else
+                {
+                    const ManifestFile fileResume = manifestFileFind(resumeData->manifestResume, manifestName);
+
+                    if (fileResume.reference != NULL)
+                        removeReason = "reference in resumed manifest";
+                    else if (fileResume.checksumSha1[0] == '\0')
+                        removeReason = "no checksum in resumed manifest";
+                    else if (file.size != fileResume.size)
+                        removeReason = "mismatched size";
+                    else if (!resumeData->delta && file.timestamp != fileResume.timestamp)
+                        removeReason = "mismatched timestamp";
+                    else if (file.size == 0)
+                        // ??? don't resume zero size files because Perl wouldn't -- this can be removed after the migration)
+                        removeReason = "zero size";
+                    else
+                    {
+                        manifestFileUpdate(
+                            resumeData->manifest, manifestName, file.size, fileResume.sizeRepo, fileResume.checksumSha1, NULL,
+                            fileResume.checksumPage, fileResume.checksumPageError, fileResume.checksumPageErrorList);
+                    }
+                }
             }
 
             // Remove the file if it could not be resumed
@@ -1165,7 +1171,7 @@ backupJobResult(
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const ManifestFile *const file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
+            const ManifestFile file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
             const unsigned int processId = protocolParallelJobProcessId(job);
 
             PackRead *const jobResult = protocolParallelJobResult(job);
@@ -1205,7 +1211,7 @@ backupJobResult(
             else if (copyResult == backupCopyResultSkip)
             {
                 LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strZ(fileLog));
-                strLstAdd(fileRemove, file->name);
+                strLstAdd(fileRemove, file.name);
             }
             // Else file was copied so update manifest
             else
@@ -1220,13 +1226,13 @@ backupJobResult(
                         " continue but this may be an issue unless the resumed backup path in the repository is known to be"
                         " corrupted.\n"
                         "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
-                        strZ(file->name), file->checksumSha1);
+                        strZ(file.name), file.checksumSha1);
                 }
 
                 LOG_DETAIL_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
 
                 // If the file had page checksums calculated during the copy
-                ASSERT((!file->checksumPage && checksumPageResult == NULL) || (file->checksumPage && checksumPageResult != NULL));
+                ASSERT((!file.checksumPage && checksumPageResult == NULL) || (file.checksumPage && checksumPageResult != NULL));
 
                 bool checksumPageError = false;
                 const VariantList *checksumPageErrorList = NULL;
@@ -1300,7 +1306,7 @@ backupJobResult(
 
                 // Update file info and remove any reference to the file's existence in a prior backup
                 manifestFileUpdate(
-                    manifest, file->name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file->checksumPage,
+                    manifest, file.name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file.checksumPage,
                     checksumPageError, checksumPageErrorList);
             }
         }
@@ -1450,20 +1456,21 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
+            const void *const filePack = manifestFilePack(manifest, fileIdx);
+            const ManifestFile file = manifestFileUnpack(filePack);
 
             // If the file is a reference it should only be backed up if delta and not zero size
-            if (file->reference != NULL && (!delta || file->size == 0))
+            if (file.reference != NULL && (!delta || file.size == 0))
                 continue;
 
             // Is pg_control in the backup?
-            if (strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
+            if (strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
                 pgControlFound = true;
 
             // Files that must be copied from the primary are always put in queue 0 when backup from standby
-            if (backupStandby && file->primary)
+            if (backupStandby && file.primary)
             {
-                lstAdd(*(List **)lstGet(*queueList, 0), &file);
+                lstAdd(*(List **)lstGet(*queueList, 0), &filePack);
             }
             // Else find the correct queue by matching the file to a target
             else
@@ -1475,7 +1482,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 {
                     CHECK(AssertError, targetIdx < strLstSize(targetList), "backup target not found");
 
-                    if (strBeginsWith(file->name, strLstGet(targetList, targetIdx)))
+                    if (strBeginsWith(file.name, strLstGet(targetList, targetIdx)))
                         break;
 
                     targetIdx++;
@@ -1483,11 +1490,11 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 while (1);
 
                 // Add file to queue
-                lstAdd(*(List **)lstGet(*queueList, targetIdx + queueOffset), &file);
+                lstAdd(*(List **)lstGet(*queueList, targetIdx + queueOffset), &filePack);
             }
 
             // Add size to total
-            result += file->size;
+            result += file.size;
 
             // Increment total files
             fileTotal++;
@@ -1585,21 +1592,21 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
             if (!lstEmpty(queue))
             {
-                const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
+                const ManifestFile file = manifestFileUnpack(*(ManifestFile **)lstGet(queue, 0));
 
                 // Create backup job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
                 PackWrite *const param = protocolCommandParam(command);
 
-                pckWriteStrP(param, manifestPathPg(file->name));
-                pckWriteBoolP(param, !strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
-                pckWriteU64P(param, file->size);
-                pckWriteBoolP(param, !file->primary);
-                pckWriteStrP(param, file->checksumSha1[0] != 0 ? STR(file->checksumSha1) : NULL);
-                pckWriteBoolP(param, file->checksumPage);
+                pckWriteStrP(param, manifestPathPg(file.name));
+                pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
+                pckWriteU64P(param, file.size);
+                pckWriteBoolP(param, !file.primary);
+                pckWriteStrP(param, file.checksumSha1[0] != 0 ? STR(file.checksumSha1) : NULL);
+                pckWriteBoolP(param, file.checksumPage);
                 pckWriteU64P(param, jobData->lsnStart);
-                pckWriteStrP(param, file->name);
-                pckWriteBoolP(param, file->reference != NULL);
+                pckWriteStrP(param, file.name);
+                pckWriteBoolP(param, file.reference != NULL);
                 pckWriteU32P(param, jobData->compressType);
                 pckWriteI32P(param, jobData->compressLevel);
                 pckWriteStrP(param, jobData->backupLabel);
@@ -1613,7 +1620,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 // Assign job to result
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = protocolParallelJobNew(VARSTR(file->name), command);
+                    result = protocolParallelJobNew(VARSTR(file.name), command);
                 }
                 MEM_CONTEXT_PRIOR_END();
 
@@ -1752,7 +1759,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
-                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)), fileRemove, job,
+                            manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job))).name)), fileRemove, job,
                             sizeTotal, &sizeProgress);
                 }
 
@@ -1792,22 +1799,22 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const ManifestFile *const file = manifestFile(manifest, fileIdx);
+            const ManifestFile file = manifestFile(manifest, fileIdx);
 
             // If the file has a reference, then it was not copied since it can be retrieved from the referenced backup. However,
             // if hardlinking is enabled the link will need to be created.
-            if (file->reference != NULL)
+            if (file.reference != NULL)
             {
                 // If hardlinking is enabled then create a hardlink for files that have not changed since the last backup
                 if (hardLink)
                 {
-                    LOG_DETAIL_FMT("hardlink %s to %s",  strZ(file->name), strZ(file->reference));
+                    LOG_DETAIL_FMT("hardlink %s to %s",  strZ(file.name), strZ(file.reference));
 
                     const String *const linkName = storagePathP(
-                        storageRepo(), strNewFmt("%s/%s%s", strZ(backupPathExp), strZ(file->name), compressExt));
+                        storageRepo(), strNewFmt("%s/%s%s", strZ(backupPathExp), strZ(file.name), compressExt));
                     const String *const linkDestination =  storagePathP(
                         storageRepo(),
-                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file->reference), strZ(file->name), compressExt));
+                        strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file.reference), strZ(file.name), compressExt));
 
                     THROW_ON_SYS_ERROR_FMT(
                         link(strZ(linkDestination), strZ(linkName)) == -1, FileOpenError,
@@ -1816,7 +1823,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
                 // recopied.
                 else
-                    LOG_DETAIL_FMT("reference %s to %s", strZ(file->name), strZ(file->reference));
+                    LOG_DETAIL_FMT("reference %s to %s", strZ(file.name), strZ(file.reference));
             }
         }
 
