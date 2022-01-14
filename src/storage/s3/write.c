@@ -125,7 +125,7 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
                     httpResponseContent(
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
-                            .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR)))));
+                            .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true))));
 
             // Store the upload id
             MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
@@ -248,7 +248,10 @@ storageWriteS3Close(THIS_VOID)
             }
             // Else upload all the data in a single put
             else
-                storageS3RequestP(this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer);
+            {
+                storageS3RequestP(
+                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true);
+            }
 
             bufFree(this->partBuffer);
             this->partBuffer = NULL;
