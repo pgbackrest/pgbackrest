@@ -270,10 +270,10 @@ typedef struct ManifestFilePack ManifestFilePack;
 
 ManifestFile manifestFileUnpack(const ManifestFilePack *filePack);
 
-__attribute__((always_inline)) static inline ManifestFilePack *
+__attribute__((always_inline)) static inline const ManifestFilePack *
 manifestFilePackGet(const Manifest *const this, const unsigned int fileIdx)
 {
-    return (void *)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
+    return *(ManifestFilePack **)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
 }
 
 __attribute__((always_inline)) static inline ManifestFile
@@ -283,14 +283,22 @@ manifestFile(const Manifest *const this, const unsigned int fileIdx)
 }
 
 void manifestFileAdd(Manifest *this, const ManifestFile *file);
-ManifestFile manifestFileFind(const Manifest *this, const String *name);
+const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
+
+__attribute__((always_inline)) static inline ManifestFile
+manifestFileFind(const Manifest *const this, const String *const name)
+{
+    ASSERT_INLINE(name != NULL);
+    return manifestFileUnpack(manifestFilePackFind(this, name));
+}
 
 // If the file requested is not found in the list, return the default passed rather than throw an error
 __attribute__((always_inline)) static inline bool
 manifestFileExists(const Manifest *const this, const String *const name)
 {
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(THIS_PUB(Manifest)->fileList, &name, NULL) != NULL;
+    const String *const *const namePtr = &name;
+    return lstFindDefault(THIS_PUB(Manifest)->fileList, &namePtr, NULL) != NULL;
 }
 
 void manifestFileRemove(const Manifest *this, const String *name);

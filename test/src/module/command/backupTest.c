@@ -23,7 +23,7 @@ typedef struct TestBackupValidateCallbackData
 {
     const Storage *storage;                                         // Storage object when needed (e.g. fileCompressed = true)
     const String *path;                                             // Subpath when storage is specified
-    const Manifest *manifest;                                       // Manifest to check for files/links/paths
+    Manifest *manifest;                                             // Manifest to check for files/links/paths
     const ManifestData *manifestData;                               // Manifest data
     String *content;                                                // String where content should be added
 } TestBackupValidateCallbackData;
@@ -76,30 +76,31 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
             // Check against the manifest
             // ---------------------------------------------------------------------------------------------------------------------
-            ManifestFile *const file = lstFind(data->manifest->pub.fileList, &manifestName);
+            ManifestFilePack **const filePack = manifestFilePackFindInternal(data->manifest, manifestName);
+            ManifestFile file = manifestFileUnpack(*filePack);
 
             // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the same
             // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
             // compression.
-            if (size != file->size)
+            if (size != file.size)
                 THROW_FMT(AssertError, "'%s' size does match manifest", strZ(manifestName));
 
-            if (info->size != file->sizeRepo)
+            if (info->size != file.sizeRepo)
                 THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(manifestName));
 
             if (data->manifestData->backupOptionCompressType != compressTypeNone)
-                ((ManifestFile *)file)->sizeRepo = file->size;
+                file.sizeRepo = file.size;
 
             // Test the checksum. pg_control and WAL headers have different checksums depending on cpu architecture so remove
             // the checksum from the test output.
-            if (!strEqZ(checksum, file->checksumSha1))
+            if (!strEqZ(checksum, file.checksumSha1))
                 THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(manifestName));
 
             if (strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
                 strBeginsWith(
                     manifestName, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(data->manifestData->pgVersion)))))
             {
-                ((ManifestFile *)file)->checksumSha1[0] = '\0';
+                file.checksumSha1[0] = '\0';
             }
 
             // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
@@ -112,6 +113,9 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
             if (!strEq(info->group, TEST_GROUP_STR))
                 THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(manifestName));
+
+            // Update changes to manifest file
+            manifestFilePackUpdate(data->manifest, filePack, &file);
 
             break;
         }
@@ -1748,10 +1752,12 @@ testRun(void)
                 storagePg(), PG_FILE_PGVERSION, storageRepoWrite(),
                 strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(resumeLabel))));
 
-            const String *manifestName = STRDEF("pg_data/PG_VERSION");
-            strcpy(
-                ((ManifestFile *)lstFind(manifestResume->pub.fileList, &manifestName))->checksumSha1,
-                "06d06bb31b570b94d7b4325f511f853dbe771c21");
+            ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/PG_VERSION"));
+            ManifestFile file = manifestFileUnpack(*filePack);
+
+            strcpy(file.checksumSha1, "06d06bb31b570b94d7b4325f511f853dbe771c21");
+
+            manifestFilePackUpdate(manifestResume, filePack, &file);
 
             // Save the resume manifest
             manifestSave(
@@ -1842,8 +1848,12 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strZ(resumeLabel))));
 
-            const String *manifestName = STRDEF("pg_data/global/pg_control");
-            ((ManifestFile *)lstFind(manifestResume->pub.fileList, &manifestName))->checksumSha1[0] = 0;
+            ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/global/pg_control"));
+            ManifestFile file = manifestFileUnpack(*filePack);
+
+            file.checksumSha1[0] = 0;
+
+            manifestFilePackUpdate(manifestResume, filePack, &file);
 
             // Size does not match between cluster and resume manifest
             HRN_STORAGE_PUT_Z(storagePgWrite(), "size-mismatch", "TEST", .timeModified = backupTimeStart);
