@@ -1456,7 +1456,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const void *const filePack = manifestFilePack(manifest, fileIdx);
+            const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
             const ManifestFile file = manifestFileUnpack(filePack);
 
             // If the file is a reference it should only be backed up if delta and not zero size
@@ -1592,7 +1592,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
             if (!lstEmpty(queue))
             {
-                const ManifestFile file = manifestFileUnpack(*(ManifestFile **)lstGet(queue, 0));
+                const ManifestFile file = manifestFileUnpack(*(ManifestFilePack **)lstGet(queue, 0));
 
                 // Create backup job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);

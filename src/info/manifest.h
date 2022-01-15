@@ -266,10 +266,12 @@ manifestDbTotal(const Manifest *const this)
 /***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
-ManifestFile manifestFileUnpack(const void *filePack);
+typedef struct ManifestFilePack ManifestFilePack;
 
-__attribute__((always_inline)) static inline const void *
-manifestFilePack(const Manifest *const this, const unsigned int fileIdx)
+ManifestFile manifestFileUnpack(const ManifestFilePack *filePack);
+
+__attribute__((always_inline)) static inline ManifestFilePack *
+manifestFilePackGet(const Manifest *const this, const unsigned int fileIdx)
 {
     return (void *)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
 }
@@ -277,7 +279,7 @@ manifestFilePack(const Manifest *const this, const unsigned int fileIdx)
 __attribute__((always_inline)) static inline ManifestFile
 manifestFile(const Manifest *const this, const unsigned int fileIdx)
 {
-    return manifestFileUnpack(manifestFilePack(this, fileIdx));
+    return manifestFileUnpack(manifestFilePackGet(this, fileIdx));
 }
 
 void manifestFileAdd(Manifest *this, const ManifestFile *file);

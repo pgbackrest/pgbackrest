@@ -1961,7 +1961,7 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         // Now put all files into the processing queues
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const void *const filePack = manifestFilePack(manifest, fileIdx);
+            const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
             const ManifestFile file = manifestFileUnpack(filePack);
 
             // Find the target that contains this file
@@ -2180,7 +2180,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
             if (!lstEmpty(queue))
             {
-                const ManifestFile file = manifestFileUnpack(*(ManifestFile **)lstGet(queue, 0));
+                const ManifestFile file = manifestFileUnpack(*(ManifestFilePack **)lstGet(queue, 0));
 
                 // Create restore job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);

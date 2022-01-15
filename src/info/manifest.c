@@ -202,7 +202,7 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-// static void *
+// static ManifestFilePack *
 // manifestFilePack(const ManifestFile *const file)
 // {
 //     FUNCTION_TEST_BEGIN();
@@ -242,7 +242,7 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
 // }
 
 ManifestFile
-manifestFileUnpack(const void *const filePack)
+manifestFileUnpack(const ManifestFilePack *const filePack)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, filePack);
@@ -2712,7 +2712,7 @@ manifestFileFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const void *const filePack = lstFind(this->pub.fileList, &name);
+    const ManifestFilePack *const filePack = lstFind(this->pub.fileList, &name);
 
     if (filePack == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strZ(name));
