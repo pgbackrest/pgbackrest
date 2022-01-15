@@ -653,6 +653,18 @@ restoreManifestMap(Manifest *manifest)
 /***********************************************************************************************************************************
 Check ownership of items in the manifest
 ***********************************************************************************************************************************/
+// Helper to determine what the user/group of a path/file/link should be
+static const String *
+restoreManifestOwnerReplace(const String *const owner, const String *const ownerDefaultRoot)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, owner);
+        FUNCTION_TEST_PARAM(STRING, ownerDefaultRoot);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(userRoot() ? (owner == NULL ? ownerDefaultRoot : owner) : NULL);
+}
+
 // Helper to get list of owners from a file/link/path list
 #define RESTORE_MANIFEST_OWNER_GET(type, deref)                                                                                    \
     for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
@@ -687,19 +699,8 @@ Check ownership of items in the manifest
     }                                                                                                                              \
     while (0)
 
-static const String *
-restoreManifestOwnerReplace(const String *const owner, const String *const ownerDefaultRoot)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, owner);
-        FUNCTION_TEST_PARAM(STRING, ownerDefaultRoot);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(userRoot() ? (owner == NULL ? ownerDefaultRoot : owner) : NULL);
-}
-
 static void
-restoreManifestOwner(Manifest *manifest, const String **rootReplaceUser, const String **rootReplaceGroup)
+restoreManifestOwner(const Manifest *const manifest, const String **const rootReplaceUser, const String **const rootReplaceGroup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -789,7 +790,7 @@ typedef struct RestoreCleanCallbackData
 static void
 restoreCleanOwnership(
     const String *const pgPath, const String *manifestUserName, const String *const rootReplaceUser,
-    const String *manifestGroupName, const String *const rootReplaceGroup, const uid_t actualUserId, gid_t const actualGroupId,
+    const String *manifestGroupName, const String *const rootReplaceGroup, const uid_t actualUserId, const gid_t actualGroupId,
     const bool new)
 {
     FUNCTION_TEST_BEGIN();
@@ -1005,7 +1006,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 }
 
 static void
-restoreCleanBuild(Manifest *manifest, const String *const rootReplaceUser, const String *const rootReplaceGroup)
+restoreCleanBuild(const Manifest *const manifest, const String *const rootReplaceUser, const String *const rootReplaceGroup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);

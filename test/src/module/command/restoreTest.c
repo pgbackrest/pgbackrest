@@ -965,6 +965,9 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
 
+        TEST_RESULT_STR(rootReplaceUser, NULL, "root replace user not set");
+        TEST_RESULT_STR(rootReplaceGroup, NULL, "root replace group not set");
+
         TEST_RESULT_LOG(
             "P00   WARN: unknown user '" TEST_USER "' in backup manifest mapped to current user\n"
             "P00   WARN: unknown group '" TEST_GROUP "' in backup manifest mapped to current group");
@@ -984,6 +987,9 @@ testRun(void)
         manifestLinkAdd(manifest, &link);
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, NULL, "root replace user not set");
+        TEST_RESULT_STR(rootReplaceGroup, NULL, "root replace group not set");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to current user\n"
@@ -1008,12 +1014,18 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
 
+        TEST_RESULT_STR(rootReplaceUser, NULL, "root replace user not set");
+        TEST_RESULT_STR(rootReplaceGroup, NULL, "root replace group not set");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is root and user is bad");
 
         manifestPathAdd(manifest, &path);
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, TEST_USER_STR, "root replace user set");
+        TEST_RESULT_STR(rootReplaceGroup, TEST_GROUP_STR, "root replace group set");
 
         TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '" TEST_GROUP "'");
 
@@ -1026,6 +1038,9 @@ testRun(void)
         manifestLinkAdd(manifest, &link);
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, TEST_USER_STR, "root replace user set");
+        TEST_RESULT_STR(rootReplaceGroup, TEST_GROUP_STR, "root replace group set");
 
         TEST_RESULT_LOG("P00   WARN: unknown user in backup manifest mapped to '" TEST_USER "'");
 
@@ -1046,6 +1061,9 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
 
+        TEST_RESULT_STR(rootReplaceUser, STRDEF("root"), "root replace user set");
+        TEST_RESULT_STR(rootReplaceGroup, STRDEF("root"), "root replace group set");
+
         TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to 'root'\n"
             "P00   WARN: unknown group in backup manifest mapped to 'root'");
@@ -1058,8 +1076,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("restoreClean*()"))
     {
-        userInitInternal();
-
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
 
@@ -1076,12 +1092,8 @@ testRun(void)
 
         TEST_RESULT_LOG("P00 DETAIL: update ownership for '" TEST_PATH "'");
 
-        userInitInternal();
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restoreCleanOwnership() update to bogus (new)");
-
-        userLocalData.userRoot = true;
 
         // Will succeed because bogus will be remapped to the current user/group
         restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), NULL, STRDEF("bogus"), NULL, 0, 0, true);
