@@ -60,6 +60,7 @@
                 <release-development-list>
                     <release-item>
                         <commit subject="Add read range to all storage drivers."/>
+                        <commit subject="Implement restore ownership without updating manifest internals."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

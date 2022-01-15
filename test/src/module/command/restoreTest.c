@@ -950,7 +950,10 @@ testRun(void)
         TEST_TITLE("owner is not root and all ownership is good");
 
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        const String *rootReplaceUser = NULL;
+        const String *rootReplaceGroup = NULL;
+
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is not root but has no user name");
@@ -960,7 +963,10 @@ testRun(void)
         userLocalData.groupName = NULL;
         userLocalData.userName = NULL;
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, NULL, "root replace user not set");
+        TEST_RESULT_STR(rootReplaceGroup, NULL, "root replace group not set");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user '" TEST_USER "' in backup manifest mapped to current user\n"
@@ -980,7 +986,10 @@ testRun(void)
         ManifestLink link = {.name = STRDEF("pg_data/bogus_link"), .destination = STRDEF("/"), .group = STRDEF("link-group-bogus")};
         manifestLinkAdd(manifest, &link);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, NULL, "root replace user not set");
+        TEST_RESULT_STR(rootReplaceGroup, NULL, "root replace group not set");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to current user\n"
@@ -1003,14 +1012,20 @@ testRun(void)
 
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, NULL, "root replace user not set");
+        TEST_RESULT_STR(rootReplaceGroup, NULL, "root replace group not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is root and user is bad");
 
         manifestPathAdd(manifest, &path);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, TEST_USER_STR, "root replace user set");
+        TEST_RESULT_STR(rootReplaceGroup, TEST_GROUP_STR, "root replace group set");
 
         TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '" TEST_GROUP "'");
 
@@ -1018,14 +1033,18 @@ testRun(void)
         TEST_TITLE("owner is root and group is bad");
 
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
-        userLocalData.userRoot = true;
 
         manifestFileAdd(manifest, &file);
         manifestLinkAdd(manifest, &link);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, TEST_USER_STR, "root replace user set");
+        TEST_RESULT_STR(rootReplaceGroup, TEST_GROUP_STR, "root replace group set");
 
         TEST_RESULT_LOG("P00   WARN: unknown user in backup manifest mapped to '" TEST_USER "'");
+
+        userInitInternal();
 
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef TEST_CONTAINER_REQUIRED
@@ -1038,30 +1057,38 @@ testRun(void)
 
         userLocalData.userName = STRDEF("root");
         userLocalData.groupName = STRDEF("root");
+        userLocalData.userRoot = true;
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, STRDEF("root"), "root replace user set");
+        TEST_RESULT_STR(rootReplaceGroup, STRDEF("root"), "root replace group set");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to 'root'\n"
             "P00   WARN: unknown group in backup manifest mapped to 'root'");
+
+        userInitInternal();
+
 #endif // TEST_CONTAINER_REQUIRED
     }
 
     // *****************************************************************************************************************************
     if (testBegin("restoreClean*()"))
     {
-        userInitInternal();
-
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restoreCleanOwnership() update to root (existing)");
 
+        userLocalData.userRoot = true;
+
         // Expect an error here since we can't really set ownership to root
         TEST_ERROR(
-            restoreCleanOwnership(TEST_PATH_STR, STRDEF("root"), STRDEF("root"), userId(), groupId(), false), FileOwnerError,
-            "unable to set ownership for '" TEST_PATH "': [1] Operation not permitted");
+            restoreCleanOwnership(
+                TEST_PATH_STR, STRDEF("root"), STRDEF("root"), STRDEF("root"), STRDEF("root"), userId(), groupId(), false),
+            FileOwnerError, "unable to set ownership for '" TEST_PATH "': [1] Operation not permitted");
 
         TEST_RESULT_LOG("P00 DETAIL: update ownership for '" TEST_PATH "'");
 
@@ -1069,10 +1096,12 @@ testRun(void)
         TEST_TITLE("restoreCleanOwnership() update to bogus (new)");
 
         // Will succeed because bogus will be remapped to the current user/group
-        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), STRDEF("bogus"), 0, 0, true);
+        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), NULL, STRDEF("bogus"), NULL, 0, 0, true);
 
         // Test again with only group for coverage
-        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), STRDEF("bogus"), userId(), 0, true);
+        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), NULL, STRDEF("bogus"), NULL, userId(), 0, true);
+
+        userInitInternal();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("directory with bad permissions/mode");
@@ -1092,21 +1121,24 @@ testRun(void)
         userLocalData.userId = TEST_USER_ID + 1;
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '" TEST_PATH "/pg' not owned by current user");
+            restoreCleanBuild(manifest, NULL, NULL), PathOpenError,
+            "unable to restore to path '" TEST_PATH "/pg' not owned by current user");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         userLocalData.userRoot = true;
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
+            restoreCleanBuild(manifest, TEST_USER_STR, TEST_GROUP_STR), PathOpenError,
+            "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         userInitInternal();
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
+            restoreCleanBuild(manifest, NULL, NULL), PathOpenError,
+            "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
@@ -1119,7 +1151,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYCONF);
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), PathNotEmptyError,
+            restoreCleanBuild(manifest, NULL, NULL), PathNotEmptyError,
             "unable to restore to path '" TEST_PATH "/pg' because it contains files\n"
                 "HINT: try using --delta if this is what you intended.");
 
@@ -1139,7 +1171,7 @@ testRun(void)
 
         HRN_STORAGE_PATH_CREATE(storageTest, "conf", .mode = 0700);
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1153,7 +1185,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "../conf/pg_hba.conf");
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), FileExistsError,
+            restoreCleanBuild(manifest, NULL, NULL), FileExistsError,
             "unable to restore file '" TEST_PATH "/conf/pg_hba.conf' because it already exists\n"
             "HINT: try using --delta if this is what you intended.");
 
@@ -1175,7 +1207,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "preserve");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1185,7 +1217,7 @@ testRun(void)
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYCONF);
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "normal restore ignore recovery.conf");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "normal restore ignore recovery.conf");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1199,7 +1231,7 @@ testRun(void)
 
         manifest->pub.data.pgVersion = PG_VERSION_12;
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1217,7 +1249,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYSIGNAL);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_STANDBYSIGNAL);
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1236,7 +1268,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"

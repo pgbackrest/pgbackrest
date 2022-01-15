@@ -653,6 +653,18 @@ restoreManifestMap(Manifest *manifest)
 /***********************************************************************************************************************************
 Check ownership of items in the manifest
 ***********************************************************************************************************************************/
+// Helper to determine what the user/group of a path/file/link should be
+static const String *
+restoreManifestOwnerReplace(const String *const owner, const String *const ownerDefaultRoot)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, owner);
+        FUNCTION_TEST_PARAM(STRING, ownerDefaultRoot);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(userRoot() ? (owner == NULL ? ownerDefaultRoot : owner) : NULL);
+}
+
 // Helper to get list of owners from a file/link/path list
 #define RESTORE_MANIFEST_OWNER_GET(type)                                                                                           \
     for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
@@ -668,25 +680,6 @@ Check ownership of items in the manifest
             groupNull = true;                                                                                                      \
         else                                                                                                                       \
             strLstAddIfMissing(groupList, item->group);                                                                            \
-                                                                                                                                   \
-        if (!userRoot())                                                                                                           \
-        {                                                                                                                          \
-            item->user = NULL;                                                                                                     \
-            item->group = NULL;                                                                                                    \
-        }                                                                                                                          \
-    }
-
-// Helper to update an owner in a file/link/path list
-#define RESTORE_MANIFEST_OWNER_NULL_UPDATE(type, user, group)                                                                      \
-    for (unsigned int itemIdx = 0; itemIdx < manifest##type##Total(manifest); itemIdx++)                                           \
-    {                                                                                                                              \
-        Manifest##type *item = (Manifest##type *)manifest##type(manifest, itemIdx);                                                \
-                                                                                                                                   \
-        if (item->user == NULL)                                                                                                    \
-            item->user = user;                                                                                                     \
-                                                                                                                                   \
-        if (item->group == NULL)                                                                                                   \
-            item->group = group;                                                                                                   \
     }
 
 // Helper to warn when an owner is missing and must be remapped
@@ -707,10 +700,12 @@ Check ownership of items in the manifest
     while (0)
 
 static void
-restoreManifestOwner(Manifest *manifest)
+restoreManifestOwner(const Manifest *const manifest, const String **const rootReplaceUser, const String **const rootReplaceGroup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM_P(VOID, rootReplaceUser);
+        FUNCTION_LOG_PARAM_P(VOID, rootReplaceGroup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -752,12 +747,8 @@ restoreManifestOwner(Manifest *manifest)
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    const String *user = strDup(pathInfo.user);
-                    const String *group = strDup(pathInfo.group);
-
-                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(File, user, group)
-                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Link, user, group)
-                    RESTORE_MANIFEST_OWNER_NULL_UPDATE(Path, user, group)
+                    *rootReplaceUser = strDup(pathInfo.user);
+                    *rootReplaceGroup = strDup(pathInfo.group);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
@@ -791,13 +782,16 @@ typedef struct RestoreCleanCallbackData
     bool exists;                                                    // Does the target path exist?
     bool delta;                                                     // Is this a delta restore?
     StringList *fileIgnore;                                         // Files to ignore during clean
+    const String *rootReplaceUser;                                  // User to replace invalid users when root
+    const String *rootReplaceGroup;                                 // Group to replace invalid group when root
 } RestoreCleanCallbackData;
 
 // Helper to update ownership on a file/link/path
 static void
 restoreCleanOwnership(
-    const String *pgPath, const String *manifestUserName, const String *manifestGroupName, uid_t actualUserId, gid_t actualGroupId,
-    bool new)
+    const String *const pgPath, const String *manifestUserName, const String *const rootReplaceUser,
+    const String *manifestGroupName, const String *const rootReplaceGroup, const uid_t actualUserId, const gid_t actualGroupId,
+    const bool new)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, pgPath);
@@ -813,6 +807,8 @@ restoreCleanOwnership(
     // Get the expected user id
     uid_t expectedUserId = userId();
 
+    manifestUserName = restoreManifestOwnerReplace(manifestUserName, rootReplaceUser);
+
     if (manifestUserName != NULL)
     {
         uid_t manifestUserId = userIdFromName(manifestUserName);
@@ -823,6 +819,8 @@ restoreCleanOwnership(
 
     // Get the expected group id
     gid_t expectedGroupId = groupId();
+
+    manifestGroupName = restoreManifestOwnerReplace(manifestGroupName, rootReplaceGroup);
 
     if (manifestGroupName != NULL)
     {
@@ -924,7 +922,9 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
             if (manifestFile != NULL && manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
             {
-                restoreCleanOwnership(pgPath, manifestFile->user, manifestFile->group, info->userId, info->groupId, false);
+                restoreCleanOwnership(
+                    pgPath, manifestFile->user, cleanData->rootReplaceUser, manifestFile->group, cleanData->rootReplaceGroup,
+                    info->userId, info->groupId, false);
                 restoreCleanMode(pgPath, manifestFile->mode, info);
             }
             else
@@ -948,7 +948,11 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
                     storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
                 }
                 else
-                    restoreCleanOwnership(pgPath, manifestLink->user, manifestLink->group, info->userId, info->groupId, false);
+                {
+                    restoreCleanOwnership(
+                        pgPath, manifestLink->user, cleanData->rootReplaceUser, manifestLink->group, cleanData->rootReplaceGroup,
+                        info->userId, info->groupId, false);
+                }
             }
             else
             {
@@ -966,7 +970,9 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
             if (manifestPath != NULL && manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
             {
                 // Check ownership/permissions
-                restoreCleanOwnership(pgPath, manifestPath->user, manifestPath->group, info->userId, info->groupId, false);
+                restoreCleanOwnership(
+                    pgPath, manifestPath->user, cleanData->rootReplaceUser, manifestPath->group, cleanData->rootReplaceGroup,
+                    info->userId, info->groupId, false);
                 restoreCleanMode(pgPath, manifestPath->mode, info);
 
                 // Recurse into the path
@@ -999,10 +1005,12 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 }
 
 static void
-restoreCleanBuild(Manifest *manifest)
+restoreCleanBuild(const Manifest *const manifest, const String *const rootReplaceUser, const String *const rootReplaceGroup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
+        FUNCTION_LOG_PARAM(STRING, rootReplaceUser);
+        FUNCTION_LOG_PARAM(STRING, rootReplaceGroup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1029,6 +1037,8 @@ restoreCleanBuild(Manifest *manifest)
                 .target = manifestTarget(manifest, targetIdx),
                 .delta = delta,
                 .fileIgnore = strLstNew(),
+                .rootReplaceUser = rootReplaceUser,
+                .rootReplaceGroup = rootReplaceGroup,
             };
 
             cleanData->targetName = cleanData->target->name;
@@ -1170,7 +1180,8 @@ restoreCleanBuild(Manifest *manifest)
                     StorageInfo info = storageInfoP(storageLocal(), cleanData->targetPath, .followLink = true);
 
                     restoreCleanOwnership(
-                        cleanData->targetPath, manifestPath->user, manifestPath->group, info.userId, info.groupId, false);
+                        cleanData->targetPath, manifestPath->user, rootReplaceUser, manifestPath->group, rootReplaceGroup,
+                        info.userId, info.groupId, false);
                     restoreCleanMode(cleanData->targetPath, manifestPath->mode, &info);
 
                     // Clean the target
@@ -1194,7 +1205,8 @@ restoreCleanBuild(Manifest *manifest)
                     path = manifestPathFind(manifest, cleanData->target->name);
 
                 storagePathCreateP(storageLocalWrite(), cleanData->targetPath, .mode = path->mode);
-                restoreCleanOwnership(cleanData->targetPath, path->user, path->group, userId(), groupId(), true);
+                restoreCleanOwnership(
+                    cleanData->targetPath, path->user, rootReplaceUser, path->group, rootReplaceGroup, userId(), groupId(), true);
             }
         }
 
@@ -1230,7 +1242,8 @@ restoreCleanBuild(Manifest *manifest)
                     THROW_ON_SYS_ERROR_FMT(
                         symlink(strZ(link->destination), strZ(pgPath)) == -1, FileOpenError,
                         "unable to create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
-                    restoreCleanOwnership(pgPath, link->user, link->group, userId(), groupId(), true);
+                    restoreCleanOwnership(
+                        pgPath, link->user, rootReplaceUser, link->group, rootReplaceGroup, userId(), groupId(), true);
                 }
             }
             // Create the path normally
@@ -1245,7 +1258,9 @@ restoreCleanBuild(Manifest *manifest)
                     LOG_DETAIL_FMT("create path '%s'", strZ(pgPath));
 
                     storagePathCreateP(storagePgWrite(), pgPath, .mode = path->mode, .noParentCreate = true, .errorOnExists = true);
-                    restoreCleanOwnership(storagePathP(storagePg(), pgPath), path->user, path->group, userId(), groupId(), true);
+                    restoreCleanOwnership(
+                        storagePathP(storagePg(), pgPath), path->user, rootReplaceUser, path->group, rootReplaceGroup, userId(),
+                        groupId(), true);
                 }
             }
         }
@@ -1267,7 +1282,8 @@ restoreCleanBuild(Manifest *manifest)
                 THROW_ON_SYS_ERROR_FMT(
                     symlink(strZ(link->destination), strZ(pgPath)) == -1, FileOpenError,
                     "unable to create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
-                restoreCleanOwnership(pgPath, link->user, link->group, userId(), groupId(), true);
+                restoreCleanOwnership(
+                    pgPath, link->user, rootReplaceUser, link->group, rootReplaceGroup, userId(), groupId(), true);
             }
         }
     }
@@ -2109,6 +2125,8 @@ typedef struct RestoreJobData
     List *queueList;                                                // List of processing queues
     RegExp *zeroExp;                                                // Identify files that should be sparse zeroed
     const String *cipherSubPass;                                    // Passphrase used to decrypt files in the backup
+    const String *rootReplaceUser;                                  // User to replace invalid users when root
+    const String *rootReplaceGroup;                                 // Group to replace invalid group when root
 } RestoreJobData;
 
 // Helper to calculate the next queue to scan based on the client index
@@ -2176,8 +2194,8 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 pckWriteU64P(param, file->size);
                 pckWriteTimeP(param, file->timestamp);
                 pckWriteModeP(param, file->mode);
-                pckWriteStrP(param, file->user);
-                pckWriteStrP(param, file->group);
+                pckWriteStrP(param, restoreManifestOwnerReplace(file->user, jobData->rootReplaceUser));
+                pckWriteStrP(param, restoreManifestOwnerReplace(file->group, jobData->rootReplaceGroup));
                 pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
                 pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
                 pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
@@ -2275,14 +2293,14 @@ cmdRestore(void)
         manifestLinkCheck(jobData.manifest);
 
         // Update ownership
-        restoreManifestOwner(jobData.manifest);
+        restoreManifestOwner(jobData.manifest, &jobData.rootReplaceUser, &jobData.rootReplaceGroup);
 
         // Generate the selective restore expression
         String *expression = restoreSelectiveExpression(jobData.manifest);
         jobData.zeroExp = expression == NULL ? NULL : regExpNew(expression);
 
         // Clean the data directory and build path/link structure
-        restoreCleanBuild(jobData.manifest);
+        restoreCleanBuild(jobData.manifest, jobData.rootReplaceUser, jobData.rootReplaceGroup);
 
         // Generate processing queues
         uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
