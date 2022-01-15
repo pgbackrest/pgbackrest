@@ -356,7 +356,7 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
         {
             .checksumPage = file->checksumPage,
             .checksumPageError = file->checksumPageError,
-            .checksumPageErrorList = varLstDup(file->checksumPageErrorList),
+            .checksumPageErrorList = strDup(file->checksumPageErrorList),
             .group = manifestOwnerCache(this, file->group),
             .mode = file->mode,
             .name = strDup(file->name),
@@ -1780,7 +1780,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 const Variant *checksumPageErrorList = kvGetDefault(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
 
                 if (checksumPageErrorList != NULL)
-                    file.checksumPageErrorList = varVarLst(checksumPageErrorList);
+                    file.checksumPageErrorList = jsonFromVar(checksumPageErrorList);
             }
 
             if (kvKeyExists(fileKv, MANIFEST_KEY_GROUP_VAR))
@@ -2439,7 +2439,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                     kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_VAR, VARBOOL(!file.checksumPageError));
 
                     if (file.checksumPageErrorList != NULL)
-                        kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, varNewVarLst(file.checksumPageErrorList));
+                        kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, jsonToVar(file.checksumPageErrorList));
                 }
 
                 if (!varEq(manifestOwnerVar(file.group), saveData->fileGroupDefault))
@@ -2789,8 +2789,9 @@ manifestFileRemove(const Manifest *this, const String *name)
 
 void
 manifestFileUpdate(
-    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList)
+    Manifest *const this, const String *const name, const uint64_t size, const uint64_t sizeRepo, const char *const checksumSha1,
+    const Variant *const reference, const bool checksumPage, const bool checksumPageError,
+    const String *const checksumPageErrorList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -2801,7 +2802,7 @@ manifestFileUpdate(
         FUNCTION_TEST_PARAM(VARIANT, reference);
         FUNCTION_TEST_PARAM(BOOL, checksumPage);
         FUNCTION_TEST_PARAM(BOOL, checksumPageError);
-        FUNCTION_TEST_PARAM(VARIANT_LIST, checksumPageErrorList);
+        FUNCTION_TEST_PARAM(STRING, checksumPageErrorList);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -2835,7 +2836,7 @@ manifestFileUpdate(
         // Update checksum page info
         file.checksumPage = checksumPage;
         file.checksumPageError = checksumPageError;
-        file.checksumPageErrorList = varLstDup(checksumPageErrorList);
+        file.checksumPageErrorList = strDup(checksumPageErrorList);
 
         manifestFilePackUpdate(this, filePack, &file);
     }

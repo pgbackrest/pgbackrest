@@ -1307,7 +1307,7 @@ backupJobResult(
                 // Update file info and remove any reference to the file's existence in a prior backup
                 manifestFileUpdate(
                     manifest, file.name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file.checksumPage,
-                    checksumPageError, checksumPageErrorList);
+                    checksumPageError, checksumPageErrorList != NULL ? jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL);
             }
         }
         MEM_CONTEXT_TEMP_END();

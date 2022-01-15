@@ -110,7 +110,7 @@ typedef struct ManifestFile
 
     // Info
     bool checksumPageError;                                         // Is there an error in the page checksum?
-    const VariantList *checksumPageErrorList;                       // List of page checksum errors if there are any
+    const String *checksumPageErrorList;                            // List of page checksum errors if there are any
 } ManifestFile;
 
 /***********************************************************************************************************************************
@@ -312,7 +312,7 @@ manifestFileTotal(const Manifest *const this)
 // Update a file with new data
 void manifestFileUpdate(
     Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList);
+    bool checksumPage, bool checksumPageError, const String *checksumPageErrorList);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters
