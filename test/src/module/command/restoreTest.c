@@ -950,8 +950,8 @@ testRun(void)
         TEST_TITLE("owner is not root and all ownership is good");
 
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
-        const String *rootReplaceUser;
-        const String *rootReplaceGroup;
+        const String *rootReplaceUser = NULL;
+        const String *rootReplaceGroup = NULL;
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
 
