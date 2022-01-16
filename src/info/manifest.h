@@ -282,7 +282,7 @@ manifestFile(const Manifest *const this, const unsigned int fileIdx)
     return manifestFileUnpack(manifestFilePackGet(this, fileIdx));
 }
 
-void manifestFileAdd(Manifest *this, const ManifestFile *file);
+void manifestFileAdd(Manifest *this, ManifestFile file);
 const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
 
 __attribute__((always_inline)) static inline ManifestFile
