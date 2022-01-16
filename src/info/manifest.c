@@ -202,6 +202,79 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+#define PACK_UINT64_SIZE_MAX                                        10
+
+static uint64_t
+manifestReadU64(const uint8_t *const buffer, size_t *const bufferPos)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM_P(UINT64, bufferPos);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+    ASSERT(bufferPos != NULL);
+
+    uint64_t result = 0;
+    uint8_t byte;
+
+    // Convert bytes from varint-128 encoding to a uint64
+    for (unsigned int bufferIdx = 0; bufferIdx < PACK_UINT64_SIZE_MAX; bufferIdx++)
+    {
+        // Get the next encoded byte
+        byte = buffer[*bufferPos];
+
+        // Shift the lower order 7 encoded bits into the uint64 in reverse order
+        result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
+
+        // Increment buffer position to indicate that the byte has been processed
+        (*bufferPos)++;
+
+        // Done if the high order bit is not set to indicate more data
+        if (byte < 0x80)
+            break;
+    }
+
+    // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
+    // corrupton in the data stream.
+    if (byte >= 0x80)
+        THROW(FormatError, "unterminated base-128 integer");
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+static void
+manifestWriteU64(uint8_t *const buffer, size_t *const bufferPos, uint64_t value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM_P(UINT64, bufferPos);
+        FUNCTION_TEST_PARAM(UINT64, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+    ASSERT(bufferPos != NULL);
+
+    // Convert uint64 to varint-128 encoding. Keep writing out bytes while the remaining value is greater than 7 bits.
+    while (value >= 0x80)
+    {
+        // Encode the lower order 7 bits, adding the continuation bit to indicate there is more data
+        buffer[*bufferPos] = (unsigned char)value | 0x80;
+
+        // Shift the value to remove bits that have been encoded
+        value >>= 7;
+
+        // Keep track of size so we know how many bytes to write out
+        (*bufferPos)++;
+    }
+
+    // Encode the last 7 bits of value
+    buffer[*bufferPos] = (unsigned char)value;
+    (*bufferPos)++;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static ManifestFilePack *
 manifestFilePack(const ManifestFile *const file)
 {
@@ -209,37 +282,72 @@ manifestFilePack(const ManifestFile *const file)
         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
-    // PackWrite *result = NULL;
+    uint8_t buffer[512];
+    size_t bufferPos = 0;
 
-    // MEM_CONTEXT_TEMP_BEGIN()
-    // {
-    //     PackWrite *const pack = pckWriteNewP(.size = 512);
+    // Size
+    manifestWriteU64(buffer, &bufferPos, file->size);
 
-    //     // Backup
-    //     pckWriteStrP(pack, file->name);
-    //     pckWriteBoolP(pack, file->primary);
-    //     pckWriteBoolP(pack, file->checksumPage);
-    //     pckWriteStrP(pack, STR(file->checksumSha1));
-    //     pckWriteU64P(pack, file->size);
-    //     pckWriteTimeP(pack, file->timestamp);
-    //     pckWritePtrP(pack, file->reference);
+    // THROW_FMT(AssertError, "BUFFER SIZE = %zu", bufferPos); // !!!
 
-    //     // Restore
-    //     pckWriteModeP(pack, file->mode);
-    //     pckWritePtrP(pack, file->user);
-    //     pckWritePtrP(pack, file->group);
+    // Timestamp
+    manifestWriteU64(buffer, &bufferPos, cvtInt64ToZigZag(file->timestamp));
 
-    //     // Info
-    //     pckWriteU64P(pack, file->sizeRepo);
-    //     pckWriteBoolP(pack, file->checksumPageError);
-    //     pckWriteStrP(pack, jsonFromVar(varNewVarLst(file->checksumPageErrorList)));
+    // Primary
+    buffer[bufferPos] = file->primary;
+    bufferPos++;
 
-    //     result = pckMove(pckWriteResult(pack), memContextPrior());
-    // }
-    // MEM_CONTEXT_TEMP_END();
+    // Checksum page
+    buffer[bufferPos] = file->checksumPage;
+    bufferPos++;
 
-    ManifestFile *const result = memNew(sizeof(ManifestFile));
-    *result = *file;
+    // SHA1 checksum
+    strcpy((char *)buffer + bufferPos, file->checksumSha1);
+    bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
+
+    // Reference
+    manifestWriteU64(buffer, &bufferPos, (uintptr_t)file->reference);
+
+    // Mode
+    manifestWriteU64(buffer, &bufferPos, file->mode);
+
+    // User/group
+    manifestWriteU64(buffer, &bufferPos, (uintptr_t)file->user);
+    manifestWriteU64(buffer, &bufferPos, (uintptr_t)file->group);
+
+    // Repo size
+    manifestWriteU64(buffer, &bufferPos, file->sizeRepo);
+
+    // Checksum page error
+    buffer[bufferPos] = file->checksumPageError;
+    bufferPos++;
+
+    buffer[bufferPos] = file->checksumPageErrorList != NULL;
+    bufferPos++;
+
+    // Copy data to result
+    uint8_t *const result = memNew(
+        sizeof(StringPub) + strSize(file->name) + 1 + bufferPos + (file->checksumPageErrorList != NULL ?
+            sizeof(StringPub) + strSize(file->checksumPageErrorList) + 1 : 0));
+
+    *(StringPub *)result = (StringPub){.size = (unsigned int)strSize(file->name), .buffer = (char *)result + sizeof(StringPub)};
+    size_t resultPos = sizeof(StringPub);
+
+    memcpy(result + resultPos, (uint8_t *)strZ(file->name), strSize(file->name) + 1);
+    resultPos += strSize(file->name) + 1;
+
+    memcpy(result + resultPos, buffer, bufferPos);
+
+    if (file->checksumPageErrorList != NULL)
+    {
+        resultPos += bufferPos;
+
+        *(StringPub *)(result + resultPos) =
+            (StringPub){.size = (unsigned int)strSize(file->checksumPageErrorList), .buffer = (char *)result + sizeof(StringPub)};
+        resultPos += sizeof(StringPub);
+
+        memcpy(result + resultPos, (uint8_t *)strZ(file->checksumPageErrorList), strSize(file->checksumPageErrorList) + 1);
+    }
 
     FUNCTION_TEST_RETURN((ManifestFilePack *)result);
 }
@@ -278,7 +386,7 @@ manifestFilePackComparator(const void *item1, const void *item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    FUNCTION_TEST_RETURN(strCmp((*(ManifestFile **)item1)->name, (*(ManifestFile **)item2)->name));
+    FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
 }
 
 ManifestFile
@@ -288,54 +396,52 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
         FUNCTION_TEST_PARAM_P(VOID, filePack);
     FUNCTION_TEST_END();
 
-    // ManifestFile result = {0};
+    ManifestFile result = {0};
+    size_t bufferPos = 0;
 
-    // MEM_CONTEXT_TEMP_BEGIN()
-    // {
-    //     // !!! ADD DEBUG FUNCTION TO ENSURE THERE ARE NO ALLOCATIONS -- MAYBE ADD THIS AS A BLOCK?
+    // Name
+    result.name = (const String *)filePack;
+    bufferPos += sizeof(StringPub) + strSize(result.name) + 1;
 
-    //     PackRead *const pack = pckReadNew(filePack);
+    // Size
+    result.size = manifestReadU64((const uint8_t *)filePack, &bufferPos);
 
-    //     // Backup
-    //     MEM_CONTEXT_PRIOR_BEGIN()
-    //     {
-    //         result.name = pckReadStrP(pack);
-    //     }
-    //     MEM_CONTEXT_PRIOR_END();
+    // Timestamp
+    result.timestamp = cvtInt64FromZigZag(manifestReadU64((const uint8_t *)filePack, &bufferPos));
 
-    //     result.primary = pckReadBoolP(pack);
-    //     result.checksumPage = pckReadBoolP(pack);
+    // Primary
+    result.primary = ((const uint8_t *)filePack)[bufferPos];
+    bufferPos++;
 
-    //     strncpy(result.checksumSha1, strZ(pckReadStrP(pack)), HASH_TYPE_SHA1_SIZE_HEX);
-    //     result.checksumSha1[HASH_TYPE_SHA1_SIZE_HEX] = '\0';
+    // Checksum page
+    result.checksumPage = ((const uint8_t *)filePack)[bufferPos];
+    bufferPos++;
 
-    //     result.size = pckReadU64P(pack);
-    //     result.timestamp = pckReadTimeP(pack);
-    //     result.reference = pckReadPtrP(pack);
+    // SHA1 checksum
+    memcpy(result.checksumSha1, (const uint8_t *)filePack + bufferPos, HASH_TYPE_SHA1_SIZE_HEX + 1);
+    bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
 
-    //     // Restore
-    //     result.mode = pckReadModeP(pack);
-    //     result.user = pckReadPtrP(pack);
-    //     result.group = pckReadPtrP(pack);
+    // Reference
+    result.reference = (const String *)manifestReadU64((const uint8_t *)filePack, &bufferPos);
 
-    //     // Info
-    //     result.sizeRepo = pckReadU64P(pack);
-    //     result.checksumPageError = pckReadBoolP(pack);
+    // Mode
+    result.mode = (mode_t)manifestReadU64((const uint8_t *)filePack, &bufferPos);
 
-    //     const String *const checksumPageErrorList = pckReadStrP(pack);
+    // User/group
+    result.user = (const String *)manifestReadU64((const uint8_t *)filePack, &bufferPos);
+    result.group = (const String *)manifestReadU64((const uint8_t *)filePack, &bufferPos);
 
-    //     if (checksumPageErrorList != NULL)
-    //     {
-    //         MEM_CONTEXT_PRIOR_BEGIN()
-    //         {
-    //             result.checksumPageErrorList = varVarLst(jsonToVar(checksumPageErrorList));
-    //         }
-    //         MEM_CONTEXT_PRIOR_END();
-    //     }
-    // }
-    // MEM_CONTEXT_TEMP_END();
+    // Repo size
+    result.sizeRepo = manifestReadU64((const uint8_t *)filePack, &bufferPos);
 
-    FUNCTION_TEST_RETURN(*(ManifestFile *)filePack);
+    // Checksum page error
+    result.checksumPageError = ((const uint8_t *)filePack)[bufferPos];
+    bufferPos++;
+
+    if (((uint8_t *)filePack)[bufferPos])
+        result.checksumPageErrorList = (const String *)((const uint8_t *)filePack + 1);
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 void
@@ -2745,7 +2851,7 @@ manifestFilePackFindInternal(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const String *const *const namePtr = &name;
+    char **namePtr = &(((StringPub *)name)->buffer);
     ManifestFilePack **const filePack = lstFind(this->pub.fileList, &namePtr);
 
     if (filePack == NULL)

@@ -297,7 +297,7 @@ __attribute__((always_inline)) static inline bool
 manifestFileExists(const Manifest *const this, const String *const name)
 {
     ASSERT_INLINE(name != NULL);
-    const String *const *const namePtr = &name;
+    char **namePtr = &(((StringPub *)name)->buffer);
     return lstFindDefault(THIS_PUB(Manifest)->fileList, &namePtr, NULL) != NULL;
 }
 
