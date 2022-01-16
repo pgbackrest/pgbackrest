@@ -1908,14 +1908,18 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
+    // Unpack files
+    ManifestFile file1 = manifestFileUnpack(*(const ManifestFilePack **)item1);
+    ManifestFile file2 = manifestFileUnpack(*(const ManifestFilePack **)item2);
+
     // If the size differs then that's enough to determine order
-    if ((*(ManifestFile **)item1)->size < (*(ManifestFile **)item2)->size)
+    if (file1.size < file2.size)
         FUNCTION_TEST_RETURN(-1);
-    else if ((*(ManifestFile **)item1)->size > (*(ManifestFile **)item2)->size)
+    else if (file1.size > file2.size)
         FUNCTION_TEST_RETURN(1);
 
     // If size is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(strCmp((*(ManifestFile **)item1)->name, (*(ManifestFile **)item2)->name));
+    FUNCTION_TEST_RETURN(strCmp(file1.name, file2.name));
 }
 
 static uint64_t

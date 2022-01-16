@@ -219,7 +219,7 @@ manifestReadU64(const uint8_t *const buffer, size_t *const bufferPos)
     uint8_t byte;
 
     // Convert bytes from varint-128 encoding to a uint64
-    for (unsigned int bufferIdx = 0; bufferIdx < PACK_UINT64_SIZE_MAX; bufferIdx++)
+    for (unsigned int bufferIdx = 0; bufferIdx < PACK_UINT64_SIZE_MAX; bufferIdx++) // {uncovered - !!!}
     {
         // Get the next encoded byte
         byte = buffer[*bufferPos];
@@ -237,8 +237,8 @@ manifestReadU64(const uint8_t *const buffer, size_t *const bufferPos)
 
     // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
     // corrupton in the data stream.
-    if (byte >= 0x80)
-        THROW(FormatError, "unterminated base-128 integer");
+    if (byte >= 0x80) // {uncovered - !!!}
+        THROW(FormatError, "unterminated base-128 integer"); // {uncovered - !!!}
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -342,8 +342,8 @@ manifestFilePack(const ManifestFile *const file)
     {
         resultPos += bufferPos;
 
-        *(StringPub *)(result + resultPos) =
-            (StringPub){.size = (unsigned int)strSize(file->checksumPageErrorList), .buffer = (char *)result + sizeof(StringPub)};
+        *(StringPub *)(result + resultPos) = (StringPub)
+            {.size = (unsigned int)strSize(file->checksumPageErrorList), .buffer = (char *)result + resultPos + sizeof(StringPub)};
         resultPos += sizeof(StringPub);
 
         memcpy(result + resultPos, (uint8_t *)strZ(file->checksumPageErrorList), strSize(file->checksumPageErrorList) + 1);
@@ -367,8 +367,9 @@ manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, 
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
-        memFree(*filePack);
+        ManifestFilePack *const filePackOld = *filePack;
         *filePack = manifestFilePack(file);
+        memFree(filePackOld);
     }
     MEM_CONTEXT_END();
 
@@ -439,7 +440,10 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     bufferPos++;
 
     if (((uint8_t *)filePack)[bufferPos])
-        result.checksumPageErrorList = (const String *)((const uint8_t *)filePack + 1);
+    {
+        bufferPos++;
+        result.checksumPageErrorList = (const String *)((const uint8_t *)filePack + bufferPos);
+    }
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -2851,8 +2855,8 @@ manifestFilePackFindInternal(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    char **namePtr = &(((StringPub *)name)->buffer);
-    ManifestFilePack **const filePack = lstFind(this->pub.fileList, &namePtr);
+    const String *const *const namePtr = &name;
+    ManifestFilePack **const filePack = lstFind(this->pub.fileList, namePtr);
 
     if (filePack == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strZ(name));
@@ -2887,7 +2891,7 @@ manifestFileRemove(const Manifest *this, const String *name)
 
     const String *const *const namePtr = &name;
 
-    if (!lstRemove(this->pub.fileList, &namePtr))
+    if (!lstRemove(this->pub.fileList, namePtr))
         THROW_FMT(AssertError, "unable to remove '%s' from manifest file list", strZ(name));
 
     FUNCTION_TEST_RETURN_VOID();
