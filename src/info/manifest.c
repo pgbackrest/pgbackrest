@@ -423,14 +423,14 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
 
     // Reference
-    result.reference = (const String *)manifestReadU64((const uint8_t *)filePack, &bufferPos);
+    result.reference = (const String *)(uintptr_t)manifestReadU64((const uint8_t *)filePack, &bufferPos);
 
     // Mode
     result.mode = (mode_t)manifestReadU64((const uint8_t *)filePack, &bufferPos);
 
     // User/group
-    result.user = (const String *)manifestReadU64((const uint8_t *)filePack, &bufferPos);
-    result.group = (const String *)manifestReadU64((const uint8_t *)filePack, &bufferPos);
+    result.user = (const String *)(uintptr_t)manifestReadU64((const uint8_t *)filePack, &bufferPos);
+    result.group = (const String *)(uintptr_t)manifestReadU64((const uint8_t *)filePack, &bufferPos);
 
     // Repo size
     result.sizeRepo = manifestReadU64((const uint8_t *)filePack, &bufferPos);
