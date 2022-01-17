@@ -203,6 +203,17 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
 }
 
 // Pack file into a compact format to save memory
+static time_t manifestPackBaseTime = -1;
+
+typedef enum
+{
+    manifestFilePackFlagPrimary,
+    manifestFilePackFlagReference,
+    manifestFilePackFlagChecksumPage,
+    manifestFilePackFlagChecksumPageError,
+    manifestFilePackFlagChecksumPageErrorList,
+} ManifestFilePackFlag;
+
 static ManifestFilePack *
 manifestFilePack(const ManifestFile *const file)
 {
@@ -211,28 +222,45 @@ manifestFilePack(const ManifestFile *const file)
     FUNCTION_TEST_END();
 
     uint8_t buffer[512];
+    uint64_t flag = 0;
     size_t bufferPos = 0;
+
+    // Flags
+    if (file->primary)
+        flag |= 1 << manifestFilePackFlagPrimary;
+
+    if (file->checksumPage)
+        flag |= 1 << manifestFilePackFlagChecksumPage;
+
+    if (file->checksumPageError)
+        flag |= 1 << manifestFilePackFlagChecksumPageError;
+
+    if (file->checksumPageErrorList != NULL)
+        flag |= 1 << manifestFilePackFlagChecksumPageErrorList;
+
+    if (file->reference != NULL)
+        flag |= 1 << manifestFilePackFlagReference;
+
+    cvtUInt64ToVarInt128(flag, buffer, &bufferPos, sizeof(buffer));
 
     // Size
     cvtUInt64ToVarInt128(file->size, buffer, &bufferPos, sizeof(buffer));
 
+    // Use the first timestamp that appears as the base for all other timestamps. Ideally we would like a timestamp as close to the
+    // middle as possible but it doesn't seem worth doing the calculation.
+    if (manifestPackBaseTime == -1)
+        manifestPackBaseTime = file->timestamp;
+
     // Timestamp
-    cvtUInt64ToVarInt128(cvtInt64ToZigZag(file->timestamp), buffer, &bufferPos, sizeof(buffer));
-
-    // Primary
-    buffer[bufferPos] = file->primary;
-    bufferPos++;
-
-    // Checksum page
-    buffer[bufferPos] = file->checksumPage;
-    bufferPos++;
+    cvtUInt64ToVarInt128(cvtInt64ToZigZag(manifestPackBaseTime - file->timestamp), buffer, &bufferPos, sizeof(buffer));
 
     // SHA1 checksum
     strcpy((char *)buffer + bufferPos, file->checksumSha1);
     bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
 
     // Reference
-    cvtUInt64ToVarInt128((uintptr_t)file->reference, buffer, &bufferPos, sizeof(buffer));
+    if (file->reference != NULL)
+        cvtUInt64ToVarInt128((uintptr_t)file->reference, buffer, &bufferPos, sizeof(buffer));
 
     // Mode
     cvtUInt64ToVarInt128(file->mode, buffer, &bufferPos, sizeof(buffer));
@@ -243,13 +271,6 @@ manifestFilePack(const ManifestFile *const file)
 
     // Repo size
     cvtUInt64ToVarInt128(file->sizeRepo, buffer, &bufferPos, sizeof(buffer));
-
-    // Checksum page error
-    buffer[bufferPos] = file->checksumPageError;
-    bufferPos++;
-
-    buffer[bufferPos] = file->checksumPageErrorList != NULL;
-    bufferPos++;
 
     // Allocate memory for the file pack
     uint8_t *const result = memNew(
@@ -288,6 +309,9 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
         FUNCTION_TEST_PARAM_P(VOID, filePack);
     FUNCTION_TEST_END();
 
+    ASSERT(filePack != NULL);
+    ASSERT(manifestPackBaseTime != -1);
+
     ManifestFile result = {0};
     size_t bufferPos = 0;
 
@@ -295,26 +319,29 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     result.name = (const String *)filePack;
     bufferPos += sizeof(StringPub) + strSize(result.name) + 1;
 
+    // Flags
+    const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+
     // Size
     result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Timestamp
-    result.timestamp = (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos));
+    result.timestamp =
+        manifestPackBaseTime - (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos));
 
     // Primary
-    result.primary = ((const uint8_t *)filePack)[bufferPos];
-    bufferPos++;
+    result.primary = flag & (1 << manifestFilePackFlagPrimary) ? true : false;
 
     // Checksum page
-    result.checksumPage = ((const uint8_t *)filePack)[bufferPos];
-    bufferPos++;
+    result.checksumPage = flag & (1 << manifestFilePackFlagChecksumPage) ? true : false;
 
     // SHA1 checksum
     memcpy(result.checksumSha1, (const uint8_t *)filePack + bufferPos, HASH_TYPE_SHA1_SIZE_HEX + 1);
     bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
 
     // Reference
-    result.reference = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    if (flag & (1 << manifestFilePackFlagReference))
+        result.reference = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Mode
     result.mode = (mode_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
@@ -327,14 +354,10 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Checksum page error
-    result.checksumPageError = ((const uint8_t *)filePack)[bufferPos];
-    bufferPos++;
+    result.checksumPageError = flag & (1 << manifestFilePackFlagChecksumPageError) ? true : false;
 
-    if (((uint8_t *)filePack)[bufferPos])
-    {
-        bufferPos++;
+    if (flag & (1 << manifestFilePackFlagChecksumPageErrorList))
         result.checksumPageErrorList = (const String *)((const uint8_t *)filePack + bufferPos);
-    }
 
     FUNCTION_TEST_RETURN(result);
 }
