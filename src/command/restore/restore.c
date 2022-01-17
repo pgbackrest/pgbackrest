@@ -1342,11 +1342,11 @@ restoreSelectiveExpression(Manifest *manifest)
 
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
-                const ManifestFile file = manifestFile(manifest, fileIdx);
+                const String *const fileName = manifestFileNameGet(manifest, fileIdx);
 
-                if (regExpMatch(baseRegExp, file.name) || regExpMatch(tablespaceRegExp, file.name))
+                if (regExpMatch(baseRegExp, fileName) || regExpMatch(tablespaceRegExp, fileName))
                 {
-                    String *dbId = strBase(strPath(file.name));
+                    String *dbId = strBase(strPath(fileName));
 
                     // In the highly unlikely event that a system database was somehow added after the backup began, it will only be
                     // found in the file list and not the manifest db section, so add it to the system database list

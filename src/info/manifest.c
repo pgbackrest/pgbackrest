@@ -202,6 +202,7 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// Pack file into a compact format to save memory
 static ManifestFilePack *
 manifestFilePack(const ManifestFile *const file)
 {
@@ -250,19 +251,22 @@ manifestFilePack(const ManifestFile *const file)
     buffer[bufferPos] = file->checksumPageErrorList != NULL;
     bufferPos++;
 
-    // Copy data to result
+    // Allocate memory for the file pack
     uint8_t *const result = memNew(
         sizeof(StringPub) + strSize(file->name) + 1 + bufferPos + (file->checksumPageErrorList != NULL ?
             sizeof(StringPub) + strSize(file->checksumPageErrorList) + 1 : 0));
 
+    // Create string object for the file name
     *(StringPub *)result = (StringPub){.size = (unsigned int)strSize(file->name), .buffer = (char *)result + sizeof(StringPub)};
     size_t resultPos = sizeof(StringPub);
 
     memcpy(result + resultPos, (uint8_t *)strZ(file->name), strSize(file->name) + 1);
     resultPos += strSize(file->name) + 1;
 
+    // Copy pack data
     memcpy(result + resultPos, buffer, bufferPos);
 
+    // Create string object for the checksum error list
     if (file->checksumPageErrorList != NULL)
     {
         resultPos += bufferPos;
@@ -335,20 +339,6 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     FUNCTION_TEST_RETURN(result);
 }
 
-int
-manifestFilePackComparator(const void *item1, const void *item2)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, item1);
-        FUNCTION_TEST_PARAM_P(VOID, item2);
-    FUNCTION_TEST_END();
-
-    ASSERT(item1 != NULL);
-    ASSERT(item2 != NULL);
-
-    FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
-}
-
 void
 manifestFileAdd(Manifest *this, ManifestFile file)
 {
@@ -376,6 +366,7 @@ manifestFileAdd(Manifest *this, ManifestFile file)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// Update file pack by creating a new one and then freeing the old one
 static void
 manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, const ManifestFile *const file)
 {
@@ -507,7 +498,7 @@ manifestNewInternal(void)
         {
             .memContext = memContextCurrent(),
             .dbList = lstNewP(sizeof(ManifestDb), .comparator = lstComparatorStr),
-            .fileList = lstNewP(sizeof(ManifestFilePack *), .comparator = manifestFilePackComparator),
+            .fileList = lstNewP(sizeof(ManifestFilePack *), .comparator = lstComparatorStr),
             .linkList = lstNewP(sizeof(ManifestLink), .comparator = lstComparatorStr),
             .pathList = lstNewP(sizeof(ManifestPath), .comparator = lstComparatorStr),
             .targetList = lstNewP(sizeof(ManifestTarget), .comparator = lstComparatorStr),
@@ -1320,12 +1311,12 @@ manifestNewBuild(
                 while (fileIdx < manifestFileTotal(this))
                 {
                     // If this file looks like a relation.  Note that this never matches on _init forks.
-                    const ManifestFile file = manifestFile(this, fileIdx);
+                    const String *const filePathName = manifestFileNameGet(this, fileIdx);
 
-                    if (regExpMatch(relationExp, file.name))
+                    if (regExpMatch(relationExp, filePathName))
                     {
                         // Get the filename (without path)
-                        const char *fileName = strBaseZ(file.name);
+                        const char *fileName = strBaseZ(filePathName);
                         size_t fileNameSize = strlen(fileName);
 
                         // Strip off the numeric part of the relation
@@ -1350,7 +1341,7 @@ manifestNewBuild(
                         {
                             // Determine if the relation is unlogged
                             String *relationInit = strNewFmt(
-                                "%.*s%s_init", (int)(strSize(file.name) - fileNameSize), strZ(file.name), relationFileId);
+                                "%.*s%s_init", (int)(strSize(filePathName) - fileNameSize), strZ(filePathName), relationFileId);
                             lastRelationFileIdUnlogged = manifestFileExists(this, relationInit);
                             strFree(relationInit);
 
@@ -1361,7 +1352,7 @@ manifestNewBuild(
                         // If relation is unlogged then remove it
                         if (lastRelationFileIdUnlogged)
                         {
-                            manifestFileRemove(this, file.name);
+                            manifestFileRemove(this, filePathName);
                             continue;
                         }
                     }
@@ -2746,8 +2737,7 @@ manifestFilePackFindInternal(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const String *const *const namePtr = &name;
-    ManifestFilePack **const filePack = lstFind(this->pub.fileList, namePtr);
+    ManifestFilePack **const filePack = lstFind(this->pub.fileList, &name);
 
     if (filePack == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strZ(name));
@@ -2780,9 +2770,7 @@ manifestFileRemove(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const String *const *const namePtr = &name;
-
-    if (!lstRemove(this->pub.fileList, namePtr))
+    if (!lstRemove(this->pub.fileList, &name))
         THROW_FMT(AssertError, "unable to remove '%s' from manifest file list", strZ(name));
 
     FUNCTION_TEST_RETURN_VOID();

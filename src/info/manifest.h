@@ -91,26 +91,19 @@ File type
 ***********************************************************************************************************************************/
 typedef struct ManifestFile
 {
-    // Sort
     const String *name;                                             // File name (must be first member in struct)
-    uint64_t size;                                                  // Original size
-    time_t timestamp;                                               // Original timestamp
-
-    // Backup
-    bool primary;                                                   // Should this file be copied from the primary?
-    bool checksumPage;                                              // Does this file have page checksums?
-    char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
-    const String *reference;                                        // Reference to a prior backup
-
-    // Restore
+    bool primary:1;                                                 // Should this file be copied from the primary?
+    bool checksumPage:1;                                            // Does this file have page checksums?
+    bool checksumPageError:1;                                       // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
+    char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
+    const String *checksumPageErrorList;                            // List of page checksum errors if there are any
     const String *user;                                             // User name
     const String *group;                                            // Group name
+    const String *reference;                                        // Reference to a prior backup
+    uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
-
-    // Info
-    bool checksumPageError;                                         // Is there an error in the page checksum?
-    const String *checksumPageErrorList;                            // List of page checksum errors if there are any
+    time_t timestamp;                                               // Original timestamp
 } ManifestFile;
 
 /***********************************************************************************************************************************
@@ -268,23 +261,37 @@ File functions and getters/setters
 ***********************************************************************************************************************************/
 typedef struct ManifestFilePack ManifestFilePack;
 
+// Unpack file pack returned by manifestFilePackGet()
 ManifestFile manifestFileUnpack(const ManifestFilePack *filePack);
 
+// Get file in pack format by index
 __attribute__((always_inline)) static inline const ManifestFilePack *
 manifestFilePackGet(const Manifest *const this, const unsigned int fileIdx)
 {
     return *(ManifestFilePack **)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
 }
 
+// Get file name
+__attribute__((always_inline)) static inline const String *
+manifestFileNameGet(const Manifest *const this, const unsigned int fileIdx)
+{
+    return (const String *)manifestFilePackGet(this, fileIdx);
+}
+
+// Get file by index
 __attribute__((always_inline)) static inline ManifestFile
 manifestFile(const Manifest *const this, const unsigned int fileIdx)
 {
     return manifestFileUnpack(manifestFilePackGet(this, fileIdx));
 }
 
+// Add a file
 void manifestFileAdd(Manifest *this, ManifestFile file);
+
+// Find file in pack format by name
 const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
 
+// Find file by name
 __attribute__((always_inline)) static inline ManifestFile
 manifestFileFind(const Manifest *const this, const String *const name)
 {
@@ -292,13 +299,12 @@ manifestFileFind(const Manifest *const this, const String *const name)
     return manifestFileUnpack(manifestFilePackFind(this, name));
 }
 
-// If the file requested is not found in the list, return the default passed rather than throw an error
+// Does the file exist?
 __attribute__((always_inline)) static inline bool
 manifestFileExists(const Manifest *const this, const String *const name)
 {
     ASSERT_INLINE(name != NULL);
-    const String *const *const namePtr = &name;
-    return lstFindDefault(THIS_PUB(Manifest)->fileList, namePtr, NULL) != NULL;
+    return lstFindDefault(THIS_PUB(Manifest)->fileList, &name, NULL) != NULL;
 }
 
 void manifestFileRemove(const Manifest *this, const String *name);
