@@ -15,6 +15,7 @@ Required buffer sizes
 ***********************************************************************************************************************************/
 #define CVT_BOOL_BUFFER_SIZE                                        6
 #define CVT_BASE10_BUFFER_SIZE                                      64
+#define CVT_VARINT128_BUFFER_SIZE                                   10
 
 /***********************************************************************************************************************************
 Functions
@@ -84,6 +85,10 @@ unsigned int cvtZToUIntBase(const char *value, int base);
 size_t cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize);
 uint64_t cvtZToUInt64(const char *value);
 uint64_t cvtZToUInt64Base(const char *value, int base);
+
+// Convert uint64 to varint-128
+void cvtUInt64ToVarInt128(uint64_t value, uint8_t *buffer, size_t *bufferPos, size_t bufferSize);
+uint64_t cvtUInt64FromVarInt128(const uint8_t *value, size_t *valuePos);
 
 // Convert boolean to zero-terminated string. Use cvtBoolToConstZ() whenever possible since it is more efficient.
 size_t cvtBoolToZ(bool value, char *buffer, size_t bufferSize);

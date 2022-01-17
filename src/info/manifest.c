@@ -202,79 +202,6 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-#define PACK_UINT64_SIZE_MAX                                        10
-
-static uint64_t
-manifestReadU64(const uint8_t *const buffer, size_t *const bufferPos)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, buffer);
-        FUNCTION_TEST_PARAM_P(UINT64, bufferPos);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-    ASSERT(bufferPos != NULL);
-
-    uint64_t result = 0;
-    uint8_t byte;
-
-    // Convert bytes from varint-128 encoding to a uint64
-    for (unsigned int bufferIdx = 0; bufferIdx < PACK_UINT64_SIZE_MAX; bufferIdx++) // {uncovered - !!!}
-    {
-        // Get the next encoded byte
-        byte = buffer[*bufferPos];
-
-        // Shift the lower order 7 encoded bits into the uint64 in reverse order
-        result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
-
-        // Increment buffer position to indicate that the byte has been processed
-        (*bufferPos)++;
-
-        // Done if the high order bit is not set to indicate more data
-        if (byte < 0x80)
-            break;
-    }
-
-    // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
-    // corrupton in the data stream.
-    if (byte >= 0x80) // {uncovered - !!!}
-        THROW(FormatError, "unterminated base-128 integer"); // {uncovered - !!!}
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-static void
-manifestWriteU64(uint8_t *const buffer, size_t *const bufferPos, uint64_t value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, buffer);
-        FUNCTION_TEST_PARAM_P(UINT64, bufferPos);
-        FUNCTION_TEST_PARAM(UINT64, value);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-    ASSERT(bufferPos != NULL);
-
-    // Convert uint64 to varint-128 encoding. Keep writing out bytes while the remaining value is greater than 7 bits.
-    while (value >= 0x80)
-    {
-        // Encode the lower order 7 bits, adding the continuation bit to indicate there is more data
-        buffer[*bufferPos] = (unsigned char)value | 0x80;
-
-        // Shift the value to remove bits that have been encoded
-        value >>= 7;
-
-        // Keep track of size so we know how many bytes to write out
-        (*bufferPos)++;
-    }
-
-    // Encode the last 7 bits of value
-    buffer[*bufferPos] = (unsigned char)value;
-    (*bufferPos)++;
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 static ManifestFilePack *
 manifestFilePack(const ManifestFile *const file)
 {
@@ -286,12 +213,10 @@ manifestFilePack(const ManifestFile *const file)
     size_t bufferPos = 0;
 
     // Size
-    manifestWriteU64(buffer, &bufferPos, file->size);
-
-    // THROW_FMT(AssertError, "BUFFER SIZE = %zu", bufferPos); // !!!
+    cvtUInt64ToVarInt128(file->size, buffer, &bufferPos, sizeof(buffer));
 
     // Timestamp
-    manifestWriteU64(buffer, &bufferPos, cvtInt64ToZigZag(file->timestamp));
+    cvtUInt64ToVarInt128(cvtInt64ToZigZag(file->timestamp), buffer, &bufferPos, sizeof(buffer));
 
     // Primary
     buffer[bufferPos] = file->primary;
@@ -306,17 +231,17 @@ manifestFilePack(const ManifestFile *const file)
     bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
 
     // Reference
-    manifestWriteU64(buffer, &bufferPos, (uintptr_t)file->reference);
+    cvtUInt64ToVarInt128((uintptr_t)file->reference, buffer, &bufferPos, sizeof(buffer));
 
     // Mode
-    manifestWriteU64(buffer, &bufferPos, file->mode);
+    cvtUInt64ToVarInt128(file->mode, buffer, &bufferPos, sizeof(buffer));
 
     // User/group
-    manifestWriteU64(buffer, &bufferPos, (uintptr_t)file->user);
-    manifestWriteU64(buffer, &bufferPos, (uintptr_t)file->group);
+    cvtUInt64ToVarInt128((uintptr_t)file->user, buffer, &bufferPos, sizeof(buffer));
+    cvtUInt64ToVarInt128((uintptr_t)file->group, buffer, &bufferPos, sizeof(buffer));
 
     // Repo size
-    manifestWriteU64(buffer, &bufferPos, file->sizeRepo);
+    cvtUInt64ToVarInt128(file->sizeRepo, buffer, &bufferPos, sizeof(buffer));
 
     // Checksum page error
     buffer[bufferPos] = file->checksumPageError;
@@ -352,44 +277,6 @@ manifestFilePack(const ManifestFile *const file)
     FUNCTION_TEST_RETURN((ManifestFilePack *)result);
 }
 
-static void
-manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, const ManifestFile *const file)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM_P(VOID, filePack);
-        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(filePack != NULL);
-    ASSERT(file != NULL);
-
-    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
-    {
-        ManifestFilePack *const filePackOld = *filePack;
-        *filePack = manifestFilePack(file);
-        memFree(filePackOld);
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-int
-manifestFilePackComparator(const void *item1, const void *item2)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, item1);
-        FUNCTION_TEST_PARAM_P(VOID, item2);
-    FUNCTION_TEST_END();
-
-    ASSERT(item1 != NULL);
-    ASSERT(item2 != NULL);
-
-    FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
-}
-
 ManifestFile
 manifestFileUnpack(const ManifestFilePack *const filePack)
 {
@@ -405,10 +292,10 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     bufferPos += sizeof(StringPub) + strSize(result.name) + 1;
 
     // Size
-    result.size = manifestReadU64((const uint8_t *)filePack, &bufferPos);
+    result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Timestamp
-    result.timestamp = (time_t)cvtInt64FromZigZag(manifestReadU64((const uint8_t *)filePack, &bufferPos));
+    result.timestamp = (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos));
 
     // Primary
     result.primary = ((const uint8_t *)filePack)[bufferPos];
@@ -423,17 +310,17 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
 
     // Reference
-    result.reference = (const String *)(uintptr_t)manifestReadU64((const uint8_t *)filePack, &bufferPos);
+    result.reference = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Mode
-    result.mode = (mode_t)manifestReadU64((const uint8_t *)filePack, &bufferPos);
+    result.mode = (mode_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // User/group
-    result.user = (const String *)(uintptr_t)manifestReadU64((const uint8_t *)filePack, &bufferPos);
-    result.group = (const String *)(uintptr_t)manifestReadU64((const uint8_t *)filePack, &bufferPos);
+    result.user = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    result.group = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Repo size
-    result.sizeRepo = manifestReadU64((const uint8_t *)filePack, &bufferPos);
+    result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Checksum page error
     result.checksumPageError = ((const uint8_t *)filePack)[bufferPos];
@@ -446,6 +333,20 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     }
 
     FUNCTION_TEST_RETURN(result);
+}
+
+int
+manifestFilePackComparator(const void *item1, const void *item2)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
+    FUNCTION_TEST_END();
+
+    ASSERT(item1 != NULL);
+    ASSERT(item2 != NULL);
+
+    FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
 }
 
 void
@@ -469,6 +370,30 @@ manifestFileAdd(Manifest *this, ManifestFile file)
     {
         const ManifestFilePack *const filePack = manifestFilePack(&file);
         lstAdd(this->pub.fileList, &filePack);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, const ManifestFile *const file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM_P(VOID, filePack);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(filePack != NULL);
+    ASSERT(file != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
+    {
+        ManifestFilePack *const filePackOld = *filePack;
+        *filePack = manifestFilePack(file);
+        memFree(filePackOld);
     }
     MEM_CONTEXT_END();
 

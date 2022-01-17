@@ -482,3 +482,79 @@ cvtZToUInt64(const char *value)
 
     FUNCTION_TEST_RETURN(cvtZToUInt64Base(value, 10));
 }
+
+/**********************************************************************************************************************************/
+uint64_t
+cvtUInt64FromVarInt128(const uint8_t *const value, size_t *const valuePos)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, value);
+        FUNCTION_TEST_PARAM_P(UINT64, valuePos);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+    ASSERT(valuePos != NULL);
+
+    uint64_t result = 0;
+    uint8_t byte;
+
+    // Convert bytes from varint-128 encoding to a uint64
+    for (unsigned int valueIdx = 0; valueIdx < CVT_VARINT128_BUFFER_SIZE; valueIdx++)
+    {
+        // Get the next encoded byte
+        byte = value[*valuePos];
+
+        // Shift the lower order 7 encoded bits into the uint64 in reverse order
+        result |= (uint64_t)(byte & 0x7f) << (7 * valueIdx);
+
+        // Increment value position to indicate that the byte has been processed
+        (*valuePos)++;
+
+        // Done if the high order bit is not set to indicate more data
+        if (byte < 0x80)
+            break;
+    }
+
+    // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
+    // corrupton in the data stream.
+    if (byte >= 0x80)
+        THROW(FormatError, "unterminated varint-128 integer");
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+void
+cvtUInt64ToVarInt128(uint64_t value, uint8_t *const buffer, size_t *const bufferPos, const size_t bufferSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, value);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(UINT64, bufferSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+    ASSERT(bufferSize > *bufferPos);
+
+    // Convert uint64 to varint-128 encoding. Keep writing out bytes while the remaining value is greater than 7 bits.
+    while (value >= 0x80)
+    {
+        // Encode the lower order 7 bits, adding the continuation bit to indicate there is more data
+        buffer[*bufferPos] = (unsigned char)value | 0x80;
+
+        // Shift the value to remove bits that have been encoded
+        value >>= 7;
+
+        // Keep track of size so we know how many bytes to write out
+        (*bufferPos)++;
+
+        // Make sure the buffer won't overflow
+        if (*bufferPos >= bufferSize)
+            THROW(AssertError, "buffer overflow");
+    }
+
+    // Encode the last 7 bits of value
+    buffer[*bufferPos] = (unsigned char)value;
+    (*bufferPos)++;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
