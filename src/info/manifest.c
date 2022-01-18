@@ -224,10 +224,11 @@ manifestFilePack(const ManifestFile *const file)
     FUNCTION_TEST_END();
 
     uint8_t buffer[512];
-    uint64_t flag = 0;
     size_t bufferPos = 0;
 
     // Flags
+    uint64_t flag = 0;
+
     if (file->primary)
         flag |= 1 << manifestFilePackFlagPrimary;
 
