@@ -202,9 +202,10 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-// Pack file into a compact format to save memory
+// Base time used as a delta to reduce the size of packed timestamps. This will be set on the first call to manifestFilePack().
 static time_t manifestPackBaseTime = -1;
 
+// Flags used to reduce the size of packed data. They should be ordered from most to least likely and can be reordered at will.
 typedef enum
 {
     manifestFilePackFlagPrimary,
@@ -214,6 +215,7 @@ typedef enum
     manifestFilePackFlagChecksumPageErrorList,
 } ManifestFilePackFlag;
 
+// Pack file into a compact format to save memory
 static ManifestFilePack *
 manifestFilePack(const ManifestFile *const file)
 {
