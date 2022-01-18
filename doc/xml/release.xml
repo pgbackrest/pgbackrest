@@ -61,6 +61,7 @@
                     <release-item>
                         <commit subject="Add read range to all storage drivers."/>
                         <commit subject="Implement restore ownership without updating manifest internals."/>
+                        <commit subject="Fix issue with Posix read offset handling after an error."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
