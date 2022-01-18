@@ -153,12 +153,12 @@ Internal Functions (in virtually all cases the macros above should be used in pr
 ***********************************************************************************************************************************/
 // Log function
 void logInternal(
-    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, unsigned int processId, const char *fileName,
+    LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *message);
 
 // Log function with formatting
 void logInternalFmt(
-    LogLevel logLevel, LogLevel logRangeMin,  LogLevel logRangeMax, unsigned int processId, const char *fileName,
+    LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *format, ...) __attribute__((format(printf, 8, 9)));
 
 #endif

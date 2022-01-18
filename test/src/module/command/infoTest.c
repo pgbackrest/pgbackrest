@@ -2536,7 +2536,7 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n",
-            .comment = "put archive info to file,  repo2, same system-id, different version");
+            .comment = "put archive info to file, repo2, same system-id, different version");
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE
@@ -2610,7 +2610,7 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6569239123849665888,\"db-version\":\"9.4\"}\n",
-            .comment = "put archive info to file,  repo2, different system-id, same version");
+            .comment = "put archive info to file, repo2, different system-id, same version");
 
         TEST_RESULT_STR_Z(
             infoRender(),

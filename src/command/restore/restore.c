@@ -261,7 +261,7 @@ restoreBackupSet(void)
             TRY_BEGIN()
             {
                 infoBackup = infoBackupLoadFile(
-                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR,  cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
+                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             }
             CATCH_ANY()

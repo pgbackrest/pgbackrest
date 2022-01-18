@@ -462,7 +462,7 @@ testRun(void)
 
                 driver = (StorageAzure *)storageDriver(storage);
                 TEST_RESULT_STR(driver->host, hrnServerHost(), "check host");
-                TEST_RESULT_STR_Z(driver->pathPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "check path prefix");
+                TEST_RESULT_STR_Z(driver->pathPrefix, "/" TEST_ACCOUNT "/" TEST_CONTAINER, "check path prefix");
                 TEST_RESULT_BOOL(driver->fileId == 0, false, "check file id");
 
                 // Tests need the block size to be 16

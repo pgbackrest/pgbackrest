@@ -144,7 +144,7 @@ storageLocal(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageLocal =  storagePosixNewP(FSLASH_STR);
+            storageHelper.storageLocal = storagePosixNewP(FSLASH_STR);
         }
         MEM_CONTEXT_END();
     }

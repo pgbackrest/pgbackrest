@@ -1801,11 +1801,11 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 // If hardlinking is enabled then create a hardlink for files that have not changed since the last backup
                 if (hardLink)
                 {
-                    LOG_DETAIL_FMT("hardlink %s to %s",  strZ(file->name), strZ(file->reference));
+                    LOG_DETAIL_FMT("hardlink %s to %s", strZ(file->name), strZ(file->reference));
 
                     const String *const linkName = storagePathP(
                         storageRepo(), strNewFmt("%s/%s%s", strZ(backupPathExp), strZ(file->name), compressExt));
-                    const String *const linkDestination =  storagePathP(
+                    const String *const linkDestination = storagePathP(
                         storageRepo(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file->reference), strZ(file->name), compressExt));
 
@@ -2157,7 +2157,7 @@ cmdBackup(void)
         // Backup info
         LOG_INFO_FMT(
             "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
-            strZ(strSizeFormat(infoBackupDataByLabel(infoBackup,  manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
+            strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
             manifestFileTotal(manifest));
     }
     MEM_CONTEXT_TEMP_END();

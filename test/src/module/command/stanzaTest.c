@@ -37,7 +37,7 @@ testRun(void)
         TEST_TITLE("stanza-create: repo option not valid");
 
         // Load Parameters
-        StringList *argList =  strLstDup(argListBase);
+        StringList *argList = strLstDup(argListBase);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 

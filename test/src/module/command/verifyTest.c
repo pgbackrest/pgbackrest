@@ -393,9 +393,9 @@ testRun(void)
         VerifyArchiveResult archiveResult =
         {
             .archiveId = strNewZ("9.4-1"),
-            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
+            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator = lstComparatorStr),
         };
-        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator);
+        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator);
         lstAdd(archiveIdResultList, &archiveResult);
         VerifyArchiveResult *archiveIdResult = lstGetLast(archiveIdResultList);
 
@@ -685,20 +685,20 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyRender() - missing file, empty invalidList");
 
-        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator);
+        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator);
         List *backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr);
 
         VerifyArchiveResult archiveIdResult =
         {
             .archiveId = strNewZ("9.6-1"),
             .totalWalFile = 1,
-            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
+            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator = lstComparatorStr),
         };
         VerifyWalRange walRange =
         {
             .start = strNewZ("0"),
             .stop = strNewZ("2"),
-            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
+            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator = lstComparatorStr),
         };
 
         lstAdd(archiveIdResult.walRangeList, &walRange);
@@ -722,7 +722,7 @@ testRun(void)
             .backupLabel = strNewZ("test-backup-label"),
             .status = backupInvalid,
             .totalFileVerify = 1,
-            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
+            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator = lstComparatorStr),
         };
         lstAdd(backupResult.invalidFileList, &invalidFile);
         lstAdd(backupResultList, &backupResult);

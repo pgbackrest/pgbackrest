@@ -73,7 +73,7 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentCompare)), "load backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->pub.infoPg, "infoPg set");
         TEST_RESULT_STR(infoBackupCipherPass(infoBackup), NULL, "cipher sub not set");
-        TEST_RESULT_INT(infoBackupDataTotal(infoBackup),  0, "infoBackupDataTotal returns 0");
+        TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 0, "infoBackupDataTotal returns 0");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check cipher pass");
@@ -785,7 +785,7 @@ testRun(void)
             "[target:path]\n"
             "pg_data={}\n"
             TEST_MANIFEST_PATH_DEFAULT,
-            .comment =  "write manifest for dependent backup to be added to full already in backup.info");
+            .comment = "write manifest for dependent backup to be added to full already in backup.info");
 
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
