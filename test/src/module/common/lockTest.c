@@ -133,14 +133,12 @@ testRun(void)
         String *archiveLockFile = strNewFmt(TEST_PATH "/%s-archive" LOCK_FILE_EXT, strZ(stanza));
         String *backupLockFile = strNewFmt(TEST_PATH "/%s-backup" LOCK_FILE_EXT, strZ(stanza));
         int lockFdTest = -1;
-        const Buffer *buffer = NULL;
+        Buffer *buffer = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(lockRelease(true), AssertError, "no lock is held by this process");
         TEST_RESULT_BOOL(lockRelease(false), false, "release when there is no lock");
-        TEST_RESULT_BOOL(
-            writeLockPercentageComplete(TEST_PATH_STR, stanza, STRDEF("1-test"), 85.58389), false,
-            "% complete write fails when no lockMemContext");
+        TEST_ERROR(lockWritePercentComplete(STRDEF("1-test"), 85.58389), AssertError, "backup lock is not held");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, STRDEF("1-test"), 0, true), "archive lock by file");
@@ -195,49 +193,43 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
-        TEST_RESULT_BOOL(
-            writeLockPercentageComplete(TEST_PATH_STR, stanza, STRDEF("1-test"), 0.0), true,
-            "backup lock, lock file write 1 succeeded");
+        TEST_RESULT_VOID(lockWritePercentComplete(STRDEF("1-test"), 0.0), "backup lock, lock file write 1 succeeded");
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test-backup.lock"))), "get file contents");
-        const StringList *parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+        StringList *parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
         TEST_RESULT_BOOL(
             strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("execId")))), STRDEF("1-test")), true,
             "verify 1 execId");
         TEST_RESULT_BOOL(
-            strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("percentageComplete")))), STRDEF("0.00")), true,
-            "verify percentageComplete 0.00");
-        TEST_RESULT_BOOL(
-            writeLockPercentageComplete(TEST_PATH_STR, stanza, STRDEF("1-test"), 50.85938), true,
-            "backup lock, lock file write 2 succeeded");
+            strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("percentComplete")))), STRDEF("0.00")), true,
+            "verify percentComplete 0.00");
+        TEST_RESULT_VOID(lockWritePercentComplete(STRDEF("1-test"), 50.85938), "backup lock, lock file write 2 succeeded");
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test-backup.lock"))), "get file contents");
         parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
         TEST_RESULT_BOOL(
             strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("execId")))), STRDEF("1-test")), true,
             "verify 2 execId");
         TEST_RESULT_BOOL(
-            strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("percentageComplete")))), STRDEF("50.86")), true,
-            "verify percentageComplete 50.86");
+            strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("percentComplete")))), STRDEF("50.86")), true,
+            "verify percentComplete 50.86");
         TEST_ERROR(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, false), AssertError,
             "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
         TEST_RESULT_VOID(lockRelease(true), "release all locks");
-        TEST_RESULT_BOOL(
-            writeLockPercentageComplete(TEST_PATH_STR, stanza, STRDEF("1-test"), 0.0), false, "no locks, lock file write failed");
+        TEST_ERROR(lockWritePercentComplete(STRDEF("1-test"), 0.0), AssertError, "backup lock is not held");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), false, "archive lock file was removed");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), false, "backup lock file was removed");
 
         // Test with only archive lock
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeArchive, 0, true), true, "archive lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
-        TEST_RESULT_BOOL(
-            writeLockPercentageComplete(TEST_PATH_STR, stanza, STRDEF("1-test"), 0.0), false, "archive lock, lock file write noop");
+        TEST_ERROR(lockWritePercentComplete(STRDEF("1-test"), 0.0), AssertError, "backup lock is not held");
         TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // Test with all lock
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, true), true, "all lock");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "all lock file was created");
-        TEST_RESULT_BOOL(
-            writeLockPercentageComplete(TEST_PATH_STR, stanza, STRDEF("1-test"), 0.0), true, "all lock, lock file write succeeded");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
+        TEST_RESULT_VOID(lockWritePercentComplete(STRDEF("1-test"), 0.0), "all lock, lock file write succeeded");
         TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // -------------------------------------------------------------------------------------------------------------------------

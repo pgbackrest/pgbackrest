@@ -38,6 +38,6 @@ bool lockAcquire(
 bool lockRelease(bool failOnNoLock);
 
 // Write the backup percentage complete value into the backup lock file
-bool writeLockPercentageComplete( const String *lockPath, const String *stanza, const String *execId, const double percentagComplete);
+void lockWritePercentComplete(const String *execId, double percentComplete);
 
 #endif

@@ -27,7 +27,7 @@ Constants
 // general system error.
 #define LOCK_ON_EXEC_ID                                             -2
 VARIANT_STRDEF_STATIC(EXEC_ID_VAR,                                  "execId");
-VARIANT_STRDEF_STATIC(PERCENTAGE_COMPLETE_VAR,                      "percentageComplete");
+VARIANT_STRDEF_STATIC(PERCENT_COMPLETE_VAR,                         "percentComplete");
 
 /***********************************************************************************************************************************
 Lock type names
@@ -289,56 +289,31 @@ lockRelease(bool failOnNoLock)
 }
 
 /**********************************************************************************************************************************/
-bool
-writeLockPercentageComplete(const String *lockPath, const String *stanza, const String *execId, const double percentageComplete)
+void
+lockWritePercentComplete(const String *const execId, const double percentComplete)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-    FUNCTION_LOG_PARAM(STRING, stanza);
     FUNCTION_LOG_PARAM(STRING, execId);
-    FUNCTION_LOG_PARAM(DOUBLE, percentageComplete);
+    FUNCTION_LOG_PARAM(DOUBLE, percentComplete);
     FUNCTION_LOG_END();
 
-    ASSERT(lockPath != NULL);
-    ASSERT(stanza != NULL);
     ASSERT(execId != NULL);
+    CHECK(AssertError, lockTypeHeld == lockTypeBackup || lockTypeHeld == lockTypeAll, "backup lock is not held");
 
-    bool status = false;
-
-    // This context should already exist, noop if it doesn't
-    if (lockMemContext != NULL)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        MEM_CONTEXT_BEGIN(lockMemContext)
-        {
-            // We are only interested in the backup lock file
-            const String *const lockFPtr = strNewFmt(
-                    "%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockTypeBackup]);
+        // Build kv for second line json
+        KeyValue *keyValue = kvNew();
+        kvPut(keyValue, EXEC_ID_VAR, varNewStr(execId));
+        kvPut(keyValue, PERCENT_COMPLETE_VAR, varNewStr(strNewFmt("%.2lf", percentComplete)));
 
-            // If backup lock file exists, locate the file descriptor and update the content of the file.
-            if (storageExistsP(storageLocal(), lockFPtr))
-            {
-                LockType lockMin = lockTypeHeld == lockTypeAll ? lockTypeArchive : lockTypeHeld;
-                LockType lockMax = lockTypeHeld == lockTypeAll ? (lockTypeAll - 1) : lockTypeHeld;
-                for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
-                {
-                    if (strEq(lockFile[lockIdx], lockFPtr))
-                    {
-                        // Build kv for second line json
-                        KeyValue *keyValue = kvNew();
-                        kvPut(keyValue, EXEC_ID_VAR, varNewStr(execId));
-                        const String *const percentageCompleteStr = strNewFmt("%.2lf", percentageComplete);
-                        kvPut(keyValue, PERCENTAGE_COMPLETE_VAR, varNewStr(percentageCompleteStr));
-
-                        // Move to the beginning of the file, and overwrite the contents with the udpated data
-                        lseek(lockFd[lockIdx], 0, SEEK_SET);
-                        ioFdWriteOneStr(lockFd[lockIdx], strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))));
-
-                        status = true;
-                    }
-                }
-            }
-        }
-        MEM_CONTEXT_END();
+        // Seek to beginning of backup lock file and write updated information
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockFd[lockTypeBackup], 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+            strZ(lockFile[lockTypeBackup]));
+        ioFdWriteOneStr(lockFd[lockTypeBackup], strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))));
     }
+    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, status);
+    FUNCTION_LOG_RETURN_VOID();
 }
