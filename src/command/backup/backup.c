@@ -21,6 +21,7 @@ Backup Command
 #include "common/debug.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "common/time.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
@@ -968,7 +969,6 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             ManifestFile file =
             {
                 .name = manifestName,
-                .primary = true,
                 .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
                 .user = basePath->user,
                 .group = basePath->group,
@@ -1377,6 +1377,37 @@ backupDbPing(const BackupData *const backupData, const bool force)
 /***********************************************************************************************************************************
 Process the backup manifest
 ***********************************************************************************************************************************/
+typedef struct BackupJobData
+{
+    const String *const backupLabel;                                // Backup label (defines the backup path)
+    const bool backupStandby;                                       // Backup from standby
+    RegExp *standbyExp;                                             // Identify files that may be copied from the standby
+    const CipherType cipherType;                                    // Cipher type
+    const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
+    const CompressType compressType;                                // Backup compression type
+    const int compressLevel;                                        // Compress level if backup is compressed
+    const bool delta;                                               // Is this a checksum delta backup?
+    const uint64_t lsnStart;                                        // Starting lsn for the backup
+
+    List *queueList;                                                // List of processing queues
+} BackupJobData;
+
+// Identify files that must be copied from the primary
+bool
+backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(REGEXP, standbyExp);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(standbyExp != NULL);
+    ASSERT(name != NULL);
+
+    FUNCTION_TEST_RETURN(
+        strEqZ(name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) || !regExpMatch(standbyExp, name));
+}
+
 // Comparator to order ManifestFile objects by size then name
 static int
 backupProcessQueueComparator(const void *item1, const void *item2)
@@ -1401,7 +1432,7 @@ backupProcessQueueComparator(const void *item1, const void *item2)
 
 // Helper to generate the backup queues
 static uint64_t
-backupProcessQueue(Manifest *manifest, List **queueList)
+backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData, List **queueList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1461,7 +1492,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 pgControlFound = true;
 
             // Files that must be copied from the primary are always put in queue 0 when backup from standby
-            if (backupStandby && file->primary)
+            if (backupStandby && backupProcessFilePrimary(jobData->standbyExp, file->name))
             {
                 lstAdd(*(List **)lstGet(*queueList, 0), &file);
             }
@@ -1542,20 +1573,6 @@ backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal
 }
 
 // Callback to fetch backup jobs for the parallel executor
-typedef struct BackupJobData
-{
-    const String *const backupLabel;                                // Backup label (defines the backup path)
-    const bool backupStandby;                                       // Backup from standby
-    const CipherType cipherType;                                    // Cipher type
-    const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
-    const CompressType compressType;                                // Backup compression type
-    const int compressLevel;                                        // Compress level if backup is compressed
-    const bool delta;                                               // Is this a checksum delta backup?
-    const uint64_t lsnStart;                                        // Starting lsn for the backup
-
-    List *queueList;                                                // List of processing queues
-} BackupJobData;
-
 static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -1594,7 +1611,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteStrP(param, manifestPathPg(file->name));
                 pckWriteBoolP(param, !strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file->size);
-                pckWriteBoolP(param, !file->primary);
+                pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file->name));
                 pckWriteStrP(param, file->checksumSha1[0] != 0 ? STR(file->checksumSha1) : NULL);
                 pckWriteBoolP(param, file->checksumPage);
                 pckWriteU64P(param, jobData->lsnStart);
@@ -1705,9 +1722,16 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
+
+            // Build expression to identify files that can be copied from the standby when standby backup is supported
+            .standbyExp = regExpNew(
+                strNewFmt(
+                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
+                        MANIFEST_TARGET_PGTBLSPC ")/",
+                    strZ(pgXactPath(backupData->version)))),
         };
 
-        sizeTotal = backupProcessQueue(manifest, &jobData.queueList);
+        sizeTotal = backupProcessQueue(manifest, &jobData, &jobData.queueList);
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
@@ -1942,7 +1966,6 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                         ManifestFile file =
                         {
                             .name = manifestName,
-                            .primary = true,
                             .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
                             .user = basePath->user,
                             .group = basePath->group,

@@ -221,7 +221,6 @@ manifestFileAdd(Manifest *this, const ManifestFile *file)
             .group = manifestOwnerCache(this, file->group),
             .mode = file->mode,
             .name = strDup(file->name),
-            .primary = file->primary,
             .size = file->size,
             .sizeRepo = file->sizeRepo,
             .timestamp = file->timestamp,
@@ -592,7 +591,6 @@ typedef struct ManifestBuildData
     const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
-    RegExp *standbyExp;                                             // Identify files that must be copied from the primary
     const VariantList *tablespaceList;                              // List of tablespaces in the database
     ManifestLinkCheck linkCheck;                                    // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
@@ -837,11 +835,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
             };
-
-            // Set a flag to indicate if this file must be copied from the primary
-            file.primary =
-                strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-                !regExpMatch(buildData.standbyExp, manifestName);
 
             // Determine if this file should be page checksummed
             if (buildData.dbPath && buildData.checksumPage)
@@ -1091,14 +1084,6 @@ manifestNewBuild(
 
             // Expression to find temp relations
             buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
-
-            // Build expression to identify files that can be copied from the standby when standby backup is supported
-            // ---------------------------------------------------------------------------------------------------------------------
-            buildData.standbyExp = regExpNew(
-                strNewFmt(
-                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
-                        MANIFEST_TARGET_PGTBLSPC ")/",
-                    strZ(pgXactPath(pgVersion))));
 
             // Build list of exclusions
             // ---------------------------------------------------------------------------------------------------------------------
