@@ -41,6 +41,7 @@ VARIANT_STRDEF_STATIC(BACKUP_KEY_DATABASE_REF_VAR,                  "database-re
 VARIANT_STRDEF_STATIC(BACKUP_KEY_INFO_VAR,                          "info");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LABEL_VAR,                         "label");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LINK_VAR,                          "link");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_LSN_VAR,                           "lsn");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_PRIOR_VAR,                         "prior");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_REFERENCE_VAR,                     "reference");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_TABLESPACE_VAR,                    "tablespace");
@@ -395,6 +396,10 @@ backupListAdd(
 
     Variant *backupInfo = varNewKv(kvNew());
 
+    // Flags used to decide what data to add
+    const bool outputJson = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
+    const bool backupLabelMatch = backupLabel != NULL && strEq(backupData->backupLabel, backupLabel);
+
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
     kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(strIdToStr(backupData->backupType)));
@@ -450,8 +455,16 @@ backupListAdd(
     if (backupData->backupError != NULL)
         kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, backupData->backupError);
 
+    // Add start/stop backup lsn info to json output or --set text
+    if ((outputJson || backupLabelMatch) && backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
+    {
+        KeyValue *const lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
+        kvPut(lsnInfo, KEY_START_VAR, VARSTR(backupData->backupLsnStart));
+        kvPut(lsnInfo, KEY_STOP_VAR, VARSTR(backupData->backupLsnStop));
+    }
+
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
-    if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
+    if (backupLabelMatch)
     {
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
@@ -820,6 +833,16 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         }
         else
             strCatZ(resultStr, "n/a\n");
+
+        const KeyValue *const lsnInfo = varKv(kvGet(backupInfo, BACKUP_KEY_LSN_VAR));
+
+        if (lsnInfo != NULL)
+        {
+            strCatFmt(
+                resultStr, "            lsn start/stop: %s / %s\n",
+                strZ(varStr(kvGet(lsnInfo, KEY_START_VAR))),
+                strZ(varStr(kvGet(lsnInfo, KEY_STOP_VAR))));
+        }
 
         KeyValue *info = varKv(kvGet(backupInfo, BACKUP_KEY_INFO_VAR));
 

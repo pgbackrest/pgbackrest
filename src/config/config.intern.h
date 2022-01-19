@@ -13,33 +13,53 @@ The general-purpose functions for querying the current configuration are found i
 #include "config/parse.h"
 
 /***********************************************************************************************************************************
-The maximum number of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
-***********************************************************************************************************************************/
-#define CFG_OPTION_KEY_MAX                                          256
-
-/***********************************************************************************************************************************
 Configuration data. These structures are not directly user-created or accessible. configParse() creates the structures and uses
 cfgInit() to load it as the current configuration. Various cfg*() functions provide access.
 ***********************************************************************************************************************************/
+// Group options that are related to allow valid and test checks across all options in the group
+typedef struct ConfigOptionGroupData
+{
+    const char *name;                                               // Name
+    bool valid;                                                     // Is option group valid for the current command?
+    unsigned int indexTotal;                                        // Total number of indexes with values in option group
+    bool indexDefaultExists;                                        // Is there a default index for non-indexed functions?
+    unsigned int indexDefault;                                      // Default index (usually 0)
+    unsigned int *indexMap;                                         // List of index to key index mappings
+    const String **indexName;                                       // List of index names
+} ConfigOptionGroupData;
+
+// Option data
 typedef union ConfigOptionValueType
 {
-    bool boolean;                                           // Boolean
-    int64_t integer;                                        // Integer
-    const KeyValue *keyValue;                               // KeyValue
-    const VariantList *list;                                // VariantList
-    const String *string;                                   // String
-    StringId stringId;                                      // StringId
+    bool boolean;                                                   // Boolean
+    int64_t integer;                                                // Integer
+    const KeyValue *keyValue;                                       // KeyValue
+    const VariantList *list;                                        // VariantList
+    const String *string;                                           // String
+    StringId stringId;                                              // StringId
 } ConfigOptionValueType;
 
 typedef struct ConfigOptionValue
 {
-    bool set;                                                   // Is the option set?
-    bool negate;                                                // Is the option negated?
-    bool reset;                                                 // Is the option reset?
-    unsigned int source;                                        // Where the option came from, i.e. ConfigSource enum
-    const String *display;                                      // Current display value, if any. Used for messages, etc.
-    ConfigOptionValueType value;                                // Option value
+    bool set;                                                       // Is the option set?
+    bool negate;                                                    // Is the option negated?
+    bool reset;                                                     // Is the option reset?
+    unsigned int source;                                            // Where the option came from, i.e. ConfigSource enum
+    const String *display;                                          // Current display value, if any. Used for messages, etc.
+    ConfigOptionValueType value;                                    // Option value
 } ConfigOptionValue;
+
+typedef struct ConfigOptionData
+{
+    const char *name;                                               // Name
+    bool valid;                                                     // Is option valid for current command?
+    bool group;                                                     // In a group?
+    unsigned int groupId;                                           // Id if in a group
+    ConfigOptionDataType dataType;                                  // Underlying data type
+    const String *defaultValue;                                     // Default value
+    ConfigOptionValue *index;                                       // List of indexed values (only 1 unless the option is indexed)
+    const String **indexName;                                       // Index names (e.g. repo1-path, repo2-path)
+} ConfigOptionData;
 
 typedef struct Config
 {
@@ -58,28 +78,8 @@ typedef struct Config
     LogLevel logLevelDefault;                                       // Default log level
     StringList *paramList;                                          // Parameters passed to the command (if any)
 
-    // Group options that are related together to allow valid and test checks across all options in the group
-    struct
-    {
-        const char *name;                                           // Name
-        bool valid;                                                 // Is option group valid for the current command?
-        unsigned int indexTotal;                                    // Total number of indexes with values in option group
-        bool indexDefaultExists;                                    // Is there a default index for non-indexed functions?
-        unsigned int indexDefault;                                  // Default index (usually 0)
-        unsigned int indexMap[CFG_OPTION_KEY_MAX];                  // List of index to key index mappings
-    } optionGroup[CFG_OPTION_GROUP_TOTAL];
-
-    // Option data
-    struct
-    {
-        const char *name;                                           // Name
-        bool valid;                                                 // Is option valid for current command?
-        bool group;                                                 // In a group?
-        unsigned int groupId;                                       // Id if in a group
-        ConfigOptionDataType dataType;                              // Underlying data type
-        const String *defaultValue;                                 // Default value
-        ConfigOptionValue *index;                                   // List of indexed values (only 1 unless the option is indexed)
-    } option[CFG_OPTION_TOTAL];
+    ConfigOptionGroupData optionGroup[CFG_OPTION_GROUP_TOTAL];      // Option group data
+    ConfigOptionData option[CFG_OPTION_TOTAL];                      // Option data
 } Config;
 
 /***********************************************************************************************************************************

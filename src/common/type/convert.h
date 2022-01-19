@@ -80,7 +80,7 @@ size_t cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize);
 unsigned int cvtZToUInt(const char *value);
 unsigned int cvtZToUIntBase(const char *value, int base);
 
-// Convert uint64 to zero-terminated string and visa versa
+// Convert uint64 to zero-terminated string and vice versa
 size_t cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize);
 uint64_t cvtZToUInt64(const char *value);
 uint64_t cvtZToUInt64Base(const char *value, int base);

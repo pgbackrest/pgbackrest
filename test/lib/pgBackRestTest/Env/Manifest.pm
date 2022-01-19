@@ -485,8 +485,7 @@ sub repoPathGet
 
     my $strRepoFile = $strTarget;
 
-    if ($self->isTargetTablespace($strTarget) &&
-        ($self->dbVersion() >= PG_VERSION_90))
+    if ($self->isTargetTablespace($strTarget))
     {
         $strRepoFile .= '/' . $self->tablespacePathGet();
     }
@@ -871,7 +870,7 @@ sub build
         next if $strFile =~ ('^' . MANIFEST_PATH_PGDYNSHMEM . '\/') && $self->dbVersion() >= PG_VERSION_94;
 
         # Skip pg_notify/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGNOTIFY . '\/') && $self->dbVersion() >= PG_VERSION_90;
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGNOTIFY . '\/');
 
         # Skip pg_replslot/* since these files are generally not useful after a restore
         next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/') && $self->dbVersion() >= PG_VERSION_94;
@@ -884,7 +883,7 @@ sub build
 
         # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
         # there.
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/') && $self->dbVersion() >= PG_VERSION_84;
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSTATTMP . '\/');
 
         # Skip pg_subtrans/* since these files are reset
         next if $strFile =~ ('^' . MANIFEST_PATH_PGSUBTRANS . '\/');
@@ -911,8 +910,8 @@ sub build
             next;
         }
 
-        # If version is greater than 9.0, check for files to exclude
-        if ($self->dbVersion() >= PG_VERSION_90 && $hManifest->{$strName}{type} eq 'f')
+        # Check for files to exclude
+        if ($hManifest->{$strName}{type} eq 'f')
         {
             # Get the directory name from the manifest; it will be used later to search for existence in the keys
             my $strDir = dirname($strName);
@@ -1078,12 +1077,7 @@ sub build
 
             if ($bTablespace)
             {
-                # Only versions >= 9.0  have the special top-level tablespace path.  Below 9.0 the database files are stored
-                # directly in the path referenced by the symlink.
-                if ($self->dbVersion() >= PG_VERSION_90)
-                {
-                    $strFilter = $self->tablespacePathGet();
-                }
+                $strFilter = $self->tablespacePathGet();
 
                 $self->set(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGTBLSPC, undef,
                            $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA));

@@ -27,6 +27,8 @@ typedef struct TestRequestParam
     const char *content;
     const char *accessKey;
     const char *securityToken;
+    const char *range;
+    const char *kms;
 } TestRequestParam;
 
 #define testRequestP(write, s3, verb, path, ...)                                                                                   \
@@ -64,10 +66,18 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
         if (param.content != NULL)
             strCatZ(request, "content-md5;");
 
-        strCatZ(request, "host;x-amz-content-sha256;x-amz-date");
+        strCatZ(request, "host;");
+
+        if (param.range != NULL)
+            strCatZ(request, "range;");
+
+        strCatZ(request, "x-amz-content-sha256;x-amz-date");
 
         if (securityToken != NULL)
             strCatZ(request, ";x-amz-security-token");
+
+        if (param.kms != NULL)
+            strCatZ(request, ";x-amz-server-side-encryption;x-amz-server-side-encryption-aws-kms-key-id");
 
         strCatZ(request, ",Signature=????????????????????????????????????????????????????????????????\r\n");
     }
@@ -94,6 +104,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     else
         strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
 
+    // Add range
+    if (param.range != NULL)
+        strCatFmt(request, "range:bytes=%s\r\n", param.range);
+
     // Add content checksum and date if s3 service
     if (s3 != NULL)
     {
@@ -108,6 +122,13 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
         // Add security token
         if (securityToken != NULL)
             strCatFmt(request, "x-amz-security-token:%s\r\n", securityToken);
+    }
+
+    // Add kms key
+    if (param.kms != NULL)
+    {
+        strCatZ(request, "x-amz-server-side-encryption:aws:kms\r\n");
+        strCatFmt(request, "x-amz-server-side-encryption-aws-kms-key-id:%s\r\n", param.kms);
     }
 
     // Add final \r\n
@@ -417,13 +438,14 @@ testRun(void)
                     "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file");
+                TEST_TITLE("get file with offset and limit");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "1-21");
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt")))), "this is a sample file", "get file");
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
@@ -442,6 +464,7 @@ testRun(void)
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeAuto);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
@@ -617,7 +640,9 @@ testRun(void)
 
                 hrnServerScriptClose(auth);
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD", .accessKey = "xx", .securityToken = "zz");
+                testRequestP(
+                    service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD", .accessKey = "xx", .securityToken = "zz",
+                    .kms = "kmskey1");
                 testResponseP(service);
 
                 // Make a copy of the signing key to verify that it gets changed when the keys are updated
@@ -648,7 +673,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "");
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "", .kms = "kmskey1");
                 testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
@@ -657,7 +682,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with nothing left over on close");
 
-                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=");
+                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1");
                 testResponseP(
                     service,
                     .content =
@@ -694,7 +719,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error in success response of multipart upload");
 
-                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=");
+                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1");
                 testResponseP(
                     service,
                     .content =
@@ -748,7 +773,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
 
-                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=");
+                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1");
                 testResponseP(
                     service,
                     .content =
@@ -897,6 +922,15 @@ testRun(void)
 
                 // Auth service no longer needed
                 hrnServerScriptEnd(auth);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write zero-length file (without kms)");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "");
+                testResponseP(service);
+
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, NULL), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");

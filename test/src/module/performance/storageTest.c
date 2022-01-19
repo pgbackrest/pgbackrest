@@ -271,15 +271,7 @@ testRun(void)
                                                                                                                                    \
             uint64_t benchMarkBegin = timeMSec();                                                                                  \
                                                                                                                                    \
-            Buffer *buffer = bufNew(ioBufferSize());                                                                               \
-                                                                                                                                   \
-            do                                                                                                                     \
-            {                                                                                                                      \
-                ioRead(read, buffer);                                                                                              \
-                ioWrite(write, buffer);                                                                                            \
-                bufUsedZero(buffer);                                                                                               \
-            }                                                                                                                      \
-            while (!ioReadEof(read));                                                                                              \
+            ioCopy(read, write);                                                                                                   \
                                                                                                                                    \
             ioReadClose(read);                                                                                                     \
             ioWriteClose(write);                                                                                                   \

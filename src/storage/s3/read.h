@@ -10,6 +10,7 @@ S3 Storage Read
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageRead *storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing);
+StorageRead *storageReadS3New(
+    StorageS3 *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
 
 #endif

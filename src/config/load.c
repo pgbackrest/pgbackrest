@@ -98,8 +98,8 @@ cfgLoadUpdateOption(void)
                     {
                         THROW_FMT(
                             OptionInvalidValueError,
-                            "local repo%u and repo%u paths are both '%s' but must be different",
-                            cfgOptionGroupIdxToKey(cfgOptGrpRepo, optionIdx), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                            "local %s and %s paths are both '%s' but must be different",
+                            cfgOptionGroupName(cfgOptGrpRepo, optionIdx), cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
                             strZ(cfgOptionIdxDisplay(cfgOptRepoPath, repoIdx)));
                     }
                 }

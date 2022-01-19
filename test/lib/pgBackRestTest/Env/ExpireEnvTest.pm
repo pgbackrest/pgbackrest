@@ -79,8 +79,6 @@ sub new
 my $oPgControlVersionHash =
 {
     # iControlVersion => {iCatalogVersion => strDbVersion}
-    833 => {200711281 => PG_VERSION_83},
-    843 => {200904091 => PG_VERSION_84},
     903 =>
     {
         201008051 => PG_VERSION_90,

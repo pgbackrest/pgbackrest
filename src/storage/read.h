@@ -61,6 +61,13 @@ storageReadName(const StorageRead *const this)
     return THIS_PUB(StorageRead)->interface->name;
 }
 
+// Is there a read limit? NULL for no limit.
+__attribute__((always_inline)) static inline uint64_t
+storageReadOffset(const StorageRead *const this)
+{
+    return THIS_PUB(StorageRead)->interface->offset;
+}
+
 // Get file type
 __attribute__((always_inline)) static inline StringId
 storageReadType(const StorageRead *const this)

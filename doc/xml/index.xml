@@ -144,9 +144,9 @@
         </section>
 
         <section id="postgres-compatibility">
-            <title>Compatibility with <postgres/> >= 8.3</title>
+            <title>Compatibility with <postgres/> >= 9.0</title>
 
-            <p><backrest/> includes support for versions down to 8.3, since older versions of PostgreSQL are still regularly utilized.</p>
+            <p><backrest/> includes support for versions down to 9.0, since older versions of PostgreSQL are still regularly utilized.</p>
         </section>
     </section>
 

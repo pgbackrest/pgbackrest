@@ -1032,13 +1032,34 @@ testRun(void)
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TESTFILE\n", bufSize(buffer)) == 0, true, "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read limited bytes");
+        TEST_TITLE("error on invalid read offset bytes");
 
-        ioBufferSizeSet(2);
+        TEST_ERROR(
+            storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = UINT64_MAX)), FileOpenError,
+            "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt': [22] Invalid argument");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read limited bytes");
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .limit = VARUINT64(7))), "get");
         TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TESTFIL", bufSize(buffer)) == 0, true, "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read offset bytes");
+
+        TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = 4)), "get");
+        TEST_RESULT_UINT(bufSize(buffer), 5, "check size");
+        TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "FILE\n", bufSize(buffer)) == 0, true, "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read offset/limited bytes");
+
+        TEST_ASSIGN(
+            buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = 4,
+            .limit = VARUINT64(4))), "get");
+        TEST_RESULT_UINT(bufSize(buffer), 4, "check size");
+        TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "FILE", bufSize(buffer)) == 0, true, "check content");
     }
 
     // *****************************************************************************************************************************
@@ -1138,7 +1159,8 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(
-                file, storageReadMove(storageNewReadP(storageTest, fileName, .limit = VARUINT64(44)), memContextPrior()),
+                file,
+                storageReadMove(storageNewReadP(storageTest, fileName, .limit = VARUINT64(44)), memContextPrior()),
                 "new read file");
         }
         MEM_CONTEXT_TEMP_END();
@@ -1146,6 +1168,7 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_RESULT_STR(storageReadName(file), fileName, "check file name");
         TEST_RESULT_UINT(storageReadType(file), STORAGE_POSIX_TYPE, "check file type");
+        TEST_RESULT_UINT(storageReadOffset(file), 0, "check offset");
         TEST_RESULT_UINT(varUInt64(storageReadLimit(file)), 44, "check limit");
 
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");

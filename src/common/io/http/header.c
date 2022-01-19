@@ -5,6 +5,7 @@ HTTP Header
 
 #include "common/debug.h"
 #include "common/io/http/header.h"
+#include "common/io/http/request.h"
 #include "common/type/keyValue.h"
 
 /***********************************************************************************************************************************
@@ -154,6 +155,32 @@ httpHeaderPut(HttpHeader *this, const String *key, const String *value)
 
     // Store the key
     kvPut(this->kv, VARSTR(key), VARSTR(value));
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+HttpHeader *
+httpHeaderPutRange(HttpHeader *const this, const uint64_t offset, const Variant *const limit)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_HEADER, this);
+        FUNCTION_TEST_PARAM(UINT64, offset);
+        FUNCTION_TEST_PARAM(VARIANT, limit);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(limit == NULL || varType(limit) == varTypeUInt64);
+
+    if (offset != 0 || limit != NULL)
+    {
+        String *const range = strCatFmt(strNew(), HTTP_HEADER_RANGE_BYTES "=%" PRIu64 "-", offset);
+
+        if (limit != NULL)
+            strCatFmt(range, "%" PRIu64, offset + varUInt64(limit) - 1);
+
+        httpHeaderPut(this, HTTP_HEADER_RANGE_STR, range);
+    }
 
     FUNCTION_TEST_RETURN(this);
 }

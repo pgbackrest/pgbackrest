@@ -31,7 +31,7 @@ Archive Get Command
 Constants for log messages that are used multiple times to keep them consistent
 ***********************************************************************************************************************************/
 #define FOUND_IN_ARCHIVE_MSG                                        "found %s in the archive"
-#define FOUND_IN_REPO_ARCHIVE_MSG                                   "found %s in the repo%u: %s archive"
+#define FOUND_IN_REPO_ARCHIVE_MSG                                   "found %s in the %s: %s archive"
 #define UNABLE_TO_FIND_IN_ARCHIVE_MSG                               "unable to find %s in the archive"
 #define UNABLE_TO_FIND_VALID_REPO_MSG                               "unable to find a valid repository"
 #define REPO_INVALID_OR_ERR_MSG                                     "some repositories were invalid or encountered errors"
@@ -61,8 +61,7 @@ typedef struct ArchiveGetCheckResult
 static void
 archiveGetErrorAdd(StringList *warnList, bool log, unsigned int repoIdx, const ErrorType *type, const String *message)
 {
-    const String *warn = strNewFmt(
-        "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(type), strZ(message));
+    const String *warn = strNewFmt("%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(type), strZ(message));
 
     if (!strLstExists(warnList, warn))
     {
@@ -298,7 +297,7 @@ archiveGetFind(
 
                         if (repoKey != repoKeyLast)
                         {
-                            strCatFmt(message, "\nrepo%u:", repoKey);
+                            strCatFmt(message, "\n%s:", cfgOptionGroupName(cfgOptGrpRepo, file->repoIdx));
                             repoKeyLast = repoKey;
                             first = true;
                         }
@@ -814,7 +813,7 @@ cmdArchiveGet(void)
                 ASSERT(file != NULL);
 
                 LOG_INFO_FMT(
-                    FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment), cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx),
+                    FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment), cfgOptionGroupName(cfgOptGrpRepo, file->repoIdx),
                     strZ(file->archiveId));
 
                 result = 0;
@@ -980,7 +979,7 @@ cmdArchiveGetAsync(void)
 
                                 LOG_DETAIL_PID_FMT(
                                     processId, FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
-                                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx), strZ(file->archiveId));
+                                    cfgOptionGroupName(cfgOptGrpRepo, file->repoIdx), strZ(file->archiveId));
 
                                 // Rename temp WAL segment to actual name. This is done after the ok file is written so the ok file
                                 // is guaranteed to exist before the foreground process finds the WAL segment.
