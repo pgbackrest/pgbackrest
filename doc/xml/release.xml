@@ -64,10 +64,12 @@
                         <commit subject="Fix issue with Posix read offset handling after an error."/>
                         <commit subject="Refactor backupProcessQueue() to use BackupJobData struct."/>
                         <commit subject="Use the PG_FILE_POSTMTRPID constant where appropriate."/>
+                        <commit subject="Remove primary flag from manifest."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
