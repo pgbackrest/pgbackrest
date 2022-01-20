@@ -1483,8 +1483,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdBackup(), PgRunningError,
-            "--no-online passed but postmas""ter.pid exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and try"
-                " again, or use --force.");
+            "--no-online passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and"
+                " try again, or use --force.");
 
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, incr backup has been changed to full");
 
@@ -1507,8 +1507,8 @@ testRun(void)
 
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
-            "P00   WARN: --no-online passed and postmas""ter.pid exists but --force was passed so backup will continue though it"
-                " looks like " PG_NAME " is running and the backup will probably not be consistent\n"
+            "P00   WARN: --no-online passed and " PG_FILE_POSTMTRPID " exists but --force was passed so backup will continue though"
+                " it looks like " PG_NAME " is running and the backup will probably not be consistent\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100%%) checksum"
                 " e3db315c260e79211b7b52587123b7aa060f30ab\n"

@@ -621,7 +621,7 @@ sub run
             {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--force --checksum-page' . ($bDeltaBackup ? ' --delta' : '')});
 
-        # Remove postmas'.'ter.pid so restore will succeed (the rest will be cleaned up by the delta)
+        # Remove pid so restore will succeed (the rest will be cleaned up by the delta)
         storageTest->remove($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_POSTMTRPID);
 
         # Restore - tests various mode, extra files/paths, missing files/paths

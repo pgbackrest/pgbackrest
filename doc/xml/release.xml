@@ -63,6 +63,7 @@
                         <commit subject="Implement restore ownership without updating manifest internals."/>
                         <commit subject="Fix issue with Posix read offset handling after an error."/>
                         <commit subject="Refactor backupProcessQueue() to use BackupJobData struct."/>
+                        <commit subject="Use the PG_FILE_POSTMTRPID constant where appropriate."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
