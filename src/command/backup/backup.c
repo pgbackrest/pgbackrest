@@ -1377,6 +1377,20 @@ backupDbPing(const BackupData *const backupData, const bool force)
 /***********************************************************************************************************************************
 Process the backup manifest
 ***********************************************************************************************************************************/
+typedef struct BackupJobData
+{
+    const String *const backupLabel;                                // Backup label (defines the backup path)
+    const bool backupStandby;                                       // Backup from standby
+    const CipherType cipherType;                                    // Cipher type
+    const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
+    const CompressType compressType;                                // Backup compression type
+    const int compressLevel;                                        // Compress level if backup is compressed
+    const bool delta;                                               // Is this a checksum delta backup?
+    const uint64_t lsnStart;                                        // Starting lsn for the backup
+
+    List *queueList;                                                // List of processing queues
+} BackupJobData;
+
 // Comparator to order ManifestFile objects by size then name
 static int
 backupProcessQueueComparator(const void *item1, const void *item2)
@@ -1401,11 +1415,11 @@ backupProcessQueueComparator(const void *item1, const void *item2)
 
 // Helper to generate the backup queues
 static uint64_t
-backupProcessQueue(Manifest *manifest, List **queueList)
+backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM_P(LIST, queueList);
+        FUNCTION_LOG_PARAM_P(VOID, jobData);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1415,7 +1429,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create list of process queues (use void * instead of List * to avoid Coverity false positive)
-        *queueList = lstNewP(sizeof(void *));
+        jobData->queueList = lstNewP(sizeof(void *));
 
         // Generate the list of targets
         StringList *targetList = strLstNew();
@@ -1430,21 +1444,19 @@ backupProcessQueue(Manifest *manifest, List **queueList)
         }
 
         // Generate the processing queues (there is always at least one)
-        bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
-        unsigned int queueOffset = backupStandby ? 1 : 0;
+        unsigned int queueOffset = jobData->backupStandby ? 1 : 0;
 
-        MEM_CONTEXT_BEGIN(lstMemContext(*queueList))
+        MEM_CONTEXT_BEGIN(lstMemContext(jobData->queueList))
         {
             for (unsigned int queueIdx = 0; queueIdx < strLstSize(targetList) + queueOffset; queueIdx++)
             {
                 List *queue = lstNewP(sizeof(ManifestFile *), .comparator = backupProcessQueueComparator);
-                lstAdd(*queueList, &queue);
+                lstAdd(jobData->queueList, &queue);
             }
         }
         MEM_CONTEXT_END();
 
         // Now put all files into the processing queues
-        bool delta = cfgOptionBool(cfgOptDelta);
         uint64_t fileTotal = 0;
         bool pgControlFound = false;
 
@@ -1453,7 +1465,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             const ManifestFile *file = manifestFile(manifest, fileIdx);
 
             // If the file is a reference it should only be backed up if delta and not zero size
-            if (file->reference != NULL && (!delta || file->size == 0))
+            if (file->reference != NULL && (!jobData->delta || file->size == 0))
                 continue;
 
             // Is pg_control in the backup?
@@ -1461,9 +1473,9 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 pgControlFound = true;
 
             // Files that must be copied from the primary are always put in queue 0 when backup from standby
-            if (backupStandby && file->primary)
+            if (jobData->backupStandby && file->primary)
             {
-                lstAdd(*(List **)lstGet(*queueList, 0), &file);
+                lstAdd(*(List **)lstGet(jobData->queueList, 0), &file);
             }
             // Else find the correct queue by matching the file to a target
             else
@@ -1483,7 +1495,7 @@ backupProcessQueue(Manifest *manifest, List **queueList)
                 while (1);
 
                 // Add file to queue
-                lstAdd(*(List **)lstGet(*queueList, targetIdx + queueOffset), &file);
+                lstAdd(*(List **)lstGet(jobData->queueList, targetIdx + queueOffset), &file);
             }
 
             // Add size to total
@@ -1508,11 +1520,11 @@ backupProcessQueue(Manifest *manifest, List **queueList)
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         // Sort the queues
-        for (unsigned int queueIdx = 0; queueIdx < lstSize(*queueList); queueIdx++)
-            lstSort(*(List **)lstGet(*queueList, queueIdx), sortOrderDesc);
+        for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
+            lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderDesc);
 
         // Move process queues to prior context
-        lstMove(*queueList, memContextPrior());
+        lstMove(jobData->queueList, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1542,20 +1554,6 @@ backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal
 }
 
 // Callback to fetch backup jobs for the parallel executor
-typedef struct BackupJobData
-{
-    const String *const backupLabel;                                // Backup label (defines the backup path)
-    const bool backupStandby;                                       // Backup from standby
-    const CipherType cipherType;                                    // Cipher type
-    const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
-    const CompressType compressType;                                // Backup compression type
-    const int compressLevel;                                        // Compress level if backup is compressed
-    const bool delta;                                               // Is this a checksum delta backup?
-    const uint64_t lsnStart;                                        // Starting lsn for the backup
-
-    List *queueList;                                                // List of processing queues
-} BackupJobData;
-
 static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -1707,7 +1705,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
         };
 
-        sizeTotal = backupProcessQueue(manifest, &jobData.queueList);
+        sizeTotal = backupProcessQueue(manifest, &jobData);
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
