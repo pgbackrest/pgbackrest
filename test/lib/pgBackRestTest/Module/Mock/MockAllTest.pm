@@ -209,7 +209,7 @@ sub run
         {vm => VM2, remote =>  true, tls => false, storage => AZURE, encrypt =>  true, delta => false, compress =>  GZ},
         {vm => VM3, remote => false, tls => false, storage => POSIX, encrypt => false, delta =>  true, compress => ZST},
         {vm => VM3, remote =>  true, tls =>  true, storage =>    S3, encrypt =>  true, delta => false, compress => LZ4},
-        {vm => VM4, remote => false, tls => false, storage =>   GCS, encrypt => false, delta => false, compress =>  GZ},
+        {vm => VM4, remote => false, tls => false, storage => POSIX, encrypt => false, delta => false, compress =>  GZ},
         {vm => VM4, remote =>  true, tls =>  true, storage =>    S3, encrypt =>  true, delta =>  true, compress => ZST},
     )
     {

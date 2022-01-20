@@ -11,6 +11,7 @@ use Carp qw(confess);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname basename);
+use Fcntl qw(:mode);
 use Time::Local qw(timelocal);
 
 use pgBackRestDoc::Common::Exception;
@@ -1291,63 +1292,47 @@ sub buildDefault
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->buildDefault');
 
-    # Set defaults for subkeys that tend to repeat
+    # Defaults for subkeys that tend to repeat
+    my $strDefaultUser = $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_USER);
+    my $strDefaultGroup = $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_GROUP);
+    my $strDefaultPathMode = $self->get(MANIFEST_SECTION_TARGET_PATH, MANIFEST_TARGET_PGDATA, MANIFEST_SUBKEY_MODE);
+    my $strDefaultFileMode = sprintf('%04o', oct($strDefaultPathMode) & (S_IRUSR | S_IWUSR | S_IRGRP));
+
+    # Remove subkeys that match the defaults
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
-        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE)
+        foreach my $strFile ($self->keys($strSection))
         {
-            # Links don't have a mode so skip
-            next if ($strSection eq MANIFEST_SECTION_TARGET_LINK && $strSubKey eq &MANIFEST_SUBKEY_MODE);
-
-            my %oDefault;
-            my $iSectionTotal = 0;
-
-            foreach my $strFile ($self->keys($strSection))
+            if ($self->test($strSection, $strFile, MANIFEST_SUBKEY_USER, $strDefaultUser))
             {
-                # Don't count false values when subkey in (MANIFEST_SUBKEY_USER, MANIFEST_SUBKEY_GROUP)
-                next if (($strSubKey eq MANIFEST_SUBKEY_USER || $strSubKey eq MANIFEST_SUBKEY_GROUP) &&
-                         $self->boolTest($strSection, $strFile, $strSubKey, false));
-
-                my $strValue = $self->get($strSection, $strFile, $strSubKey);
-
-                if (defined($oDefault{$strValue}))
-                {
-                    $oDefault{$strValue}++;
-                }
-                else
-                {
-                    $oDefault{$strValue} = 1;
-                }
-
-                $iSectionTotal++;
+                $self->remove($strSection, $strFile, MANIFEST_SUBKEY_USER);
             }
 
-            my $strMaxValue;
-            my $iMaxValueTotal = 0;
-
-            foreach my $strValue (sort(keys(%oDefault)))
+            if ($self->test($strSection, $strFile, MANIFEST_SUBKEY_GROUP, $strDefaultGroup))
             {
-                if ($oDefault{$strValue} > $iMaxValueTotal)
-                {
-                    $iMaxValueTotal = $oDefault{$strValue};
-                    $strMaxValue = $strValue;
-                }
+                $self->remove($strSection, $strFile, MANIFEST_SUBKEY_GROUP);
             }
 
-            if (defined($strMaxValue) > 0 && $iMaxValueTotal > $iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR)
+            if ($self->test(
+                $strSection, $strFile, MANIFEST_SUBKEY_MODE,
+                $strSection eq MANIFEST_SECTION_TARGET_PATH ? $strDefaultPathMode : $strDefaultFileMode))
             {
-                $self->set("${strSection}:default", $strSubKey, undef, $strMaxValue);
-
-                foreach my $strFile ($self->keys($strSection))
-                {
-                    if ($self->test($strSection, $strFile, $strSubKey, $strMaxValue))
-                    {
-                        $self->remove($strSection, $strFile, $strSubKey);
-                    }
-                }
+                $self->remove($strSection, $strFile, MANIFEST_SUBKEY_MODE);
             }
         }
     }
+
+    # Write defaults
+    $self->set(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_USER, undef, $strDefaultUser);
+    $self->set(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_GROUP, undef, $strDefaultGroup);
+    $self->set(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_MODE, undef, $strDefaultFileMode);
+
+    $self->set(MANIFEST_SECTION_TARGET_LINK . ':default', MANIFEST_SUBKEY_USER, undef, $strDefaultUser);
+    $self->set(MANIFEST_SECTION_TARGET_LINK . ':default', MANIFEST_SUBKEY_GROUP, undef, $strDefaultGroup);
+
+    $self->set(MANIFEST_SECTION_TARGET_PATH . ':default', MANIFEST_SUBKEY_USER, undef, $strDefaultUser);
+    $self->set(MANIFEST_SECTION_TARGET_PATH . ':default', MANIFEST_SUBKEY_GROUP, undef, $strDefaultGroup);
+    $self->set(MANIFEST_SECTION_TARGET_PATH . ':default', MANIFEST_SUBKEY_MODE, undef, $strDefaultPathMode);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
