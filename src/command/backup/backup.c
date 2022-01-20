@@ -1432,11 +1432,11 @@ backupProcessQueueComparator(const void *item1, const void *item2)
 
 // Helper to generate the backup queues
 static uint64_t
-backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData, List **queueList)
+backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM_P(LIST, queueList);
+        FUNCTION_LOG_PARAM_P(VOID, jobData);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1446,7 +1446,7 @@ backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData, List 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create list of process queues (use void * instead of List * to avoid Coverity false positive)
-        *queueList = lstNewP(sizeof(void *));
+        jobData->queueList = lstNewP(sizeof(void *));
 
         // Generate the list of targets
         StringList *targetList = strLstNew();
@@ -1461,21 +1461,19 @@ backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData, List 
         }
 
         // Generate the processing queues (there is always at least one)
-        bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
-        unsigned int queueOffset = backupStandby ? 1 : 0;
+        unsigned int queueOffset = jobData->backupStandby ? 1 : 0;
 
-        MEM_CONTEXT_BEGIN(lstMemContext(*queueList))
+        MEM_CONTEXT_BEGIN(lstMemContext(jobData->queueList))
         {
             for (unsigned int queueIdx = 0; queueIdx < strLstSize(targetList) + queueOffset; queueIdx++)
             {
                 List *queue = lstNewP(sizeof(ManifestFile *), .comparator = backupProcessQueueComparator);
-                lstAdd(*queueList, &queue);
+                lstAdd(jobData->queueList, &queue);
             }
         }
         MEM_CONTEXT_END();
 
         // Now put all files into the processing queues
-        bool delta = cfgOptionBool(cfgOptDelta);
         uint64_t fileTotal = 0;
         bool pgControlFound = false;
 
@@ -1484,7 +1482,7 @@ backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData, List 
             const ManifestFile *file = manifestFile(manifest, fileIdx);
 
             // If the file is a reference it should only be backed up if delta and not zero size
-            if (file->reference != NULL && (!delta || file->size == 0))
+            if (file->reference != NULL && (!jobData->delta || file->size == 0))
                 continue;
 
             // Is pg_control in the backup?
@@ -1492,9 +1490,9 @@ backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData, List 
                 pgControlFound = true;
 
             // Files that must be copied from the primary are always put in queue 0 when backup from standby
-            if (backupStandby && backupProcessFilePrimary(jobData->standbyExp, file->name))
+            if (jobData->backupStandby && backupProcessFilePrimary(jobData->standbyExp, file->name))
             {
-                lstAdd(*(List **)lstGet(*queueList, 0), &file);
+                lstAdd(*(List **)lstGet(jobData->queueList, 0), &file);
             }
             // Else find the correct queue by matching the file to a target
             else
@@ -1514,7 +1512,7 @@ backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData, List 
                 while (1);
 
                 // Add file to queue
-                lstAdd(*(List **)lstGet(*queueList, targetIdx + queueOffset), &file);
+                lstAdd(*(List **)lstGet(jobData->queueList, targetIdx + queueOffset), &file);
             }
 
             // Add size to total
@@ -1539,11 +1537,11 @@ backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData, List 
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         // Sort the queues
-        for (unsigned int queueIdx = 0; queueIdx < lstSize(*queueList); queueIdx++)
-            lstSort(*(List **)lstGet(*queueList, queueIdx), sortOrderDesc);
+        for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
+            lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderDesc);
 
         // Move process queues to prior context
-        lstMove(*queueList, memContextPrior());
+        lstMove(jobData->queueList, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1731,7 +1729,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                     strZ(pgXactPath(backupData->version)))),
         };
 
-        sizeTotal = backupProcessQueue(manifest, &jobData, &jobData.queueList);
+        sizeTotal = backupProcessQueue(manifest, &jobData);
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
