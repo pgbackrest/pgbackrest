@@ -705,7 +705,7 @@ sub manifestDefault
     # Set defaults for subkeys that tend to repeat
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
-        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE, &MANIFEST_SUBKEY_PRIMARY)
+        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE)
         {
             my %oDefault;
             my $iSectionTotal = 0;
@@ -745,14 +745,7 @@ sub manifestDefault
 
             if (defined($strMaxValue) > 0 && $iMaxValueTotal > $iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR)
             {
-                if ($strSubKey eq MANIFEST_SUBKEY_PRIMARY)
-                {
-                    $oExpectedManifest->{"${strSection}:default"}{$strSubKey} = $strMaxValue ? JSON::PP::true : JSON::PP::false;
-                }
-                else
-                {
-                    $oExpectedManifest->{"${strSection}:default"}{$strSubKey} = $strMaxValue;
-                }
+                $oExpectedManifest->{"${strSection}:default"}{$strSubKey} = $strMaxValue;
 
                 foreach my $strFile (keys(%{$oExpectedManifest->{$strSection}}))
                 {
