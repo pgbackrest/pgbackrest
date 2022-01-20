@@ -72,7 +72,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("regular expression - match full, incremental, differential");
 
-        filter = backupRegExpP(.full = true,  .incremental = true, .differential = true);
+        filter = backupRegExpP(.full = true, .incremental = true, .differential = true);
 
         TEST_RESULT_STR_Z(
             filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}(D|I)){0,1}$",

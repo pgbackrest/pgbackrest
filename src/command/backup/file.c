@@ -53,7 +53,7 @@ backupFile(
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Destination in the repo to copy the pg file
         FUNCTION_LOG_PARAM(BOOL, repoFileHasReference);             // Does the repo file exist in a prior backup in the set?
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
-        FUNCTION_LOG_PARAM(INT,  repoFileCompressLevel);            // Compression level for repo file
+        FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING, backupLabel);                    // Label of current backup
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type

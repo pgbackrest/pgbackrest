@@ -62,7 +62,7 @@ cmdStop(void)
                     // If we cannot open the lock file for any reason then warn and continue to next file
                     if ((fd = open(strZ(lockFile), O_RDONLY, 0)) == -1)
                     {
-                        LOG_WARN_FMT( "unable to open lock file %s", strZ(lockFile));
+                        LOG_WARN_FMT("unable to open lock file %s", strZ(lockFile));
                         continue;
                     }
 

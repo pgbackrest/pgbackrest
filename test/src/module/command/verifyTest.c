@@ -173,14 +173,12 @@ testRun(void)
     #define TEST_MANIFEST_FILE                                                                                                     \
         "\n"                                                                                                                       \
         "[target:file]\n"                                                                                                          \
-        "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"mas""ter\":true"                          \
-            ",\"size\":4,\"timestamp\":1565282114}\n"
+        "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
 
     #define TEST_MANIFEST_FILE_DEFAULT                                                                                             \
         "\n"                                                                                                                       \
         "[target:file:default]\n"                                                                                                  \
         "group=\"group1\"\n"                                                                                                       \
-        "mas""ter=false\n"                                                                                                         \
         "mode=\"0600\"\n"                                                                                                          \
         "user=\"user1\"\n"
 
@@ -393,9 +391,9 @@ testRun(void)
         VerifyArchiveResult archiveResult =
         {
             .archiveId = strNewZ("9.4-1"),
-            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
+            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator = lstComparatorStr),
         };
-        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator);
+        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator);
         lstAdd(archiveIdResultList, &archiveResult);
         VerifyArchiveResult *archiveIdResult = lstGetLast(archiveIdResultList);
 
@@ -685,20 +683,20 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyRender() - missing file, empty invalidList");
 
-        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator);
+        List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator);
         List *backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr);
 
         VerifyArchiveResult archiveIdResult =
         {
             .archiveId = strNewZ("9.6-1"),
             .totalWalFile = 1,
-            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
+            .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator = lstComparatorStr),
         };
         VerifyWalRange walRange =
         {
             .start = strNewZ("0"),
             .stop = strNewZ("2"),
-            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
+            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator = lstComparatorStr),
         };
 
         lstAdd(archiveIdResult.walRangeList, &walRange);
@@ -722,7 +720,7 @@ testRun(void)
             .backupLabel = strNewZ("test-backup-label"),
             .status = backupInvalid,
             .totalFileVerify = 1,
-            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
+            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator = lstComparatorStr),
         };
         lstAdd(backupResult.invalidFileList, &invalidFile);
         lstAdd(backupResultList, &backupResult);
@@ -1086,7 +1084,7 @@ testRun(void)
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
             TEST_MANIFEST_FILE
-            "pg_data/testvalid={\"checksum\":\"%s\",\"mas""ter\":true,\"size\":7,\"timestamp\":1565282114}\n"
+            "pg_data/testvalid={\"checksum\":\"%s\",\"size\":7,\"timestamp\":1565282114}\n"
             "pg_data/testzero={\"repo-size\":20,\"size\":0,\"timestamp\":1601405663}\n"
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
@@ -1118,15 +1116,13 @@ testRun(void)
                 TEST_MANIFEST_DB
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"mas""ter\":true,"
+                "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\","
                     "\"reference\":\"20181119-152900F\",\"size\":4,\"timestamp\":1565282114}\n"
-                "pg_data/testfile={\"checksum\":\"%s\",\"mas""ter\":true,\"reference\":\"20181119-152900F\",\"size\":7,"
-                    "\"timestamp\":1565282114}\n"
-                "pg_data/testfile2={\"checksum\":\"%s\",\"mas""ter\":true,\"size\":7,\"timestamp\":1565282114}\n"
+                "pg_data/testfile={\"checksum\":\"%s\",\"reference\":\"20181119-152900F\",\"size\":7,\"timestamp\":1565282114}\n"
+                "pg_data/testfile2={\"checksum\":\"%s\",\"size\":7,\"timestamp\":1565282114}\n"
                 "pg_data/testmissing="
                     "{\"checksum\":\"123473f470864e067ee3a22e64b47b0a1c356abc\",\"size\":7,\"timestamp\":1565282114}\n"
-                "pg_data/testother={\"checksum\":\"%s\",\"mas""ter\":true,\"reference\":\"UNPROCESSEDBACKUP\",\"size\":7,"
-                    "\"timestamp\":1565282114}\n"
+                "pg_data/testother={\"checksum\":\"%s\",\"reference\":\"UNPROCESSEDBACKUP\",\"size\":7,\"timestamp\":1565282114}\n"
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
                 TEST_MANIFEST_LINK_DEFAULT
@@ -1292,9 +1288,8 @@ testRun(void)
             TEST_MANIFEST_DB                                                                                                       \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
-            "pg_data/PG_VERSION="                                                                                                  \
-                "{\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"mas""ter\":true,\"reference\":\"20181119-152900F\"," \
-                "\"size\":4,\"timestamp\":1565282114}\n"                                                                           \
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20181119-152900F\""     \
+                ",\"size\":4,\"timestamp\":1565282114}\n"                                                                          \
             TEST_MANIFEST_FILE_DEFAULT                                                                                             \
             TEST_MANIFEST_LINK                                                                                                     \
             TEST_MANIFEST_LINK_DEFAULT                                                                                             \
@@ -1341,8 +1336,8 @@ testRun(void)
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
             TEST_MANIFEST_FILE
-            "pg_data/base/1/555_init={\"checksum\":\"%s\",\"mas""ter\":false,\"size\":1,\"timestamp\":1565282114}\n"
-            "pg_data/base/1/555_init.1={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
+            "pg_data/base/1/555_init={\"checksum\":\"%s\",\"size\":1,\"timestamp\":1565282114}\n"
+            "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
@@ -1370,8 +1365,8 @@ testRun(void)
             TEST_MANIFEST_DB
             "\n"
             "[target:file]\n"
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"mas""ter\":true,"
-                "\"reference\":\"20181119-152900F\",\"size\":4,\"timestamp\":1565282114}\n"
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20181119-152900F\""
+                ",\"size\":4,\"timestamp\":1565282114}\n"
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
@@ -1396,7 +1391,7 @@ testRun(void)
                 TEST_MANIFEST_DB
                 "\n"
                 "[target:file]\n"
-                "pg_data/validfile={\"checksum\":\"%s\",\"mas""ter\":true,\"size\":%u,\"timestamp\":1565282114}\n"
+                "pg_data/validfile={\"checksum\":\"%s\",\"size\":%u,\"timestamp\":1565282114}\n"
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
                 TEST_MANIFEST_LINK_DEFAULT

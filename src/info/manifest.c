@@ -91,9 +91,6 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
 #define MANIFEST_KEY_GROUP                                          "group"
     STRING_STATIC(MANIFEST_KEY_GROUP_STR,                           MANIFEST_KEY_GROUP);
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_GROUP_VAR,                   MANIFEST_KEY_GROUP);
-#define MANIFEST_KEY_PRIMARY                                        "mas""ter"
-    STRING_STATIC(MANIFEST_KEY_PRIMARY_STR,                         MANIFEST_KEY_PRIMARY);
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_PRIMARY_VAR,                 MANIFEST_KEY_PRIMARY);
 #define MANIFEST_KEY_MODE                                           "mode"
     STRING_STATIC(MANIFEST_KEY_MODE_STR,                            MANIFEST_KEY_MODE);
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_MODE_VAR,                    MANIFEST_KEY_MODE);
@@ -208,7 +205,6 @@ static time_t manifestPackBaseTime = -1;
 // Flags used to reduce the size of packed data. They should be ordered from most to least likely and can be reordered at will.
 typedef enum
 {
-    manifestFilePackFlagPrimary,
     manifestFilePackFlagReference,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
@@ -228,9 +224,6 @@ manifestFilePack(const ManifestFile *const file)
 
     // Flags
     uint64_t flag = 0;
-
-    if (file->primary)
-        flag |= 1 << manifestFilePackFlagPrimary;
 
     if (file->checksumPage)
         flag |= 1 << manifestFilePackFlagChecksumPage;
@@ -331,9 +324,6 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     // Timestamp
     result.timestamp =
         manifestPackBaseTime - (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos));
-
-    // Primary
-    result.primary = flag & (1 << manifestFilePackFlagPrimary) ? true : false;
 
     // Checksum page
     result.checksumPage = flag & (1 << manifestFilePackFlagChecksumPage) ? true : false;
@@ -750,7 +740,6 @@ typedef struct ManifestBuildData
     const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
-    RegExp *standbyExp;                                             // Identify files that must be copied from the primary
     const VariantList *tablespaceList;                              // List of tablespaces in the database
     ManifestLinkCheck linkCheck;                                    // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
@@ -995,11 +984,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
             };
-
-            // Set a flag to indicate if this file must be copied from the primary
-            file.primary =
-                strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-                !regExpMatch(buildData.standbyExp, manifestName);
 
             // Determine if this file should be page checksummed
             if (buildData.dbPath && buildData.checksumPage)
@@ -1249,14 +1233,6 @@ manifestNewBuild(
 
             // Expression to find temp relations
             buildData.tempRelationExp = regExpNew(STRDEF("^t[0-9]+_" RELATION_EXP "$"));
-
-            // Build expression to identify files that can be copied from the standby when standby backup is supported
-            // ---------------------------------------------------------------------------------------------------------------------
-            buildData.standbyExp = regExpNew(
-                strNewFmt(
-                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
-                        MANIFEST_TARGET_PGTBLSPC ")/",
-                    strZ(pgXactPath(pgVersion))));
 
             // Build list of exclusions
             // ---------------------------------------------------------------------------------------------------------------------
@@ -1656,7 +1632,6 @@ typedef struct ManifestLoadFound
 {
     bool group:1;
     bool mode:1;
-    bool primary:1;
     bool user:1;
 } ManifestLoadFound;
 
@@ -1668,7 +1643,6 @@ typedef struct ManifestLoadData
     List *fileFoundList;                                            // Values found in files
     const Variant *fileGroupDefault;                                // File default group
     mode_t fileModeDefault;                                         // File default mode
-    bool filePrimaryDefault;                                        // File default primary
     const Variant *fileUserDefault;                                 // File default user
 
     List *linkFoundList;                                            // Values found in links
@@ -1813,12 +1787,6 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 file.mode = cvtZToMode(strZ(varStr(kvGet(fileKv, MANIFEST_KEY_MODE_VAR))));
             }
 
-            if (kvKeyExists(fileKv, MANIFEST_KEY_PRIMARY_VAR))
-            {
-                valueFound.primary = true;
-                file.primary = varBool(kvGet(fileKv, MANIFEST_KEY_PRIMARY_VAR));
-            }
-
             if (kvKeyExists(fileKv, MANIFEST_KEY_USER_VAR))
             {
                 valueFound.user = true;
@@ -1911,8 +1879,6 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                 loadData->fileGroupDefault = manifestOwnerDefaultGet(value);
             else if (strEq(key, MANIFEST_KEY_MODE_STR))
                 loadData->fileModeDefault = cvtZToMode(strZ(varStr(value)));
-            else if (strEq(key, MANIFEST_KEY_PRIMARY_STR))
-                loadData->filePrimaryDefault = varBool(value);
             else if (strEq(key, MANIFEST_KEY_USER_STR))
                 loadData->fileUserDefault = manifestOwnerDefaultGet(value);
         }
@@ -2124,9 +2090,6 @@ manifestNewLoad(IoRead *read)
             if (!found->mode)
                 file.mode = loadData.fileModeDefault;
 
-            if (!found->primary)
-                file.primary = loadData.filePrimaryDefault;
-
             if (!found->user)
                 file.user = manifestOwnerCache(this, manifestOwnerGet(loadData.fileUserDefault));
 
@@ -2191,7 +2154,6 @@ typedef struct ManifestSaveData
 
     const Variant *fileGroupDefault;                                // File default group
     mode_t fileModeDefault;                                         // File default mode
-    bool filePrimaryDefault;                                        // File default primary
     const Variant *fileUserDefault;                                 // File default user
 
     const Variant *linkGroupDefault;                                // Link default group
@@ -2463,9 +2425,6 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 if (!varEq(manifestOwnerVar(file.group), saveData->fileGroupDefault))
                     kvPut(fileKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(file.group));
 
-                if (file.primary != saveData->filePrimaryDefault)
-                    kvPut(fileKv, MANIFEST_KEY_PRIMARY_VAR, VARBOOL(file.primary));
-
                 if (file.mode != saveData->fileModeDefault)
                     kvPut(fileKv, MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", file.mode)));
 
@@ -2496,9 +2455,6 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
             jsonFromVar(saveData->fileGroupDefault));
-        infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_PRIMARY_STR,
-            jsonFromBool(saveData->filePrimaryDefault));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_MODE_STR,
             jsonFromStr(strNewFmt("%04o", saveData->fileModeDefault)));
@@ -2615,7 +2571,6 @@ manifestSave(Manifest *this, IoWrite *write)
         // Get default file values
         MostCommonValue *fileGroupMcv = mcvNew();
         MostCommonValue *fileModeMcv = mcvNew();
-        MostCommonValue *filePrimaryMcv = mcvNew();
         MostCommonValue *fileUserMcv = mcvNew();
 
         ASSERT(manifestFileTotal(this) > 0);
@@ -2626,13 +2581,11 @@ manifestSave(Manifest *this, IoWrite *write)
 
             mcvUpdate(fileGroupMcv, VARSTR(file.group));
             mcvUpdate(fileModeMcv, VARUINT(file.mode));
-            mcvUpdate(filePrimaryMcv, VARBOOL(file.primary));
             mcvUpdate(fileUserMcv, VARSTR(file.user));
         }
 
         saveData.fileGroupDefault = manifestOwnerVar(varStr(mcvResult(fileGroupMcv)));
         saveData.fileModeDefault = (mode_t)varUInt(mcvResult(fileModeMcv));
-        saveData.filePrimaryDefault = varBool(mcvResult(filePrimaryMcv));
         saveData.fileUserDefault = manifestOwnerVar(varStr(mcvResult(fileUserMcv)));
 
         // Get default link values

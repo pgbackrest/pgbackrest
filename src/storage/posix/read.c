@@ -71,8 +71,6 @@ storageReadPosixOpen(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->fd == -1);
 
-    bool result = false;
-
     // Open the file
     this->fd = open(strZ(this->interface.name), O_RDONLY, 0);
 
@@ -87,23 +85,22 @@ storageReadPosixOpen(THIS_VOID)
         else
             THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->interface.name));                // {vm_covered}
     }
-
-    // On success set free callback to ensure the file descriptor is freed
-    if (this->fd != -1)
+    // Else success
+    else
     {
+        // Set free callback to ensure the file descriptor is freed
         memContextCallbackSet(THIS_MEM_CONTEXT(), storageReadPosixFreeResource, this);
-        result = true;
+
+        // Seek to offset
+        if (this->interface.offset != 0)
+        {
+            THROW_ON_SYS_ERROR_FMT(
+                lseek(this->fd, (off_t)this->interface.offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
+                this->interface.offset, strZ(this->interface.name));
+        }
     }
 
-    // Seek to offset
-    if (this->interface.offset != 0)
-    {
-        THROW_ON_SYS_ERROR_FMT(
-            lseek(this->fd, (off_t)this->interface.offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
-            this->interface.offset, strZ(this->interface.name));
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, this->fd != -1);
 }
 
 /***********************************************************************************************************************************

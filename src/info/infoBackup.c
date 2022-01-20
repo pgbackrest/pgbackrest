@@ -80,7 +80,7 @@ infoBackupNewInternal(void)
         .pub =
         {
             .memContext = memContextCurrent(),
-            .backup = lstNewP(sizeof(InfoBackupData), .comparator =  lstComparatorStr),
+            .backup = lstNewP(sizeof(InfoBackupData), .comparator = lstComparatorStr),
         },
     };
 
