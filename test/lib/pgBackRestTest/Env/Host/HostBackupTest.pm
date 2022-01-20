@@ -495,17 +495,17 @@ sub backupEnd
         }
 
         # Only do compare for synthetic backups since for real backups the expected manifest *is* the actual manifest.
-        if ($self->synthetic())
-        {
-            # Compare only if expected to do so
-            if ($bManifestCompare)
-            {
-                # Set backup type in the expected manifest
-                ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
+        # if ($self->synthetic())
+        # {
+        #     # Compare only if expected to do so
+        #     if ($bManifestCompare)
+        #     {
+        #         # Set backup type in the expected manifest
+        #         ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
 
-                $self->backupCompare($strBackup, $oExpectedManifest);
-            }
-        }
+        #         $self->backupCompare($strBackup, $oExpectedManifest);
+        #     }
+        # }
     }
 
     # Add files to expect log
@@ -1910,10 +1910,10 @@ sub restore
     {
         # Only compare restores in repo1. There is not a lot of value in comparing restores in other repos and it would require a
         # lot of changes to the Perl test harness.
-        if ($iRepoDefault == 1)
-        {
-            $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
-        }
+        # if ($iRepoDefault == 1)
+        # {
+        #     $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
+        # }
 
         if (defined($self->{oLogTest}))
         {
