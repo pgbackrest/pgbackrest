@@ -904,8 +904,8 @@ sub build
         # Skip ignored files
         if ($strFile eq MANIFEST_FILE_POSTGRESQLAUTOCONFTMP ||      # postgresql.auto.conf.tmp - temp file for safe writes
             $strFile eq MANIFEST_FILE_BACKUPLABELOLD ||             # backup_label.old - old backup labels are not useful
-            $strFile eq MANIFEST_FILE_POSTMTROPTS ||                # postmas'.'ter.opts - not useful for backup
-            $strFile eq MANIFEST_FILE_POSTMTRPID)                   # postmas'.'ter.pid - to avoid confusing postgres after restore
+            $strFile eq MANIFEST_FILE_POSTMTROPTS ||                # not useful for backup
+            $strFile eq MANIFEST_FILE_POSTMTRPID)                   # to avoid confusing postgres after restore
         {
             next;
         }

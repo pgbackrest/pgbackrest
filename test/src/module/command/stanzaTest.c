@@ -980,7 +980,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE, .comment = "create empty backup info for stanza '" TEST_STANZA "'");
         HRN_STORAGE_PUT_EMPTY(storageHrn, strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))), .comment = "create stop file");
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTMTRPID, .comment = "create postmas""ter pid file");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTMTRPID, .comment = "create " PG_FILE_POSTMTRPID " file");
 
         TEST_ERROR(
             cmdStanzaDelete(), PgRunningError, PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. "

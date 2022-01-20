@@ -350,15 +350,15 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "postmas""ter.pid");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTMTRPID);
 
         TEST_ERROR(
             restorePathValidate(), PgRunningError,
             "unable to restore while PostgreSQL is running\n"
-            "HINT: presence of 'postmas""ter.pid' in '" TEST_PATH "/pg' indicates PostgreSQL is running.\n"
-            "HINT: remove 'postmas""ter.pid' only if PostgreSQL is not running.");
+            "HINT: presence of '" PG_FILE_POSTMTRPID "' in '" TEST_PATH "/pg' indicates PostgreSQL is running.\n"
+            "HINT: remove '" PG_FILE_POSTMTRPID "' only if PostgreSQL is not running.");
 
-        HRN_STORAGE_REMOVE(storagePgWrite(), "postmas""ter.pid", .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on data directory does not look valid - delta");

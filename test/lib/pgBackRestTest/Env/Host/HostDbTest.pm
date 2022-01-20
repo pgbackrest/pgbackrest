@@ -389,9 +389,9 @@ sub clusterStart
     my $bArchiveEnabled = defined($$hParam{bArchiveEnabled}) ? $$hParam{bArchiveEnabled} : true;
 
     # Make sure postgres is not running
-    if (-e $self->dbBasePath() . '/postmas'.'ter.pid')
+    if (-e $self->dbBasePath() . '/' . DB_FILE_POSTMTRPID)
     {
-        confess 'postmas'.'ter.pid exists';
+        confess DB_FILE_POSTMTRPID . ' exists';
     }
 
     # Create the archive command
