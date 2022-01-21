@@ -1474,8 +1474,8 @@ testRun(void)
                 ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                      \
             "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"          \
                 ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                        \
-            "pg_data/base/16384/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"group\":false,\"size\":4"  \
-                ",\"timestamp\":1565282115}\n"                                                                                     \
+            "pg_data/base/16384/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"group\":\"group2\""        \
+                ",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                                           \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
@@ -1486,26 +1486,26 @@ testRun(void)
         #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
             "[target:file:default]\n"                                                                                              \
-            "group=\"group1\"\n"                                                                                                   \
+            "group=false\n"                                                                                                        \
             "mode=\"0600\"\n"                                                                                                      \
-            "user=\"user1\"\n"
+            "user=\"user2\"\n"
 
         #define TEST_MANIFEST_LINK                                                                                                 \
             "\n"                                                                                                                   \
             "[target:link]\n"                                                                                                      \
             "pg_data/pg_stat={\"destination\":\"../pg_stat\"}\n"                                                                   \
-            "pg_data/postgresql.conf={\"destination\":\"../pg_config/postgresql.conf\",\"group\":false,\"user\":\"user1\"}\n"
+            "pg_data/postgresql.conf={\"destination\":\"../pg_config/postgresql.conf\",\"group\":\"group2\",\"user\":false}\n"
 
         #define TEST_MANIFEST_LINK_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
             "[target:link:default]\n"                                                                                              \
-            "group=\"group1\"\n"                                                                                                   \
-            "user=false\n"
+            "group=false\n"                                                                                                        \
+            "user=\"user2\"\n"
 
         #define TEST_MANIFEST_PATH                                                                                                 \
             "\n"                                                                                                                   \
             "[target:path]\n"                                                                                                      \
-            "pg_data={\"user\":\"user2\"}\n"                                                                                       \
+            "pg_data={}\n"                                                                                                         \
             "pg_data/base={\"group\":\"group2\"}\n"                                                                                \
             "pg_data/base/16384={\"mode\":\"0750\"}\n"                                                                             \
             "pg_data/base/32768={}\n"                                                                                              \
@@ -1516,7 +1516,7 @@ testRun(void)
             "[target:path:default]\n"                                                                                              \
             "group=false\n"                                                                                                        \
             "mode=\"0700\"\n"                                                                                                      \
-            "user=\"user1\"\n"
+            "user=\"user2\"\n"
 
         TEST_ASSIGN(
             manifest,
