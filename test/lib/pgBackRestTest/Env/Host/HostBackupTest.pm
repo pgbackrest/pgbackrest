@@ -2239,7 +2239,11 @@ sub restoreCompare
     # Delete the list of DBs
     delete($$oExpectedManifestRef{&MANIFEST_SECTION_DB});
 
-    $self->manifestDefault($oExpectedManifestRef);
+    # Only update defaults if the expect manifest is synthetic. If loaded from a file the defaults will already be correct.
+    if ($self->synthetic())
+    {
+        $self->manifestDefault($oExpectedManifestRef);
+    }
 
     # Newer Perls will change this variable to a number whenever a numeric comparison is performed. It is expected to be a string so
     # make sure it is one before saving.
