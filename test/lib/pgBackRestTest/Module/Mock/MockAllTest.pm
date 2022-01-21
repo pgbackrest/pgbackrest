@@ -682,15 +682,13 @@ sub run
                         {&MANIFEST_SUBKEY_USER => undef, &MANIFEST_SUBKEY_GROUP => undef}}},
                 false);
 
-            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER});
-            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP});
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER} = TEST_USER;
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP} = TEST_GROUP;
 
-            delete(
-                $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
-                  {&MANIFEST_SUBKEY_USER});
-            delete(
-                $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
-                {&MANIFEST_SUBKEY_GROUP});
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
+                {&MANIFEST_SUBKEY_USER} = TEST_USER;
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
+                {&MANIFEST_SUBKEY_GROUP} = TEST_GROUP;
 
             $oHostDbPrimary->restore(
                 'fix permissions', $strFullBackup,

@@ -495,17 +495,17 @@ sub backupEnd
         }
 
         # Only do compare for synthetic backups since for real backups the expected manifest *is* the actual manifest.
-        # if ($self->synthetic())
-        # {
-        #     # Compare only if expected to do so
-        #     if ($bManifestCompare)
-        #     {
-        #         # Set backup type in the expected manifest
-        #         ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
+        if ($self->synthetic())
+        {
+            # Compare only if expected to do so
+            if ($bManifestCompare)
+            {
+                # Set backup type in the expected manifest
+                ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
 
-        #         $self->backupCompare($strBackup, $oExpectedManifest);
-        #     }
-        # }
+                $self->backupCompare($strBackup, $oExpectedManifest);
+            }
+        }
     }
 
     # Add files to expect log
@@ -723,6 +723,8 @@ sub manifestDefault
     # Remove subkeys that match the defaults
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
+        next if !defined($oExpectedManifest->{$strSection});
+
         foreach my $strFile (keys(%{$oExpectedManifest->{$strSection}}))
         {
             if (defined($oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_USER}) &&
@@ -1910,10 +1912,10 @@ sub restore
     {
         # Only compare restores in repo1. There is not a lot of value in comparing restores in other repos and it would require a
         # lot of changes to the Perl test harness.
-        # if ($iRepoDefault == 1)
-        # {
-        #     $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
-        # }
+        if ($iRepoDefault == 1)
+        {
+            $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
+        }
 
         if (defined($self->{oLogTest}))
         {
@@ -1935,8 +1937,6 @@ sub restoreCompare
     my $bTablespace = shift;
 
     my $strTestPath = $self->testPath();
-
-    $oExpectedManifestRef = defined($oExpectedManifestRef) ? dclone($oExpectedManifestRef) : undef;
 
     # Get the backup host
     my $oHostGroup = hostGroupGet();
@@ -2240,7 +2240,11 @@ sub restoreCompare
     # Delete the list of DBs
     delete($$oExpectedManifestRef{&MANIFEST_SECTION_DB});
 
-    $self->manifestDefault($oExpectedManifestRef);
+    # Only update defaults if the expect manifest is synthetic. If loaded from a file the defaults will already be correct.
+    if ($self->synthetic())
+    {
+        $self->manifestDefault($oExpectedManifestRef);
+    }
 
     # Newer Perls will change this variable to a number whenever a numeric comparison is performed. It is expected to be a string so
     # make sure it is one before saving.
