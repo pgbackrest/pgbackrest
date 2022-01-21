@@ -2425,11 +2425,10 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                     kvPut(fileKv, MANIFEST_KEY_REFERENCE_VAR, VARSTR(file.reference));
 
                 if (file.sizeRepo != file.size)
-                    kvPut(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, varNewUInt64(file.sizeRepo));
+                    kvPut(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.sizeRepo));
 
-                kvPut(fileKv, MANIFEST_KEY_SIZE_VAR, varNewUInt64(file.size));
-
-                kvPut(fileKv, MANIFEST_KEY_TIMESTAMP_VAR, varNewUInt64((uint64_t)file.timestamp));
+                kvPut(fileKv, MANIFEST_KEY_SIZE_VAR, VARUINT64(file.size));
+                kvPut(fileKv, MANIFEST_KEY_TIMESTAMP_VAR, VARUINT64((uint64_t)file.timestamp));
 
                 if (!varEq(manifestOwnerVar(file.user), saveData->userDefault))
                     kvPut(fileKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(file.user));
