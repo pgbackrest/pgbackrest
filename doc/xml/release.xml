@@ -66,6 +66,7 @@
                         <commit subject="Use the PG_FILE_POSTMTRPID constant where appropriate."/>
                         <commit subject="Remove primary flag from manifest."/>
                         <commit subject="Simplify base path mode in mock/all integration tests."/>
+                        <commit subject="Simplify manifest defaults."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

@@ -1171,14 +1171,6 @@ src/common/type/list.h:
   class: core
   type: c/h
 
-src/common/type/mcv.c:
-  class: core
-  type: c
-
-src/common/type/mcv.h:
-  class: core
-  type: c/h
-
 src/common/type/object.c:
   class: core
   type: c

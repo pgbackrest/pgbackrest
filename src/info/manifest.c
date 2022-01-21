@@ -13,7 +13,6 @@ Backup Manifest Handler
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
-#include "common/type/mcv.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -1996,16 +1995,10 @@ typedef struct ManifestSaveData
 {
     Manifest *manifest;                                             // Manifest object to be saved
 
-    const Variant *fileGroupDefault;                                // File default group
+    const Variant *userDefault;                                     // Default user
+    const Variant *groupDefault;                                    // Default group
     mode_t fileModeDefault;                                         // File default mode
-    const Variant *fileUserDefault;                                 // File default user
-
-    const Variant *linkGroupDefault;                                // Link default group
-    const Variant *linkUserDefault;                                 // Link default user
-
-    const Variant *pathGroupDefault;                                // Path default group
     mode_t pathModeDefault;                                         // Path default mode
-    const Variant *pathUserDefault;                                 // Path default user
 } ManifestSaveData;
 
 // Helper to convert the owner MCV to a default.  If the input is NULL boolean false should be returned, else the owner string.
@@ -2266,7 +2259,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                         kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, varNewVarLst(file->checksumPageErrorList));
                 }
 
-                if (!varEq(manifestOwnerVar(file->group), saveData->fileGroupDefault))
+                if (!varEq(manifestOwnerVar(file->group), saveData->groupDefault))
                     kvPut(fileKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(file->group));
 
                 if (file->mode != saveData->fileModeDefault)
@@ -2282,7 +2275,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
 
                 kvPut(fileKv, MANIFEST_KEY_TIMESTAMP_VAR, varNewUInt64((uint64_t)file->timestamp));
 
-                if (!varEq(manifestOwnerVar(file->user), saveData->fileUserDefault))
+                if (!varEq(manifestOwnerVar(file->user), saveData->userDefault))
                     kvPut(fileKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(file->user));
 
                 infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, file->name, jsonFromKv(fileKv));
@@ -2298,13 +2291,13 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
-            jsonFromVar(saveData->fileGroupDefault));
+            jsonFromVar(saveData->groupDefault));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_MODE_STR,
             jsonFromStr(strNewFmt("%04o", saveData->fileModeDefault)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_USER_STR,
-            jsonFromVar(saveData->fileUserDefault));
+            jsonFromVar(saveData->userDefault));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -2317,10 +2310,10 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 const ManifestLink *link = manifestLink(manifest, linkIdx);
                 KeyValue *linkKv = kvNew();
 
-                if (!varEq(manifestOwnerVar(link->user), saveData->linkUserDefault))
+                if (!varEq(manifestOwnerVar(link->user), saveData->userDefault))
                     kvPut(linkKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(link->user));
 
-                if (!varEq(manifestOwnerVar(link->group), saveData->linkGroupDefault))
+                if (!varEq(manifestOwnerVar(link->group), saveData->groupDefault))
                     kvPut(linkKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(link->group));
 
                 kvPut(linkKv, MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
@@ -2340,10 +2333,10 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
-                jsonFromVar(saveData->linkGroupDefault));
+                jsonFromVar(saveData->groupDefault));
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, MANIFEST_KEY_USER_STR,
-                jsonFromVar(saveData->linkUserDefault));
+                jsonFromVar(saveData->userDefault));
         }
     }
 
@@ -2357,13 +2350,13 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 const ManifestPath *path = manifestPath(manifest, pathIdx);
                 KeyValue *pathKv = kvNew();
 
-                if (!varEq(manifestOwnerVar(path->group), saveData->pathGroupDefault))
+                if (!varEq(manifestOwnerVar(path->group), saveData->groupDefault))
                     kvPut(pathKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(path->group));
 
                 if (path->mode != saveData->pathModeDefault)
                     kvPut(pathKv, MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
 
-                if (!varEq(manifestOwnerVar(path->user), saveData->pathUserDefault))
+                if (!varEq(manifestOwnerVar(path->user), saveData->userDefault))
                     kvPut(pathKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(path->user));
 
                 infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathKv));
@@ -2379,13 +2372,13 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
-            jsonFromVar(saveData->pathGroupDefault));
+            jsonFromVar(saveData->groupDefault));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_MODE_STR,
             jsonFromStr(strNewFmt("%04o", saveData->pathModeDefault)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_USER_STR,
-            jsonFromVar(saveData->pathUserDefault));
+            jsonFromVar(saveData->userDefault));
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -2407,68 +2400,17 @@ manifestSave(Manifest *this, IoWrite *write)
         // Files can be added from outside the manifest so make sure they are sorted
         lstSort(this->pub.fileList, sortOrderAsc);
 
+        // Set default values based on the base path
+        const ManifestPath *const pathBase = manifestPathFind(this, MANIFEST_TARGET_PGDATA_STR);
+
         ManifestSaveData saveData =
         {
             .manifest = this,
+            .userDefault = manifestOwnerVar(pathBase->user),
+            .groupDefault = manifestOwnerVar(pathBase->group),
+            .fileModeDefault = pathBase->mode & (S_IRUSR | S_IWUSR | S_IRGRP),
+            .pathModeDefault = pathBase->mode,
         };
-
-        // Get default file values
-        MostCommonValue *fileGroupMcv = mcvNew();
-        MostCommonValue *fileModeMcv = mcvNew();
-        MostCommonValue *fileUserMcv = mcvNew();
-
-        ASSERT(manifestFileTotal(this) > 0);
-
-        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
-        {
-            const ManifestFile *file = manifestFile(this, fileIdx);
-
-            mcvUpdate(fileGroupMcv, VARSTR(file->group));
-            mcvUpdate(fileModeMcv, VARUINT(file->mode));
-            mcvUpdate(fileUserMcv, VARSTR(file->user));
-        }
-
-        saveData.fileGroupDefault = manifestOwnerVar(varStr(mcvResult(fileGroupMcv)));
-        saveData.fileModeDefault = (mode_t)varUInt(mcvResult(fileModeMcv));
-        saveData.fileUserDefault = manifestOwnerVar(varStr(mcvResult(fileUserMcv)));
-
-        // Get default link values
-        if (manifestLinkTotal(this) > 0)
-        {
-            MostCommonValue *linkGroupMcv = mcvNew();
-            MostCommonValue *linkUserMcv = mcvNew();
-
-            for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(this); linkIdx++)
-            {
-                const ManifestLink *link = manifestLink(this, linkIdx);
-
-                mcvUpdate(linkGroupMcv, VARSTR(link->group));
-                mcvUpdate(linkUserMcv, VARSTR(link->user));
-            }
-
-            saveData.linkGroupDefault = manifestOwnerVar(varStr(mcvResult(linkGroupMcv)));
-            saveData.linkUserDefault = manifestOwnerVar(varStr(mcvResult(linkUserMcv)));
-        }
-
-        // Get default path values
-        MostCommonValue *pathGroupMcv = mcvNew();
-        MostCommonValue *pathModeMcv = mcvNew();
-        MostCommonValue *pathUserMcv = mcvNew();
-
-        ASSERT(manifestPathTotal(this) > 0);
-
-        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(this); pathIdx++)
-        {
-            const ManifestPath *path = manifestPath(this, pathIdx);
-
-            mcvUpdate(pathGroupMcv, VARSTR(path->group));
-            mcvUpdate(pathModeMcv, VARUINT(path->mode));
-            mcvUpdate(pathUserMcv, VARSTR(path->user));
-        }
-
-        saveData.pathGroupDefault = manifestOwnerVar(varStr(mcvResult(pathGroupMcv)));
-        saveData.pathModeDefault = (mode_t)varUInt(mcvResult(pathModeMcv));
-        saveData.pathUserDefault = manifestOwnerVar(varStr(mcvResult(pathUserMcv)));
 
         // Save manifest
         infoSave(this->pub.info, write, manifestSaveCallback, &saveData);

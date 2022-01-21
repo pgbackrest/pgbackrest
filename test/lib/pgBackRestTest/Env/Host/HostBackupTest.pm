@@ -702,62 +702,54 @@ sub manifestDefault
     my $self = shift;
     my $oExpectedManifest = shift;
 
-    # Set defaults for subkeys that tend to repeat
+    # Defaults for subkeys that tend to repeat
+    my $strDefaultUser = $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER};
+    my $strDefaultGroup = $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP};
+    my $strDefaultPathMode = $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE};
+    my $strDefaultFileMode = sprintf('%04o', oct($strDefaultPathMode) & (S_IRUSR | S_IWUSR | S_IRGRP));
+
+    # Remove subkeys that match the defaults
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
-        foreach my $strSubKey (&MANIFEST_SUBKEY_USER, &MANIFEST_SUBKEY_GROUP, &MANIFEST_SUBKEY_MODE)
+        next if !defined($oExpectedManifest->{$strSection});
+
+        foreach my $strFile (keys(%{$oExpectedManifest->{$strSection}}))
         {
-            my %oDefault;
-            my $iSectionTotal = 0;
-
-            next if !defined($oExpectedManifest->{$strSection});
-
-            foreach my $strFile (keys(%{$oExpectedManifest->{$strSection}}))
+            if (defined($oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_USER}) &&
+                $oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_USER} eq $strDefaultUser)
             {
-                my $strValue = $oExpectedManifest->{$strSection}{$strFile}{$strSubKey};
-
-                if (defined($strValue))
-                {
-                    if (defined($oDefault{$strValue}))
-                    {
-                        $oDefault{$strValue}++;
-                    }
-                    else
-                    {
-                        $oDefault{$strValue} = 1;
-                    }
-                }
-
-                $iSectionTotal++;
+                delete($oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_USER});
             }
 
-            my $strMaxValue;
-            my $iMaxValueTotal = 0;
-
-            foreach my $strValue (sort(keys(%oDefault)))
+            if (defined($oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_GROUP}) &&
+                $oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_GROUP} eq $strDefaultGroup)
             {
-                if ($oDefault{$strValue} > $iMaxValueTotal)
-                {
-                    $iMaxValueTotal = $oDefault{$strValue};
-                    $strMaxValue = $strValue;
-                }
+                delete($oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_GROUP});
             }
 
-            if (defined($strMaxValue) > 0 && $iMaxValueTotal > $iSectionTotal * MANIFEST_DEFAULT_MATCH_FACTOR)
+            if (defined($oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_MODE}) &&
+                $oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_MODE} eq
+                    ($strSection eq MANIFEST_SECTION_TARGET_PATH ? $strDefaultPathMode : $strDefaultFileMode))
             {
-                $oExpectedManifest->{"${strSection}:default"}{$strSubKey} = $strMaxValue;
-
-                foreach my $strFile (keys(%{$oExpectedManifest->{$strSection}}))
-                {
-                    if (defined($oExpectedManifest->{$strSection}{$strFile}{$strSubKey}) &&
-                        $oExpectedManifest->{$strSection}{$strFile}{$strSubKey} eq $strMaxValue)
-                    {
-                        delete($oExpectedManifest->{$strSection}{$strFile}{$strSubKey});
-                    }
-                }
+                delete($oExpectedManifest->{$strSection}{$strFile}{&MANIFEST_SUBKEY_MODE});
             }
         }
     }
+
+    # Write defaults
+    $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE . ':default'}{&MANIFEST_SUBKEY_USER} = $strDefaultUser;
+    $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE . ':default'}{&MANIFEST_SUBKEY_GROUP} = $strDefaultGroup;
+    $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE . ':default'}{&MANIFEST_SUBKEY_MODE} = $strDefaultFileMode;
+
+    if (defined($oExpectedManifest->{&MANIFEST_SECTION_TARGET_LINK}))
+    {
+        $oExpectedManifest->{&MANIFEST_SECTION_TARGET_LINK . ':default'}{&MANIFEST_SUBKEY_USER} = $strDefaultUser;
+        $oExpectedManifest->{&MANIFEST_SECTION_TARGET_LINK . ':default'}{&MANIFEST_SUBKEY_GROUP} = $strDefaultGroup;
+    }
+
+    $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH . ':default'}{&MANIFEST_SUBKEY_USER} = $strDefaultUser;
+    $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH . ':default'}{&MANIFEST_SUBKEY_GROUP} = $strDefaultGroup;
+    $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH . ':default'}{&MANIFEST_SUBKEY_MODE} = $strDefaultPathMode;
 }
 
 ####################################################################################################################################
