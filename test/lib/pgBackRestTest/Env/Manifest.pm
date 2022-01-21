@@ -1327,8 +1327,11 @@ sub buildDefault
     $self->set(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_GROUP, undef, $strDefaultGroup);
     $self->set(MANIFEST_SECTION_TARGET_FILE . ':default', MANIFEST_SUBKEY_MODE, undef, $strDefaultFileMode);
 
-    $self->set(MANIFEST_SECTION_TARGET_LINK . ':default', MANIFEST_SUBKEY_USER, undef, $strDefaultUser);
-    $self->set(MANIFEST_SECTION_TARGET_LINK . ':default', MANIFEST_SUBKEY_GROUP, undef, $strDefaultGroup);
+    if ($self->test(MANIFEST_SECTION_TARGET_LINK))
+    {
+        $self->set(MANIFEST_SECTION_TARGET_LINK . ':default', MANIFEST_SUBKEY_USER, undef, $strDefaultUser);
+        $self->set(MANIFEST_SECTION_TARGET_LINK . ':default', MANIFEST_SUBKEY_GROUP, undef, $strDefaultGroup);
+    }
 
     $self->set(MANIFEST_SECTION_TARGET_PATH . ':default', MANIFEST_SUBKEY_USER, undef, $strDefaultUser);
     $self->set(MANIFEST_SECTION_TARGET_PATH . ':default', MANIFEST_SUBKEY_GROUP, undef, $strDefaultGroup);

@@ -704,19 +704,7 @@ sub manifestDefault
 
     # Defaults for subkeys that tend to repeat
     my $strDefaultUser = $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER};
-
-    # if (!defined($strDefaultUser))
-    # {
-    #     $strDefaultUser = JSON::PP::false;
-    # }
-
     my $strDefaultGroup = $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP};
-
-    # if (!defined($strDefaultGroup))
-    # {
-    #     $strDefaultGroup = JSON::PP::false;
-    # }
-
     my $strDefaultPathMode = $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE};
     my $strDefaultFileMode = sprintf('%04o', oct($strDefaultPathMode) & (S_IRUSR | S_IWUSR | S_IRGRP));
 
@@ -753,8 +741,11 @@ sub manifestDefault
     $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE . ':default'}{&MANIFEST_SUBKEY_GROUP} = $strDefaultGroup;
     $oExpectedManifest->{&MANIFEST_SECTION_TARGET_FILE . ':default'}{&MANIFEST_SUBKEY_MODE} = $strDefaultFileMode;
 
-    $oExpectedManifest->{&MANIFEST_SECTION_TARGET_LINK . ':default'}{&MANIFEST_SUBKEY_USER} = $strDefaultUser;
-    $oExpectedManifest->{&MANIFEST_SECTION_TARGET_LINK . ':default'}{&MANIFEST_SUBKEY_GROUP} = $strDefaultGroup;
+    if (defined($oExpectedManifest->{&MANIFEST_SECTION_TARGET_LINK}))
+    {
+        $oExpectedManifest->{&MANIFEST_SECTION_TARGET_LINK . ':default'}{&MANIFEST_SUBKEY_USER} = $strDefaultUser;
+        $oExpectedManifest->{&MANIFEST_SECTION_TARGET_LINK . ':default'}{&MANIFEST_SUBKEY_GROUP} = $strDefaultGroup;
+    }
 
     $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH . ':default'}{&MANIFEST_SUBKEY_USER} = $strDefaultUser;
     $oExpectedManifest->{&MANIFEST_SECTION_TARGET_PATH . ':default'}{&MANIFEST_SUBKEY_GROUP} = $strDefaultGroup;
