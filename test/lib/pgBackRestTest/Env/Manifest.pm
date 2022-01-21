@@ -1301,6 +1301,8 @@ sub buildDefault
     # Remove subkeys that match the defaults
     foreach my $strSection (&MANIFEST_SECTION_TARGET_FILE, &MANIFEST_SECTION_TARGET_PATH, &MANIFEST_SECTION_TARGET_LINK)
     {
+        next if !$self->test($strSection);
+
         foreach my $strFile ($self->keys($strSection))
         {
             if ($self->test($strSection, $strFile, MANIFEST_SUBKEY_USER, $strDefaultUser))
