@@ -96,7 +96,7 @@ typedef struct ManifestFile
     bool checksumPageError:1;                                       // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
     char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
-    const VariantList *checksumPageErrorList;                       // List of page checksum errors if there are any
+    const String *checksumPageErrorList;                            // List of page checksum errors if there are any
     const String *user;                                             // User name
     const String *group;                                            // Group name
     const String *reference;                                        // Reference to a prior backup
@@ -258,21 +258,52 @@ manifestDbTotal(const Manifest *const this)
 /***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline const ManifestFile *
-manifestFile(const Manifest *const this, const unsigned int fileIdx)
+typedef struct ManifestFilePack ManifestFilePack;
+
+// Unpack file pack returned by manifestFilePackGet()
+ManifestFile manifestFileUnpack(const ManifestFilePack *filePack);
+
+// Get file in pack format by index
+__attribute__((always_inline)) static inline const ManifestFilePack *
+manifestFilePackGet(const Manifest *const this, const unsigned int fileIdx)
 {
-    return lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
+    return *(ManifestFilePack **)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
 }
 
-void manifestFileAdd(Manifest *this, const ManifestFile *file);
-const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
+// Get file name
+__attribute__((always_inline)) static inline const String *
+manifestFileNameGet(const Manifest *const this, const unsigned int fileIdx)
+{
+    return (const String *)manifestFilePackGet(this, fileIdx);
+}
 
-// If the file requested is not found in the list, return the default passed rather than throw an error
-__attribute__((always_inline)) static inline const ManifestFile *
-manifestFileFindDefault(const Manifest *const this, const String *const name, const ManifestFile *const fileDefault)
+// Get file by index
+__attribute__((always_inline)) static inline ManifestFile
+manifestFile(const Manifest *const this, const unsigned int fileIdx)
+{
+    return manifestFileUnpack(manifestFilePackGet(this, fileIdx));
+}
+
+// Add a file
+void manifestFileAdd(Manifest *this, ManifestFile file);
+
+// Find file in pack format by name
+const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
+
+// Find file by name
+__attribute__((always_inline)) static inline ManifestFile
+manifestFileFind(const Manifest *const this, const String *const name)
 {
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(THIS_PUB(Manifest)->fileList, &name, (void *)fileDefault);
+    return manifestFileUnpack(manifestFilePackFind(this, name));
+}
+
+// Does the file exist?
+__attribute__((always_inline)) static inline bool
+manifestFileExists(const Manifest *const this, const String *const name)
+{
+    ASSERT_INLINE(name != NULL);
+    return lstFindDefault(THIS_PUB(Manifest)->fileList, &name, NULL) != NULL;
 }
 
 void manifestFileRemove(const Manifest *this, const String *name);
@@ -286,7 +317,7 @@ manifestFileTotal(const Manifest *const this)
 // Update a file with new data
 void manifestFileUpdate(
     Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const VariantList *checksumPageErrorList);
+    bool checksumPage, bool checksumPageError, const String *checksumPageErrorList);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters

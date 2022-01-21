@@ -370,22 +370,22 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
+            const ManifestFile file = manifestFile(manifest, fileIdx);
 
-            backupSize += file->size;
-            backupRepoSize += file->sizeRepo > 0 ? file->sizeRepo : file->size;
+            backupSize += file.size;
+            backupRepoSize += file.sizeRepo > 0 ? file.sizeRepo : file.size;
 
             // If a reference to a file exists, then it is in a previous backup and the delta calculation was already done
-            if (file->reference != NULL)
-                strLstAddIfMissing(referenceList, file->reference);
+            if (file.reference != NULL)
+                strLstAddIfMissing(referenceList, file.reference);
             else
             {
-                backupSizeDelta += file->size;
-                backupRepoSizeDelta += file->sizeRepo > 0 ? file->sizeRepo : file->size;
+                backupSizeDelta += file.size;
+                backupRepoSizeDelta += file.sizeRepo > 0 ? file.sizeRepo : file.size;
             }
 
             // Is there an error in the file?
-            if (file->checksumPageError)
+            if (file.checksumPageError)
                 backupError = true;
         }
 

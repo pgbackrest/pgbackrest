@@ -202,5 +202,36 @@ testRun(void)
         TEST_RESULT_UINT(cvtZToUInt64("18446744073709551615"), 18446744073709551615U, "convert string to uint64");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("cvtUInt64ToVarInt128() and cvtUInt64FromVarInt128()"))
+    {
+        uint8_t buffer[CVT_VARINT128_BUFFER_SIZE];
+        size_t bufferPos;
+
+        bufferPos = 0;
+        TEST_ERROR(cvtUInt64ToVarInt128(9999, buffer, &bufferPos, 1), AssertError, "buffer overflow");
+
+        bufferPos = 0;
+        TEST_RESULT_VOID(cvtUInt64ToVarInt128(0xFFFFFFFFFFFFFFFF, buffer, &bufferPos, sizeof(buffer)), "to varint-128");
+        TEST_RESULT_UINT(bufferPos, 10, "check buffer position");
+
+        bufferPos = 0;
+        TEST_RESULT_UINT(cvtUInt64FromVarInt128(buffer, &bufferPos), 0xFFFFFFFFFFFFFFFF, "to uint64");
+        TEST_RESULT_UINT(bufferPos, 10, "check buffer position");
+
+        bufferPos = 0;
+        TEST_RESULT_VOID(cvtUInt64ToVarInt128(0, buffer, &bufferPos, sizeof(buffer)), "to varint-128");
+        TEST_RESULT_UINT(bufferPos, 1, "check buffer position");
+
+        bufferPos = 0;
+        TEST_RESULT_UINT(cvtUInt64FromVarInt128(buffer, &bufferPos), 0, "to uint64");
+        TEST_RESULT_UINT(bufferPos, 1, "check buffer position");
+
+        uint8_t buffer2[CVT_VARINT128_BUFFER_SIZE + 1];
+        memset(buffer2, 0xFF, sizeof(buffer2));
+        bufferPos = 0;
+        TEST_ERROR(cvtUInt64FromVarInt128(buffer2, &bufferPos), FormatError, "unterminated varint-128 integer");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }
