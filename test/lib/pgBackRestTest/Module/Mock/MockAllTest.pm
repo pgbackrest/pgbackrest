@@ -674,6 +674,7 @@ sub run
             # Reset the base path user and group for the next restore so files will be reset to the base path user/group
             $oHostDbPrimary->executeSimple(
                 'chown ' . TEST_USER . ':' . TEST_GROUP . ' ' . $oHostDbPrimary->dbBasePath(), undef, 'root');
+            $oHostDbPrimary->executeSimple('chmod 700 ' . $oHostDbPrimary->dbBasePath(), undef, 'root');
 
             $oHostBackup->manifestMunge(
                 $strFullBackup,
