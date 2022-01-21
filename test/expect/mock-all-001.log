@@ -581,6 +581,7 @@ P00 DETAIL: check '[TEST_PATH]/db-primary/db/pg_config' exists
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/pg_stat' exists
 P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/base'
+P00 DETAIL: update mode for '[TEST_PATH]/db-primary/db/base' to 0777
 P00 DETAIL: update ownership for '[TEST_PATH]/db-primary/db/base/base/1/PG_VERSION'
 P00 DETAIL: update ownership for '[TEST_PATH]/db-primary/db/base/base/16384/PG_VERSION'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.conf'
