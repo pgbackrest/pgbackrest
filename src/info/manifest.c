@@ -211,6 +211,7 @@ static time_t manifestPackBaseTime = -1;
 typedef enum
 {
     manifestFilePackFlagReference,
+    manifestFilePackFlagBundle,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
     manifestFilePackFlagChecksumPageErrorList,
@@ -241,6 +242,9 @@ manifestFilePack(const ManifestFile *const file)
 
     if (file->reference != NULL)
         flag |= 1 << manifestFilePackFlagReference;
+
+    if (file->bundleId != 0)
+        flag |= 1 << manifestFilePackFlagBundle;
 
     cvtUInt64ToVarInt128(flag, buffer, &bufferPos, sizeof(buffer));
 
@@ -274,8 +278,11 @@ manifestFilePack(const ManifestFile *const file)
     cvtUInt64ToVarInt128(file->sizeRepo, buffer, &bufferPos, sizeof(buffer));
 
     // Bundle
-    cvtUInt64ToVarInt128(file->bundleId, buffer, &bufferPos, sizeof(buffer));
-    cvtUInt64ToVarInt128(file->bundleOffset, buffer, &bufferPos, sizeof(buffer));
+    if (flag & (1 << manifestFilePackFlagBundle))
+    {
+        cvtUInt64ToVarInt128(file->bundleId, buffer, &bufferPos, sizeof(buffer));
+        cvtUInt64ToVarInt128(file->bundleOffset, buffer, &bufferPos, sizeof(buffer));
+    }
 
     // Allocate memory for the file pack
     uint8_t *const result = memNew(
@@ -356,8 +363,11 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
     result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Bundle
-    result.bundleId = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
-    result.bundleOffset = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    if (flag & (1 << manifestFilePackFlagBundle))
+    {
+        result.bundleId = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.bundleOffset = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    }
 
     // Checksum page error
     result.checksumPageError = flag & (1 << manifestFilePackFlagChecksumPageError) ? true : false;
