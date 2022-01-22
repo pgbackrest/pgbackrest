@@ -69,6 +69,7 @@
                         <commit subject="Simplify manifest defaults."/>
                         <commit subject="Convert varNewUInt64() to VARUINT64() where possible in manifest."/>
                         <commit subject="Pack manifest file structs to save memory."/>
+                        <commit subject="Optimization for jsonFromStrInternal()."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
