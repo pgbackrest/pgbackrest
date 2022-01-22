@@ -149,9 +149,9 @@ struct Manifest
     StringList *ownerList;                                          // List of users/groups
     StringList *referenceList;                                      // List of file references
 
-    const String *defaultFileUser;                                  // Default file user name
-    const String *defaultFileGroup;                                 // Default file group name
-    mode_t defaultFileMode;                                         // Default file mode
+    const String *fileUserDefault;                                  // Default file user name
+    const String *fileGroupDefault;                                 // Default file group name
+    mode_t fileModeDefault;                                         // Default file mode
 };
 
 /***********************************************************************************************************************************
@@ -246,17 +246,17 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     if (file->reference != NULL)
         flag |= 1 << manifestFilePackFlagReference;
 
-    if (file->mode != manifest->defaultFileMode)
+    if (file->mode != manifest->fileModeDefault)
         flag |= 1 << manifestFilePackFlagMode;
 
     if (file->user == NULL)
         flag |= 1 << manifestFilePackFlagUserNull;
-    else if (!strEq(file->user, manifest->defaultFileUser))
+    else if (!strEq(file->user, manifest->fileUserDefault))
         flag |= 1 << manifestFilePackFlagUser;
 
     if (file->group == NULL)
         flag |= 1 << manifestFilePackFlagGroupNull;
-    else if (!strEq(file->group, manifest->defaultFileGroup))
+    else if (!strEq(file->group, manifest->fileGroupDefault))
         flag |= 1 << manifestFilePackFlagGroup;
 
     cvtUInt64ToVarInt128(flag, buffer, &bufferPos, sizeof(buffer));
@@ -367,18 +367,18 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     if (flag & (1 << manifestFilePackFlagMode))
         result.mode = (mode_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
     else
-        result.mode = manifest->defaultFileMode;
+        result.mode = manifest->fileModeDefault;
 
     // User/group
     if (flag & (1 << manifestFilePackFlagUser))
         result.user = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
     else if (!(flag & (1 << manifestFilePackFlagUserNull)))
-        result.user = manifest->defaultFileUser;
+        result.user = manifest->fileUserDefault;
 
     if (flag & (1 << manifestFilePackFlagGroup))
         result.group = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
     else if (!(flag & (1 << manifestFilePackFlagGroupNull)))
-        result.group = manifest->defaultFileGroup;
+        result.group = manifest->fileGroupDefault;
 
     // Repo size
     result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
@@ -1315,9 +1315,9 @@ manifestNewBuild(
             // Generate file defaults from base path
             MEM_CONTEXT_BEGIN(this->pub.memContext)
             {
-                this->defaultFileUser = strDup(path.user);
-                this->defaultFileGroup = strDup(path.group);
-                this->defaultFileMode = path.mode & (S_IRUSR | S_IWUSR | S_IRGRP);
+                this->fileUserDefault = strDup(path.user);
+                this->fileGroupDefault = strDup(path.group);
+                this->fileModeDefault = path.mode & (S_IRUSR | S_IWUSR | S_IRGRP);
             }
             MEM_CONTEXT_END();
 
@@ -1820,7 +1820,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             if (value != NULL)
                 file.group = manifestOwnerGet(value);
             else
-                file.group = manifest->defaultFileGroup;
+                file.group = manifest->fileGroupDefault;
 
             // Mode
             value = kvGet(fileKv, MANIFEST_KEY_MODE_VAR);
@@ -1828,7 +1828,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             if (value != NULL)
                 file.mode = cvtZToMode(strZ(varStr(value)));
             else
-                file.mode = manifest->defaultFileMode;
+                file.mode = manifest->fileModeDefault;
 
             // User
             value = kvGet(fileKv, MANIFEST_KEY_USER_VAR);
@@ -1836,7 +1836,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             if (value != NULL)
                 file.user = manifestOwnerGet(value);
             else
-                file.user = manifest->defaultFileUser;
+                file.user = manifest->fileUserDefault;
 
             manifestFileAdd(manifest, file);
         }
@@ -1920,11 +1920,11 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             if (strEq(key, MANIFEST_KEY_GROUP_STR))
-                manifest->defaultFileGroup = strDup(manifestOwnerGet(value));
+                manifest->fileGroupDefault = strDup(manifestOwnerGet(value));
             else if (strEq(key, MANIFEST_KEY_MODE_STR))
-                manifest->defaultFileMode = cvtZToMode(strZ(varStr(value)));
+                manifest->fileModeDefault = cvtZToMode(strZ(varStr(value)));
             else if (strEq(key, MANIFEST_KEY_USER_STR))
-                manifest->defaultFileUser = strDup(manifestOwnerGet(value));
+                manifest->fileUserDefault = strDup(manifestOwnerGet(value));
         }
         MEM_CONTEXT_END();
     }
@@ -2112,9 +2112,9 @@ manifestNewLoad(IoRead *read)
 
         // Set file defaults that will be updated when we know what the real defaults are. These need to be set to values that are
         // not valid for actual names or modes.
-        this->defaultFileUser = STRDEF("@");
-        this->defaultFileGroup = this->defaultFileUser;
-        this->defaultFileMode = (mode_t)-1;
+        this->fileUserDefault = STRDEF("@");
+        this->fileGroupDefault = this->fileUserDefault;
+        this->fileModeDefault = (mode_t)-1;
 
         MEM_CONTEXT_BEGIN(loadData.memContext)
         {
