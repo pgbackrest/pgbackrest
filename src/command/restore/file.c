@@ -16,6 +16,7 @@ Restore File
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "info/manifest.h"
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
@@ -173,7 +174,7 @@ restoreFile(
                 if (bundleId == 0)
                     strCatFmt(repoPathFile, "%s%s", strZ(repoFile), strZ(compressExtStr(repoFileCompressType)));
                 else
-                    strCatFmt(repoPathFile, "bundle/%" PRIu64, bundleId);
+                    strCatFmt(repoPathFile, MANIFEST_PATH_BUNDLE "/%" PRIu64, bundleId);
 
                 storageCopyP(
                     storageNewReadP(

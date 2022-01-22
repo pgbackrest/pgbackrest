@@ -16,6 +16,9 @@ Constants
 #define BACKUP_MANIFEST_FILE                                        "backup.manifest"
     STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
 
+#define MANIFEST_PATH_BUNDLE                                        "bundle"
+    STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
+
 #define MANIFEST_TARGET_PGDATA                                      "pg_data"
     STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 #define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"

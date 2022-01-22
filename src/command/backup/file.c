@@ -17,6 +17,7 @@ Backup File
 #include "common/regExp.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
+#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
 
@@ -66,7 +67,7 @@ backupFile(
             strNewFmt(
                 STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupLabel), strZ(((BackupFile *)lstGet(fileList, 0))->repoFile),
                 strZ(compressExtStr(repoFileCompressType))) :
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/bundle/%" PRIu64, strZ(backupLabel), bundleId);
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(backupLabel), bundleId);
 
         result = lstNewP(sizeof(BackupFileResult));
 
@@ -135,7 +136,7 @@ backupFile(
                 // there may be corruption in the repo, so recopy
                 if (!delta || !file->repoFileHasReference)
                 {
-                    CHECK(AssertError, bundleId == 0, "bundle is not valid for resume");
+                    CHECK(AssertError, bundleId == 0, MANIFEST_PATH_BUNDLE " is not valid for resume");
 
                     // If this is a delta backup and the file is missing from the DB, then remove it from the repo
                     // (backupManifestUpdate will remove it from the manifest)
