@@ -105,11 +105,6 @@ Array and object types:
 #include "common/type/pack.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PACK_UINT64_SIZE_MAX                                        10
-
-/***********************************************************************************************************************************
 Map PackType types to the types that will be written into the pack. This hides the details of the type IDs from the user and allows
 the IDs used in the pack to differ from the IDs the user sees.
 ***********************************************************************************************************************************/
@@ -495,7 +490,7 @@ pckReadU64Internal(PackRead *this)
     uint8_t byte;
 
     // Convert bytes from varint-128 encoding to a uint64
-    for (unsigned int bufferIdx = 0; bufferIdx < PACK_UINT64_SIZE_MAX; bufferIdx++)
+    for (unsigned int bufferIdx = 0; bufferIdx < CVT_VARINT128_BUFFER_SIZE; bufferIdx++)
     {
         // Get the next encoded byte
         pckReadBuffer(this, 1);
@@ -1409,7 +1404,7 @@ pckWriteBuffer(PackWrite *this, const Buffer *buffer)
 Pack an unsigned 64-bit integer to base-128 varint encoding
 ***********************************************************************************************************************************/
 static void
-pckWriteU64Internal(PackWrite *this, uint64_t value)
+pckWriteU64Internal(PackWrite *const this, const uint64_t value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
@@ -1418,27 +1413,13 @@ pckWriteU64Internal(PackWrite *this, uint64_t value)
 
     ASSERT(this != NULL);
 
-    unsigned char buffer[PACK_UINT64_SIZE_MAX];
+    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
     size_t size = 0;
 
-    // Convert uint64 to varint-128 encoding. Keep writing out bytes while the remaining value is greater than 7 bits.
-    while (value >= 0x80)
-    {
-        // Encode the lower order 7 bits, adding the continuation bit to indicate there is more data
-        buffer[size] = (unsigned char)value | 0x80;
-
-        // Shift the value to remove bits that have been encoded
-        value >>= 7;
-
-        // Keep track of size so we know how many bytes to write out
-        size++;
-    }
-
-    // Encode the last 7 bits of value
-    buffer[size] = (unsigned char)value;
+    cvtUInt64ToVarInt128(value, buffer, &size, sizeof(buffer));
 
     // Write encoded bytes to the buffer
-    pckWriteBuffer(this, BUF(buffer, size + 1));
+    pckWriteBuffer(this, BUF(buffer, size));
 
     FUNCTION_TEST_RETURN_VOID();
 }

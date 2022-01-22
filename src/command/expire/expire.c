@@ -157,7 +157,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned in
 
         // Log the expired backup list (prepend "set:" if there were any dependents that were also expired)
         LOG_INFO_FMT(
-            "%s: expire adhoc backup %s%s",  cfgOptionGroupName(cfgOptGrpRepo, repoIdx), (result > 1 ? "set " : ""),
+            "%s: expire adhoc backup %s%s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), (result > 1 ? "set " : ""),
             strZ(strLstJoin(backupExpired, ", ")));
     }
     MEM_CONTEXT_TEMP_END();

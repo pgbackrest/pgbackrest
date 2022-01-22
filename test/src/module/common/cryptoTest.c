@@ -106,11 +106,11 @@ testRun(void)
         bufLimitSet(encryptBuffer, CIPHER_BLOCK_MAGIC_SIZE);
         ioFilterProcessInOut(blockEncryptFilter, testPlainText, encryptBuffer);
         TEST_RESULT_UINT(bufUsed(encryptBuffer), CIPHER_BLOCK_MAGIC_SIZE, "cipher size is magic size");
-        TEST_RESULT_BOOL(ioFilterInputSame(blockEncryptFilter), true,  "filter needs same input");
+        TEST_RESULT_BOOL(ioFilterInputSame(blockEncryptFilter), true, "filter needs same input");
 
         bufLimitSet(encryptBuffer, CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN);
         ioFilterProcessInOut(blockEncryptFilter, testPlainText, encryptBuffer);
-        TEST_RESULT_BOOL(ioFilterInputSame(blockEncryptFilter), false,  "filter does not need same input");
+        TEST_RESULT_BOOL(ioFilterInputSame(blockEncryptFilter), false, "filter does not need same input");
 
         TEST_RESULT_BOOL(blockEncrypt->saltDone, true, "salt done is true");
         TEST_RESULT_BOOL(blockEncrypt->processDone, true, "process done is true");
@@ -132,13 +132,13 @@ testRun(void)
         TEST_RESULT_UINT(
             bufUsed(encryptBuffer), CIPHER_BLOCK_HEADER_SIZE + (size_t)EVP_CIPHER_block_size(blockEncrypt->cipher),
             "cipher size increases by one block");
-        TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), false,  "filter is not done");
+        TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), false, "filter is not done");
 
         ioFilterProcessInOut(blockEncryptFilter, NULL, encryptBuffer);
         TEST_RESULT_UINT(
             bufUsed(encryptBuffer), CIPHER_BLOCK_HEADER_SIZE + (size_t)(EVP_CIPHER_block_size(blockEncrypt->cipher) * 2),
             "cipher size increases by one block on flush");
-        TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), true,  "filter is done");
+        TEST_RESULT_BOOL(ioFilterDone(blockEncryptFilter), true, "filter is done");
 
         ioFilterFree(blockEncryptFilter);
 

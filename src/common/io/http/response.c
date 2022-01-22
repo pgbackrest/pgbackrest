@@ -309,7 +309,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             if (this->contentChunked && this->contentSize > 0)
             {
                 THROW_FMT(
-                    FormatError,  "'%s' and '%s' headers are both set", HTTP_HEADER_TRANSFER_ENCODING,
+                    FormatError, "'%s' and '%s' headers are both set", HTTP_HEADER_TRANSFER_ENCODING,
                     HTTP_HEADER_CONTENT_LENGTH);
             }
 

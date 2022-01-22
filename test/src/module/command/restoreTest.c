@@ -131,7 +131,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
         manifestPathAdd(result, &pathBase);
         ManifestFile fileVersion = {
             .name = STRDEF("pg_data/" PG_FILE_PGVERSION), .mode = 0600, .group = groupName(), .user = userName()};
-        manifestFileAdd(result, &fileVersion);
+        manifestFileAdd(result, fileVersion);
     }
     OBJ_NEW_END();
 
@@ -329,15 +329,15 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "postmas""ter.pid");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTMTRPID);
 
         TEST_ERROR(
             restorePathValidate(), PgRunningError,
             "unable to restore while PostgreSQL is running\n"
-            "HINT: presence of 'postmas""ter.pid' in '" TEST_PATH "/pg' indicates PostgreSQL is running.\n"
-            "HINT: remove 'postmas""ter.pid' only if PostgreSQL is not running.");
+            "HINT: presence of '" PG_FILE_POSTMTRPID "' in '" TEST_PATH "/pg' indicates PostgreSQL is running.\n"
+            "HINT: remove '" PG_FILE_POSTMTRPID "' only if PostgreSQL is not running.");
 
-        HRN_STORAGE_REMOVE(storagePgWrite(), "postmas""ter.pid", .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on data directory does not look valid - delta");
@@ -794,7 +794,7 @@ testRun(void)
 
         manifestFileAdd(
             manifest,
-            &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_hba.conf"), .size = 4, .timestamp = 1482182860});
+            (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_hba.conf"), .size = 4, .timestamp = 1482182860});
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap links");
 
@@ -929,7 +929,10 @@ testRun(void)
         TEST_TITLE("owner is not root and all ownership is good");
 
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        const String *rootReplaceUser = NULL;
+        const String *rootReplaceGroup = NULL;
+
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is not root but has no user name");
@@ -939,7 +942,10 @@ testRun(void)
         userLocalData.groupName = NULL;
         userLocalData.userName = NULL;
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, NULL, "root replace user not set");
+        TEST_RESULT_STR(rootReplaceGroup, NULL, "root replace group not set");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user '" TEST_USER "' in backup manifest mapped to current user\n"
@@ -955,11 +961,14 @@ testRun(void)
         ManifestPath path = {.name = STRDEF("pg_data/bogus_path"), .user = STRDEF("path-user-bogus")};
         manifestPathAdd(manifest, &path);
         ManifestFile file = {.name = STRDEF("pg_data/bogus_file"), .mode = 0600, .group = STRDEF("file-group-bogus")};
-        manifestFileAdd(manifest, &file);
+        manifestFileAdd(manifest, file);
         ManifestLink link = {.name = STRDEF("pg_data/bogus_link"), .destination = STRDEF("/"), .group = STRDEF("link-group-bogus")};
         manifestLinkAdd(manifest, &link);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, NULL, "root replace user not set");
+        TEST_RESULT_STR(rootReplaceGroup, NULL, "root replace group not set");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to current user\n"
@@ -982,14 +991,20 @@ testRun(void)
 
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, NULL, "root replace user not set");
+        TEST_RESULT_STR(rootReplaceGroup, NULL, "root replace group not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is root and user is bad");
 
         manifestPathAdd(manifest, &path);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, TEST_USER_STR, "root replace user set");
+        TEST_RESULT_STR(rootReplaceGroup, TEST_GROUP_STR, "root replace group set");
 
         TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '" TEST_GROUP "'");
 
@@ -997,50 +1012,62 @@ testRun(void)
         TEST_TITLE("owner is root and group is bad");
 
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
-        userLocalData.userRoot = true;
 
-        manifestFileAdd(manifest, &file);
+        manifestFileAdd(manifest, file);
         manifestLinkAdd(manifest, &link);
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, TEST_USER_STR, "root replace user set");
+        TEST_RESULT_STR(rootReplaceGroup, TEST_GROUP_STR, "root replace group set");
 
         TEST_RESULT_LOG("P00   WARN: unknown user in backup manifest mapped to '" TEST_USER "'");
+
+        userInitInternal();
 
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_TITLE("owner is root and ownership of pg_data is bad");
 
         manifestPathAdd(manifest, &path);
-        manifestFileAdd(manifest, &file);
+        manifestFileAdd(manifest, file);
 
         HRN_SYSTEM_FMT("sudo chown 77777:77777 %s", strZ(pgPath));
 
         userLocalData.userName = STRDEF("root");
         userLocalData.groupName = STRDEF("root");
+        userLocalData.userRoot = true;
 
-        TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
+        TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
+
+        TEST_RESULT_STR(rootReplaceUser, STRDEF("root"), "root replace user set");
+        TEST_RESULT_STR(rootReplaceGroup, STRDEF("root"), "root replace group set");
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user in backup manifest mapped to 'root'\n"
             "P00   WARN: unknown group in backup manifest mapped to 'root'");
+
+        userInitInternal();
+
 #endif // TEST_CONTAINER_REQUIRED
     }
 
     // *****************************************************************************************************************************
     if (testBegin("restoreClean*()"))
     {
-        userInitInternal();
-
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restoreCleanOwnership() update to root (existing)");
 
+        userLocalData.userRoot = true;
+
         // Expect an error here since we can't really set ownership to root
         TEST_ERROR(
-            restoreCleanOwnership(TEST_PATH_STR, STRDEF("root"), STRDEF("root"), userId(), groupId(), false), FileOwnerError,
-            "unable to set ownership for '" TEST_PATH "': [1] Operation not permitted");
+            restoreCleanOwnership(
+                TEST_PATH_STR, STRDEF("root"), STRDEF("root"), STRDEF("root"), STRDEF("root"), userId(), groupId(), false),
+            FileOwnerError, "unable to set ownership for '" TEST_PATH "': [1] Operation not permitted");
 
         TEST_RESULT_LOG("P00 DETAIL: update ownership for '" TEST_PATH "'");
 
@@ -1048,10 +1075,12 @@ testRun(void)
         TEST_TITLE("restoreCleanOwnership() update to bogus (new)");
 
         // Will succeed because bogus will be remapped to the current user/group
-        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), STRDEF("bogus"), 0, 0, true);
+        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), NULL, STRDEF("bogus"), NULL, 0, 0, true);
 
         // Test again with only group for coverage
-        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), STRDEF("bogus"), userId(), 0, true);
+        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), NULL, STRDEF("bogus"), NULL, userId(), 0, true);
+
+        userInitInternal();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("directory with bad permissions/mode");
@@ -1071,21 +1100,24 @@ testRun(void)
         userLocalData.userId = TEST_USER_ID + 1;
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '" TEST_PATH "/pg' not owned by current user");
+            restoreCleanBuild(manifest, NULL, NULL), PathOpenError,
+            "unable to restore to path '" TEST_PATH "/pg' not owned by current user");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         userLocalData.userRoot = true;
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
+            restoreCleanBuild(manifest, TEST_USER_STR, TEST_GROUP_STR), PathOpenError,
+            "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         userInitInternal();
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
+            restoreCleanBuild(manifest, NULL, NULL), PathOpenError,
+            "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
@@ -1098,7 +1130,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYCONF);
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), PathNotEmptyError,
+            restoreCleanBuild(manifest, NULL, NULL), PathNotEmptyError,
             "unable to restore to path '" TEST_PATH "/pg' because it contains files\n"
                 "HINT: try using --delta if this is what you intended.");
 
@@ -1118,7 +1150,7 @@ testRun(void)
 
         HRN_STORAGE_PATH_CREATE(storageTest, "conf", .mode = 0700);
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1132,7 +1164,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "../conf/pg_hba.conf");
 
         TEST_ERROR(
-            restoreCleanBuild(manifest), FileExistsError,
+            restoreCleanBuild(manifest, NULL, NULL), FileExistsError,
             "unable to restore file '" TEST_PATH "/conf/pg_hba.conf' because it already exists\n"
             "HINT: try using --delta if this is what you intended.");
 
@@ -1154,7 +1186,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "preserve");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1164,7 +1196,7 @@ testRun(void)
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYCONF);
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "normal restore ignore recovery.conf");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "normal restore ignore recovery.conf");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1178,7 +1210,7 @@ testRun(void)
 
         manifest->pub.data.pgVersion = PG_VERSION_12;
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1190,13 +1222,13 @@ testRun(void)
 
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
-        manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)});
+        manifestFileAdd(manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)});
 
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYSIGNAL);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_STANDBYSIGNAL);
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1215,7 +1247,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
+        TEST_RESULT_VOID(restoreCleanBuild(manifest, NULL, NULL), "restore");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -1250,7 +1282,7 @@ testRun(void)
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_90);
 
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
-            manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION)});
+            manifestFileAdd(manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION)});
         }
         OBJ_NEW_END();
 
@@ -1271,11 +1303,11 @@ testRun(void)
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("user-made-system-db"), .id = 16380, .lastSystemId = 12168});
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF(UTF8_DB_NAME), .id = 16384, .lastSystemId = 12168});
             manifestFileAdd(
-                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/" PG_FILE_PGVERSION)});
+                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/" PG_FILE_PGVERSION)});
             manifestFileAdd(
-                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16381/" PG_FILE_PGVERSION)});
+                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16381/" PG_FILE_PGVERSION)});
             manifestFileAdd(
-                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16385/" PG_FILE_PGVERSION)});
+                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16385/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
@@ -1300,7 +1332,7 @@ testRun(void)
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             manifestFileAdd(
-                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16384/" PG_FILE_PGVERSION)});
+                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16384/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
@@ -1371,7 +1403,7 @@ testRun(void)
         {
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
             manifestFileAdd(
-                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
+                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
@@ -1395,7 +1427,7 @@ testRun(void)
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/16387"), .tablespaceId = 16387, .tablespaceName = STRDEF("ts1"),
                     .path = STRDEF("/ts1")});
             manifestFileAdd(
-                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
+                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
@@ -1417,7 +1449,7 @@ testRun(void)
         {
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test3"), .id = 65536, .lastSystemId = 12168});
             manifestFileAdd(
-                manifest, &(ManifestFile){
+                manifest, (ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/16387/PG_9.4_201409291/65536/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
@@ -2000,7 +2032,7 @@ testRun(void)
             // PG_VERSION
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "b74d60e763728399bcd3fb63f7dd1f97b46c6b44"});
@@ -2131,7 +2163,7 @@ testRun(void)
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);
@@ -2165,7 +2197,7 @@ testRun(void)
             // pg_tblspc/1/16384/PG_VERSION
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION), .size = 4,
                     .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "b74d60e763728399bcd3fb63f7dd1f97b46c6b44"});
@@ -2347,7 +2379,7 @@ testRun(void)
 
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "5e2b96c19c4f5c63a5afa2de504d29fe64a4c908"});
@@ -2356,7 +2388,7 @@ testRun(void)
             // global/999
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/999"), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = HASH_TYPE_SHA1_ZERO});
@@ -2365,7 +2397,7 @@ testRun(void)
             // PG_VERSION
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
                     .reference = STRDEF(TEST_LABEL), .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
@@ -2387,7 +2419,7 @@ testRun(void)
             // base/1/PG_VERSION. File was written as part of bundle 1 above
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 4,
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
@@ -2399,7 +2431,7 @@ testRun(void)
 
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/2"), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
@@ -2417,7 +2449,7 @@ testRun(void)
             // base/16384/PG_VERSION
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/16384/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
@@ -2430,7 +2462,7 @@ testRun(void)
 
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/16384/16385"), .size = 16384, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f"});
@@ -2446,7 +2478,7 @@ testRun(void)
             // base/32768/PG_VERSION
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/32768/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
@@ -2459,7 +2491,7 @@ testRun(void)
 
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/32768/32769"), .size = 32768, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "a40f0986acb1531ce0cc75a23dcf8aa406ae9081"});
@@ -2476,7 +2508,7 @@ testRun(void)
                     .name = name, .destination = STRDEF("../config/postgresql.conf"), .group = groupName(), .user = userName()});
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA "postgresql.conf"), .size = 15, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "98b8abb2e681e2a5a7d8ab082c0a79727887558d"});
@@ -2493,7 +2525,7 @@ testRun(void)
                     .name = name, .destination = STRDEF("../config/pg_hba.conf"), .group = groupName(), .user = userName()});
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA "pg_hba.conf"), .size = 11, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "401215e092779574988a854d8c7caed7f91dba4b"});
@@ -2502,7 +2534,7 @@ testRun(void)
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);

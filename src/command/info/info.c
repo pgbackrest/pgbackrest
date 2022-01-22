@@ -533,10 +533,10 @@ backupListAdd(
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(repoData->manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(repoData->manifest, fileIdx);
+            const ManifestFile file = manifestFile(repoData->manifest, fileIdx);
 
-            if (file->checksumPageError)
-                varLstAdd(checksumPageErrorList, varNewStr(manifestPathPg(file->name)));
+            if (file.checksumPageError)
+                varLstAdd(checksumPageErrorList, varNewStr(manifestPathPg(file.name)));
         }
 
         if (!varLstEmpty(checksumPageErrorList))

@@ -622,7 +622,7 @@ sub run
             {oExpectedManifest => \%oManifest,
                 strOptionalParam => '--force --checksum-page' . ($bDeltaBackup ? ' --delta' : '')});
 
-        # Remove postmas'.'ter.pid so restore will succeed (the rest will be cleaned up by the delta)
+        # Remove pid so restore will succeed (the rest will be cleaned up by the delta)
         storageTest->remove($oHostDbPrimary->dbBasePath() . '/' . DB_FILE_POSTMTRPID);
 
         # Restore - tests various mode, extra files/paths, missing files/paths
@@ -683,15 +683,13 @@ sub run
                         {&MANIFEST_SUBKEY_USER => undef, &MANIFEST_SUBKEY_GROUP => undef}}},
                 false);
 
-            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER});
-            delete($oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP});
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_USER} = TEST_USER;
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_GROUP} = TEST_GROUP;
 
-            delete(
-                $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
-                  {&MANIFEST_SUBKEY_USER});
-            delete(
-                $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
-                {&MANIFEST_SUBKEY_GROUP});
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/1/' . DB_FILE_PGVERSION}
+                {&MANIFEST_SUBKEY_USER} = TEST_USER;
+            $oManifest{&MANIFEST_SECTION_TARGET_FILE}{MANIFEST_TARGET_PGDATA . '/base/16384/' . DB_FILE_PGVERSION}
+                {&MANIFEST_SUBKEY_GROUP} = TEST_GROUP;
 
             $oHostDbPrimary->restore(
                 'fix permissions', $strFullBackup,
@@ -737,6 +735,13 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_INCR;
         $oHostDbPrimary->manifestReference(\%oManifest, $strFullBackup);
+
+        # Fix mode on base path so defaults are simpler in backups
+        if (!$bRemote)
+        {
+            $oHostDbPrimary->executeSimple('chmod 700 ' . $oHostDbPrimary->dbBasePath(), undef, 'root');
+            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE} = '0700';
+        }
 
         # Add tablespace 1
         $oHostDbPrimary->manifestTablespaceCreate(\%oManifest, 1);
@@ -875,13 +880,6 @@ sub run
         storageTest()->pathCreate($oHostDbPrimary->dbBasePath(2), {strMode => '0700', bCreateParent => true});
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/1'} = $oHostDbPrimary->tablespacePath(1, 2);
         $oRemapHash{&MANIFEST_TARGET_PGTBLSPC . '/2'} = $oHostDbPrimary->tablespacePath(2, 2);
-
-        # At this point the $PG_DATA permissions have been reset to 0700
-        if (!$bRemote)
-        {
-            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_MODE} = '0777';
-            $oManifest{&MANIFEST_SECTION_TARGET_PATH}{&MANIFEST_TARGET_PGTBLSPC}{&MANIFEST_SUBKEY_MODE} = '0777';
-        }
 
         $oHostDbPrimary->restore(
             'remap all paths', $strBackup, {rhExpectedManifest => \%oManifest, rhRemapHash => \%oRemapHash});

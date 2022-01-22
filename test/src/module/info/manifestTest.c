@@ -139,7 +139,6 @@ testRun(void)
             "\n"                                                                                                                   \
             "[target:file:default]\n"                                                                                              \
             "group=\"" TEST_GROUP "\"\n"                                                                                           \
-            "mas""ter=false\n"                                                                                                     \
             "mode=\"0600\"\n"                                                                                                      \
             "user=\"" TEST_USER "\"\n"
 
@@ -147,7 +146,6 @@ testRun(void)
             "\n"                                                                                                                   \
             "[target:file:default]\n"                                                                                              \
             "group=\"" TEST_GROUP "\"\n"                                                                                           \
-            "mas""ter=true\n"                                                                                                      \
             "mode=\"0600\"\n"                                                                                                      \
             "user=\"" TEST_USER "\"\n"
 
@@ -333,13 +331,13 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
-                "pg_data/base/1/555={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_fsm={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/global/pg_internal.init.allow={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_fsm={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
                 "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
@@ -348,7 +346,7 @@ testRun(void)
                 "pg_data/pg_xlog/BOGUS={\"size\":0,\"timestamp\":1565282108}\n"
                 "pg_data/pg_xlog/archive_status/BOGUS={\"size\":8,\"timestamp\":1565282120}\n"
                 "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
-                "pg_tblspc/1/PG_9.0_201008051/1/16384={\"mas""ter\":false,\"size\":8,\"timestamp\":1565282115}\n"
+                "pg_tblspc/1/PG_9.0_201008051/1/16384={\"size\":8,\"timestamp\":1565282115}\n"
                 TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
                 "\n"
                 "[target:link]\n"
@@ -432,10 +430,10 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
-                "pg_data/base/1/555_init={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/global/pg_internal.init.allow={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
                 "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
@@ -510,10 +508,10 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
-                "pg_data/base/1/555_init={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/global/pg_internal.init.allow={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
                 "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
@@ -564,10 +562,10 @@ testRun(void)
         // Version
         HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.4\n", .modeFile = 0600, .timeModified = 1565282100);
 
-        // Put a pgcontrol (always mas""ter:true)
+        // Put a pgcontrol (always primary:true)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .modeFile = 0600, .timeModified = 1565282101);
 
-        // pg_clog pgVersion < 10 mas""ter:false (pg_xact pgVersion < 10 orimary:true), pg_multixact always mas""ter:false
+        // pg_clog pgVersion < 10 primary:false (pg_xact pgVersion < 10 primary:true), pg_multixact always primary:false
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_PGMULTIXACT, .mode = 0700);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_PGMULTIXACT "/" BOGUS_STR, .modeFile = 0600, .timeModified = 1565282101);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_clog", .mode = 0700);
@@ -630,23 +628,23 @@ testRun(void)
                 "pg_tblspc/2={\"path\":\"../../ts/2\",\"tablespace-id\":\"2\",\"tablespace-name\":\"ts2\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
-                "pg_data/PG_VERSION={\"mas""ter\":true,\"size\":4,\"timestamp\":1565282100}\n"
-                "pg_data/backup_label={\"mas""ter\":true,\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
+                "pg_data/backup_label={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/base/1/555_init={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_init.1={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_vm.1_vm={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
                 "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_data/global/pg_control={\"mas""ter\":true,\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/global/pg_control={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/global/pg_internal.init.allow={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
-                "pg_data/pg_hba.conf={\"mas""ter\":true,\"size\":9,\"timestamp\":1565282117}\n"
+                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
                 "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/pg_wal/000000010000000000000001={\"mas""ter\":true,\"size\":7,\"timestamp\":1565282120}\n"
-                "pg_data/pg_xact/BOGUS={\"mas""ter\":true,\"size\":0,\"timestamp\":1565282122}\n"
-                "pg_data/postgresql.conf={\"mas""ter\":true,\"size\":14,\"timestamp\":1565282116}\n"
-                "pg_data/recovery.signal={\"mas""ter\":true,\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/standby.signal={\"mas""ter\":true,\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/pg_wal/000000010000000000000001={\"size\":7,\"timestamp\":1565282120}\n"
+                "pg_data/pg_xact/BOGUS={\"size\":0,\"timestamp\":1565282122}\n"
+                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                "pg_data/recovery.signal={\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/standby.signal={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_tblspc/1/PG_9.4_201409291/1/16384={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
                 "pg_tblspc/1/PG_9.4_201409291/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
                 "pg_tblspc/2/PG_9.4_201409291/1/16385={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
@@ -717,7 +715,7 @@ testRun(void)
 
         // Test manifest - 'pg_data/pg_tblspc' will appear in manifest but 'pg_tblspc' will not (no links). Recovery signal files
         // and backup_label ignored. Old recovery files and pg_xlog are now just another file/directory and will not be ignored.
-        // pg_wal contents will be ignored online. pg_clog pgVersion > 10 mas""ter:true, pg_xact pgVersion > 10 mas""ter:false
+        // pg_wal contents will be ignored online. pg_clog pgVersion > 10 primary:true, pg_xact pgVersion > 10 primary:false
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), true, false, false, NULL, NULL),
@@ -744,16 +742,16 @@ testRun(void)
                 "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
                 "pg_data/backup_manifest={\"size\":8,\"timestamp\":1565282198}\n"
                 "pg_data/backup_manifest.tmp={\"size\":8,\"timestamp\":1565282199}\n"
-                "pg_data/base/1/555_init={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/PG_VERSION={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_data/base/1/pg_filenode.map={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282120}\n"
+                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
+                "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
                 "pg_data/global/pg_control={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
                 "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                "pg_data/pg_multixact/BOGUS={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/pg_xact/BOGUS={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282122}\n"
+                "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/pg_xact/BOGUS={\"size\":0,\"timestamp\":1565282122}\n"
                 "pg_data/pg_xlog/000000020000000000000002={\"size\":6,\"timestamp\":1565282100}\n"
                 "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
                 "pg_data/recovery.conf={\"size\":0,\"timestamp\":1565282101}\n"
@@ -813,17 +811,17 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
-                "pg_data/base/1/555_init={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/PG_VERSION={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_data/base/1/pg_filenode.map={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282120}\n"
+                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
+                "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
                 "pg_data/global/pg_control={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
                 "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                "pg_data/pg_multixact/BOGUS={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282101}\n"
+                "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                 "pg_data/pg_wal/000000010000000000000001={\"size\":7,\"timestamp\":1565282120}\n"
-                "pg_data/pg_xact/BOGUS={\"mas""ter\":false,\"size\":0,\"timestamp\":1565282122}\n"
+                "pg_data/pg_xact/BOGUS={\"size\":0,\"timestamp\":1565282122}\n"
                 "pg_data/pg_xlog/000000020000000000000002={\"size\":6,\"timestamp\":1565282100}\n"
                 "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
                 "pg_data/recovery.conf={\"size\":0,\"timestamp\":1565282101}\n"
@@ -960,7 +958,7 @@ testRun(void)
 
         manifestFileAdd(
             manifest,
-            &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860});
+            (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860});
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182860, false), "validate manifest");
         TEST_RESULT_INT(manifest->pub.data.backupTimestampCopyStart, 1482182860, "check copy start");
@@ -1011,7 +1009,6 @@ testRun(void)
             "\n"                                                                                                                   \
             "[target:file:default]\n"                                                                                              \
             "group=\"test\"\n"                                                                                                     \
-            "mas""ter=false\n"                                                                                                     \
             "mode=\"0600\"\n"                                                                                                      \
             "user=\"test\"\n"
 
@@ -1041,22 +1038,22 @@ testRun(void)
                 &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
-                &(ManifestFile){
+                (ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
         }
@@ -1071,17 +1068,17 @@ testRun(void)
 
             manifestFileAdd(
                 manifestPrior,
-                &(ManifestFile){
+                (ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
                 .checksumSha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709"});
             manifestFileAdd(
                 manifestPrior,
-                &(ManifestFile){
+                (ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182860,
                 .checksumSha1 = "ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd"});
             manifestFileAdd(
                 manifestPrior,
-                &(ManifestFile){
+                (ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                 .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
         }
@@ -1121,18 +1118,18 @@ testRun(void)
         lstClear(manifest->pub.fileList);
         manifestFileAdd(
             manifest,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
         manifestFileAdd(
             manifest,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         manifestFileAdd(
             manifestPrior,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
@@ -1172,7 +1169,7 @@ testRun(void)
 
         manifestFileAdd(
             manifest,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
@@ -1183,11 +1180,11 @@ testRun(void)
         varLstAdd(checksumPageErrorList, varNewUInt(77));
         manifestFileAdd(
             manifestPrior,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd", .checksumPage = true, .checksumPageError = true,
-               .checksumPageErrorList = checksumPageErrorList});
+               .checksumPageErrorList = jsonFromVar(varNewVarLst(checksumPageErrorList))});
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
@@ -1223,18 +1220,18 @@ testRun(void)
         lstClear(manifest->pub.fileList);
         manifestFileAdd(
             manifest,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
         manifestFileAdd(
             manifest,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         manifestFileAdd(
             manifestPrior,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
@@ -1291,14 +1288,14 @@ testRun(void)
         lstClear(manifest->pub.fileList);
         manifestFileAdd(
             manifest,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         manifest->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
         manifestFileAdd(
             manifestPrior,
-            &(ManifestFile){
+            (ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
 
@@ -1377,7 +1374,6 @@ testRun(void)
             "\n"
             "[target:file:default]\n"
             "group=\"group1\"\n"
-            "mas""ter=true\n"
             "mode=\"0600\"\n"
             "user=\"user1\"\n"
             "\n"
@@ -1484,45 +1480,43 @@ testRun(void)
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
-            "pg_data/=equal=more=={\"mas""ter\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120}\n"                     \
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"mas""ter\":true"                      \
+            "pg_data/=equal=more=={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120}\n"                                       \
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""                                        \
                 ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                      \
             "pg_data/base/16384/17000={\"bni\":1,\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"\
                 ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                        \
             "pg_data/base/16384/PG_VERSION={\"bni\":1,\"bno\":1,\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""         \
-                ",\"group\":false,\"size\":4,\"timestamp\":1565282115}\n"                                                          \
+                ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                                          \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
                 ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                   \
-            "pg_data/postgresql.conf={\"mas""ter\":true,\"size\":4457,\"timestamp\":1565282114}\n"                                 \
-            "pg_data/special-@#!$^&*()_+~`{}[]\\:;={\"mas""ter\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120"       \
-                ",\"user\":false}\n"                                                                                               \
+            "pg_data/postgresql.conf={\"size\":4457,\"timestamp\":1565282114}\n"                                                   \
+            "pg_data/special-@#!$^&*()_+~`{}[]\\:;={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 
         #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
             "[target:file:default]\n"                                                                                              \
-            "group=\"group1\"\n"                                                                                                   \
-            "mas""ter=false\n"                                                                                                     \
+            "group=false\n"                                                                                                        \
             "mode=\"0600\"\n"                                                                                                      \
-            "user=\"user1\"\n"
+            "user=\"user2\"\n"
 
         #define TEST_MANIFEST_LINK                                                                                                 \
             "\n"                                                                                                                   \
             "[target:link]\n"                                                                                                      \
             "pg_data/pg_stat={\"destination\":\"../pg_stat\"}\n"                                                                   \
-            "pg_data/postgresql.conf={\"destination\":\"../pg_config/postgresql.conf\",\"group\":false,\"user\":\"user1\"}\n"
+            "pg_data/postgresql.conf={\"destination\":\"../pg_config/postgresql.conf\",\"group\":\"group2\",\"user\":false}\n"
 
         #define TEST_MANIFEST_LINK_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
             "[target:link:default]\n"                                                                                              \
-            "group=\"group1\"\n"                                                                                                   \
-            "user=false\n"
+            "group=false\n"                                                                                                        \
+            "user=\"user2\"\n"
 
         #define TEST_MANIFEST_PATH                                                                                                 \
             "\n"                                                                                                                   \
             "[target:path]\n"                                                                                                      \
-            "pg_data={\"user\":\"user2\"}\n"                                                                                       \
+            "pg_data={}\n"                                                                                                         \
             "pg_data/base={\"group\":\"group2\"}\n"                                                                                \
             "pg_data/base/16384={\"mode\":\"0750\"}\n"                                                                             \
             "pg_data/base/32768={}\n"                                                                                              \
@@ -1533,7 +1527,7 @@ testRun(void)
             "[target:path:default]\n"                                                                                              \
             "group=false\n"                                                                                                        \
             "mode=\"0700\"\n"                                                                                                      \
-            "user=\"user1\"\n"
+            "user=\"user2\"\n"
 
         TEST_ASSIGN(
             manifest,
@@ -1746,18 +1740,14 @@ testRun(void)
         TEST_TITLE("manifest getters");
 
         // ManifestFile getters
-        const ManifestFile *file = NULL;
+        ManifestFile file = {0};
         TEST_ERROR(manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
         TEST_ASSIGN(file, manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION")), "manifestFileFind()");
-        TEST_RESULT_STR_Z(file->name, "pg_data/PG_VERSION", "find file");
+        TEST_RESULT_STR_Z(file.name, "pg_data/PG_VERSION", "find file");
         TEST_RESULT_STR_Z(
-            manifestFileFindDefault(manifest, STRDEF("bogus"), file)->name, "pg_data/PG_VERSION",
-            "manifestFileFindDefault() - return default");
-        TEST_RESULT_STR_Z(
-            manifestFileFind(manifest, STRDEF("pg_data/special-@#!$^&*()_+~`{}[]\\:;"))->name,
+            manifestFileFind(manifest, STRDEF("pg_data/special-@#!$^&*()_+~`{}[]\\:;")).name,
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;", "find special file");
-        TEST_ASSIGN(file, manifestFileFindDefault(manifest, STRDEF("bogus"), NULL), "manifestFileFindDefault()");
-        TEST_RESULT_PTR(file, NULL, "return default NULL");
+        TEST_RESULT_BOOL(manifestFileExists(manifest, STRDEF("bogus")), false, "manifest file does not exist");
 
         TEST_RESULT_VOID(
             manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL, 0, 0),
@@ -1917,7 +1907,6 @@ testRun(void)
             "[target:file:default]\n"                                                                                              \
             "group=\"group1\"\n"                                                                                                   \
             "ignore-key=\"ignore-value\"\n"                                                                                        \
-            "mas""ter=true\n"                                                                                                      \
             "mode=\"0600\"\n"                                                                                                      \
             "user=\"user1\"\n"                                                                                                     \
             "\n"                                                                                                                   \

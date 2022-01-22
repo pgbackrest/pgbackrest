@@ -44,7 +44,7 @@ backupFile(
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle if (zero of none)
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
-        FUNCTION_LOG_PARAM(INT,  repoFileCompressLevel);            // Compression level for repo file
+        FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING, backupLabel);                    // Label of current backup
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type

@@ -23,7 +23,7 @@ typedef struct TestBackupValidateCallbackData
 {
     const Storage *storage;                                         // Storage object when needed (e.g. fileCompressed = true)
     const String *path;                                             // Subpath when storage is specified
-    const Manifest *manifest;                                       // Manifest to check for files/links/paths
+    Manifest *manifest;                                             // Manifest to check for files/links/paths
     const ManifestData *manifestData;                               // Manifest data
     String *content;                                                // String where content should be added
 } TestBackupValidateCallbackData;
@@ -60,7 +60,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
             // Build file list (needed because bundles can contain multiple files)
             // ---------------------------------------------------------------------------------------------------------------------
-            List *const fileList = lstNewP(sizeof(ManifestFile *));
+            List *const fileList = lstNewP(sizeof(ManifestFilePack **));
             bool bundle = strBeginsWithZ(info->name, "bundle/");
 
             if (bundle)
@@ -69,10 +69,10 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
                 for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(data->manifest); fileIdx++)
                 {
-                    const ManifestFile *const file = manifestFile(data->manifest, fileIdx);
+                    ManifestFilePack **const filePack = lstGet(data->manifest->pub.fileList, fileIdx);
 
-                    if (file->bundleId == bundleId)
-                        lstAdd(fileList, &file);
+                    if (manifestFileUnpack(*filePack).bundleId == bundleId)
+                        lstAdd(fileList, &filePack);
                 }
             }
             else
@@ -85,26 +85,27 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
                         info->name, 0, strSize(info->name) - strSize(compressExtStr(data->manifestData->backupOptionCompressType)));
                 }
 
-                const ManifestFile *const file = manifestFileFind(data->manifest, manifestName);
-                lstAdd(fileList, &file);
+                ManifestFilePack **const filePack = manifestFilePackFindInternal(data->manifest, manifestName);
+                lstAdd(fileList, &filePack);
             }
 
             // Check files
             // ---------------------------------------------------------------------------------------------------------------------
             for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
             {
-                ManifestFile *const file = *(ManifestFile **)lstGet(fileList, fileIdx);
+                ManifestFilePack **const filePack = *(ManifestFilePack ***)lstGet(fileList, fileIdx);
+                ManifestFile file = manifestFileUnpack(*filePack);
 
                 if (bundle)
-                    strCatFmt(data->content, "%s/%s {file", strZ(info->name), strZ(file->name));
+                    strCatFmt(data->content, "%s/%s {file", strZ(info->name), strZ(file.name));
                 else
                     strCatFmt(data->content, "%s {file", strZ(info->name));
 
                 // Calculate checksum/size and decompress if needed
                 // -----------------------------------------------------------------------------------------------------------------
                 StorageRead *read = storageNewReadP(
-                    data->storage, strNewFmt("%s/%s", strZ(data->path), strZ(info->name)), .offset = file->bundleOffset,
-                    .limit = VARUINT64(file->sizeRepo));
+                    data->storage, strNewFmt("%s/%s", strZ(data->path), strZ(info->name)), .offset = file.bundleOffset,
+                    .limit = VARUINT64(file.sizeRepo));
 
                 if (data->manifestData->backupOptionCompressType != compressTypeNone)
                 {
@@ -120,42 +121,45 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
                 strCatFmt(data->content, ", s=%" PRIu64, size);
 
-                if (!strEqZ(checksum, file->checksumSha1))
-                    THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file->name));
+                if (!strEqZ(checksum, file.checksumSha1))
+                    THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
 
                 // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the
                 // same compression algorithm can give slightly different results based on the version so repo-size is not
                 // deterministic for compression.
                 // -----------------------------------------------------------------------------------------------------------------
-                if (size != file->size)
-                    THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file->name));
+                if (size != file.size)
+                    THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file.name));
 
                 // Repo size can only be compared to file size when not bundled
                 if (!bundle)
                 {
-                    if (info->size != file->sizeRepo)
-                        THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file->name));
+                    if (info->size != file.sizeRepo)
+                        THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
                 }
 
                 if (data->manifestData->backupOptionCompressType != compressTypeNone)
-                    file->sizeRepo = file->size;
+                    file.sizeRepo = file.size;
 
                 // Bundle id/offset are too noisy so remove them. They are checked size/checksum and listed with the files.
                 // -----------------------------------------------------------------------------------------------------------------
-                file->bundleId = 0;
-                file->bundleOffset = 0;
+                file.bundleId = 0;
+                file.bundleOffset = 0;
 
                 // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from the
                 // test output.
                 // -----------------------------------------------------------------------------------------------------------------
-                if (strEqZ(file->name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+                if (strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
                     strBeginsWith(
-                        file->name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(data->manifestData->pgVersion)))))
+                        file.name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(data->manifestData->pgVersion)))))
                 {
-                    file->checksumSha1[0] = '\0';
+                    file.checksumSha1[0] = '\0';
                 }
 
                 strCatZ(data->content, "}\n");
+
+                // Update changes to manifest file
+                manifestFilePackUpdate(data->manifest, filePack, &file);
             }
 
             break;
@@ -1634,7 +1638,7 @@ testRun(void)
 
         manifestTargetAdd(manifestResume, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
         manifestPathAdd(manifestResume, &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR});
-        manifestFileAdd(manifestResume, &(ManifestFile){.name = STRDEF("pg_data/" PG_FILE_PGVERSION)});
+        manifestFileAdd(manifestResume, (ManifestFile){.name = STRDEF("pg_data/" PG_FILE_PGVERSION)});
 
         manifestSave(
             manifestResume,
@@ -1780,7 +1784,7 @@ testRun(void)
         OBJ_NEW_BEGIN(Manifest)
         {
             manifest = manifestNewInternal();
-            manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
+            manifestFileAdd(manifest, (ManifestFile){.name = STRDEF("pg_data/test")});
         }
         OBJ_NEW_END();
 
@@ -1833,8 +1837,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdBackup(), PgRunningError,
-            "--no-online passed but postmas""ter.pid exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and try"
-                " again, or use --force.");
+            "--no-online passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and"
+                " try again, or use --force.");
 
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, incr backup has been changed to full");
 
@@ -1857,8 +1861,8 @@ testRun(void)
 
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
-            "P00   WARN: --no-online passed and postmas""ter.pid exists but --force was passed so backup will continue though it"
-                " looks like " PG_NAME " is running and the backup will probably not be consistent\n"
+            "P00   WARN: --no-online passed and " PG_FILE_POSTMTRPID " exists but --force was passed so backup will continue though"
+                " it looks like " PG_NAME " is running and the backup will probably not be consistent\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100%%) checksum"
                 " e3db315c260e79211b7b52587123b7aa060f30ab\n"
@@ -2098,9 +2102,12 @@ testRun(void)
                 storagePg(), PG_FILE_PGVERSION, storageRepoWrite(),
                 strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(resumeLabel))));
 
-            strcpy(
-                ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/PG_VERSION")))->checksumSha1,
-                "06d06bb31b570b94d7b4325f511f853dbe771c21");
+            ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/PG_VERSION"));
+            ManifestFile file = manifestFileUnpack(*filePack);
+
+            strcpy(file.checksumSha1, "06d06bb31b570b94d7b4325f511f853dbe771c21");
+
+            manifestFilePackUpdate(manifestResume, filePack, &file);
 
             // Save the resume manifest
             manifestSave(
@@ -2191,14 +2198,19 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strZ(resumeLabel))));
 
-            ((ManifestFile *)manifestFileFind(manifestResume, STRDEF("pg_data/global/pg_control")))->checksumSha1[0] = 0;
+            ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/global/pg_control"));
+            ManifestFile file = manifestFileUnpack(*filePack);
+
+            file.checksumSha1[0] = 0;
+
+            manifestFilePackUpdate(manifestResume, filePack, &file);
 
             // Size does not match between cluster and resume manifest
             HRN_STORAGE_PUT_Z(storagePgWrite(), "size-mismatch", "TEST", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/size-mismatch.gz", strZ(resumeLabel))));
             manifestFileAdd(
-                manifestResume, &(ManifestFile){
+                manifestResume, (ManifestFile){
                     .name = STRDEF("pg_data/size-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
                     .size = 33});
 
@@ -2207,7 +2219,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch.gz", strZ(resumeLabel))));
             manifestFileAdd(
-                manifestResume, &(ManifestFile){
+                manifestResume, (ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", .size = 4,
                     .timestamp = backupTimeStart - 1});
 
@@ -2217,7 +2229,7 @@ testRun(void)
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/zero-size.gz", strZ(resumeLabel))),
                 "ZERO-SIZE");
             manifestFileAdd(
-                manifestResume, &(ManifestFile){.name = STRDEF("pg_data/zero-size"), .size = 0, .timestamp = backupTimeStart});
+                manifestResume, (ManifestFile){.name = STRDEF("pg_data/zero-size"), .size = 0, .timestamp = backupTimeStart});
 
             // Path is not in manifest
             HRN_STORAGE_PATH_CREATE(
@@ -2378,7 +2390,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/resume-ref.gz", strZ(resumeLabel))));
             manifestFileAdd(
-                manifestResume, &(ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
+                manifestResume, (ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
 
             // Time does not match between cluster and resume manifest (but resume because time is in future so delta enabled). Note
             // also that the repo file is intenionally corrupt to generate a warning about corruption in the repository.
@@ -2386,7 +2398,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch2.gz", strZ(resumeLabel))));
             manifestFileAdd(
-                manifestResume, &(ManifestFile){
+                manifestResume, (ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch2"), .checksumSha1 = "984816fd329622876e14907634264e6f332e9fb3", .size = 4,
                     .timestamp = backupTimeStart});
 
@@ -2605,11 +2617,9 @@ testRun(void)
                     ",\"timestamp\":1571200000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1571200002}\n"
-                "pg_data/base/1/1={\"mas""ter\":false,\"size\":0,\"timestamp\":1571200000}\n"
-                "pg_data/base/1/2={\"checksum\":\"54ceb91256e8190e474aa752a6e0650a2df5ba37\",\"mas""ter\":false,\"size\":2"
-                    ",\"timestamp\":1571200000}\n"
-                "pg_data/base/1/3={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"mas""ter\":false,\"size\":3"
-                    ",\"timestamp\":1571200000}\n"
+                "pg_data/base/1/1={\"size\":0,\"timestamp\":1571200000}\n"
+                "pg_data/base/1/2={\"checksum\":\"54ceb91256e8190e474aa752a6e0650a2df5ba37\",\"size\":2,\"timestamp\":1571200000}\n"
+                "pg_data/base/1/3={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3,\"timestamp\":1571200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1571200000}\n"
                 "pg_data/pg_xlog/0000000105DA69C000000000={\"size\":16777216,\"timestamp\":1571200002}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
@@ -2803,13 +2813,13 @@ testRun(void)
                     "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                         ",\"timestamp\":1572200002}\n"
                     "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
-                        ",\"mas""ter\":false,\"size\":8192,\"timestamp\":1572200000}\n"
+                        ",\"size\":8192,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/2={\"checksum\":\"8beb58e08394fe665fb04a17b4003faa3802760b\",\"checksum-page\":false"
-                        ",\"mas""ter\":false,\"size\":8193,\"timestamp\":1572200000}\n"
+                        ",\"size\":8193,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,[2,3]]"
-                        ",\"mas""ter\":false,\"size\":32768,\"timestamp\":1572200000}\n"
-                    "pg_data/base/1/4={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[1],\"mas""ter\":false"
-                        ",\"size\":24576,\"timestamp\":1572200000}\n"
+                        ",\"size\":32768,\"timestamp\":1572200000}\n"
+                    "pg_data/base/1/4={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[1],\"size\":24576"
+                        ",\"timestamp\":1572200000}\n"
                     "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572200000}\n"
                     "pg_data/pg_wal/0000000105DB5DE000000000={\"size\":1048576,\"timestamp\":1572200002}\n"
                     "pg_data/pg_wal/0000000105DB5DE000000001={\"size\":1048576,\"timestamp\":1572200002}\n"
@@ -2818,8 +2828,7 @@ testRun(void)
                         ",\"timestamp\":1570000000}\n"
                     "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                         ",\"timestamp\":1572200002}\n"
-                    "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"mas""ter\":false,\"size\":0"
-                        ",\"timestamp\":1572200000}\n"
+                    "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"size\":0,\"timestamp\":1572200000}\n"
                     "\n"
                     "[target:link]\n"
                     "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
@@ -2960,14 +2969,14 @@ testRun(void)
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1572400002}\n"
                 "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
-                    ",\"mas""ter\":false,\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572200000}\n"
+                    ",\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
                     ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1572400002}\n"
-                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"mas""ter\":false,\"reference\":\"20191027-181320F\""
-                    ",\"size\":0,\"timestamp\":1572200000}\n"
+                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"reference\":\"20191027-181320F\",\"size\":0"
+                    ",\"timestamp\":1572200000}\n"
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
@@ -3082,10 +3091,10 @@ testRun(void)
                     ",\"timestamp\":1572200000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1572400002}\n"
-                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
-                    ",\"mas""ter\":false,\"size\":8192,\"timestamp\":1572200000}\n"
-                "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true"
-                    ",\"mas""ter\":false,\"size\":24576,\"timestamp\":1572400000}\n"
+                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true,\"size\":8192"
+                    ",\"timestamp\":1572200000}\n"
+                "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"size\":24576"
+                    ",\"timestamp\":1572400000}\n"
                 "pg_data/bigish.dat={\"checksum\":\"3e5175386be683d2f231f3fa3eab892a799082f7\",\"size\":8191"
                     ",\"timestamp\":1500000001}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
@@ -3099,8 +3108,7 @@ testRun(void)
                     ",\"timestamp\":1500000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1572400002}\n"
-                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"mas""ter\":false,\"size\":0"
-                    ",\"timestamp\":1572200000}\n"
+                "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"size\":0,\"timestamp\":1572200000}\n"
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"

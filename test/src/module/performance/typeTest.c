@@ -318,8 +318,8 @@ testRun(void)
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
-            ASSERT(file == manifestFileFind(manifest, file->name));
+            const ManifestFile file = manifestFile(manifest, fileIdx);
+            ASSERT(strEq(file.name, manifestFileFind(manifest, file.name).name));
         }
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
