@@ -77,7 +77,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             // Check against the manifest
             // ---------------------------------------------------------------------------------------------------------------------
             ManifestFilePack **const filePack = manifestFilePackFindInternal(data->manifest, manifestName);
-            ManifestFile file = manifestFileUnpack(*filePack);
+            ManifestFile file = manifestFileUnpack(data->manifest, *filePack);
 
             // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the same
             // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
@@ -1753,7 +1753,7 @@ testRun(void)
                 strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(resumeLabel))));
 
             ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/PG_VERSION"));
-            ManifestFile file = manifestFileUnpack(*filePack);
+            ManifestFile file = manifestFileUnpack(manifestResume, *filePack);
 
             strcpy(file.checksumSha1, "06d06bb31b570b94d7b4325f511f853dbe771c21");
 
@@ -1849,7 +1849,7 @@ testRun(void)
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strZ(resumeLabel))));
 
             ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/global/pg_control"));
-            ManifestFile file = manifestFileUnpack(*filePack);
+            ManifestFile file = manifestFileUnpack(manifestResume, *filePack);
 
             file.checksumSha1[0] = 0;
 

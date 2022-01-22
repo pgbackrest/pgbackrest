@@ -261,7 +261,7 @@ File functions and getters/setters
 typedef struct ManifestFilePack ManifestFilePack;
 
 // Unpack file pack returned by manifestFilePackGet()
-ManifestFile manifestFileUnpack(const ManifestFilePack *filePack);
+ManifestFile manifestFileUnpack(const Manifest *manifest, const ManifestFilePack *filePack);
 
 // Get file in pack format by index
 __attribute__((always_inline)) static inline const ManifestFilePack *
@@ -281,7 +281,7 @@ manifestFileNameGet(const Manifest *const this, const unsigned int fileIdx)
 __attribute__((always_inline)) static inline ManifestFile
 manifestFile(const Manifest *const this, const unsigned int fileIdx)
 {
-    return manifestFileUnpack(manifestFilePackGet(this, fileIdx));
+    return manifestFileUnpack(this, manifestFilePackGet(this, fileIdx));
 }
 
 // Add a file
@@ -295,7 +295,7 @@ __attribute__((always_inline)) static inline ManifestFile
 manifestFileFind(const Manifest *const this, const String *const name)
 {
     ASSERT_INLINE(name != NULL);
-    return manifestFileUnpack(manifestFilePackFind(this, name));
+    return manifestFileUnpack(this, manifestFilePackFind(this, name));
 }
 
 // Does the file exist?
