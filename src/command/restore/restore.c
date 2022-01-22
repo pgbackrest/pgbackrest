@@ -1923,10 +1923,9 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
 }
 
 static uint64_t
-restoreProcessQueue(const Storage *const storagePg, Manifest *const manifest, List **queueList)
+restoreProcessQueue(Manifest *manifest, List **queueList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM_P(LIST, queueList);
     FUNCTION_LOG_END();
@@ -1968,29 +1967,6 @@ restoreProcessQueue(const Storage *const storagePg, Manifest *const manifest, Li
         {
             const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
             const ManifestFile file = manifestFileUnpack(filePack);
-
-            // Create zero-length files
-            if (file.size == 0)
-            {
-                String *const pgName = storagePathP(storagePg, manifestPathPg(file.name));
-                StorageInfo info = storageInfoP(storagePg, pgName, .ignoreMissing = true);
-
-                if (!info.exists || info.size != 0)
-                {
-                    storagePutP(
-                        storageNewWriteP(
-                            storagePg, pgName, .timeModified = file.timestamp, .modeFile = file.mode, .user = file.user,
-                            .group = file.group, .noAtomic = true, .noCreatePath = true, .noSyncPath = true),
-                        BUFSTRDEF(""));
-
-                    LOG_DETAIL_FMT("restore file %s (0B)", strZ(pgName));
-                }
-                else
-                    LOG_DETAIL_FMT("restore file %s - exists and is zero size", strZ(pgName));
-
-                strFree(pgName);
-                continue;
-            }
 
             // Find the target that contains this file
             unsigned int targetIdx = 0;
@@ -2107,12 +2083,19 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                         log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file.size,
                         (uint64_t)file.timestamp);
                 }
-                // Else the file matched the manifest checksum so did not need to be copied
+                // Else a checksum delta or file is zero-length
                 else
                 {
-                    ASSERT(file.size != 0);
+                    strCatZ(log, "exists and ");
 
-                    strCatZ(log, "exists and matches backup");
+                    // No need to copy zero-length files
+                    if (file.size == 0)
+                    {
+                        strCatZ(log, "is zero size");
+                    }
+                    // The file matched the manifest checksum so did not need to be copied
+                    else
+                        strCatZ(log, "matches backup");
                 }
             }
 
@@ -2120,8 +2103,8 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             sizeRestored += file.size;
             strCatFmt(log, " (%s, %" PRIu64 "%%)", strZ(strSizeFormat(file.size)), sizeRestored * 100 / sizeTotal);
 
-            // If not zeroed add the checksum
-            if (!zeroed)
+            // If not zero-length add the checksum
+            if (file.size != 0 && !zeroed)
                 strCatFmt(log, " checksum %s", file.checksumSha1);
 
             LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
@@ -2329,7 +2312,7 @@ cmdRestore(void)
         restoreCleanBuild(jobData.manifest, jobData.rootReplaceUser, jobData.rootReplaceGroup);
 
         // Generate processing queues
-        uint64_t sizeTotal = restoreProcessQueue(storagePgWrite(), jobData.manifest, &jobData.queueList);
+        uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
 
         // Save manifest to the data directory so we can restart a delta restore even if the PG_VERSION file is missing
         manifestSave(jobData.manifest, storageWriteIo(storageNewWriteP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR)));
