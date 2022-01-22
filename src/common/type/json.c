@@ -682,14 +682,13 @@ jsonFromStrInternal(String *json, const String *string)
         strCatChr(json, '"');
 
         // Track portion of string with no escapes
+        const char *stringPtr = strZ(string);
         const char *noEscape = NULL;
         size_t noEscapeSize = 0;
 
         for (unsigned int stringIdx = 0; stringIdx < strSize(string); stringIdx++)
         {
-            char stringChr = strZ(string)[stringIdx];
-
-            switch (stringChr)
+            switch (*stringPtr)
             {
                 case '"':
                 case '\\':
@@ -706,7 +705,7 @@ jsonFromStrInternal(String *json, const String *string)
                         noEscapeSize = 0;
                     }
 
-                    switch (stringChr)
+                    switch (*stringPtr)
                     {
                         case '"':
                             strCatZ(json, "\\\"");
@@ -744,12 +743,14 @@ jsonFromStrInternal(String *json, const String *string)
                 {
                     // If escape string is zero size then start it
                     if (noEscapeSize == 0)
-                        noEscape = strZ(string) + stringIdx;
+                        noEscape = stringPtr;
 
                     noEscapeSize++;
                     break;
                 }
             }
+
+            stringPtr++;
         }
 
         // Copy portion of string without escapes
