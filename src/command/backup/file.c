@@ -288,6 +288,10 @@ backupFile(
                     }
                     MEM_CONTEXT_END();
 
+                    // Free the read object. This is very important if many files are being read because they can each contain a lot
+                    // of buffers.
+                    storageReadFree(read);
+
                     bundleOffset += fileResult->repoSize;
                 }
                 // Else if source file is missing and the read setup indicated ignore a missing file, the database removed it so
