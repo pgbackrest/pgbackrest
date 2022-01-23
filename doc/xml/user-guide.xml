@@ -279,6 +279,14 @@
             chmod 600 /root/.ssh/*
         </variable>
 
+        <variable key="postgres-config-common-create">
+            echo 'listen_addresses = '\''*'\''' > /root/postgresql.common.conf &amp;&amp; \
+            echo 'port = 5432' >> /root/postgresql.common.conf &amp;&amp; \
+            echo 'shared_buffers = 16MB' >> /root/postgresql.common.conf &amp;&amp; \
+            echo 'log_line_prefix = '\'''\''' >> /root/postgresql.common.conf &amp;&amp; \
+            echo 'autovacuum = off' >> /root/postgresql.common.conf
+        </variable>
+
         <variable key="copy-ca-cert">COPY {[fake-cert-path-relative]}/ca.crt {[ca-cert-path]}/pgbackrest-ca.crt</variable>
 
         <!-- Don't allow sudo to disable core dump (suppresses errors, see https://github.com/sudo-project/sudo/issues/42) -->
@@ -318,6 +326,9 @@
 
         # Create an ssh key for root so all hosts can ssh to each other as root
         RUN \ {[ssh-key-install]}
+
+        # Create common postgresql config
+        RUN \ {[postgres-config-common-create]}
 
         # Add doc user with sudo privileges
         RUN adduser --disabled-password --gecos "" {[host-user]} &amp;&amp; \
@@ -376,6 +387,9 @@
 
         # Create an ssh key for root so all hosts can ssh to each other as root
         RUN \ {[ssh-key-install]}
+
+        # Create common postgresql config
+        RUN \ {[postgres-config-common-create]}
 
         # Add doc user with sudo privileges
         RUN adduser -n {[host-user]} &amp;&amp; \
@@ -981,7 +995,8 @@
                 <execute user="postgres">
                     <exe-cmd>
                         {[pg-bin-path]}/initdb
-                            -D {[pg-path]} -k -A peer</exe-cmd>
+                            -D {[pg-path]} -k -A peer
+                    </exe-cmd>
                 </execute>
 
                 <execute if="{[os-type-is-debian]}" user="root" output="y" filter="n">
@@ -989,27 +1004,11 @@
                 </execute>
 
                 <execute user="root" show="n" user-force="y">
-                    <exe-cmd>echo 'shared_buffers = 16MB' >> {[postgres-config-demo]}</exe-cmd>
+                    <exe-cmd>cat /root/postgresql.common.conf >> {[postgres-config-demo]}</exe-cmd>
                 </execute>
             </execute-list>
 
-            <p>By default <postgres/> will only accept local connections.  The examples in this guide will require connections from other servers so <pg-option>listen_addresses</pg-option> is configured to listen on all interfaces.  This may not be appropriate for secure installations.</p>
-
-            <postgres-config host="{[host-pg1]}" file="{[postgres-config-demo]}">
-                <title>Set <pg-option>listen_addresses</pg-option></title>
-
-                <postgres-config-option key="listen_addresses">'*'</postgres-config-option>
-            </postgres-config>
-
-            <p>For demonstration purposes the <pg-option>log_line_prefix</pg-option> setting will be minimally configured.  This keeps the log output as brief as possible to better illustrate important information.</p>
-
-            <postgres-config host="{[host-pg1]}" file="{[postgres-config-demo]}">
-                <title>Set <pg-option>log_line_prefix</pg-option></title>
-
-                <postgres-config-option key="log_line_prefix">''</postgres-config-option>
-            </postgres-config>
-
-            <p if="{[os-type-is-rhel]}">By default {[user-guide-os]} includes the day of the week in the log filename.  This makes automating the user guide a bit more complicated so the <pg-option>log_filename</pg-option> is set to a constant.</p>
+            <p if="{[os-type-is-rhel]}">By default {[user-guide-os]} includes the day of the week in the log filename. This makes the user guide a bit more complicated so the <pg-option>log_filename</pg-option> is set to a constant.</p>
 
             <postgres-config host="{[host-pg1]}" if="{[os-type-is-rhel]}" file="{[postgres-config-demo]}">
                 <title>Set <pg-option>log_filename</pg-option></title>
@@ -2890,7 +2889,7 @@
                 </execute>
 
                 <execute user="root" show="n" user-force="y">
-                    <exe-cmd>echo 'shared_buffers = 16MB' >> {[postgres-config-demo]}</exe-cmd>
+                    <exe-cmd>cat /root/postgresql.common.conf >> {[postgres-config-demo]}</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -2904,8 +2903,7 @@
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
                 <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
-                <postgres-config-option key="log_filename">'postgresql.log'</postgres-config-option>
-                <postgres-config-option key="log_line_prefix">''</postgres-config-option>
+                <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
             </postgres-config>
 
             <execute-list host="{[host-pg2]}">
@@ -3658,6 +3656,10 @@
                 </exe-cmd>
                 <exe-highlight>Upgrade Complete</exe-highlight>
             </execute>
+
+                <execute user="root" show="n" user-force="y">
+                    <exe-cmd>cat /root/postgresql.common.conf >> {[postgres-config-demo-upgrade]}</exe-cmd>
+                </execute>
         </execute-list>
 
         <p>Configure the new cluster settings and port.</p>
@@ -3669,9 +3671,7 @@
             <postgres-config-option key="archive_mode">on</postgres-config-option>
             <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
             <postgres-config-option key="max_wal_senders">3</postgres-config-option>
-            <postgres-config-option key="listen_addresses">'*'</postgres-config-option>
-            <postgres-config-option key="log_line_prefix">''</postgres-config-option>
-            <postgres-config-option key="port">5432</postgres-config-option>
+            <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
         </postgres-config>
 
         <p>Update the <backrest/> configuration on all systems to point to the new cluster.</p>
