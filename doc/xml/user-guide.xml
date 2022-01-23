@@ -1169,6 +1169,22 @@
                 <execute user="postgres" show="n">
                     <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
                 </execute>
+
+                <execute user="postgres" show="n">
+                    <exe-cmd>psql -c "
+                        create or replace function create_test_table(prefix int, scale int, data bool) returns void as \$\$
+                        declare
+                            index int;
+                        begin
+                            for index in 1 .. scale loop
+                                execute 'create table test_' || prefix || '_' || index || ' (id int)';
+
+                                if data then
+                                    execute 'insert into test_' || prefix || '_' || index || ' values (' || (prefix * index) || ')';
+                                end if;
+                            end loop;
+                        end \$\$ LANGUAGE plpgsql;"</exe-cmd>
+                </execute>
             </execute-list>
 
             <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) to reach the <backrest/> repository, then the <backrest/> <br-option>archive-timeout</br-option> option should be increased. Note that this option is not the same as the <postgres/> <pg-option>archive_timeout</pg-option> option which is used to force a WAL segment switch; useful for databases where there are long periods of inactivity. For more information on the <postgres/> <pg-option>archive_timeout</pg-option> option, see <postgres/> <link url="https://www.postgresql.org/docs/current/static/runtime-config-wal.html">Write Ahead Log</link>.</p>
@@ -3433,22 +3449,10 @@
                 <execute-list host="{[host-pg1]}">
                     <title>Create tables</title>
 
-                    <execute user="postgres" show="n">
-                        <exe-cmd>psql -c "
-                            create or replace function create_test_table(prefix int, scale int) returns void as \$\$
-                            declare
-                                index int;
-                            begin
-                                for index in 1 .. scale loop
-                                    execute 'create table test_' || prefix || '_' || index || ' (id int)';
-                                end loop;
-                            end \$\$ LANGUAGE plpgsql;"</exe-cmd>
-                    </execute>
-
                     <execute user="postgres">
                         <exe-cmd>
                             bash -c 'for i in {1..{[stress-scale-table]}};
-                                do psql -c "select create_test_table(${i?}, 1000)";
+                                do psql -c "select create_test_table(${i?}, 1000, true)";
                                 done'
                         </exe-cmd>
                     </execute>
