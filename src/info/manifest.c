@@ -148,6 +148,10 @@ struct Manifest
     ManifestPub pub;                                                // Publicly accessible variables
     StringList *ownerList;                                          // List of users/groups
     StringList *referenceList;                                      // List of file references
+
+    const String *fileUserDefault;                                  // Default file user name
+    const String *fileGroupDefault;                                 // Default file group name
+    mode_t fileModeDefault;                                         // Default file mode
 };
 
 /***********************************************************************************************************************************
@@ -208,13 +212,19 @@ typedef enum
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
     manifestFilePackFlagChecksumPageErrorList,
+    manifestFilePackFlagMode,
+    manifestFilePackFlagUser,
+    manifestFilePackFlagUserNull,
+    manifestFilePackFlagGroup,
+    manifestFilePackFlagGroupNull,
 } ManifestFilePackFlag;
 
 // Pack file into a compact format to save memory
 static ManifestFilePack *
-manifestFilePack(const ManifestFile *const file)
+manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, manifest);
         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
@@ -235,6 +245,19 @@ manifestFilePack(const ManifestFile *const file)
 
     if (file->reference != NULL)
         flag |= 1 << manifestFilePackFlagReference;
+
+    if (file->mode != manifest->fileModeDefault)
+        flag |= 1 << manifestFilePackFlagMode;
+
+    if (file->user == NULL)
+        flag |= 1 << manifestFilePackFlagUserNull;
+    else if (!strEq(file->user, manifest->fileUserDefault))
+        flag |= 1 << manifestFilePackFlagUser;
+
+    if (file->group == NULL)
+        flag |= 1 << manifestFilePackFlagGroupNull;
+    else if (!strEq(file->group, manifest->fileGroupDefault))
+        flag |= 1 << manifestFilePackFlagGroup;
 
     cvtUInt64ToVarInt128(flag, buffer, &bufferPos, sizeof(buffer));
 
@@ -258,11 +281,15 @@ manifestFilePack(const ManifestFile *const file)
         cvtUInt64ToVarInt128((uintptr_t)file->reference, buffer, &bufferPos, sizeof(buffer));
 
     // Mode
-    cvtUInt64ToVarInt128(file->mode, buffer, &bufferPos, sizeof(buffer));
+    if (flag & (1 << manifestFilePackFlagMode))
+        cvtUInt64ToVarInt128(file->mode, buffer, &bufferPos, sizeof(buffer));
 
     // User/group
-    cvtUInt64ToVarInt128((uintptr_t)file->user, buffer, &bufferPos, sizeof(buffer));
-    cvtUInt64ToVarInt128((uintptr_t)file->group, buffer, &bufferPos, sizeof(buffer));
+    if (flag & (1 << manifestFilePackFlagUser))
+        cvtUInt64ToVarInt128((uintptr_t)file->user, buffer, &bufferPos, sizeof(buffer));
+
+    if (flag & (1 << manifestFilePackFlagGroup))
+        cvtUInt64ToVarInt128((uintptr_t)file->group, buffer, &bufferPos, sizeof(buffer));
 
     // Repo size
     cvtUInt64ToVarInt128(file->sizeRepo, buffer, &bufferPos, sizeof(buffer));
@@ -298,9 +325,10 @@ manifestFilePack(const ManifestFile *const file)
 }
 
 ManifestFile
-manifestFileUnpack(const ManifestFilePack *const filePack)
+manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const filePack)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, manifest);
         FUNCTION_TEST_PARAM_P(VOID, filePack);
     FUNCTION_TEST_END();
 
@@ -336,11 +364,21 @@ manifestFileUnpack(const ManifestFilePack *const filePack)
         result.reference = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Mode
-    result.mode = (mode_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    if (flag & (1 << manifestFilePackFlagMode))
+        result.mode = (mode_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    else
+        result.mode = manifest->fileModeDefault;
 
     // User/group
-    result.user = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
-    result.group = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    if (flag & (1 << manifestFilePackFlagUser))
+        result.user = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    else if (!(flag & (1 << manifestFilePackFlagUserNull)))
+        result.user = manifest->fileUserDefault;
+
+    if (flag & (1 << manifestFilePackFlagGroup))
+        result.group = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    else if (!(flag & (1 << manifestFilePackFlagGroupNull)))
+        result.group = manifest->fileGroupDefault;
 
     // Repo size
     result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
@@ -373,7 +411,7 @@ manifestFileAdd(Manifest *this, ManifestFile file)
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
-        const ManifestFilePack *const filePack = manifestFilePack(&file);
+        const ManifestFilePack *const filePack = manifestFilePack(this, &file);
         lstAdd(this->pub.fileList, &filePack);
     }
     MEM_CONTEXT_END();
@@ -398,7 +436,7 @@ manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
         ManifestFilePack *const filePackOld = *filePack;
-        *filePack = manifestFilePack(file);
+        *filePack = manifestFilePack(this, file);
         memFree(filePackOld);
     }
     MEM_CONTEXT_END();
@@ -1274,6 +1312,15 @@ manifestNewBuild(
 
             manifestPathAdd(this, &path);
 
+            // Generate file defaults from base path
+            MEM_CONTEXT_BEGIN(this->pub.memContext)
+            {
+                this->fileUserDefault = strDup(path.user);
+                this->fileGroupDefault = strDup(path.group);
+                this->fileModeDefault = path.mode & (S_IRUSR | S_IWUSR | S_IRGRP);
+            }
+            MEM_CONTEXT_END();
+
             ManifestTarget target =
             {
                 .name = MANIFEST_TARGET_PGDATA_STR,
@@ -1639,11 +1686,6 @@ typedef struct ManifestLoadData
     MemContext *memContext;                                         // Mem context for data needed only during load
     Manifest *manifest;                                             // Manifest info
 
-    List *fileFoundList;                                            // Values found in files
-    const Variant *fileGroupDefault;                                // File default group
-    mode_t fileModeDefault;                                         // File default mode
-    const Variant *fileUserDefault;                                 // File default user
-
     List *linkFoundList;                                            // Values found in links
     const Variant *linkGroupDefault;                                // Link default group
     const Variant *linkUserDefault;                                 // Link default user
@@ -1680,7 +1722,7 @@ static const Variant *
 manifestOwnerDefaultGet(const Variant *ownerDefault)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, ownerDefault);
+        FUNCTION_TEST_PARAM(VARIANT, ownerDefault);
     FUNCTION_TEST_END();
 
     ASSERT(ownerDefault != NULL);
@@ -1721,8 +1763,6 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
 
         MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.fileList))
         {
-            ManifestLoadFound valueFound = {0};
-
             ManifestFile file =
             {
                 .name = key,
@@ -1774,25 +1814,30 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
                     file.checksumPageErrorList = jsonFromVar(checksumPageErrorList);
             }
 
-            if (kvKeyExists(fileKv, MANIFEST_KEY_GROUP_VAR))
-            {
-                valueFound.group = true;
-                file.group = manifestOwnerGet(kvGet(fileKv, MANIFEST_KEY_GROUP_VAR));
-            }
+            // Group
+            const Variant *value = kvGet(fileKv, MANIFEST_KEY_GROUP_VAR);
 
-            if (kvKeyExists(fileKv, MANIFEST_KEY_MODE_VAR))
-            {
-                valueFound.mode = true;
-                file.mode = cvtZToMode(strZ(varStr(kvGet(fileKv, MANIFEST_KEY_MODE_VAR))));
-            }
+            if (value != NULL)
+                file.group = manifestOwnerGet(value);
+            else
+                file.group = manifest->fileGroupDefault;
 
-            if (kvKeyExists(fileKv, MANIFEST_KEY_USER_VAR))
-            {
-                valueFound.user = true;
-                file.user = manifestOwnerGet(kvGet(fileKv, MANIFEST_KEY_USER_VAR));
-            }
+            // Mode
+            value = kvGet(fileKv, MANIFEST_KEY_MODE_VAR);
 
-            lstAdd(loadData->fileFoundList, &valueFound);
+            if (value != NULL)
+                file.mode = cvtZToMode(strZ(varStr(value)));
+            else
+                file.mode = manifest->fileModeDefault;
+
+            // User
+            value = kvGet(fileKv, MANIFEST_KEY_USER_VAR);
+
+            if (value != NULL)
+                file.user = manifestOwnerGet(value);
+            else
+                file.user = manifest->fileUserDefault;
+
             manifestFileAdd(manifest, file);
         }
         MEM_CONTEXT_END();
@@ -1872,14 +1917,14 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR))
     {
-        MEM_CONTEXT_BEGIN(loadData->memContext)
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             if (strEq(key, MANIFEST_KEY_GROUP_STR))
-                loadData->fileGroupDefault = manifestOwnerDefaultGet(value);
+                manifest->fileGroupDefault = strDup(manifestOwnerGet(value));
             else if (strEq(key, MANIFEST_KEY_MODE_STR))
-                loadData->fileModeDefault = cvtZToMode(strZ(varStr(value)));
+                manifest->fileModeDefault = cvtZToMode(strZ(varStr(value)));
             else if (strEq(key, MANIFEST_KEY_USER_STR))
-                loadData->fileUserDefault = manifestOwnerDefaultGet(value);
+                manifest->fileUserDefault = strDup(manifestOwnerGet(value));
         }
         MEM_CONTEXT_END();
     }
@@ -2065,9 +2110,14 @@ manifestNewLoad(IoRead *read)
             .manifest = this,
         };
 
+        // Set file defaults that will be updated when we know what the real defaults are. These need to be set to values that are
+        // not valid for actual names or modes.
+        this->fileUserDefault = STRDEF("@");
+        this->fileGroupDefault = this->fileUserDefault;
+        this->fileModeDefault = (mode_t)-1;
+
         MEM_CONTEXT_BEGIN(loadData.memContext)
         {
-            loadData.fileFoundList = lstNewP(sizeof(ManifestLoadFound));
             loadData.linkFoundList = lstNewP(sizeof(ManifestLoadFound));
             loadData.pathFoundList = lstNewP(sizeof(ManifestLoadFound));
         }
@@ -2075,25 +2125,6 @@ manifestNewLoad(IoRead *read)
 
         this->pub.info = infoNewLoad(read, manifestLoadCallback, &loadData);
         this->pub.data.backrestVersion = infoBackrestVersion(this->pub.info);
-
-        // Process file defaults
-        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
-        {
-            ManifestFilePack **const filePack = lstGet(this->pub.fileList, fileIdx);
-            ManifestFile file = manifestFileUnpack(*filePack);
-            ManifestLoadFound *found = lstGet(loadData.fileFoundList, fileIdx);
-
-            if (!found->group)
-                file.group = manifestOwnerCache(this, manifestOwnerGet(loadData.fileGroupDefault));
-
-            if (!found->mode)
-                file.mode = loadData.fileModeDefault;
-
-            if (!found->user)
-                file.user = manifestOwnerCache(this, manifestOwnerGet(loadData.fileUserDefault));
-
-            manifestFilePackUpdate(this, filePack, &file);
-        }
 
         // Process link defaults
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(this); linkIdx++)
@@ -2721,7 +2752,7 @@ manifestFileUpdate(
         (checksumPage && !checksumPageError && checksumPageErrorList == NULL) || (checksumPage && checksumPageError));
 
     ManifestFilePack **const filePack = manifestFilePackFindInternal(this, name);
-    ManifestFile file = manifestFileUnpack(*filePack);
+    ManifestFile file = manifestFileUnpack(this, *filePack);
 
     // Update reference if set
     if (reference != NULL)

@@ -1385,6 +1385,7 @@ Process the backup manifest
 ***********************************************************************************************************************************/
 typedef struct BackupJobData
 {
+    const Manifest *const manifest;                                 // Backup manifest
     const String *const backupLabel;                                // Backup label (defines the backup path)
     const bool backupStandby;                                       // Backup from standby
     RegExp *standbyExp;                                             // Identify files that may be copied from the standby
@@ -1415,6 +1416,8 @@ backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
 }
 
 // Comparator to order ManifestFile objects by size then name
+static const Manifest *backupProcessQueueComparatorManifest = NULL;
+
 static int
 backupProcessQueueComparator(const void *item1, const void *item2)
 {
@@ -1427,8 +1430,8 @@ backupProcessQueueComparator(const void *item1, const void *item2)
     ASSERT(item2 != NULL);
 
     // Unpack files
-    ManifestFile file1 = manifestFileUnpack(*(const ManifestFilePack **)item1);
-    ManifestFile file2 = manifestFileUnpack(*(const ManifestFilePack **)item2);
+    ManifestFile file1 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
+    ManifestFile file2 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
 
     // If the size differs then that's enough to determine order
     if (file1.size < file2.size)
@@ -1490,7 +1493,7 @@ backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData)
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
-            const ManifestFile file = manifestFileUnpack(filePack);
+            const ManifestFile file = manifestFileUnpack(manifest, filePack);
 
             // If the file is a reference it should only be backed up if delta and not zero size
             if (file.reference != NULL && (!jobData->delta || file.size == 0))
@@ -1548,6 +1551,8 @@ backupProcessQueue(Manifest *const manifest, BackupJobData *const jobData)
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         // Sort the queues
+        backupProcessQueueComparatorManifest = manifest;
+
         for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
             lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderDesc);
 
@@ -1611,7 +1616,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
             if (!lstEmpty(queue))
             {
-                const ManifestFile file = manifestFileUnpack(*(ManifestFilePack **)lstGet(queue, 0));
+                const ManifestFile file = manifestFileUnpack(jobData->manifest, *(ManifestFilePack **)lstGet(queue, 0));
 
                 // Create backup job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
@@ -1723,6 +1728,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         // Generate processing queues
         BackupJobData jobData =
         {
+            .manifest = manifest,
             .backupLabel = backupLabel,
             .backupStandby = backupStandby,
             .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
