@@ -17,6 +17,7 @@ typedef enum
 
 #include "common/type/string.h"
 #include "common/time.h"
+#include "common/type/keyValue.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -25,6 +26,16 @@ Constants
 
 // Size of buffer used to load lock file
 #define LOCK_BUFFER_SIZE                                            128
+
+/***********************************************************************************************************************************
+Data Types and Structures
+***********************************************************************************************************************************/
+// Structure representing data contained in the lock file's json
+typedef struct LockJsonData
+{
+    String *execId;                                                 // Process execId
+    String *percentComplete;                                        // Backup percent complete
+} LockJsonData;
 
 /***********************************************************************************************************************************
 Functions
@@ -39,5 +50,8 @@ bool lockRelease(bool failOnNoLock);
 
 // Write the backup percentage complete value into the backup lock file
 void lockWritePercentComplete(const String *execId, double percentComplete);
+
+// Return json data from the lock file
+LockJsonData lockReadJson(void);
 
 #endif

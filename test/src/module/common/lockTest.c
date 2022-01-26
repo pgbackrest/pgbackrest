@@ -134,11 +134,24 @@ testRun(void)
         String *backupLockFile = strNewFmt(TEST_PATH "/%s-backup" LOCK_FILE_EXT, strZ(stanza));
         int lockFdTest = -1;
         Buffer *buffer = NULL;
+        LockJsonData lockFileData = {0};
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(lockRelease(true), AssertError, "no lock is held by this process");
         TEST_RESULT_BOOL(lockRelease(false), false, "release when there is no lock");
         TEST_ERROR(lockWritePercentComplete(STRDEF("1-test"), 85.58389), AssertError, "backup lock is not held");
+        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "obtain backup lock");
+        lseek(lockFd[lockTypeBackup], 0, SEEK_SET);
+        // Truncate backup lock file as our overwrite is much shorter than current contents
+        ftruncate(lockFd[lockTypeBackup], 0);
+        ioFdWriteOneStr(lockFd[lockTypeBackup], strNewFmt("%d" LF_Z, 12345));
+        TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test-backup.lock"))), "get file contents");
+        StringList *parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+        TEST_RESULT_BOOL((strLstSize(parse) == 3), false, "verify it's a short file");
+        TEST_ASSIGN(lockFileData, lockReadJson(), "load lock file json data");
+        TEST_RESULT_BOOL(lockFileData.execId == NULL, true, "verify execId is not populated/is null");
+        TEST_RESULT_BOOL(lockFileData.percentComplete == NULL, true, "verify percentComplete is not populated/is null");
+        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, STRDEF("1-test"), 0, true), "archive lock by file");
@@ -194,8 +207,10 @@ testRun(void)
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
         TEST_RESULT_VOID(lockWritePercentComplete(STRDEF("1-test"), 0.0), "backup lock, lock file write 1 succeeded");
+        TEST_ASSIGN(lockFileData, lockReadJson(), "load lock file json data");
+        TEST_RESULT_BOOL(strEq(lockFileData.execId, STRDEF("1-test")), true, "verify execId");
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test-backup.lock"))), "get file contents");
-        StringList *parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+        parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
         TEST_RESULT_BOOL(
             strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("execId")))), STRDEF("1-test")), true,
             "verify 1 execId");

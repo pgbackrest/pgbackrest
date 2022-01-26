@@ -298,6 +298,8 @@ lockWritePercentComplete(const String *const execId, const double percentComplet
     FUNCTION_LOG_END();
 
     ASSERT(execId != NULL);
+
+    // Backup lock is required
     CHECK(AssertError, lockTypeHeld == lockTypeBackup || lockTypeHeld == lockTypeAll, "backup lock is not held");
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -316,4 +318,48 @@ lockWritePercentComplete(const String *const execId, const double percentComplet
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+LockJsonData
+lockReadJson(void)
+{
+    FUNCTION_LOG_VOID(logLevelDebug);
+
+    // Backup lock is required
+    CHECK(AssertError, lockTypeHeld == lockTypeBackup || lockTypeHeld == lockTypeAll, "backup lock is not held");
+
+    LockJsonData result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        char buffer[LOCK_BUFFER_SIZE];
+
+        // Seek to beginning of file
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockFd[lockTypeBackup], 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+            strZ(lockFile[lockTypeBackup]));
+
+        // Read the file
+        ssize_t actualBytes = read(lockFd[lockTypeBackup], buffer, sizeof(buffer));
+        THROW_ON_SYS_ERROR_FMT(actualBytes == -1, FileReadError, "unable to read '%s", strZ(lockFile[lockTypeBackup]));
+
+        // Parse and populate the struct
+        const StringList *parse = strLstNewSplitZ(strNewZN(buffer, (size_t)actualBytes), LF_Z);
+        if (strLstSize(parse) == 3)
+        {
+            String *execId = strDup(varStr(kvGet(jsonToKv(strLstGet(parse,1)), EXEC_ID_VAR)));
+            String *percentComplete = strDup(varStr(kvGet(jsonToKv(strLstGet(parse,1)), PERCENT_COMPLETE_VAR)));
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.execId = strDup(execId);
+                result.percentComplete = strDup(percentComplete);
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
