@@ -183,9 +183,7 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
         else if (result != LOCK_ON_EXEC_ID)
         {
             // Create, populate, and write lock file data
-            LockJsonData lockJsonData = {0};
-            lockJsonData.execId = strDup(execId);
-            lockJsonData.percentComplete = strNewZ("0.00");
+            LockJsonData lockJsonData = {.execId = strDup(execId), .percentComplete = strNewZ("0.00")};
             lockWriteData(result, lockFile, lockJsonData);
         }
     }
@@ -341,9 +339,7 @@ lockWritePercentComplete(const String *const execId, const double percentComplet
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Create, populate, and write lock file data
-        LockJsonData lockJsonData = {0};
-        lockJsonData.execId = strDup(execId);
-        lockJsonData.percentComplete = strNewFmt("%.2lf", percentComplete);
+        LockJsonData lockJsonData = {.execId = strDup(execId), .percentComplete = strNewFmt("%.2lf", percentComplete)};
         lockWriteData(lockFd[lockTypeBackup], lockFile[lockTypeBackup], lockJsonData);
     }
     MEM_CONTEXT_TEMP_END();
