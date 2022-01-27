@@ -47,6 +47,43 @@ static int lockFd[lockTypeAll];
 static LockType lockTypeHeld = lockTypeNone;
 
 /***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+String *lockJsonDataToLog(const LockJsonData *this);
+
+#define FUNCTION_LOG_LOCKJSONDATA_TYPE                                                                                             \
+    LockJsonData
+#define FUNCTION_LOG_LOCKJSONDATA_FORMAT(value, buffer, bufferSize)                                                                \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, lockJsonDataToLog, buffer, bufferSize)
+
+/**********************************************************************************************************************************/
+static void
+lockWriteData(int lockFd, const String *lockFile, const LockJsonData lockJsonData)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+    FUNCTION_LOG_PARAM(INT, lockFd);
+    FUNCTION_LOG_PARAM(STRING, lockFile);
+    FUNCTION_LOG_PARAM(LOCKJSONDATA, lockJsonData);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build kv for second line json
+        KeyValue *keyValue = kvNew();
+        kvPut(keyValue, EXEC_ID_VAR, varNewStr(lockJsonData.execId));
+        kvPut(keyValue, PERCENT_COMPLETE_VAR, varNewStr(lockJsonData.percentComplete));
+
+        // Seek to beginning of backup lock file and write updated information
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockFd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(lockFile));
+        ioFdWriteOneStr(lockFd, strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Acquire a lock using a file on the local filesystem
 ***********************************************************************************************************************************/
 static int
@@ -145,12 +182,11 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
         }
         else if (result != LOCK_ON_EXEC_ID)
         {
-            // Prepare kv store to write as json
-            KeyValue *keyValue = kvNew();
-            kvPut(keyValue, EXEC_ID_VAR, varNewStr(execId));
-
-            // Write pid and execID of the current process
-            ioFdWriteOneStr(result, strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))));
+            // Create, populate, and write lock file data
+            LockJsonData lockJsonData = {0};
+            lockJsonData.execId = strDup(execId);
+            lockJsonData.percentComplete = strNewZ("0.00");
+            lockWriteData(result, lockFile, lockJsonData);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -304,16 +340,11 @@ lockWritePercentComplete(const String *const execId, const double percentComplet
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build kv for second line json
-        KeyValue *keyValue = kvNew();
-        kvPut(keyValue, EXEC_ID_VAR, varNewStr(execId));
-        kvPut(keyValue, PERCENT_COMPLETE_VAR, varNewStr(strNewFmt("%.2lf", percentComplete)));
-
-        // Seek to beginning of backup lock file and write updated information
-        THROW_ON_SYS_ERROR_FMT(
-            lseek(lockFd[lockTypeBackup], 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
-            strZ(lockFile[lockTypeBackup]));
-        ioFdWriteOneStr(lockFd[lockTypeBackup], strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))));
+        // Create, populate, and write lock file data
+        LockJsonData lockJsonData = {0};
+        lockJsonData.execId = strDup(execId);
+        lockJsonData.percentComplete = strNewFmt("%.2lf", percentComplete);
+        lockWriteData(lockFd[lockTypeBackup], lockFile[lockTypeBackup], lockJsonData);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -348,8 +379,8 @@ lockReadJson(void)
         const StringList *parse = strLstNewSplitZ(strNewZN(buffer, (size_t)actualBytes), LF_Z);
         if (strLstSize(parse) == 3)
         {
-            String *execId = strDup(varStr(kvGet(jsonToKv(strLstGet(parse,1)), EXEC_ID_VAR)));
-            String *percentComplete = strDup(varStr(kvGet(jsonToKv(strLstGet(parse,1)), PERCENT_COMPLETE_VAR)));
+            const String *const execId = strDup(varStr(kvGet(jsonToKv(strLstGet(parse,1)), EXEC_ID_VAR)));
+            const String *const percentComplete = strDup(varStr(kvGet(jsonToKv(strLstGet(parse,1)), PERCENT_COMPLETE_VAR)));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -362,4 +393,13 @@ lockReadJson(void)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/**********************************************************************************************************************************/
+// Logging function for LockJsonData
+String *
+lockJsonDataToLog(const LockJsonData *this)
+{
+    return strNewFmt(
+        "{execId: %s, percentComplete: %s}", strZNull(this->execId), strZNull(this->percentComplete));
 }

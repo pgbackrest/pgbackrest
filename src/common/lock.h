@@ -33,8 +33,8 @@ Data Types and Structures
 // Structure representing data contained in the lock file's json
 typedef struct LockJsonData
 {
-    String *execId;                                                 // Process execId
-    String *percentComplete;                                        // Backup percent complete
+    const String *execId;                                           // Process execId
+    const String *percentComplete;                                  // Backup percent complete
 } LockJsonData;
 
 /***********************************************************************************************************************************
