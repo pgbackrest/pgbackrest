@@ -1256,6 +1256,17 @@
                         <example>n</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-missing-retry" name="Retry Missing WAL Segment">
+                        <summary>Retry missing WAL segment</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-QUEUE-MAX KEY -->
                     <config-key id="archive-push-queue-max" name="Maximum Archive Push Queue Size">
                         <summary>Maximum size of the <postgres/> archive queue.</summary>

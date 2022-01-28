@@ -647,11 +647,15 @@ cmdArchiveGet(void)
                 // Check if the WAL segment is already in the queue
                 found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
 
+                // Determine whether a missing WAL segment will be retried. Retrying is safer, but not retrying lets PostgreSQL
+                // know that there are no more WAL segments in the archive which means it can switch to streaming.
+                const bool missingRetry = first && cfgOptionBool(cfgOptArchiveMissingRetry);
+
                 // Check for errors or missing files. For archive-get ok indicates that the process succeeded but there is no WAL
                 // file to download, or that there was a warning. Do not error on the first run so the async process can be spawned
                 // to correct any errors from a previous run. Do not warn on the first run if the segment was not found so the async
                 // process can be spawned to check for the file again.
-                if (archiveAsyncStatus(archiveModeGet, walSegment, !first, found || !first))
+                if (archiveAsyncStatus(archiveModeGet, walSegment, !first, found || !missingRetry))
                 {
                     storageRemoveP(
                         storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s" STATUS_EXT_OK, strZ(walSegment)),
@@ -662,7 +666,7 @@ cmdArchiveGet(void)
                     // spawned by a prior archive-get execution, which means we should spawn the async process again to see if the
                     // file exists now. This also prevents spool files from a previous recovery interfering with the current
                     // recovery.
-                    if (!found && !first)
+                    if (!found && !missingRetry)
                     {
                         foundOk = true;
                         break;
