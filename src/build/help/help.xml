@@ -1261,7 +1261,11 @@
                         <summary>Retry missing WAL segment</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Retry a WAL segment that was previously reported as missing. This prevents notifications in the spool directly from a prior restore being used and possible causing a recovery failure if consistency has not been reached.</p>
+
+                            <p>Disabling this option allows <postgres/> to more reliably recognize when the end of the WAL in the archive has been reached, which permits it to switch over to streaming from the primary. With retries enabled, a steady stream of WAL being archived will cause <postgres/> to continue getting WAL from the archive rather than switch to streaming.</p>
+
+                            <p>When disabling this option it is important to ensure that the spool path for the stanza is clean. The <cmd>restore</cmd> command does this automatically if the spool path is configured at restore time. Otherwise, it is up to the user to ensure the spool path is clean.</p>
                         </text>
 
                         <example>n</example>

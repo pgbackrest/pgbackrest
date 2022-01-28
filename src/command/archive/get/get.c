@@ -648,7 +648,7 @@ cmdArchiveGet(void)
                 found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
 
                 // Determine whether a missing WAL segment will be retried. Retrying is safer, but not retrying lets PostgreSQL
-                // know that there are no more WAL segments in the archive which means it can switch to streaming.
+                // know that there are probably no more WAL segments in the archive which means it can switch to streaming.
                 const bool missingRetry = first && cfgOptionBool(cfgOptArchiveMissingRetry);
 
                 // Check for errors or missing files. For archive-get ok indicates that the process succeeded but there is no WAL
