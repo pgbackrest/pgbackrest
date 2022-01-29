@@ -12,6 +12,7 @@ Stop Command
 
 #include "command/control/common.h"
 #include "common/debug.h"
+#include "common/lock.h"
 #include "common/type/convert.h"
 #include "config/config.h"
 #include "storage/helper.h"
@@ -76,18 +77,15 @@ cmdStop(void)
                     }
 
                     // The file is locked so that means there is a running process - read the process id and send it a term signal
-                    char contents[LOCK_BUFFER_SIZE];
-                    ssize_t actualBytes = read(fd, contents, sizeof(contents));
-                    String *processId = actualBytes > 0 ?
-                        strTrim(strLstGet(strLstNewSplitZ(strNewZN(contents, (size_t)actualBytes), LF_Z), 0)) : NULL;
+                    const pid_t processId = lockReadData(lockFile, fd).processId;
 
                     // If the process id is defined then assume this is a valid lock file
-                    if (processId != NULL && strSize(processId) > 0)
+                    if (processId != 0)
                     {
-                        if (kill(cvtZToInt(strZ(processId)), SIGTERM) != 0)
-                            LOG_WARN_FMT("unable to send term signal to process %s", strZ(processId));
+                        if (kill(processId, SIGTERM) != 0)
+                            LOG_WARN_FMT("unable to send term signal to process %d", processId);
                         else
-                            LOG_INFO_FMT("sent term signal to process %s", strZ(processId));
+                            LOG_INFO_FMT("sent term signal to process %d", processId);
                     }
                     else
                     {

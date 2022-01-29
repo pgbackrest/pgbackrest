@@ -13,4 +13,13 @@ Constructors
 ***********************************************************************************************************************************/
 IoRead *ioBufferReadNew(const Buffer *buffer);
 
+// Construct and open buffer read
+__attribute__((always_inline)) static inline IoRead *
+ioBufferReadNewOpen(const Buffer *const buffer)
+{
+    IoRead *const result = ioBufferReadNew(buffer);
+    ioReadOpen(result);
+    return result;
+}
+
 #endif

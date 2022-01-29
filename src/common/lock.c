@@ -10,7 +10,11 @@ Lock Handler
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
+#include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/io.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -42,6 +46,68 @@ static MemContext *lockMemContext = NULL;
 static String *lockFile[lockTypeAll];
 static int lockFd[lockTypeAll];
 static LockType lockTypeHeld = lockTypeNone;
+
+/**********************************************************************************************************************************/
+LockData
+lockReadData(const String *const lockFile, const int fd)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
+        FUNCTION_LOG_PARAM(INT, fd);
+    FUNCTION_LOG_END();
+
+    LockData result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Read contents of file
+        Buffer *const buffer = bufNew(LOCK_BUFFER_SIZE);
+        IoWrite *const write = ioBufferWriteNewOpen(buffer);
+
+        ioCopy(ioFdReadNewOpen(lockFile, fd, 0), write);
+        ioWriteClose(write);
+
+        // Parse the file
+        const StringList *const parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            if (!strEmpty(strTrim(strLstGet(parse, 0))))
+                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
+
+            if (strLstSize(parse) == 3)
+                result.execId = strDup(strLstGet(parse, 1));
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/***********************************************************************************************************************************
+Acquire a lock using a file on the local filesystem
+***********************************************************************************************************************************/
+static void
+lockWriteData(const String *const lockFile, const int fd, const String *const execId)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
+        FUNCTION_LOG_PARAM(INT, fd);
+        FUNCTION_LOG_PARAM(STRING, execId);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        IoWrite *const write = ioFdWriteNewOpen(lockFile, fd, 0);
+
+        ioCopy(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(execId)))), write);
+        ioWriteClose(write);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Acquire a lock using a file on the local filesystem
@@ -95,25 +161,19 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
 
                     // Even though we were unable to lock the file, it may be that it is already locked by another process with the
                     // same exec-id, i.e. spawned by the same original main process. If so, report the lock as successful.
-                    char buffer[LOCK_BUFFER_SIZE];
-
-                    // Read from file
-                    ssize_t actualBytes = read(result, buffer, sizeof(buffer));
-
-                    // Close the file
-                    close(result);
-
-                    // Make sure the read was successful. The file is already open and the chance of a failed read seems pretty
-                    // remote so don't integrate this with the rest of the lock error handling.
-                    THROW_ON_SYS_ERROR_FMT(actualBytes == -1, FileReadError, "unable to read '%s", strZ(lockFile));
-
-                    // Parse the file and see if the exec id matches
-                    const StringList *parse = strLstNewSplitZ(strNewZN(buffer, (size_t)actualBytes), LF_Z);
-
-                    if (strLstSize(parse) == 3 && strEq(strLstGet(parse, 1), execId))
-                        result = LOCK_ON_EXEC_ID;
-                    else
-                        result = -1;
+                    TRY_BEGIN()
+                    {
+                        if (strEq(lockReadData(lockFile, result).execId, execId))
+                            result = LOCK_ON_EXEC_ID;
+                        else
+                            result = -1;
+                    }
+                    FINALLY()
+                    {
+                        // Close the file
+                        close(result);
+                    }
+                    TRY_END();
                 }
             }
         }
@@ -142,8 +202,8 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
         }
         else if (result != LOCK_ON_EXEC_ID)
         {
-            // Write pid of the current process
-            ioFdWriteOneStr(result, strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(execId)));
+            // Write lock data
+            lockWriteData(lockFile, result, execId);
         }
     }
     MEM_CONTEXT_TEMP_END();

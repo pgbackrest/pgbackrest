@@ -16,6 +16,14 @@ typedef enum
 } LockType;
 
 #include "common/type/string.h"
+
+// Lock data
+typedef struct LockData
+{
+    pid_t processId;                                                // Process holding the lock
+    const String *execId;                                           // Exec id of process holding the lock
+} LockData;
+
 #include "common/time.h"
 
 /***********************************************************************************************************************************
@@ -33,6 +41,9 @@ Functions
 // single lock (archive or backup), but the stanza commands all need to lock both.
 bool lockAcquire(
     const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock);
+
+// Read contents of lock file
+LockData lockReadData(const String *lockFile, int fd);
 
 // Release a lock
 bool lockRelease(bool failOnNoLock);
