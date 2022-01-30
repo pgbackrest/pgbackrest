@@ -42,12 +42,26 @@ static const char *const lockTypeName[] =
 /***********************************************************************************************************************************
 Mem context and local variables
 ***********************************************************************************************************************************/
-static MemContext *lockMemContext = NULL;
-static String *lockFile[lockTypeAll];
-static int lockFd[lockTypeAll];
-static LockType lockTypeHeld = lockTypeNone;
+static struct LockLocal
+{
+    MemContext *memContext;                                         // Mem context for locks
+    LockType held;                                                  // Current lock type held
+    const String *execId;                                           // Process exec id
+
+    struct
+    {
+        String *name;                                               // Name of lock file
+        int fd;                                                     // File descriptor for lock file
+    } file[lockTypeAll];
+} lockLocal =
+{
+    .held = lockTypeNone,
+};
 
 /**********************************************************************************************************************************/
+// Size of initial buffer used to load lock file
+#define LOCK_BUFFER_SIZE                                            128
+
 LockData
 lockReadData(const String *const lockFile, const int fd)
 {
@@ -55,6 +69,9 @@ lockReadData(const String *const lockFile, const int fd)
         FUNCTION_LOG_PARAM(STRING, lockFile);
         FUNCTION_LOG_PARAM(INT, fd);
     FUNCTION_LOG_END();
+
+    ASSERT(lockFile != NULL);
+    ASSERT(fd != -1);
 
     LockData result = {0};
 
@@ -89,19 +106,21 @@ lockReadData(const String *const lockFile, const int fd)
 Acquire a lock using a file on the local filesystem
 ***********************************************************************************************************************************/
 static void
-lockWriteData(const String *const lockFile, const int fd, const String *const execId)
+lockWriteData(const LockType lockType)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, lockFile);
-        FUNCTION_LOG_PARAM(INT, fd);
-        FUNCTION_LOG_PARAM(STRING, execId);
+        FUNCTION_LOG_PARAM(ENUM, lockType);
     FUNCTION_LOG_END();
+
+    ASSERT(lockType < lockTypeAll);
+    ASSERT(lockLocal.file[lockType].name != NULL);
+    ASSERT(lockLocal.file[lockType].fd != -1);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        IoWrite *const write = ioFdWriteNewOpen(lockFile, fd, 0);
+        IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockType].name, lockLocal.file[lockType].fd, 0);
 
-        ioCopy(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(execId)))), write);
+        ioCopy(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(lockLocal.execId)))), write);
         ioWriteClose(write);
     }
     MEM_CONTEXT_TEMP_END();
@@ -113,17 +132,16 @@ lockWriteData(const String *const lockFile, const int fd, const String *const ex
 Acquire a lock using a file on the local filesystem
 ***********************************************************************************************************************************/
 static int
-lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeout, bool failOnNoLock)
+lockAcquireFile(const LockType lockType, const TimeMSec lockTimeout, const bool failOnNoLock)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, lockFile);
-        FUNCTION_LOG_PARAM(STRING, execId);
+        FUNCTION_LOG_PARAM(ENUM, lockType);
         FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
 
-    ASSERT(lockFile != NULL);
-    ASSERT(execId != NULL);
+    ASSERT(lockType < lockTypeAll);
+    ASSERT(lockLocal.file[lockType].name != NULL);
 
     int result = -1;
 
@@ -139,7 +157,7 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
             retry = false;
 
             // Attempt to open the file
-            if ((result = open(strZ(lockFile), O_RDWR | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
+            if ((result = open(strZ(lockLocal.file[lockType].name), O_RDWR | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
             {
                 // Save the error for reporting outside the loop
                 errNo = errno;
@@ -147,7 +165,7 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
                 // If the path does not exist then create it
                 if (errNo == ENOENT)
                 {
-                    storagePathCreateP(storageLocalWrite(), strPath(lockFile));
+                    storagePathCreateP(storageLocalWrite(), strPath(lockLocal.file[lockType].name));
                     retry = true;
                 }
             }
@@ -163,7 +181,7 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
                     // same exec-id, i.e. spawned by the same original main process. If so, report the lock as successful.
                     TRY_BEGIN()
                     {
-                        if (strEq(lockReadData(lockFile, result).execId, execId))
+                        if (strEq(lockReadData(lockLocal.file[lockType].name, result).execId, lockLocal.execId))
                             result = LOCK_ON_EXEC_ID;
                         else
                             result = -1;
@@ -192,18 +210,20 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
                 else if (errNo == EACCES)
                 {
                     errorHint = strNewFmt(
-                        "\nHINT: does the user running " PROJECT_NAME " have permissions on the '%s' file?", strZ(lockFile));
+                        "\nHINT: does the user running " PROJECT_NAME " have permissions on the '%s' file?",
+                        strZ(lockLocal.file[lockType].name));
                 }
 
                 THROW_FMT(
-                    LockAcquireError, "unable to acquire lock on file '%s': %s%s", strZ(lockFile), strerror(errNo),
-                    errorHint == NULL ? "" : strZ(errorHint));
+                    LockAcquireError, "unable to acquire lock on file '%s': %s%s", strZ(lockLocal.file[lockType].name),
+                    strerror(errNo), errorHint == NULL ? "" : strZ(errorHint));
             }
         }
+        // Else write lock data unless we locked an execId match
         else if (result != LOCK_ON_EXEC_ID)
         {
-            // Write lock data
-            lockWriteData(lockFile, result, execId);
+            lockLocal.file[lockType].fd = result;
+            lockWriteData(lockType);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -257,25 +277,29 @@ lockAcquire(
     ASSERT(failOnNoLock || lockType != lockTypeAll);
 
     // Don't allow another lock if one is already held
-    if (lockTypeHeld != lockTypeNone)
+    if (lockLocal.held != lockTypeNone)
         THROW(AssertError, "lock is already held by this process");
 
     // Allocate a mem context to hold lock filenames if one does not already exist
-    if (lockMemContext == NULL)
+    if (lockLocal.memContext == NULL)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
             MEM_CONTEXT_NEW_BEGIN("Lock")
             {
-                lockMemContext = MEM_CONTEXT_NEW();
+                lockLocal.memContext = MEM_CONTEXT_NEW();
+                lockLocal.execId = strDup(execId);
             }
             MEM_CONTEXT_NEW_END();
         }
         MEM_CONTEXT_END();
     }
 
+    // Exec id should never change
+    ASSERT(strEq(execId, lockLocal.execId));
+
     // Lock files
-    MEM_CONTEXT_BEGIN(lockMemContext)
+    MEM_CONTEXT_BEGIN(lockLocal.memContext)
     {
         LockType lockMin = lockType == lockTypeAll ? lockTypeArchive : lockType;
         LockType lockMax = lockType == lockTypeAll ? (lockTypeAll - 1) : lockType;
@@ -283,11 +307,10 @@ lockAcquire(
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
-            lockFile[lockIdx] = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
+            lockLocal.file[lockIdx].name = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
+            lockLocal.file[lockIdx].fd = lockAcquireFile(lockIdx, lockTimeout, failOnNoLock);
 
-            lockFd[lockIdx] = lockAcquireFile(lockFile[lockIdx], execId, lockTimeout, failOnNoLock);
-
-            if (lockFd[lockIdx] == -1)
+            if (lockLocal.file[lockIdx].fd == -1)
             {
                 error = true;
                 break;
@@ -296,7 +319,7 @@ lockAcquire(
 
         if (!error)
         {
-            lockTypeHeld = lockType;
+            lockLocal.held = lockType;
             result = true;
         }
     }
@@ -315,7 +338,7 @@ lockRelease(bool failOnNoLock)
 
     bool result = false;
 
-    if (lockTypeHeld == lockTypeNone)
+    if (lockLocal.held == lockTypeNone)
     {
         if (failOnNoLock)
             THROW(AssertError, "no lock is held by this process");
@@ -323,18 +346,18 @@ lockRelease(bool failOnNoLock)
     else
     {
         // Release locks
-        LockType lockMin = lockTypeHeld == lockTypeAll ? lockTypeArchive : lockTypeHeld;
-        LockType lockMax = lockTypeHeld == lockTypeAll ? (lockTypeAll - 1) : lockTypeHeld;
+        LockType lockMin = lockLocal.held == lockTypeAll ? lockTypeArchive : lockLocal.held;
+        LockType lockMax = lockLocal.held == lockTypeAll ? (lockTypeAll - 1) : lockLocal.held;
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
-            if (lockFd[lockIdx] != LOCK_ON_EXEC_ID)
-                lockReleaseFile(lockFd[lockIdx], lockFile[lockIdx]);
+            if (lockLocal.file[lockIdx].fd != LOCK_ON_EXEC_ID)
+                lockReleaseFile(lockLocal.file[lockIdx].fd, lockLocal.file[lockIdx].name);
 
-            strFree(lockFile[lockIdx]);
+            strFree(lockLocal.file[lockIdx].name);
         }
 
-        lockTypeHeld = lockTypeNone;
+        lockLocal.held = lockTypeNone;
         result = true;
     }
 
