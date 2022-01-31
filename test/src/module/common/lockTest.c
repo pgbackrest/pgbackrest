@@ -28,7 +28,10 @@ testRun(void)
         TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLock, 0, true), "get lock");
         TEST_RESULT_BOOL(lockFdTest != -1, true, "lock succeeds");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLock), true, "lock file was created");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLock), true, "lock file was created");
+
+        lockLocal.file[lockTypeArchive].fd = lockFdTest;
+        lockLocal.file[lockTypeArchive].name = strDup(archiveLock);
+        TEST_RESULT_VOID(lockWriteData(lockTypeArchive), "write lock data");
 
         lockLocal.execId = STRDEF("2-test");
 
@@ -40,11 +43,11 @@ testRun(void)
         TEST_RESULT_BOOL(lockAcquireFile(archiveLock, 0, false) == -1, true, "lock is already held");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("acquire file lock on the same exec-id");
+        TEST_TITLE("acquire file lock on the same exec-id");
 
-        // lockLocal.execId = STRDEF("1-test");
+        lockLocal.execId = STRDEF("1-test");
 
-        // TEST_RESULT_INT(lockAcquireFile(archiveLock, 0, true), -2, "allow lock with same exec id");
+        TEST_RESULT_INT(lockAcquireFile(archiveLock, 0, true), -2, "allow lock with same exec id");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail file lock on the same exec-id when lock file is empty");
