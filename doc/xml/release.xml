@@ -82,6 +82,16 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Add read range to all storage drivers."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add percent complete to lock file.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Fix inconsistent group display names in messages."/>
                         <commit subject="Dynamically allocate index to key index map."/>
                         <commit subject="Replace cfgOptionGroupIdxToKey() with cfgOptionGroupName()."/>

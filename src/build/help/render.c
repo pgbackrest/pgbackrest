@@ -261,12 +261,10 @@ bldHlpRenderHelpAutoCCmp(const BldCfg bldCfg, const BldHlp bldHlp)
     Buffer *const result = bufNew(bufSize(packBuf));
 
     // Open source/destination
-    IoRead *const source = ioBufferReadNew(packBuf);
+    IoRead *const source = ioBufferReadNewOpen(packBuf);
     IoWrite *const destination = ioBufferWriteNew(result);
 
     ioFilterGroupAdd(ioWriteFilterGroup(destination), bz2CompressNew(9));
-
-    ioReadOpen(source);
     ioWriteOpen(destination);
 
     // Copy data from source to destination
