@@ -132,16 +132,15 @@ lockWriteData(const LockType lockType)
 Acquire a lock using a file on the local filesystem
 ***********************************************************************************************************************************/
 static int
-lockAcquireFile(const LockType lockType, const TimeMSec lockTimeout, const bool failOnNoLock)
+lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const bool failOnNoLock)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, lockType);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
         FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
 
-    ASSERT(lockType < lockTypeAll);
-    ASSERT(lockLocal.file[lockType].name != NULL);
+    ASSERT(lockFile != NULL);
 
     int result = -1;
 
@@ -157,7 +156,7 @@ lockAcquireFile(const LockType lockType, const TimeMSec lockTimeout, const bool 
             retry = false;
 
             // Attempt to open the file
-            if ((result = open(strZ(lockLocal.file[lockType].name), O_RDWR | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
+            if ((result = open(strZ(lockFile), O_RDWR | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
             {
                 // Save the error for reporting outside the loop
                 errNo = errno;
@@ -165,7 +164,7 @@ lockAcquireFile(const LockType lockType, const TimeMSec lockTimeout, const bool 
                 // If the path does not exist then create it
                 if (errNo == ENOENT)
                 {
-                    storagePathCreateP(storageLocalWrite(), strPath(lockLocal.file[lockType].name));
+                    storagePathCreateP(storageLocalWrite(), strPath(lockFile));
                     retry = true;
                 }
             }
@@ -181,7 +180,7 @@ lockAcquireFile(const LockType lockType, const TimeMSec lockTimeout, const bool 
                     // same exec-id, i.e. spawned by the same original main process. If so, report the lock as successful.
                     TRY_BEGIN()
                     {
-                        if (strEq(lockReadData(lockLocal.file[lockType].name, result).execId, lockLocal.execId))
+                        if (strEq(lockReadData(lockFile, result).execId, lockLocal.execId))
                             result = LOCK_ON_EXEC_ID;
                         else
                             result = -1;
@@ -210,20 +209,13 @@ lockAcquireFile(const LockType lockType, const TimeMSec lockTimeout, const bool 
                 else if (errNo == EACCES)
                 {
                     errorHint = strNewFmt(
-                        "\nHINT: does the user running " PROJECT_NAME " have permissions on the '%s' file?",
-                        strZ(lockLocal.file[lockType].name));
+                        "\nHINT: does the user running " PROJECT_NAME " have permissions on the '%s' file?", strZ(lockFile));
                 }
 
                 THROW_FMT(
-                    LockAcquireError, "unable to acquire lock on file '%s': %s%s", strZ(lockLocal.file[lockType].name),
-                    strerror(errNo), errorHint == NULL ? "" : strZ(errorHint));
+                    LockAcquireError, "unable to acquire lock on file '%s': %s%s", strZ(lockFile), strerror(errNo),
+                    errorHint == NULL ? "" : strZ(errorHint));
             }
-        }
-        // Else write lock data unless we locked an execId match
-        else if (result != LOCK_ON_EXEC_ID)
-        {
-            lockLocal.file[lockType].fd = result;
-            lockWriteData(lockType);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -308,13 +300,16 @@ lockAcquire(
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
             lockLocal.file[lockIdx].name = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
-            lockLocal.file[lockIdx].fd = lockAcquireFile(lockIdx, lockTimeout, failOnNoLock);
+            lockLocal.file[lockIdx].fd = lockAcquireFile(lockLocal.file[lockIdx].name, lockTimeout, failOnNoLock);
 
             if (lockLocal.file[lockIdx].fd == -1)
             {
                 error = true;
                 break;
             }
+            // Else write lock data unless we locked an execId match
+            else if (lockLocal.file[lockIdx].fd != LOCK_ON_EXEC_ID)
+                lockWriteData(lockIdx);
         }
 
         if (!error)
