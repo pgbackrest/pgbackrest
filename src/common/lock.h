@@ -16,15 +16,20 @@ typedef enum
 } LockType;
 
 #include "common/type/string.h"
+
+// Lock data
+typedef struct LockData
+{
+    pid_t processId;                                                // Process holding the lock
+    const String *execId;                                           // Exec id of process holding the lock
+} LockData;
+
 #include "common/time.h"
 
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
 #define LOCK_FILE_EXT                                               ".lock"
-
-// Size of buffer used to load lock file
-#define LOCK_BUFFER_SIZE                                            128
 
 /***********************************************************************************************************************************
 Functions

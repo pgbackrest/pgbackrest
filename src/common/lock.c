@@ -10,7 +10,11 @@ Lock Handler
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
+#include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/io.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -38,26 +42,111 @@ static const char *const lockTypeName[] =
 /***********************************************************************************************************************************
 Mem context and local variables
 ***********************************************************************************************************************************/
-static MemContext *lockMemContext = NULL;
-static String *lockFile[lockTypeAll];
-static int lockFd[lockTypeAll];
-static LockType lockTypeHeld = lockTypeNone;
+static struct LockLocal
+{
+    MemContext *memContext;                                         // Mem context for locks
+    LockType held;                                                  // Current lock type held
+    const String *execId;                                           // Process exec id
+
+    struct
+    {
+        String *name;                                               // Name of lock file
+        int fd;                                                     // File descriptor for lock file
+    } file[lockTypeAll];
+} lockLocal =
+{
+    .held = lockTypeNone,
+};
 
 /***********************************************************************************************************************************
-Acquire a lock using a file on the local filesystem
+Read contents of lock file
+
+If a seek is required to get to the beginning of the data, that must be done before calling this function.
+
+??? This function should not be extern'd, but need to fix dependency in cmdStop().
 ***********************************************************************************************************************************/
-static int
-lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeout, bool failOnNoLock)
+// Size of initial buffer used to load lock file
+#define LOCK_BUFFER_SIZE                                            128
+
+// Helper to read data
+LockData
+lockReadDataFile(const String *const lockFile, const int fd)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, lockFile);
-        FUNCTION_LOG_PARAM(STRING, execId);
+        FUNCTION_LOG_PARAM(INT, fd);
+    FUNCTION_LOG_END();
+
+    ASSERT(lockFile != NULL);
+    ASSERT(fd != -1);
+
+    LockData result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Read contents of file
+        Buffer *const buffer = bufNew(LOCK_BUFFER_SIZE);
+        IoWrite *const write = ioBufferWriteNewOpen(buffer);
+
+        ioCopy(ioFdReadNewOpen(lockFile, fd, 0), write);
+        ioWriteClose(write);
+
+        // Parse the file
+        const StringList *const parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            if (!strEmpty(strTrim(strLstGet(parse, 0))))
+                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
+
+            if (strLstSize(parse) == 3)
+                result.execId = strDup(strLstGet(parse, 1));
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/***********************************************************************************************************************************
+Write contents of lock file
+***********************************************************************************************************************************/
+static void
+lockWriteData(const LockType lockType)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, lockType);
+    FUNCTION_LOG_END();
+
+    ASSERT(lockType < lockTypeAll);
+    ASSERT(lockLocal.file[lockType].name != NULL);
+    ASSERT(lockLocal.file[lockType].fd != -1);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockType].name, lockLocal.file[lockType].fd, 0);
+
+        ioCopy(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(lockLocal.execId)))), write);
+        ioWriteClose(write);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+// Helper to acquire a file lock
+static int
+lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const bool failOnNoLock)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
         FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
 
     ASSERT(lockFile != NULL);
-    ASSERT(execId != NULL);
 
     int result = -1;
 
@@ -95,25 +184,19 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
 
                     // Even though we were unable to lock the file, it may be that it is already locked by another process with the
                     // same exec-id, i.e. spawned by the same original main process. If so, report the lock as successful.
-                    char buffer[LOCK_BUFFER_SIZE];
-
-                    // Read from file
-                    ssize_t actualBytes = read(result, buffer, sizeof(buffer));
-
-                    // Close the file
-                    close(result);
-
-                    // Make sure the read was successful. The file is already open and the chance of a failed read seems pretty
-                    // remote so don't integrate this with the rest of the lock error handling.
-                    THROW_ON_SYS_ERROR_FMT(actualBytes == -1, FileReadError, "unable to read '%s", strZ(lockFile));
-
-                    // Parse the file and see if the exec id matches
-                    const StringList *parse = strLstNewSplitZ(strNewZN(buffer, (size_t)actualBytes), LF_Z);
-
-                    if (strLstSize(parse) == 3 && strEq(strLstGet(parse, 1), execId))
-                        result = LOCK_ON_EXEC_ID;
-                    else
-                        result = -1;
+                    TRY_BEGIN()
+                    {
+                        if (strEq(lockReadDataFile(lockFile, result).execId, lockLocal.execId))
+                            result = LOCK_ON_EXEC_ID;
+                        else
+                            result = -1;
+                    }
+                    FINALLY()
+                    {
+                        // Close the file
+                        close(result);
+                    }
+                    TRY_END();
                 }
             }
         }
@@ -140,40 +223,12 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
                     errorHint == NULL ? "" : strZ(errorHint));
             }
         }
-        else if (result != LOCK_ON_EXEC_ID)
-        {
-            // Write pid of the current process
-            ioFdWriteOneStr(result, strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(execId)));
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INT, result);
 }
 
-/***********************************************************************************************************************************
-Release the current lock
-***********************************************************************************************************************************/
-static void
-lockReleaseFile(int lockFd, const String *lockFile)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, lockFd);
-        FUNCTION_LOG_PARAM(STRING, lockFile);
-    FUNCTION_LOG_END();
-
-    // Can't release lock if there isn't one
-    ASSERT(lockFd >= 0);
-
-    // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
-    // right before the delete which means the file locked by the other process will get deleted.
-    storageRemoveP(storageLocalWrite(), lockFile);
-    close(lockFd);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
 bool
 lockAcquire(
     const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
@@ -191,61 +246,88 @@ lockAcquire(
     ASSERT(stanza != NULL);
     ASSERT(execId != NULL);
 
-    bool result = false;
+    bool result = true;
 
     // Don't allow failures when locking more than one file.  This makes cleanup difficult and there are no known use cases.
     ASSERT(failOnNoLock || lockType != lockTypeAll);
 
     // Don't allow another lock if one is already held
-    if (lockTypeHeld != lockTypeNone)
+    if (lockLocal.held != lockTypeNone)
         THROW(AssertError, "lock is already held by this process");
 
     // Allocate a mem context to hold lock filenames if one does not already exist
-    if (lockMemContext == NULL)
+    if (lockLocal.memContext == NULL)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
             MEM_CONTEXT_NEW_BEGIN("Lock")
             {
-                lockMemContext = MEM_CONTEXT_NEW();
+                lockLocal.memContext = MEM_CONTEXT_NEW();
+                lockLocal.execId = strDup(execId);
             }
             MEM_CONTEXT_NEW_END();
         }
         MEM_CONTEXT_END();
     }
 
+    // Exec id should never change
+    ASSERT(strEq(execId, lockLocal.execId));
+
     // Lock files
-    MEM_CONTEXT_BEGIN(lockMemContext)
+    LockType lockMin = lockType == lockTypeAll ? lockTypeArchive : lockType;
+    LockType lockMax = lockType == lockTypeAll ? (lockTypeAll - 1) : lockType;
+
+    for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
     {
-        LockType lockMin = lockType == lockTypeAll ? lockTypeArchive : lockType;
-        LockType lockMax = lockType == lockTypeAll ? (lockTypeAll - 1) : lockType;
-        bool error = false;
-
-        for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
+        MEM_CONTEXT_BEGIN(lockLocal.memContext)
         {
-            lockFile[lockIdx] = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
-
-            lockFd[lockIdx] = lockAcquireFile(lockFile[lockIdx], execId, lockTimeout, failOnNoLock);
-
-            if (lockFd[lockIdx] == -1)
-            {
-                error = true;
-                break;
-            }
+            lockLocal.file[lockIdx].name = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
         }
+        MEM_CONTEXT_END();
 
-        if (!error)
+        lockLocal.file[lockIdx].fd = lockAcquireFile(lockLocal.file[lockIdx].name, lockTimeout, failOnNoLock);
+
+        if (lockLocal.file[lockIdx].fd == -1)
         {
-            lockTypeHeld = lockType;
-            result = true;
+            // Free the lock context and reset lock data
+            memContextFree(lockLocal.memContext);
+            lockLocal = (struct LockLocal){.held = lockTypeNone};
+
+            result = false;
+            break;
         }
+        // Else write lock data unless we locked an execId match
+        else if (lockLocal.file[lockIdx].fd != LOCK_ON_EXEC_ID)
+            lockWriteData(lockIdx);
     }
-    MEM_CONTEXT_END();
+
+    if (result)
+        lockLocal.held = lockType;
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
+// Helper to release a file lock
+static void
+lockReleaseFile(const int lockFd, const String *const lockFile)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, lockFd);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
+    FUNCTION_LOG_END();
+
+    // Can't release lock if there isn't one
+    ASSERT(lockFd >= 0);
+
+    // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
+    // right before the delete which means the file locked by the other process will get deleted.
+    storageRemoveP(storageLocalWrite(), lockFile);
+    close(lockFd);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 bool
 lockRelease(bool failOnNoLock)
 {
@@ -255,7 +337,7 @@ lockRelease(bool failOnNoLock)
 
     bool result = false;
 
-    if (lockTypeHeld == lockTypeNone)
+    if (lockLocal.held == lockTypeNone)
     {
         if (failOnNoLock)
             THROW(AssertError, "no lock is held by this process");
@@ -263,18 +345,19 @@ lockRelease(bool failOnNoLock)
     else
     {
         // Release locks
-        LockType lockMin = lockTypeHeld == lockTypeAll ? lockTypeArchive : lockTypeHeld;
-        LockType lockMax = lockTypeHeld == lockTypeAll ? (lockTypeAll - 1) : lockTypeHeld;
+        LockType lockMin = lockLocal.held == lockTypeAll ? lockTypeArchive : lockLocal.held;
+        LockType lockMax = lockLocal.held == lockTypeAll ? (lockTypeAll - 1) : lockLocal.held;
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
-            if (lockFd[lockIdx] != LOCK_ON_EXEC_ID)
-                lockReleaseFile(lockFd[lockIdx], lockFile[lockIdx]);
-
-            strFree(lockFile[lockIdx]);
+            if (lockLocal.file[lockIdx].fd != LOCK_ON_EXEC_ID)
+                lockReleaseFile(lockLocal.file[lockIdx].fd, lockLocal.file[lockIdx].name);
         }
 
-        lockTypeHeld = lockTypeNone;
+        // Free the lock context and reset lock data
+        memContextFree(lockLocal.memContext);
+        lockLocal = (struct LockLocal){.held = lockTypeNone};
+
         result = true;
     }
 
