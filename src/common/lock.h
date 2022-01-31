@@ -39,9 +39,6 @@ Functions
 bool lockAcquire(
     const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock);
 
-// Read contents of lock file
-LockData lockReadData(const String *lockFile, int fd);
-
 // Release a lock
 bool lockRelease(bool failOnNoLock);
 

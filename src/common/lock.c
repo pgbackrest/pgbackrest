@@ -58,12 +58,19 @@ static struct LockLocal
     .held = lockTypeNone,
 };
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Read contents of lock file
+
+If a seek is required to get to the beginning of the data, that must be done before calling this function.
+
+??? This function should not be extern'd, but need to fix dependency in cmdStop().
+***********************************************************************************************************************************/
 // Size of initial buffer used to load lock file
 #define LOCK_BUFFER_SIZE                                            128
 
+// Helper to read data
 LockData
-lockReadData(const String *const lockFile, const int fd)
+lockReadDataFile(const String *const lockFile, const int fd)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, lockFile);
@@ -103,7 +110,7 @@ lockReadData(const String *const lockFile, const int fd)
 }
 
 /***********************************************************************************************************************************
-Acquire a lock using a file on the local filesystem
+Write contents of lock file
 ***********************************************************************************************************************************/
 static void
 lockWriteData(const LockType lockType)
@@ -179,7 +186,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                     // same exec-id, i.e. spawned by the same original main process. If so, report the lock as successful.
                     TRY_BEGIN()
                     {
-                        if (strEq(lockReadData(lockFile, result).execId, lockLocal.execId))
+                        if (strEq(lockReadDataFile(lockFile, result).execId, lockLocal.execId))
                             result = LOCK_ON_EXEC_ID;
                         else
                             result = -1;
