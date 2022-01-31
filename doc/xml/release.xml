@@ -82,7 +82,8 @@
                     </release-item>
 
                     <release-item>
-                        <commit subject="Add read range to all storage drivers."/>
+                        <commit subject="Add ioBufferReadNewOpen() and ioBufferWriteNewOpen()."/>
+                        <commit subject="Refactor lock code."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
