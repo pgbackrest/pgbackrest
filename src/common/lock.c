@@ -357,7 +357,10 @@ lockRelease(bool failOnNoLock)
             strFree(lockLocal.file[lockIdx].name);
         }
 
-        lockLocal.held = lockTypeNone;
+        // Free the lock context and reset lock data
+        memContextFree(lockLocal.memContext);
+        lockLocal = (struct LockLocal){.held = lockTypeNone};
+
         result = true;
     }
 

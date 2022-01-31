@@ -66,27 +66,31 @@ testRun(void)
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLock), "release lock again without error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        lockLocal.file[lockTypeArchive].name = strNewZ(TEST_PATH "/sub1/sub2/db-backup" LOCK_FILE_EXT);
+        String *subPathLock = strNewZ(TEST_PATH "/sub1/sub2/db-backup" LOCK_FILE_EXT);
+        lockLocal.file[lockTypeArchive].name = subPathLock;
 
         TEST_ASSIGN(lockFdTest, lockAcquireFile(lockTypeArchive, 0, true), "get lock in subpath");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, lockLocal.file[lockTypeArchive].name), true, "lock file was created");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, subPathLock), true, "lock file was created");
         TEST_RESULT_BOOL(lockFdTest != -1, true, "lock succeeds");
-        TEST_RESULT_VOID(lockReleaseFile(lockFdTest, lockLocal.file[lockTypeArchive].name), "release lock");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, lockLocal.file[lockTypeArchive].name), false, "lock file was removed");
+        TEST_RESULT_VOID(lockReleaseFile(lockFdTest, subPathLock), "release lock");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, subPathLock), false, "lock file was removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        lockLocal.file[lockTypeArchive].name = strNewZ(TEST_PATH "/dir" LOCK_FILE_EXT);
+        String *dirLock = strNewZ(TEST_PATH "/dir" LOCK_FILE_EXT);
+        lockLocal.file[lockTypeArchive].name = dirLock;
 
-        HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(lockLocal.file[lockTypeArchive].name));
+        HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(dirLock));
 
         TEST_ERROR(
             lockAcquireFile(lockTypeArchive, 0, true), LockAcquireError,
-            strZ(strNewFmt("unable to acquire lock on file '%s': Is a directory", strZ(lockLocal.file[lockTypeArchive].name))));
+            strZ(strNewFmt("unable to acquire lock on file '%s': Is a directory", strZ(dirLock))));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        lockLocal.file[lockTypeArchive].name = strNewZ(TEST_PATH "/noperm/noperm");
-        HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(strPath(lockLocal.file[lockTypeArchive].name)));
-        HRN_SYSTEM_FMT("chmod 000 %s", strZ(strPath(lockLocal.file[lockTypeArchive].name)));
+        String *noPermLock = strNewZ(TEST_PATH "/noperm/noperm");
+        lockLocal.file[lockTypeArchive].name = noPermLock;
+
+        HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(strPath(noPermLock)));
+        HRN_SYSTEM_FMT("chmod 000 %s", strZ(strPath(noPermLock)));
 
         TEST_ERROR(
             lockAcquireFile(lockTypeArchive, 100, true), LockAcquireError,
@@ -94,10 +98,11 @@ testRun(void)
                 strNewFmt(
                     "unable to acquire lock on file '%s': Permission denied\n"
                         "HINT: does the user running pgBackRest have permissions on the '%s' file?",
-                    strZ(lockLocal.file[lockTypeArchive].name), strZ(lockLocal.file[lockTypeArchive].name))));
+                    strZ(noPermLock), strZ(noPermLock))));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        lockLocal.file[lockTypeBackup].name = strNewZ(TEST_PATH "/main-backup" LOCK_FILE_EXT);
+        String *backupLock = strNewZ(TEST_PATH "/main-backup" LOCK_FILE_EXT);
+        lockLocal.file[lockTypeBackup].name = backupLock;
 
         HRN_FORK_BEGIN()
         {
@@ -126,7 +131,7 @@ testRun(void)
                     strZ(
                         strNewFmt(
                             "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                            "HINT: is another pgBackRest process running?", strZ(lockLocal.file[lockTypeBackup].name))));
+                            "HINT: is another pgBackRest process running?", strZ(backupLock))));
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
@@ -179,9 +184,9 @@ testRun(void)
         TEST_RESULT_VOID(lockRelease(true), "release archive lock");
 
         // // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(lockFdTest, lockAcquireFile(lockTypeBackup, 0, true), "backup lock by file");
-
         lockLocal.execId = STRDEF("2-test");
+
+        TEST_ASSIGN(lockFdTest, lockAcquireFile(lockTypeBackup, 0, true), "backup lock by file");
 
         TEST_ERROR(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeBackup, 0, true), LockAcquireError,
