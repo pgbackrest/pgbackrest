@@ -128,9 +128,8 @@ lockWriteData(const LockType lockType)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Acquire a lock using a file on the local filesystem
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
+// Helper to acquire a file lock
 static int
 lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const bool failOnNoLock)
 {
@@ -223,29 +222,6 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
     FUNCTION_LOG_RETURN(INT, result);
 }
 
-/***********************************************************************************************************************************
-Release the current lock
-***********************************************************************************************************************************/
-static void
-lockReleaseFile(int lockFd, const String *lockFile)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, lockFd);
-        FUNCTION_LOG_PARAM(STRING, lockFile);
-    FUNCTION_LOG_END();
-
-    // Can't release lock if there isn't one
-    ASSERT(lockFd >= 0);
-
-    // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
-    // right before the delete which means the file locked by the other process will get deleted.
-    storageRemoveP(storageLocalWrite(), lockFile);
-    close(lockFd);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
 bool
 lockAcquire(
     const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
@@ -263,7 +239,7 @@ lockAcquire(
     ASSERT(stanza != NULL);
     ASSERT(execId != NULL);
 
-    bool result = false;
+    bool result = true;
 
     // Don't allow failures when locking more than one file.  This makes cleanup difficult and there are no known use cases.
     ASSERT(failOnNoLock || lockType != lockTypeAll);
@@ -291,39 +267,60 @@ lockAcquire(
     ASSERT(strEq(execId, lockLocal.execId));
 
     // Lock files
-    MEM_CONTEXT_BEGIN(lockLocal.memContext)
-    {
-        LockType lockMin = lockType == lockTypeAll ? lockTypeArchive : lockType;
-        LockType lockMax = lockType == lockTypeAll ? (lockTypeAll - 1) : lockType;
-        bool error = false;
+    LockType lockMin = lockType == lockTypeAll ? lockTypeArchive : lockType;
+    LockType lockMax = lockType == lockTypeAll ? (lockTypeAll - 1) : lockType;
 
-        for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
+    for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
+    {
+        MEM_CONTEXT_BEGIN(lockLocal.memContext)
         {
             lockLocal.file[lockIdx].name = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
-            lockLocal.file[lockIdx].fd = lockAcquireFile(lockLocal.file[lockIdx].name, lockTimeout, failOnNoLock);
-
-            if (lockLocal.file[lockIdx].fd == -1)
-            {
-                error = true;
-                break;
-            }
-            // Else write lock data unless we locked an execId match
-            else if (lockLocal.file[lockIdx].fd != LOCK_ON_EXEC_ID)
-                lockWriteData(lockIdx);
         }
+        MEM_CONTEXT_END();
 
-        if (!error)
+        lockLocal.file[lockIdx].fd = lockAcquireFile(lockLocal.file[lockIdx].name, lockTimeout, failOnNoLock);
+
+        if (lockLocal.file[lockIdx].fd == -1)
         {
-            lockLocal.held = lockType;
-            result = true;
+            // Free the lock context and reset lock data
+            memContextFree(lockLocal.memContext);
+            lockLocal = (struct LockLocal){.held = lockTypeNone};
+
+            result = false;
+            break;
         }
+        // Else write lock data unless we locked an execId match
+        else if (lockLocal.file[lockIdx].fd != LOCK_ON_EXEC_ID)
+            lockWriteData(lockIdx);
     }
-    MEM_CONTEXT_END();
+
+    if (result)
+        lockLocal.held = lockType;
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
+// Helper to release a file lock
+static void
+lockReleaseFile(const int lockFd, const String *const lockFile)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, lockFd);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
+    FUNCTION_LOG_END();
+
+    // Can't release lock if there isn't one
+    ASSERT(lockFd >= 0);
+
+    // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
+    // right before the delete which means the file locked by the other process will get deleted.
+    storageRemoveP(storageLocalWrite(), lockFile);
+    close(lockFd);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 bool
 lockRelease(bool failOnNoLock)
 {
@@ -348,8 +345,6 @@ lockRelease(bool failOnNoLock)
         {
             if (lockLocal.file[lockIdx].fd != LOCK_ON_EXEC_ID)
                 lockReleaseFile(lockLocal.file[lockIdx].fd, lockLocal.file[lockIdx].name);
-
-            strFree(lockLocal.file[lockIdx].name);
         }
 
         // Free the lock context and reset lock data
