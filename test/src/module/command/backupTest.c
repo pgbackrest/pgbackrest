@@ -71,7 +71,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
                 {
                     ManifestFilePack **const filePack = lstGet(data->manifest->pub.fileList, fileIdx);
 
-                    if (manifestFileUnpack(*filePack).bundleId == bundleId)
+                    if (manifestFileUnpack(data->manifest, *filePack).bundleId == bundleId)
                         lstAdd(fileList, &filePack);
                 }
             }
@@ -94,7 +94,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
             {
                 ManifestFilePack **const filePack = *(ManifestFilePack ***)lstGet(fileList, fileIdx);
-                ManifestFile file = manifestFileUnpack(*filePack);
+                ManifestFile file = manifestFileUnpack(data->manifest, *filePack);
 
                 if (bundle)
                     strCatFmt(data->content, "%s/%s {file", strZ(info->name), strZ(file.name));
@@ -2103,7 +2103,7 @@ testRun(void)
                 strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(resumeLabel))));
 
             ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/PG_VERSION"));
-            ManifestFile file = manifestFileUnpack(*filePack);
+            ManifestFile file = manifestFileUnpack(manifestResume, *filePack);
 
             strcpy(file.checksumSha1, "06d06bb31b570b94d7b4325f511f853dbe771c21");
 
@@ -2199,7 +2199,7 @@ testRun(void)
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strZ(resumeLabel))));
 
             ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/global/pg_control"));
-            ManifestFile file = manifestFileUnpack(*filePack);
+            ManifestFile file = manifestFileUnpack(manifestResume, *filePack);
 
             file.checksumSha1[0] = 0;
 

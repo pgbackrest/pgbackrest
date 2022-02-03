@@ -26,13 +26,10 @@ testRun(void)
         TEST_TITLE("write pack");
 
         Buffer *pack = bufNew(0);
-
-        IoWrite *write = ioBufferWriteNew(pack);
-        ioWriteOpen(write);
+        IoWrite *write = ioBufferWriteNewOpen(pack);
+        PackWrite *packWrite = NULL;
 
         ioBufferSizeSet(3);
-
-        PackWrite *packWrite = NULL;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -227,8 +224,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read pack");
 
-        IoRead *read = ioBufferReadNew(pack);
-        ioReadOpen(read);
+        IoRead *read = ioBufferReadNewOpen(pack);
 
         PackRead *packRead = NULL;
 

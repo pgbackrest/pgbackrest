@@ -413,8 +413,7 @@ testRun(void)
         // Mixed line and buffer read
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(5);
-        read = ioBufferReadNew(BUFSTRDEF("AAAAAA123\n1234\n\n12\nBDDDEFF"));
-        ioReadOpen(read);
+        read = ioBufferReadNewOpen(BUFSTRDEF("AAAAAA123\n1234\n\n12\nBDDDEFF"));
         buffer = bufNew(6);
 
         // Start with a small read
@@ -459,13 +458,11 @@ testRun(void)
 
         // Error if buffer is full and there is no linefeed
         ioBufferSizeSet(10);
-        read = ioBufferReadNew(BUFSTRDEF("0123456789"));
-        ioReadOpen(read);
+        read = ioBufferReadNewOpen(BUFSTRDEF("0123456789"));
         TEST_ERROR(ioReadLine(read), FileReadError, "unable to find line in 10 byte buffer");
 
         // Read line without eof
-        read = ioBufferReadNew(BUFSTRDEF("1234"));
-        ioReadOpen(read);
+        read = ioBufferReadNewOpen(BUFSTRDEF("1234"));
         TEST_RESULT_STR_Z(ioReadLineParam(read, true), "1234", "read line without eof");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -473,12 +470,10 @@ testRun(void)
 
         ioBufferSizeSet(4);
 
-        bufferRead = ioBufferReadNew(BUFSTRDEF("a test string"));
-        ioReadOpen(bufferRead);
+        bufferRead = ioBufferReadNewOpen(BUFSTRDEF("a test string"));
 
         buffer = bufNew(0);
-        IoWrite *bufferWrite = ioBufferWriteNew(buffer);
-        ioWriteOpen(bufferWrite);
+        IoWrite *bufferWrite = ioBufferWriteNewOpen(buffer);
 
         TEST_RESULT_VOID(ioCopy(bufferRead, bufferWrite), "copy buffer");
         TEST_RESULT_VOID(ioWriteClose(bufferWrite), "close write");
@@ -489,8 +484,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(8);
 
-        bufferRead = ioBufferReadNew(BUFSTRDEF("a test string"));
-        ioReadOpen(bufferRead);
+        bufferRead = ioBufferReadNewOpen(BUFSTRDEF("a test string"));
 
         TEST_RESULT_STR_Z(strNewBuf(ioReadBuf(bufferRead)), "a test string", "read into buffer");
 

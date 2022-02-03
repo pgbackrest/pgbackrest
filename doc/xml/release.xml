@@ -70,6 +70,7 @@
                         <commit subject="Convert varNewUInt64() to VARUINT64() where possible in manifest."/>
                         <commit subject="Pack manifest file structs to save memory."/>
                         <commit subject="Optimization for jsonFromStrInternal()."/>
+                        <commit subject="Simplify manifest file defaults."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -78,6 +79,17 @@
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Add ioBufferReadNewOpen() and ioBufferWriteNewOpen()."/>
+                        <commit subject="Refactor lock code."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add percent complete to lock file.</p>
                     </release-item>
 
                     <release-item>
@@ -122,8 +134,6 @@
             <release-core-list>
                 <text>
                     <p><b>IMPORTANT NOTE</b>: If the <cmd>restore</cmd> command is unable to find a backup that matches a specified time target then an error will be thrown, whereas before a warning was logged.</p>
-
-                    <p><b>IMPORTANT NOTE</b>: The default <proper>TLS</proper> server port has not yet been approved by <proper>IANA</proper> and is subject to change once the approval process is complete.</p>
                 </text>
 
                 <release-bug-list>

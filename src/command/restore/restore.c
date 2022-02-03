@@ -1897,6 +1897,8 @@ restoreRecoveryWrite(const Manifest *manifest)
 Generate a list of queues that determine the order of file processing
 ***********************************************************************************************************************************/
 // Comparator to order ManifestFile objects by size then name
+static const Manifest *restoreProcessQueueComparatorManifest = NULL;
+
 static int
 restoreProcessQueueComparator(const void *item1, const void *item2)
 {
@@ -1909,8 +1911,8 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     ASSERT(item2 != NULL);
 
     // Unpack files
-    ManifestFile file1 = manifestFileUnpack(*(const ManifestFilePack **)item1);
-    ManifestFile file2 = manifestFileUnpack(*(const ManifestFilePack **)item2);
+    ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
+    ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
 
     // If the size differs then that's enough to determine order
     if (file1.size < file2.size)
@@ -1966,7 +1968,7 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
-            const ManifestFile file = manifestFileUnpack(filePack);
+            const ManifestFile file = manifestFileUnpack(manifest, filePack);
 
             // Find the target that contains this file
             unsigned int targetIdx = 0;
@@ -1991,6 +1993,8 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         }
 
         // Sort the queues
+        restoreProcessQueueComparatorManifest = manifest;
+
         for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
             lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
 
@@ -2184,7 +2188,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
             if (!lstEmpty(queue))
             {
-                const ManifestFile file = manifestFileUnpack(*(ManifestFilePack **)lstGet(queue, 0));
+                const ManifestFile file = manifestFileUnpack(jobData->manifest, *(ManifestFilePack **)lstGet(queue, 0));
 
                 // Create restore job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
