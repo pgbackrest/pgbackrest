@@ -71,6 +71,7 @@
                         <commit subject="Pack manifest file structs to save memory."/>
                         <commit subject="Optimization for jsonFromStrInternal()."/>
                         <commit subject="Simplify manifest file defaults."/>
+                        <commit subject="Simplify filename construction in command/verify module."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
