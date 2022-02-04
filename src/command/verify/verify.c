@@ -907,12 +907,12 @@ verifyBackup(void *data)
             {
                 const ManifestFile fileData = manifestFile(jobData->manifest, jobData->manifestFileIdx);
 
-                String *filePathName = NULL;
-
                 // Track the files verified in order to determine when the processing of the backup is complete
                 backupResult->totalFileVerify++;
 
                 // Check if the file is referenced in a prior backup
+                const String *fileBackupLabel = NULL;
+
                 if (fileData.reference != NULL)
                 {
                     // If the prior backup is not in the result list, then that backup was never processed (likely due to the --set
@@ -921,9 +921,7 @@ verifyBackup(void *data)
 
                     if (backupPriorIdx == LIST_NOT_FOUND)
                     {
-                        filePathName = strNewFmt(
-                            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData.reference), strZ(fileData.name),
-                            strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                        fileBackupLabel = fileData.reference;
                     }
                     // Else the backup this file references has a result so check the processing state for the referenced backup
                     else
@@ -933,9 +931,7 @@ verifyBackup(void *data)
                         // If the verify-state of the backup is not complete then verify the file
                         if (!backupResultPrior->fileVerifyComplete)
                         {
-                            filePathName = strNewFmt(
-                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData.reference), strZ(fileData.name),
-                                strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                            fileBackupLabel = fileData.reference;
                         }
                         // Else skip verification
                         else
@@ -966,20 +962,30 @@ verifyBackup(void *data)
                 }
                 // Else file is not referenced in a prior backup
                 else
-                {
-                    filePathName = strNewFmt(
-                        STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupResult->backupLabel), strZ(fileData.name),
-                        strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
-                }
+                    fileBackupLabel = backupResult->backupLabel;
 
-                // If constructed file name is not null then send it off for processing
-                if (filePathName != NULL)
+                // If backup label is not null then send it off for processing
+                if (fileBackupLabel != NULL)
                 {
                     // Set up the job
                     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
                     PackWrite *const param = protocolCommandParam(command);
 
-                    pckWriteStrP(param, filePathName);
+                    const String *const filePathName = strNewFmt(
+                            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),
+                            strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+
+                    if (fileData.bundleId != 0) // {uncovered - !!!}
+                    {
+                        pckWriteStrP(  // {uncovered - !!!}
+                            param,
+                            strNewFmt(
+                                STORAGE_REPO_BACKUP "/%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(fileBackupLabel),
+                                fileData.bundleId));
+                    }
+                    else
+                        pckWriteStrP(param, filePathName);
+
                     pckWriteU64P(param, fileData.bundleId);
                     pckWriteU64P(param, fileData.bundleOffset);
                     pckWriteU64P(param, fileData.sizeRepo);

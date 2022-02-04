@@ -39,7 +39,10 @@ verifyFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Prepare the file for reading
-        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), filePathName, .ignoreMissing = true));
+        IoRead *read = storageReadIo(
+            storageNewReadP(  // {uncovered - !!!}
+                storageRepo(), filePathName, .ignoreMissing = true, .offset = bundleId == 0 ? 0 : bundleOffset,
+                .limit = bundleId == 0 ? NULL : VARUINT64(bundleSize)));
         IoFilterGroup *filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter

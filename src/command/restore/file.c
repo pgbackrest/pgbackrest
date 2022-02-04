@@ -179,7 +179,7 @@ restoreFile(
                 storageCopyP(
                     storageNewReadP(
                         storageRepoIdx(repoIdx), repoPathFile, .compressible = compressible,
-                        .offset = bundleId == 0 ? 0 : bundleOffset, .limit = bundleId == 0 ? 0 : VARUINT64(repoSize)),
+                        .offset = bundleId == 0 ? 0 : bundleOffset, .limit = bundleId == 0 ? NULL : VARUINT64(repoSize)),
                     pgFileWrite);
 
                 // Validate checksum
