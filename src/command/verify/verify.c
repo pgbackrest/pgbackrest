@@ -757,9 +757,7 @@ verifyArchive(void *data)
                     PackWrite *const param = protocolCommandParam(command);
 
                     pckWriteStrP(param, filePathName);
-                    pckWriteU64P(param, 0);
-                    pckWriteU64P(param, 0);
-                    pckWriteU64P(param, 0);
+                    pckWriteBoolP(param, false);
                     pckWriteStrP(param, checksum);
                     pckWriteU64P(param, archiveResult->pgWalInfo.size);
                     pckWriteStrP(param, jobData->walCipherPass);
@@ -982,13 +980,16 @@ verifyBackup(void *data)
                             strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(fileBackupLabel),
                                 fileData.bundleId));
+                        pckWriteBoolP(param, true);
+                        pckWriteU64P(param, fileData.bundleOffset);
+                        pckWriteU64P(param, fileData.sizeRepo);
                     }
                     else
+                    {
                         pckWriteStrP(param, filePathName);
+                        pckWriteBoolP(param, false);
+                    }
 
-                    pckWriteU64P(param, fileData.bundleId);
-                    pckWriteU64P(param, fileData.bundleOffset);
-                    pckWriteU64P(param, fileData.sizeRepo);
                     // If the checksum is not present in the manifest, it will be calculated by manifest load
                     pckWriteStrP(param, STR(fileData.checksumSha1));
                     pckWriteU64P(param, fileData.size);

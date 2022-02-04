@@ -17,14 +17,13 @@ Verify File
 /**********************************************************************************************************************************/
 VerifyResult
 verifyFile(
-    const String *const filePathName, const uint64_t bundleId, const uint64_t bundleOffset, const uint64_t bundleSize,
-    const String *const fileChecksum, const uint64_t fileSize, const String *const cipherPass)
+    const String *const filePathName, const uint64_t offset, const Variant *const limit, const String *const fileChecksum,
+    const uint64_t fileSize, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
-        FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle id (0 for none)
-        FUNCTION_LOG_PARAM(UINT64, bundleOffset);                   // Bundle offset (if bundleId != 0)
-        FUNCTION_LOG_PARAM(UINT64, bundleSize);                     // Bundle size (if bundleId != 0)
+        FUNCTION_LOG_PARAM(UINT64, offset);                         // Offset to read in file
+        FUNCTION_LOG_PARAM(VARIANT, limit);                         // Limit to read from file
         FUNCTION_LOG_PARAM(STRING, fileChecksum);                   // Checksum for the file
         FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
@@ -32,6 +31,7 @@ verifyFile(
 
     ASSERT(filePathName != NULL);
     ASSERT(fileChecksum != NULL);
+    ASSERT(limit == NULL || varType(limit) == varTypeUInt64);
 
     // Is the file valid?
     VerifyResult result = verifyOk;
@@ -40,9 +40,7 @@ verifyFile(
     {
         // Prepare the file for reading
         IoRead *read = storageReadIo(
-            storageNewReadP(
-                storageRepo(), filePathName, .ignoreMissing = true, .offset = bundleId == 0 ? 0 : bundleOffset,
-                .limit = bundleId == 0 ? NULL : VARUINT64(bundleSize)));
+            storageNewReadP(storageRepo(), filePathName, .ignoreMissing = true, .offset = offset, .limit = limit));
         IoFilterGroup *filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter

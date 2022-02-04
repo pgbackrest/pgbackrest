@@ -856,19 +856,19 @@ testRun(void)
 
         String *filePathName = strNewZ(STORAGE_REPO_ARCHIVE "/testfile");
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), strZ(filePathName));
-        TEST_RESULT_UINT(verifyFile(filePathName, 0, 0, 0, STRDEF(HASH_TYPE_SHA1_ZERO), 0, NULL), verifyOk, "file ok");
+        TEST_RESULT_UINT(verifyFile(filePathName, 0, NULL, STRDEF(HASH_TYPE_SHA1_ZERO), 0, NULL), verifyOk, "file ok");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file size invalid in archive");
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), strZ(filePathName), fileContents);
-        TEST_RESULT_UINT(verifyFile(filePathName, 0, 0, 0, fileChecksum, 0, NULL), verifySizeInvalid, "file size invalid");
+        TEST_RESULT_UINT(verifyFile(filePathName, 0, NULL, fileChecksum, 0, NULL), verifySizeInvalid, "file size invalid");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing in archive");
         TEST_RESULT_UINT(
             verifyFile(
-                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, 0, 0, fileChecksum, 0, NULL), verifyFileMissing, "file missing");
+                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, NULL, fileChecksum, 0, NULL), verifyFileMissing, "file missing");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("encrypted/compressed file in backup");
@@ -881,10 +881,10 @@ testRun(void)
 
         strCatZ(filePathName, ".gz");
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, 0, 0, fileChecksum, fileSize, STRDEF("pass")), verifyOk, "file encrypted compressed ok");
+            verifyFile(filePathName, 0, NULL, fileChecksum, fileSize, STRDEF("pass")), verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
-                filePathName, 0, 0, 0, STRDEF("badchecksum"), fileSize, STRDEF("pass")), verifyChecksumMismatch,
+                filePathName, 0, NULL, STRDEF("badchecksum"), fileSize, STRDEF("pass")), verifyChecksumMismatch,
                 "file encrypted compressed checksum mismatch");
     }
 
@@ -1391,7 +1391,7 @@ testRun(void)
                 TEST_MANIFEST_DB
                 "\n"
                 "[target:file]\n"
-                "pg_data/validfile={\"bni\":1,\"checksum\":\"%s\",\"size\":%u,\"timestamp\":1565282114}\n"
+                "pg_data/validfile={\"bni\":1,\"bno\":3,\"checksum\":\"%s\",\"size\":%u,\"timestamp\":1565282114}\n"
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
                 TEST_MANIFEST_LINK_DEFAULT
@@ -1407,7 +1407,8 @@ testRun(void)
             .comment = "valid manifest copy - full");
 
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), STORAGE_REPO_BACKUP  "/20201119-163000F/bundle/1", fileContents, .comment = "valid file");
+            storageRepoWrite(), STORAGE_REPO_BACKUP  "/20201119-163000F/bundle/1", strZ(strNewFmt("XXX%s", fileContents)),
+            .comment = "valid file");
 
         // Create WAL file with just header info and small WAL size
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
