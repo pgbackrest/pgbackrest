@@ -975,9 +975,9 @@ verifyBackup(void *data)
                             STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),
                             strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
 
-                    if (fileData.bundleId != 0) // {uncovered - !!!}
+                    if (fileData.bundleId != 0)
                     {
-                        pckWriteStrP(  // {uncovered - !!!}
+                        pckWriteStrP(
                             param,
                             strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(fileBackupLabel),

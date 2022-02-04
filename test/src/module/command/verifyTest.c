@@ -1391,7 +1391,7 @@ testRun(void)
                 TEST_MANIFEST_DB
                 "\n"
                 "[target:file]\n"
-                "pg_data/validfile={\"checksum\":\"%s\",\"size\":%u,\"timestamp\":1565282114}\n"
+                "pg_data/validfile={\"bni\":1,\"checksum\":\"%s\",\"size\":%u,\"timestamp\":1565282114}\n"
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
                 TEST_MANIFEST_LINK_DEFAULT
@@ -1407,7 +1407,7 @@ testRun(void)
             .comment = "valid manifest copy - full");
 
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), STORAGE_REPO_BACKUP  "/20201119-163000F/pg_data/validfile", fileContents, .comment = "valid file");
+            storageRepoWrite(), STORAGE_REPO_BACKUP  "/20201119-163000F/bundle/1", fileContents, .comment = "valid file");
 
         // Create WAL file with just header info and small WAL size
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));

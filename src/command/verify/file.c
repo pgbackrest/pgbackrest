@@ -40,7 +40,7 @@ verifyFile(
     {
         // Prepare the file for reading
         IoRead *read = storageReadIo(
-            storageNewReadP(  // {uncovered - !!!}
+            storageNewReadP(
                 storageRepo(), filePathName, .ignoreMissing = true, .offset = bundleId == 0 ? 0 : bundleOffset,
                 .limit = bundleId == 0 ? NULL : VARUINT64(bundleSize)));
         IoFilterGroup *filterGroup = ioReadFilterGroup(read);
