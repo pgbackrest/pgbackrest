@@ -135,7 +135,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-FULL-1]"
 backup-timestamp-copy-start=[TIMESTAMP]
 backup-timestamp-start=[TIMESTAMP]
@@ -340,7 +339,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-FULL-2]"
 backup-timestamp-copy-start=[TIMESTAMP]
 backup-timestamp-start=[TIMESTAMP]
@@ -576,7 +574,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-INCR-1]"
 backup-prior="[BACKUP-FULL-2]"
 backup-timestamp-copy-start=[TIMESTAMP]
@@ -789,7 +786,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-INCR-2]"
 backup-prior="[BACKUP-FULL-2]"
 backup-timestamp-copy-start=[TIMESTAMP]
@@ -1010,7 +1006,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-DIFF-1]"
 backup-prior="[BACKUP-FULL-2]"
 backup-timestamp-copy-start=[TIMESTAMP]
@@ -1248,7 +1243,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-INCR-3]"
 backup-prior="[BACKUP-DIFF-1]"
 backup-timestamp-copy-start=[TIMESTAMP]
@@ -1466,7 +1460,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-INCR-4]"
 backup-prior="[BACKUP-INCR-3]"
 backup-timestamp-copy-start=[TIMESTAMP]
@@ -1687,7 +1680,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-DIFF-2]"
 backup-prior="[BACKUP-FULL-2]"
 backup-timestamp-copy-start=[TIMESTAMP]
@@ -1909,7 +1901,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-DIFF-3]"
 backup-prior="[BACKUP-FULL-2]"
 backup-timestamp-copy-start=[TIMESTAMP]
@@ -2125,7 +2116,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-FULL-3]"
 backup-timestamp-copy-start=[TIMESTAMP]
 backup-timestamp-start=[TIMESTAMP]
@@ -2346,7 +2336,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-DIFF-4]"
 backup-prior="[BACKUP-FULL-3]"
 backup-timestamp-copy-start=[TIMESTAMP]
@@ -2603,7 +2592,6 @@ backrest-format=5
 backrest-version="[VERSION-1]"
 
 [backup]
-backup-bundle=false
 backup-label="[BACKUP-DIFF-5]"
 backup-prior="[BACKUP-FULL-3]"
 backup-timestamp-copy-start=[TIMESTAMP]

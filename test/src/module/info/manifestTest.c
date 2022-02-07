@@ -39,7 +39,6 @@ testRun(void)
     {
         #define TEST_MANIFEST_HEADER                                                                                               \
             "[backup]\n"                                                                                                           \
-            "backup-bundle=false\n"                                                                                                \
             "backup-label=null\n"                                                                                                  \
             "backup-timestamp-copy-start=0\n"                                                                                      \
             "backup-timestamp-start=0\n"                                                                                           \
@@ -980,7 +979,6 @@ testRun(void)
     {
         #define TEST_MANIFEST_HEADER_PRE                                                                                           \
             "[backup]\n"                                                                                                           \
-            "backup-bundle=false\n"                                                                                                \
             "backup-label=null\n"                                                                                                  \
             "backup-prior=\"20190101-010101F\"\n"                                                                                  \
             "backup-timestamp-copy-start=0\n"                                                                                      \
@@ -1341,7 +1339,6 @@ testRun(void)
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             "[backup]\n"
-            "backup-bundle=false\n"
             "backup-label=\"20190808-163540F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
             "backup-timestamp-start=1565282140\n"
@@ -1423,7 +1420,7 @@ testRun(void)
             "[backup]\n"                                                                                                           \
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
             "backup-archive-stop=\"000000030000028500000089\"\n"                                                                   \
-            "backup-bundle=false\n"                                                                                                \
+            "backup-bundle=true\n"                                                                                                 \
             "backup-label=\"20190818-084502F_20190820-084502D\"\n"                                                                 \
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
             "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
@@ -1535,6 +1532,7 @@ testRun(void)
                 "[backup]\n"
                 "backup-archive-start=\"000000040000028500000089\"\n"
                 "backup-archive-stop=\"000000040000028500000089\"\n"
+                "backup-bundle=true\n"
                 "backup-label=\"20190818-084502F\"\n"
                 "backup-lsn-start=\"300/89000028\"\n"
                 "backup-lsn-stop=\"300/89001F88\"\n"

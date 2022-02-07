@@ -2266,8 +2266,11 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 jsonFromStr(manifest->pub.data.archiveStop));
         }
 
-        infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_BUNDLE_STR, jsonFromBool(manifest->pub.data.bundle));
+        if (manifest->pub.data.bundle)
+        {
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_BUNDLE_STR, jsonFromBool(manifest->pub.data.bundle));
+        }
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LABEL_STR,
