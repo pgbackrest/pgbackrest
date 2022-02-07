@@ -22,19 +22,17 @@ Restore File
 /**********************************************************************************************************************************/
 bool
 restoreFile(
-    const String *const repoFile, unsigned int repoIdx, const uint64_t bundleId, const uint64_t bundleOffset,
-    const uint64_t repoSize, const String *const repoFileReference, const CompressType repoFileCompressType,
-    const String *const pgFile, const String *const pgFileChecksum, const bool pgFileZero, const uint64_t pgFileSize,
-    const time_t pgFileModified, const mode_t pgFileMode, const String *const pgFileUser, const String *const pgFileGroup,
-    const time_t copyTimeBegin, const bool delta, const bool deltaForce, const String *const cipherPass)
+    const String *const repoFile, unsigned int repoIdx, const uint64_t offset, const Variant *const limit,
+    const CompressType repoFileCompressType, const String *const pgFile, const String *const pgFileChecksum, const bool pgFileZero,
+    const uint64_t pgFileSize, const time_t pgFileModified, const mode_t pgFileMode, const String *const pgFileUser,
+    const String *const pgFileGroup, const time_t copyTimeBegin, const bool delta, const bool deltaForce,
+    const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);
         FUNCTION_LOG_PARAM(UINT, repoIdx);
-        FUNCTION_LOG_PARAM(UINT64, bundleId);
-        FUNCTION_LOG_PARAM(UINT64, bundleOffset);
-        FUNCTION_LOG_PARAM(UINT64, repoSize);
-        FUNCTION_LOG_PARAM(STRING, repoFileReference);
+        FUNCTION_LOG_PARAM(UINT64, offset);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);
         FUNCTION_LOG_PARAM(STRING, pgFile);
         FUNCTION_LOG_PARAM(STRING, pgFileChecksum);
@@ -51,8 +49,8 @@ restoreFile(
     FUNCTION_LOG_END();
 
     ASSERT(repoFile != NULL);
-    ASSERT(repoFileReference != NULL);
     ASSERT(pgFile != NULL);
+    ASSERT(limit == NULL || varType(limit) == varTypeUInt64);
 
     // Was the file copied?
     bool result = true;
@@ -169,17 +167,9 @@ restoreFile(
                 ioFilterGroupAdd(filterGroup, ioSizeNew());
 
                 // Copy file
-                String *const repoPathFile = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(repoFileReference));
-
-                if (bundleId == 0)
-                    strCatFmt(repoPathFile, "%s%s", strZ(repoFile), strZ(compressExtStr(repoFileCompressType)));
-                else
-                    strCatFmt(repoPathFile, MANIFEST_PATH_BUNDLE "/%" PRIu64, bundleId);
-
                 storageCopyP(
                     storageNewReadP(
-                        storageRepoIdx(repoIdx), repoPathFile, .compressible = compressible,
-                        .offset = bundleId == 0 ? 0 : bundleOffset, .limit = bundleId == 0 ? NULL : VARUINT64(repoSize)),
+                        storageRepoIdx(repoIdx), repoFile, .compressible = compressible, .offset = offset, .limit = limit),
                     pgFileWrite);
 
                 // Validate checksum

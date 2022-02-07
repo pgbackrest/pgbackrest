@@ -28,11 +28,17 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
     {
         // Restore file
         const String *const repoFile = pckReadStrP(param);
+
+        uint64_t offset = 0;
+        const Variant *limit = NULL;
+
+        if (pckReadBoolP(param))
+        {
+            offset = pckReadU64P(param);
+            limit = varNewUInt64(pckReadU64P(param));
+        }
+
         const unsigned int repoIdx = pckReadU32P(param);
-        const uint64_t bundleId = pckReadU64P(param);
-        const uint64_t bundleOffset = pckReadU64P(param);
-        const uint64_t repoSize = pckReadU64P(param);
-        const String *const repoFileReference = pckReadStrP(param);
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const String *const pgFile = pckReadStrP(param);
         const String *const pgFileChecksum = pckReadStrP(param);
@@ -48,9 +54,8 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
         const String *const cipherPass = pckReadStrP(param);
 
         const bool result = restoreFile(
-            repoFile, repoIdx, bundleId, bundleOffset, repoSize, repoFileReference, repoFileCompressType, pgFile, pgFileChecksum,
-            pgFileZero, pgFileSize, pgFileModified, pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce,
-            cipherPass);
+            repoFile, repoIdx, offset, limit, repoFileCompressType, pgFile, pgFileChecksum, pgFileZero, pgFileSize, pgFileModified,
+            pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass);
 
         // Return result
         protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), result));
