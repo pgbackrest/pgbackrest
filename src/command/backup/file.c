@@ -38,22 +38,20 @@ segmentNumber(const String *pgFile)
 /**********************************************************************************************************************************/
 List *
 backupFile(
-    const uint64_t bundleId, const CompressType repoFileCompressType, const int repoFileCompressLevel,
-    const String *const backupLabel, const bool delta, const CipherType cipherType, const String *const cipherPass,
-    const List *const fileList)
+    const String *const repoFile, const CompressType repoFileCompressType, const int repoFileCompressLevel,
+    const bool delta, const CipherType cipherType, const String *const cipherPass, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle if (zero of none)
+        FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
-        FUNCTION_LOG_PARAM(STRING, backupLabel);                    // Label of current backup
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
     FUNCTION_LOG_END();
 
-    ASSERT(backupLabel != NULL);
+    ASSERT(repoFile != NULL);
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
     ASSERT(fileList != NULL && !lstEmpty(fileList));
 
@@ -62,23 +60,16 @@ backupFile(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Generate complete repo path and add compression extension if needed
-        const String *repoPathFile = bundleId == 0 ?
-            strNewFmt(
-                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupLabel), strZ(((BackupFile *)lstGet(fileList, 0))->repoFile),
-                strZ(compressExtStr(repoFileCompressType))) :
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(backupLabel), bundleId);
-
         result = lstNewP(sizeof(BackupFileResult));
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
             const BackupFile *const file = lstGet(fileList, fileIdx);
             ASSERT(file->pgFile != NULL);
-            ASSERT(file->repoFile != NULL);
+            ASSERT(file->manifestFile != NULL);
 
             BackupFileResult *const fileResult = lstAdd(
-                result, &(BackupFileResult){.repoFile = file->repoFile, .backupCopyResult = backupCopyResultCopy});
+                result, &(BackupFileResult){.manifestFile = file->manifestFile, .backupCopyResult = backupCopyResultCopy});
 
             // If checksum is defined then the file needs to be checked. If delta option then check the DB and possibly the repo,
             // else just check the repo.
@@ -114,7 +105,7 @@ backupFile(
                             pgFileMatch = true;
 
                             // If it matches and is a reference to a previous backup then no need to copy the file
-                            if (file->repoFileHasReference)
+                            if (file->manifestFileHasReference)
                             {
                                 MEM_CONTEXT_BEGIN(lstMemContext(result))
                                 {
@@ -134,15 +125,13 @@ backupFile(
                 // If this is not a delta backup or it is and the file exists and the checksum from the DB matches, then also test
                 // the checksum of the file in the repo (unless it is in a prior backup) and if the checksum doesn't match, then
                 // there may be corruption in the repo, so recopy
-                if (!delta || !file->repoFileHasReference)
+                if (!delta || !file->manifestFileHasReference)
                 {
-                    CHECK(AssertError, bundleId == 0, MANIFEST_PATH_BUNDLE " is not valid for resume");
-
                     // If this is a delta backup and the file is missing from the DB, then remove it from the repo
                     // (backupManifestUpdate will remove it from the manifest)
                     if (fileResult->backupCopyResult == backupCopyResultSkip)
                     {
-                        storageRemoveP(storageRepoWrite(), repoPathFile);
+                        storageRemoveP(storageRepoWrite(), repoFile);
                     }
                     else if (!delta || pgFileMatch)
                     {
@@ -151,7 +140,7 @@ backupFile(
                         TRY_BEGIN()
                         {
                             // Generate checksum/size for the repo file
-                            IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoPathFile));
+                            IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
 
                             if (cipherType != cipherTypeNone)
                             {
@@ -258,7 +247,7 @@ backupFile(
                         // Posix) because checksums are tested on resume after a failed backup. The path does not need to be synced
                         // for each file because all paths are synced at the end of the backup.
                         write = storageNewWriteP(
-                            storageRepoWrite(), repoPathFile, .compressible = compressible, .noAtomic = true, .noSyncPath = true);
+                            storageRepoWrite(), repoFile, .compressible = compressible, .noAtomic = true, .noSyncPath = true);
                         ioWriteOpen(storageWriteIo(write));
                     }
 
@@ -316,10 +305,10 @@ backupFile(
             //
             // If the file was checksummed then get the size in all cases since we don't already have it.
             if (((fileResult->backupCopyResult == backupCopyResultCopy || fileResult->backupCopyResult == backupCopyResultReCopy) &&
-                    storageFeature(storageRepo(), storageFeatureCompress) && bundleId == 0) ||
+                    storageFeature(storageRepo(), storageFeatureCompress)) ||
                 fileResult->backupCopyResult == backupCopyResultChecksum)
             {
-                fileResult->repoSize = storageInfoP(storageRepo(), repoPathFile).size;
+                fileResult->repoSize = storageInfoP(storageRepo(), repoFile).size;
             }
         }
 

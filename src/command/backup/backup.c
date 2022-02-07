@@ -1658,17 +1658,9 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
         // Create backup job
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
-        PackWrite *const param = protocolCommandParam(command);
+        PackWrite *param = NULL;
         uint64_t fileTotal = 0;
         uint64_t fileSize = 0;
-
-        pckWriteU64P(param, jobData->bundle ? jobData->bundleId : 0);
-        pckWriteU32P(param, jobData->compressType);
-        pckWriteI32P(param, jobData->compressLevel);
-        pckWriteStrP(param, jobData->backupLabel);
-        pckWriteBoolP(param, jobData->delta);
-        pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
-        pckWriteStrP(param, jobData->cipherSubPass);
 
         do
         {
@@ -1684,6 +1676,25 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 {
                     fileIdx++;
                     continue;
+                }
+
+                if (param == NULL)
+                {
+                    param = protocolCommandParam(command);
+
+                    String *const repoFile = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(jobData->backupLabel));
+
+                    if (jobData->bundle)
+                        strCatFmt(repoFile, MANIFEST_PATH_BUNDLE "/%" PRIu64, jobData->bundleId);
+                    else
+                        strCatFmt(repoFile, "%s%s", strZ(file.name), strZ(compressExtStr(jobData->compressType)));
+
+                    pckWriteStrP(param, repoFile);
+                    pckWriteU32P(param, jobData->compressType);
+                    pckWriteI32P(param, jobData->compressLevel);
+                    pckWriteBoolP(param, jobData->delta);
+                    pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
+                    pckWriteStrP(param, jobData->cipherSubPass);
                 }
 
                 pckWriteStrP(param, manifestPathPg(file.name));

@@ -33,14 +33,14 @@ typedef struct BackupFile
     const String *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
     uint64_t pgFileChecksumPageLsnLimit;                            // Upper limit of pages to validate
-    const String *repoFile;                                         // Repo file
-    bool repoFileHasReference;                                      // Reference to prior backup, if any
+    const String *manifestFile;                                     // Repo file
+    bool manifestFileHasReference;                                  // Reference to prior backup, if any
 } BackupFile;
 
 // Copy a file from the PostgreSQL data directory to the repository
 typedef struct BackupFileResult
 {
-    const String *repoFile;                                         // Repo file
+    const String *manifestFile;                                     // Manifest file
     BackupCopyResult backupCopyResult;
     uint64_t copySize;
     String *copyChecksum;
@@ -50,7 +50,7 @@ typedef struct BackupFileResult
 } BackupFileResult;
 
 List *backupFile(
-    uint64_t bundleId, CompressType repoFileCompressType, int repoFileCompressLevel, const String *backupLabel, bool delta,
-    CipherType cipherType, const String *cipherPass, const List *fileList);
+    const String *repoFile, CompressType repoFileCompressType, int repoFileCompressLevel, bool delta, CipherType cipherType,
+    const String *cipherPass, const List *fileList);
 
 #endif

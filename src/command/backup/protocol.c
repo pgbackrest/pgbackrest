@@ -28,10 +28,9 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Backup options that apply to all files
-        const uint64_t bundleId = pckReadU64P(param);
+        const String *const repoFile = pckReadStrP(param);
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const int repoFileCompressLevel = pckReadI32P(param);
-        const String *const backupLabel = pckReadStrP(param);
         const bool delta = pckReadBoolP(param);
         const CipherType cipherType = (CipherType)pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
@@ -48,15 +47,15 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             file.pgFileChecksum = pckReadStrP(param);
             file.pgFileChecksumPage = pckReadBoolP(param);
             file.pgFileChecksumPageLsnLimit = pckReadU64P(param);
-            file.repoFile = pckReadStrP(param);
-            file.repoFileHasReference = pckReadBoolP(param);
+            file.manifestFile = pckReadStrP(param);
+            file.manifestFileHasReference = pckReadBoolP(param);
 
             lstAdd(fileList, &file);
         }
 
         // Backup file
         const List *const result = backupFile(
-            bundleId, repoFileCompressType, repoFileCompressLevel, backupLabel, delta, cipherType, cipherPass, fileList);
+            repoFile, repoFileCompressType, repoFileCompressLevel, delta, cipherType, cipherPass, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();
@@ -65,7 +64,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         {
             const BackupFileResult *const fileResult = lstGet(result, resultIdx);
 
-            pckWriteStrP(resultPack, fileResult->repoFile);
+            pckWriteStrP(resultPack, fileResult->manifestFile);
             pckWriteU32P(resultPack, fileResult->backupCopyResult);
             pckWriteU64P(resultPack, fileResult->copySize);
             pckWriteU64P(resultPack, fileResult->bundleOffset);
