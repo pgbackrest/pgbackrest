@@ -17,13 +17,14 @@ Verify File
 /**********************************************************************************************************************************/
 VerifyResult
 verifyFile(
-    const String *const filePathName, const uint64_t offset, const Variant *const limit, const String *const fileChecksum,
-    const uint64_t fileSize, const String *const cipherPass)
+    const String *const filePathName, const uint64_t offset, const Variant *const limit, const CompressType compressType,
+    const String *const fileChecksum, const uint64_t fileSize, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
         FUNCTION_LOG_PARAM(UINT64, offset);                         // Offset to read in file
         FUNCTION_LOG_PARAM(VARIANT, limit);                         // Limit to read from file
+        FUNCTION_LOG_PARAM(ENUM, compressType);                     // Compression type
         FUNCTION_LOG_PARAM(STRING, fileChecksum);                   // Checksum for the file
         FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
@@ -48,8 +49,8 @@ verifyFile(
             ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
 
         // Add decompression filter
-        if (compressTypeFromName(filePathName) != compressTypeNone)
-            ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeFromName(filePathName)));
+        if (compressType != compressTypeNone)
+            ioFilterGroupAdd(filterGroup, decompressFilter(compressType));
 
         // Add sha1 filter
         ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));

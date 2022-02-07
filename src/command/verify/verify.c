@@ -758,6 +758,7 @@ verifyArchive(void *data)
 
                     pckWriteStrP(param, filePathName);
                     pckWriteBoolP(param, false);
+                    pckWriteU32P(param, compressTypeFromName(filePathName));
                     pckWriteStrP(param, checksum);
                     pckWriteU64P(param, archiveResult->pgWalInfo.size);
                     pckWriteStrP(param, jobData->walCipherPass);
@@ -908,97 +909,106 @@ verifyBackup(void *data)
                 // Track the files verified in order to determine when the processing of the backup is complete
                 backupResult->totalFileVerify++;
 
-                // Check if the file is referenced in a prior backup
-                const String *fileBackupLabel = NULL;
-
-                if (fileData.reference != NULL)
+                // Check the file if it is not zero-length or not bundled
+                if (fileData.size != 0 || !manifestData(jobData->manifest)->bundle)
                 {
-                    // If the prior backup is not in the result list, then that backup was never processed (likely due to the --set
-                    // option) so verify the file
-                    unsigned int backupPriorIdx = lstFindIdx(jobData->backupResultList, &fileData.reference);
+                    // Check if the file is referenced in a prior backup
+                    const String *fileBackupLabel = NULL;
 
-                    if (backupPriorIdx == LIST_NOT_FOUND)
+                    if (fileData.reference != NULL)
                     {
-                        fileBackupLabel = fileData.reference;
-                    }
-                    // Else the backup this file references has a result so check the processing state for the referenced backup
-                    else
-                    {
-                        VerifyBackupResult *backupResultPrior = lstGet(jobData->backupResultList, backupPriorIdx);
+                        // If the prior backup is not in the result list, then that backup was never processed (likely due to the
+                        // --set option) so verify the file
+                        unsigned int backupPriorIdx = lstFindIdx(jobData->backupResultList, &fileData.reference);
 
-                        // If the verify-state of the backup is not complete then verify the file
-                        if (!backupResultPrior->fileVerifyComplete)
+                        if (backupPriorIdx == LIST_NOT_FOUND)
                         {
                             fileBackupLabel = fileData.reference;
                         }
-                        // Else skip verification
+                        // Else the backup this file references has a result so check the processing state for the referenced backup
                         else
                         {
-                            String *priorFile = strNewFmt(
-                                "%s/%s%s", strZ(fileData.reference), strZ(fileData.name),
-                                strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                            VerifyBackupResult *backupResultPrior = lstGet(jobData->backupResultList, backupPriorIdx);
 
-                            unsigned int backupPriorInvalidIdx = lstFindIdx(backupResultPrior->invalidFileList, &priorFile);
-
-                            // If the file is in the invalid file list of the prior backup where it is referenced then add the file
-                            // as invalid to this backup result and set the backup result status; since already logged an error on
-                            // this file, don't log again
-                            if (backupPriorInvalidIdx != LIST_NOT_FOUND)
+                            // If the verify-state of the backup is not complete then verify the file
+                            if (!backupResultPrior->fileVerifyComplete)
                             {
-                                VerifyInvalidFile *invalidFile = lstGet(
-                                    backupResultPrior->invalidFileList, backupPriorInvalidIdx);
-                                verifyInvalidFileAdd(backupResult->invalidFileList, invalidFile->reason, invalidFile->fileName);
-                                backupResult->status = backupInvalid;
+                                fileBackupLabel = fileData.reference;
                             }
-                            // Else the file in the prior backup was valid so increment the total valid files for this backup
+                            // Else skip verification
                             else
                             {
-                                backupResult->totalFileValid++;
+                                String *priorFile = strNewFmt(
+                                    "%s/%s%s", strZ(fileData.reference), strZ(fileData.name),
+                                    strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+
+                                unsigned int backupPriorInvalidIdx = lstFindIdx(backupResultPrior->invalidFileList, &priorFile);
+
+                                // If the file is in the invalid file list of the prior backup where it is referenced then add the
+                                // file as invalid to this backup result and set the backup result status; since already logged an
+                                // error on this file, don't log again
+                                if (backupPriorInvalidIdx != LIST_NOT_FOUND)
+                                {
+                                    VerifyInvalidFile *invalidFile = lstGet(
+                                        backupResultPrior->invalidFileList, backupPriorInvalidIdx);
+                                    verifyInvalidFileAdd(backupResult->invalidFileList, invalidFile->reason, invalidFile->fileName);
+                                    backupResult->status = backupInvalid;
+                                }
+                                // Else the file in the prior backup was valid so increment the total valid files for this backup
+                                else
+                                {
+                                    backupResult->totalFileValid++;
+                                }
                             }
                         }
                     }
-                }
-                // Else file is not referenced in a prior backup
-                else
-                    fileBackupLabel = backupResult->backupLabel;
-
-                // If backup label is not null then send it off for processing
-                if (fileBackupLabel != NULL)
-                {
-                    // Set up the job
-                    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                    PackWrite *const param = protocolCommandParam(command);
-
-                    const String *const filePathName = strNewFmt(
-                            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),
-                            strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
-
-                    if (fileData.bundleId != 0)
-                    {
-                        pckWriteStrP(
-                            param,
-                            strNewFmt(
-                                STORAGE_REPO_BACKUP "/%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(fileBackupLabel),
-                                fileData.bundleId));
-                        pckWriteBoolP(param, true);
-                        pckWriteU64P(param, fileData.bundleOffset);
-                        pckWriteU64P(param, fileData.sizeRepo);
-                    }
+                    // Else file is not referenced in a prior backup
                     else
+                        fileBackupLabel = backupResult->backupLabel;
+
+                    // If backup label is not null then send it off for processing
+                    if (fileBackupLabel != NULL)
                     {
-                        pckWriteStrP(param, filePathName);
-                        pckWriteBoolP(param, false);
+                        // Set up the job
+                        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
+                        PackWrite *const param = protocolCommandParam(command);
+
+                        const String *const filePathName = strNewFmt(
+                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),
+                                strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+
+                        if (fileData.bundleId != 0)
+                        {
+                            pckWriteStrP(
+                                param,
+                                strNewFmt(
+                                    STORAGE_REPO_BACKUP "/%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(fileBackupLabel),
+                                    fileData.bundleId));
+                            pckWriteBoolP(param, true);
+                            pckWriteU64P(param, fileData.bundleOffset);
+                            pckWriteU64P(param, fileData.sizeRepo);
+                        }
+                        else
+                        {
+                            pckWriteStrP(param, filePathName);
+                            pckWriteBoolP(param, false);
+                        }
+
+                        pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
+                        // If the checksum is not present in the manifest, it will be calculated by manifest load
+                        pckWriteStrP(param, STR(fileData.checksumSha1));
+                        pckWriteU64P(param, fileData.size);
+                        pckWriteStrP(param, jobData->backupCipherPass);
+
+                        // Assign job to result (prepend backup label being processed to the key since some files are in a prior
+                        // backup)
+                        result = protocolParallelJobNew(
+                            VARSTR(strNewFmt("%s/%s", strZ(backupResult->backupLabel), strZ(filePathName))), command);
                     }
-
-                    // If the checksum is not present in the manifest, it will be calculated by manifest load
-                    pckWriteStrP(param, STR(fileData.checksumSha1));
-                    pckWriteU64P(param, fileData.size);
-                    pckWriteStrP(param, jobData->backupCipherPass);
-
-                    // Assign job to result (prepend backup label being processed to the key since some files are in a prior backup)
-                    result = protocolParallelJobNew(
-                        VARSTR(strNewFmt("%s/%s", strZ(backupResult->backupLabel), strZ(filePathName))), command);
                 }
+                // Else mark the zero-length file as valid
+                else
+                    backupResult->totalFileValid++;
 
                 // Increment the index to point to the next file
                 jobData->manifestFileIdx++;

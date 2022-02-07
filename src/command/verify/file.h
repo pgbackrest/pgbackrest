@@ -24,7 +24,7 @@ Functions
 ***********************************************************************************************************************************/
 // Verify a file in the pgBackRest repository
 VerifyResult verifyFile(
-    const String *filePathName, uint64_t offset, const Variant *limit, const String *fileChecksum, uint64_t fileSize,
-    const String *cipherPass);
+    const String *filePathName, uint64_t offset, const Variant *limit, CompressType compressType, const String *fileChecksum,
+    uint64_t fileSize, const String *cipherPass);
 
 #endif

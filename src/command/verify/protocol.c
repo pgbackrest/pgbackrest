@@ -38,11 +38,12 @@ verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
             limit = varNewUInt64(pckReadU64P(param));
         }
 
+        const CompressType compressType = (CompressType)pckReadU32P(param);
         const String *const fileChecksum = pckReadStrP(param);
         const uint64_t fileSize = pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
 
-        const VerifyResult result = verifyFile(filePathName, offset, limit, fileChecksum, fileSize, cipherPass);
+        const VerifyResult result = verifyFile(filePathName, offset, limit, compressType, fileChecksum, fileSize, cipherPass);
 
         // Return result
         protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), result));
