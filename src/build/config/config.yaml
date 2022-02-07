@@ -1101,6 +1101,7 @@ option:
       main: {}
 
   bundle:
+    internal: true
     section: global
     type: boolean
     default: false
@@ -1110,6 +1111,7 @@ option:
       main: {}
 
   bundle-size:
+    internal: true
     section: global
     type: size
     default: 100MiB

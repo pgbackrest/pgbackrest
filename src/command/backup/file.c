@@ -305,8 +305,9 @@ backupFile(
             //
             // If the file was checksummed then get the size in all cases since we don't already have it.
             if (((fileResult->backupCopyResult == backupCopyResultCopy || fileResult->backupCopyResult == backupCopyResultReCopy) &&
-                    storageFeature(storageRepo(), storageFeatureCompress)) ||
-                fileResult->backupCopyResult == backupCopyResultChecksum)
+                    storageFeature(storageRepo(), storageFeatureCompress) &&
+                    strstr(strZ(repoFile), "/" MANIFEST_PATH_BUNDLE "/") == NULL) ||
+                    fileResult->backupCopyResult == backupCopyResultChecksum)
             {
                 fileResult->repoSize = storageInfoP(storageRepo(), repoFile).size;
             }
