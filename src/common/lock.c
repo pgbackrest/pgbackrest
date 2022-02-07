@@ -182,21 +182,25 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                     // Save the error for reporting outside the loop
                     errNo = errno;
 
-                    // Even though we were unable to lock the file, it may be that it is already locked by another process with the
-                    // same exec-id, i.e. spawned by the same original main process. If so, report the lock as successful.
+                    // Get execId from lock file and close it
+                    const String *execId = NULL;
+
                     TRY_BEGIN()
                     {
-                        if (strEq(lockReadDataFile(lockFile, result).execId, lockLocal.execId))
-                            result = LOCK_ON_EXEC_ID;
-                        else
-                            result = -1;
+                        execId = lockReadDataFile(lockFile, result).execId;
                     }
                     FINALLY()
                     {
-                        // Close the file
                         close(result);
                     }
                     TRY_END();
+
+                    // Even though we were unable to lock the file, it may be that it is already locked by another process with the
+                    // same exec-id, i.e. spawned by the same original main process. If so, report the lock as successful.
+                    if (strEq(execId, lockLocal.execId))
+                        result = LOCK_ON_EXEC_ID;
+                    else
+                        result = -1;
                 }
             }
         }
