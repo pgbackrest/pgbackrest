@@ -1249,6 +1249,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList, String *errorRes
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, archiveIdResultList);             // Result list for all archive Ids in the repo
         FUNCTION_TEST_PARAM(LIST, backupResultList);                // Result list for all backups in the repo
+        FUNCTION_TEST_PARAM(STRING, errorResult);                   // Result string for errors
     FUNCTION_TEST_END();
 
     ASSERT(archiveIdResultList != NULL);
@@ -1441,6 +1442,7 @@ verifyProcess(unsigned int *errorTotal, String *errorResult)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_TEST_PARAM_P(UINT, errorTotal);                    // Pointer to overall job error total
+        FUNCTION_TEST_PARAM(STRING, errorResult);                   // Result string for errors
     FUNCTION_LOG_END();
 
     String *result = NULL;
@@ -1700,6 +1702,8 @@ verifyOutputText(const String *verifyresult, const String *errorResult, const un
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_TEST_PARAM(STRING, verifyresult);                  // Result string from verifyProcess()
+        FUNCTION_TEST_PARAM(STRING, errorResult);                   // Result string for errors
+        FUNCTION_TEST_PARAM_P(UINT, errorTotal);                    // Pointer to overall job error total
     FUNCTION_LOG_END();
 
     String *result = NULL;
