@@ -908,25 +908,23 @@ verifyBackup(void *data)
         {
             do
             {
-                const ManifestFile *fileData = manifestFile(jobData->manifest, jobData->manifestFileIdx);
-
-                String *filePathName = NULL;
+                const ManifestFile fileData = manifestFile(jobData->manifest, jobData->manifestFileIdx);
 
                 // Track the files verified in order to determine when the processing of the backup is complete
                 backupResult->totalFileVerify++;
 
                 // Check if the file is referenced in a prior backup
-                if (fileData->reference != NULL)
+                const String *fileBackupLabel = NULL;
+
+                if (fileData.reference != NULL)
                 {
                     // If the prior backup is not in the result list, then that backup was never processed (likely due to the --set
                     // option) so verify the file
-                    unsigned int backupPriorIdx = lstFindIdx(jobData->backupResultList, &fileData->reference);
+                    unsigned int backupPriorIdx = lstFindIdx(jobData->backupResultList, &fileData.reference);
 
                     if (backupPriorIdx == LIST_NOT_FOUND)
                     {
-                        filePathName = strNewFmt(
-                            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
-                            strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                        fileBackupLabel = fileData.reference;
                     }
                     // Else the backup this file references has a result so check the processing state for the referenced backup
                     else
@@ -936,15 +934,13 @@ verifyBackup(void *data)
                         // If the verify-state of the backup is not complete then verify the file
                         if (!backupResultPrior->fileVerifyComplete)
                         {
-                            filePathName = strNewFmt(
-                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
-                                strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                            fileBackupLabel = fileData.reference;
                         }
                         // Else skip verification
                         else
                         {
                             String *priorFile = strNewFmt(
-                                "%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
+                                "%s/%s%s", strZ(fileData.reference), strZ(fileData.name),
                                 strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
 
                             unsigned int backupPriorInvalidIdx = lstFindIdx(backupResultPrior->invalidFileList, &priorFile);
@@ -969,23 +965,23 @@ verifyBackup(void *data)
                 }
                 // Else file is not referenced in a prior backup
                 else
-                {
-                    filePathName = strNewFmt(
-                        STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupResult->backupLabel), strZ(fileData->name),
-                        strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
-                }
+                    fileBackupLabel = backupResult->backupLabel;
 
-                // If constructed file name is not null then send it off for processing
-                if (filePathName != NULL)
+                // If backup label is not null then send it off for processing
+                if (fileBackupLabel != NULL)
                 {
                     // Set up the job
                     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
                     PackWrite *const param = protocolCommandParam(command);
 
+                    const String *const filePathName = strNewFmt(
+                            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),
+                            strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+
                     pckWriteStrP(param, filePathName);
                     // If the checksum is not present in the manifest, it will be calculated by manifest load
-                    pckWriteStrP(param, STR(fileData->checksumSha1));
-                    pckWriteU64P(param, fileData->size);
+                    pckWriteStrP(param, STR(fileData.checksumSha1));
+                    pckWriteU64P(param, fileData.size);
                     pckWriteStrP(param, jobData->backupCipherPass);
 
                     // Assign job to result (prepend backup label being processed to the key since some files are in a prior backup)

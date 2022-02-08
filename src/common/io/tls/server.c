@@ -284,7 +284,7 @@ tlsServerNew(
 
     OBJ_NEW_BEGIN(TlsServer)
     {
-        TlsServer *const driver =  OBJ_NEW_ALLOC();
+        TlsServer *const driver = OBJ_NEW_ALLOC();
 
         *driver = (TlsServer)
         {

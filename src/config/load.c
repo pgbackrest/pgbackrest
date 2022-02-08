@@ -148,7 +148,7 @@ cfgLoadUpdateOption(void)
                 OptionInvalidValueError,
                 "'%s' is not valid for '" CFGOPT_PROTOCOL_TIMEOUT "' option\nHINT '" CFGOPT_PROTOCOL_TIMEOUT "' option (%s)"
                     " should be greater than '" CFGOPT_DB_TIMEOUT "' option (%s).",
-                strZ(cfgOptionDisplay(cfgOptProtocolTimeout)),  strZ(cfgOptionDisplay(cfgOptProtocolTimeout)),
+                strZ(cfgOptionDisplay(cfgOptProtocolTimeout)), strZ(cfgOptionDisplay(cfgOptProtocolTimeout)),
                 strZ(cfgOptionDisplay(cfgOptDbTimeout)));
         }
     }

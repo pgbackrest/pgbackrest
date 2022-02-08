@@ -400,8 +400,6 @@ sub regExpReplaceAll
         $strLine = 'P00 DETAIL: statistics: STATISTICS'
     }
 
-    $strLine = $self->regExpReplace($strLine, 'PRIMARY', 'mas'.'ter', undef, false);
-
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'strGroup = [^ \n,\[\]]+', '[^ \n,\[\]]+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'unknown group in backup manifest mapped to \'[^\']+', '[^\']+$');
     $strLine = $self->regExpReplace($strLine, 'GROUP', 'group"[ ]{0,1}:[ ]{0,1}"[^"]+', '[^"]+$');

@@ -449,7 +449,7 @@ hrnStoragePut(
 
     // Add modified time to output information filter
     if (param.timeModified != 0)
-        strCatFmt(filter, "%stime[%" PRIu64 "]",  strEmpty(filter) ? "" : "/", (uint64_t)param.timeModified);
+        strCatFmt(filter, "%stime[%" PRIu64 "]", strEmpty(filter) ? "" : "/", (uint64_t)param.timeModified);
 
     // Add compression filter
     if (param.compressType != compressTypeNone)

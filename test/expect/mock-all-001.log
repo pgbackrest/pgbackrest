@@ -154,7 +154,7 @@ pg_data/pg_stat={"path":"../pg_stat","type":"link"}
 pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":false}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -164,15 +164,14 @@ pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b59
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_hba.conf={"checksum":"dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_hba.conf={"checksum":"dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -296,7 +295,7 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE]
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: backup '[BACKUP-FULL-1]' missing manifest removed from backup.info
-P00   WARN: --no-online passed and post[PRIMARY].pid exists but --force was passed so backup will continue though it looks like PostgreSQL is running and the backup will probably not be consistent
+P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it looks like PostgreSQL is running and the backup will probably not be consistent
 P00   INFO: exclude '[TEST_PATH]/db-primary/db/base/apipe' from backup using 'apipe' exclusion
 P00   INFO: exclude contents of '[TEST_PATH]/db-primary/db/base/pg_log' from backup using 'pg_log/' exclusion
 P00   INFO: exclude '[TEST_PATH]/db-primary/db/base/pg_log2' from backup using 'pg_log2' exclusion
@@ -402,63 +401,62 @@ pg_data/pg_stat={"path":"../pg_stat","type":"link"}
 pg_data/postgresql.conf={"file":"postgresql.conf","path":"../pg_config","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":false}
-pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","group":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"238a131a3e8eb98d1fc5b27d882ca40b7618fd2a","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_hba.conf={"checksum":"dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","group":"[GROUP-1]","mode":"0660","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/changecontent.txt={"checksum":"238a131a3e8eb98d1fc5b27d882ca40b7618fd2a","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-2],"user":"[USER-1]"}
+pg_data/pg_hba.conf={"checksum":"dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-2],"user":"[USER-1]"}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-2],"user":"[USER-1]"}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-2],"user":"[USER-1]"}
+pg_data/special-!_.*'()&!@;:+,?={"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/zero_from_start={"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
 
 [target:file:default]
-group="[GROUP-1]"
-[PRIMARY]=false
-mode="0600"
-user="[USER-1]"
+group=false
+mode="0640"
+user=false
 
 [target:link]
-pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf"}
-pg_data/pg_stat={"destination":"../pg_stat"}
-pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf"}
+pg_data/pg_hba.conf={"destination":"../pg_config/pg_hba.conf","group":"[GROUP-1]","user":"[USER-1]"}
+pg_data/pg_stat={"destination":"../pg_stat","group":"[GROUP-1]","user":"[USER-1]"}
+pg_data/postgresql.conf={"destination":"../pg_config/postgresql.conf","group":"[GROUP-1]","user":"[USER-1]"}
 
 [target:link:default]
-group="[GROUP-1]"
-user="[USER-1]"
+group=false
+user=false
 
 [target:path]
-pg_data={"group":false,"mode":"0777","user":false}
-pg_data/base={}
-pg_data/base/1={}
-pg_data/base/16384={}
-pg_data/base/32768={}
-pg_data/global={}
-pg_data/pg_clog={}
-pg_data/pg_dynshmem={}
-pg_data/pg_log={}
-pg_data/pg_notify={}
-pg_data/pg_replslot={}
-pg_data/pg_serial={}
-pg_data/pg_snapshots={}
-pg_data/pg_stat={}
-pg_data/pg_stat_tmp={}
-pg_data/pg_subtrans={}
-pg_data/pg_tblspc={}
+pg_data={}
+pg_data/base={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/base/1={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/base/16384={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/base/32768={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/global={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_clog={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_dynshmem={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_log={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_notify={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_replslot={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_serial={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_snapshots={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_stat={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_stat_tmp={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_subtrans={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
+pg_data/pg_tblspc={"group":"[GROUP-1]","mode":"0700","user":"[USER-1]"}
 
 [target:path:default]
-group="[GROUP-1]"
-mode="0700"
-user="[USER-1]"
+group=false
+mode="0777"
+user=false
 
 [backrest]
 backrest-checksum="[CHECKSUM]"
@@ -520,7 +518,7 @@ P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/pg_stat_tmp/anyt
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/pg_subtrans/anything.tmp'
 P00 DETAIL: remove invalid link '[TEST_PATH]/db-primary/db/base/postgresql.auto.conf'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/postgresql.auto.conf.tmp'
-P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/post[PRIMARY].opts'
+P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/postmaster.opts'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.conf'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.done'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/pg_stat'
@@ -866,15 +864,15 @@ pg_tblspc/1={"path":"[TEST_PATH]/db-primary/db/tablespace/ts1","tablespace-id":"
 [target:file]
 pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"[PRIMARY]":false,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":false,"mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"[PRIMARY]":false,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":false,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"[PRIMARY]":false,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"[PRIMARY]":false,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"[PRIMARY]":false,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"[PRIMARY]":false,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":false,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"238a131a3e8eb98d1fc5b27d882ca40b7618fd2a","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changesize.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -884,11 +882,10 @@ pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","
 pg_data/special-!_.*'()&!@;:+,?={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/zero_from_start={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/zerosize.txt={"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"14c44cef6287269b08d41de489fd492bb9fc795d","checksum-page":false,"[PRIMARY]":false,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"14c44cef6287269b08d41de489fd492bb9fc795d","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=true
 mode="0600"
 user="[USER-1]"
 
@@ -900,7 +897,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -917,7 +914,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/1={}
 pg_tblspc/1/[TS_PATH-1]={}
 pg_tblspc/1/[TS_PATH-1]/16384={}
@@ -1081,8 +1078,8 @@ pg_tblspc/11={"path":"[TEST_PATH]/db-primary/db/tablespace/ts11","tablespace-id"
 pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1092,21 +1089,20 @@ pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b59
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changesize.txt={"checksum":"3905d5be2ec8d67f41435dab5e0dcda3ae47455d","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changesize.txt={"checksum":"3905d5be2ec8d67f41435dab5e0dcda3ae47455d","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -1120,7 +1116,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -1137,7 +1133,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/1={}
 pg_tblspc/1/[TS_PATH-1]={}
 pg_tblspc/1/[TS_PATH-1]/16384={}
@@ -1298,8 +1294,8 @@ pg_tblspc/1={"path":"[TEST_PATH]/db-primary/db/tablespace/ts1","tablespace-id":"
 pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1309,20 +1305,19 @@ pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b59
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/1/[TS_PATH-1]/16384/tablespace1.txt={"checksum":"d85de07d6421d90aa9191c11c889bfde43680f0f","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -1335,7 +1330,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -1352,7 +1347,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/1={}
 pg_tblspc/1/[TS_PATH-1]={}
 pg_tblspc/1/[TS_PATH-1]/16384={}
@@ -1403,7 +1398,6 @@ P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespac
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/tablespace/ts1-2/[TS_PATH-1]' exists
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/tablespace/ts2-2/[TS_PATH-1]' exists
-P00 DETAIL: update mode for '[TEST_PATH]/db-primary/db/base-2' to 0777
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/1'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/16384'
@@ -1657,8 +1651,8 @@ pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","[PRIMARY]":true,"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1669,20 +1663,19 @@ pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b",
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","[PRIMARY]":true,"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"[PRIMARY]":true,"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -1694,7 +1687,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -1711,7 +1704,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -1877,8 +1870,8 @@ pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","[PRIMARY]":true,"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1889,20 +1882,19 @@ pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b",
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","reference":"[BACKUP-INCR-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","[PRIMARY]":true,"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"[PRIMARY]":true,"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"reference":"[BACKUP-INCR-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -1914,7 +1906,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -1931,7 +1923,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -2094,8 +2086,8 @@ pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2106,20 +2098,19 @@ pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b",
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2b.txt={"checksum":"e324463005236d83e6e54795dbddd20a74533bf3","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -2131,7 +2122,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -2148,7 +2139,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -2312,8 +2303,8 @@ pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2322,20 +2313,19 @@ pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b59
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"[PRIMARY]":true,"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -2347,7 +2337,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -2364,7 +2354,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -2510,8 +2500,8 @@ pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2521,20 +2511,19 @@ pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b59
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"[PRIMARY]":true,"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -2546,7 +2535,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -2563,7 +2552,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -2727,8 +2716,8 @@ pg_data={"path":"[TEST_PATH]/db-primary/db/base-2","type":"path"}
 pg_tblspc/2={"path":"[TEST_PATH]/db-primary/db/tablespace/ts2-2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2739,20 +2728,19 @@ pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b",
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -2764,7 +2752,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -2781,7 +2769,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}
@@ -2968,7 +2956,6 @@ P00   INFO: remap data directory to '[TEST_PATH]/db-primary/db/base-2/base'
 P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base-2/base' exists
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base-2/tablespace/ts2/[TS_PATH-1]' exists
-P00 DETAIL: update mode for '[TEST_PATH]/db-primary/db/base-2/base' to 0777
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/base'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/base/1'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/base/16384'
@@ -3142,8 +3129,8 @@ pg_data={"path":"[TEST_PATH]/db-primary/db/base-2/base","type":"path"}
 pg_tblspc/2={"path":"../../tablespace/ts2","tablespace-id":"2","tablespace-name":"ts2","type":"link"}
 
 [target:file]
-pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -3154,20 +3141,19 @@ pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b",
 pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
-pg_data/special-!_.*'()&!@;:+,?={"[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zero_from_start={"[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/zerosize.txt={"[PRIMARY]":true,"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/pg_stat/global.stat={"checksum":"e350d5ce0153f3e22d5db21cf2a4eff00f3ee877","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/postgresql.conf={"checksum":"6721d92c9fcdf4248acff1f9a1377127d9064807","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
+pg_data/special-!_.*'()&!@;:+,?={"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zero_from_start={"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/zerosize.txt={"reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2.txt={"checksum":"dc7f76e43c46101b47acc55ae4d593a9e6983578","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_tblspc/2/[TS_PATH-1]/32768/tablespace2c.txt={"checksum":"dfcb8679956b734706cf87259d50c88f83e80e66","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 
 [target:file:default]
 group="[GROUP-1]"
-[PRIMARY]=false
 mode="0600"
 user="[USER-1]"
 
@@ -3179,7 +3165,7 @@ group="[GROUP-1]"
 user="[USER-1]"
 
 [target:path]
-pg_data={"mode":"0777"}
+pg_data={}
 pg_data/base={}
 pg_data/base/1={}
 pg_data/base/16384={}
@@ -3196,7 +3182,7 @@ pg_data/pg_stat={}
 pg_data/pg_stat_tmp={}
 pg_data/pg_subtrans={}
 pg_data/pg_tblspc={}
-pg_tblspc={"mode":"0777"}
+pg_tblspc={}
 pg_tblspc/2={}
 pg_tblspc/2/[TS_PATH-1]={}
 pg_tblspc/2/[TS_PATH-1]/32768={}

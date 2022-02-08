@@ -61,13 +61,36 @@
                     <release-item>
                         <commit subject="Add read range to all storage drivers."/>
                         <commit subject="Implement restore ownership without updating manifest internals."/>
+                        <commit subject="Fix issue with Posix read offset handling after an error."/>
+                        <commit subject="Refactor backupProcessQueue() to use BackupJobData struct."/>
+                        <commit subject="Use the PG_FILE_POSTMTRPID constant where appropriate."/>
+                        <commit subject="Remove primary flag from manifest."/>
+                        <commit subject="Simplify base path mode in mock/all integration tests."/>
+                        <commit subject="Simplify manifest defaults."/>
+                        <commit subject="Convert varNewUInt64() to VARUINT64() where possible in manifest."/>
+                        <commit subject="Pack manifest file structs to save memory."/>
+                        <commit subject="Optimization for jsonFromStrInternal()."/>
+                        <commit subject="Simplify manifest file defaults."/>
+                        <commit subject="Simplify filename construction in command/verify module."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Add ioBufferReadNewOpen() and ioBufferWriteNewOpen()."/>
+                        <commit subject="Refactor lock code."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add percent complete to lock file.</p>
                     </release-item>
 
                     <release-item>
@@ -90,6 +113,17 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stefan.fercot"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove unused <br-option>backup-standby</br-option> option from stanza commands.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-issue id="1585"/>
@@ -112,8 +146,6 @@
             <release-core-list>
                 <text>
                     <p><b>IMPORTANT NOTE</b>: If the <cmd>restore</cmd> command is unable to find a backup that matches a specified time target then an error will be thrown, whereas before a warning was logged.</p>
-
-                    <p><b>IMPORTANT NOTE</b>: The default <proper>TLS</proper> server port has not yet been approved by <proper>IANA</proper> and is subject to change once the approval process is complete.</p>
                 </text>
 
                 <release-bug-list>

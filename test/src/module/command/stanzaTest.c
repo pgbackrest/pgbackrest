@@ -37,7 +37,7 @@ testRun(void)
         TEST_TITLE("stanza-create: repo option not valid");
 
         // Load Parameters
-        StringList *argList =  strLstDup(argListBase);
+        StringList *argList = strLstDup(argListBase);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 
@@ -980,7 +980,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE, .comment = "create empty backup info for stanza '" TEST_STANZA "'");
         HRN_STORAGE_PUT_EMPTY(storageHrn, strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))), .comment = "create stop file");
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTMTRPID, .comment = "create postmas""ter pid file");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTMTRPID, .comment = "create " PG_FILE_POSTMTRPID " file");
 
         TEST_ERROR(
             cmdStanzaDelete(), PgRunningError, PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. "

@@ -576,6 +576,14 @@ sub containerBuild
             $strScript = '';
 
             #-----------------------------------------------------------------------------------------------------------------------
+            if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL && hostArch() eq VM_ARCH_AARCH64)
+            {
+                $strScript .= sectionHeader() .
+                    "# Remove unneeded language setup\n" .
+                    "    rm /etc/profile.d/lang.sh";
+            }
+
+            #-----------------------------------------------------------------------------------------------------------------------
             $strScript .= caSetup($strOS, $oStorageDocker, "test/certificate/pgbackrest-test-ca.crt");
 
             #-----------------------------------------------------------------------------------------------------------------------

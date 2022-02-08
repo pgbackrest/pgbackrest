@@ -69,7 +69,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
                 hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
-                hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "testdb");
+                hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1, "testdb");
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
                 hrnCfgArgRawZ(argList, cfgOptProcess, "0");
                 hrnCfgArgRawZ(argList, cfgOptDbTimeout, "777");
@@ -124,8 +124,8 @@ testRun(void)
                 StringList *argList = strLstNew();
                 hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
                 hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
-                hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "testdb");
-                hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1,  "1");
+                hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1, "testdb");
+                hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
                 HRN_CFG_LOAD(cfgCmdBackup, argList);
 
                 // Create control file
@@ -200,7 +200,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1,  "backupdb");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgDatabase, 1, "backupdb");
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "888");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 

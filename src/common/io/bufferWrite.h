@@ -13,4 +13,13 @@ Constructors
 ***********************************************************************************************************************************/
 IoWrite *ioBufferWriteNew(Buffer *buffer);
 
+// Construct and open buffer write
+__attribute__((always_inline)) static inline IoWrite *
+ioBufferWriteNewOpen(Buffer *const buffer)
+{
+    IoWrite *const result = ioBufferWriteNew(buffer);
+    ioWriteOpen(result);
+    return result;
+}
+
 #endif

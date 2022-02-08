@@ -23,28 +23,38 @@ testRun(void)
         const String *archiveLock = STRDEF(TEST_PATH "/main-archive" LOCK_FILE_EXT);
         int lockFdTest = -1;
 
-        HRN_SYSTEM_FMT("touch %s", strZ(archiveLock));
-        TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLock, STRDEF("1-test"), 0, true), "get lock");
+        lockLocal.execId = STRDEF("1-test");
+
+        TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLock, 0, true), "get lock");
         TEST_RESULT_BOOL(lockFdTest != -1, true, "lock succeeds");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLock), true, "lock file was created");
-        TEST_ERROR(lockAcquireFile(archiveLock, STRDEF("2-test"), 0, true), LockAcquireError,
+
+        lockLocal.file[lockTypeArchive].fd = lockFdTest;
+        lockLocal.file[lockTypeArchive].name = strDup(archiveLock);
+        TEST_RESULT_VOID(lockWriteData(lockTypeArchive), "write lock data");
+
+        lockLocal.execId = STRDEF("2-test");
+
+        TEST_ERROR(lockAcquireFile(archiveLock, 0, true), LockAcquireError,
             strZ(
                 strNewFmt(
                     "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                     "HINT: is another pgBackRest process running?", strZ(archiveLock))));
-        TEST_RESULT_BOOL(lockAcquireFile(archiveLock, STRDEF("2-test"), 0, false) == -1, true, "lock is already held");
+        TEST_RESULT_BOOL(lockAcquireFile(archiveLock, 0, false) == -1, true, "lock is already held");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("acquire file lock on the same exec-id");
 
-        TEST_RESULT_INT(lockAcquireFile(archiveLock, STRDEF("1-test"), 0, true), -2, "allow lock with same exec id");
+        lockLocal.execId = STRDEF("1-test");
+
+        TEST_RESULT_INT(lockAcquireFile(archiveLock, 0, true), -2, "allow lock with same exec id");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail file lock on the same exec-id when lock file is empty");
 
         HRN_SYSTEM_FMT("echo '' > %s", strZ(archiveLock));
 
-        TEST_ERROR(lockAcquireFile(archiveLock, STRDEF("2-test"), 0, true), LockAcquireError,
+        TEST_ERROR(lockAcquireFile(archiveLock, 0, true), LockAcquireError,
             strZ(
                 strNewFmt(
                     "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
@@ -58,30 +68,31 @@ testRun(void)
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLock), "release lock again without error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *subPathLock = STRDEF(TEST_PATH "/sub1/sub2/db-backup" LOCK_FILE_EXT);
+        String *subPathLock = strNewZ(TEST_PATH "/sub1/sub2/db-backup" LOCK_FILE_EXT);
 
-        TEST_ASSIGN(lockFdTest, lockAcquireFile(subPathLock, STRDEF("1-test"), 0, true), "get lock in subpath");
+        TEST_ASSIGN(lockFdTest, lockAcquireFile(subPathLock, 0, true), "get lock in subpath");
         TEST_RESULT_BOOL(storageExistsP(storageTest, subPathLock), true, "lock file was created");
         TEST_RESULT_BOOL(lockFdTest != -1, true, "lock succeeds");
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, subPathLock), "release lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, subPathLock), false, "lock file was removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *dirLock = STRDEF(TEST_PATH "/dir" LOCK_FILE_EXT);
+        String *dirLock = strNewZ(TEST_PATH "/dir" LOCK_FILE_EXT);
 
         HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(dirLock));
 
         TEST_ERROR(
-            lockAcquireFile(dirLock, STRDEF("1-test"), 0, true), LockAcquireError,
+            lockAcquireFile(dirLock, 0, true), LockAcquireError,
             strZ(strNewFmt("unable to acquire lock on file '%s': Is a directory", strZ(dirLock))));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *noPermLock = STRDEF(TEST_PATH "/noperm/noperm");
+        String *noPermLock = strNewZ(TEST_PATH "/noperm/noperm");
+
         HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(strPath(noPermLock)));
         HRN_SYSTEM_FMT("chmod 000 %s", strZ(strPath(noPermLock)));
 
         TEST_ERROR(
-            lockAcquireFile(noPermLock, STRDEF("1-test"), 100, true), LockAcquireError,
+            lockAcquireFile(noPermLock, 100, true), LockAcquireError,
             strZ(
                 strNewFmt(
                     "unable to acquire lock on file '%s': Permission denied\n"
@@ -89,13 +100,13 @@ testRun(void)
                     strZ(noPermLock), strZ(noPermLock))));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *backupLock = STRDEF(TEST_PATH "/main-backup" LOCK_FILE_EXT);
+        String *backupLock = strNewZ(TEST_PATH "/main-backup" LOCK_FILE_EXT);
 
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                TEST_RESULT_INT_NE(lockAcquireFile(backupLock, STRDEF("1-test"), 0, true), -1, "lock on fork");
+                TEST_RESULT_INT_NE(lockAcquireFile(backupLock, 0, true), -1, "lock on fork");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -110,8 +121,10 @@ testRun(void)
                 // Wait for child to acquire lock
                 HRN_FORK_PARENT_NOTIFY_GET(0);
 
+                lockLocal.execId = STRDEF("2-test");
+
                 TEST_ERROR(
-                    lockAcquireFile(backupLock, STRDEF("2-test"), 0, true),
+                    lockAcquireFile(backupLock, 0, true),
                     LockAcquireError,
                     strZ(
                         strNewFmt(
@@ -139,7 +152,9 @@ testRun(void)
         TEST_RESULT_BOOL(lockRelease(false), false, "release when there is no lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, STRDEF("1-test"), 0, true), "archive lock by file");
+        lockLocal.execId = STRDEF("1-test");
+
+        TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, 0, true), "archive lock by file");
         TEST_RESULT_BOOL(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeArchive, 0, false), false, "archive already locked");
         TEST_ERROR(
@@ -155,6 +170,8 @@ testRun(void)
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLockFile), "release lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        lockLocal.execId = STRDEF("1-test");
+
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeArchive, 0, true), true, "archive lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
         TEST_ERROR(
@@ -163,7 +180,10 @@ testRun(void)
         TEST_RESULT_VOID(lockRelease(true), "release archive lock");
 
         // // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, STRDEF("1-test"), 0, true), "backup lock by file");
+        lockLocal.execId = STRDEF("2-test");
+
+        TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, 0, true), "backup lock by file");
+
         TEST_ERROR(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeBackup, 0, true), LockAcquireError,
             strZ(strNewFmt(
@@ -178,6 +198,8 @@ testRun(void)
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, backupLockFile), "release lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        lockLocal.execId = STRDEF("1-test");
+
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, true), true, "all lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
@@ -195,9 +217,9 @@ testRun(void)
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
 
         // Make it look there is no lock
-        lockFdTest = lockFd[lockTypeBackup];
-        String *lockFileTest = strDup(lockFile[lockTypeBackup]);
-        lockTypeHeld = lockTypeNone;
+        lockFdTest = lockLocal.file[lockTypeBackup].fd;
+        String *lockFileTest = strDup(lockLocal.file[lockTypeBackup].name);
+        lockLocal.held = lockTypeNone;
 
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock again");
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");

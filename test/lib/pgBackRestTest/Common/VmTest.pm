@@ -64,6 +64,8 @@ use constant VM_OS_BASE_RHEL                                        => 'rhel';
 ####################################################################################################################################
 # Valid architecture list
 ####################################################################################################################################
+use constant VM_ARCH_AARCH64                                        => 'aarch64';
+    push @EXPORT, qw(VM_ARCH_AARCH64);
 use constant VM_ARCH_I386                                           => 'i386';
     push @EXPORT, qw(VM_ARCH_I386);
 use constant VM_ARCH_AMD64                                          => 'amd64';
@@ -418,7 +420,7 @@ sub vmArchBits
 {
     my $strVm = shift;
 
-    return ($oyVm->{$strVm}{&VM_ARCH} eq VM_ARCH_AMD64 ? 64 : 32);
+    return ($oyVm->{$strVm}{&VM_ARCH} eq VM_ARCH_I386 ? 32 : 64);
 }
 
 push @EXPORT, qw(vmArchBits);

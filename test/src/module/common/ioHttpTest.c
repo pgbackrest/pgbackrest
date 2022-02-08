@@ -525,7 +525,7 @@ testRun(void)
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_PTR(response->session, NULL, "session is not busy");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),  "{content-length: '380'}", "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)), "{content-length: '380'}", "check response headers");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with transfer encoding but no content");
@@ -541,7 +541,7 @@ testRun(void)
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_PTR(response->session, NULL, "session is not busy");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),  "{transfer-encoding: 'chunked'}", "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)), "{transfer-encoding: 'chunked'}", "check response headers");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with connection close but no content");
@@ -557,7 +557,7 @@ testRun(void)
                 TEST_RESULT_BOOL(httpResponseEof(response), true, "io is eof");
                 TEST_RESULT_PTR(response->session, NULL, "session is not busy");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),  "{connection: 'close'}", "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close'}", "check response headers");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error with content (with a few slow down errors)");
@@ -586,7 +586,7 @@ testRun(void)
                 TEST_RESULT_BOOL(httpResponseCodeOk(response), false, "check response code error");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "Not Found", "check response message");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),  "{}", "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)), "{}", "check response headers");
 
                 TEST_ERROR(
                     httpRequestError(request, response), ProtocolError,
@@ -616,8 +616,8 @@ testRun(void)
                 TEST_RESULT_UINT(httpResponseCode(response), 403, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "", "check empty response message");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),  "{content-length: '7'}", "check response headers");
-                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)),  "CONTENT", "check response content");
+                    httpHeaderToLog(httpResponseHeader(response)), "{content-length: '7'}", "check response headers");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "CONTENT", "check response content");
 
                 TEST_ERROR(
                     httpRequestError(request, response), ProtocolError,
@@ -653,8 +653,8 @@ testRun(void)
                             .content = BUFSTRDEF("012345678901234567890123456789")), true),
                     "request");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),  "{connection: 'close'}", "check response headers");
-                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)),  "01234567890123456789012345678901", "check response");
+                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close'}", "check response headers");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "01234567890123456789012345678901", "check response");
                 TEST_RESULT_UINT(httpResponseRead(response, bufNew(1), true), 0, "call internal read to check eof");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -676,7 +676,7 @@ testRun(void)
                     httpRequestResponse(
                         httpRequestNewP(client, STRDEF("GET"), httpUriEncode(STRDEF("/path/file 1.txt"), true)), true),
                     "request");
-                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)),  "01234567890123456789012345678901", "check response");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "01234567890123456789012345678901", "check response");
                 TEST_RESULT_UINT(httpResponseRead(response, bufNew(1), true), 0, "call internal read to check eof");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -711,12 +711,12 @@ testRun(void)
 
                 TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), "request");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)),  "{transfer-encoding: 'chunked'}", "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)), "{transfer-encoding: 'chunked'}", "check response headers");
 
                 Buffer *buffer = bufNew(35);
 
-                TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer),  "read response");
-                TEST_RESULT_STR_Z(strNewBuf(buffer),  "01234567890123456789012345678901012", "check response");
+                TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "01234567890123456789012345678901012", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close connection and end server process");

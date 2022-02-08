@@ -132,7 +132,6 @@ SRCS = \
 	common/lock.c \
 	common/stat.c \
 	common/type/json.c \
-	common/type/mcv.c \
 	config/config.c \
 	config/exec.c \
 	config/load.c \

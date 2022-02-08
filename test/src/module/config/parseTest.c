@@ -320,7 +320,7 @@ testRun(void)
         // Pass actual location of config files as "default" - not setting valueList above, so these are the only possible values
         // to choose.
         TEST_RESULT_STR_Z(
-            cfgFileLoad(storageTest, parseOptionList, configFile,  configIncludePath, oldConfigDefault),
+            cfgFileLoad(storageTest, parseOptionList, configFile, configIncludePath, oldConfigDefault),
             "[global]\n"
             "compress-level=3\n"
             "spool-path=/path/to/spool\n"

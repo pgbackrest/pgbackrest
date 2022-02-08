@@ -1109,8 +1109,6 @@ option:
     command:
       backup: {}
       check: {}
-      stanza-create: {}
-      stanza-upgrade: {}
     command-role:
       main: {}
 

@@ -440,7 +440,7 @@ Macros for defining groups of functions that implement various queries and comma
     sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam)                                  \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param =  strZ(strNewFmt(                                                                                                  \
+        .param = strZ(strNewFmt(                                                                                                   \
             "[\"select replayLsn::text,\\n"                                                                                        \
             "       (replayLsn > '%s')::bool as targetReached\\n"                                                                  \
             "  from pg_catalog.pg_last_" walNameParam "_replay_" lsnNameParam "() as replayLsn\"]", targetLsnParam)),              \
