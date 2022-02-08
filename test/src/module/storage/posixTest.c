@@ -109,7 +109,6 @@ testRun(void)
         TEST_RESULT_PTR(storageDriver(storageTest), storageTest->pub.driver, "check driver");
         TEST_RESULT_UINT(storageType(storageTest), storageTest->pub.type, "check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "check path feature");
-        TEST_RESULT_BOOL(storageFeature(storageTest, storageFeatureCompress), true, "check compress feature");
     }
 
     // *****************************************************************************************************************************
@@ -1581,7 +1580,6 @@ testRun(void)
         TEST_ASSIGN(storage, storageRepoGet(0, true), "get cifs repo storage");
         TEST_RESULT_UINT(storageType(storage), STORAGE_CIFS_TYPE, "check storage type");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), true, "check path feature");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), true, "check compress feature");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write object path sync false");
