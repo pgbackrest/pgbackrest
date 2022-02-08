@@ -701,12 +701,19 @@ testRun(void)
 
         lstAdd(archiveIdResult.walRangeList, &walRange);
         lstAdd(archiveIdResultList, &archiveIdResult);
+
+        String *errorResult = strNew();
         TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList, backupResultList),
+            verifyRender(archiveIdResultList, backupResultList, errorResult),
             "Results:\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
             "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
             "  backup: none found", "archive: no invalid file list");
+        TEST_RESULT_STR_Z(
+            errorResult,
+            "\n"
+            "  archiveId: 9.6-1    1 of 1 WAL are invalid\n"
+            "  backup: none found", "validate errorResult");
 
         VerifyInvalidFile invalidFile =
         {
@@ -725,13 +732,21 @@ testRun(void)
         lstAdd(backupResult.invalidFileList, &invalidFile);
         lstAdd(backupResultList, &backupResult);
 
+        errorResult = strNew();
         TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList, backupResultList),
+            verifyRender(archiveIdResultList, backupResultList, errorResult),
             "Results:\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
             "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0\n"
             "  backup: test-backup-label, status: invalid, total files checked: 1, total valid files: 0\n"
             "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0", "archive file missing, backup file missing");
+        TEST_RESULT_STR_Z(
+            errorResult,
+            "\n"
+            "  archiveId: 9.6-1    1 of 1 WAL are invalid\n"
+            "    files missing: 1\n"
+            "  backup: test-backup-label, status: invalid\n"
+            "    files missing: 1", "validate errorResult");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyAddInvalidWalFile() - file missing (coverage test)");
@@ -982,14 +997,22 @@ testRun(void)
 
         // Test verifyProcess directly
         unsigned int errorTotal = 0;
+        String *result = NULL;
+        String *errorResult = strNew();
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal),
+            verifyProcess(&errorTotal, errorResult),
             "Results:\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
-            "  backup: none found",
-            "verifyProcess() results");
+            "  backup: none found", "verifyProcess() no text, no verbose");
+        TEST_RESULT_STR_Z(
+            verifyOutputText(result, errorResult, &errorTotal),
+            "stanza: db\n"
+            "status: error (one or more archive(s) or backup(s) contains errors)\n"
+            "  archiveId: 11-2    2 of 4 WAL are invalid\n"
+            "    files with checksum invalid: 1, files with size invalid: 1\n"
+            "  backup: none found\n", "verifyOutputText() no text, no verbose");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
         TEST_RESULT_LOG(
             "P00   WARN: no backups exist in the repo\n"
@@ -1012,19 +1035,16 @@ testRun(void)
 
         // Verify text output, verbose, with verify failures
         errorTotal = 0;
-        String *result = NULL;
-        result = verifyProcess(&errorTotal);
+        errorResult = strNew();
+        result = verifyProcess(&errorTotal, errorResult);
         TEST_RESULT_STR_Z(
-            verifyOutputText(result, &errorTotal),
+            verifyOutputText(result, errorResult, &errorTotal),
             "stanza: db\n"
             "status: error (one or more archive(s) or backup(s) contains errors)\n"
-            "\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
-            "  backup: none found\n",
-            "verify text output, verbose, with failures");
-
+            "  backup: none found\n", "verify text output, verbose, with failures");
         TEST_RESULT_LOG(
             "P00   WARN: no backups exist in the repo\n"
             "P00   WARN: archive path '9.4-1' is empty\n"
@@ -1072,10 +1092,16 @@ testRun(void)
 
         errorTotal = 0;
         result = NULL;
-        result = verifyProcess(&errorTotal);
+        errorResult = strNew();
+        result = verifyProcess(&errorTotal, errorResult);
 
         // Verify none output
-        TEST_RESULT_STR_Z(verifyOutputText(result, &errorTotal), "", "verify none output");
+        TEST_RESULT_STR_Z(verifyOutputText(result, errorResult, &errorTotal),
+            "stanza: db\n"
+            "status: error (one or more archive(s) or backup(s) contains errors)\n"
+            "  archiveId: 11-2    2 of 7 WAL are invalid\n"
+            "    files with checksum invalid: 1, files with size invalid: 1\n"
+            "  backup: none found\n", "verify none output");
 
         TEST_RESULT_LOG(
             "P01  ERROR: [028]: invalid checksum "
@@ -1263,13 +1289,22 @@ testRun(void)
 
         errorTotal = 0;
         result = NULL;
-        result = verifyProcess(&errorTotal);
+        errorResult = strNew();
+        result = verifyProcess(&errorTotal, errorResult);
 
         // Verify text output, not verbose, with failures
         TEST_RESULT_STR_Z(
-            verifyOutputText(result, &errorTotal),
+            verifyOutputText(result, errorResult, &errorTotal),
             "stanza: db\n"
-            "status: error (one or more archive(s) or backup(s) contains errors)\n",
+            "status: error (one or more archive(s) or backup(s) contains errors)\n"
+            "  archiveId: 11-2    3 of 8 WAL are invalid\n"
+            "    files with checksum invalid: 1, files with size invalid: 1, other errors: 1\n"
+            "  backup: 20181119-152800F, status: manifest missing\n"
+            "  backup: 20181119-152810F, status: invalid\n"
+            "  backup: 20181119-152900F, status: invalid\n"
+            "    files with checksum invalid: 1\n"
+            "  backup: 20181119-152900F_20181119-152909D, status: invalid\n"
+            "    files missing: 1, files with checksum invalid: 1, other errors: 1\n",
             "verify text output, not verbose, with failures");
 
         TEST_RESULT_LOG(
@@ -1535,6 +1570,68 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("verifyProcess(), verifyOutputText(), none"))
+    {
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Load Parameters with multi-repo
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "none");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // Store valid archive/backup info files
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "valid archive.info.copy");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyOutputText(), none output, not verbose, with no verify failures");
+
+        #define TEST_NO_CURRENT_BACKUP                                                                                             \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "no current backups");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP, .comment = "no current backups copy");
+
+        // Create WAL file with just header info and small WAL size
+        Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
+        bufUsedSet(walBuffer, bufSize(walBuffer));
+        memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11, .size = 1024 * 1024}, walBuffer);
+        const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1)), walBuffer,
+            .comment = "valid WAL");
+
+        // Set log detail level to capture ranges (there should be none)
+        harnessLogLevelSet(logLevelDetail);
+
+        // Verify text output with no verify errors
+        unsigned int errorTotal = 0;
+        String *result = NULL;
+        String *errorResult = strNew();
+        result = verifyProcess(&errorTotal, errorResult);
+        TEST_RESULT_UINT(errorTotal, 0, "no errors");
+        TEST_RESULT_STR_Z(
+            verifyOutputText(result, errorResult, &errorTotal), "", "verify none output, not verbose, with no failures");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: no backups exist in the repo\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFE, wal stop: 000000020000000700000FFE");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("verifyProcess(), verifyOutputText(), text"))
     {
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1585,10 +1682,12 @@ testRun(void)
         // Verify text output with no verify errors
         unsigned int errorTotal = 0;
         String *result = NULL;
-        result = verifyProcess(&errorTotal);
+        String *errorResult = strNew();
+        result = verifyProcess(&errorTotal, errorResult);
         TEST_RESULT_STR_Z(
-            verifyOutputText(result, &errorTotal),
-            "",
+            verifyOutputText(result, errorResult, &errorTotal),
+            "stanza: db\n"
+            "status: ok",
             "verify text output, not verbose, with no failures");
 
         TEST_RESULT_LOG(
@@ -1647,17 +1746,16 @@ testRun(void)
 
         // Verify text output with no verify errors
         unsigned int errorTotal = 0;
+        String *errorResult = strNew();
         String *result = NULL;
-        result = verifyProcess(&errorTotal);
+        TEST_ASSIGN(result, verifyProcess(&errorTotal, errorResult), "assign verifyProcess result");
         TEST_RESULT_STR_Z(
-            verifyOutputText(result, &errorTotal),
+            verifyOutputText(result, errorResult, &errorTotal),
             "stanza: db\n"
             "status: ok\n"
-            "\n"
             "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
             "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
-            "  backup: none found\n",
-            "verify text output, verbose, with no failures");
+            "  backup: none found\n", "verify text output, verbose, with no failures");
 
         TEST_RESULT_LOG(
             "P00   WARN: no backups exist in the repo\n"

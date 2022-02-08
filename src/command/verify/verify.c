@@ -1244,7 +1244,7 @@ verifyAddInvalidWalFile(List *walRangeList, VerifyResult fileResult, const Strin
 Render the results of the verify command
 ***********************************************************************************************************************************/
 static String *
-verifyRender(List *archiveIdResultList, List *backupResultList)
+verifyRender(List *archiveIdResultList, List *backupResultList, String *errorResult)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, archiveIdResultList);             // Result list for all archive Ids in the repo
@@ -1258,7 +1258,10 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
 
     // Render archive results
     if (lstEmpty(archiveIdResultList))
+    {
         strCatZ(result, "\n  archiveId: none found");
+        strCatZ(errorResult, "\n  archiveId: none found");
+    }
     else
     {
         for (unsigned int archiveIdx = 0; archiveIdx < lstSize(archiveIdResultList); archiveIdx++)
@@ -1267,6 +1270,13 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
             strCatFmt(
                 result, "\n  archiveId: %s, total WAL checked: %u, total valid WAL: %u", strZ(archiveIdResult->archiveId),
                 archiveIdResult->totalWalFile, archiveIdResult->totalValidWal);
+
+            if (archiveIdResult->totalWalFile - archiveIdResult->totalValidWal != 0)
+            {
+                strCatFmt(errorResult, "\n  archiveId: %s", strZ(archiveIdResult->archiveId));
+                strCatFmt(errorResult, "    %u of %u WAL are invalid",
+                    archiveIdResult->totalWalFile - archiveIdResult->totalValidWal, archiveIdResult->totalWalFile);
+            }
 
             if (archiveIdResult->totalWalFile > 0)
             {
@@ -1305,13 +1315,34 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
                 strCatFmt(
                     result, "\n    missing: %u, checksum invalid: %u, size invalid: %u, other: %u", errMissing, errChecksum,
                     errSize, errOther);
+
+                if (errMissing + errChecksum + errSize + errOther > 0)
+                    strCatZ(errorResult, "\n    ");
+
+                if (errMissing != 0)
+                    strCatFmt(errorResult, "files missing: %u, ", errMissing);
+
+                if (errChecksum != 0)
+                    strCatFmt(errorResult, "files with checksum invalid: %u, ", errChecksum);
+
+                if (errSize != 0)
+                    strCatFmt(errorResult, "files with size invalid: %u, ", errSize);
+
+                if (errOther != 0)
+                    strCatFmt(errorResult, "other errors: %u", errOther);
+
+                if (strEndsWithZ(errorResult, ", "))
+                    strTrunc(errorResult, (int)strSize(errorResult) - 2);
             }
         }
     }
 
     // Render backup results
     if (lstEmpty(backupResultList))
+    {
         strCatZ(result, "\n  backup: none found");
+        strCatZ(errorResult, "\n  backup: none found");
+    }
     else
     {
         for (unsigned int backupIdx = 0; backupIdx < lstSize(backupResultList); backupIdx++)
@@ -1350,6 +1381,9 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
                 result, "\n  backup: %s, status: %s, total files checked: %u, total valid files: %u",
                 strZ(backupResult->backupLabel), strZ(status), backupResult->totalFileVerify, backupResult->totalFileValid);
 
+            if (!strEqZ(status, "valid") && !(strEqZ(status, "in-progress")))
+                strCatFmt(errorResult, "\n  backup: %s, status: %s", strZ(backupResult->backupLabel), strZ(status));
+
             if (backupResult->totalFileVerify > 0)
             {
                 unsigned int errMissing = 0;
@@ -1374,6 +1408,24 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
                 strCatFmt(
                     result, "\n    missing: %u, checksum invalid: %u, size invalid: %u, other: %u", errMissing, errChecksum,
                     errSize, errOther);
+
+                if (errMissing + errChecksum + errSize + errOther > 0)
+                    strCatZ(errorResult, "\n    ");
+
+                if (errMissing != 0)
+                    strCatFmt(errorResult, "files missing: %u, ", errMissing);
+
+                if (errChecksum != 0)
+                    strCatFmt(errorResult, "files with checksum invalid: %u, ", errChecksum);
+
+                if (errSize != 0)
+                    strCatFmt(errorResult, "files with size invalid: %u, ", errSize);
+
+                if (errOther != 0)
+                    strCatFmt(errorResult, "other errors: %u", errOther);
+
+                if (strEndsWithZ(errorResult, ", "))
+                    strTrunc(errorResult, (int)strSize(errorResult) - 2);
             }
         }
     }
@@ -1385,7 +1437,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
 Process the verify command
 ***********************************************************************************************************************************/
 static String *
-verifyProcess(unsigned int *errorTotal)
+verifyProcess(unsigned int *errorTotal, String *errorResult)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_TEST_PARAM_P(UINT, errorTotal);                    // Pointer to overall job error total
@@ -1407,6 +1459,7 @@ verifyProcess(unsigned int *errorTotal)
         if (backupInfo == NULL)
         {
             LOG_ERROR(errorTypeCode(&FormatError), "No usable backup.info file");
+            strCatZ(errorResult, "\n  No usable backup info file");
             (*errorTotal)++;
         }
 
@@ -1417,6 +1470,7 @@ verifyProcess(unsigned int *errorTotal)
         if (archiveInfo == NULL)
         {
             LOG_ERROR(errorTypeCode(&FormatError), "No usable archive.info file");
+            strCatZ(errorResult, "\n  No usable archive.info file");
             (*errorTotal)++;
         }
 
@@ -1431,6 +1485,7 @@ verifyProcess(unsigned int *errorTotal)
             CATCH_ANY()
             {
                 LOG_ERROR(errorTypeCode(&FormatError), errorMessage());
+                strCatFmt(errorResult, "%s%s", LF_Z, errorMessage());
                 (*errorTotal)++;
             }
             TRY_END();
@@ -1615,10 +1670,13 @@ verifyProcess(unsigned int *errorTotal)
                 // ??? Need to do the final reconciliation - checking backup required WAL against, valid WAL
 
                 // Report results
-                resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList);
+                resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList, errorResult);
             }
             else
+            {
                 LOG_WARN("no archives or backups exist in the repo");
+                strCatZ(errorResult, "\n  no archives or backups exist in the repo");
+            }
 
             (*errorTotal) += jobData.jobErrorTotal;
         }
@@ -1638,7 +1696,7 @@ verifyProcess(unsigned int *errorTotal)
 Format the text result
 ***********************************************************************************************************************************/
 static String *
-verifyOutputText(const String *verifyresult, const unsigned int *errorTotal)
+verifyOutputText(const String *verifyresult, const String *errorResult, const unsigned int *errorTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_TEST_PARAM(STRING, verifyresult);                  // Result string from verifyProcess()
@@ -1649,29 +1707,38 @@ verifyOutputText(const String *verifyresult, const unsigned int *errorTotal)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *resultStr = strNew();
+        String *status = strNew();
 
+        if (*errorTotal == 0)
+            strCatFmt(status, "%s", VERIFY_STATUS_OK);
+        else
+            strCatFmt(status, "%s", VERIFY_STATUS_ERROR " (one or more archive(s) or backup(s) contains errors)");
+
+        // If errors or if output requested then init output content
+        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT || *errorTotal != 0)
+        {
+            // Add stanza and status to output
+            strCatFmt(
+                resultStr, "%s%s%s", strZ(strNewFmt("stanza: %s", strZ(cfgOptionStr(cfgOptStanza)))), LF_Z,
+                strZ(strNewFmt("status: %s", strZ(status))));
+        }
+
+        // Output text if requested. Errors will always be output
         if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
         {
-            String *status = strNew();
-
-            if (*errorTotal == 0)
-                strCatFmt(status, "%s%s", VERIFY_STATUS_OK, LF_Z);
-            else
-                strCatFmt(status, "%s%s", VERIFY_STATUS_ERROR " (one or more archive(s) or backup(s) contains errors)", LF_Z);
-
-            // Output verbose response if requested otherwise only output on error
+            // Add verbose response if requested, otherwise only errors if they exist
             if (cfgOptionBool(cfgOptVerbose))
             {
-                strCat(resultStr, strNewFmt("stanza: %s", strZ(cfgOptionStr(cfgOptStanza))));
-                strCat(resultStr, strNewFmt("%sstatus: %s", LF_Z, strZ(status)));
                 strCatFmt(resultStr, "%s%s", strZ(strSub(verifyresult, (unsigned int)strChr(verifyresult, ':') + 1)), LF_Z);
             }
             else if (*errorTotal != 0)
             {
-                strCatFmt(
-                    resultStr, "%s%s%s", strZ(strNewFmt("stanza: %s", strZ(cfgOptionStr(cfgOptStanza)))), LF_Z,
-                    strZ(strNewFmt("status: %s", strZ(status))));
+                strCatFmt(resultStr, "%s%s", strZ(errorResult), LF_Z);
             }
+        }
+        else if (*errorTotal != 0)
+        {
+            strCatFmt(resultStr, "%s%s", strZ(errorResult), LF_Z);
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -1694,14 +1761,17 @@ cmdVerify(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         unsigned int errorTotal = 0;
-        String *result = verifyProcess(&errorTotal);
+
+        String *errorResult = strNew();                             // For non-verbose error output if needed
+
+        String *result = verifyProcess(&errorTotal, errorResult);
 
         // Output results if any
         if (strSize(result) > 0)
             LOG_INFO_FMT("%s", strZ(result));
 
-        // Output results to console if requested
-        ioFdWriteOneStr(STDOUT_FILENO, verifyOutputText(result, &errorTotal));
+        // If log-level-console is >= info should we bypass this?
+        ioFdWriteOneStr(STDOUT_FILENO, verifyOutputText(result, errorResult, &errorTotal));
 
         // Throw an error if any encountered
         if (errorTotal > 0)

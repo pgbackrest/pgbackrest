@@ -2368,7 +2368,7 @@
                         <summary>Output type.</summary>
 
                         <text>
-                            <p>Output may be none (default) or text. Requesting text generates ouput to stdout. Output will always be written to the verify command logfile.</p>
+                            <p>Output may be none (default) or text. Requesting text generates ouput to stdout. Errors will always be output. Output will always be written to the verify command logfile.</p>
                         </text>
 
                         <example>text</example>
