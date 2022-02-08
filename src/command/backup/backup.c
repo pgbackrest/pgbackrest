@@ -1675,6 +1675,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                     continue;
                 }
 
+                // Add common parameters before first file
                 if (param == NULL)
                 {
                     param = protocolCommandParam(command);

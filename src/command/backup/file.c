@@ -62,6 +62,7 @@ backupFile(
     {
         result = lstNewP(sizeof(BackupFileResult));
 
+        // Check files to determine which ones need to be copied
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
             const BackupFile *const file = lstGet(fileList, fileIdx);
@@ -192,7 +193,7 @@ backupFile(
         // Are the file compressible during the copy?
         const bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
 
-        // Copy the files
+        // Copy files that need to be copied
         StorageWrite *write = NULL;
         uint64_t bundleOffset = 0;
 
