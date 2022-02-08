@@ -1304,7 +1304,7 @@ testRun(void)
                 TEST_RESULT_VOID(storagePathRemoveP(s3, STRDEF("/path/to"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("remove error");
+                TEST_TITLE("path remove error and retry");
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
                 testResponseP(
@@ -1333,12 +1333,13 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                            "<Error><Key>sample2.txt</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error>"
+                            "<Error><Key>path/sample2.txt</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error>"
                             "</DeleteResult>");
 
-                TEST_ERROR(
-                    storagePathRemoveP(s3, STRDEF("/path"), .recurse = true), FileRemoveError,
-                    "unable to remove file 'sample2.txt': [AccessDenied] Access Denied");
+                testRequestP(service, s3, HTTP_VERB_DELETE, "/bucket/path/sample2.txt");
+                testResponseP(service, .code = 204);
+
+                TEST_RESULT_VOID(storagePathRemoveP(s3, STRDEF("/path"), .recurse = true), "remove path");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove file");
