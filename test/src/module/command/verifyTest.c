@@ -712,8 +712,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             errorResult,
             "\n"
-            "  archiveId: 9.6-1    1 of 1 WAL are invalid\n"
-            "  backup: none found", "validate errorResult");
+            "  archiveId: 9.6-1    1 of 1 WAL are invalid", "validate errorResult");
 
         VerifyInvalidFile invalidFile =
         {
@@ -1011,8 +1010,7 @@ testRun(void)
             "stanza: db\n"
             "status: error (one or more archive(s) or backup(s) contains errors)\n"
             "  archiveId: 11-2    2 of 4 WAL are invalid\n"
-            "    files with checksum invalid: 1, files with size invalid: 1\n"
-            "  backup: none found\n", "verifyOutputText() no text, no verbose");
+            "    files with checksum invalid: 1, files with size invalid: 1\n", "verifyOutputText() no text, no verbose");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
         TEST_RESULT_LOG(
             "P00   WARN: no backups exist in the repo\n"
@@ -1100,8 +1098,7 @@ testRun(void)
             "stanza: db\n"
             "status: error (one or more archive(s) or backup(s) contains errors)\n"
             "  archiveId: 11-2    2 of 7 WAL are invalid\n"
-            "    files with checksum invalid: 1, files with size invalid: 1\n"
-            "  backup: none found\n", "verify none output");
+            "    files with checksum invalid: 1, files with size invalid: 1\n", "verify none output");
 
         TEST_RESULT_LOG(
             "P01  ERROR: [028]: invalid checksum "
