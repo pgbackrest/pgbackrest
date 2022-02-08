@@ -1175,7 +1175,7 @@ sub configCreate
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-timestamp'} = 'n';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'buffer-size'} = '64k';
 
-    if (!$self->synthetic())
+    if ($oParam->{bBundle})
     {
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'bundle'} = 'y';
         # Set bundle size smaller for testing and because FakeGCS does not do multi-part upload
@@ -2214,8 +2214,13 @@ sub restoreCompare
         $oActualManifest->set(
             MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef,
             $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE});
-        $oActualManifest->set(
-            MANIFEST_SECTION_BACKUP, 'backup-bundle', undef, $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
+
+        if (defined($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'}))
+        {
+            $oActualManifest->set(
+                MANIFEST_SECTION_BACKUP, 'backup-bundle', undef,
+                $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
+        }
 
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef,
                               ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LSN_START});

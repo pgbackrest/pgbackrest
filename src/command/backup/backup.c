@@ -1508,11 +1508,6 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
 
         MEM_CONTEXT_BEGIN(lstMemContext(jobData->queueList))
         {
-            backupProcessQueueComparatorBundle = cfgOptionBool(cfgOptBundle);
-
-            if (backupProcessQueueComparatorBundle)
-                backupProcessQueueComparatorBundleSize = cfgOptionUInt64(cfgOptBundleSize);
-
             for (unsigned int queueIdx = 0; queueIdx < strLstSize(targetList) + queueOffset; queueIdx++)
             {
                 List *queue = lstNewP(sizeof(ManifestFile *), .comparator = backupProcessQueueComparator);
@@ -1598,6 +1593,8 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
 
         // Sort the queues
         backupProcessQueueComparatorManifest = manifest;
+        backupProcessQueueComparatorBundle = jobData->bundle;
+        backupProcessQueueComparatorBundleSize = jobData->bundleSize;
 
         for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
             lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderDesc);
