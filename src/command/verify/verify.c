@@ -1261,7 +1261,6 @@ verifyRender(List *archiveIdResultList, List *backupResultList, String *errorRes
     if (lstEmpty(archiveIdResultList))
     {
         strCatZ(result, "\n  archiveId: none found");
-//jrt        strCatZ(errorResult, "\n  archiveId: none found");
     }
     else
     {
@@ -1342,7 +1341,6 @@ verifyRender(List *archiveIdResultList, List *backupResultList, String *errorRes
     if (lstEmpty(backupResultList))
     {
         strCatZ(result, "\n  backup: none found");
-//jrt        strCatZ(errorResult, "\n  backup: none found");
     }
     else
     {
@@ -1677,7 +1675,6 @@ verifyProcess(unsigned int *errorTotal, String *errorResult)
             else
             {
                 LOG_WARN("no archives or backups exist in the repo");
-//jrt                strCatZ(errorResult, "\n  no archives or backups exist in the repo");
             }
 
             (*errorTotal) += jobData.jobErrorTotal;
