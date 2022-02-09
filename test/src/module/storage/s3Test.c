@@ -411,7 +411,6 @@ testRun(void)
 
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
-                TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("coverage for noop functions");
@@ -473,7 +472,6 @@ testRun(void)
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_STR(driver->credRole, credRole, "check role");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
-                TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;

@@ -77,7 +77,6 @@ testRun(void)
     {
         TEST_RESULT_UINT(storageInterface(storageRepoWrite).feature, storageInterface(storageTest).feature, "check features");
         TEST_RESULT_BOOL(storageFeature(storageRepoWrite, storageFeaturePath), true, "check path feature");
-        TEST_RESULT_BOOL(storageFeature(storageRepoWrite, storageFeatureCompress), true, "check compress feature");
         TEST_RESULT_STR_Z(storagePathP(storageRepo, NULL), TEST_PATH "/repo128", "check repo path");
         TEST_RESULT_STR_Z(storagePathP(storageRepoWrite, NULL), TEST_PATH "/repo128", "check repo write path");
         TEST_RESULT_STR_Z(storagePathP(storagePgWrite, NULL), TEST_PATH "/pg256", "check pg write path");

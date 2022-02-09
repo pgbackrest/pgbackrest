@@ -546,7 +546,7 @@ storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfacePosix =
 {
-    .feature = 1 << storageFeaturePath | 1 << storageFeatureCompress,
+    .feature = 1 << storageFeaturePath,
 
     .info = storagePosixInfo,
     .infoList = storagePosixInfoList,
