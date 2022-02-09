@@ -34,6 +34,18 @@
 
                         <p>Add support for <proper>AWS</proper> <proper>S3</proper> server-side encryption using <proper>KMS</proper>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="600"/>
+                        <github-pull-request id="1651"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add backup type filter to <cmd>info</cmd> command.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
