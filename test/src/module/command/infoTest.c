@@ -1607,6 +1607,48 @@ testRun(void)
             "text - backup set requested");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo: filter by backup type");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgRawZ(argList2, cfgOptType, "full");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: ok\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
+            "\n"
+            "        full backup: 20181119-152138F\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
+            "            database size: 19.2MB, database backup size: 19.2MB\n"
+            "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, database backup size: 25.7MB\n"
+            "            repo1: backup set size: 3MB, backup size: 3KB\n"
+            "\n"
+            "        full backup: 20201116-200000F\n"
+            "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+            "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
+            "            database size: 25.7MB, database backup size: 25.7MB\n"
+            "            repo2: backup set size: 3MB, backup size: 3KB\n"
+            "            error(s) detected during backup\n",
+            "text - multi-repo, filter by backup type");
+
+        //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: read encrypted manifest and confirm requested database found without setting --repo");
 
         argList2 = strLstDup(argListMultiRepo);

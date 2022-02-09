@@ -2270,6 +2270,7 @@
                         <example>json</example>
                     </option>
 
+                    <!-- ======================================================================================================= -->
                     <option id="set" name="Set">
                         <summary>Backup set to detail.</summary>
 
@@ -2278,6 +2279,17 @@
                         </text>
 
                         <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+
+                    <!-- ======================================================================================================= -->
+                    <option id="type" name="Type">
+                        <summary>Filter on backup type.</summary>
+
+                        <text>
+                            <p>Filter the output using one of the following backup types: <id>full</id>, <id>incr</id>, <id>diff</id>.</p>
+                        </text>
+
+                        <example>full</example>
                     </option>
                 </option-list>
             </command>
