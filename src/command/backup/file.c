@@ -295,25 +295,6 @@ backupFile(
         if (write != NULL)
             ioWriteClose(storageWriteIo(write));
 
-        for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
-        {
-            BackupFileResult *const fileResult = lstGet(result, fileIdx);
-
-            // !!! THIS IS NOT GOOD BECAUSE WE NEED THE BUNDLE SIZE AND REPO SIZE TO MATCH EXACTLY
-            // If the file was copied get the repo size only if the storage can store the files with a different size than what was
-            // written. This has to be checked after the file is at rest because filesystem compression may affect the actual repo
-            // size and this cannot be calculated in stream.
-            //
-            // If the file was checksummed then get the size in all cases since we don't already have it.
-            if (((fileResult->backupCopyResult == backupCopyResultCopy || fileResult->backupCopyResult == backupCopyResultReCopy) &&
-                    storageFeature(storageRepo(), storageFeatureCompress) &&
-                    strstr(strZ(repoFile), "/" MANIFEST_PATH_BUNDLE "/") == NULL) ||
-                    fileResult->backupCopyResult == backupCopyResultChecksum)
-            {
-                fileResult->repoSize = storageInfoP(storageRepo(), repoFile).size;
-            }
-        }
-
         lstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

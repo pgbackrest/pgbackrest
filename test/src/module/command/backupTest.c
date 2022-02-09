@@ -701,46 +701,6 @@ testRun(void)
         // Create a pg file to backup
         HRN_STORAGE_PUT_Z(storagePgWrite(), strZ(pgFile), "atestfile");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("copy file to repo success - no prior checksum, no compression, no pageChecksum, no delta, no hasReference");
-
-        // With the expected backupCopyResultCopy, unset the storageFeatureCompress bit for the storageRepo for code coverage
-        uint64_t feature = storageRepo()->pub.interface.feature;
-        ((Storage *)storageRepo())->pub.interface.feature = feature & ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
-
-        fileList = lstNewP(sizeof(BackupFile));
-
-        file = (BackupFile)
-        {
-            .pgFile = pgFile,
-            .pgFileIgnoreMissing = false,
-            .pgFileSize = 9999999,
-            .pgFileCopyExactSize = true,
-            .pgFileChecksum = NULL,
-            .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
-            .manifestFile = pgFile,
-            .manifestFileHasReference = false,
-        };
-
-        lstAdd(fileList, &file);
-
-        repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(file.manifestFile));
-
-        TEST_ASSIGN(
-            result,
-            *(BackupFileResult *)lstGet(backupFile(repoFile, compressTypeNone, 1, false, cipherTypeNone, NULL, fileList), 0),
-            "pg file exists and shrunk, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
-
-        ((Storage *)storageRepo())->pub.interface.feature = feature;
-
-        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
-        TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
-        TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum matches");
-        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
-        TEST_STORAGE_EXISTS(storageRepo(), strZ(backupPathFile));
-
         // Remove repo file
         HRN_STORAGE_REMOVE(storageRepoWrite(), strZ(backupPathFile));
 
@@ -767,6 +727,8 @@ testRun(void)
         };
 
         lstAdd(fileList, &file);
+
+        repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(file.manifestFile));
 
         TEST_ASSIGN(
             result,
@@ -1073,7 +1035,7 @@ testRun(void)
             *(BackupFileResult *)lstGet(backupFile(repoFile, compressTypeGz, 3, false, cipherTypeNone, NULL, fileList), 0),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
-        TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
+        TEST_RESULT_UINT(result.repoSize, 0, "repo size not calculated");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultChecksum, "checksum file");
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "compressed repo file checksum matches");
         TEST_STORAGE_EXISTS(
