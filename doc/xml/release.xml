@@ -59,6 +59,18 @@
 
                         <p>Remove support for <proper>PostgreSQL</proper> <id>8.3</id>/<id>8.4</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1652"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove logic that tried to determine additional file system compression.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
