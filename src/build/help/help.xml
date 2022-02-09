@@ -2270,7 +2270,7 @@
                         <example>json</example>
                     </option>
 
-                    <!-- OPERATION - INFO COMMAND - SET OPTION -->
+                    <!-- ======================================================================================================= -->
                     <option id="set" name="Set">
                         <summary>Backup set to detail.</summary>
 
@@ -2281,12 +2281,12 @@
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
 
-                    <!-- OPERATION - INFO COMMAND - TYPE OPTION -->
+                    <!-- ======================================================================================================= -->
                     <option id="type" name="Type">
-                        <summary>Filter output to only show the specified backup type.</summary>
+                        <summary>Filter on backup type.</summary>
 
                         <text>
-                            <p>The following backup types are supported: <id>full</id>, <id>incr</id>, <id>diff</id>.</p>
+                            <p>Filter the output using one of the following backup types: <id>full</id>, <id>incr</id>, <id>diff</id>.</p>
                         </text>
 
                         <example>full</example>
