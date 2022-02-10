@@ -623,7 +623,8 @@ backupList(
         repoData->backupIdx++;
 
         // Add the backup data to the backup section
-        backupListAdd(backupSection, &backupData, backupLabel, repoData);
+        if (!cfgOptionTest(cfgOptType) || cfgOptionStrId(cfgOptType) == backupData.backupType)
+            backupListAdd(backupSection, &backupData, backupLabel, repoData);
 
         backupTotalProcessed++;
     }

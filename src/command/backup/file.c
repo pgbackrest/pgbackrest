@@ -261,18 +261,6 @@ backupFile(
             else
                 result.backupCopyResult = backupCopyResultSkip;
         }
-
-        // If the file was copied get the repo size only if the storage can store the files with a different size than what was
-        // written. This has to be checked after the file is at rest because filesystem compression may affect the actual repo size
-        // and this cannot be calculated in stream.
-        //
-        // If the file was checksummed then get the size in all cases since we don't already have it.
-        if (((result.backupCopyResult == backupCopyResultCopy || result.backupCopyResult == backupCopyResultReCopy) &&
-                storageFeature(storageRepo(), storageFeatureCompress)) ||
-            result.backupCopyResult == backupCopyResultChecksum)
-        {
-            result.repoSize = storageInfoP(storageRepo(), repoPathFile).size;
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
