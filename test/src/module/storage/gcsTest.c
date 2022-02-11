@@ -226,7 +226,6 @@ testRun(void)
         TEST_RESULT_UINT(((StorageGcs *)storageDriver(storage))->chunkSize, STORAGE_GCS_CHUNKSIZE_DEFAULT, "check chunk size");
         TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->token, TEST_TOKEN_STR, "check token");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "check path feature");
-        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "check compress feature");
     }
 
     // *****************************************************************************************************************************

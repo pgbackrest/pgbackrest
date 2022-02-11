@@ -16,6 +16,10 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.38dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: Repository size reported by the <cmd>info</cmd> command is now entirely based on what <backrest/> has written to storage. Previously, in certain cases, <backrest/> could detect if additional compression was being applied by the storage but this is no longer supported.</p>
+                </text>
+
                 <release-feature-list>
                     <release-item>
                         <github-issue id="1430"/>
@@ -29,6 +33,18 @@
                         </release-item-contributor-list>
 
                         <p>Add support for <proper>AWS</proper> <proper>S3</proper> server-side encryption using <proper>KMS</proper>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="600"/>
+                        <github-pull-request id="1651"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add backup type filter to <cmd>info</cmd> command.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -55,6 +71,18 @@
 
                         <p>Remove support for <proper>PostgreSQL</proper> <id>8.3</id>/<id>8.4</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1652"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove logic that tried to determine additional file system compression.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -71,6 +99,7 @@
                         <commit subject="Pack manifest file structs to save memory."/>
                         <commit subject="Optimization for jsonFromStrInternal()."/>
                         <commit subject="Simplify manifest file defaults."/>
+                        <commit subject="Simplify filename construction in command/verify module."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -112,6 +141,17 @@
             </release-core-list>
 
             <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stefan.fercot"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove unused <br-option>backup-standby</br-option> option from stanza commands.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-issue id="1585"/>

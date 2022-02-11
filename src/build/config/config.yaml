@@ -429,6 +429,12 @@ option:
           - diff
           - incr
         default: incr
+      info:
+        required: false
+        allow-list:
+          - full
+          - diff
+          - incr
       restore:
         allow-list:
           - lsn
@@ -1106,8 +1112,6 @@ option:
     command:
       backup: {}
       check: {}
-      stanza-create: {}
-      stanza-upgrade: {}
     command-role:
       main: {}
 
