@@ -80,7 +80,7 @@ ERROR_DEFINE( 96, ParamInvalidError, false, RuntimeError);
 ERROR_DEFINE( 97, PathCloseError, false, RuntimeError);
 ERROR_DEFINE( 98, FileInfoError, false, RuntimeError);
 ERROR_DEFINE( 99, JsonFormatError, false, RuntimeError);
-ERROR_DEFINE(100, KernelError, true, RuntimeError);
+ERROR_DEFINE(100, KernelError, false, RuntimeError);
 ERROR_DEFINE(101, ServiceError, false, RuntimeError);
 ERROR_DEFINE(102, ExecuteError, false, RuntimeError);
 ERROR_DEFINE(103, RepoInvalidError, false, RuntimeError);

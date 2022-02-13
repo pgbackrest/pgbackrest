@@ -92,9 +92,7 @@ file-info: 98
 json-format: 99
 
 # An error from the kernel that there's nothing we can do about.  It should always be fatal.
-kernel:
-  code: 100
-  fatal: true
+kernel: 100
 
 # An error from a service that is not our fault, e.g. 5xx errors from an http server.  These may be retried.
 service: 101
