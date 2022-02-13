@@ -3,7 +3,9 @@
 # Definitions for all C errors, auto-generated to src/common/error.auto.c/h.
 
 # Errors in the code that it should not be possible for the user to encounter -- i.e., a likely bug
-assert: 25
+assert:
+  code: 25
+  fatal: true
 
 checksum: 26
 config: 27
@@ -73,7 +75,9 @@ path-exists: 92
 file-exists: 93
 
 # Memory allocation failed
-memory: 94
+memory:
+  code: 94
+  fatal: true
 
 crypto: 95
 param-invalid: 96
@@ -88,7 +92,9 @@ file-info: 98
 json-format: 99
 
 # An error from the kernel that there's nothing we can do about.  It should always be fatal.
-kernel: 100
+kernel:
+  code: 100
+  fatal: true
 
 # An error from a service that is not our fault, e.g. 5xx errors from an http server.  These may be retried.
 service: 101

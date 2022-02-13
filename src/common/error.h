@@ -67,6 +67,9 @@ Functions to get information about a generic error type
 // Error type code
 int errorTypeCode(const ErrorType *errorType);
 
+// Is the error type fatal
+bool errorTypeFatal(const ErrorType *errorType);
+
 // Get error type using a code
 const ErrorType *errorTypeFromCode(int code);
 
@@ -87,6 +90,9 @@ const ErrorType *errorType(void);
 
 // Error code (pulled from error type)
 int errorCode(void);
+
+// Is the error fatal?
+bool errorFatal(void);
 
 // Error filename
 const char *errorFileName(void);
@@ -136,15 +142,23 @@ Catch a specific error thrown in the try block
 ***********************************************************************************************************************************/
 #define CATCH(errorTypeCatch)                                                                                                      \
         }                                                                                                                          \
-        else if (errorInternalCatch(&errorTypeCatch))                                                                              \
+        else if (errorInternalCatch(&errorTypeCatch, true))                                                                        \
+        {
+
+/***********************************************************************************************************************************
+Catch any non-fatal error thrown in the try block
+***********************************************************************************************************************************/
+#define CATCH_ANY()                                                                                                                \
+        }                                                                                                                          \
+        else if (errorInternalCatch(&RuntimeError, false))                                                                         \
         {
 
 /***********************************************************************************************************************************
 Catch any error thrown in the try block
 ***********************************************************************************************************************************/
-#define CATCH_ANY()                                                                                                                \
+#define CATCH_FATAL()                                                                                                              \
         }                                                                                                                          \
-        else if (errorInternalCatch(&RuntimeError))                                                                                \
+        else if (errorInternalCatch(&RuntimeError, true))                                                                          \
         {
 
 /***********************************************************************************************************************************
@@ -291,7 +305,7 @@ void errorInternalTryBegin(const char *fileName, const char *functionName, int f
 jmp_buf *errorInternalJump(void);
 
 // True when in catch state and the expected error matches
-bool errorInternalCatch(const ErrorType *errorTypeCatch);
+bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch);
 
 // Propagate the error up so it can be caught
 void errorInternalPropagate(void) __attribute__((__noreturn__));

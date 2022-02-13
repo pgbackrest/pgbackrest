@@ -12,9 +12,9 @@ ERROR_DECLARE(TestParent1Error);
 ERROR_DECLARE(TestParent2Error);
 ERROR_DECLARE(TestChildError);
 
-ERROR_DEFINE(101, TestParent1Error, TestParent1Error);
-ERROR_DEFINE(102, TestParent2Error, TestParent1Error);
-ERROR_DEFINE(200, TestChildError, TestParent2Error);
+ERROR_DEFINE(101, TestParent1Error, false, TestParent1Error);
+ERROR_DEFINE(102, TestParent2Error, false, TestParent1Error);
+ERROR_DEFINE(200, TestChildError, false, TestParent2Error);
 
 /***********************************************************************************************************************************
 testTryRecurse - test to blow up try stack
@@ -164,6 +164,11 @@ testRun(void)
 
                         THROW(AssertError, bigMessage);
                     }
+                    CATCH_ANY()
+                    {
+                        // Catch should not be executed since this error is fatal
+                        assert(false);
+                    }
                     TRY_END();
                 }
                 CATCH(AssertError)
@@ -179,7 +184,7 @@ testRun(void)
                 }
                 TRY_END();
             }
-            CATCH_ANY()
+            CATCH_FATAL()
             {
                 assert(testErrorHandlerTryDepth == 2);
 
@@ -268,7 +273,7 @@ testRun(void)
         {
             THROW_CODE(25, "message");
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             assert(errorCode() == 25);
             assert(strcmp(errorMessage(), "message") == 0);
@@ -311,7 +316,7 @@ testRun(void)
             errno = E2BIG;
             THROW_ON_SYS_ERROR(true, AssertError, "message");
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -325,7 +330,7 @@ testRun(void)
             errno = 0;
             THROW_ON_SYS_ERROR_FMT(true, AssertError, "message %d", 77);
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -339,7 +344,7 @@ testRun(void)
             errno = E2BIG;
             THROW_ON_SYS_ERROR_FMT(true, AssertError, "message %d", 77);
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -353,7 +358,7 @@ testRun(void)
             errno = 0;
             THROW_SYS_ERROR(AssertError, "message");
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -367,7 +372,7 @@ testRun(void)
             errno = EIO;
             THROW_SYS_ERROR_FMT(AssertError, "message %d", 1);
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
@@ -381,7 +386,7 @@ testRun(void)
             errno = 0;
             THROW_SYS_ERROR_FMT(AssertError, "message %d", 1);
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
