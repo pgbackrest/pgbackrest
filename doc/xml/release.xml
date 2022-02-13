@@ -126,6 +126,16 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Improve protocol module error test for protocolClientFree()."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Do not retry fatal errors.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Add ioBufferReadNewOpen() and ioBufferWriteNewOpen()."/>
                         <commit subject="Refactor lock code."/>
 

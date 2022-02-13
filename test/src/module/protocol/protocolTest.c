@@ -279,10 +279,13 @@ testRun(void)
         // Create bogus client and exec to generate errors
         ProtocolHelperClient protocolHelperClient = {0};
 
+        IoWrite *write = ioFdWriteNewOpen(STRDEF("invalid"), 0, 0);
+
         OBJ_NEW_BEGIN(ProtocolClient)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
-            *protocolHelperClient.client = (ProtocolClient){.name = STRDEF("test"), .state = protocolClientStateIdle};
+            *protocolHelperClient.client = (ProtocolClient){
+                .name = STRDEF("test"), .state = protocolClientStateIdle, .write = write};
             memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
         }
         OBJ_NEW_END();
@@ -298,7 +301,7 @@ testRun(void)
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
 
         TEST_RESULT_LOG(
-            "P00   WARN: assertion 'write != NULL' failed\n"
+            "P00   WARN: unable to write to invalid: [9] Bad file descriptor\n"
             "P00   WARN: unable to wait on child process: [10] No child processes");
     }
 
