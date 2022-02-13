@@ -56,6 +56,7 @@ bldErrParseErrorList(Yaml *const yaml)
             {
                 errRaw.code = cvtZToUInt(strZ(errDef.value));
             }
+            // Else there may be multiple definitions
             else
             {
                 yamlEventCheck(errDef, yamlEventTypeMapBegin);
