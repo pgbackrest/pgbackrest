@@ -127,6 +127,7 @@
 
                     <release-item>
                         <commit subject="Improve protocol module error test for protocolClientFree()."/>
+                        <commit subject="Use normal error for protocol module error retry test."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
