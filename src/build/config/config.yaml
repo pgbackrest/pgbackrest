@@ -305,8 +305,8 @@ option:
       verify:
         default: none
         allow-list:
-          - text
           - none
+          - text
     allow-list:
       - text
       - json

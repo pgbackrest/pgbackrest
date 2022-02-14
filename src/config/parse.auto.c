@@ -3030,8 +3030,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_ALLOW_LIST
                 (
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdText),
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdNone),
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdText),
                 ),
 
                 PARSE_RULE_OPTIONAL_DEFAULT
