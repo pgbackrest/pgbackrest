@@ -8727,6 +8727,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
@@ -8751,6 +8752,23 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(parseRuleValStrIdIncr),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_incr_QT),
                 ),
+            ),
+
+            PARSE_RULE_OPTIONAL_GROUP
+            (
+                PARSE_RULE_FILTER_CMD
+                (
+                    PARSE_RULE_VAL_CMD(cfgCmdInfo),
+                ),
+
+                PARSE_RULE_OPTIONAL_ALLOW_LIST
+                (
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdFull),
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdDiff),
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdIncr),
+                ),
+
+                PARSE_RULE_OPTIONAL_NOT_REQUIRED(),
             ),
 
             PARSE_RULE_OPTIONAL_GROUP

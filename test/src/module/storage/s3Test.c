@@ -411,7 +411,6 @@ testRun(void)
 
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
-                TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("coverage for noop functions");
@@ -473,7 +472,6 @@ testRun(void)
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_STR(driver->credRole, credRole, "check role");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
-                TEST_RESULT_BOOL(storageFeature(s3, storageFeatureCompress), false, "check compress feature");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;
@@ -1304,7 +1302,7 @@ testRun(void)
                 TEST_RESULT_VOID(storagePathRemoveP(s3, STRDEF("/path/to"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("remove error");
+                TEST_TITLE("path remove error and retry");
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/bucket/?list-type=2&prefix=path%2F");
                 testResponseP(
@@ -1333,12 +1331,13 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                            "<Error><Key>sample2.txt</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error>"
+                            "<Error><Key>path/sample2.txt</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error>"
                             "</DeleteResult>");
 
-                TEST_ERROR(
-                    storagePathRemoveP(s3, STRDEF("/path"), .recurse = true), FileRemoveError,
-                    "unable to remove file 'sample2.txt': [AccessDenied] Access Denied");
+                testRequestP(service, s3, HTTP_VERB_DELETE, "/bucket/path/sample2.txt");
+                testResponseP(service, .code = 204);
+
+                TEST_RESULT_VOID(storagePathRemoveP(s3, STRDEF("/path"), .recurse = true), "remove path");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove file");

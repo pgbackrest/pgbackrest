@@ -16,6 +16,25 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.38dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: Repository size reported by the <cmd>info</cmd> command is now entirely based on what <backrest/> has written to storage. Previously, in certain cases, <backrest/> could detect if additional compression was being applied by the storage but this is no longer supported.</p>
+                </text>
+
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1650"/>
+                        <github-pull-request id="1653"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="alex.richman"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Retry errors in S3 batch file delete.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <github-issue id="1430"/>
@@ -29,6 +48,18 @@
                         </release-item-contributor-list>
 
                         <p>Add support for <proper>AWS</proper> <proper>S3</proper> server-side encryption using <proper>KMS</proper>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="600"/>
+                        <github-pull-request id="1651"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add backup type filter to <cmd>info</cmd> command.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -55,6 +86,18 @@
 
                         <p>Remove support for <proper>PostgreSQL</proper> <id>8.3</id>/<id>8.4</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1652"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove logic that tried to determine additional file system compression.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -80,6 +123,17 @@
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Improve protocol module error test for protocolClientFree()."/>
+                        <commit subject="Use normal error for protocol module error retry test."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Do not retry fatal errors.</p>
                     </release-item>
 
                     <release-item>
@@ -10518,6 +10572,11 @@
         <contributor id="ales.zeleny">
             <contributor-name-display>Ale&amp;scaron; Zelen&amp;yacute;</contributor-name-display>
             <contributor-id type="github">aleszeleny</contributor-id>
+        </contributor>
+
+        <contributor id="alex.richman">
+            <contributor-name-display>Alex Richman</contributor-name-display>
+            <contributor-id type="github">alex-richman-onesignal</contributor-id>
         </contributor>
 
         <contributor id="anderson.a.mallmann">

@@ -21,8 +21,6 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
-static unsigned int testCommandAssertProtocolTotal = 0;
-
 __attribute__((__noreturn__)) static void
 testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
 {
@@ -34,13 +32,14 @@ testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
     ASSERT(param == NULL);
     ASSERT(server != NULL);
 
-    testCommandAssertProtocolTotal++;
-    hrnErrorThrowP(.message = testCommandAssertProtocolTotal <= 3 ? NULL : "ERR_MESSAGE_RETRY");
+    hrnErrorThrowP();
 
     // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
 }
 
 #define TEST_PROTOCOL_COMMAND_ERROR                                 STRID5("error", 0x127ca450)
+
+static unsigned int testCommandErrorProtocolTotal = 0;
 
 __attribute__((__noreturn__)) static void
 testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server)
@@ -53,7 +52,8 @@ testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server)
     ASSERT(param == NULL);
     ASSERT(server != NULL);
 
-    hrnErrorThrowP(.errorType = &FormatError);
+    testCommandErrorProtocolTotal++;
+    hrnErrorThrowP(.errorType = &FormatError, .message = testCommandErrorProtocolTotal <= 2 ? NULL : "ERR_MESSAGE_RETRY");
 
     // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
 }
@@ -279,10 +279,13 @@ testRun(void)
         // Create bogus client and exec to generate errors
         ProtocolHelperClient protocolHelperClient = {0};
 
+        IoWrite *write = ioFdWriteNewOpen(STRDEF("invalid"), 0, 0);
+
         OBJ_NEW_BEGIN(ProtocolClient)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
-            *protocolHelperClient.client = (ProtocolClient){.name = STRDEF("test"), .state = protocolClientStateIdle};
+            *protocolHelperClient.client = (ProtocolClient){
+                .name = STRDEF("test"), .state = protocolClientStateIdle, .write = write};
             memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
         }
         OBJ_NEW_END();
@@ -298,7 +301,7 @@ testRun(void)
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
 
         TEST_RESULT_LOG(
-            "P00   WARN: assertion 'write != NULL' failed\n"
+            "P00   WARN: unable to write to invalid: [9] Bad file descriptor\n"
             "P00   WARN: unable to wait on child process: [10] No child processes");
     }
 
@@ -679,10 +682,10 @@ testRun(void)
                 TEST_TITLE("command throws assert with retry messages");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false), AssertError,
+                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
                     "raised from test client: ERR_MESSAGE\n"
-                    "[AssertError] on retry after 0ms\n"
-                    "[AssertError] on retry after 500ms: ERR_MESSAGE_RETRY");
+                    "[FormatError] on retry after 0ms\n"
+                    "[FormatError] on retry after 500ms: ERR_MESSAGE_RETRY");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");

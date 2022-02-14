@@ -433,6 +433,12 @@ option:
           - diff
           - incr
         default: incr
+      info:
+        required: false
+        allow-list:
+          - full
+          - diff
+          - incr
       restore:
         allow-list:
           - lsn
