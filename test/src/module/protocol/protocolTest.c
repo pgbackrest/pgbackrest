@@ -522,6 +522,14 @@ testRun(void)
                     ProtocolError, "invalid command 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("server restart and assert");
+
+                // This does not run in a TEST* macro because tests are run by the command handlers
+                TEST_ERROR(
+                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
+                    AssertError, "ERR_MESSAGE");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server restart");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
@@ -608,7 +616,7 @@ testRun(void)
                     protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false);
                     THROW(TestError, "error was expected");
                 }
-                CATCH_ANY()
+                CATCH_FATAL()
                 {
                     TEST_RESULT_PTR(errorType(), &AssertError, "check type");
                     TEST_RESULT_Z(errorFileName(), TEST_PGB_PATH "/src/protocol/client.c", "check file");

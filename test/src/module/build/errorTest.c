@@ -32,12 +32,21 @@ testRun(void)
 
         TEST_ERROR(bldErrParse(storageTest), FormatError, "error 'assert' code must be >= 25 and <= 125");
 
+        HRN_STORAGE_PUT_Z(
+            storageTest, "src/build/error/error.yaml",
+            "assert:\n"
+            "  bogus: 25");
+
+        TEST_ERROR(bldErrParse(storageTest), FormatError, "unknown error definition 'bogus'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("parse and render error");
 
         HRN_STORAGE_PUT_Z(
             storageTest, "src/build/error/error.yaml",
-            "assert: 25\n"
+            "assert:\n"
+            "  code: 25\n"
+            "  fatal: true\n"
             "option-invalid: 31\n"
             "runtime: 122\n");
 
@@ -81,9 +90,9 @@ testRun(void)
             COMMENT_BLOCK_BEGIN "\n"
             "Error type definitions\n"
             COMMENT_BLOCK_END "\n"
-            "ERROR_DEFINE( 25, AssertError, RuntimeError);\n"
-            "ERROR_DEFINE( 31, OptionInvalidError, RuntimeError);\n"
-            "ERROR_DEFINE(122, RuntimeError, RuntimeError);\n"
+            "ERROR_DEFINE( 25, AssertError, true, RuntimeError);\n"
+            "ERROR_DEFINE( 31, OptionInvalidError, false, RuntimeError);\n"
+            "ERROR_DEFINE(122, RuntimeError, false, RuntimeError);\n"
             "\n"
             COMMENT_BLOCK_BEGIN "\n"
             "Error type array\n"
