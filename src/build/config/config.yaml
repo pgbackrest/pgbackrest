@@ -1120,7 +1120,7 @@ option:
     internal: true
     section: global
     type: size
-    default: 100MiB
+    default: 20MiB
     allow-range: [1MiB, 1PiB]
     command:
       backup: {}
@@ -1130,6 +1130,11 @@ option:
       option: bundle
       list:
         - true
+
+  bundle-limit:
+    inherit: bundle-size
+    default: 2MiB
+    allow-range: [8KiB, 1PiB]
 
   checksum-page:
     section: global

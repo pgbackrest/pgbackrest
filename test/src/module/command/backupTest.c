@@ -2992,6 +2992,7 @@ testRun(void)
 
             // Set to a smaller values than the defaults allow
             cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
+            cfgOptionSet(cfgOptBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
 
             // Zeroed file which passes page checksums
             Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
@@ -3004,12 +3005,19 @@ testRun(void)
             HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.auto.conf", "CONFIGSTUFF2", .timeModified = 1500000000);
             HRN_STORAGE_PUT_Z(storagePgWrite(), "stuff.conf", "CONFIGSTUFF3", .timeModified = 1500000000);
 
+            // File that will get skipped because it needs to be stored by itself
+            // Buffer *tooBig = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            // memset(bufPtr(tooBig), 0, bufSize(tooBig));
+            // bufUsedSet(tooBig, bufSize(tooBig));
+
+            // HRN_STORAGE_PUT(storagePgWrite(), "toobig.dat", tooBig, .timeModified = 1500000010);
+
             // File that will get skipped while bundling smaller files and end up a bundle by itself
             Buffer *bigish = bufNew(PG_PAGE_SIZE_DEFAULT - 1);
             memset(bufPtr(bigish), 0, bufSize(bigish));
             bufUsedSet(bigish, bufSize(bigish));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "bigish.dat", bigish, .timeModified = 1500000001);
+            HRN_STORAGE_PUT(storagePgWrite(), "bigish.dat", bigish, .timeModified = 1500000050);
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
@@ -3021,13 +3029,13 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000000105DB8EB000000000\n"
                 "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/stuff.conf (12B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.auto.conf (12B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/bigish.dat (8.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB8EB000000001, lsn = 5db8eb0/180000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
@@ -3042,16 +3050,18 @@ testRun(void)
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191030-014640F}\n"
                 "bundle {path}\n"
-                "bundle/1/pg_data/base/1/2 {file, s=24576}\n"
-                "bundle/2/pg_data/base/1/1 {file, s=8192}\n"
-                "bundle/3/pg_data/global/pg_control {file, s=8192}\n"
-                "bundle/4/pg_data/PG_VERSION {file, s=2}\n"
-                "bundle/4/pg_data/postgresql.auto.conf {file, s=12}\n"
-                "bundle/4/pg_data/postgresql.conf {file, s=11}\n"
-                "bundle/4/pg_data/stuff.conf {file, s=12}\n"
-                "bundle/5/pg_data/bigish.dat {file, s=8191}\n"
+                "bundle/1/pg_data/PG_VERSION {file, s=2}\n"
+                "bundle/1/pg_data/postgresql.auto.conf {file, s=12}\n"
+                "bundle/1/pg_data/postgresql.conf {file, s=11}\n"
+                "bundle/1/pg_data/stuff.conf {file, s=12}\n"
+                "bundle/2/pg_data/bigish.dat {file, s=8191}\n"
+                "bundle/3/pg_data/base/1/1 {file, s=8192}\n"
+                "bundle/4/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
+                "pg_data/base {path}\n"
+                "pg_data/base/1 {path}\n"
+                "pg_data/base/1/2.gz {file, s=24576}\n"
                 "pg_data/pg_wal {path}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000000.gz {file, s=1048576}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000001.gz {file, s=1048576}\n"
@@ -3072,7 +3082,7 @@ testRun(void)
                 "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"size\":24576"
                     ",\"timestamp\":1572400000}\n"
                 "pg_data/bigish.dat={\"checksum\":\"3e5175386be683d2f231f3fa3eab892a799082f7\",\"size\":8191"
-                    ",\"timestamp\":1500000001}\n"
+                    ",\"timestamp\":1500000050}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000000={\"size\":1048576,\"timestamp\":1572400002}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000001={\"size\":1048576,\"timestamp\":1572400002}\n"
