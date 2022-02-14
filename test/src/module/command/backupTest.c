@@ -1696,30 +1696,6 @@ testRun(void)
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifestResume->pub.data.backupOptionCompressType = compressTypeNone;
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cannot resume when bundling");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-        hrnCfgArgRawBool(argList, cfgOptBundle, true);
-        HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-        manifestSave(
-            manifestResume,
-            storageWriteIo(
-                storageNewWriteP(
-                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
-
-        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
-
-        TEST_RESULT_LOG("P00   INFO: backup '20191003-105320F' cannot be resumed: resume is disabled");
-
-        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
     }
 
     // *****************************************************************************************************************************

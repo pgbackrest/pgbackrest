@@ -674,7 +674,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
             // Resumable backups do not have backup.manifest
             if (!storageExistsP(storageRepo(), manifestFile))
             {
-                const bool resume = cfgOptionTest(cfgOptResume) && cfgOptionBool(cfgOptResume);
+                const bool resume = cfgOptionBool(cfgOptResume);
                 bool usable = false;
                 const String *reason = STRDEF("partially deleted by prior resume or invalid");
                 Manifest *manifestResume = NULL;

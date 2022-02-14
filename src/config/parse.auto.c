@@ -7824,12 +7824,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTIONAL_GROUP
             (
-                PARSE_RULE_OPTIONAL_DEPEND
-                (
-                    PARSE_RULE_VAL_OPT(cfgOptBundle),
-                    PARSE_RULE_VAL_BOOL_FALSE,
-                ),
-
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
                     PARSE_RULE_VAL_BOOL_TRUE,

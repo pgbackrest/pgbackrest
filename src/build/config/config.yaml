@@ -1181,10 +1181,6 @@ option:
       backup: {}
     command-role:
       main: {}
-    depend:
-      option: bundle
-      list:
-        - false
 
   start-fast:
     section: global
