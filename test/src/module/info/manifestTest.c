@@ -31,7 +31,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(sizeof(ManifestLoadFound), TEST_64BIT() ? 1 : 1, "check size of ManifestLoadFound");
         TEST_RESULT_UINT(sizeof(ManifestPath), TEST_64BIT() ? 32 : 16, "check size of ManifestPath");
-        TEST_RESULT_UINT(sizeof(ManifestFile), TEST_64BIT() ? 120 : 92, "check size of ManifestFile");
+        TEST_RESULT_UINT(sizeof(ManifestFile), TEST_64BIT() ? 136 : 108, "check size of ManifestFile");
     }
 
     // *****************************************************************************************************************************
@@ -291,7 +291,7 @@ testRun(void)
         // Test tablespace error
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), false, false, exclusionList, tablespaceList),
+                storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), false, false, false, exclusionList, tablespaceList),
             AssertError,
             "tablespace with oid 1 not found in tablespace map\n"
             "HINT: was a tablespace created or dropped during the backup?");
@@ -307,7 +307,8 @@ testRun(void)
 
         TEST_ASSIGN(
             manifest,
-            manifestNewBuild(storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), false, false, NULL, tablespaceList),
+            manifestNewBuild(
+                storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), false, false, false, NULL, tablespaceList),
             "build manifest");
 
         Buffer *contentSave = bufNew(0);
@@ -405,7 +406,8 @@ testRun(void)
 
         // Test manifest - temp tables, unlogged tables, pg_serial and pg_xlog files ignored
         TEST_ASSIGN(
-            manifest, manifestNewBuild(storagePg, PG_VERSION_91, hrnPgCatalogVersion(PG_VERSION_91), true, false, NULL, NULL),
+            manifest,
+            manifestNewBuild(storagePg, PG_VERSION_91, hrnPgCatalogVersion(PG_VERSION_91), true, false, false, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -484,7 +486,8 @@ testRun(void)
 
         // Test manifest - pg_snapshots files ignored
         TEST_ASSIGN(
-            manifest, manifestNewBuild(storagePg, PG_VERSION_92, hrnPgCatalogVersion(PG_VERSION_92), false, false, NULL, NULL),
+            manifest,
+            manifestNewBuild(storagePg, PG_VERSION_92, hrnPgCatalogVersion(PG_VERSION_92), false, false, false, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -546,7 +549,7 @@ testRun(void)
         THROW_ON_SYS_ERROR(symlink(TEST_PATH "/wal", TEST_PATH "/wal/wal") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_92, hrnPgCatalogVersion(PG_VERSION_92), false, false, NULL, NULL),
+            manifestNewBuild(storagePg, PG_VERSION_92, hrnPgCatalogVersion(PG_VERSION_92), false, false, false, NULL, NULL),
             LinkDestinationError,
             "link 'pg_xlog/wal' (" TEST_PATH "/wal) destination is the same directory as link 'pg_xlog' (" TEST_PATH "/wal)");
 
@@ -600,7 +603,8 @@ testRun(void)
 
         // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
         TEST_ASSIGN(
-            manifest, manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, true, NULL, NULL),
+            manifest,
+            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, true, false, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -693,7 +697,7 @@ testRun(void)
 
         // Tablespace link errors when correct verion not found
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), false, false, NULL, NULL),
+            manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), false, false, false, NULL, NULL),
             FileOpenError,
             "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or"
                 " directory");
@@ -712,7 +716,8 @@ testRun(void)
         // and backup_label ignored. Old recovery files and pg_xlog are now just another file/directory and will not be ignored.
         // pg_wal contents will be ignored online. pg_clog pgVersion > 10 primary:true, pg_xact pgVersion > 10 primary:false
         TEST_ASSIGN(
-            manifest, manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), true, false, NULL, NULL),
+            manifest,
+            manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), true, false, false, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -784,7 +789,8 @@ testRun(void)
 
         // pg_wal not ignored
         TEST_ASSIGN(
-            manifest, manifestNewBuild(storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), false, false, NULL, NULL),
+            manifest,
+            manifestNewBuild(storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), false, false, false, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -854,7 +860,7 @@ testRun(void)
         THROW_ON_SYS_ERROR(symlink(TEST_PATH "/pg/base", TEST_PATH "/pg/link") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
+            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, false, NULL, NULL),
             LinkDestinationError, "link 'link' destination '" TEST_PATH "/pg/base' is in PGDATA");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link") == -1, FileRemoveError, "unable to remove symlink");
@@ -865,7 +871,7 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir", .mode = 0700);
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
+            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, false, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
 
         HRN_STORAGE_PATH_REMOVE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir");
@@ -876,7 +882,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
+            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, false, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
         TEST_STORAGE_EXISTS(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile", .remove = true);
@@ -887,7 +893,8 @@ testRun(void)
         THROW_ON_SYS_ERROR(symlink("../bogus-link", TEST_PATH "/pg/link-to-link") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, true, NULL, NULL), FileOpenError,
+            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, true, false, NULL, NULL),
+            FileOpenError,
             "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link': [2] No such file or directory");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link-to-link") == -1, FileRemoveError, "unable to remove symlink");
@@ -902,7 +909,7 @@ testRun(void)
             symlink(TEST_PATH "/linktest", TEST_PATH "/pg/linktolink") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
+            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, false, NULL, NULL),
             LinkDestinationError, "link '" TEST_PATH "/pg/linktolink' cannot reference another link '" TEST_PATH "/linktest'");
 
         #undef TEST_MANIFEST_HEADER
@@ -1413,6 +1420,7 @@ testRun(void)
             "[backup]\n"                                                                                                           \
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
             "backup-archive-stop=\"000000030000028500000089\"\n"                                                                   \
+            "backup-bundle=true\n"                                                                                                 \
             "backup-label=\"20190818-084502F_20190820-084502D\"\n"                                                                 \
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
             "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
@@ -1472,10 +1480,10 @@ testRun(void)
             "pg_data/=equal=more=={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120}\n"                                       \
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""                                        \
                 ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                      \
-            "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"          \
+            "pg_data/base/16384/17000={\"bni\":1,\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"\
                 ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                        \
-            "pg_data/base/16384/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"group\":\"group2\""        \
-                ",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                                           \
+            "pg_data/base/16384/PG_VERSION={\"bni\":1,\"bno\":1,\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""         \
+                ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                                          \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
@@ -1524,6 +1532,7 @@ testRun(void)
                 "[backup]\n"
                 "backup-archive-start=\"000000040000028500000089\"\n"
                 "backup-archive-stop=\"000000040000028500000089\"\n"
+                "backup-bundle=true\n"
                 "backup-label=\"20190818-084502F\"\n"
                 "backup-lsn-start=\"300/89000028\"\n"
                 "backup-lsn-stop=\"300/89001F88\"\n"
@@ -1575,8 +1584,8 @@ testRun(void)
         TEST_TITLE("manifest validation");
 
         // Munge files to produce errors
-        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, false, false, NULL);
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, NULL, true, false, NULL);
+        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, false, false, NULL, 0, 0);
+        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, NULL, true, false, NULL, 0, 0);
 
         TEST_ERROR(
             manifestValidate(manifest, false), FormatError,
@@ -1591,10 +1600,10 @@ testRun(void)
             "repo size must be > 0 for file 'pg_data/postgresql.conf'");
 
         // Undo changes made to files
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, NULL, true, false, NULL);
+        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, NULL, true, false, NULL, 0, 0);
         manifestFileUpdate(
             manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", NULL, false,
-            false, NULL);
+            false, NULL, 0, 0);
 
         TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
 
@@ -1739,10 +1748,11 @@ testRun(void)
         TEST_RESULT_BOOL(manifestFileExists(manifest, STRDEF("bogus")), false, "manifest file does not exist");
 
         TEST_RESULT_VOID(
-            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL),
+            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL, 0, 0),
             "update file");
         TEST_RESULT_VOID(
-            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL),
+            manifestFileUpdate(
+                manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL, 0, 0),
             "update file");
 
         // ManifestDb getters

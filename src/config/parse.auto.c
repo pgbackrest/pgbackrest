@@ -16,6 +16,7 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("/var/log/pgbackrest"),
     PARSE_RULE_STRPUB("/var/spool/pgbackrest"),
     PARSE_RULE_STRPUB("1"),
+    PARSE_RULE_STRPUB("100MiB"),
     PARSE_RULE_STRPUB("128MiB"),
     PARSE_RULE_STRPUB("15"),
     PARSE_RULE_STRPUB("1800"),
@@ -63,6 +64,7 @@ typedef enum
     parseRuleValStrQT_FS_var_FS_log_FS_pgbackrest_QT,
     parseRuleValStrQT_FS_var_FS_spool_FS_pgbackrest_QT,
     parseRuleValStrQT_1_QT,
+    parseRuleValStrQT_100MiB_QT,
     parseRuleValStrQT_128MiB_QT,
     parseRuleValStrQT_15_QT,
     parseRuleValStrQT_1800_QT,
@@ -258,10 +260,12 @@ static const int64_t parseRuleValueInt[] =
     9999999,
     16777216,
     86400000,
+    104857600,
     134217728,
     604800000,
     1073741824,
     1099511627776,
+    1125899906842624,
     4503599627370496,
 };
 
@@ -304,10 +308,12 @@ typedef enum
     parseRuleValInt9999999,
     parseRuleValInt16777216,
     parseRuleValInt86400000,
+    parseRuleValInt104857600,
     parseRuleValInt134217728,
     parseRuleValInt604800000,
     parseRuleValInt1073741824,
     parseRuleValInt1099511627776,
+    parseRuleValInt1125899906842624,
     parseRuleValInt4503599627370496,
 } ParseRuleValueInt;
 
@@ -1137,6 +1143,72 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (
                     PARSE_RULE_VAL_INT(parseRuleValInt1048576),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_1MiB_QT),
+                ),
+            ),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("bundle"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
+
+        PARSE_RULE_OPTIONAL
+        (
+            PARSE_RULE_OPTIONAL_GROUP
+            (
+                PARSE_RULE_OPTIONAL_DEFAULT
+                (
+                    PARSE_RULE_VAL_BOOL_FALSE,
+                ),
+            ),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("bundle-size"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_RESET(true),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
+
+        PARSE_RULE_OPTIONAL
+        (
+            PARSE_RULE_OPTIONAL_GROUP
+            (
+                PARSE_RULE_OPTIONAL_DEPEND
+                (
+                    PARSE_RULE_VAL_OPT(cfgOptBundle),
+                    PARSE_RULE_VAL_BOOL_TRUE,
+                ),
+
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE
+                (
+                    PARSE_RULE_VAL_INT(parseRuleValInt1048576),
+                    PARSE_RULE_VAL_INT(parseRuleValInt1125899906842624),
+                ),
+
+                PARSE_RULE_OPTIONAL_DEFAULT
+                (
+                    PARSE_RULE_VAL_INT(parseRuleValInt104857600),
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_100MiB_QT),
                 ),
             ),
         ),
@@ -7709,6 +7781,12 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTIONAL_GROUP
             (
+                PARSE_RULE_OPTIONAL_DEPEND
+                (
+                    PARSE_RULE_VAL_OPT(cfgOptBundle),
+                    PARSE_RULE_VAL_BOOL_FALSE,
+                ),
+
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
                     PARSE_RULE_VAL_BOOL_TRUE,
@@ -9087,6 +9165,8 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
+    cfgOptBundle,
+    cfgOptBundleSize,
     cfgOptChecksumPage,
     cfgOptCipherPass,
     cfgOptCmd,

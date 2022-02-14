@@ -30,6 +30,8 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -62,6 +64,8 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -108,6 +112,8 @@ pg256-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -141,6 +147,8 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -173,6 +181,8 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -219,6 +229,8 @@ pg256-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -252,6 +264,8 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -284,6 +298,8 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -330,6 +346,8 @@ pg256-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -382,6 +400,8 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -416,6 +436,8 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -463,6 +485,8 @@ pg256-port=6544
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -500,6 +524,8 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -534,6 +560,8 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -581,6 +609,8 @@ pg256-port=6544
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -634,6 +664,8 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -668,6 +700,8 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -715,6 +749,8 @@ pg256-port=6544
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
+bundle=y
+bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none

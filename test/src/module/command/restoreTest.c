@@ -175,9 +175,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("sparse-zero"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 0, true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("sparse-zero"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600,
+                TEST_USER_STR, TEST_GROUP_STR, 0, true, false, NULL),
             false, "zero sparse 1TB file");
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "check size");
 
@@ -186,9 +186,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("normal-zero"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                false, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("normal-zero"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600,
+                TEST_USER_STR, TEST_GROUP_STR, 0, false, false, NULL),
             true, "zero-length file");
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "check size");
 
@@ -202,9 +202,9 @@ testRun(void)
 
         TEST_ERROR(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
-                STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                false, false, STRDEF("badpass")),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeGz,
+                STRDEF("normal"), STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, false, false, STRDEF("badpass")),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -218,9 +218,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
-                STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                false, false, STRDEF("badpass")),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeGz,
+                STRDEF("normal"), STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, false, false, STRDEF("badpass")),
             true, "copy file");
 
         StorageInfo info = storageInfoP(storagePg(), STRDEF("normal"));
@@ -242,9 +242,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             true, "sha1 delta missing");
         TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
@@ -256,18 +256,18 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             false, "sha1 delta existing");
 
         ioBufferSizeSet(oldBufferSize);
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
-                1557432155, true, true, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 1557432155, true, true, NULL),
             false, "sha1 delta force existing");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -278,9 +278,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             true, "sha1 delta existing, size differs");
         TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
@@ -288,9 +288,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
-                1557432155, true, true, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
         TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
@@ -302,9 +302,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             true, "sha1 delta existing, content differs");
         TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
@@ -312,16 +312,16 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
-                1557432155, true, true, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 1557432155, true, true, NULL),
             true, "delta force existing, timestamp differs");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
-                1557432153, true, true, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 1557432153, true, true, NULL),
             true, "delta force existing, timestamp after copy time");
 
         // Change the existing file to zero-length
@@ -329,9 +329,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             false, "sha1 delta existing, content differs");
     }
 
@@ -2412,17 +2412,18 @@ testRun(void)
                 (ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/999"), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = HASH_TYPE_SHA1_ZERO, .reference = STRDEF(TEST_LABEL)});
+                    .checksumSha1 = HASH_TYPE_SHA1_ZERO});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/999");
 
             // PG_VERSION
             manifestFileAdd(
                 manifest,
                 (ManifestFile){
-                    .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+                    .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
+                    .reference = STRDEF(TEST_LABEL), .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+            HRN_STORAGE_PUT_Z(
+                storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1", PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\n");
 
             // base directory
             manifestPathAdd(
@@ -2436,14 +2437,13 @@ testRun(void)
                 &(ManifestPath){
                     .name = STRDEF(TEST_PGDATA PG_PATH_BASE "/1"), .mode = 0700, .group = groupName(), .user = userName()});
 
-            // base/1/PG_VERSION
+            // base/1/PG_VERSION. File was written as part of bundle 1 above
             manifestFileAdd(
                 manifest,
                 (ManifestFile){
-                    .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 4,
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/1/2
             fileBuffer = bufNew(8192);
