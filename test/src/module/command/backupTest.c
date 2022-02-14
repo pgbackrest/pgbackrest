@@ -2981,19 +2981,12 @@ testRun(void)
             HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.auto.conf", "CONFIGSTUFF2", .timeModified = 1500000000);
             HRN_STORAGE_PUT_Z(storagePgWrite(), "stuff.conf", "CONFIGSTUFF3", .timeModified = 1500000000);
 
-            // File that will get skipped because it needs to be stored by itself
-            // Buffer *tooBig = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
-            // memset(bufPtr(tooBig), 0, bufSize(tooBig));
-            // bufUsedSet(tooBig, bufSize(tooBig));
-
-            // HRN_STORAGE_PUT(storagePgWrite(), "toobig.dat", tooBig, .timeModified = 1500000010);
-
             // File that will get skipped while bundling smaller files and end up a bundle by itself
             Buffer *bigish = bufNew(PG_PAGE_SIZE_DEFAULT - 1);
             memset(bufPtr(bigish), 0, bufSize(bigish));
             bufUsedSet(bigish, bufSize(bigish));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "bigish.dat", bigish, .timeModified = 1500000050);
+            HRN_STORAGE_PUT(storagePgWrite(), "bigish.dat", bigish, .timeModified = 1500000001);
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
@@ -3058,7 +3051,7 @@ testRun(void)
                 "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"size\":24576"
                     ",\"timestamp\":1572400000}\n"
                 "pg_data/bigish.dat={\"checksum\":\"3e5175386be683d2f231f3fa3eab892a799082f7\",\"size\":8191"
-                    ",\"timestamp\":1500000050}\n"
+                    ",\"timestamp\":1500000001}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000000={\"size\":1048576,\"timestamp\":1572400002}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000001={\"size\":1048576,\"timestamp\":1572400002}\n"
