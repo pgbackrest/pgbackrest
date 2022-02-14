@@ -1259,9 +1259,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList, String *errorRes
 
     // Render archive results
     if (lstEmpty(archiveIdResultList))
-    {
         strCatZ(result, "\n  archiveId: none found");
-    }
     else
     {
         for (unsigned int archiveIdx = 0; archiveIdx < lstSize(archiveIdResultList); archiveIdx++)
@@ -1339,9 +1337,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList, String *errorRes
 
     // Render backup results
     if (lstEmpty(backupResultList))
-    {
         strCatZ(result, "\n  backup: none found");
-    }
     else
     {
         for (unsigned int backupIdx = 0; backupIdx < lstSize(backupResultList); backupIdx++)
@@ -1673,9 +1669,7 @@ verifyProcess(unsigned int *errorTotal, String *errorResult)
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList, errorResult);
             }
             else
-            {
                 LOG_WARN("no archives or backups exist in the repo");
-            }
 
             (*errorTotal) += jobData.jobErrorTotal;
         }
@@ -1729,18 +1723,12 @@ verifyOutputText(const String *verifyresult, const String *errorResult, const un
         {
             // Add verbose response if requested, otherwise only errors if they exist
             if (cfgOptionBool(cfgOptVerbose))
-            {
                 strCatFmt(resultStr, "%s%s", strZ(strSub(verifyresult, (unsigned int)strChr(verifyresult, ':') + 1)), LF_Z);
-            }
             else if (*errorTotal != 0)
-            {
                 strCatFmt(resultStr, "%s%s", strZ(errorResult), LF_Z);
-            }
         }
         else if (*errorTotal != 0)
-        {
             strCatFmt(resultStr, "%s%s", strZ(errorResult), LF_Z);
-        }
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
