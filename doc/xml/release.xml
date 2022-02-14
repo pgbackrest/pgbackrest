@@ -76,6 +76,19 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Improve protocol module error test for protocolClientFree()."/>
+                        <commit subject="Use normal error for protocol module error retry test."/>
+                        <commit subject="Do not retry fatal errors."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Do not retry fatal errors.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1611"/>
 
                         <release-item-contributor-list>
@@ -123,17 +136,6 @@
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
-                    </release-item>
-
-                    <release-item>
-                        <commit subject="Improve protocol module error test for protocolClientFree()."/>
-                        <commit subject="Use normal error for protocol module error retry test."/>
-
-                        <release-item-contributor-list>
-                            <release-item-contributor id="david.steele"/>
-                        </release-item-contributor-list>
-
-                        <p>Do not retry fatal errors.</p>
                     </release-item>
 
                     <release-item>
