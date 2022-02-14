@@ -296,7 +296,7 @@ main(int argListSize, const char *argList[])
             }
         }
     }
-    CATCH_ANY()
+    CATCH_FATAL()
     {
         error = true;
         result = exitSafe(result, true, 0);

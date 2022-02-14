@@ -3,7 +3,9 @@
 # Definitions for all C errors, auto-generated to src/common/error.auto.c/h.
 
 # Errors in the code that it should not be possible for the user to encounter -- i.e., a likely bug
-assert: 25
+assert:
+  code: 25
+  fatal: true
 
 checksum: 26
 config: 27
@@ -73,7 +75,9 @@ path-exists: 92
 file-exists: 93
 
 # Memory allocation failed
-memory: 94
+memory:
+  code: 94
+  fatal: true
 
 crypto: 95
 param-invalid: 96

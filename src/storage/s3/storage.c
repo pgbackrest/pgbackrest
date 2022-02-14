@@ -49,14 +49,12 @@ STRING_STATIC(S3_QUERY_VALUE_LIST_TYPE_2_STR,                       "2");
 /***********************************************************************************************************************************
 XML tags
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_XML_TAG_CODE_STR,                                  "Code");
 STRING_STATIC(S3_XML_TAG_COMMON_PREFIXES_STR,                       "CommonPrefixes");
 STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
 STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
 STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
 STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
-STRING_STATIC(S3_XML_TAG_MESSAGE_STR,                               "Message");
 STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinuationToken");
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
@@ -882,15 +880,13 @@ storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *
         {
             XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
 
-            if (xmlNodeLstSize(errorList) > 0)
+            // Attempt to remove errored files one at a time rather than retrying the batch
+            for (unsigned int errorIdx = 0; errorIdx < xmlNodeLstSize(errorList); errorIdx++)
             {
-                XmlNode *error = xmlNodeLstGet(errorList, 0);
-
-                THROW_FMT(
-                    FileRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE ": [%s] %s",
-                    strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_KEY_STR, true))),
-                    strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_CODE_STR, true))),
-                    strZ(xmlNodeContent(xmlNodeChild(error, S3_XML_TAG_MESSAGE_STR, true))));
+                storageS3RequestP(
+                    this, HTTP_VERB_DELETE_STR,
+                    strNewFmt(
+                        "/%s", strZ(xmlNodeContent(xmlNodeChild(xmlNodeLstGet(errorList, errorIdx), S3_XML_TAG_KEY_STR, true)))));
             }
         }
 
