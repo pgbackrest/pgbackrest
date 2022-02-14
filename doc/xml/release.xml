@@ -128,6 +128,7 @@
                         <commit subject="Optimization for jsonFromStrInternal()."/>
                         <commit subject="Simplify manifest file defaults."/>
                         <commit subject="Simplify filename construction in command/verify module."/>
+                        <commit subject="Bundle files in the repository during backup."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
