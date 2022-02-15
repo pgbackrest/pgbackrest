@@ -284,7 +284,7 @@ protocolServerProcess(
             }
             MEM_CONTEXT_TEMP_END();
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             // Report error to the client
             protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));

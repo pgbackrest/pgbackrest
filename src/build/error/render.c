@@ -6,6 +6,7 @@ Render Error Data
 #include <ctype.h>
 
 #include "common/log.h"
+#include "common/type/convert.h"
 #include "storage/posix/storage.h"
 
 #include "build/common/render.h"
@@ -101,7 +102,9 @@ bldErrRenderErrorAutoC(const Storage *const storageRepo, const BldErr bldErr)
     {
         const BldErrError *const err = lstGet(bldErr.errList, errIdx);
 
-        strCatFmt(error, "ERROR_DEFINE(%3u, %s, RuntimeError);\n", err->code, strZ(bldErrName(err->name)));
+        strCatFmt(
+            error, "ERROR_DEFINE(%3u, %s, %s, RuntimeError);\n", err->code, strZ(bldErrName(err->name)),
+            cvtBoolToConstZ(err->fatal));
     }
 
     // Error type array

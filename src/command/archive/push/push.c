@@ -628,7 +628,7 @@ cmdArchivePushAsync(void)
             }
         }
         // On any global error write a single error file to cover all unprocessed files
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             archiveAsyncStatusErrorWrite(archiveModePush, NULL, errorCode(), STR(errorMessage()));
             RETHROW();

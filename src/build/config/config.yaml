@@ -1115,6 +1115,31 @@ option:
     command-role:
       main: {}
 
+  bundle:
+    internal: true
+    section: global
+    type: boolean
+    default: false
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
+  bundle-size:
+    internal: true
+    section: global
+    type: size
+    default: 100MiB
+    allow-range: [1MiB, 1PiB]
+    command:
+      backup: {}
+    command-role:
+      main: {}
+    depend:
+      option: bundle
+      list:
+        - true
+
   checksum-page:
     section: global
     type: boolean
@@ -1160,6 +1185,10 @@ option:
       backup: {}
     command-role:
       main: {}
+    depend:
+      option: bundle
+      list:
+        - false
 
   start-fast:
     section: global

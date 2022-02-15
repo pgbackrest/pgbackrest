@@ -236,7 +236,7 @@ main(int argListSize, const char *argList[])
         fflush(stdout);
 #ifdef HRN_FEATURE_ERROR
     }
-    CATCH_ANY()
+    CATCH_FATAL()
     {
         // Make the error really obvious
         fprintf(

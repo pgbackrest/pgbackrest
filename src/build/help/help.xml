@@ -1109,6 +1109,30 @@
                         <example>y</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="bundle" name="Repository Bundles">
+                        <summary>Bundle files in repository.</summary>
+
+                        <text>
+                            <p>Bundle (combine) smaller files to reduce the total number of files written to the repository. Writing fewer files is generally more efficient, especially on object stores such as <proper>S3</proper>. In addition, zero-length files are not stored (except in the manifest), which saves time and space.</p>
+                        </text>
+
+                        <example>y</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="bundle-size" name="Repository Bundle Size">
+                        <summary>Target size for file bundles.</summary>
+
+                        <text>
+                            <p>Defines the target size of bundled files. Most bundles will be smaller than this target but it is possible that some will be slightly larger, so do not set this option to the maximum size that your file system allows.</p>
+
+                            <p>In general, it is not a good idea to set this option too high because retries will need to redo the entire bundle.</p>
+                        </text>
+
+                        <example>10MiB</example>
+                    </config-key>
+
                     <!-- CONFIG - BACKUP SECTION - CHECKSUM-PAGE KEY -->
                     <config-key id="checksum-page" name="Page Checksums">
                         <summary>Validate data page checksums.</summary>
