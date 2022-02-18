@@ -1218,7 +1218,7 @@
                         <commit subject="Factor remote process exec out of protocolRemoteGet()."/>
                         <commit subject="Refactor storage/remote unit test using the protocol remote shim."/>
 
-                        <p>Add local processs shim.</p>
+                        <p>Add local process shim.</p>
                     </release-item>
 
                     <release-item>
