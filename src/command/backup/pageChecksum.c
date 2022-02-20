@@ -132,7 +132,9 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                 }
                 MEM_CONTEXT_TEMP_END();
 
-                // If the page has changed then PostgreSQL must be updating it so we won't consider it to be in error
+                // If the page has changed then PostgreSQL must be updating it so we won't consider it to be invalid. We are not
+                // concerned about whether this new page has a valid checksum or not, since the page will be replayed from WAL on
+                // recovery. This prevents (theoretically) limitless retries for a hot page.
                 if (changed)
                     continue;
             }

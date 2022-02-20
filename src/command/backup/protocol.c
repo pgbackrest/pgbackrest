@@ -46,7 +46,6 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             file.pgFileCopyExactSize = pckReadBoolP(param);
             file.pgFileChecksum = pckReadStrP(param);
             file.pgFileChecksumPage = pckReadBoolP(param);
-            file.pgFileChecksumPageLsnLimit = pckReadU64P(param);
             file.manifestFile = pckReadStrP(param);
             file.manifestFileHasReference = pckReadBoolP(param);
 

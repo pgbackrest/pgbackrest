@@ -32,7 +32,6 @@ typedef struct BackupFile
     bool pgFileCopyExactSize;                                       // Copy only pg expected size
     const String *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
-    uint64_t pgFileChecksumPageLsnLimit;                            // Upper limit of pages to validate
     const String *manifestFile;                                     // Repo file
     bool manifestFileHasReference;                                  // Reference to prior backup, if any
 } BackupFile;

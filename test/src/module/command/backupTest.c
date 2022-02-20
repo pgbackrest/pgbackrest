@@ -811,7 +811,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = NULL,
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = missingFile,
             .manifestFileHasReference = false,
         };
@@ -840,7 +839,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = NULL,
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = missingFile,
             .manifestFileHasReference = false,
         };
@@ -874,7 +872,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = NULL,
             .pgFileChecksumPage = true,
-            .pgFileChecksumPageLsnLimit = 0xFFFFFFFFFFFFFFFF,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
@@ -895,7 +892,7 @@ testRun(void)
         TEST_STORAGE_EXISTS(storageRepoWrite(), strZ(backupPathFile), .remove = true, .comment = "check exists in repo, remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit");
+        TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage");
 
         fileList = lstNewP(sizeof(BackupFile));
 
@@ -907,7 +904,6 @@ testRun(void)
             .pgFileCopyExactSize = false,
             .pgFileChecksum = NULL,
             .pgFileChecksumPage = true,
-            .pgFileChecksumPageLsnLimit = 0xFFFFFFFFFFFFFFFF,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
@@ -938,7 +934,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = true,
         };
@@ -970,7 +965,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("1234567890123456789012345678901234567890"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = true,
         };
@@ -1002,7 +996,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = true,
         };
@@ -1034,7 +1027,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = STRDEF(BOGUS_STR),
             .manifestFileHasReference = false,
         };
@@ -1076,7 +1068,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
@@ -1110,7 +1101,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
@@ -1141,7 +1131,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = NULL,
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
@@ -1176,7 +1165,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
@@ -1211,7 +1199,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = NULL,
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = STRDEF("zerofile"),
             .manifestFileHasReference = false,
         };
@@ -1263,7 +1250,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = NULL,
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
@@ -1300,7 +1286,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
@@ -1335,7 +1320,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
@@ -1369,7 +1353,6 @@ testRun(void)
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("1234567890123456789012345678901234567890"),
             .pgFileChecksumPage = false,
-            .pgFileChecksumPageLsnLimit = 0,
             .manifestFile = pgFile,
             .manifestFileHasReference = false,
         };
