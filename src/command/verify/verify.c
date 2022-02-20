@@ -1351,7 +1351,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                 }
 
                 // Create/append file errors string
-                if (verboseText || errMissing + errChecksum + errSize + errOther)
+                if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
                 {
                     strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText));
                 }
@@ -1425,7 +1425,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                 }
 
                 // Create/append file errors string
-                if (verboseText || errMissing + errChecksum + errSize + errOther)
+                if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
                 {
                     strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText));
                 }
@@ -1440,10 +1440,9 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
 Process the verify command
 ***********************************************************************************************************************************/
 static String *
-verifyProcess(unsigned int *errorTotal, const bool verboseText)
+verifyProcess(const bool verboseText)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM_P(UINT, errorTotal);                    // Pointer to overall job error total
         FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested
     FUNCTION_LOG_END();
 
@@ -1451,6 +1450,7 @@ verifyProcess(unsigned int *errorTotal, const bool verboseText)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        unsigned int errorTotal = 0;
         String *resultStr = strNew();
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
@@ -1463,7 +1463,7 @@ verifyProcess(unsigned int *errorTotal, const bool verboseText)
         if (backupInfo == NULL)
         {
             strCatZ(resultStr, "\n  No usable backup.info file");
-            (*errorTotal)++;
+            errorTotal++;
         }
 
         // Get a usable archive info file
@@ -1473,7 +1473,7 @@ verifyProcess(unsigned int *errorTotal, const bool verboseText)
         if (archiveInfo == NULL)
         {
             strCatZ(resultStr, "\n  No usable archive.info file");
-            (*errorTotal)++;
+            errorTotal++;
         }
 
         // If both a usable archive info and backup info file were found, then proceed with verification
@@ -1487,13 +1487,13 @@ verifyProcess(unsigned int *errorTotal, const bool verboseText)
             CATCH_ANY()
             {
                 strCatFmt(resultStr, "%s%s", LF_Z, errorMessage());
-                (*errorTotal)++;
+                errorTotal++;
             }
             TRY_END();
         }
 
         // If valid info files, then begin process of checking backups and archives in the repo
-        if ((*errorTotal) == 0)
+        if (errorTotal == 0)
         {
             // Initialize the job data
             VerifyJobData jobData =
@@ -1676,20 +1676,20 @@ verifyProcess(unsigned int *errorTotal, const bool verboseText)
             else
                 strCatZ(resultStr, "\n    no archives or backups exist in the repo");
 
-            (*errorTotal) += jobData.jobErrorTotal;
+            errorTotal += jobData.jobErrorTotal;
         }
 
         String *outputStr = strNew();
 
         // If text output or errors then output stanza/status
-        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT || *errorTotal != 0)
+        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT || errorTotal != 0)
         {
             strCat(outputStr, strNewFmt("stanza: %s%sstatus: %s", strZ(cfgOptionStr(cfgOptStanza)), LF_Z,
-                *errorTotal > 0 ? VERIFY_STATUS_ERROR : VERIFY_STATUS_OK));
+                errorTotal > 0 ? VERIFY_STATUS_ERROR : VERIFY_STATUS_OK));
         }
 
-        // If verbose text is requested or errors then add verify results
-        if (verboseText || *errorTotal > 0)
+        // If verbose text is requested or errors exist then add verify results
+        if (verboseText || errorTotal > 0)
         {
             strCatZ(outputStr, strZ(resultStr));
         }
@@ -1713,10 +1713,7 @@ cmdVerify(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        unsigned int errorTotal = 0;
-
-        String *result = verifyProcess(
-            &errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT);
+        String *result = verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT);
 
         // Output results if any
         if (strSize(result) > 0)
@@ -1724,7 +1721,9 @@ cmdVerify(void)
 
         // Output resutls to console if any
         ioFdWriteOneStr(STDOUT_FILENO, result);
-        ioFdWriteOneStr(STDOUT_FILENO, LF_STR);
+
+        if (strSize(result) > 0)
+            ioFdWriteOneStr(STDOUT_FILENO, LF_STR);
     }
     MEM_CONTEXT_TEMP_END();
 

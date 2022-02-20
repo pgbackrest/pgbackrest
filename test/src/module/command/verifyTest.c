@@ -1089,14 +1089,12 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // Test verifyProcess directly
-        unsigned int errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
             "stanza: db\n"
             "status: error\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
             "    checksum invalid: 1, size invalid: 1", "verifyProcess() no text, no verbose");
-        TEST_RESULT_UINT(errorTotal, 2, "2 errors");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
             "P00 DETAIL: archive path '9.4-1' is empty\n"
@@ -1116,9 +1114,8 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         // Verify text output, verbose, with verify failures
-        errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
             "stanza: db\n"
             "status: error\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
@@ -1136,9 +1133,8 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         // Verify text output, verbose, with verify failures
-        errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
             "stanza: db\n"
             "status: error\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
@@ -1208,9 +1204,8 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         // Verify none output
-        errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
             "stanza: db\n"
             "status: error\n"
             "  archiveId: 11-2, total WAL checked: 7, total valid WAL: 5\n"
@@ -1426,9 +1421,8 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         // Verify text output, not verbose, with failures
-        errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
             "stanza: db\n"
             "status: error\n"
             "  archiveId: 11-2, total WAL checked: 8, total valid WAL: 5\n"
@@ -1914,11 +1908,9 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // Verify text output with no verify errors
-        unsigned int errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT), "",
+            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT), "",
             "verify none output, not verbose, with no failures");
-        TEST_RESULT_UINT(errorTotal, 0, "no errors");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFE, wal stop: 000000020000000700000FFE");
@@ -1929,7 +1921,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT), "",
+            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT), "",
             "verify none output, verbose, with no failures");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
@@ -1984,9 +1976,8 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // Verify text output with no verify errors
-        unsigned int errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
             "stanza: db\n"
             "status: ok", "verify text output, not verbose, with no failures");
         TEST_RESULT_LOG(
@@ -2043,9 +2034,8 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // Verify text output with no verify errors
-        unsigned int errorTotal = 0;
         TEST_RESULT_STR_Z(
-            verifyProcess(&errorTotal, cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
             "stanza: db\n"
             "status: ok\n"
             "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
