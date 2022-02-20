@@ -136,6 +136,7 @@
                             <github-issue id="1149"/>
                             <github-pull-request id="1662"/>
                         </commit>
+                        <commit subject="Pass file by reference in manifestFileAdd()."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
