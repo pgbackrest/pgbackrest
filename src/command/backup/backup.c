@@ -990,7 +990,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 file.checksumSha1, strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))),
                 HASH_TYPE_SHA1_SIZE_HEX + 1);
 
-            manifestFileAdd(manifest, file);
+            manifestFileAdd(manifest, &file);
 
             LOG_DETAIL_FMT("wrote '%s' file returned from pg_stop_backup()", strZ(name));
         }
@@ -2085,7 +2085,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
                         memcpy(file.checksumSha1, strZ(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);
 
-                        manifestFileAdd(manifest, file);
+                        manifestFileAdd(manifest, &file);
                     }
                 }
                 MEM_CONTEXT_TEMP_END();

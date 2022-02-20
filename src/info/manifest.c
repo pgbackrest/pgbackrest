@@ -417,25 +417,25 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 }
 
 void
-manifestFileAdd(Manifest *this, ManifestFile file)
+manifestFileAdd(Manifest *const this, ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(VOID, file);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(file.name != NULL);
+    ASSERT(file->name != NULL);
 
-    file.user = manifestOwnerCache(this, file.user);
-    file.group = manifestOwnerCache(this, file.group);
+    file->user = manifestOwnerCache(this, file->user);
+    file->group = manifestOwnerCache(this, file->group);
 
-    if (file.reference != NULL)
-        file.reference = strLstAddIfMissing(this->referenceList, file.reference);
+    if (file->reference != NULL)
+        file->reference = strLstAddIfMissing(this->referenceList, file->reference);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
-        const ManifestFilePack *const filePack = manifestFilePack(this, &file);
+        const ManifestFilePack *const filePack = manifestFilePack(this, file);
         lstAdd(this->pub.fileList, &filePack);
     }
     MEM_CONTEXT_END();
@@ -1054,7 +1054,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     !strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
             }
 
-            manifestFileAdd(buildData.manifest, file);
+            manifestFileAdd(buildData.manifest, &file);
             break;
         }
 
@@ -1871,7 +1871,7 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             else
                 file.user = manifest->fileUserDefault;
 
-            manifestFileAdd(manifest, file);
+            manifestFileAdd(manifest, &file);
         }
         MEM_CONTEXT_END();
     }

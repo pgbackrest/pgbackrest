@@ -291,7 +291,7 @@ manifestFile(const Manifest *const this, const unsigned int fileIdx)
 }
 
 // Add a file
-void manifestFileAdd(Manifest *this, ManifestFile file);
+void manifestFileAdd(Manifest *this, ManifestFile *file);
 
 // Find file in pack format by name
 const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
