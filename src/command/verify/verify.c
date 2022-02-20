@@ -1241,6 +1241,50 @@ verifyAddInvalidWalFile(List *walRangeList, VerifyResult fileResult, const Strin
 }
 
 /***********************************************************************************************************************************
+Create file errors string
+***********************************************************************************************************************************/
+static String *
+verifyCreateFileErrorsStr(
+    const unsigned int errMissing, const unsigned int errChecksum, const unsigned int errSize, const unsigned int errOther,
+    const bool verboseText)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, errMissing);                      // Number of files missing
+        FUNCTION_TEST_PARAM(UINT, errChecksum);                     // Number of files with checksum errors
+        FUNCTION_TEST_PARAM(UINT, errSize);                         // Number of files with invalid size
+        FUNCTION_TEST_PARAM(UINT, errOther);                        // Number of files with other errors
+    FUNCTION_TEST_END();
+
+    String *result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        String *resultStr = strNew();
+
+        // List all if verbose text, otherwise only list if type has errors
+        strCatFmt(
+            resultStr, "\n    %s%s%s%s",
+            verboseText || errMissing ? strZ(strNewFmt("missing: %u, ", errMissing)) : "",
+            verboseText || errChecksum ? strZ(strNewFmt("checksum invalid: %u, ", errChecksum)) : "",
+            verboseText || errSize ? strZ(strNewFmt("size invalid: %u, ", errSize)) : "",
+            verboseText || errOther ? strZ(strNewFmt("other: %u", errOther)) : "");
+
+        // Clean up trailing chars when necessary
+        if (strEndsWith(resultStr, STRDEF(", ")))
+            strTrunc(resultStr, (int)strSize(resultStr) - 2);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(resultStr);
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Render the results of the verify command
 ***********************************************************************************************************************************/
 static String *
@@ -1306,19 +1350,10 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                     }
                 }
 
+                // Create/append file errors string
                 if (verboseText || errMissing + errChecksum + errSize + errOther)
                 {
-                    // Only list errors when not verbose text
-                    strCatFmt(
-                        result, "\n    %s%s%s%s",
-                        verboseText || errMissing ? strZ(strNewFmt("missing: %u, ", errMissing)) : "",
-                        verboseText || errChecksum ? strZ(strNewFmt("checksum invalid: %u, ", errChecksum)) : "",
-                        verboseText || errSize ? strZ(strNewFmt("size invalid: %u, ", errSize)) : "",
-                        verboseText || errOther ? strZ(strNewFmt("other: %u", errOther)) : "");
-
-                    // Clean up trailing chars when necessary
-                    if (strEndsWith(result, STRDEF(", ")))
-                        strTrunc(result, (int)strSize(result) - 2);
+                    strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText));
                 }
             }
         }
@@ -1389,19 +1424,10 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                         errOther++;
                 }
 
+                // Create/append file errors string
                 if (verboseText || errMissing + errChecksum + errSize + errOther)
                 {
-                    // Only list errors when not verbose text
-                    strCatFmt(
-                        result, "\n    %s%s%s%s",
-                        verboseText || errMissing ? strZ(strNewFmt("missing: %u, ", errMissing)) : "",
-                        verboseText || errChecksum ? strZ(strNewFmt("checksum invalid: %u, ", errChecksum)) : "",
-                        verboseText || errSize ? strZ(strNewFmt("size invalid: %u, ", errSize)) : "",
-                        verboseText || errOther ? strZ(strNewFmt("other: %u", errOther)) : "");
-
-                    // Clean up trailing chars when necessary
-                    if (strEndsWith(result, STRDEF(", ")))
-                        strTrunc(result, (int)strSize(result) - 2);
+                    strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText));
                 }
             }
         }
