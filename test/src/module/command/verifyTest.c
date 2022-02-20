@@ -785,7 +785,7 @@ testRun(void)
                 "<REPO:BACKUP>/backup.info\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info' for read\n"
-            "P00 DETAIL: unable to open missing file '/home/vagrant/test/test-0/repo/archive/db/archive.info.copy' for read\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info.copy' for read\n"
             "P00   INFO: stanza: db\n"
             "            status: error\n"
             "              No usable backup.info file\n"
