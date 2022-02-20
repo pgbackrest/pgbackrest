@@ -724,219 +724,51 @@ testRun(void)
         TEST_RESULT_UINT(PG_SEGMENT_PAGE_DEFAULT, 131072, "check pages per segment");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pages with all zeroes");
-
-        // Test pages with all zeros (these are considered valid)
-        Buffer *buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
-        Buffer *bufferOut = bufNew(0);
-        bufUsedSet(buffer, bufSize(buffer));
-        memset(bufPtr(buffer), 0, bufSize(buffer));
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0};
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0};
-
-        IoWrite *write = ioBufferWriteNew(bufferOut);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
-        ioWriteOpen(write);
-        ioWrite(write, buffer);
-        ioWriteClose(write);
-
-        TEST_RESULT_STR_Z(
-            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
-            "2:bool:true, 3:bool:true", "all zero pages");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("single valid page");
-
-        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 1);
-        bufUsedSet(buffer, bufSize(buffer));
-        memset(bufPtr(buffer), 0, bufSize(buffer));
-
-        // Page 0 has good checksum
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
-        {
-            .pd_upper = 0x01,
-            .pd_lsn = (PageXLogRecPtr)
-            {
-                .xlogid = 0xF0F0F0F0,
-                .xrecoff = 0xF0F0F0F0,
-            },
-        };
-
-        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_checksum = pgPageChecksum(
-            bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00), 0);
-
-        write = ioBufferWriteNew(bufferOut);
-
-        ioFilterGroupAdd(
-            ioWriteFilterGroup(write),
-            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000))));
-        ioWriteOpen(write);
-        ioWrite(write, buffer);
-        ioWriteClose(write);
-
-        TEST_RESULT_STR_Z(
-            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
-            "2:bool:true, 3:bool:true", "single valid page");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("single checksum error");
-
-        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 1);
-        bufUsedSet(buffer, bufSize(buffer));
-        memset(bufPtr(buffer), 0, bufSize(buffer));
-
-        // Page 0 has bogus checksum
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
-        {
-            .pd_upper = 0x01,
-            .pd_lsn = (PageXLogRecPtr)
-            {
-                .xlogid = 0xF0F0F0F0,
-                .xrecoff = 0xF0F0F0F0,
-            },
-        };
-
-        write = ioBufferWriteNew(bufferOut);
-
-        ioFilterGroupAdd(
-            ioWriteFilterGroup(write),
-            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000))));
-        ioWriteOpen(write);
-        ioWrite(write, buffer);
-        ioWriteClose(write);
-
-        TEST_RESULT_STR_Z(
-            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
-            "1:array:[1:obj:{1:u64:17361641481138401520}], 2:bool:false, 3:bool:true", "single checksum error");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("various checksum errors some of which will be skipped because of the LSN");
-
-        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 8 - (PG_PAGE_SIZE_DEFAULT - 512));
-        bufUsedSet(buffer, bufSize(buffer));
-        memset(bufPtr(buffer), 0, bufSize(buffer));
-
-        // Page 0 has bogus checksum
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
-        {
-            .pd_upper = 0x01,
-            .pd_lsn = (PageXLogRecPtr)
-            {
-                .xlogid = 0xF0F0F0F0,
-                .xrecoff = 0xF0F0F0F0,
-            },
-        };
-
-        // Page 1 has bogus checksum but lsn above the limit
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData)
-        {
-            .pd_upper = 0x01,
-            .pd_lsn = (PageXLogRecPtr)
-            {
-                .xlogid = 0xFACEFACE,
-                .xrecoff = 0x00000000,
-            },
-        };
-
-        // Page 2 has bogus checksum
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData)
-        {
-            .pd_upper = 0x01,
-            .pd_lsn = (PageXLogRecPtr)
-            {
-                .xrecoff = 0x2,
-            },
-        };
-
-        // Page 3 has bogus checksum
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData)
-        {
-            .pd_upper = 0x01,
-            .pd_lsn = (PageXLogRecPtr)
-            {
-                .xrecoff = 0x3,
-            },
-        };
-
-        // Page 4 has bogus checksum
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x04)) = (PageHeaderData)
-        {
-            .pd_upper = 0x01,
-            .pd_lsn = (PageXLogRecPtr)
-            {
-                .xrecoff = 0x4,
-            },
-        };
-
-        // Page 5 is zero
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x05)) = (PageHeaderData){.pd_upper = 0x00};
-
-        // Page 6 has bogus checksum
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x06)) = (PageHeaderData)
-        {
-            .pd_upper = 0x01,
-            .pd_lsn = (PageXLogRecPtr)
-            {
-                .xrecoff = 0x6,
-            },
-        };
-
-        // Page 7 has bogus checksum (and is misaligned but large enough to test)
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)) = (PageHeaderData)
-        {
-            .pd_upper = 0x01,
-            .pd_lsn = (PageXLogRecPtr)
-            {
-                .xrecoff = 0x7,
-            },
-        };
-
-        write = ioBufferWriteNew(bufferOut);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000));
-        ioWriteOpen(write);
-        ioWrite(write, buffer);
-        ioWriteClose(write);
-
-        TEST_RESULT_STR_Z(
-            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
-            "1:array:[1:obj:{1:u64:17361641481138401520}, 3:obj:{1:u64:2}, 4:obj:{1:u64:3}, 5:obj:{1:u64:4}, 7:obj:{1:u64:6},"
-                " 8:obj:{1:u64:7}], 2:bool:false, 3:bool:false",
-            "various checksum errors");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("impossibly misaligned page");
-
-        buffer = bufNew(256);
-        bufUsedSet(buffer, bufSize(buffer));
-        memset(bufPtr(buffer), 0, bufSize(buffer));
-
-        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
-
-        write = ioBufferWriteNew(bufferOut);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000));
-        ioWriteOpen(write);
-        ioWrite(write, buffer);
-        ioWriteClose(write);
-
-        TEST_RESULT_STR_Z(
-            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
-            "2:bool:false, 3:bool:false", "misalignment");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("two misaligned buffers in a row");
 
-        buffer = bufNew(513);
+        Buffer *buffer = bufNew(513);
         bufUsedSet(buffer, bufSize(buffer));
         memset(bufPtr(buffer), 0, bufSize(buffer));
 
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
 
-        write = ioBufferWriteNew(bufferOut);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000));
+        Buffer *bufferOut = bufNew(513);
+        IoWrite *write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write),
+            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, STRDEF(BOGUS_STR)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("retry a page with an invalid checksum");
+
+        // Write to file with valid checksums
+        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 2);
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+        bufUsedSet(buffer, bufSize(buffer));
+
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_checksum = pgPageChecksum(
+            bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01), 1);
+
+        HRN_STORAGE_PUT(storageTest, "relation", buffer);
+
+        // Now break the checksum to force a retry
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_checksum = 0;
+
+        write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, storagePathP(storageTest, STRDEF("relation"))));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "2:bool:true, 3:bool:true", "valid on retry");
     }
 
     // *****************************************************************************************************************************
@@ -2964,12 +2796,15 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/1", relation, .timeModified = backupTimeStart);
 
-            // Zeroed file which will fail on alignment
-            relation = bufNew(PG_PAGE_SIZE_DEFAULT + 1);
+            // File which will fail on alignment
+            relation = bufNew(PG_PAGE_SIZE_DEFAULT + 512);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0xFE};
+            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_checksum = pgPageChecksum(
+                bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00), 0);
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
 
@@ -2990,7 +2825,9 @@ testRun(void)
             memset(bufPtr(relation), 0, bufSize(relation));
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0x08};
-            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
+            *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0xFF};
+            ((PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02)))->pd_checksum = pgPageChecksum(
+                bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x02), 2);
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
@@ -3029,8 +2866,8 @@ testRun(void)
                 "P00   WARN: invalid page checksums found in file " TEST_PATH "/pg1/base/1/3 at pages 0, 2-3\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/4 (24KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/base/1/4 at page 1\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (8KB, [PCT]) checksum [SHA1]\n"
-                "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/2: file size 8193 is not divisible by page size"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (8.5KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/2: file size 8704 is not divisible by page size"
                     " 8192\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
@@ -3057,7 +2894,7 @@ testRun(void)
                     "pg_data/base {path}\n"
                     "pg_data/base/1 {path}\n"
                     "pg_data/base/1/1.gz {file, s=8192}\n"
-                    "pg_data/base/1/2.gz {file, s=8193}\n"
+                    "pg_data/base/1/2.gz {file, s=8704}\n"
                     "pg_data/base/1/3.gz {file, s=32768}\n"
                     "pg_data/base/1/4.gz {file, s=24576}\n"
                     "pg_data/global {path}\n"
@@ -3087,8 +2924,8 @@ testRun(void)
                         ",\"timestamp\":1572200002}\n"
                     "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
                         ",\"size\":8192,\"timestamp\":1572200000}\n"
-                    "pg_data/base/1/2={\"checksum\":\"8beb58e08394fe665fb04a17b4003faa3802760b\",\"checksum-page\":false"
-                        ",\"size\":8193,\"timestamp\":1572200000}\n"
+                    "pg_data/base/1/2={\"checksum\":\"2deafa7ae60279a54a09422b985a8025f5e125fb\",\"checksum-page\":false"
+                        ",\"size\":8704,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,[2,3]]"
                         ",\"size\":32768,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/4={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[1],\"size\":24576"
