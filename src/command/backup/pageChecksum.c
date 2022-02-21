@@ -95,10 +95,6 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Get a pointer to the page header
             const PageHeaderData *const pageHeader = (const PageHeaderData *)(bufPtrConst(input) + pageIdx * PG_PAGE_SIZE_DEFAULT);
 
-            // Skip new pages ??? Improved to exactly match what PostgreSQL does in PageIsVerifiedExtended()
-            if (pageHeader->pd_upper == 0)
-                continue;
-
             // Get the page lsn
             uint64_t pageLsn = PageXLogRecPtrGet(pageHeader->pd_lsn);
 
@@ -111,32 +107,55 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                 // Make a copy of the page since it will be modified by the page checksum function
                 memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
 
-                // Continue if the checksum matches
-                if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
-                    continue;
+                // Skip new pages, indicated by pg_upper == 0
+                bool pdUpperValid = true;
 
-                // On checksum mismatch retry the page
-                bool changed = false;
-
-                MEM_CONTEXT_TEMP_BEGIN()
+                if (pageHeader->pd_upper == 0)
                 {
-                    // Reload the page
-                    const Buffer *const pageRetry = storageGetP(
-                        storageNewReadP(
-                            storagePosixNewP(FSLASH_STR), this->fileName,
-                            .offset = (blockNo % this->segmentPageTotal) * PG_PAGE_SIZE_DEFAULT,
-                            .limit = VARUINT64(PG_PAGE_SIZE_DEFAULT)));
+                    // Check that the entire page is zero in case pg_upper is corrupted
+                    for (unsigned int pageIdx = 0; pageIdx < PG_PAGE_SIZE_DEFAULT / sizeof(size_t); pageIdx++)
+                    {
+                        if (((size_t *)pageHeader)[pageIdx] != 0)
+                        {
+                            pdUpperValid = false;
+                            break;
+                        }
+                    }
 
-                    // Check if the page has changed since it was last read
-                    changed = !bufEq(pageRetry, BUF(this->pageBuffer, PG_PAGE_SIZE_DEFAULT));
+                    // If the entire page is zero it is valid
+                    if (pdUpperValid)
+                        continue;
                 }
-                MEM_CONTEXT_TEMP_END();
 
-                // If the page has changed then PostgreSQL must be updating it so we won't consider it to be invalid. We are not
-                // concerned about whether this new page has a valid checksum or not, since the page will be replayed from WAL on
-                // recovery. This prevents (theoretically) limitless retries for a hot page.
-                if (changed)
-                    continue;
+                if (pdUpperValid)
+                {
+                    // Continue if the checksum matches
+                    if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
+                        continue;
+
+                    // On checksum mismatch retry the page
+                    bool changed = false;
+
+                    MEM_CONTEXT_TEMP_BEGIN()
+                    {
+                        // Reload the page
+                        const Buffer *const pageRetry = storageGetP(
+                            storageNewReadP(
+                                storagePosixNewP(FSLASH_STR), this->fileName,
+                                .offset = (blockNo % this->segmentPageTotal) * PG_PAGE_SIZE_DEFAULT,
+                                .limit = VARUINT64(PG_PAGE_SIZE_DEFAULT)));
+
+                        // Check if the page has changed since it was last read
+                        changed = !bufEq(pageRetry, BUF(this->pageBuffer, PG_PAGE_SIZE_DEFAULT));
+                    }
+                    MEM_CONTEXT_TEMP_END();
+
+                    // If the page has changed then PostgreSQL must be updating it so we won't consider it to be invalid. We are not
+                    // concerned about whether this new page has a valid checksum or not, since the page will be replayed from WAL
+                    // on recovery. This prevents (theoretically) limitless retries for a hot page.
+                    if (changed)
+                        continue;
+                }
             }
 
             // Create the error list if it does not exist yet
