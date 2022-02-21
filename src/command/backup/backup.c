@@ -1106,9 +1106,6 @@ backupJobResultPageChecksum(PackRead *const checksumPageResult)
             unsigned int pageId = pckReadId(checksumPageResult) - 1;
             pckReadObjBeginP(checksumPageResult, .id = pageId + 1);
 
-            // ??? Discarded for now but will eventually be used for filtering
-            pckReadU64P(checksumPageResult);
-
             // If first error then just store page
             if (!first)
             {
