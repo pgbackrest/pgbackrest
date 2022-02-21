@@ -101,7 +101,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Only validate page checksum if the page is complete
             if (this->align || pageIdx < pageTotal - 1)
             {
-                // Skip new pages, indicated by pd_upper == 0
+                // Skip new pages indicated by pd_upper == 0
                 bool pdUpperValid = true;
 
                 if (pageHeader->pd_upper == 0)
@@ -121,7 +121,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                         continue;
                 }
 
-                // Validate the checksum if pd_upper is non-zero to avoid an assertion from pg_checksum_page()
+                // Only validate the checksum if pd_upper is non-zero to avoid an assertion from pg_checksum_page()
                 if (pdUpperValid)
                 {
                     // Make a copy of the page since it will be modified by the page checksum function
@@ -132,7 +132,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                         continue;
                 }
 
-                // On error mismatch retry the page
+                // On error retry the page
                 bool changed = false;
 
                 MEM_CONTEXT_TEMP_BEGIN()
