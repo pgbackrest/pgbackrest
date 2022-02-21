@@ -745,7 +745,7 @@ testRun(void)
         TEST_TITLE("retry a page with an invalid checksum");
 
         // Write to file with valid checksums
-        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 2);
+        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
         memset(bufPtr(buffer), 0, bufSize(buffer));
         bufUsedSet(buffer, bufSize(buffer));
 
@@ -753,11 +753,16 @@ testRun(void)
         *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_checksum = pgPageChecksum(
             bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01), 1);
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0x00};
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData){.pd_upper = 0xFE};
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = pgPageChecksum(
+            bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03), 3);
 
         HRN_STORAGE_PUT(storageTest, "relation", buffer);
 
         // Now break the checksum to force a retry
         ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)))->pd_checksum = 0;
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)))->pd_checksum = 0;
 
         write = ioBufferWriteNew(bufferOut);
         ioFilterGroupAdd(

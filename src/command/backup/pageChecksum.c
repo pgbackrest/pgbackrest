@@ -95,11 +95,8 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Get a pointer to the page header
             const PageHeaderData *const pageHeader = (const PageHeaderData *)(bufPtrConst(input) + pageIdx * PG_PAGE_SIZE_DEFAULT);
 
-            // Get the page lsn
-            uint64_t pageLsn = PageXLogRecPtrGet(pageHeader->pd_lsn);
-
             // Block number relative to all segments in the relation
-            unsigned int blockNo = this->pageNoOffset + pageIdx;
+            const unsigned int blockNo = this->pageNoOffset + pageIdx;
 
             // Only validate page checksum if the page is complete
             if (this->align || pageIdx < pageTotal - 1)
@@ -127,6 +124,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                         continue;
                 }
 
+                // Validate the checksum if pd_upper is non-zero to avoid an assertion from pg_checksum_page().
                 if (pdUpperValid)
                 {
                     // Continue if the checksum matches
@@ -171,7 +169,6 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
 
             // Add page number and lsn to the error list
             pckWriteObjBeginP(this->error, .id = blockNo + 1);
-            pckWriteU64P(this->error, pageLsn);
             pckWriteObjEndP(this->error);
         }
 
