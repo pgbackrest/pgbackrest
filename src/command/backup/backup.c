@@ -1776,7 +1776,6 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 
         // Process jobs
         uint64_t sizeProgress = 0;
-        double currentPercentComplete = 0.0;
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
