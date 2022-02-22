@@ -146,25 +146,10 @@ testRun(void)
         String *archiveLockFile = strNewFmt(TEST_PATH "/%s-archive" LOCK_FILE_EXT, strZ(stanza));
         String *backupLockFile = strNewFmt(TEST_PATH "/%s-backup" LOCK_FILE_EXT, strZ(stanza));
         int lockFdTest = -1;
-        Buffer *buffer = NULL;
-        LockJsonData lockFileData = {0};
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(lockRelease(true), AssertError, "no lock is held by this process");
         TEST_RESULT_BOOL(lockRelease(false), false, "release when there is no lock");
-        TEST_ERROR(lockWritePercentComplete(STRDEF("1-test"), 85.58389), AssertError, "backup lock is not held");
-        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "obtain backup lock");
-        lseek(lockFd[lockTypeBackup], 0, SEEK_SET);
-        // Truncate backup lock file as our overwrite is much shorter than current contents
-        ftruncate(lockFd[lockTypeBackup], 0);
-        ioFdWriteOneStr(lockFd[lockTypeBackup], strNewFmt("%d" LF_Z, 12345));
-        TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test-backup.lock"))), "get file contents");
-        StringList *parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
-        TEST_RESULT_BOOL((strLstSize(parse) == 3), false, "verify it's a short file");
-        TEST_ASSIGN(lockFileData, lockReadJson(), "load lock file json data");
-        TEST_RESULT_BOOL(lockFileData.execId == NULL, true, "verify execId is not populated/is null");
-        TEST_RESULT_BOOL(lockFileData.percentComplete == NULL, true, "verify percentComplete is not populated/is null");
-        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
         lockLocal.execId = STRDEF("1-test");
@@ -222,52 +207,9 @@ testRun(void)
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, false), AssertError,
             "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
         TEST_RESULT_VOID(lockRelease(true), "release all locks");
+
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), false, "archive lock file was removed");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), false, "backup lock file was removed");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
-        TEST_RESULT_VOID(lockWritePercentComplete(STRDEF("1-test"), 0.0), "backup lock, lock file write 1 succeeded");
-        TEST_ASSIGN(lockFileData, lockReadJson(), "load lock file json data");
-        TEST_RESULT_BOOL(strEq(lockFileData.execId, STRDEF("1-test")), true, "verify execId");
-        TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test-backup.lock"))), "get file contents");
-        parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
-        TEST_RESULT_BOOL(
-            strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("execId")))), STRDEF("1-test")), true,
-            "verify 1 execId");
-        TEST_RESULT_BOOL(
-            strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("percentComplete")))), STRDEF("0.00")), true,
-            "verify percentComplete 0.00");
-        TEST_RESULT_VOID(lockWritePercentComplete(STRDEF("1-test"), 50.85938), "backup lock, lock file write 2 succeeded");
-        TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test-backup.lock"))), "get file contents");
-        parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
-        TEST_RESULT_BOOL(
-            strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("execId")))), STRDEF("1-test")), true,
-            "verify 2 execId");
-        TEST_RESULT_BOOL(
-            strEq(varStr(kvGet(jsonToKv(strLstGet(parse,1)), varNewStr(STRDEF("percentComplete")))), STRDEF("50.86")), true,
-            "verify percentComplete 50.86");
-        TEST_ERROR(
-            lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, false), AssertError,
-            "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
-        TEST_ERROR(lockWritePercentComplete(STRDEF("1-test"), 0.0), AssertError, "backup lock is not held");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), false, "archive lock file was removed");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), false, "backup lock file was removed");
-
-        // Test with only archive lock
-        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeArchive, 0, true), true, "archive lock");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
-        TEST_ERROR(lockWritePercentComplete(STRDEF("1-test"), 0.0), AssertError, "backup lock is not held");
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
-
-        // Test with all lock
-        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, true), true, "all lock");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
-        TEST_RESULT_VOID(lockWritePercentComplete(STRDEF("1-test"), 0.0), "all lock, lock file write succeeded");
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("acquire lock on the same exec-id and release");
