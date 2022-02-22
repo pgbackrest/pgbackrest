@@ -17,6 +17,7 @@ Lock Handler
 #include "common/io/io.h"
 #include "common/lock.h"
 #include "common/log.h"
+#include "common/type/json.h"
 #include "common/memContext.h"
 #include "common/wait.h"
 #include "storage/helper.h"
@@ -29,6 +30,8 @@ Constants
 // Indicates a lock that was made by matching exec-id rather than holding an actual lock. This disguishes it from -1, which is a
 // general system error.
 #define LOCK_ON_EXEC_ID                                             -2
+VARIANT_STRDEF_STATIC(EXEC_ID_VAR,                                  "execId");
+VARIANT_STRDEF_STATIC(PERCENT_COMPLETE_VAR,                         "percentComplete");
 
 /***********************************************************************************************************************************
 Lock type names

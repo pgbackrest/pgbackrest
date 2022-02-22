@@ -25,11 +25,22 @@ typedef struct LockData
 } LockData;
 
 #include "common/time.h"
+#include "common/type/keyValue.h"
 
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
 #define LOCK_FILE_EXT                                               ".lock"
+
+/***********************************************************************************************************************************
+Data Types and Structures
+***********************************************************************************************************************************/
+// Structure representing data contained in the lock file's json
+typedef struct LockJsonData
+{
+    const String *execId;                                           // Process execId
+    const String *percentComplete;                                  // Backup percent complete
+} LockJsonData;
 
 /***********************************************************************************************************************************
 Functions
@@ -41,5 +52,11 @@ bool lockAcquire(
 
 // Release a lock
 bool lockRelease(bool failOnNoLock);
+
+// Write the backup percentage complete value into the backup lock file
+void lockWritePercentComplete(const String *execId, double percentComplete);
+
+// Return json data from the lock file
+LockJsonData lockReadJson(void);
 
 #endif

@@ -1410,7 +1410,11 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, NULL), AssertError, "error message");
+        double currentPercentComplete = 0.0;
+        TEST_ERROR(
+            backupJobResult(
+                (Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, NULL, &currentPercentComplete), AssertError,
+                "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report host/100% progress on noop result");
@@ -1439,9 +1443,11 @@ testRun(void)
         OBJ_NEW_END();
 
         uint64_t sizeProgress = 0;
-
+        currentPercentComplete = 0.0;
         TEST_RESULT_VOID(
-            backupJobResult(manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, &sizeProgress), "log noop result");
+            backupJobResult(
+                manifest, STRDEF("host"), STRDEF("log-test"), strLstNew(), job, 0, &sizeProgress, &currentPercentComplete),
+                "log noop result");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:log-test (0B, 100%)");
     }
@@ -1506,6 +1512,9 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF");
+
+        // Create lock file - lock is released after last test in block cmdBackup() offline
+        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
@@ -1675,6 +1684,7 @@ testRun(void)
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
         harnessLogLevelReset();
+        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
     }
 
     // *****************************************************************************************************************************
@@ -1766,6 +1776,9 @@ testRun(void)
                     storageNewWriteP(
                         storageRepoWrite(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
+
+            // Create lock file - lock is released after last test in block cmdBackup() online
+            TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
@@ -2644,6 +2657,7 @@ testRun(void)
                 "pg_tblspc/32768/PG_11_201809051/1={}\n",
                 "compare file list");
         }
+        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

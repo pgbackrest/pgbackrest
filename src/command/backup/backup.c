@@ -20,6 +20,7 @@ Backup Command
 #include "common/compress/helper.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
+#include "common/lock.h"
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/time.h"
@@ -1149,7 +1150,7 @@ Log the results of a job and throw errors
 static void
 backupJobResult(
     Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t *sizeProgress)
+    const uint64_t sizeTotal, uint64_t *const sizeProgress)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1775,6 +1776,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 
         // Process jobs
         uint64_t sizeProgress = 0;
+        double currentPercentComplete = 0.0;
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
