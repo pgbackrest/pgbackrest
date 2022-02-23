@@ -78,9 +78,11 @@
                     <release-item>
                         <commit subject="Move command/backup-common tests in the command/backup module."/>
                         <commit subject="Retry on page checksum validation failure during backup.">
+                            <github-issue id="952"/>
                             <github-pull-request id="1667"/>
                         </commit>
                         <commit subject="Improve validation of zero pages.">
+                            <github-issue id="952"/>
                             <github-pull-request id="1669"/>
                         </commit>
 
