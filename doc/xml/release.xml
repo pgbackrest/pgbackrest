@@ -76,11 +76,15 @@
 
                 <release-improvement-list>
                     <release-item>
-                        <github-pull-request id="1667"/>
+                        <commit subject="Move command/backup-common tests in the command/backup module."/>
+                        <commit subject="Retry on page checksum validation failure during backup.">
+                            <github-pull-request id="1667"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="david.christensen"/>
                         </release-item-contributor-list>
 
                         <p>Retry on page checksum validation failure during <cmd>backup</cmd>.</p>
