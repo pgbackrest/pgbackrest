@@ -1040,6 +1040,15 @@ option:
       main: {}
       async: {}
 
+  archive-missing-retry:
+    section: global
+    type: boolean
+    default: true
+    command:
+      archive-get: {}
+    command-role:
+      main: {}
+
   archive-push-queue-max:
     section: global
     type: size
