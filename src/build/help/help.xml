@@ -1291,6 +1291,21 @@
                         <example>n</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-missing-retry" name="Retry Missing WAL Segment">
+                        <summary>Retry missing WAL segment</summary>
+
+                        <text>
+                            <p>Retry a WAL segment that was previously reported as missing by the <cmd>archive-get</cmd> command when in asynchronous mode. This prevents notifications in the spool path from a prior restore from being used and possibly causing a recovery failure if consistency has not been reached.</p>
+
+                            <p>Disabling this option allows <postgres/> to more reliably recognize when the end of the WAL in the archive has been reached, which permits it to switch over to streaming from the primary. With retries enabled, a steady stream of WAL being archived will cause <postgres/> to continue getting WAL from the archive rather than switch to streaming.</p>
+
+                            <p>When disabling this option it is important to ensure that the spool path for the stanza is empty. The <cmd>restore</cmd> command does this automatically if the spool path is configured at restore time. Otherwise, it is up to the user to ensure the spool path is empty.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-QUEUE-MAX KEY -->
                     <config-key id="archive-push-queue-max" name="Maximum Archive Push Queue Size">
                         <summary>Maximum size of the <postgres/> archive queue.</summary>
