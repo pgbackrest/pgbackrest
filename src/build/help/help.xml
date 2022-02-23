@@ -1133,6 +1133,17 @@
                         <example>10MiB</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="bundle-limit" name="Repository Bundle Limit">
+                        <summary>Limit for file bundles.</summary>
+
+                        <text>
+                            <p>Size limit for files that will be included in bundles. Files larger than this size will be stored separately.</p>
+                        </text>
+
+                        <example>10MiB</example>
+                    </config-key>
+
                     <!-- CONFIG - BACKUP SECTION - CHECKSUM-PAGE KEY -->
                     <config-key id="checksum-page" name="Page Checksums">
                         <summary>Validate data page checksums.</summary>

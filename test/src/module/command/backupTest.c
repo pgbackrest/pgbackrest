@@ -619,6 +619,327 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
+    if (testBegin("backupRegExp()"))
+    {
+        const String *full = STRDEF("20181119-152138F");
+        const String *incr = STRDEF("20181119-152138F_20181119-152152I");
+        const String *diff = STRDEF("20181119-152138F_20181119-152152D");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - error");
+
+        TEST_ERROR(
+            backupRegExpP(0),
+            AssertError, "assertion 'param.full || param.differential || param.incremental' failed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match full");
+
+        String *filter = backupRegExpP(.full = true);
+        TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F$", "full backup regex with anchors");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "does not exactly match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "does not exactly match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "exactly matches full");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match full, incremental");
+
+        filter = backupRegExpP(.full = true, .incremental = true);
+
+        TEST_RESULT_STR_Z(
+            filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}I){0,1}$", "full and optional incr backup regex with anchors");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "does not match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "match full");
+        TEST_RESULT_BOOL(
+            regExpMatchOne(
+                filter, STRDEF("12341234-123123F_12341234-123123IG")), false, "does not match with trailing character");
+        TEST_RESULT_BOOL(
+            regExpMatchOne(
+                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "does not match with leading character");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match full, differential");
+
+        filter = backupRegExpP(.full = true, .differential = true);
+
+        TEST_RESULT_STR_Z(
+            filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}D){0,1}$", "full and optional diff backup regex with anchors");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "does not match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "match full");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match full, incremental, differential");
+
+        filter = backupRegExpP(.full = true, .incremental = true, .differential = true);
+
+        TEST_RESULT_STR_Z(
+            filter, "^[0-9]{8}\\-[0-9]{6}F(\\_[0-9]{8}\\-[0-9]{6}(D|I)){0,1}$",
+            "full, optional diff and incr backup regex with anchors");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "match full");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match incremental, differential without end anchor");
+
+        filter = backupRegExpP(.incremental = true, .differential = true, .noAnchorEnd = true);
+
+        TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}(D|I)", "diff and incr backup regex with anchors");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "does not match full");
+        TEST_RESULT_BOOL(
+            regExpMatchOne(
+                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "does not match with leading character");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match incremental");
+
+        filter = backupRegExpP(.incremental = true);
+
+        TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}I$", "incr backup regex with anchors");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), true, "match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), false, "does not match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "does not match full");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("regular expression - match differential");
+
+        filter = backupRegExpP(.differential = true);
+
+        TEST_RESULT_STR_Z(filter, "^[0-9]{8}\\-[0-9]{6}F\\_[0-9]{8}\\-[0-9]{6}D$", "diff backup regex with anchors");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, incr), false, "does not match incr");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, diff), true, "match diff");
+        TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "does not match full");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("PageChecksum"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("segment page default");
+
+        TEST_RESULT_UINT(PG_SEGMENT_PAGE_DEFAULT, 131072, "check pages per segment");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pages with all zeroes");
+
+        // Test pages with all zeros (these are considered valid)
+        Buffer *buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+        Buffer *bufferOut = bufNew(0);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0};
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData){.pd_upper = 0};
+
+        IoWrite *write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "2:bool:true, 3:bool:true", "all zero pages");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single valid page");
+
+        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 1);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        // Page 0 has good checksum
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xlogid = 0xF0F0F0F0,
+                .xrecoff = 0xF0F0F0F0,
+            },
+        };
+
+        ((PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)))->pd_checksum = pgPageChecksum(
+            bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00), 0);
+
+        write = ioBufferWriteNew(bufferOut);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write),
+            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000))));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "2:bool:true, 3:bool:true", "single valid page");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single checksum error");
+
+        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 1);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        // Page 0 has bogus checksum
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xlogid = 0xF0F0F0F0,
+                .xrecoff = 0xF0F0F0F0,
+            },
+        };
+
+        write = ioBufferWriteNew(bufferOut);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write),
+            pageChecksumNewPack(ioFilterParamList(pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000))));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "1:array:[1:obj:{1:u64:17361641481138401520}], 2:bool:false, 3:bool:true", "single checksum error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("various checksum errors some of which will be skipped because of the LSN");
+
+        buffer = bufNew(PG_PAGE_SIZE_DEFAULT * 8 - (PG_PAGE_SIZE_DEFAULT - 512));
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        // Page 0 has bogus checksum
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xlogid = 0xF0F0F0F0,
+                .xrecoff = 0xF0F0F0F0,
+            },
+        };
+
+        // Page 1 has bogus checksum but lsn above the limit
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xlogid = 0xFACEFACE,
+                .xrecoff = 0x00000000,
+            },
+        };
+
+        // Page 2 has bogus checksum
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x02)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xrecoff = 0x2,
+            },
+        };
+
+        // Page 3 has bogus checksum
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x03)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xrecoff = 0x3,
+            },
+        };
+
+        // Page 4 has bogus checksum
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x04)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xrecoff = 0x4,
+            },
+        };
+
+        // Page 5 is zero
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x05)) = (PageHeaderData){.pd_upper = 0x00};
+
+        // Page 6 has bogus checksum
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x06)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xrecoff = 0x6,
+            },
+        };
+
+        // Page 7 has bogus checksum (and is misaligned but large enough to test)
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x07)) = (PageHeaderData)
+        {
+            .pd_upper = 0x01,
+            .pd_lsn = (PageXLogRecPtr)
+            {
+                .xrecoff = 0x7,
+            },
+        };
+
+        write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "1:array:[1:obj:{1:u64:17361641481138401520}, 3:obj:{1:u64:2}, 4:obj:{1:u64:3}, 5:obj:{1:u64:4}, 7:obj:{1:u64:6},"
+                " 8:obj:{1:u64:7}], 2:bool:false, 3:bool:false",
+            "various checksum errors");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("impossibly misaligned page");
+
+        buffer = bufNew(256);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+
+        write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(
+            hrnPackToStr(ioFilterGroupResultPackP(ioWriteFilterGroup(write), PAGE_CHECKSUM_FILTER_TYPE)),
+            "2:bool:false, 3:bool:false", "misalignment");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("two misaligned buffers in a row");
+
+        buffer = bufNew(513);
+        bufUsedSet(buffer, bufSize(buffer));
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+
+        *(PageHeaderData *)(bufPtr(buffer) + (PG_PAGE_SIZE_DEFAULT * 0x00)) = (PageHeaderData){.pd_upper = 0};
+
+        write = ioBufferWriteNew(bufferOut);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000));
+        ioWriteOpen(write);
+        ioWrite(write, buffer);
+        TEST_ERROR(ioWrite(write, buffer), AssertError, "should not be possible to see two misaligned pages in a row");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("segmentNumber()"))
     {
         TEST_RESULT_UINT(segmentNumber(STRDEF("999")), 0, "No segment number");
@@ -1614,7 +1935,7 @@ testRun(void)
 
         manifestTargetAdd(manifestResume, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
         manifestPathAdd(manifestResume, &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR});
-        manifestFileAdd(manifestResume, (ManifestFile){.name = STRDEF("pg_data/" PG_FILE_PGVERSION)});
+        manifestFileAdd(manifestResume, &(ManifestFile){.name = STRDEF("pg_data/" PG_FILE_PGVERSION)});
 
         manifestSave(
             manifestResume,
@@ -1696,30 +2017,6 @@ testRun(void)
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifestResume->pub.data.backupOptionCompressType = compressTypeNone;
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cannot resume when bundling");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-        hrnCfgArgRawBool(argList, cfgOptBundle, true);
-        HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-        manifestSave(
-            manifestResume,
-            storageWriteIo(
-                storageNewWriteP(
-                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
-
-        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
-
-        TEST_RESULT_LOG("P00   INFO: backup '20191003-105320F' cannot be resumed: resume is disabled");
-
-        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
     }
 
     // *****************************************************************************************************************************
@@ -1760,7 +2057,7 @@ testRun(void)
         OBJ_NEW_BEGIN(Manifest)
         {
             manifest = manifestNewInternal();
-            manifestFileAdd(manifest, (ManifestFile){.name = STRDEF("pg_data/test")});
+            manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
         }
         OBJ_NEW_END();
 
@@ -2186,7 +2483,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/size-mismatch.gz", strZ(resumeLabel))));
             manifestFileAdd(
-                manifestResume, (ManifestFile){
+                manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/size-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
                     .size = 33});
 
@@ -2195,7 +2492,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch.gz", strZ(resumeLabel))));
             manifestFileAdd(
-                manifestResume, (ManifestFile){
+                manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", .size = 4,
                     .timestamp = backupTimeStart - 1});
 
@@ -2205,7 +2502,7 @@ testRun(void)
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/zero-size.gz", strZ(resumeLabel))),
                 "ZERO-SIZE");
             manifestFileAdd(
-                manifestResume, (ManifestFile){.name = STRDEF("pg_data/zero-size"), .size = 0, .timestamp = backupTimeStart});
+                manifestResume, &(ManifestFile){.name = STRDEF("pg_data/zero-size"), .size = 0, .timestamp = backupTimeStart});
 
             // Path is not in manifest
             HRN_STORAGE_PATH_CREATE(
@@ -2366,7 +2663,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/resume-ref.gz", strZ(resumeLabel))));
             manifestFileAdd(
-                manifestResume, (ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
+                manifestResume, &(ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
 
             // Time does not match between cluster and resume manifest (but resume because time is in future so delta enabled). Note
             // also that the repo file is intenionally corrupt to generate a warning about corruption in the repository.
@@ -2374,7 +2671,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch2.gz", strZ(resumeLabel))));
             manifestFileAdd(
-                manifestResume, (ManifestFile){
+                manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch2"), .checksumSha1 = "984816fd329622876e14907634264e6f332e9fb3", .size = 4,
                     .timestamp = backupTimeStart});
 
@@ -2992,6 +3289,7 @@ testRun(void)
 
             // Set to a smaller values than the defaults allow
             cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
+            cfgOptionSet(cfgOptBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
 
             // Zeroed file which passes page checksums
             Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
@@ -3021,13 +3319,13 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000000105DB8EB000000000\n"
                 "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/stuff.conf (12B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.auto.conf (12B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/bigish.dat (8.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB8EB000000001, lsn = 5db8eb0/180000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
@@ -3042,16 +3340,18 @@ testRun(void)
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191030-014640F}\n"
                 "bundle {path}\n"
-                "bundle/1/pg_data/base/1/2 {file, s=24576}\n"
-                "bundle/2/pg_data/base/1/1 {file, s=8192}\n"
-                "bundle/3/pg_data/global/pg_control {file, s=8192}\n"
-                "bundle/4/pg_data/PG_VERSION {file, s=2}\n"
-                "bundle/4/pg_data/postgresql.auto.conf {file, s=12}\n"
-                "bundle/4/pg_data/postgresql.conf {file, s=11}\n"
-                "bundle/4/pg_data/stuff.conf {file, s=12}\n"
-                "bundle/5/pg_data/bigish.dat {file, s=8191}\n"
+                "bundle/1/pg_data/PG_VERSION {file, s=2}\n"
+                "bundle/1/pg_data/postgresql.auto.conf {file, s=12}\n"
+                "bundle/1/pg_data/postgresql.conf {file, s=11}\n"
+                "bundle/1/pg_data/stuff.conf {file, s=12}\n"
+                "bundle/2/pg_data/bigish.dat {file, s=8191}\n"
+                "bundle/3/pg_data/base/1/1 {file, s=8192}\n"
+                "bundle/4/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
+                "pg_data/base {path}\n"
+                "pg_data/base/1 {path}\n"
+                "pg_data/base/1/2.gz {file, s=24576}\n"
                 "pg_data/pg_wal {path}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000000.gz {file, s=1048576}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000001.gz {file, s=1048576}\n"
