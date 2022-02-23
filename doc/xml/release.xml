@@ -187,6 +187,15 @@
 
                         <p>Remove unused <br-option>backup-standby</br-option> option from stanza commands.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="daniel.gustafsson"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix typos in help and release notes.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -10767,6 +10776,11 @@
         <contributor id="daniel.farina">
             <contributor-name-display>Daniel Farina</contributor-name-display>
             <contributor-id type="github">fdr</contributor-id>
+        </contributor>
+
+        <contributor id="daniel.gustafsson">
+            <contributor-name-display>Daniel Gustafsson</contributor-name-display>
+            <contributor-id type="github">danielgustafsson</contributor-id>
         </contributor>
 
         <contributor id="daniel.westermann">
