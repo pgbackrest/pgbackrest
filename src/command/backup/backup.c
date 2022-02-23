@@ -1106,9 +1106,6 @@ backupJobResultPageChecksum(PackRead *const checksumPageResult)
             unsigned int pageId = pckReadId(checksumPageResult) - 1;
             pckReadObjBeginP(checksumPageResult, .id = pageId + 1);
 
-            // ??? Discarded for now but will eventually be used for filtering
-            pckReadU64P(checksumPageResult);
-
             // If first error then just store page
             if (!first)
             {
@@ -1406,7 +1403,6 @@ typedef struct BackupJobData
     const CompressType compressType;                                // Backup compression type
     const int compressLevel;                                        // Compress level if backup is compressed
     const bool delta;                                               // Is this a checksum delta backup?
-    const uint64_t lsnStart;                                        // Starting lsn for the backup
     const bool bundle;                                              // Bundle files?
     uint64_t bundleSize;                                            // Target bundle size
     uint64_t bundleLimit;                                           // Limit on files to bundle
@@ -1711,7 +1707,6 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteStrP(param, file.checksumSha1[0] != 0 ? STR(file.checksumSha1) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
-                pckWriteU64P(param, jobData->lsnStart);
                 pckWriteStrP(param, file.name);
                 pckWriteBoolP(param, file.reference != NULL);
 
@@ -1785,7 +1780,6 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
-            .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
             .bundle = cfgOptionBool(cfgOptBundle),
             .bundleId = 1,
 
