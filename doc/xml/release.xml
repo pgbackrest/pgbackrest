@@ -51,6 +51,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1642"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>archive-missing-retry</br-option> option.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="600"/>
                         <github-pull-request id="1651"/>
 
@@ -64,6 +75,21 @@
                 </release-feature-list>
 
                 <release-improvement-list>
+                    <release-item>
+                        <commit subject="Move command/backup-common tests in the command/backup module."/>
+                        <commit subject="Retry on page checksum validation failure during backup.">
+                            <github-pull-request id="1667"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Retry on page checksum validation failure during <cmd>backup</cmd>.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1610"/>
 
@@ -114,6 +140,20 @@
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <commit subject="Disconnect help.auto.c from build-help in Makefile.">
+                            <github-pull-request id="1672"/>
+                        </commit>
+                        <commit subject="Fix release note attribution in cacfdd94 and f798458e."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="daniel.gustafsson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Disconnect <file>help.auto.c</file> from <id>build-help</id> in <file>Makefile</file>.</p>
+                    </release-item>
+
                     <release-item>
                         <commit subject="Add read range to all storage drivers."/>
                         <commit subject="Implement restore ownership without updating manifest internals."/>
@@ -186,6 +226,20 @@
                         </release-item-contributor-list>
 
                         <p>Remove unused <br-option>backup-standby</br-option> option from stanza commands.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Fix typos in help and release notes.">
+                            <github-pull-request id="1671"/>
+                        </commit>
+                        <commit subject="Fix release note attribution in cacfdd94 and f798458e."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="daniel.gustafsson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix typos in help and release notes.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -1226,7 +1280,7 @@
                         <commit subject="Factor remote process exec out of protocolRemoteGet()."/>
                         <commit subject="Refactor storage/remote unit test using the protocol remote shim."/>
 
-                        <p>Add local processs shim.</p>
+                        <p>Add local process shim.</p>
                     </release-item>
 
                     <release-item>
@@ -10767,6 +10821,11 @@
         <contributor id="daniel.farina">
             <contributor-name-display>Daniel Farina</contributor-name-display>
             <contributor-id type="github">fdr</contributor-id>
+        </contributor>
+
+        <contributor id="daniel.gustafsson">
+            <contributor-name-display>Daniel Gustafsson</contributor-name-display>
+            <contributor-id type="github">danielgustafsson</contributor-id>
         </contributor>
 
         <contributor id="daniel.westermann">
