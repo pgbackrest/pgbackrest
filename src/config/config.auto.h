@@ -130,7 +130,7 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            153
+#define CFG_OPTION_TOTAL                                            154
 
 /***********************************************************************************************************************************
 Option value constants
