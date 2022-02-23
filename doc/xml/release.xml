@@ -76,6 +76,17 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <github-pull-request id="1667"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Retry on page checksum validation failure during <cmd>backup</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1610"/>
 
                         <release-item-contributor-list>
