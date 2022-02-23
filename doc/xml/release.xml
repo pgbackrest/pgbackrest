@@ -107,6 +107,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1673"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically strip trailing slashes for <cmd>repo-ls</cmd> paths.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Improve protocol module error test for protocolClientFree()."/>
                         <commit subject="Use normal error for protocol module error retry test."/>
                         <commit subject="Do not retry fatal errors."/>
