@@ -51,6 +51,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1642"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>archive-missing-retry</br-option> option.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="600"/>
                         <github-pull-request id="1651"/>
 
