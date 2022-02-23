@@ -620,7 +620,7 @@
                         <summary>Repository host certificate file.</summary>
 
                         <text>
-                            <p>Sent to repository host to prove client indentity.</p>
+                            <p>Sent to repository host to prove client identity.</p>
                         </text>
 
                         <example>/path/to/client.crt</example>
@@ -1620,7 +1620,7 @@
                         <summary><postgres/> host certificate file.</summary>
 
                         <text>
-                            <p>Sent to <postgres/> host to prove client indentity.</p>
+                            <p>Sent to <postgres/> host to prove client identity.</p>
                         </text>
 
                         <example>/path/to/client.crt</example>
