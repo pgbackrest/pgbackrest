@@ -332,10 +332,10 @@ sub run
             pageBuild($tBasePage, 0, 0x1b99) .
             pageBuild($tBasePage, 1, 0x1b9a) .
             pageBuild($tBasePage, 2, 0x1b97) .
-            pageBuild($tBasePage, 0, 0x8170, 0xFFFFFFFF, 0xFFFFFFFF);
+            ("\0" x 8192);
 
         $oHostDbPrimary->manifestFileCreate(
-            \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid, '7a16d165e4775f7c92e8cdf60c0af57313f0bf90',
+            \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000', $tPageValid, '1d73a0052828531770e7c155aeb22338e017e196',
             $lTime);
 
         my $iBlockOffset = 32767 * 131072;
@@ -344,11 +344,11 @@ sub run
             pageBuild($tBasePage, $iBlockOffset + 0, 0xf7de) .
             pageBuild($tBasePage, $iBlockOffset + 1, 0xf7df) .
             ("\0" x 8192) .
-            pageBuild($tBasePage, 0, 0x8170, 0xFFFFFFFF, 0xFFFFFFFF);
+            ("\0" x 8192);
 
         $oHostDbPrimary->manifestFileCreate(
             \%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/33000.32767', $tPageValidSeg32767,
-            '6e99b589e550e68e934fd235ccba59fe5b592a9e', $lTime);
+            '1d11c42e6080e805a7b12bf9f83f4def548d92ac', $lTime);
 
         my $tPageInvalid33001 =
             pageBuild($tBasePage, 1, 0x1b9a) .
@@ -430,7 +430,7 @@ sub run
 
             # Unlog and temp files to ignore (unlog _init will NOT be ignored)
             $oHostDbPrimary->manifestFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000_init', $tPageValid,
-                '7a16d165e4775f7c92e8cdf60c0af57313f0bf90', $lTime);
+                '1d73a0052828531770e7c155aeb22338e017e196', $lTime);
             $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/44000', 'IGNORE');
             $oHostDbPrimary->dbFileCreate(\%oManifest, MANIFEST_TARGET_PGDATA, 'base/32768/t333_44000', 'IGNORE');
         }
@@ -1050,7 +1050,7 @@ sub run
 
         # Restore checksum values for next test
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33000'}{&MANIFEST_SUBKEY_CHECKSUM} =
-            '7a16d165e4775f7c92e8cdf60c0af57313f0bf90';
+            '1d73a0052828531770e7c155aeb22338e017e196';
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_data/base/32768/33001'}{&MANIFEST_SUBKEY_CHECKSUM} =
             '6bf316f11d28c28914ea9be92c00de9bea6d9a6b';
         $oManifest{&MANIFEST_SECTION_TARGET_FILE}{'pg_tblspc/2/PG_9.4_201409291/32768/tablespace2.txt'}

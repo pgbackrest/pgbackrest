@@ -76,6 +76,26 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <commit subject="Move command/backup-common tests in the command/backup module."/>
+                        <commit subject="Retry on page checksum validation failure during backup.">
+                            <github-issue id="952"/>
+                            <github-pull-request id="1667"/>
+                        </commit>
+                        <commit subject="Improve validation of zero pages.">
+                            <github-issue id="952"/>
+                            <github-pull-request id="1669"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Retry on page validation failure during <cmd>backup</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1610"/>
 
                         <release-item-contributor-list>
