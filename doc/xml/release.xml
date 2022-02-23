@@ -126,6 +126,17 @@
 
                 <release-development-list>
                     <release-item>
+                        <github-pull-request id="1672"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="daniel.gustafsson"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Disconnect <file>help.auto.c</file> from <id>build-help</id> in <file>Makefile</file>.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Add read range to all storage drivers."/>
                         <commit subject="Implement restore ownership without updating manifest internals."/>
                         <commit subject="Fix issue with Posix read offset handling after an error."/>
