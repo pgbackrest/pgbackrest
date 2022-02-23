@@ -95,24 +95,44 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Get a pointer to the page header
             const PageHeaderData *const pageHeader = (const PageHeaderData *)(bufPtrConst(input) + pageIdx * PG_PAGE_SIZE_DEFAULT);
 
-            // Skip new pages ??? Improved to exactly match what PostgreSQL does in PageIsVerifiedExtended()
-            if (pageHeader->pd_upper == 0)
-                continue;
-
             // Block number relative to all segments in the relation
             const unsigned int blockNo = this->pageNoOffset + pageIdx;
 
             // Only validate page checksum if the page is complete
             if (this->align || pageIdx < pageTotal - 1)
             {
-                // Make a copy of the page since it will be modified by the page checksum function
-                memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
+                // Skip new pages indicated by pd_upper == 0
+                bool pdUpperValid = true;
 
-                // Continue if the checksum matches
-                if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
-                    continue;
+                if (pageHeader->pd_upper == 0)
+                {
+                    // Check that the entire page is zero in case pd_upper is corrupted
+                    for (unsigned int pageIdx = 0; pageIdx < PG_PAGE_SIZE_DEFAULT / sizeof(size_t); pageIdx++)
+                    {
+                        if (((size_t *)pageHeader)[pageIdx] != 0)
+                        {
+                            pdUpperValid = false;
+                            break;
+                        }
+                    }
 
-                // On checksum mismatch retry the page
+                    // If the entire page is zero it is valid
+                    if (pdUpperValid)
+                        continue;
+                }
+
+                // Only validate the checksum if pd_upper is non-zero to avoid an assertion from pg_checksum_page()
+                if (pdUpperValid)
+                {
+                    // Make a copy of the page since it will be modified by the page checksum function
+                    memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
+
+                    // Continue if the checksum matches
+                    if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
+                        continue;
+                }
+
+                // On error retry the page
                 bool changed = false;
 
                 MEM_CONTEXT_TEMP_BEGIN()
@@ -125,7 +145,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
                             .limit = VARUINT64(PG_PAGE_SIZE_DEFAULT)));
 
                     // Check if the page has changed since it was last read
-                    changed = !bufEq(pageRetry, BUF(this->pageBuffer, PG_PAGE_SIZE_DEFAULT));
+                    changed = !bufEq(pageRetry, BUF(pageHeader, PG_PAGE_SIZE_DEFAULT));
                 }
                 MEM_CONTEXT_TEMP_END();
 
