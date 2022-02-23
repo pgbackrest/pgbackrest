@@ -125,19 +125,15 @@ storageListRender(IoWrite *write)
     const String *path = NULL;
 
     if (strLstSize(cfgCommandParam()) == 1)
+    {
         path = strLstGet(cfgCommandParam(), 0);
+
+        // Make sure the path does not end with a slash unless it is only /
+        if (strEndsWith(path, FSLASH_STR) && strSize(path) > 1)
+            path = strPath(path);
+    }
     else if (strLstSize(cfgCommandParam()) > 1)
         THROW(ParamInvalidError, "only one path may be specified");
-
-    // make sure the path does not end with a slash
-    if (strEndsWith(path, STR("/"))) {
-        path = strPath(path);
-
-        // but if we reduced down to nothing (i.e., leading slash or multiple slashes) then use a single slash
-        if (!strSize(path)) {
-            path = STR("/");
-        }
-    }
 
     // Get options
     bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON ? true : false;
