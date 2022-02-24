@@ -22,6 +22,7 @@ typedef struct LockData
 {
     pid_t processId;                                                // Process holding the lock
     const String *execId;                                           // Exec id of process holding the lock
+    int percentComplete;                                            // Percentage of backup complete
 } LockData;
 
 #include "common/time.h"
@@ -42,5 +43,16 @@ bool lockAcquire(
 
 // Release a lock
 bool lockRelease(bool failOnNoLock);
+
+typedef struct LockWriteDataParam
+{
+    VAR_PARAM_HEADER;
+    int percentComplete;                                             // Percentage of backup complete
+} LockWriteDataParam;
+
+#define lockWriteDataP(lockType, ...)                                                                                              \
+    lockWriteData(lockType, (LockWriteDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
+
+void lockWriteData(LockType lockType, LockWriteDataParam param);
 
 #endif

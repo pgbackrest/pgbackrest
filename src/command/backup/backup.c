@@ -1149,8 +1149,8 @@ Log the results of a job and throw errors
 ***********************************************************************************************************************************/
 static void
 backupJobResult(
-    Manifest *manifest, const String *host, const String *const fileName, StringList *fileRemove, ProtocolParallelJob *const job,
-    const uint64_t sizeTotal, uint64_t *const sizeProgress)
+    Manifest *const manifest, const String *const host, const String *const fileName, StringList *const fileRemove,
+    ProtocolParallelJob *const job, const uint64_t sizeTotal, uint64_t *const sizeProgress, int *const currentPercentComplete)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1160,6 +1160,7 @@ backupJobResult(
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
+        FUNCTION_LOG_PARAM_P(INT, currentPercentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1309,6 +1310,14 @@ backupJobResult(
                 manifestFileUpdate(
                     manifest, file.name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file.checksumPage,
                     checksumPageError, checksumPageErrorList != NULL ? jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL);
+            }
+
+            // Update currentPercentComplete and lock file when the change is significant enough
+            const int percentComplete = (int)(((double)*sizeProgress * 100.0 / (double)(sizeTotal == 0 ? 100 : sizeTotal)) * 100 );
+            if (percentComplete - *currentPercentComplete > 10)
+            {
+                *currentPercentComplete = percentComplete;
+                lockWriteDataP(lockTypeBackup, .percentComplete = percentComplete);
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1777,6 +1786,9 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         // Process jobs
         uint64_t sizeProgress = 0;
 
+        // Store percentage complete as an int
+        int currentPercentComplete = 0;
+
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             do
@@ -1793,7 +1805,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         storagePathP(
                             protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
                             manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job))).name)), fileRemove, job,
-                            sizeTotal, &sizeProgress);
+                            sizeTotal, &sizeProgress, &currentPercentComplete);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection

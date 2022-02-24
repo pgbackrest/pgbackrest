@@ -103,7 +103,17 @@ lockReadDataFile(const String *const lockFile, const int fd)
                 result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
 
             if (strLstSize(parse) == 3)
-                result.execId = strDup(strLstGet(parse, 1));
+            {
+                // Convert json to key value store and populate LockData
+                KeyValue *kv = jsonToKv(strLstGet(parse, 1));
+
+                result.execId = strDup(varStr(kvGet(kv, EXEC_ID_VAR)));
+
+                // Convert decimal string back to int for percentComplete
+                const String *percentCompleteStr = varStr(kvGet(kv, PERCENT_COMPLETE_VAR));
+                if (percentCompleteStr != NULL)
+                    result.percentComplete = (int)(cvtZToDouble(strZ(percentCompleteStr)) * 100);
+            }
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -115,11 +125,12 @@ lockReadDataFile(const String *const lockFile, const int fd)
 /***********************************************************************************************************************************
 Write contents of lock file
 ***********************************************************************************************************************************/
-static void
-lockWriteData(const LockType lockType)
+void
+lockWriteData(const LockType lockType, const LockWriteDataParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
+        FUNCTION_LOG_PARAM(INT, param.percentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -128,9 +139,29 @@ lockWriteData(const LockType lockType)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Build key value store for second line json
+        KeyValue *keyValue = kvNew();
+        kvPut(keyValue, EXEC_ID_VAR, varNewStr(lockLocal.execId));
+        if (param.percentComplete > 0)
+            kvPut(keyValue, PERCENT_COMPLETE_VAR, varNewStr(strNewFmt("%.2f", param.percentComplete / 100.0)));
+
+        if (lockType == lockTypeBackup && lockLocal.held != lockTypeNone)
+        {
+            // Seek to beginning of backup lock file
+            THROW_ON_SYS_ERROR_FMT(
+                lseek(lockLocal.file[lockType].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+                strZ(lockLocal.file[lockType].name));
+
+            // In case the current write is ever shorter than the previous one
+            THROW_ON_SYS_ERROR_FMT(
+                ftruncate(lockLocal.file[lockType].fd, 0) == -1, FileWriteError, "unable to truncate '%s'",
+                strZ(lockLocal.file[lockType].name));
+        }
+
+        // Write lock file data
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockType].name, lockLocal.file[lockType].fd, 0);
 
-        ioCopy(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(lockLocal.execId)))), write);
+        ioCopy(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))))), write);
         ioWriteClose(write);
     }
     MEM_CONTEXT_TEMP_END();
@@ -190,6 +221,9 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
 
                     TRY_BEGIN()
                     {
+                        THROW_ON_SYS_ERROR_FMT(
+                            lseek(result, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(lockFile));
+
                         execId = lockReadDataFile(lockFile, result).execId;
                     }
                     FINALLY()
@@ -305,7 +339,7 @@ lockAcquire(
         }
         // Else write lock data unless we locked an execId match
         else if (lockLocal.file[lockIdx].fd != LOCK_ON_EXEC_ID)
-            lockWriteData(lockIdx);
+            lockWriteDataP(lockIdx);
     }
 
     if (result)
