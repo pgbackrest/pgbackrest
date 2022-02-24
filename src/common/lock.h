@@ -47,7 +47,7 @@ bool lockRelease(bool failOnNoLock);
 typedef struct LockWriteDataParam
 {
     VAR_PARAM_HEADER;
-    int percentComplete;                                             // Percentage of backup complete
+    int percentComplete;                                            // Percentage of backup complete
 } LockWriteDataParam;
 
 #define lockWriteDataP(lockType, ...)                                                                                              \
