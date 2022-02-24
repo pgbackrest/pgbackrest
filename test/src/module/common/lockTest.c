@@ -31,7 +31,7 @@ testRun(void)
 
         lockLocal.file[lockTypeArchive].fd = lockFdTest;
         lockLocal.file[lockTypeArchive].name = strDup(archiveLock);
-        TEST_RESULT_VOID(lockWriteData(lockTypeArchive), "write lock data");
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeArchive), "write lock data");
 
         lockLocal.execId = STRDEF("2-test");
 
@@ -183,7 +183,6 @@ testRun(void)
         lockLocal.execId = STRDEF("2-test");
 
         TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, 0, true), "backup lock by file");
-
         TEST_ERROR(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeBackup, 0, true), LockAcquireError,
             strZ(strNewFmt(
@@ -203,6 +202,17 @@ testRun(void)
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, true), true, "all lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
+        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        TEST_RESULT_STR(
+            lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).execId, STRDEF("1-test"), "verify execId");
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = 5432), "write lock data");
+        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        TEST_RESULT_INT(
+            lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 5432, "verify percentComplete");
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = 8432), "write lock data");
+        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        TEST_RESULT_INT(
+            lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 8432, "verify percentComplete");
         TEST_ERROR(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, false), AssertError,
             "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
