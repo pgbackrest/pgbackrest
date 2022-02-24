@@ -213,6 +213,9 @@ testRun(void)
         lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
         TEST_RESULT_INT(
             lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 8432, "verify percentComplete");
+        TEST_RESULT_INT(
+            lockReadDataP(.lockFile = backupLockFile, .fd = lockLocal.file[lockTypeBackup].fd).percentComplete, 8432,
+            "verify percentComplete");
         TEST_ERROR(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, false), AssertError,
             "assertion 'failOnNoLock || lockType != lockTypeAll' failed");

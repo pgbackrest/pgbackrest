@@ -72,7 +72,7 @@ If a seek is required to get to the beginning of the data, that must be done bef
 #define LOCK_BUFFER_SIZE                                            128
 
 // Helper to read data
-LockData
+static LockData
 lockReadDataFile(const String *const lockFile, const int fd)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -116,6 +116,34 @@ lockReadDataFile(const String *const lockFile, const int fd)
             }
         }
         MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/***********************************************************************************************************************************
+Read contents of lock file
+***********************************************************************************************************************************/
+LockData
+lockReadData(LockReadDataParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, param.lockFile);
+        FUNCTION_LOG_PARAM(INT, param.fd);
+    FUNCTION_LOG_END();
+
+    ASSERT(param.lockFile != NULL);
+    ASSERT(param.fd != -1);
+
+    LockData result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(param.fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(param.lockFile));
+
+        result = lockReadDataFile(param.lockFile, param.fd);
     }
     MEM_CONTEXT_TEMP_END();
 

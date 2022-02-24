@@ -82,7 +82,7 @@ cmdStop(void)
                     }
 
                     // The file is locked so that means there is a running process - read the process id and send it a term signal
-                    const pid_t processId = lockReadDataFile(lockFile, fd).processId;
+                    const pid_t processId = lockReadDataP(.lockFile = lockFile, .fd = fd).processId;
 
                     // If the process id is defined then assume this is a valid lock file
                     if (processId != 0)

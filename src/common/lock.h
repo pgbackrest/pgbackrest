@@ -44,6 +44,7 @@ bool lockAcquire(
 // Release a lock
 bool lockRelease(bool failOnNoLock);
 
+// Write data to a lock file
 typedef struct LockWriteDataParam
 {
     VAR_PARAM_HEADER;
@@ -54,5 +55,18 @@ typedef struct LockWriteDataParam
     lockWriteData(lockType, (LockWriteDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
 
 void lockWriteData(LockType lockType, LockWriteDataParam param);
+
+// Read data from a lock file
+typedef struct LockReadDataParam
+{
+    VAR_PARAM_HEADER;
+    String *lockFile;
+    int fd;
+} LockReadDataParam;
+
+#define lockReadDataP(...)                                                                                              \
+    lockReadData((LockReadDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
+
+LockData lockReadData(LockReadDataParam param);
 
 #endif
