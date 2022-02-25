@@ -274,6 +274,19 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="1485"/>
+                        <github-issue id="1663"/>
+                        <github-pull-request id="1664"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add FAQ explaining WAL archive suffix.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1585"/>
                         <github-pull-request id="1601"/>
 
