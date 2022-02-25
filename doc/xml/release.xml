@@ -33,6 +33,19 @@
 
                         <p>Retry errors in S3 batch file delete.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1638"/>
+                        <github-pull-request id="1675"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="remi.vidier"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow case-insensitive matching of <proper>HTTP</proper> <id>connection</id> header values.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
@@ -11308,6 +11321,11 @@
         <contributor id="rakshitha.br">
             <contributor-name-display>Rakshitha-BR</contributor-name-display>
             <contributor-id type="github">Rakshitha-BR</contributor-id>
+        </contributor>
+
+        <contributor id="remi.vidier">
+            <contributor-name-display>R&amp;eacute;mi Vidier</contributor-name-display>
+            <contributor-id type="github">vidierr</contributor-id>
         </contributor>
 
         <contributor id="rohit.raveendran">
