@@ -1253,6 +1253,7 @@ verifyCreateFileErrorsStr(
         FUNCTION_TEST_PARAM(UINT, errChecksum);                     // Number of files with checksum errors
         FUNCTION_TEST_PARAM(UINT, errSize);                         // Number of files with invalid size
         FUNCTION_TEST_PARAM(UINT, errOther);                        // Number of files with other errors
+        FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested
     FUNCTION_TEST_END();
 
     String *result = strNew();
@@ -1352,9 +1353,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
 
                 // Create/append file errors string
                 if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
-                {
                     strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText));
-                }
             }
         }
     }
@@ -1426,9 +1425,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
 
                 // Create/append file errors string
                 if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
-                {
                     strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText));
-                }
             }
         }
     }
@@ -1690,9 +1687,7 @@ verifyProcess(const bool verboseText)
 
         // If verbose text is requested or errors exist then add verify results
         if (verboseText || errorTotal > 0)
-        {
             strCatZ(outputStr, strZ(resultStr));
-        }
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
