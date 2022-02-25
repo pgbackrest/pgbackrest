@@ -653,7 +653,7 @@ testRun(void)
                             .content = BUFSTRDEF("012345678901234567890123456789")), true),
                     "request");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close'}", "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'ClosE'}", "check response headers");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "01234567890123456789012345678901", "check response");
                 TEST_RESULT_UINT(httpResponseRead(response, bufNew(1), true), 0, "call internal read to check eof");
 
