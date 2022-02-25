@@ -158,10 +158,32 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(output), "aaa\n", "check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("subdirectory");
+        TEST_TITLE("error on /");
 
         StringList *argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, "/");
+        HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
+
+        TEST_ERROR(
+            storageListRender(ioBufferWriteNew(output)), AssertError, "absolute path '/' is not in base path '" TEST_PATH "/repo'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("subdirectory");
+
+        argListTmp = strLstDup(argList);
         strLstAddZ(argListTmp, "bbb");
+        HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "subdirectory");
+        TEST_RESULT_STR_Z(strNewBuf(output), "ccc\n", "check output");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("subdirectory with /");
+
+        argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, "bbb/");
         HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
 
         output = bufNew(0);

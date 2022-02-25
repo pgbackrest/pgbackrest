@@ -374,7 +374,7 @@ xmlDocumentNewBuf(const Buffer *buffer)
         *this = (XmlDocument){{0}};                                 // Extra braces are required for older gcc versions
 
         if ((this->xml = xmlReadMemory((const char *)bufPtrConst(buffer), (int)bufUsed(buffer), "noname.xml", NULL, 0)) == NULL)
-            THROW_FMT(FormatError, "invalid xml");
+            THROW_FMT(FormatError, "invalid xml in %zu byte(s):\n%s", bufUsed(buffer), strZ(strNewBuf(buffer)));
 
         // Set callback to ensure xml document is freed
         memContextCallbackSet(objMemContext(this), xmlDocumentFreeResource, this);

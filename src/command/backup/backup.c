@@ -674,7 +674,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
             // Resumable backups do not have backup.manifest
             if (!storageExistsP(storageRepo(), manifestFile))
             {
-                const bool resume = cfgOptionTest(cfgOptResume) && cfgOptionBool(cfgOptResume);
+                const bool resume = cfgOptionBool(cfgOptResume);
                 bool usable = false;
                 const String *reason = STRDEF("partially deleted by prior resume or invalid");
                 Manifest *manifestResume = NULL;
@@ -990,7 +990,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 file.checksumSha1, strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))),
                 HASH_TYPE_SHA1_SIZE_HEX + 1);
 
-            manifestFileAdd(manifest, file);
+            manifestFileAdd(manifest, &file);
 
             LOG_DETAIL_FMT("wrote '%s' file returned from pg_stop_backup()", strZ(name));
         }
@@ -1106,9 +1106,6 @@ backupJobResultPageChecksum(PackRead *const checksumPageResult)
             unsigned int pageId = pckReadId(checksumPageResult) - 1;
             pckReadObjBeginP(checksumPageResult, .id = pageId + 1);
 
-            // ??? Discarded for now but will eventually be used for filtering
-            pckReadU64P(checksumPageResult);
-
             // If first error then just store page
             if (!first)
             {
@@ -1176,7 +1173,8 @@ backupJobResult(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             const unsigned int processId = protocolParallelJobProcessId(job);
-            const uint64_t bundleId = bundle ? varUInt64(protocolParallelJobKey(job)) : 0;
+            const uint64_t bundleId = varType(protocolParallelJobKey(job)) == varTypeUInt64 ?
+                varUInt64(protocolParallelJobKey(job)) : 0;
             PackRead *const jobResult = protocolParallelJobResult(job);
 
             while (!pckReadNullP(jobResult))
@@ -1405,9 +1403,9 @@ typedef struct BackupJobData
     const CompressType compressType;                                // Backup compression type
     const int compressLevel;                                        // Compress level if backup is compressed
     const bool delta;                                               // Is this a checksum delta backup?
-    const uint64_t lsnStart;                                        // Starting lsn for the backup
     const bool bundle;                                              // Bundle files?
-    const uint64_t bundleSize;                                      // Target bundle size
+    uint64_t bundleSize;                                            // Target bundle size
+    uint64_t bundleLimit;                                           // Limit on files to bundle
     uint64_t bundleId;                                              // Bundle id
 
     List *queueList;                                                // List of processing queues
@@ -1432,7 +1430,7 @@ backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
 // Comparator to order ManifestFile objects by size, date, and name
 static const Manifest *backupProcessQueueComparatorManifest = NULL;
 static bool backupProcessQueueComparatorBundle;
-static uint64_t backupProcessQueueComparatorBundleSize;
+static uint64_t backupProcessQueueComparatorBundleLimit;
 
 static int
 backupProcessQueueComparator(const void *item1, const void *item2)
@@ -1450,8 +1448,8 @@ backupProcessQueueComparator(const void *item1, const void *item2)
     ManifestFile file2 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
 
     // If the size differs then that's enough to determine order
-    if (!backupProcessQueueComparatorBundle || file1.size >= backupProcessQueueComparatorBundleSize ||
-        file2.size >= backupProcessQueueComparatorBundleSize)
+    if (!backupProcessQueueComparatorBundle || file1.size > backupProcessQueueComparatorBundleLimit ||
+        file2.size > backupProcessQueueComparatorBundleLimit)
     {
         if (file1.size < file2.size)
             FUNCTION_TEST_RETURN(-1);
@@ -1594,7 +1592,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
         // Sort the queues
         backupProcessQueueComparatorManifest = manifest;
         backupProcessQueueComparatorBundle = jobData->bundle;
-        backupProcessQueueComparatorBundleSize = jobData->bundleSize;
+        backupProcessQueueComparatorBundleLimit = jobData->bundleLimit;
 
         for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
             lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderDesc);
@@ -1663,6 +1661,8 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
             unsigned int fileIdx = 0;
+            bool bundle = jobData->bundle;
+            const String *fileName = NULL;
 
             while (fileIdx < lstSize(queue))
             {
@@ -1682,10 +1682,16 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
                     String *const repoFile = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(jobData->backupLabel));
 
-                    if (jobData->bundle)
+                    if (bundle && file.size <= jobData->bundleLimit)
                         strCatFmt(repoFile, MANIFEST_PATH_BUNDLE "/%" PRIu64, jobData->bundleId);
                     else
+                    {
+                        CHECK(AssertError, fileTotal == 0, "cannot bundle file");
+
                         strCatFmt(repoFile, "%s%s", strZ(file.name), strZ(compressExtStr(jobData->compressType)));
+                        fileName = file.name;
+                        bundle = false;
+                    }
 
                     pckWriteStrP(param, repoFile);
                     pckWriteU32P(param, jobData->compressType);
@@ -1701,7 +1707,6 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteStrP(param, file.checksumSha1[0] != 0 ? STR(file.checksumSha1) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
-                pckWriteU64P(param, jobData->lsnStart);
                 pckWriteStrP(param, file.name);
                 pckWriteBoolP(param, file.reference != NULL);
 
@@ -1712,7 +1717,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 lstRemoveIdx(queue, fileIdx);
 
                 // Break if not bundling or bundle size has been reached
-                if (!jobData->bundle || fileSize >= jobData->bundleSize)
+                if (!bundle || fileSize >= jobData->bundleSize)
                     break;
             }
 
@@ -1721,8 +1726,10 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 // Assign job to result
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = protocolParallelJobNew(VARUINT64(jobData->bundleId), command);
-                    jobData->bundleId++;
+                    result = protocolParallelJobNew(bundle ? VARUINT64(jobData->bundleId) : VARSTR(fileName), command);
+
+                    if (bundle)
+                        jobData->bundleId++;
                 }
                 MEM_CONTEXT_PRIOR_END();
 
@@ -1773,9 +1780,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
-            .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
             .bundle = cfgOptionBool(cfgOptBundle),
-            .bundleSize = cfgOptionTest(cfgOptBundleSize) ? cfgOptionUInt64(cfgOptBundleSize) : 0,
             .bundleId = 1,
 
             // Build expression to identify files that can be copied from the standby when standby backup is supported
@@ -1785,6 +1790,12 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         MANIFEST_TARGET_PGTBLSPC ")/",
                     strZ(pgXactPath(backupData->version)))),
         };
+
+        if (jobData.bundle)
+        {
+            jobData.bundleSize = cfgOptionUInt64(cfgOptBundleSize);
+            jobData.bundleLimit = cfgOptionUInt64(cfgOptBundleLimit);
+        }
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
         // exist in to repo. Also create tablespace symlinks when symlinks are available. This makes it possible for the user to
@@ -2071,7 +2082,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
                         memcpy(file.checksumSha1, strZ(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);
 
-                        manifestFileAdd(manifest, file);
+                        manifestFileAdd(manifest, &file);
                     }
                 }
                 MEM_CONTEXT_TEMP_END();

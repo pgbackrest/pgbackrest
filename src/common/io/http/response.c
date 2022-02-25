@@ -275,8 +275,6 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                 String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
                 String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
 
-                httpHeaderAdd(this->pub.header, headerKey, headerValue);
-
                 // Read transfer encoding (only chunked is supported)
                 if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
                 {
@@ -300,8 +298,11 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
                 // If the server notified of a closed connection then close the client connection after reading content.  This
                 // prevents doing a retry on the next request when using the closed connection.
-                if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(headerValue, HTTP_VALUE_CONNECTION_CLOSE_STR))
+                if (strEq(headerKey, HTTP_HEADER_CONNECTION_STR) && strEq(strLower(headerValue), HTTP_VALUE_CONNECTION_CLOSE_STR))
                     this->closeOnContentEof = true;
+
+                // Add after header checks in case the value was modified
+                httpHeaderAdd(this->pub.header, headerKey, headerValue);
             }
             while (1);
 

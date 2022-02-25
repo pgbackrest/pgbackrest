@@ -620,7 +620,7 @@
                         <summary>Repository host certificate file.</summary>
 
                         <text>
-                            <p>Sent to repository host to prove client indentity.</p>
+                            <p>Sent to repository host to prove client identity.</p>
                         </text>
 
                         <example>/path/to/client.crt</example>
@@ -1133,6 +1133,17 @@
                         <example>10MiB</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="bundle-limit" name="Repository Bundle Limit">
+                        <summary>Limit for file bundles.</summary>
+
+                        <text>
+                            <p>Size limit for files that will be included in bundles. Files larger than this size will be stored separately.</p>
+                        </text>
+
+                        <example>10MiB</example>
+                    </config-key>
+
                     <!-- CONFIG - BACKUP SECTION - CHECKSUM-PAGE KEY -->
                     <config-key id="checksum-page" name="Page Checksums">
                         <summary>Validate data page checksums.</summary>
@@ -1275,6 +1286,21 @@
                             <p>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.</p>
 
                             <p>Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-missing-retry" name="Retry Missing WAL Segment">
+                        <summary>Retry missing WAL segment</summary>
+
+                        <text>
+                            <p>Retry a WAL segment that was previously reported as missing by the <cmd>archive-get</cmd> command when in asynchronous mode. This prevents notifications in the spool path from a prior restore from being used and possibly causing a recovery failure if consistency has not been reached.</p>
+
+                            <p>Disabling this option allows <postgres/> to more reliably recognize when the end of the WAL in the archive has been reached, which permits it to switch over to streaming from the primary. With retries enabled, a steady stream of WAL being archived will cause <postgres/> to continue getting WAL from the archive rather than switch to streaming.</p>
+
+                            <p>When disabling this option it is important to ensure that the spool path for the stanza is empty. The <cmd>restore</cmd> command does this automatically if the spool path is configured at restore time. Otherwise, it is up to the user to ensure the spool path is empty.</p>
                         </text>
 
                         <example>n</example>
@@ -1609,7 +1635,7 @@
                         <summary><postgres/> host certificate file.</summary>
 
                         <text>
-                            <p>Sent to <postgres/> host to prove client indentity.</p>
+                            <p>Sent to <postgres/> host to prove client identity.</p>
                         </text>
 
                         <example>/path/to/client.crt</example>
