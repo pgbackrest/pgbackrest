@@ -103,14 +103,14 @@ process-max=1
     </section>
 
     <!--
-        At least those issues have been asking about this:
+        At least these issues have been asking about this:
             https://github.com/pgbackrest/pgbackrest/issues/1485
             https://github.com/pgbackrest/pgbackrest/issues/1663
     -->
-    <section id="archives-suffix">
-        <title>What does the WAL archives suffix mean?</title>
+    <section id="archive-suffix">
+        <title>What does the WAL archive suffix mean?</title>
 
-        <p>The suffix is the SHA1 checksum used to verify the file integrity. There is no way to omit it.</p>
+        <p>The suffix is the SHA1 checksum used to verify file integrity. There is no way to omit it.</p>
     </section>
 
     <!-- <section id="different-server">
