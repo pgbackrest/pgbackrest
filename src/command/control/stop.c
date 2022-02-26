@@ -52,6 +52,7 @@ cmdStop(void)
             // If --force was specified then send term signals to running processes
             if (cfgOptionBool(cfgOptForce))
             {
+                // Create regex pattern to match lock files
                 String *expression =
                     cfgOptionStrNull(cfgOptStanza) == NULL ? NULL : strNewFmt("%s-.*%s$", strZ(cfgOptionStrNull(cfgOptStanza)),
                     LOCK_FILE_EXT);
