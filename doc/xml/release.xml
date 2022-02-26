@@ -250,6 +250,15 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="anton.kurochkin"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Move <id>repo</id> options in <proper>TLS</proper> documentation to the <id>global</id> section.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="stefan.fercot"/>
                             <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
@@ -10704,6 +10713,11 @@
         <contributor id="andrew.schwartz">
             <contributor-name-display>Andrew Schwartz</contributor-name-display>
             <contributor-id type="github">trinchan</contributor-id>
+        </contributor>
+
+        <contributor id="anton.kurochkin">
+            <contributor-name-display>Anton Kurochkin</contributor-name-display>
+            <contributor-id type="github">woblerr</contributor-id>
         </contributor>
 
         <contributor id="argdenis">
