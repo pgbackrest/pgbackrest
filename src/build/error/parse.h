@@ -13,6 +13,7 @@ typedef struct BldErrError
 {
     const String *const name;                                       // Name
     const unsigned int code;                                        // Code
+    const bool fatal;                                               // Is the error fatal?
 } BldErrError;
 
 typedef struct BldErr

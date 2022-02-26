@@ -16,20 +16,23 @@ Restore File
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "info/manifest.h"
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
 bool
 restoreFile(
-    const String *repoFile, unsigned int repoIdx, const String *repoFileReference, CompressType repoFileCompressType,
-    const String *pgFile, const String *pgFileChecksum, bool pgFileZero, uint64_t pgFileSize, time_t pgFileModified,
-    mode_t pgFileMode, const String *pgFileUser, const String *pgFileGroup, time_t copyTimeBegin, bool delta, bool deltaForce,
-    const String *cipherPass)
+    const String *const repoFile, unsigned int repoIdx, const uint64_t offset, const Variant *const limit,
+    const CompressType repoFileCompressType, const String *const pgFile, const String *const pgFileChecksum, const bool pgFileZero,
+    const uint64_t pgFileSize, const time_t pgFileModified, const mode_t pgFileMode, const String *const pgFileUser,
+    const String *const pgFileGroup, const time_t copyTimeBegin, const bool delta, const bool deltaForce,
+    const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);
         FUNCTION_LOG_PARAM(UINT, repoIdx);
-        FUNCTION_LOG_PARAM(STRING, repoFileReference);
+        FUNCTION_LOG_PARAM(UINT64, offset);
+        FUNCTION_LOG_PARAM(VARIANT, limit);
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);
         FUNCTION_LOG_PARAM(STRING, pgFile);
         FUNCTION_LOG_PARAM(STRING, pgFileChecksum);
@@ -46,8 +49,8 @@ restoreFile(
     FUNCTION_LOG_END();
 
     ASSERT(repoFile != NULL);
-    ASSERT(repoFileReference != NULL);
     ASSERT(pgFile != NULL);
+    ASSERT(limit == NULL || varType(limit) == varTypeUInt64);
 
     // Was the file copied?
     bool result = true;
@@ -166,11 +169,7 @@ restoreFile(
                 // Copy file
                 storageCopyP(
                     storageNewReadP(
-                        storageRepoIdx(repoIdx),
-                        strNewFmt(
-                            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(repoFileReference), strZ(repoFile),
-                            strZ(compressExtStr(repoFileCompressType))),
-                        .compressible = compressible),
+                        storageRepoIdx(repoIdx), repoFile, .compressible = compressible, .offset = offset, .limit = limit),
                     pgFileWrite);
 
                 // Validate checksum

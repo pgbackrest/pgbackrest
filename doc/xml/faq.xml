@@ -102,6 +102,17 @@ process-max=1
         <p>See the <link url="user-guide.html#pitr">Point-in-Time Recovery</link> section of the <proper>User Guide</proper> for more information.</p>
     </section>
 
+    <!--
+        At least these issues have been asking about this:
+            https://github.com/pgbackrest/pgbackrest/issues/1485
+            https://github.com/pgbackrest/pgbackrest/issues/1663
+    -->
+    <section id="archive-suffix">
+        <title>What does the WAL archive suffix mean?</title>
+
+        <p>The suffix is the SHA1 checksum used to verify file integrity. There is no way to omit it.</p>
+    </section>
+
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 

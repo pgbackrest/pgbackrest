@@ -16,6 +16,38 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.38dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <text>
+                    <p><b>IMPORTANT NOTE</b>: Repository size reported by the <cmd>info</cmd> command is now entirely based on what <backrest/> has written to storage. Previously, in certain cases, <backrest/> could detect if additional compression was being applied by the storage but this is no longer supported.</p>
+                </text>
+
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1650"/>
+                        <github-pull-request id="1653"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="alex.richman"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Retry errors in S3 batch file delete.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1638"/>
+                        <github-pull-request id="1675"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="remi.vidier"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow case-insensitive matching of <proper>HTTP</proper> <id>connection</id> header values.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <github-issue id="1430"/>
@@ -30,9 +62,52 @@
 
                         <p>Add support for <proper>AWS</proper> <proper>S3</proper> server-side encryption using <proper>KMS</proper>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1642"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>archive-missing-retry</br-option> option.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="600"/>
+                        <github-pull-request id="1651"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add backup type filter to <cmd>info</cmd> command.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
+                    <release-item>
+                        <commit subject="Move command/backup-common tests in the command/backup module."/>
+                        <commit subject="Retry on page checksum validation failure during backup.">
+                            <github-issue id="952"/>
+                            <github-pull-request id="1667"/>
+                        </commit>
+                        <commit subject="Improve validation of zero pages.">
+                            <github-issue id="952"/>
+                            <github-pull-request id="1669"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Retry on page validation failure during <cmd>backup</cmd>.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1610"/>
 
@@ -42,6 +117,30 @@
                         </release-item-contributor-list>
 
                         <p>Add backup LSNs to <cmd>info</cmd> command output.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1673"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically strip trailing slashes for <cmd>repo-ls</cmd> paths.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Improve protocol module error test for protocolClientFree()."/>
+                        <commit subject="Use normal error for protocol module error retry test."/>
+                        <commit subject="Do not retry fatal errors."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Do not retry fatal errors.</p>
                     </release-item>
 
                     <release-item>
@@ -55,9 +154,35 @@
 
                         <p>Remove support for <proper>PostgreSQL</proper> <id>8.3</id>/<id>8.4</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1652"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove logic that tried to determine additional file system compression.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <commit subject="Disconnect help.auto.c from build-help in Makefile.">
+                            <github-pull-request id="1672"/>
+                        </commit>
+                        <commit subject="Fix release note attribution in cacfdd94 and f798458e."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="daniel.gustafsson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Disconnect <file>help.auto.c</file> from <id>build-help</id> in <file>Makefile</file>.</p>
+                    </release-item>
+
                     <release-item>
                         <commit subject="Add read range to all storage drivers."/>
                         <commit subject="Implement restore ownership without updating manifest internals."/>
@@ -72,6 +197,15 @@
                         <commit subject="Optimization for jsonFromStrInternal()."/>
                         <commit subject="Simplify manifest file defaults."/>
                         <commit subject="Simplify filename construction in command/verify module."/>
+                        <commit subject="Bundle files in the repository during backup.">
+                            <github-issue id="1149"/>
+                            <github-pull-request id="1655"/>
+                        </commit>
+                        <commit subject="Limit files that can be bundled.">
+                            <github-issue id="1149"/>
+                            <github-pull-request id="1662"/>
+                        </commit>
+                        <commit subject="Pass file by reference in manifestFileAdd()."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -122,9 +256,36 @@
 
                         <p>Remove unused <br-option>backup-standby</br-option> option from stanza commands.</p>
                     </release-item>
+
+                    <release-item>
+                        <commit subject="Fix typos in help and release notes.">
+                            <github-pull-request id="1671"/>
+                        </commit>
+                        <commit subject="Fix release note attribution in cacfdd94 and f798458e."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="daniel.gustafsson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix typos in help and release notes.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
+                    <release-item>
+                        <github-issue id="1485"/>
+                        <github-issue id="1663"/>
+                        <github-pull-request id="1664"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add FAQ explaining WAL archive suffix.</p>
+                    </release-item>
+
                     <release-item>
                         <github-issue id="1585"/>
                         <github-pull-request id="1601"/>
@@ -1161,7 +1322,7 @@
                         <commit subject="Factor remote process exec out of protocolRemoteGet()."/>
                         <commit subject="Refactor storage/remote unit test using the protocol remote shim."/>
 
-                        <p>Add local processs shim.</p>
+                        <p>Add local process shim.</p>
                     </release-item>
 
                     <release-item>
@@ -10520,6 +10681,11 @@
             <contributor-id type="github">aleszeleny</contributor-id>
         </contributor>
 
+        <contributor id="alex.richman">
+            <contributor-name-display>Alex Richman</contributor-name-display>
+            <contributor-id type="github">alex-richman-onesignal</contributor-id>
+        </contributor>
+
         <contributor id="anderson.a.mallmann">
             <contributor-name-display>Anderson A. Mallmann</contributor-name-display>
             <contributor-id type="github">aamallmann</contributor-id>
@@ -10697,6 +10863,11 @@
         <contributor id="daniel.farina">
             <contributor-name-display>Daniel Farina</contributor-name-display>
             <contributor-id type="github">fdr</contributor-id>
+        </contributor>
+
+        <contributor id="daniel.gustafsson">
+            <contributor-name-display>Daniel Gustafsson</contributor-name-display>
+            <contributor-id type="github">danielgustafsson</contributor-id>
         </contributor>
 
         <contributor id="daniel.westermann">
@@ -11163,6 +11334,11 @@
         <contributor id="rakshitha.br">
             <contributor-name-display>Rakshitha-BR</contributor-name-display>
             <contributor-id type="github">Rakshitha-BR</contributor-id>
+        </contributor>
+
+        <contributor id="remi.vidier">
+            <contributor-name-display>R&amp;eacute;mi Vidier</contributor-name-display>
+            <contributor-id type="github">vidierr</contributor-id>
         </contributor>
 
         <contributor id="rohit.raveendran">

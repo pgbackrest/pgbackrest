@@ -802,21 +802,14 @@ unit:
           - info/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: backup-common
-        total: 2
-
-        coverage:
-          - command/backup/common
-          - command/backup/pageChecksum
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
-        total: 9
+        total: 11
 
         coverage:
           - command/backup/backup
           - command/backup/common
           - command/backup/file
+          - command/backup/pageChecksum
           - command/backup/protocol
 
         include:

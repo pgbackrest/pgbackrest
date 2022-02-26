@@ -18,17 +18,18 @@ Represents an error type
 struct ErrorType
 {
     const int code;
+    const bool fatal;
     const char *name;
     const struct ErrorType *parentType;
 };
 
 // Macro for defining new error types
-#define ERROR_DEFINE(code, name, parentType)                                                                                       \
-    const ErrorType name = {code, #name, &parentType}
+#define ERROR_DEFINE(code, name, fatal, parentType)                                                                                \
+    const ErrorType name = {code, fatal, #name, &parentType}
 
 // Define test error
 #ifdef DEBUG
-    ERROR_DEFINE(1, TestError, RuntimeError);
+    ERROR_DEFINE(1, TestError, false, RuntimeError);
 #endif
 
 // Include error type definitions
@@ -113,6 +114,13 @@ errorTypeCode(const ErrorType *errorType)
 }
 
 /**********************************************************************************************************************************/
+bool
+errorTypeFatal(const ErrorType *const errorType)
+{
+    return errorType->fatal;
+}
+
+/**********************************************************************************************************************************/
 const ErrorType *
 errorTypeFromCode(int code)
 {
@@ -189,6 +197,13 @@ int
 errorCode(void)
 {
     return errorTypeCode(errorType());
+}
+
+/**********************************************************************************************************************************/
+bool
+errorFatal(void)
+{
+    return errorTypeFatal(errorType());
 }
 
 /**********************************************************************************************************************************/
@@ -284,7 +299,7 @@ errorInternalJump(void)
 
 /**********************************************************************************************************************************/
 bool
-errorInternalCatch(const ErrorType *const errorTypeCatch)
+errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
 {
     // If just entering error state clean up the stack
     if (errorInternalState() == errorStateTry)
@@ -295,7 +310,7 @@ errorInternalCatch(const ErrorType *const errorTypeCatch)
         errorContext.tryList[errorContext.tryTotal].state++;
     }
 
-    if (errorInternalState() == errorStateCatch && errorInstanceOf(errorTypeCatch))
+    if (errorInternalState() == errorStateCatch && errorInstanceOf(errorTypeCatch) && (fatalCatch || !errorFatal()))
     {
         errorContext.tryList[errorContext.tryTotal].uncaught = false;
         errorContext.tryList[errorContext.tryTotal].state++;

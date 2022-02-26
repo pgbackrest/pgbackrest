@@ -856,19 +856,22 @@ testRun(void)
 
         String *filePathName = strNewZ(STORAGE_REPO_ARCHIVE "/testfile");
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), strZ(filePathName));
-        TEST_RESULT_UINT(verifyFile(filePathName, STRDEF(HASH_TYPE_SHA1_ZERO), 0, NULL), verifyOk, "file ok");
+        TEST_RESULT_UINT(
+            verifyFile(filePathName, 0, NULL, compressTypeNone, STRDEF(HASH_TYPE_SHA1_ZERO), 0, NULL), verifyOk, "file ok");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file size invalid in archive");
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), strZ(filePathName), fileContents);
-        TEST_RESULT_UINT(verifyFile(filePathName, fileChecksum, 0, NULL), verifySizeInvalid, "file size invalid");
+        TEST_RESULT_UINT(
+            verifyFile(filePathName, 0, NULL, compressTypeNone, fileChecksum, 0, NULL), verifySizeInvalid, "file size invalid");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing in archive");
+
         TEST_RESULT_UINT(
-            verifyFile(
-                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), fileChecksum, 0, NULL), verifyFileMissing, "file missing");
+            verifyFile(strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, NULL, compressTypeNone, fileChecksum, 0, NULL),
+            verifyFileMissing, "file missing");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("encrypted/compressed file in backup");
@@ -881,10 +884,11 @@ testRun(void)
 
         strCatZ(filePathName, ".gz");
         TEST_RESULT_UINT(
-            verifyFile(filePathName, fileChecksum, fileSize, STRDEF("pass")), verifyOk, "file encrypted compressed ok");
+            verifyFile(filePathName, 0, NULL, compressTypeGz, fileChecksum, fileSize, STRDEF("pass")),
+            verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
-                filePathName, STRDEF("badchecksum"), fileSize, STRDEF("pass")), verifyChecksumMismatch,
+                filePathName, 0, NULL, compressTypeGz, STRDEF("badchecksum"), fileSize, STRDEF("pass")), verifyChecksumMismatch,
                 "file encrypted compressed checksum mismatch");
     }
 
@@ -1383,6 +1387,7 @@ testRun(void)
         // Create valid full backup and valid diff backup
         manifestContent = strNewFmt(
                 TEST_MANIFEST_HEADER
+                "backup-bundle=true\n"
                 "\n"
                 "[backup:db]\n"
                 TEST_BACKUP_DB2_11
@@ -1391,7 +1396,8 @@ testRun(void)
                 TEST_MANIFEST_DB
                 "\n"
                 "[target:file]\n"
-                "pg_data/validfile={\"checksum\":\"%s\",\"size\":%u,\"timestamp\":1565282114}\n"
+                "pg_data/validfile={\"bni\":1,\"bno\":3,\"checksum\":\"%s\",\"size\":%u,\"timestamp\":1565282114}\n"
+                "pg_data/zerofile={\"size\":0,\"timestamp\":1565282114}\n"
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
                 TEST_MANIFEST_LINK_DEFAULT
@@ -1407,7 +1413,8 @@ testRun(void)
             .comment = "valid manifest copy - full");
 
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), STORAGE_REPO_BACKUP  "/20201119-163000F/pg_data/validfile", fileContents, .comment = "valid file");
+            storageRepoWrite(), STORAGE_REPO_BACKUP  "/20201119-163000F/bundle/1", strZ(strNewFmt("XXX%s", fileContents)),
+            .comment = "valid file");
 
         // Create WAL file with just header info and small WAL size
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
@@ -1434,7 +1441,7 @@ testRun(void)
             "                missing: 1, checksum invalid: 1, size invalid: 1, other: 0\n"
             "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1, total valid files: 0\n"
             "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
-            "              backup: 20201119-163000F, status: valid, total files checked: 1, total valid files: 1\n"
+            "              backup: 20201119-163000F, status: valid, total files checked: 2, total valid files: 2\n"
             "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0");
     }
 

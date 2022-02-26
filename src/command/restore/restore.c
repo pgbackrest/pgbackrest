@@ -2194,9 +2194,28 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
                 PackWrite *const param = protocolCommandParam(command);
 
-                pckWriteStrP(param, file.name);
+                const String *const repoPath = strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s/",
+                    strZ(file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel));
+
+                if (file.bundleId != 0)
+                {
+                    pckWriteStrP(param, strNewFmt("%s" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(repoPath), file.bundleId));
+                    pckWriteBoolP(param, true);
+                    pckWriteU64P(param, file.bundleOffset);
+                    pckWriteU64P(param, file.sizeRepo);
+                }
+                else
+                {
+                    pckWriteStrP(
+                        param,
+                        strNewFmt(
+                            "%s%s%s", strZ(repoPath), strZ(file.name),
+                            strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
+                    pckWriteBoolP(param, false);
+                }
+
                 pckWriteU32P(param, jobData->repoIdx);
-                pckWriteStrP(param, file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel);
                 pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
                 pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
                 pckWriteStrP(param, STR(file.checksumSha1));

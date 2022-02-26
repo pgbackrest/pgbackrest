@@ -84,7 +84,7 @@ Test that an expected error is actually thrown and error when it isn't
     {                                                                                                                              \
         statement;                                                                                                                 \
     }                                                                                                                              \
-    CATCH_ANY()                                                                                                                    \
+    CATCH_FATAL()                                                                                                                  \
     {                                                                                                                              \
         TEST_ERROR_catch = true;                                                                                                   \
                                                                                                                                    \
