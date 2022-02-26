@@ -318,24 +318,45 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdStop(), no stanza, force"))
+    if (testBegin("cmdStop(), force, no stanza/stanza"))
     {
         StringList *argList = strLstNew();
         hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdStop, argList);
 
-        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/db-junk.txt", .comment = "create empty non lock file, s/b ignored");
-        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/db-empty" LOCK_FILE_EXT, .comment = "create empty lock file");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no stanza, force stop = process all lock files, ignore non lock files");
 
-        TEST_RESULT_VOID(cmdStop(), "no stanza, create stop file, ignore non lock file ");
+        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/db-junk.txt", .comment = "create empty non lock file, s/b ignored");
+        HRN_STORAGE_PUT_Z(hrnStorage, "lock/db-backup" LOCK_FILE_EXT, " ", .comment = "create backup lock file for stanza");
+        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/db-archive" LOCK_FILE_EXT, .comment = "create empty archive lock file for stanza");
+        HRN_STORAGE_PUT_Z(hrnStorage, "lock/db1-backup" LOCK_FILE_EXT, " ", .comment = "create non-empty lock file other stanza");
+
+        TEST_RESULT_VOID(cmdStop(), "no stanza, create stop file, ignore non lock file");
         TEST_STORAGE_EXISTS(hrnStorage, "lock/all" STOP_FILE_EXT, .comment = "stanza stop file created");
         TEST_STORAGE_LIST(
-            hrnStorage, "lock", "all" STOP_FILE_EXT "\n" "db-junk.txt\n", .comment = "stop file created, lock file was removed");
+            hrnStorage, "lock", "all" STOP_FILE_EXT "\n" "db-junk.txt\n", .comment = "stop file created, all lock files processed");
         TEST_RESULT_LOG("");
         HRN_STORAGE_PATH_REMOVE(hrnStorage, "lock", .recurse = true, .errorOnMissing = true, .comment = "remove the lock path");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path/file info");
+        TEST_TITLE("stanza, force stop = process only stanza lock files, ignore other stanza lock files and other files");
+
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        HRN_CFG_LOAD(cfgCmdStop, argList);
+
+        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/db-junk.txt", .comment = "create empty non lock file, s/b ignored");
+        HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/db-empty" LOCK_FILE_EXT, .comment = "create stanza empty lock file");
+        HRN_STORAGE_PUT_Z(hrnStorage, "lock/db1-backup" LOCK_FILE_EXT, " ", .comment = "create other stanza non-empty lock file");
+        HRN_STORAGE_PUT_Z(hrnStorage, "lock/db-backup" LOCK_FILE_EXT, " ", .comment = "create stanza non-empty lock file");
+
+        TEST_RESULT_VOID(cmdStop(), "stanza, create stop file, ignore other stanza lock and other files");
+        TEST_STORAGE_EXISTS(hrnStorage, "lock/db" STOP_FILE_EXT, .comment = "stanza stop file created");
+        TEST_STORAGE_LIST(
+            hrnStorage, "lock", "db-junk.txt\ndb" STOP_FILE_EXT "\n" "db1-backup" LOCK_FILE_EXT "\n",
+            .comment = "stop file created, stanza lock file was removed, other stanza lock and other files remain");
+        TEST_RESULT_LOG("");
+        HRN_STORAGE_PATH_REMOVE(hrnStorage, "lock", .recurse = true, .errorOnMissing = true, .comment = "remove the lock path");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
