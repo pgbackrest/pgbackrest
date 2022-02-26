@@ -1023,7 +1023,9 @@ sub sectionChildProcess
                     $self->{oManifest}{oStorage}->put(
                         $strDockerfile,
                         "FROM ${strFrom}\n\n" . trim($self->{oManifest}->variableReplace($strCommandList)) . "\n");
-                    executeTest("docker build -f ${strDockerfile} -t ${strPreImage} " . $self->{oManifest}{oStorage}->pathGet());
+                    executeTest(
+                        "docker build -f ${strDockerfile} -t ${strPreImage} " . $self->{oManifest}{oStorage}->pathGet(),
+                        {bSuppressStdErr => true});
 
                     # Use the pre-built image
                     $strImage = $strPreImage;
