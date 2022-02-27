@@ -54,7 +54,7 @@ cmdStop(void)
             {
                 // Create regex pattern to match lock files
                 String *expression =
-                    cfgOptionStrNull(cfgOptStanza) == NULL ? NULL : strNewFmt("%s-.*%s$", strZ(cfgOptionStrNull(cfgOptStanza)),
+                    cfgOptionStrNull(cfgOptStanza) == NULL ? NULL : strNewFmt("%s-.*\%s$", strZ(cfgOptionStrNull(cfgOptStanza)),
                     LOCK_FILE_EXT);
 
                 const String *lockPath = cfgOptionStr(cfgOptLockPath);
