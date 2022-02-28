@@ -131,7 +131,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
         manifestPathAdd(result, &pathBase);
         ManifestFile fileVersion = {
             .name = STRDEF("pg_data/" PG_FILE_PGVERSION), .mode = 0600, .group = groupName(), .user = userName()};
-        manifestFileAdd(result, fileVersion);
+        manifestFileAdd(result, &fileVersion);
     }
     OBJ_NEW_END();
 
@@ -175,9 +175,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("sparse-zero"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 0, true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("sparse-zero"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600,
+                TEST_USER_STR, TEST_GROUP_STR, 0, true, false, NULL),
             false, "zero sparse 1TB file");
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "check size");
 
@@ -186,9 +186,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("normal-zero"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                false, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("normal-zero"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600,
+                TEST_USER_STR, TEST_GROUP_STR, 0, false, false, NULL),
             true, "zero-length file");
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "check size");
 
@@ -202,9 +202,9 @@ testRun(void)
 
         TEST_ERROR(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
-                STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                false, false, STRDEF("badpass")),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeGz,
+                STRDEF("normal"), STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, false, false, STRDEF("badpass")),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -218,9 +218,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
-                STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                false, false, STRDEF("badpass")),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeGz,
+                STRDEF("normal"), STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, false, false, STRDEF("badpass")),
             true, "copy file");
 
         StorageInfo info = storageInfoP(storagePg(), STRDEF("normal"));
@@ -242,9 +242,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             true, "sha1 delta missing");
         TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
@@ -256,18 +256,18 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             false, "sha1 delta existing");
 
         ioBufferSizeSet(oldBufferSize);
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
-                1557432155, true, true, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 1557432155, true, true, NULL),
             false, "sha1 delta force existing");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -278,9 +278,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             true, "sha1 delta existing, size differs");
         TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
@@ -288,9 +288,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
-                1557432155, true, true, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
         TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
@@ -302,9 +302,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             true, "sha1 delta existing, content differs");
         TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
 
@@ -312,16 +312,16 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
-                1557432155, true, true, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 1557432155, true, true, NULL),
             true, "delta force existing, timestamp differs");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
-                1557432153, true, true, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 1557432153, true, true, NULL),
             true, "delta force existing, timestamp after copy time");
 
         // Change the existing file to zero-length
@@ -329,9 +329,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
-                true, false, NULL),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
+                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             false, "sha1 delta existing, content differs");
     }
 
@@ -815,7 +815,7 @@ testRun(void)
 
         manifestFileAdd(
             manifest,
-            (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_hba.conf"), .size = 4, .timestamp = 1482182860});
+            &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/pg_hba.conf"), .size = 4, .timestamp = 1482182860});
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "remap links");
 
@@ -982,7 +982,7 @@ testRun(void)
         ManifestPath path = {.name = STRDEF("pg_data/bogus_path"), .user = STRDEF("path-user-bogus")};
         manifestPathAdd(manifest, &path);
         ManifestFile file = {.name = STRDEF("pg_data/bogus_file"), .mode = 0600, .group = STRDEF("file-group-bogus")};
-        manifestFileAdd(manifest, file);
+        manifestFileAdd(manifest, &file);
         ManifestLink link = {.name = STRDEF("pg_data/bogus_link"), .destination = STRDEF("/"), .group = STRDEF("link-group-bogus")};
         manifestLinkAdd(manifest, &link);
 
@@ -1034,7 +1034,7 @@ testRun(void)
 
         manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
 
-        manifestFileAdd(manifest, file);
+        manifestFileAdd(manifest, &file);
         manifestLinkAdd(manifest, &link);
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest, &rootReplaceUser, &rootReplaceGroup), "check ownership");
@@ -1051,7 +1051,7 @@ testRun(void)
         TEST_TITLE("owner is root and ownership of pg_data is bad");
 
         manifestPathAdd(manifest, &path);
-        manifestFileAdd(manifest, file);
+        manifestFileAdd(manifest, &file);
 
         HRN_SYSTEM_FMT("sudo chown 77777:77777 %s", strZ(pgPath));
 
@@ -1243,7 +1243,7 @@ testRun(void)
 
         HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
-        manifestFileAdd(manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)});
+        manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)});
 
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_RECOVERYSIGNAL);
@@ -1303,7 +1303,7 @@ testRun(void)
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_90);
 
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
-            manifestFileAdd(manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION)});
+            manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION)});
         }
         OBJ_NEW_END();
 
@@ -1324,11 +1324,11 @@ testRun(void)
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("user-made-system-db"), .id = 16380, .lastSystemId = 12168});
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF(UTF8_DB_NAME), .id = 16384, .lastSystemId = 12168});
             manifestFileAdd(
-                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/" PG_FILE_PGVERSION)});
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/" PG_FILE_PGVERSION)});
             manifestFileAdd(
-                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16381/" PG_FILE_PGVERSION)});
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16381/" PG_FILE_PGVERSION)});
             manifestFileAdd(
-                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16385/" PG_FILE_PGVERSION)});
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16385/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
@@ -1353,7 +1353,7 @@ testRun(void)
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             manifestFileAdd(
-                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16384/" PG_FILE_PGVERSION)});
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16384/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
@@ -1424,7 +1424,7 @@ testRun(void)
         {
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
             manifestFileAdd(
-                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
@@ -1448,7 +1448,7 @@ testRun(void)
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/16387"), .tablespaceId = 16387, .tablespaceName = STRDEF("ts1"),
                     .path = STRDEF("/ts1")});
             manifestFileAdd(
-                manifest, (ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
@@ -1470,7 +1470,7 @@ testRun(void)
         {
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test3"), .id = 65536, .lastSystemId = 12168});
             manifestFileAdd(
-                manifest, (ManifestFile){
+                manifest, &(ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/16387/PG_9.4_201409291/65536/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
@@ -2053,7 +2053,7 @@ testRun(void)
             // PG_VERSION
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "b74d60e763728399bcd3fb63f7dd1f97b46c6b44"});
@@ -2184,7 +2184,7 @@ testRun(void)
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);
@@ -2218,7 +2218,7 @@ testRun(void)
             // pg_tblspc/1/16384/PG_VERSION
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION), .size = 4,
                     .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "b74d60e763728399bcd3fb63f7dd1f97b46c6b44"});
@@ -2400,7 +2400,7 @@ testRun(void)
 
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "5e2b96c19c4f5c63a5afa2de504d29fe64a4c908"});
@@ -2409,20 +2409,21 @@ testRun(void)
             // global/999
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/999"), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = HASH_TYPE_SHA1_ZERO, .reference = STRDEF(TEST_LABEL)});
+                    .checksumSha1 = HASH_TYPE_SHA1_ZERO});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/999");
 
             // PG_VERSION
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
-                    .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
+                    .reference = STRDEF(TEST_LABEL), .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+            HRN_STORAGE_PUT_Z(
+                storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1", PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\n");
 
             // base directory
             manifestPathAdd(
@@ -2436,14 +2437,13 @@ testRun(void)
                 &(ManifestPath){
                     .name = STRDEF(TEST_PGDATA PG_PATH_BASE "/1"), .mode = 0700, .group = groupName(), .user = userName()});
 
-            // base/1/PG_VERSION
+            // base/1/PG_VERSION. File was written as part of bundle 1 above
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
-                    .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(),
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 4,
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/1/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/1/2
             fileBuffer = bufNew(8192);
@@ -2452,7 +2452,7 @@ testRun(void)
 
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/2"), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
@@ -2470,7 +2470,7 @@ testRun(void)
             // base/16384/PG_VERSION
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/16384/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
@@ -2483,7 +2483,7 @@ testRun(void)
 
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/16384/16385"), .size = 16384, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f"});
@@ -2499,7 +2499,7 @@ testRun(void)
             // base/32768/PG_VERSION
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/32768/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
@@ -2512,7 +2512,7 @@ testRun(void)
 
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/32768/32769"), .size = 32768, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "a40f0986acb1531ce0cc75a23dcf8aa406ae9081"});
@@ -2529,7 +2529,7 @@ testRun(void)
                     .name = name, .destination = STRDEF("../config/postgresql.conf"), .group = groupName(), .user = userName()});
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "postgresql.conf"), .size = 15, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "98b8abb2e681e2a5a7d8ab082c0a79727887558d"});
@@ -2546,7 +2546,7 @@ testRun(void)
                     .name = name, .destination = STRDEF("../config/pg_hba.conf"), .group = groupName(), .user = userName()});
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "pg_hba.conf"), .size = 11, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "401215e092779574988a854d8c7caed7f91dba4b"});
@@ -2555,7 +2555,7 @@ testRun(void)
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
                 manifest,
-                (ManifestFile){
+                &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);

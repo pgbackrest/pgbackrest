@@ -52,18 +52,18 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, tls => 0, storage =>   GCS, encrypt => 1, compress =>  BZ2, repo => 2},
-        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>   GZ, repo => 1},
-        {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress => NONE, repo => 1},
-        {pg => PG_VERSION_93, repoDest =>     HOST_BACKUP, tls => 0, storage => AZURE, encrypt => 0, compress => NONE, repo => 2},
-        {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 1},
-        {pg => PG_VERSION_95, repoDest =>     HOST_BACKUP, tls => 1, storage =>    S3, encrypt => 0, compress =>  BZ2, repo => 1},
-        {pg => PG_VERSION_96, repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 0, compress => NONE, repo => 2},
-        {pg => PG_VERSION_10, repoDest => HOST_DB_STANDBY, tls => 1, storage =>    S3, encrypt => 1, compress =>   GZ, repo => 2},
-        {pg => PG_VERSION_11, repoDest =>     HOST_BACKUP, tls => 1, storage => AZURE, encrypt => 0, compress =>  ZST, repo => 2},
-        {pg => PG_VERSION_12, repoDest =>     HOST_BACKUP, tls => 0, storage =>    S3, encrypt => 1, compress =>  LZ4, repo => 1},
-        {pg => PG_VERSION_13, repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>  ZST, repo => 1},
-        {pg => PG_VERSION_14, repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 2},
+        {pg => '9.0', repoDest => HOST_DB_PRIMARY, tls => 0, storage =>   GCS, encrypt => 1, compress =>  BZ2, repo => 2, bnd => 1},
+        {pg => '9.1', repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>   GZ, repo => 1, bnd => 0},
+        {pg => '9.2', repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress => NONE, repo => 1, bnd => 1},
+        {pg => '9.3', repoDest =>     HOST_BACKUP, tls => 0, storage => AZURE, encrypt => 0, compress => NONE, repo => 2, bnd => 0},
+        {pg => '9.4', repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 1, bnd => 1},
+        {pg => '9.5', repoDest =>     HOST_BACKUP, tls => 1, storage =>    S3, encrypt => 0, compress =>  BZ2, repo => 1, bnd => 0},
+        {pg => '9.6', repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 0, compress => NONE, repo => 2, bnd => 1},
+        {pg =>  '10', repoDest => HOST_DB_STANDBY, tls => 1, storage =>    S3, encrypt => 1, compress =>   GZ, repo => 2, bnd => 0},
+        {pg =>  '11', repoDest =>     HOST_BACKUP, tls => 1, storage => AZURE, encrypt => 0, compress =>  ZST, repo => 2, bnd => 1},
+        {pg =>  '12', repoDest =>     HOST_BACKUP, tls => 0, storage =>    S3, encrypt => 1, compress =>  LZ4, repo => 1, bnd => 0},
+        {pg =>  '13', repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>  ZST, repo => 1, bnd => 1},
+        {pg =>  '14', repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 2, bnd => 0},
     )
     {
         # Only run tests for this pg version
@@ -78,6 +78,7 @@ sub run
         my $bRepoEncrypt = $rhRun->{encrypt};
         my $strCompressType = $rhRun->{compress};
         my $iRepoTotal = $rhRun->{repo};
+        my $bBundle = $rhRun->{bnd};
 
         # Use a specific VM and version of PostgreSQL for expect testing. This version will also be used to run tests that are not
         # version specific.
@@ -94,7 +95,7 @@ sub run
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, bTls => $bTls, strBackupDestination => $strBackupDestination,
              strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
-             bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal});
+             bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal, bBundle => $bBundle});
 
         # Some commands will fail because of the bogus host created when a standby is present. These options reset the bogus host
         # so it won't interfere with commands that won't tolerate a connection failure.

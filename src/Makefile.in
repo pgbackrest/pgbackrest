@@ -249,6 +249,8 @@ OBJS_BUILD_HELP = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_HELP
 
 build-help: $(OBJS_BUILD_HELP) build/config/config.yaml build/help/help.xml
 	$(CC) -o build-help $(OBJS_BUILD_HELP) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
+
+command/help/help.auto.c: build-help
 	./build-help $(VPATH)
 
 ####################################################################################################################################
@@ -284,7 +286,7 @@ clean-all: clean
 # Special per-object flags
 ####################################################################################################################################
 $(BUILDDIR)/postgres/interface/page.o: CFLAGS += @CFLAGS_PAGE_CHECKSUM@
-$(BUILDDIR)/main.o: build-help
+$(BUILDDIR)/main.o: command/help/help.auto.c
 
 ####################################################################################################################################
 # Compile and generate dependencies

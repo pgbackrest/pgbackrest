@@ -620,7 +620,7 @@
                         <summary>Repository host certificate file.</summary>
 
                         <text>
-                            <p>Sent to repository host to prove client indentity.</p>
+                            <p>Sent to repository host to prove client identity.</p>
                         </text>
 
                         <example>/path/to/client.crt</example>
@@ -1109,6 +1109,41 @@
                         <example>y</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="bundle" name="Repository Bundles">
+                        <summary>Bundle files in repository.</summary>
+
+                        <text>
+                            <p>Bundle (combine) smaller files to reduce the total number of files written to the repository. Writing fewer files is generally more efficient, especially on object stores such as <proper>S3</proper>. In addition, zero-length files are not stored (except in the manifest), which saves time and space.</p>
+                        </text>
+
+                        <example>y</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="bundle-size" name="Repository Bundle Size">
+                        <summary>Target size for file bundles.</summary>
+
+                        <text>
+                            <p>Defines the target size of bundled files. Most bundles will be smaller than this target but it is possible that some will be slightly larger, so do not set this option to the maximum size that your file system allows.</p>
+
+                            <p>In general, it is not a good idea to set this option too high because retries will need to redo the entire bundle.</p>
+                        </text>
+
+                        <example>10MiB</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="bundle-limit" name="Repository Bundle Limit">
+                        <summary>Limit for file bundles.</summary>
+
+                        <text>
+                            <p>Size limit for files that will be included in bundles. Files larger than this size will be stored separately.</p>
+                        </text>
+
+                        <example>10MiB</example>
+                    </config-key>
+
                     <!-- CONFIG - BACKUP SECTION - CHECKSUM-PAGE KEY -->
                     <config-key id="checksum-page" name="Page Checksums">
                         <summary>Validate data page checksums.</summary>
@@ -1251,6 +1286,21 @@
                             <p>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.</p>
 
                             <p>Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-missing-retry" name="Retry Missing WAL Segment">
+                        <summary>Retry missing WAL segment</summary>
+
+                        <text>
+                            <p>Retry a WAL segment that was previously reported as missing by the <cmd>archive-get</cmd> command when in asynchronous mode. This prevents notifications in the spool path from a prior restore from being used and possibly causing a recovery failure if consistency has not been reached.</p>
+
+                            <p>Disabling this option allows <postgres/> to more reliably recognize when the end of the WAL in the archive has been reached, which permits it to switch over to streaming from the primary. With retries enabled, a steady stream of WAL being archived will cause <postgres/> to continue getting WAL from the archive rather than switch to streaming.</p>
+
+                            <p>When disabling this option it is important to ensure that the spool path for the stanza is empty. The <cmd>restore</cmd> command does this automatically if the spool path is configured at restore time. Otherwise, it is up to the user to ensure the spool path is empty.</p>
                         </text>
 
                         <example>n</example>
@@ -1585,7 +1635,7 @@
                         <summary><postgres/> host certificate file.</summary>
 
                         <text>
-                            <p>Sent to <postgres/> host to prove client indentity.</p>
+                            <p>Sent to <postgres/> host to prove client identity.</p>
                         </text>
 
                         <example>/path/to/client.crt</example>
@@ -2246,7 +2296,7 @@
 
                     <p>The '<id>database size</id>' is the full uncompressed size of the database while '<id>database backup size</id>' is the amount of data in the database to actually back up (these will be the same for full backups).</p>
 
-                    <p>The '<id>repo</id>' indicates in which repository this backup resides. The '<id>backup set size</id>' includes all the files from this backup and any referenced backups in the repository that are required to restore the database from this backup while '<id>backup size</id>' includes only the files in this backup (these will also be the same for full backups). Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.</p>
+                    <p>The '<id>repo</id>' indicates in which repository this backup resides. The '<id>backup set size</id>' includes all the files from this backup and any referenced backups in the repository that are required to restore the database from this backup while '<id>backup size</id>' includes only the files in this backup (these will also be the same for full backups). Repository sizes reflect compressed file sizes if compression is enabled in <backrest/>.</p>
 
                     <p>The '<id>backup reference list</id>' contains the additional backups that are required to restore this backup.</p>
 
@@ -2270,6 +2320,7 @@
                         <example>json</example>
                     </option>
 
+                    <!-- ======================================================================================================= -->
                     <option id="set" name="Set">
                         <summary>Backup set to detail.</summary>
 
@@ -2278,6 +2329,17 @@
                         </text>
 
                         <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+
+                    <!-- ======================================================================================================= -->
+                    <option id="type" name="Type">
+                        <summary>Filter on backup type.</summary>
+
+                        <text>
+                            <p>Filter the output using one of the following backup types: <id>full</id>, <id>incr</id>, <id>diff</id>.</p>
+                        </text>
+
+                        <example>full</example>
                     </option>
                 </option-list>
             </command>

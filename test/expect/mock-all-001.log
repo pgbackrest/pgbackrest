@@ -64,9 +64,9 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P00   WARN: invalid page checksums found in file [TEST_PATH]/db-primary/db/base/base/32768/33001 at pages 0, 3-5, 7
-P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P00   WARN: invalid page checksum found in file [TEST_PATH]/db-primary/db/base/base/16384/17000 at page 1
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
@@ -159,10 +159,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","che
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":false}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","group":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/global/pg_control={"checksum":"4c77c900f7af0d9ab13fa9982051a42e0b637f6c","size":[SIZE],"timestamp":[TIMESTAMP-2]}
 pg_data/pg_hba.conf={"checksum":"dd4cea0cae348309f9de28ad4ded8ee2cc2e6d5b","size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -305,9 +305,9 @@ P00 DETAIL: remove file '[TEST_PATH]/db-primary/repo/backup/db/[BACKUP-FULL-2]/f
 P00 DETAIL: remove file '[TEST_PATH]/db-primary/repo/backup/db/[BACKUP-FULL-2]/pg_data/PG_VERSION' from resumed backup (no checksum in resumed manifest)
 P00 DETAIL: remove file '[TEST_PATH]/db-primary/repo/backup/db/[BACKUP-FULL-2]/pg_data/special-!_.*'()&!@;:+,?' from resumed backup (zero size)
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: checksum resumed file [TEST_PATH]/db-primary/db/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -406,10 +406,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","che
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","group":"[GROUP-1]","mode":"0660","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
 pg_data/changecontent.txt={"checksum":"238a131a3e8eb98d1fc5b27d882ca40b7618fd2a","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
 pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","group":"[GROUP-1]","mode":"0600","size":[SIZE],"timestamp":[TIMESTAMP-1],"user":"[USER-1]"}
@@ -524,9 +524,9 @@ P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.done'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/pg_stat'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base/pg_clog'
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -586,9 +586,9 @@ P00 DETAIL: update ownership for '[TEST_PATH]/db-primary/db/base/base/16384/PG_V
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/pg_stat'
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/17000 - exists and matches backup (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -648,9 +648,9 @@ P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/pg_stat'
 P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base/pg_stat' to '../pg_stat'
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/17000 - exists and matches backup (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -714,9 +714,9 @@ P00 DETAIL: remove invalid link '[TEST_PATH]/db-primary/db/base/postgresql.conf'
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base/recovery.conf'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base/pg_stat'
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33001 - exists and matches size 65536 and modification time [MODIFICATION-TIME-1] (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/44000_init - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/32768/33000 - exists and matches size 32768 and modification time [MODIFICATION-TIME-1] (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/16384/17000 - exists and matches size 16384 and modification time [MODIFICATION-TIME-1] (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base/base/1/12000 - exists and matches size 8192 and modification time [MODIFICATION-TIME-1] (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -868,10 +868,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","che
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"238a131a3e8eb98d1fc5b27d882ca40b7618fd2a","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changesize.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -963,9 +963,9 @@ P00   WARN: resumable backup [BACKUP-INCR-2] of same type exists -- remove inval
 P00 DETAIL: remove file '[TEST_PATH]/db-primary/repo/backup/db/[BACKUP-INCR-2]/pg_data/changesize.txt' from resumed backup (mismatched size)
 P00 DETAIL: remove file '[TEST_PATH]/db-primary/repo/backup/db/[BACKUP-INCR-2]/pg_data/zerosize.txt' from resumed backup (zero size)
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -1084,10 +1084,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","che
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changesize.txt={"checksum":"3905d5be2ec8d67f41435dab5e0dcda3ae47455d","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1183,9 +1183,9 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/44000_init (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33000.32767 (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/32768/33000 (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -1300,10 +1300,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","che
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -1419,9 +1419,9 @@ P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/1/[TS_PATH-1
 P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespace/ts2-2'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/pg_tblspc/2/[TS_PATH-1]/32768'
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -1489,9 +1489,9 @@ P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/tablespace/ts1-2/[TS_PATH-1]'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/tablespace/ts2-2/[TS_PATH-1]'
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 - exists and matches backup (64KB, 33%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init - exists and matches backup (32KB, 49%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 - exists and matches backup (32KB, 66%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 - exists and matches backup (32KB, 83%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/16384/17000 - exists and matches backup (16KB, 91%) checksum e0101dd8ffb910c9c202ca35b5f828bcb9697bed
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
@@ -1657,10 +1657,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","che
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"e0101dd8ffb910c9c202ca35b5f828bcb9697bed","checksum-page":false,"checksum-page-error":[1],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1752,9 +1752,9 @@ P00   INFO: last backup label = [BACKUP-INCR-3], version = [VERSION-1]
 P00   WARN: incr backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-INCR-3]
 P00   WARN: file 'base/16384/17000' has same timestamp as prior but different size, enabling delta checksum
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
@@ -1876,10 +1876,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","che
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","reference":"[BACKUP-INCR-3]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","reference":"[BACKUP-DIFF-1]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -1971,9 +1971,9 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
@@ -2092,10 +2092,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","che
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"9a53d532e27785e681766c98516a5e93f096a501","checksum-page":false,"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"09b5e31766be1dba1ec27de82f975c1b6eea2a92","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2190,9 +2190,9 @@ P00   WARN: diff backup cannot alter compress-type option to 'zst', reset to val
 P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
@@ -2308,10 +2308,10 @@ pg_data/badchecksum.txt={"checksum":"f927212cd08d11a42a666b2f04235398e9ceeb51","
 pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","checksum-page":false,"checksum-page-error":[0,[3,5],7],"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","checksum-page":true,"reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","reference":"[BACKUP-FULL-2]","size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2402,9 +2402,9 @@ P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE]
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/global/pg_control (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: backup file [TEST_PATH]/db-primary/db/base-2/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
@@ -2506,10 +2506,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","rep
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changetime.txt={"checksum":"88087292ed82e26f3eb824d0bffc05ccf7a30f8d","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-2]}
@@ -2722,10 +2722,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","ref
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
@@ -2886,9 +2886,9 @@ P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/bas
 P00 DETAIL: remove invalid file '[TEST_PATH]/db-primary/db/base-2/recovery.conf'
 P00   INFO: remove invalid files/links/paths from '[TEST_PATH]/db-primary/db/tablespace/ts2-2/[TS_PATH-1]'
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000.32767 (32KB, 72%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/32768/33000 (32KB, 90%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/1/12000 - exists and matches backup (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/postgresql.conf - exists and matches backup (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
@@ -2975,9 +2975,9 @@ P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc'
 P00 DETAIL: create symlink '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: create path '[TEST_PATH]/db-primary/db/base-2/base/pg_tblspc/2/[TS_PATH-1]/32768'
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33001 (64KB, 36%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/44000_init (32KB, 54%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33000.32767 (32KB, 72%) checksum 6e99b589e550e68e934fd235ccba59fe5b592a9e
-P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33000 (32KB, 90%) checksum 7a16d165e4775f7c92e8cdf60c0af57313f0bf90
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/44000_init (32KB, 54%) checksum 1d73a0052828531770e7c155aeb22338e017e196
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33000.32767 (32KB, 72%) checksum 1d11c42e6080e805a7b12bf9f83f4def548d92ac
+P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/32768/33000 (32KB, 90%) checksum 1d73a0052828531770e7c155aeb22338e017e196
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/global/pg_control.pgbackrest.tmp (8KB, 95%) checksum 4c77c900f7af0d9ab13fa9982051a42e0b637f6c
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/base/1/12000 (8KB, 99%) checksum 22c98d248ff548311eda88559e4a8405ed77c003
 P01 DETAIL: restore file [TEST_PATH]/db-primary/db/base-2/base/postgresql.conf (21B, 99%) checksum 6721d92c9fcdf4248acff1f9a1377127d9064807
@@ -3135,10 +3135,10 @@ pg_data/base/1/12000={"checksum":"22c98d248ff548311eda88559e4a8405ed77c003","ref
 pg_data/base/1/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","mode":"0660","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/17000={"checksum":"7579ada0808d7f98087a0a586d0df9de009cdc33","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/16384/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/33000.32767={"checksum":"6e99b589e550e68e934fd235ccba59fe5b592a9e","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/33000.32767={"checksum":"1d11c42e6080e805a7b12bf9f83f4def548d92ac","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/33001={"checksum":"6bf316f11d28c28914ea9be92c00de9bea6d9a6b","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
-pg_data/base/32768/44000_init={"checksum":"7a16d165e4775f7c92e8cdf60c0af57313f0bf90","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
+pg_data/base/32768/44000_init={"checksum":"1d73a0052828531770e7c155aeb22338e017e196","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/32768/PG_VERSION={"checksum":"184473f470864e067ee3a22e64b47b0a1c356f29","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/base/base2.txt={"checksum":"cafac3c59553f2cfde41ce2e62e7662295f108c0","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
 pg_data/changecontent.txt={"checksum":"a094d94583e209556d03c3c5da33131a065f1689","reference":"[BACKUP-FULL-3]","repo-size":[SIZE],"size":[SIZE],"timestamp":[TIMESTAMP-1]}
