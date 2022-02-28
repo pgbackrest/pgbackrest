@@ -52,9 +52,9 @@ int ioSessionFd(IoSession *this);
 
 // Read interface
 __attribute__((always_inline)) static inline IoRead *
-ioSessionIoRead(IoSession *const this)
+ioSessionIoRead(IoSession *const this, const bool ignoreUnexpectedEof)
 {
-    return THIS_PUB(IoSession)->interface->ioRead(THIS_PUB(IoSession)->driver);
+    return THIS_PUB(IoSession)->interface->ioRead(THIS_PUB(IoSession)->driver, ignoreUnexpectedEof);
 }
 
 // Write interface

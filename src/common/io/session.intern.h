@@ -22,7 +22,7 @@ typedef struct IoSessionInterface
     int (*fd)(void *driver);
 
     // IoRead interface for the session
-    IoRead *(*ioRead)(void *driver);
+    IoRead *(*ioRead)(void *driver, bool ignoreUnexpectedEof);
 
     // IoWrite interface for the session
     IoWrite *(*ioWrite)(void *driver);

@@ -373,7 +373,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         IoSession *const tlsSession = ioServerAccept(tlsServer, socketSession);
 
         result = protocolServerNew(
-            PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession),
+            PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession, false),
             ioSessionIoWrite(tlsSession));
 
         // If session is authenticated
@@ -681,7 +681,7 @@ protocolRemoteExec(
                 .keyFile = cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx));
             helper->ioSession = ioClientOpen(helper->ioClient);
 
-            read = ioSessionIoRead(helper->ioSession);
+            read = ioSessionIoRead(helper->ioSession, false);
             write = ioSessionIoWrite(helper->ioSession);
 
             break;

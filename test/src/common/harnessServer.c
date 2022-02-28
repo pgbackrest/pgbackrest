@@ -320,7 +320,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
 
                 TRY_BEGIN()
                 {
-                    ioRead(ioSessionIoRead(serverSession), buffer);
+                    ioRead(ioSessionIoRead(serverSession, false), buffer);
                 }
                 CATCH(FileReadError)
                 {

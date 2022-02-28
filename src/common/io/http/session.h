@@ -39,7 +39,7 @@ void httpSessionDone(HttpSession *this);
 Getters/Setters
 ***********************************************************************************************************************************/
 // Read interface
-IoRead *httpSessionIoRead(HttpSession *this);
+IoRead *httpSessionIoRead(HttpSession *this, bool ignoreUnexpectedEof);
 
 // Write interface
 IoWrite *httpSessionIoWrite(HttpSession *this);

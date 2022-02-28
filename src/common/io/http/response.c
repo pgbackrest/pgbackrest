@@ -99,17 +99,21 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            IoRead *rawRead = httpSessionIoRead(this->session);
-
             // If close was requested and no content specified then the server may send content up until the eof
             if (this->closeOnContentEof && !this->contentChunked && this->contentSize == 0)
             {
+                IoRead *rawRead = httpSessionIoRead(
+                    this->session,
+                    strEq(httpHeaderGet(this->pub.header, HTTP_HEADER_CONTENT_TYPE_STR), STRDEF("application/xml")));
+
                 ioRead(rawRead, buffer);
                 this->contentEof = ioReadEof(rawRead);
             }
             // Else read using specified encoding or size
             else
             {
+                IoRead *rawRead = httpSessionIoRead(this->session, false);
+
                 do
                 {
                     // If chunked content and no content remaining
@@ -218,7 +222,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Read status
-            String *status = ioReadLine(httpSessionIoRead(this->session));
+            String *status = ioReadLine(httpSessionIoRead(this->session, false));
 
             // Check status ends with a CR and remove it to make error formatting easier and more accurate
             if (!strEndsWith(status, CR_STR))
@@ -260,7 +264,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             do
             {
                 // Read the next header
-                String *header = strTrim(ioReadLine(httpSessionIoRead(this->session)));
+                String *header = strTrim(ioReadLine(httpSessionIoRead(this->session, false)));
 
                 // If the header is empty then we have reached the end of the headers
                 if (strSize(header) == 0)

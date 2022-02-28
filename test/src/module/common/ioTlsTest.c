@@ -703,7 +703,7 @@ testRun(void)
                         "client open");
 
                     TEST_ERROR(
-                        ioRead(ioSessionIoRead(clientSession), bufNew(1)), ServiceError,
+                        ioRead(ioSessionIoRead(clientSession, false), bufNew(1)), ServiceError,
                         "TLS error [1:336151576] tlsv1 alert unknown ca");
 
                     TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
@@ -721,7 +721,7 @@ testRun(void)
                     "client open");
 
                 Buffer *buffer = bufNew(7);
-                TEST_RESULT_VOID(ioRead(ioSessionIoRead(clientSession), buffer), "client read");
+                TEST_RESULT_VOID(ioRead(ioSessionIoRead(clientSession, false), buffer), "client read");
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "message", "check read");
 
                 TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
@@ -738,7 +738,7 @@ testRun(void)
                     "client open");
 
                 buffer = bufNew(8);
-                TEST_RESULT_VOID(ioRead(ioSessionIoRead(clientSession), buffer), "client read");
+                TEST_RESULT_VOID(ioRead(ioSessionIoRead(clientSession, false), buffer), "client read");
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "message2", "check read");
 
                 TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
@@ -807,8 +807,8 @@ testRun(void)
                 TEST_RESULT_VOID(ioWrite(ioSessionIoWrite(session), input), "write input");
                 ioWriteFlush(ioSessionIoWrite(session));
 
-                TEST_RESULT_STR_Z(ioReadLine(ioSessionIoRead(session)), "something:0", "read line");
-                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), false, "check eof = false");
+                TEST_RESULT_STR_Z(ioReadLine(ioSessionIoRead(session, false)), "something:0", "read line");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session, false)), false, "check eof = false");
 
                 hrnServerScriptSleep(tls, 100);
                 hrnServerScriptReplyZ(tls, "some ");
@@ -817,14 +817,14 @@ testRun(void)
                 hrnServerScriptReplyZ(tls, "contentAND MORE");
 
                 Buffer *output = bufNew(12);
-                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session), output), 12, "read output");
+                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session, false), output), 12, "read output");
                 TEST_RESULT_STR_Z(strNewBuf(output), "some content", "check output");
-                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), false, "check eof = false");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session, false)), false, "check eof = false");
 
                 output = bufNew(8);
-                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session), output), 8, "read output");
+                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session, false), output), 8, "read output");
                 TEST_RESULT_STR_Z(strNewBuf(output), "AND MORE", "check output");
-                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), false, "check eof = false");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session, false)), false, "check eof = false");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("read eof");
@@ -834,7 +834,7 @@ testRun(void)
                 output = bufNew(12);
                 ((IoFdRead *)((SocketSession *)tlsSession->ioSession->pub.driver)->read->pub.driver)->timeout = 100;
                 TEST_ERROR_FMT(
-                    ioRead(ioSessionIoRead(session), output), FileReadError,
+                    ioRead(ioSessionIoRead(session, false), output), FileReadError,
                     "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnServerHost()), hrnServerPort(0));
                 ((IoFdRead *)((SocketSession *)tlsSession->ioSession->pub.driver)->read->pub.driver)->timeout = 5000;
 
@@ -851,13 +851,13 @@ testRun(void)
                 ioWriteFlush(ioSessionIoWrite(session));
 
                 output = bufNew(12);
-                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session), output), 12, "read output");
+                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session, false), output), 12, "read output");
                 TEST_RESULT_STR_Z(strNewBuf(output), "0123456789AB", "check output");
-                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), false, "check eof = false");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session, false)), false, "check eof = false");
 
                 output = bufNew(12);
-                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session), output), 0, "read no output after eof");
-                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session)), true, "check eof = true");
+                TEST_RESULT_UINT(ioRead(ioSessionIoRead(session, false), output), 0, "read no output after eof");
+                TEST_RESULT_BOOL(ioReadEof(ioSessionIoRead(session, false)), true, "check eof = true");
 
                 TEST_RESULT_VOID(ioSessionClose(session), "close again");
 
@@ -872,8 +872,11 @@ testRun(void)
                 TEST_ASSIGN(session, ioClientOpen(client), "open client again (was closed by server)");
                 socketLocal.block = false;
 
-                // output = bufNew(13);
-                // TEST_ERROR(ioRead(ioSessionIoRead(session), output), KernelError, "TLS syscall error");
+                output = bufNew(13);
+                TEST_ERROR(ioRead(ioSessionIoRead(session, false), output), KernelError, "TLS syscall error");
+
+                output = bufNew(13);
+                TEST_RESULT_VOID(ioRead(ioSessionIoRead(session, true), output), "ignore syscall error");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close connection");

@@ -25,6 +25,7 @@ typedef struct TlsSession
     SSL *session;                                                   // TLS session on the file descriptor
     TimeMSec timeout;                                               // Timeout for any i/o operation (read, write, etc.)
     bool shutdownOnClose;                                           // Shutdown the TLS connection when closing the session
+    bool ignoreUnexpectedEof;                                       // Ignore unexpected EOF when requested
 
     IoRead *read;                                                   // Read interface
     IoWrite *write;                                                 // Write interface
@@ -130,17 +131,23 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
         case SSL_ERROR_ZERO_RETURN:
         case SSL_ERROR_SYSCALL:
         {
-            if (!closeOk)
-                THROW(ProtocolError, "unexpected TLS eof");
+            if (errorTls == SSL_ERROR_SYSCALL && !this->ignoreUnexpectedEof)
+                THROW_SYS_ERROR_CODE(errorSys, KernelError, "TLS syscall error");
+            else
+            {
+                if (!closeOk)
+                    THROW(ProtocolError, "unexpected TLS eof");
 
-            this->shutdownOnClose = false;
-            tlsSessionClose(this);
+                this->shutdownOnClose = false;
+                tlsSessionClose(this);
+            }
+
             break;
         }
 
         // Try again after waiting for read ready
         case SSL_ERROR_WANT_READ:
-            ioReadReadyP(ioSessionIoRead(this->ioSession), .error = true);
+            ioReadReadyP(ioSessionIoRead(this->ioSession, false), .error = true);
             result = 0;
             break;
 
@@ -217,7 +224,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
     {
         // If no TLS data pending then check the io to reduce blocking
         if (!SSL_pending(this->session))
-            ioReadReadyP(ioSessionIoRead(this->ioSession), .error = true);
+            ioReadReadyP(ioSessionIoRead(this->ioSession, false), .error = true);
 
         // Read and handle errors. The error queue must be cleared before this operation.
         ERR_clear_error();
@@ -289,15 +296,18 @@ tlsSessionEof(THIS_VOID)
 
 /**********************************************************************************************************************************/
 static IoRead *
-tlsSessionIoRead(THIS_VOID)
+tlsSessionIoRead(THIS_VOID, const bool ignoreUnexpectedEof)
 {
     THIS(TlsSession);
 
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(TLS_SESSION, this);
+        FUNCTION_TEST_PARAM(BOOL, ignoreUnexpectedEof);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+
+    this->ignoreUnexpectedEof = ignoreUnexpectedEof;
 
     FUNCTION_TEST_RETURN(this->read);
 }

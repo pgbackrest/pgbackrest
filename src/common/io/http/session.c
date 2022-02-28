@@ -63,15 +63,16 @@ httpSessionDone(HttpSession *this)
 
 /**********************************************************************************************************************************/
 IoRead *
-httpSessionIoRead(HttpSession *this)
+httpSessionIoRead(HttpSession *const this, const bool ignoreUnexpectedEof)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_SESSION, this);
+        FUNCTION_TEST_PARAM(BOOL, ignoreUnexpectedEof);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(ioSessionIoRead(this->ioSession));
+    FUNCTION_TEST_RETURN(ioSessionIoRead(this->ioSession, ignoreUnexpectedEof));
 }
 
 /**********************************************************************************************************************************/
