@@ -1890,7 +1890,7 @@ testRun(void)
             lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_VOID(
             backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress,
-                    &currentPercentComplete), "log noop result");
+            &currentPercentComplete), "log noop result");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100%)");
         TEST_RESULT_VOID(lockRelease(true), "release all locks");
