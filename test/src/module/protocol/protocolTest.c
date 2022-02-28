@@ -728,7 +728,7 @@ testRun(void)
 
                 // Send ping
                 ProtocolClient *protocolClient = protocolClientNew(
-                    PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoRead(tlsSession, false),
+                    PROTOCOL_SERVICE_REMOTE_STR, PROTOCOL_SERVICE_REMOTE_STR, ioSessionIoReadP(tlsSession),
                     ioSessionIoWrite(tlsSession));
                 protocolClientNoExit(protocolClient);
                 protocolClientNoOp(protocolClient);

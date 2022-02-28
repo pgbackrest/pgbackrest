@@ -147,7 +147,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
 
         // Try again after waiting for read ready
         case SSL_ERROR_WANT_READ:
-            ioReadReadyP(ioSessionIoRead(this->ioSession, false), .error = true);
+            ioReadReadyP(ioSessionIoReadP(this->ioSession), .error = true);
             result = 0;
             break;
 
@@ -224,7 +224,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
     {
         // If no TLS data pending then check the io to reduce blocking
         if (!SSL_pending(this->session))
-            ioReadReadyP(ioSessionIoRead(this->ioSession, false), .error = true);
+            ioReadReadyP(ioSessionIoReadP(this->ioSession), .error = true);
 
         // Read and handle errors. The error queue must be cleared before this operation.
         ERR_clear_error();

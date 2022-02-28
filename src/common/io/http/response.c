@@ -76,6 +76,19 @@ httpResponseDone(HttpResponse *this)
 /***********************************************************************************************************************************
 Read content
 ***********************************************************************************************************************************/
+static bool
+httpResponseReadIgnoreUnexpectedEof(const HttpResponse *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(HTTP_RESPONSE, this);
+    FUNCTION_LOG_END();
+
+    const String *const contentType = httpHeaderGet(this->pub.header, HTTP_HEADER_CONTENT_TYPE_STR);
+
+    FUNCTION_LOG_RETURN(
+        BOOL, strEq(contentType, HTTP_HEADER_CONTENT_TYPE_XML_STR) || strEq(contentType, HTTP_HEADER_CONTENT_TYPE_JSON_STR));
+}
+
 static size_t
 httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
 {
@@ -102,9 +115,8 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
             // If close was requested and no content specified then the server may send content up until the eof
             if (this->closeOnContentEof && !this->contentChunked && this->contentSize == 0)
             {
-                IoRead *rawRead = httpSessionIoRead(
-                    this->session,
-                    strEq(httpHeaderGet(this->pub.header, HTTP_HEADER_CONTENT_TYPE_STR), STRDEF("application/xml")));
+                IoRead *const rawRead = httpSessionIoReadP(
+                    this->session, .ignoreUnexpectedEof = httpResponseReadIgnoreUnexpectedEof(this));
 
                 ioRead(rawRead, buffer);
                 this->contentEof = ioReadEof(rawRead);
@@ -112,7 +124,7 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
             // Else read using specified encoding or size
             else
             {
-                IoRead *rawRead = httpSessionIoRead(this->session, false);
+                IoRead *const rawRead = httpSessionIoReadP(this->session);
 
                 do
                 {
@@ -222,7 +234,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Read status
-            String *status = ioReadLine(httpSessionIoRead(this->session, false));
+            String *status = ioReadLine(httpSessionIoReadP(this->session));
 
             // Check status ends with a CR and remove it to make error formatting easier and more accurate
             if (!strEndsWith(status, CR_STR))
@@ -264,7 +276,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             do
             {
                 // Read the next header
-                String *header = strTrim(ioReadLine(httpSessionIoRead(this->session, false)));
+                String *const header = strTrim(ioReadLine(httpSessionIoReadP(this->session)));
 
                 // If the header is empty then we have reached the end of the headers
                 if (strSize(header) == 0)
