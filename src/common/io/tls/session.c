@@ -128,6 +128,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
     {
         // The connection was closed
         case SSL_ERROR_ZERO_RETURN:
+        case SSL_ERROR_SYSCALL:
         {
             if (!closeOk)
                 THROW(ProtocolError, "unexpected TLS eof");
@@ -148,10 +149,6 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
             ioWriteReadyP(ioSessionIoWrite(this->ioSession), .error = true);
             result = 0;
             break;
-
-        // A syscall failed (this usually indicates unexpected eof)
-        case SSL_ERROR_SYSCALL:
-            THROW_SYS_ERROR_CODE(errorSys, KernelError, "TLS syscall error");
 
         // Any other error that we cannot handle
         default:

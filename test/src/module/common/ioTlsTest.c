@@ -872,8 +872,8 @@ testRun(void)
                 TEST_ASSIGN(session, ioClientOpen(client), "open client again (was closed by server)");
                 socketLocal.block = false;
 
-                output = bufNew(13);
-                TEST_ERROR(ioRead(ioSessionIoRead(session), output), KernelError, "TLS syscall error");
+                // output = bufNew(13);
+                // TEST_ERROR(ioRead(ioSessionIoRead(session), output), KernelError, "TLS syscall error");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close connection");
