@@ -129,10 +129,15 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
     {
         // The connection was closed
         case SSL_ERROR_ZERO_RETURN:
+        // A syscall failed (this usually indicates unexpected eof)
         case SSL_ERROR_SYSCALL:
         {
+            // Error on SSL_ERROR_SYSCALL if unexpected EOF is not allowed
             if (errorTls == SSL_ERROR_SYSCALL && !this->ignoreUnexpectedEof)
+            {
                 THROW_SYS_ERROR_CODE(errorSys, KernelError, "TLS syscall error");
+            }
+            // Else close the connection if we are in a state where it is allowed, e.g. not connecting
             else
             {
                 if (!closeOk)

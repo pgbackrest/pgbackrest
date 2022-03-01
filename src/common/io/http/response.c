@@ -76,6 +76,8 @@ httpResponseDone(HttpResponse *this)
 /***********************************************************************************************************************************
 Read content
 ***********************************************************************************************************************************/
+// Helper to determine if it is OK to accept unexpected EOF, e.g. the server closed the socket with properly closing the TLS
+// connection. The idea is that since these types of responses can be validated we should be able to detect a short read.
 static bool
 httpResponseReadIgnoreUnexpectedEof(const HttpResponse *const this)
 {

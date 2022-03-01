@@ -54,7 +54,7 @@ int ioSessionFd(IoSession *this);
 typedef struct IoSessionIoReadParam
 {
     VAR_PARAM_HEADER;
-    bool ignoreUnexpectedEof;
+    bool ignoreUnexpectedEof;                                       // Allow unexpected EOF, e.g. TLS session improperly terminated
 } IoSessionIoReadParam;
 
 #define ioSessionIoReadP(this, ...)                                                                                                \
