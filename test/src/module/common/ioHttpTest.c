@@ -637,6 +637,44 @@ testRun(void)
                     "CONTENT");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("end server process");
+
+                hrnServerScriptEnd(http);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        HRN_FORK_BEGIN()
+        {
+            // Start HTTPS test server
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                // Set buffer size large enough for server to read expect messages
+                ioBufferSizeSet(65536);
+
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls), "http server run");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *http = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("create client");
+
+                ioBufferSizeSet(35);
+
+                TEST_ASSIGN(
+                    client,
+                    httpClientNew(
+                        tlsClientNewP(
+                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 0, 0, TEST_IN_CONTAINER),
+                        5000),
+                    "new client");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("request with content using content-length");
 
                 hrnServerScriptAccept(http);
@@ -648,9 +686,12 @@ testRun(void)
                     http,
                     "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:application/xml\r\n\r\n01234567890123456789012345678901");
 
-                hrnServerScriptClose(http);
+                // Abort connect without proper TLS shutdown to show that all bytes are read correctly for content type xml
+                hrnServerScriptAbort(http);
 
                 ioBufferSizeSet(30);
+
+                HttpResponse *response = NULL;
 
                 TEST_ASSIGN(
                     response,
@@ -660,6 +701,7 @@ testRun(void)
                             .header = httpHeaderAdd(httpHeaderNew(NULL), STRDEF("content-length"), STRDEF("30")),
                             .content = BUFSTRDEF("012345678901234567890123456789")), true),
                     "request");
+                TEST_RESULT_BOOL(httpResponseReadIgnoreUnexpectedEof(response), true, "check unexpected eof allowed");
                 TEST_RESULT_STR_Z(
                     httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close', content-type: 'application/xml'}",
                     "check response headers");

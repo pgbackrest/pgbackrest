@@ -875,8 +875,18 @@ testRun(void)
                 output = bufNew(13);
                 TEST_ERROR(ioRead(ioSessionIoReadP(session), output), KernelError, "TLS syscall error");
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("aborted connection ignored and read complete (non-blocking socket)");
+
+                hrnServerScriptAccept(tls);
+                hrnServerScriptReplyZ(tls, "0123456789AC");
+                hrnServerScriptAbort(tls);
+
+                TEST_ASSIGN(session, ioClientOpen(client), "open client again (was closed by server)");
+
                 output = bufNew(13);
                 TEST_RESULT_VOID(ioRead(ioSessionIoReadP(session, .ignoreUnexpectedEof = true), output), "ignore syscall error");
+                TEST_RESULT_STR_Z(strNewBuf(output), "0123456789AC", "all bytes read");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close connection");
