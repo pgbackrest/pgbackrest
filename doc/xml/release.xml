@@ -109,6 +109,21 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1638"/>
+                        <github-pull-request id="1677"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="remi.vidier"/>
+                            <release-item-reviewer id="david.christensen"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Handle <proper>TLS</proper> servers that do not close connections gracefully.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1610"/>
 
                         <release-item-contributor-list>
