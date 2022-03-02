@@ -298,6 +298,15 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="yogesh.sharma"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add aliveness check to <proper>systemd</proper> service configuration.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1485"/>
                         <github-issue id="1663"/>
                         <github-pull-request id="1664"/>

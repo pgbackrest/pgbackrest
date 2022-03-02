@@ -462,6 +462,8 @@
                     echo 'RestartSec=1' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'User={[setup-tls-user]}' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'ExecStart=/usr/bin/pgbackrest server' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'ExecStartPost=/bin/sleep 3' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'ExecStartPost=/bin/bash -c "[ ! -z $MAINPID ]"' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'ExecReload=kill -HUP $MAINPID' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '[Install]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
