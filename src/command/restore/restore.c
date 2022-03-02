@@ -1914,14 +1914,39 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
     ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
 
-    // If the size differs then that's enough to determine order
-    if (file1.size < file2.size)
-        FUNCTION_TEST_RETURN(-1);
-    else if (file1.size > file2.size)
+    // If the bundle id differs that is enough to determine order
+    if (file1.bundleId < file2.bundleId)
+        FUNCTION_TEST_RETURN(1);
+    else if (file1.bundleId > file2.bundleId) // {uncovered - !!!}
+        FUNCTION_TEST_RETURN(-1); // {uncovered - !!!}
+
+    // If the bundle ids are 0
+    if (file1.bundleId == 0)
+    {
+        // If the size differs then that's enough to determine order
+        if (file1.size < file2.size)
+            FUNCTION_TEST_RETURN(-1);
+        else if (file1.size > file2.size)
+            FUNCTION_TEST_RETURN(1);
+
+        // If size is the same then use name to generate a deterministic ordering (names must be unique)
+        ASSERT(!strEq(file1.name, file2.name));
+        FUNCTION_TEST_RETURN(strCmp(file1.name, file2.name));
+    }
+
+    // If the reference differs that is enough to determine order
+    const int backupLabelCmp = strCmp(file1.reference, file2.reference);
+
+    if (backupLabelCmp != 0)  // {uncovered - !!!}
+        FUNCTION_TEST_RETURN(backupLabelCmp);
+
+    // Finally order by bundle offset
+    ASSERT(file1.bundleOffset != file2.bundleOffset); // {uncovered - !!!}
+
+    if (file1.bundleOffset < file2.bundleOffset)
         FUNCTION_TEST_RETURN(1);
 
-    // If size is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(strCmp(file1.name, file2.name));
+    FUNCTION_TEST_RETURN(-1);
 }
 
 static uint64_t
