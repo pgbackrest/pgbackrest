@@ -1197,8 +1197,8 @@ backupJobResult(
                 // Format log strings
                 const String *const logProgress =
                     strNewFmt(
-                    "%s, %.2lf%%", strZ(strSizeFormat(copySize)),
-                    sizeTotal == 0 ? 100.00 : (double)*sizeProgress * 100.0 / (double)sizeTotal);
+                        "%s, %.2lf%%", strZ(strSizeFormat(copySize)),
+                        sizeTotal == 0 ? 100.00 : (double)*sizeProgress * 100.0 / (double)sizeTotal);
                 const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
 
                 // If the file is in a prior backup and nothing changed, just log it
