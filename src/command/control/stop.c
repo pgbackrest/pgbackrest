@@ -52,14 +52,11 @@ cmdStop(void)
             // If --force was specified then send term signals to running processes
             if (cfgOptionBool(cfgOptForce))
             {
-                // Create regex pattern to match lock files
-                String *expression =
-                    cfgOptionStrNull(cfgOptStanza) == NULL ? NULL : strNewFmt("%s-.*\%s$", strZ(cfgOptionStrNull(cfgOptStanza)),
-                    LOCK_FILE_EXT);
-
                 const String *lockPath = cfgOptionStr(cfgOptLockPath);
                 StringList *lockPathFileList = strLstSort(
-                    storageListP(storageLocal(), lockPath, .errorOnMissing = true, .expression = expression), sortOrderAsc);
+                    storageListP(storageLocal(), lockPath, .errorOnMissing = true,
+                    .expression = cfgOptionStrNull(cfgOptStanza) == NULL ? NULL : strNewFmt("%s-.*\%s$",
+                    strZ(cfgOptionStrNull(cfgOptStanza)), LOCK_FILE_EXT)), sortOrderAsc);
 
                 // Find each lock file and send term signals to the processes
                 for (unsigned int lockPathFileIdx = 0; lockPathFileIdx < strLstSize(lockPathFileList); lockPathFileIdx++)
