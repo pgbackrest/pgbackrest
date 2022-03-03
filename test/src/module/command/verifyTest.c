@@ -21,7 +21,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // Create Storage* storageTest = storagePosixNew(<recovery - expr>(), (StoragePosixNewParam) { .dummy = 0, .write = true })
+    // Create storage
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // Install local command handler shim
