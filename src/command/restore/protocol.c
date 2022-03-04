@@ -55,14 +55,27 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
                 file.limit = varNewUInt64(pckReadU64P(param));
             }
 
+            file.manifestFile = pckReadStrP(param);
+
             lstAdd(fileList, &file);
         }
 
-        const bool result = restoreFile(
+        // Restore files
+        const List *const result = restoreFile(
             repoFile, repoIdx, repoFileCompressType, copyTimeBegin, delta, deltaForce, cipherPass, fileList);
 
         // Return result
-        protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), result));
+        PackWrite *const resultPack = protocolPackNew();
+
+        for (unsigned int resultIdx = 0; resultIdx < lstSize(result); resultIdx++)
+        {
+            const RestoreFileResult *const fileResult = lstGet(result, resultIdx);
+
+            pckWriteStrP(resultPack, fileResult->manifestFile);
+            pckWriteBoolP(resultPack, fileResult->copy);
+        }
+
+        protocolServerDataPut(server, resultPack);
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();

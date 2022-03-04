@@ -20,7 +20,7 @@ Restore File
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-bool restoreFile(
+List *restoreFile(
     const String *const repoFile, const unsigned int repoIdx, const CompressType repoFileCompressType, const time_t copyTimeBegin,
     const bool delta, const bool deltaForce, const String *const cipherPass, const List *const fileList)
 {
@@ -44,13 +44,17 @@ bool restoreFile(
     ASSERT(pgFile->limit == NULL || varType(pgFile->limit) == varTypeUInt64);
 
     // Was the file copied?
-    bool result = true;
+    List *result = NULL;
 
     // Is the file compressible during the copy?
     bool compressible = true;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        result = lstNewP(sizeof(RestoreFileResult));
+        RestoreFileResult *const fileResult = lstAdd(
+            result, &(RestoreFileResult){.manifestFile = pgFile->manifestFile, .copy = true});
+
         // Perform delta if requested.  Delta zero-length files to avoid overwriting the file if the timestamp is correct.
         if (delta && !pgFile->zero)
         {
@@ -64,7 +68,7 @@ bool restoreFile(
                 {
                     // Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
                     if (info.size == pgFile->size && info.timeModified == pgFile->timeModified && info.timeModified < copyTimeBegin)
-                        result = false;
+                        fileResult->copy = false;
                 }
                 // Else use size and checksum
                 else
@@ -99,7 +103,7 @@ bool restoreFile(
                                     FileInfoError, "unable to set time for '%s'", strZ(storagePathP(storagePg(), pgFile->name)));
                             }
 
-                            result = false;
+                            fileResult->copy = false;
                         }
                     }
                 }
@@ -107,7 +111,7 @@ bool restoreFile(
         }
 
         // Copy file from repository to database or create zero-length/sparse file
-        if (result)
+        if (fileResult->copy)
         {
             // Create destination file
             StorageWrite *pgFileWrite = storageNewWriteP(
@@ -127,7 +131,7 @@ bool restoreFile(
                         "unable to truncate '%s'", strZ(pgFile->name));
 
                     // Report the file as not copied
-                    result = false;
+                    fileResult->copy = false;
                 }
 
                 ioWriteClose(storageWriteIo(pgFileWrite));
@@ -174,8 +178,10 @@ bool restoreFile(
                 }
             }
         }
+
+        lstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(LIST, result);
 }

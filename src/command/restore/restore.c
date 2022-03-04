@@ -2109,56 +2109,61 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const ManifestFile file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
-            bool zeroed = restoreFileZeroed(file.name, zeroExp);
-            bool copy = pckReadBoolP(protocolParallelJobResult(job));
+            PackRead *const jobResult = protocolParallelJobResult(job);
 
-            String *log = strCatZ(strNew(), "restore");
-
-            // Note if file was zeroed (i.e. selective restore)
-            if (zeroed)
-                strCatZ(log, " zeroed");
-
-            // Add filename
-            strCatFmt(log, " file %s", strZ(restoreFilePgPath(manifest, file.name)));
-
-            // If not copied and not zeroed add details to explain why it was not copied
-            if (!copy && !zeroed)
+            while (!pckReadNullP(jobResult))
             {
-                strCatZ(log, " - ");
+                const ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
+                const bool zeroed = restoreFileZeroed(file.name, zeroExp);
+                const bool copy = pckReadBoolP(jobResult);
 
-                // On force we match on size and modification time
-                if (cfgOptionBool(cfgOptForce))
-                {
-                    strCatFmt(
-                        log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file.size,
-                        (uint64_t)file.timestamp);
-                }
-                // Else a checksum delta or file is zero-length
-                else
-                {
-                    strCatZ(log, "exists and ");
+                String *log = strCatZ(strNew(), "restore");
 
-                    // No need to copy zero-length files
-                    if (file.size == 0)
+                // Note if file was zeroed (i.e. selective restore)
+                if (zeroed)
+                    strCatZ(log, " zeroed");
+
+                // Add filename
+                strCatFmt(log, " file %s", strZ(restoreFilePgPath(manifest, file.name)));
+
+                // If not copied and not zeroed add details to explain why it was not copied
+                if (!copy && !zeroed)
+                {
+                    strCatZ(log, " - ");
+
+                    // On force we match on size and modification time
+                    if (cfgOptionBool(cfgOptForce))
                     {
-                        strCatZ(log, "is zero size");
+                        strCatFmt(
+                            log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file.size,
+                            (uint64_t)file.timestamp);
                     }
-                    // The file matched the manifest checksum so did not need to be copied
+                    // Else a checksum delta or file is zero-length
                     else
-                        strCatZ(log, "matches backup");
+                    {
+                        strCatZ(log, "exists and ");
+
+                        // No need to copy zero-length files
+                        if (file.size == 0)
+                        {
+                            strCatZ(log, "is zero size");
+                        }
+                        // The file matched the manifest checksum so did not need to be copied
+                        else
+                            strCatZ(log, "matches backup");
+                    }
                 }
+
+                // Add size and percent complete
+                sizeRestored += file.size;
+                strCatFmt(log, " (%s, %" PRIu64 "%%)", strZ(strSizeFormat(file.size)), sizeRestored * 100 / sizeTotal);
+
+                // If not zero-length add the checksum
+                if (file.size != 0 && !zeroed)
+                    strCatFmt(log, " checksum %s", file.checksumSha1);
+
+                LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
             }
-
-            // Add size and percent complete
-            sizeRestored += file.size;
-            strCatFmt(log, " (%s, %" PRIu64 "%%)", strZ(strSizeFormat(file.size)), sizeRestored * 100 / sizeTotal);
-
-            // If not zero-length add the checksum
-            if (file.size != 0 && !zeroed)
-                strCatFmt(log, " checksum %s", file.checksumSha1);
-
-            LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -2280,6 +2285,8 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 }
                 else
                     pckWriteBoolP(param, false);
+
+                pckWriteStrP(param, file.name);
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);

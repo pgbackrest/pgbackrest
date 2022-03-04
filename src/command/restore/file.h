@@ -23,9 +23,16 @@ typedef struct RestoreFile
     const String *group;                                            // Original group
     uint64_t offset;                                                // Offset into repo file where pg file is located
     const Variant *limit;                                           // Limit for read in the repo file
+    const String *manifestFile;                                     // Manifest file
 } RestoreFile;
 
-bool restoreFile(
+typedef struct RestoreFileResult
+{
+    const String *manifestFile;                                     // Manifest file
+    bool copy;                                                      // Was the file copied?
+} RestoreFileResult;
+
+List *restoreFile(
     const String *repoFile, unsigned int repoIdx, CompressType repoFileCompressType, time_t copyTimeBegin, bool delta,
     bool deltaForce, const String *cipherPass, const List *fileList);
 
