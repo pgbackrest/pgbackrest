@@ -2246,12 +2246,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                     strZ(file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel));
 
                 if (file.bundleId != 0)
-                {
                     pckWriteStrP(param, strNewFmt("%s" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(repoPath), file.bundleId));
-                    pckWriteBoolP(param, true);
-                    pckWriteU64P(param, file.bundleOffset);
-                    pckWriteU64P(param, file.sizeRepo);
-                }
                 else
                 {
                     pckWriteStrP(
@@ -2259,23 +2254,32 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                         strNewFmt(
                             "%s%s%s", strZ(repoPath), strZ(file.name),
                             strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
-                    pckWriteBoolP(param, false);
                 }
 
                 pckWriteU32P(param, jobData->repoIdx);
                 pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
-                pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
-                pckWriteStrP(param, STR(file.checksumSha1));
-                pckWriteBoolP(param, restoreFileZeroed(file.name, jobData->zeroExp));
-                pckWriteU64P(param, file.size);
-                pckWriteTimeP(param, file.timestamp);
-                pckWriteModeP(param, file.mode);
-                pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
-                pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
                 pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
                 pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
                 pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
                 pckWriteStrP(param, jobData->cipherSubPass);
+
+                pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
+                pckWriteStrP(param, STR(file.checksumSha1));
+                pckWriteU64P(param, file.size);
+                pckWriteTimeP(param, file.timestamp);
+                pckWriteModeP(param, file.mode);
+                pckWriteBoolP(param, restoreFileZeroed(file.name, jobData->zeroExp));
+                pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
+                pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
+
+                if (file.bundleId != 0)
+                {
+                    pckWriteBoolP(param, true);
+                    pckWriteU64P(param, file.bundleOffset);
+                    pckWriteU64P(param, file.sizeRepo);
+                }
+                else
+                    pckWriteBoolP(param, false);
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);

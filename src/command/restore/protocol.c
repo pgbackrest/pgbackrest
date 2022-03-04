@@ -28,34 +28,38 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
     {
         // Restore file
         const String *const repoFile = pckReadStrP(param);
-
-        uint64_t offset = 0;
-        const Variant *limit = NULL;
-
-        if (pckReadBoolP(param))
-        {
-            offset = pckReadU64P(param);
-            limit = varNewUInt64(pckReadU64P(param));
-        }
-
         const unsigned int repoIdx = pckReadU32P(param);
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
-        const String *const pgFile = pckReadStrP(param);
-        const String *const pgFileChecksum = pckReadStrP(param);
-        const bool pgFileZero = pckReadBoolP(param);
-        const uint64_t pgFileSize = pckReadU64P(param);
-        const time_t pgFileModified = pckReadTimeP(param);
-        const mode_t pgFileMode = pckReadModeP(param);
-        const String *const pgFileUser = pckReadStrP(param);
-        const String *const pgFileGroup = pckReadStrP(param);
         const time_t copyTimeBegin = pckReadTimeP(param);
         const bool delta = pckReadBoolP(param);
         const bool deltaForce = pckReadBoolP(param);
         const String *const cipherPass = pckReadStrP(param);
 
+        // Build the file list
+        List *fileList = lstNewP(sizeof(RestoreFile));
+
+        while (!pckReadNullP(param))
+        {
+            RestoreFile file = {.name = pckReadStrP(param)};
+            file.checksum = pckReadStrP(param);
+            file.size = pckReadU64P(param);
+            file.timeModified = pckReadTimeP(param);
+            file.mode = pckReadModeP(param);
+            file.zero = pckReadBoolP(param);
+            file.user = pckReadStrP(param);
+            file.group = pckReadStrP(param);
+
+            if (pckReadBoolP(param))
+            {
+                file.offset = pckReadU64P(param);
+                file.limit = varNewUInt64(pckReadU64P(param));
+            }
+
+            lstAdd(fileList, &file);
+        }
+
         const bool result = restoreFile(
-            repoFile, repoIdx, offset, limit, repoFileCompressType, pgFile, pgFileChecksum, pgFileZero, pgFileSize, pgFileModified,
-            pgFileMode, pgFileUser, pgFileGroup, copyTimeBegin, delta, deltaForce, cipherPass);
+            repoFile, repoIdx, repoFileCompressType, copyTimeBegin, delta, deltaForce, cipherPass, fileList);
 
         // Return result
         protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), result));
