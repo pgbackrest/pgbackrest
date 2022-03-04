@@ -171,28 +171,6 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sparse-zero file");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("sparse-zero"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600,
-                TEST_USER_STR, TEST_GROUP_STR, 0, true, false, NULL),
-            false, "zero sparse 1TB file");
-        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "check size");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("normal-zero file");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("normal-zero"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600,
-                TEST_USER_STR, TEST_GROUP_STR, 0, false, false, NULL),
-            true, "zero-length file");
-        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "check size");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressed encrypted repo file - fail");
 
         HRN_STORAGE_PUT_Z(
@@ -200,139 +178,29 @@ testRun(void)
             "acefile", .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpass",
             .comment = "create a compressed encrypted repo file");
 
+        List *fileList = lstNewP(sizeof(RestoreFile));
+
+        RestoreFile file =
+        {
+            .name = STRDEF("normal"),
+            .checksum = STRDEF("ffffffffffffffffffffffffffffffffffffffff"),
+            .size = 7,
+            .timeModified = 1557432154,
+            .mode = 0600,
+            .zero = false,
+            .user = NULL,
+            .group = NULL,
+        };
+
+        lstAdd(fileList, &file);
+
         TEST_ERROR(
             restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeGz,
-                STRDEF("normal"), STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 0, false, false, STRDEF("badpass")),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
+                0, false, false, STRDEF("badpass"), fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressed encrypted repo file - retry");
-
-        // Create normal file to make it look like a prior restore file failed partway through to ensure that retries work. It will
-        // be clear if the file was overwritten when checking the info below since the size and timestamp will be changed.
-        HRN_STORAGE_PUT_Z(storagePgWrite(), "normal", "PRT", .modeFile = 0600, .comment = "create normal file in pg");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeGz,
-                STRDEF("normal"), STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 0, false, false, STRDEF("badpass")),
-            true, "copy file");
-
-        StorageInfo info = storageInfoP(storagePg(), STRDEF("normal"));
-        TEST_RESULT_BOOL(info.exists, true, "check exists");
-        TEST_RESULT_UINT(info.size, 7, "check size");
-        TEST_RESULT_UINT(info.mode, 0600, "check mode");
-        TEST_RESULT_INT(info.timeModified, 1557432154, "check time");
-        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
-        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
-        TEST_STORAGE_GET(storagePg(), "normal", "acefile", .comment = "check contents");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg file missing - delta option set");
-
-        // Create a repo file
-        HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1))),
-            "atestfile");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 0, true, false, NULL),
-            true, "sha1 delta missing");
-        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
-
-        size_t oldBufferSize = ioBufferSize();
-        ioBufferSizeSet(4);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg file exists - delta option set");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 0, true, false, NULL),
-            false, "sha1 delta existing");
-
-        ioBufferSizeSet(oldBufferSize);
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 1557432155, true, true, NULL),
-            false, "sha1 delta force existing");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg file exists, size mismatch - delta option set");
-
-        // Change the existing file so it no longer matches by size
-        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "atestfile2");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 0, true, false, NULL),
-            true, "sha1 delta existing, size differs");
-        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
-
-        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "atestfile2");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 1557432155, true, true, NULL),
-            true, "delta force existing, size differs");
-        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg file exists, content mismatch - delta option set");
-
-        // Change the existing file so it no longer matches by content
-        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "btestfile");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 0, true, false, NULL),
-            true, "sha1 delta existing, content differs");
-        TEST_STORAGE_GET(storagePg(), "delta", "atestfile", .comment = "check contents");
-
-        HRN_STORAGE_PUT_Z(storagePgWrite(), "delta", "btestfile");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 1557432155, true, true, NULL),
-            true, "delta force existing, timestamp differs");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 1557432153, true, true, NULL),
-            true, "delta force existing, timestamp after copy time");
-
-        // Change the existing file to zero-length
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "delta");
-
-        TEST_RESULT_BOOL(
-            restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL, compressTypeNone,
-                STRDEF("delta"), STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR,
-                TEST_GROUP_STR, 0, true, false, NULL),
-            false, "sha1 delta existing, content differs");
     }
 
     // *****************************************************************************************************************************
@@ -2171,6 +2039,16 @@ testRun(void)
         // Add a special file that will be removed
         HRN_SYSTEM_FMT("mkfifo %s/pipe", strZ(pgPath));
 
+        // Modify time of postgresql.conf so it will be copied even though content is the same
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "VALID_CONF", .modeFile = 0600);
+
+        // Modify time of postgresql.auto.conf so it will be copied even though content is the same and timestamp matches
+        HRN_STORAGE_PUT_Z(
+            storagePgWrite(), "postgresql.auto.conf", "VALID_CONF_AUTO", .modeFile = 0600, .timeModified = 1482182861);
+
+        // Size mismatch
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "size-mismatch", .modeFile = 0600);
+
         // Overwrite PG_VERSION with bogus content that will not be detected by delta force because the time and size are the same
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "BOG\n", .modeFile = 0600, .timeModified = 1482182860);
 
@@ -2188,6 +2066,30 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.conf"), .size = 10,
+                    .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "1a49a3c2240449fee1422e4afcf44d5b96378511"});
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "/postgresql.conf", "VALID_CONF");
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.auto.conf"), .size = 15,
+                    .timestamp = 1482182861, .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3"});
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "/postgresql.auto.conf", "VALID_CONF_AUTO");
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(MANIFEST_TARGET_PGDATA "/size-mismatch"), .size = 1,
+                    .timestamp = 1482182861, .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "c032adc1ff629c9b66f22749ad667e6beadf144b"});
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "/size-mismatch", "X");
 
             // pg_tblspc/1
             manifestTargetAdd(
@@ -2257,9 +2159,14 @@ testRun(void)
             "P00 DETAIL: remove special file '" TEST_PATH "/pg/pipe'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, 44%)"
+                " checksum 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, 73%) checksum"
+                " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
-                " (4B, 50%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
+                " (4B, 85%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 88%) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 88%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
                 " checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
@@ -2270,7 +2177,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.0_201008051'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = 8B, file total = 3");
+            "P00   INFO: restore size = 34B, file total = 6");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2279,6 +2186,9 @@ testRun(void)
             "global {path}\n"
             "pg_tblspc {path}\n"
             "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
+            "postgresql.auto.conf {file, s=15, t=1482182861}\n"
+            "postgresql.conf {file, s=10, t=1482182860}\n"
+            "size-mismatch {file, s=1, t=1482182861}\n"
             "tablespace_map {file, s=0, t=1482182860}\n");
 
         testRestoreCompare(
@@ -2298,6 +2208,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with force");
 
+        // Replace percent complete and restore size since they can cause a lot of churn when files are added/removed
+        hrnLogReplaceAdd(", [0-9]{1,3}%\\)", "[0-9]+%", "PCT", false);
+        hrnLogReplaceAdd(" restore size = [0-9]+[A-Z]+", "[^ ]+$", "SIZE", false);
+
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
@@ -2315,9 +2229,15 @@ testRun(void)
             "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.0_201008051' exists\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_9.0_201008051'\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 50%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, [PCT]) checksum"
+                " 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, [PCT]) checksum"
+                " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, [PCT]) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, [PCT]) checksum"
+                " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, [PCT])"
                 " checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
@@ -2327,7 +2247,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.0_201008051'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = 8B, file total = 3");
+            "P00   INFO: restore size = [SIZE], file total = 6");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2336,6 +2256,9 @@ testRun(void)
             "global {path}\n"
             "pg_tblspc {path}\n"
             "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
+            "postgresql.auto.conf {file, s=15, t=1482182861}\n"
+            "postgresql.conf {file, s=10, t=1482182860}\n"
+            "size-mismatch {file, s=1, t=1482182861}\n"
             "tablespace_map {file, s=0, t=1482182860}\n");
 
         testRestoreCompare(
@@ -2351,8 +2274,13 @@ testRun(void)
         // Remove tablespace
         HRN_STORAGE_PATH_REMOVE(storagePgWrite(), MANIFEST_TARGET_PGTBLSPC "/1/PG_9.0_201008051", .recurse = true);
 
+        // Remove files
+        HRN_STORAGE_REMOVE(storagePgWrite(), "postgresql.conf");
+        HRN_STORAGE_REMOVE(storagePgWrite(), "postgresql.auto.conf");
+        HRN_STORAGE_REMOVE(storagePgWrite(), "size-mismatch");
+
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("incremental delta selective restore");
+        TEST_TITLE("incremental delta");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -2666,26 +2594,26 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_xact' to '../xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, 44%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT]) checksum"
                 " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, 66%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, [PCT]) checksum"
                 " d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 77%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
                 " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, 88%) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (15B, 88%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, [PCT]) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (15B, [PCT]) checksum"
                 " 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf (11B, 88%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf (11B, [PCT]) checksum"
                 " 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (4B, 88%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, 88%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (8KB, 99%) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 99%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (4B, 100%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (8KB, [PCT]) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, [PCT]) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (4B, [PCT]) checksum"
                 " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, 100%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2699,7 +2627,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = 72KB, file total = 12");
+            "P00   INFO: restore size = [SIZE], file total = 12");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2766,6 +2694,13 @@ testRun(void)
         // Write recovery.conf so we don't get a preserve warning
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_RECOVERYCONF, "Some Settings");
 
+        // Change timestamp so it will be updated
+        HRN_STORAGE_TIME(storagePgWrite(), "global/999", 777);
+
+        // Change size so delta will skip based on size
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "base/1/2", BOGUS_STR);
+        HRN_STORAGE_MODE(storagePgWrite(), "base/1/2", 0600);
+
         // Covert pg_wal to a path so it will be removed
         HRN_STORAGE_REMOVE(storagePgWrite(), "pg_wal");
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal");
@@ -2810,28 +2745,27 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_wal' to '../wal'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
-            "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, 44%)\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, 66%)"
+            "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, [PCT])"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 77%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
                 " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 - exists and matches backup (8KB, 88%)"
-                " checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf - exists and matches backup (15B, 88%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, [PCT]) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf - exists and matches backup (15B, [PCT])"
                 " checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf - exists and matches backup (11B, 88%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf - exists and matches backup (11B, [PCT])"
                 " checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION - exists and matches backup (4B, 88%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION - exists and matches backup (4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION - exists and matches backup (4B, 88%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION - exists and matches backup (4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (8KB, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (8KB, [PCT])"
                 " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (4B, 100%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, 100%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2845,7 +2779,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = 72KB, file total = 12");
+            "P00   INFO: restore size = [SIZE], file total = 12");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);
