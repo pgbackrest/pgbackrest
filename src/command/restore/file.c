@@ -37,144 +37,147 @@ List *restoreFile(
 
     ASSERT(repoFile != NULL);
 
-    // !!! Get the first file
-    const RestoreFile *const pgFile = lstGet(fileList, 0);
-
-    ASSERT(pgFile->name != NULL);
-    ASSERT(pgFile->limit == NULL || varType(pgFile->limit) == varTypeUInt64);
-
-    // Was the file copied?
+    // Restore file results
     List *result = NULL;
-
-    // Is the file compressible during the copy?
-    bool compressible = true;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         result = lstNewP(sizeof(RestoreFileResult));
-        RestoreFileResult *const fileResult = lstAdd(
-            result, &(RestoreFileResult){.manifestFile = pgFile->manifestFile, .copy = true});
 
-        // Perform delta if requested.  Delta zero-length files to avoid overwriting the file if the timestamp is correct.
-        if (delta && !pgFile->zero)
+        // Check files to determine which ones need to be restored
+        for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
-            // Perform delta if the file exists
-            StorageInfo info = storageInfoP(storagePg(), pgFile->name, .ignoreMissing = true, .followLink = true);
+            const RestoreFile *const pgFile = lstGet(fileList, fileIdx);
+            ASSERT(pgFile->name != NULL);
+            ASSERT(pgFile->limit == NULL || varType(pgFile->limit) == varTypeUInt64);
 
-            if (info.exists)
+            // Is the file compressible during the copy?
+            bool compressible = true;
+
+            RestoreFileResult *const fileResult = lstAdd(
+                result, &(RestoreFileResult){.manifestFile = pgFile->manifestFile, .copy = true});
+
+            // Perform delta if requested.  Delta zero-length files to avoid overwriting the file if the timestamp is correct.
+            if (delta && !pgFile->zero)
             {
-                // If force then use size/timestamp delta
-                if (deltaForce)
+                // Perform delta if the file exists
+                StorageInfo info = storageInfoP(storagePg(), pgFile->name, .ignoreMissing = true, .followLink = true);
+
+                if (info.exists)
                 {
-                    // Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
-                    if (info.size == pgFile->size && info.timeModified == pgFile->timeModified && info.timeModified < copyTimeBegin)
-                        fileResult->copy = false;
-                }
-                // Else use size and checksum
-                else
-                {
-                    // Only continue delta if the file size is as expected
-                    if (info.size == pgFile->size)
+                    // If force then use size/timestamp delta
+                    if (deltaForce)
                     {
-                        // Generate checksum for the file if size is not zero
-                        IoRead *read = NULL;
-
-                        if (info.size != 0)
+                        // Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
+                        if (info.size == pgFile->size && info.timeModified == pgFile->timeModified && info.timeModified < copyTimeBegin)
+                            fileResult->copy = false;
+                    }
+                    // Else use size and checksum
+                    else
+                    {
+                        // Only continue delta if the file size is as expected
+                        if (info.size == pgFile->size)
                         {
-                            read = storageReadIo(storageNewReadP(storagePgWrite(), pgFile->name));
-                            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
-                            ioReadDrain(read);
-                        }
+                            // Generate checksum for the file if size is not zero
+                            IoRead *read = NULL;
 
-                        // If size and checksum are equal then no need to copy the file
-                        if (pgFile->size == 0 ||
-                            strEq(
-                                pgFile->checksum,
-                                pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
-                        {
-                            // Even if hash/size are the same set the time back to backup time.  This helps with unit testing, but
-                            // also presents a pristine version of the database after restore.
-                            if (info.timeModified != pgFile->timeModified)
+                            if (info.size != 0)
                             {
-                                THROW_ON_SYS_ERROR_FMT(
-                                    utime(
-                                        strZ(storagePathP(storagePg(), pgFile->name)),
-                                        &((struct utimbuf){.actime = pgFile->timeModified, .modtime = pgFile->timeModified})) == -1,
-                                    FileInfoError, "unable to set time for '%s'", strZ(storagePathP(storagePg(), pgFile->name)));
+                                read = storageReadIo(storageNewReadP(storagePgWrite(), pgFile->name));
+                                ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+                                ioReadDrain(read);
                             }
 
-                            fileResult->copy = false;
+                            // If size and checksum are equal then no need to copy the file
+                            if (pgFile->size == 0 ||
+                                strEq(
+                                    pgFile->checksum,
+                                    pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
+                            {
+                                // Even if hash/size are the same set the time back to backup time.  This helps with unit testing, but
+                                // also presents a pristine version of the database after restore.
+                                if (info.timeModified != pgFile->timeModified)
+                                {
+                                    THROW_ON_SYS_ERROR_FMT(
+                                        utime(
+                                            strZ(storagePathP(storagePg(), pgFile->name)),
+                                            &((struct utimbuf){.actime = pgFile->timeModified, .modtime = pgFile->timeModified})) == -1,
+                                        FileInfoError, "unable to set time for '%s'", strZ(storagePathP(storagePg(), pgFile->name)));
+                                }
+
+                                fileResult->copy = false;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Copy file from repository to database or create zero-length/sparse file
-        if (fileResult->copy)
-        {
-            // Create destination file
-            StorageWrite *pgFileWrite = storageNewWriteP(
-                storagePgWrite(), pgFile->name, .modeFile = pgFile->mode, .user = pgFile->user, .group = pgFile->group,
-                .timeModified = pgFile->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
-
-            // If size is zero/sparse no need to actually copy
-            if (pgFile->size == 0 || pgFile->zero)
+            // Copy file from repository to database or create zero-length/sparse file
+            if (fileResult->copy)
             {
-                ioWriteOpen(storageWriteIo(pgFileWrite));
+                // Create destination file
+                StorageWrite *pgFileWrite = storageNewWriteP(
+                    storagePgWrite(), pgFile->name, .modeFile = pgFile->mode, .user = pgFile->user, .group = pgFile->group,
+                    .timeModified = pgFile->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
 
-                // Truncate the file to specified length (note in this case the file with grow, not shrink)
-                if (pgFile->zero)
+                // If size is zero/sparse no need to actually copy
+                if (pgFile->size == 0 || pgFile->zero)
                 {
-                    THROW_ON_SYS_ERROR_FMT(
-                        ftruncate(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)pgFile->size) == -1, FileWriteError,
-                        "unable to truncate '%s'", strZ(pgFile->name));
+                    ioWriteOpen(storageWriteIo(pgFileWrite));
 
-                    // Report the file as not copied
-                    fileResult->copy = false;
+                    // Truncate the file to specified length (note in this case the file with grow, not shrink)
+                    if (pgFile->zero)
+                    {
+                        THROW_ON_SYS_ERROR_FMT(
+                            ftruncate(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)pgFile->size) == -1, FileWriteError,
+                            "unable to truncate '%s'", strZ(pgFile->name));
+
+                        // Report the file as not copied
+                        fileResult->copy = false;
+                    }
+
+                    ioWriteClose(storageWriteIo(pgFileWrite));
                 }
-
-                ioWriteClose(storageWriteIo(pgFileWrite));
-            }
-            // Else perform the copy
-            else
-            {
-                IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
-
-                // Add decryption filter
-                if (cipherPass != NULL)
+                // Else perform the copy
+                else
                 {
-                    ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
-                    compressible = false;
-                }
+                    IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
 
-                // Add decompression filter
-                if (repoFileCompressType != compressTypeNone)
-                {
-                    ioFilterGroupAdd(filterGroup, decompressFilter(repoFileCompressType));
-                    compressible = false;
-                }
+                    // Add decryption filter
+                    if (cipherPass != NULL)
+                    {
+                        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
+                        compressible = false;
+                    }
 
-                // Add sha1 filter
-                ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+                    // Add decompression filter
+                    if (repoFileCompressType != compressTypeNone)
+                    {
+                        ioFilterGroupAdd(filterGroup, decompressFilter(repoFileCompressType));
+                        compressible = false;
+                    }
 
-                // Add size filter
-                ioFilterGroupAdd(filterGroup, ioSizeNew());
+                    // Add sha1 filter
+                    ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
 
-                // Copy file
-                storageCopyP(
-                    storageNewReadP(
-                        storageRepoIdx(repoIdx), repoFile, .compressible = compressible, .offset = pgFile->offset,
-                        .limit = pgFile->limit),
-                    pgFileWrite);
+                    // Add size filter
+                    ioFilterGroupAdd(filterGroup, ioSizeNew());
 
-                // Validate checksum
-                if (!strEq(pgFile->checksum, pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))))
-                {
-                    THROW_FMT(
-                        ChecksumError,
-                        "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(pgFile->name),
-                        strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))), strZ(pgFile->checksum));
+                    // Copy file
+                    storageCopyP(
+                        storageNewReadP(
+                            storageRepoIdx(repoIdx), repoFile, .compressible = compressible, .offset = pgFile->offset,
+                            .limit = pgFile->limit),
+                        pgFileWrite);
+
+                    // Validate checksum
+                    if (!strEq(pgFile->checksum, pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))))
+                    {
+                        THROW_FMT(
+                            ChecksumError,
+                            "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(pgFile->name),
+                            strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))), strZ(pgFile->checksum));
+                    }
                 }
             }
         }
