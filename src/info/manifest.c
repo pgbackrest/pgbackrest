@@ -235,6 +235,11 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
+    ASSERT(manifest != NULL);
+    ASSERT(file != NULL);
+
+    CHECK(AssertError, file->size > 0 || file->bundleId == 0, "zero-length files may not be bundled");
+
     uint8_t buffer[512];
     size_t bufferPos = 0;
 

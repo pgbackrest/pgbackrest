@@ -1914,6 +1914,15 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
     ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
 
+    // Zero length files should be ordered at the end
+    if (file1.size == 0)
+    {
+        if (file2.size != 0) // {uncovered - !!!}
+            FUNCTION_TEST_RETURN(-1);
+    }
+    else if (file2.size == 0) // {uncovered - !!!}
+        FUNCTION_TEST_RETURN(1); // {uncovered - !!!}
+
     // If the bundle id differs that is enough to determine order
     if (file1.bundleId < file2.bundleId)
         FUNCTION_TEST_RETURN(1);
@@ -1935,16 +1944,29 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     }
 
     // If the reference differs that is enough to determine order
-    const int backupLabelCmp = strCmp(file1.reference, file2.reference);
+    if (file1.reference == NULL)
+    {
+        if (file2.reference != NULL)
+            FUNCTION_TEST_RETURN(-1);
+    }
+    else if (file2.reference == NULL) // {uncovered - !!!}
+    {
+        if (file1.reference != NULL) // {uncovered - !!!}
+            FUNCTION_TEST_RETURN(1);
+    }
+    else
+    {
+        const int backupLabelCmp = strCmp(file1.reference, file2.reference) * -1; // {uncovered - !!!}
 
-    if (backupLabelCmp != 0)  // {uncovered - !!!}
-        FUNCTION_TEST_RETURN(backupLabelCmp);
+        if (backupLabelCmp != 0) // {uncovered - !!!}
+            FUNCTION_TEST_RETURN(backupLabelCmp); // {uncovered - !!!}
+    }
 
     // Finally order by bundle offset
-    ASSERT(file1.bundleOffset != file2.bundleOffset); // {uncovered - !!!}
+    ASSERT(file1.bundleOffset != file2.bundleOffset);
 
-    if (file1.bundleOffset < file2.bundleOffset)
-        FUNCTION_TEST_RETURN(1);
+    if (file1.bundleOffset < file2.bundleOffset) // {uncovered - !!!}
+        FUNCTION_TEST_RETURN(1); // {uncovered - !!!}
 
     FUNCTION_TEST_RETURN(-1);
 }

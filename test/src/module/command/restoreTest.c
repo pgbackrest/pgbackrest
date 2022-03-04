@@ -2366,9 +2366,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_xact=../xact");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
+        #define TEST_LABEL_PRIOR                                    "20161219-212741F"
         #define TEST_LABEL                                          "20161219-212741F_20161219-212918I"
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
         #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
+        #define TEST_REPO_PRIOR_PATH                                STORAGE_REPO_BACKUP "/" TEST_LABEL_PRIOR "/" TEST_PGDATA
 
         OBJ_NEW_BEGIN(Manifest)
         {
@@ -2377,7 +2379,7 @@ testRun(void)
             manifest->pub.data.backupLabel = STRDEF(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_10;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
-            manifest->pub.data.backupType = backupTypeFull;
+            manifest->pub.data.backupType = backupTypeIncr;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
             // Data directory
@@ -2421,7 +2423,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
-                    .reference = STRDEF(TEST_LABEL), .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .reference = NULL, .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1", PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\n");
 
@@ -2457,6 +2459,20 @@ testRun(void)
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/1/2", fileBuffer);
+
+            // base/1/10
+            fileBuffer = bufNew(8193);
+            memset(bufPtr(fileBuffer), 10, bufSize(fileBuffer));
+            bufPtr(fileBuffer)[0] = 0xFF;
+            bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/10"), .size = 8192, .sizeRepo = 8192, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 1,
+                    .reference = STRDEF(TEST_LABEL_PRIOR), .checksumSha1 = "28757c756c03c37aca13692cb719c18d1510c190"});
+            HRN_STORAGE_PUT(storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL_PRIOR "/bundle/1", fileBuffer);
 
             // system db name
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
@@ -2650,25 +2666,26 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_xact' to '../xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, 44%) checksum"
                 " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, 74%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, 66%) checksum"
                 " d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 77%)"
                 " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, 99%) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (15B, 99%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, 88%) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (15B, 88%) checksum"
                 " 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf (11B, 99%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf (11B, 88%) checksum"
                 " 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (4B, 88%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, 88%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, 99%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (8KB, 99%) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 99%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (4B, 100%) checksum"
                 " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, 100%)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2682,7 +2699,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = 64KB, file total = 11");
+            "P00   INFO: restore size = 72KB, file total = 12");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2690,6 +2707,7 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "base {path}\n"
             "base/1 {path}\n"
+            "base/1/10 {file, s=8192, t=1482182860}\n"
             "base/1/2 {file, s=8192, t=1482182860}\n"
             "base/1/PG_VERSION {file, s=4, t=1482182860}\n"
             "base/16384 {path}\n"
@@ -2792,26 +2810,28 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_wal' to '../wal'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
-            "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%)\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, 74%)"
+            "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, 44%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, 66%)"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 77%)"
                 " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 - exists and matches backup (8KB, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 - exists and matches backup (8KB, 88%)"
                 " checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf - exists and matches backup (15B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf - exists and matches backup (15B, 88%)"
                 " checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf - exists and matches backup (11B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf - exists and matches backup (11B, 88%)"
                 " checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION - exists and matches backup (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION - exists and matches backup (4B, 88%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION - exists and matches backup (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION - exists and matches backup (4B, 88%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, 99%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (8KB, 99%)"
+                " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (4B, 99%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (4B, 100%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, 100%)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2825,7 +2845,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = 64KB, file total = 11");
+            "P00   INFO: restore size = 72KB, file total = 12");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);
