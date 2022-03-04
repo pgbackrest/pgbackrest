@@ -106,12 +106,13 @@ sckSessionFd(THIS_VOID)
 
 /**********************************************************************************************************************************/
 static IoRead *
-sckSessionIoRead(THIS_VOID)
+sckSessionIoRead(THIS_VOID, const bool ignoreUnexpectedEof)
 {
     THIS(SocketSession);
 
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SOCKET_SESSION, this);
+        (void)ignoreUnexpectedEof;                                  // Unused
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);

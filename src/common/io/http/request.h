@@ -49,6 +49,10 @@ HTTP Constants
     STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_STR);
 #define HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL                       "application/x-www-form-urlencoded"
     STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
+#define HTTP_HEADER_CONTENT_TYPE_JSON                               "application/json"
+    STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_JSON_STR);
+#define HTTP_HEADER_CONTENT_TYPE_XML                                "application/xml"
+    STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_XML_STR);
 #define HTTP_HEADER_CONTENT_RANGE_BYTES                             "bytes"
 #define HTTP_HEADER_DATE                                            "date"
     STRING_DECLARE(HTTP_HEADER_DATE_STR);
