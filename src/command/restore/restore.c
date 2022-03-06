@@ -2156,7 +2156,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
 
                 // Add size and percent complete
                 sizeRestored += file.size;
-                strCatFmt(log, " (%s, %" PRIu64 "%%)", strZ(strSizeFormat(file.size)), sizeRestored * 100 / sizeTotal);
+                strCatFmt(log, " (%s, %.2lf%%)", strZ(strSizeFormat(file.size)), (double)sizeRestored * 100.00 / (double)sizeTotal);
 
                 // If not zero-length add the checksum
                 if (file.size != 0 && !zeroed)
