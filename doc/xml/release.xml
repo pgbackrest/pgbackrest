@@ -14,7 +14,10 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.38dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.39dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2022-03-06" version="2.38" title="Minor Bug Fixes and Improvements">
             <release-core-list>
                 <text>
                     <p><b>IMPORTANT NOTE</b>: Repository size reported by the <cmd>info</cmd> command is now entirely based on what <backrest/> has written to storage. Previously, in certain cases, <backrest/> could detect if additional compression was being applied by the storage but this is no longer supported.</p>
@@ -106,6 +109,21 @@
                         </release-item-contributor-list>
 
                         <p>Retry on page validation failure during <cmd>backup</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1638"/>
+                        <github-pull-request id="1677"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="remi.vidier"/>
+                            <release-item-reviewer id="david.christensen"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Handle <proper>TLS</proper> servers that do not close connections gracefully.</p>
                     </release-item>
 
                     <release-item>
@@ -282,6 +300,15 @@
                 </release-bug-list>
 
                 <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="yogesh.sharma"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add aliveness check to <proper>systemd</proper> service configuration.</p>
+                    </release-item>
+
                     <release-item>
                         <github-issue id="1485"/>
                         <github-issue id="1663"/>
