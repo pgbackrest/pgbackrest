@@ -1974,7 +1974,8 @@ testRun(void)
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100%%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100.00%%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44"
+                "\n"
             "P00   INFO: write " TEST_PATH "/pg/recovery.conf\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
@@ -2144,15 +2145,15 @@ testRun(void)
             "P00 DETAIL: remove special file '" TEST_PATH "/pg/pipe'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, 44%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, 44.12%)"
                 " checksum 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, 73%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, 73.53%) checksum"
                 " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
-                " (4B, 85%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 88%) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 88%)\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
+                " (4B, 85.29%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 88.24%) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 88.24%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100.00%)"
                 " checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
@@ -2194,7 +2195,7 @@ testRun(void)
         TEST_TITLE("full restore with force");
 
         // Replace percent complete and restore size since they can cause a lot of churn when files are added/removed
-        hrnLogReplaceAdd(", [0-9]{1,3}%\\)", "[0-9]+%", "PCT", false);
+        hrnLogReplaceAdd(", [0-9]{1,3}\\.[0-9]{2}%\\)", "[0-9]+\\.[0-9]+%", "PCT", false);
         hrnLogReplaceAdd(" restore size = [0-9]+[A-Z]+", "[^ ]+$", "SIZE", false);
 
         argList = strLstNew();
