@@ -2154,9 +2154,25 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                     }
                 }
 
+
+                // Add bundle info
+                strCatZ(log, " (");
+
+                if (file.bundleId != 0)
+                {
+                    ASSERT(varUInt64(protocolParallelJobKey(job)) == file.bundleId);
+
+                    strCatZ(log, "bundle ");
+
+                    if (file.reference != NULL)
+                        strCatFmt(log, "%s/", strZ(file.reference));
+
+                    strCatFmt(log, "%" PRIu64 "/%" PRIu64 ", ", file.bundleId, file.bundleOffset);
+                }
+
                 // Add size and percent complete
                 sizeRestored += file.size;
-                strCatFmt(log, " (%s, %.2lf%%)", strZ(strSizeFormat(file.size)), (double)sizeRestored * 100.00 / (double)sizeTotal);
+                strCatFmt(log, "%s, %.2lf%%)", strZ(strSizeFormat(file.size)), (double)sizeRestored * 100.00 / (double)sizeTotal);
 
                 // If not zero-length add the checksum
                 if (file.size != 0 && !zeroed)
@@ -2231,42 +2247,62 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
         RestoreJobData *jobData = data;
 
         // Determine where to begin scanning the queue (we'll stop when we get back here)
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
+        PackWrite *param = NULL;
         int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
         int queueEnd = queueIdx;
 
+        // Create restore job
         do
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx);
+            bool fileAdded = false;
+            const String *fileName = NULL;
+            uint64_t bundleId = 0;
+            const String *reference = NULL;
 
-            if (!lstEmpty(queue))
+            while (!lstEmpty(queue))
             {
                 const ManifestFile file = manifestFileUnpack(jobData->manifest, *(ManifestFilePack **)lstGet(queue, 0));
 
-                // Create restore job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
-                PackWrite *const param = protocolCommandParam(command);
+                // Break if bundled files have already been added and 1) the bundleId has changed or 2) the reference has changed
+                if (fileAdded && (bundleId != file.bundleId || !strEq(reference, file.reference)))
+                    break;
 
-                const String *const repoPath = strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s/",
-                    strZ(file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel));
-
-                if (file.bundleId != 0)
-                    pckWriteStrP(param, strNewFmt("%s" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(repoPath), file.bundleId));
-                else
+                // Add common parameters before first file
+                if (param == NULL)
                 {
-                    pckWriteStrP(
-                        param,
-                        strNewFmt(
-                            "%s%s%s", strZ(repoPath), strZ(file.name),
-                            strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
-                }
+                    param = protocolCommandParam(command);
 
-                pckWriteU32P(param, jobData->repoIdx);
-                pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
-                pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
-                pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
-                pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
-                pckWriteStrP(param, jobData->cipherSubPass);
+                    const String *const repoPath = strNewFmt(
+                        STORAGE_REPO_BACKUP "/%s/",
+                        strZ(file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel));
+
+                    if (file.bundleId != 0)
+                    {
+                        pckWriteStrP(param, strNewFmt("%s" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(repoPath), file.bundleId));
+                        bundleId = file.bundleId;
+                        reference = file.reference;
+                    }
+                    else
+                    {
+                        pckWriteStrP(
+                            param,
+                            strNewFmt(
+                                "%s%s%s", strZ(repoPath), strZ(file.name),
+                                strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
+                        fileName = file.name;
+                    }
+
+                    pckWriteU32P(param, jobData->repoIdx);
+                    pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
+                    pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
+                    pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
+                    pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
+                    pckWriteStrP(param, jobData->cipherSubPass);
+
+                    fileAdded = true;
+                }
 
                 pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
                 pckWriteStrP(param, STR(file.checksumSha1));
@@ -2291,14 +2327,20 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);
 
+                // Break if the file is not bundled
+                if (bundleId == 0)
+                    break;
+            }
+
+            if (fileAdded)
+            {
                 // Assign job to result
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = protocolParallelJobNew(VARSTR(file.name), command);
+                    result = protocolParallelJobNew(bundleId != 0 ? VARUINT64(bundleId) : VARSTR(fileName), command);
                 }
                 MEM_CONTEXT_PRIOR_END();
 
-                // Break out of the loop early since we found a job
                 break;
             }
 
