@@ -14,7 +14,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.38dev" title="UNDER DEVELOPMENT">
+        <release date="2022-03-06" version="2.38" title="Minor Bug Fixes and Improvements">
             <release-core-list>
                 <text>
                     <p><b>IMPORTANT NOTE</b>: Repository size reported by the <cmd>info</cmd> command is now entirely based on what <backrest/> has written to storage. Previously, in certain cases, <backrest/> could detect if additional compression was being applied by the storage but this is no longer supported.</p>

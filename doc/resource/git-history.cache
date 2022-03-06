@@ -1,5 +1,418 @@
 [
     {
+        "commit": "59a5373cf85e4ad0057b592bfe855495384dfcbd",
+        "date": "2022-03-02 11:38:52 -0600",
+        "subject": "Handle TLS servers that do not close connections gracefully.",
+        "body": "Some TLS server implementations will simply close the socket rather than correctly closing the TLS connection. This causes problems when connection: close is specified with no content-length or chunked encoding and we are forced to read to EOF. It is hard to know if this is a real EOF or a network error.\r\n\r\nIn cases where we can parse the content and (hopefully) ensure it is correct, allow the closed socket to serve as EOF. This is not ideal, but the change in 8e1807c means that currently working servers with this issue will stop working after 2.35 is installed, which seems too risky."
+    },
+    {
+        "commit": "f1bdf3e04b07dc9a2eaa1fdbe5278cc18371e868",
+        "date": "2022-03-02 10:59:06 -0600",
+        "subject": "Add aliveness check to systemd service configuration.",
+        "body": "If the pgbackrest service service fails to start then the user will get an error. However, retries will continue in the background."
+    },
+    {
+        "commit": "a66ec8d549b8f1f7b38682ad90281f1fcbb2748a",
+        "date": "2022-03-02 10:22:15 -0600",
+        "subject": "Revert PGDG yum repo workaround for aarch64.",
+        "body": "da0f3a855 used a workaround to get the documentation building on aarch64 but recent changes to the PGDG yum repo have broken this workaround. Installing the regular way still doesn't work, either.\n\nReverting for now to get the CI pipeline working again."
+    },
+    {
+        "commit": "fb5051fde74bcfde85fa3b9a452a1df693e79db9",
+        "date": "2022-02-26 13:50:30 -0600",
+        "subject": "Use vagrant user in the Docker container.",
+        "body": "This is a bit of legacy from the current Vagrant environment used to do the release, but since it is not as easy to change the user in Vagrant, just make the Docker environment conform.\n\nThis allows documentation to be built in a Vagrant environment (or any environment with the same user name) and to be deployed in a Docker environment."
+    },
+    {
+        "commit": "f716e98ad0e9eda94da973211e5f54e88c2c1aed",
+        "date": "2022-02-26 11:31:52 -0600",
+        "subject": "Suppress errors when there is stderr output for Docker builds.",
+        "body": "Docker outputs build info to stderr even when the build is successful. This seems to be especially true on Mac M1.\n\nContainerTest.pm already does this suppression so add it the other places where containers are built."
+    },
+    {
+        "commit": "53de3e3aeb71f8209f56167941df35bbfcb7cdc9",
+        "date": "2022-02-26 11:17:05 -0600",
+        "subject": "Move repo options in TLS documentation to the global section.",
+        "body": "These options were mistakenly added to the stanza section, which works in certain cases, but is not best practice."
+    },
+    {
+        "commit": "98d525dba43ba259ff7989746b8e5be3382c189d",
+        "date": "2022-02-25 14:03:09 -0600",
+        "subject": "Add FAQ explaining WAL archive suffix."
+    },
+    {
+        "commit": "b33cabe08c33e29eb8aef65dd46b2c1f3cf2d186",
+        "date": "2022-02-25 10:51:40 -0600",
+        "subject": "Allow case-insensitive matching of HTTP connection header values.",
+        "body": "The specification allows values for the connection header to be case-insensitive. See https://www.rfc-editor.org/rfc/rfc7230#section-6.1."
+    },
+    {
+        "commit": "632071232344a1160ef932d6e0d65eb3149ed226",
+        "date": "2022-02-23 13:53:02 -0600",
+        "subject": "Automatically strip trailing slashes for repo-ls paths.",
+        "body": "Trailing slashes in at least some of the repository storage types were preventing repo-ls from displaying any content (presumably due to storage-specific behavior).\r\n\r\nSince the path with the slash should be equivalent to the path without the slash, just remove it if provided by the user."
+    },
+    {
+        "commit": "53f1b2520434221c01caf92e052403a28c455c1b",
+        "date": "2022-02-23 13:17:14 -0600",
+        "subject": "Improve validation of zero pages.",
+        "body": "Checking that pd_upper == 0 is not enough since this field may be corrupted. Still use pd_upper as a quick check, but when it is zero proceed to check the rest of the page to ensure it is also all zeroes."
+    },
+    {
+        "commit": "9eec98c61302121134d2067326dbd2cd0f2f0b9c",
+        "date": "2022-02-23 12:05:53 -0600",
+        "subject": "Retry on page checksum validation failure during backup.",
+        "body": "Rather than attempting to filter page checksum failures by LSN, just retry when there is a page checksum failure. If the page has not changed since the last read report it as an error. If the page has changed, then PostgreSQL must be modifying the page so we can ignore the error because a full page write (and possibly updates) will be in the WAL.\r\n\r\nAlso remove tests made redundant by the test merge in b4897077."
+    },
+    {
+        "commit": "5c332a0b100d5a5180b3d95bd90d4d7b521b42db",
+        "date": "2022-02-23 11:23:32 -0600",
+        "subject": "Fix release note attribution in cacfdd94 and f798458e."
+    },
+    {
+        "commit": "f798458e1d18fc8a866b49a4cfa0cb73536cbd41",
+        "date": "2022-02-23 10:29:17 -0600",
+        "subject": "Disconnect help.auto.c from build-help in Makefile.",
+        "body": "When there was an issue with the system library path during building, the build-help rule would fail during executing ./build-help with the effect that main.c wouldn't build.\r\n\r\nBreak out help.auto.c generation from the build-help stage to allow it to be re-executed when the library path has been corrected."
+    },
+    {
+        "commit": "67bdf07e6969f8160347e895454bf729c9165884",
+        "date": "2022-02-23 10:26:39 -0600",
+        "subject": "Add XML to invalid XML error message.",
+        "body": "There have been cases where pgBackRest has failed on invalid XML but it is not possible to determine what was wrong with the XML.\n\nThis will only work for XML up to about 8KiB (which is the error message limit) but it should work in most cases."
+    },
+    {
+        "commit": "10038db9c9f2b4753c3821e0b246fa8626527184",
+        "date": "2022-02-23 09:14:27 -0600",
+        "subject": "Add archive-missing-retry option.",
+        "body": "Retry a WAL segment that was previously reported as missing by the archive-get command. This prevents notifications in the spool path from a prior restore from being used and possibly causing a recovery failure if consistency has not been reached.\r\n\r\nDisabling this option allows PostgreSQL to more reliably recognize when the end of the WAL in the archive has been reached, which permits it to switch over to streaming from the primary. With retries enabled, a steady stream of WAL being archived will cause PostgreSQL to continue getting WAL from the archive rather than switch to streaming.\r\n\r\nWhen disabling this option it is important to ensure that the spool path for the stanza is empty. The restore command does this automatically if the spool path is configured at restore time. Otherwise, it is up to the user to ensure the spool path is empty."
+    },
+    {
+        "commit": "cacfdd94d74307285b1b590ec0977d7db3142d0d",
+        "date": "2022-02-23 08:01:38 -0600",
+        "subject": "Fix typos in help and release notes."
+    },
+    {
+        "commit": "e2eb3ebacce18e9c0c2f74457a646142a0eace3d",
+        "date": "2022-02-20 17:45:41 -0600",
+        "subject": "Most recent news for postgresql.org."
+    },
+    {
+        "commit": "e6e1122dbcf5e667d683295f7e7e45de4bbf56bd",
+        "date": "2022-02-20 16:45:07 -0600",
+        "subject": "Pass file by reference in manifestFileAdd().",
+        "body": "Coverity complained that this pass by value was inefficient:\n\nCID 376402:  Performance inefficiencies  (PASS_BY_VALUE)\nPassing parameter file of type \"ManifestFile\" (size 136 bytes) by value.\n\nThis was completely intentional since it gives us a copy of the struct that we can change without bothering the caller. However, updating fields is fine and may benefit the caller at some future data, and in any case does no harm now.\n\nAnd as usual it is easier not to fight with Coverity."
+    },
+    {
+        "commit": "b4897077937ee4571ba719276a44d5db0a75510e",
+        "date": "2022-02-18 17:50:05 -0600",
+        "subject": "Move command/backup-common tests in the command/backup module.",
+        "body": "As much as possible it is better to get coverage with more realistic tests. Merging these modules will allow the page checksum code to be covered with real backups."
+    },
+    {
+        "commit": "efc09db7b9ece6e7b7f92538d56d6ab7b9798f8f",
+        "date": "2022-02-17 07:25:12 -0600",
+        "subject": "Limit files that can be bundled.",
+        "body": "Limit which files can be added to bundles, which allows resume to work reasonably well. On resume, the bundles are removed and any remaining file is eligible to be to be resumed.\r\n\r\nAlso reduce the bundle-size default to 20MiB. This is pretty arbitrary, but a smaller default seems better."
+    },
+    {
+        "commit": "34d649579eb3bd1530aa99f0ed1879e7d3125424",
+        "date": "2022-02-14 13:24:14 -0600",
+        "subject": "Bundle files in the repository during backup.",
+        "body": "Bundle (combine) smaller files during backup to reduce the number of files written to the repository (enable with --bundle). Reducing the number of files is a benefit on all file systems, but especially so on object stores such as S3 that have a high file creation cost. Another benefit is that zero-length files are only stored as metadata in the manifest.\r\n\r\nFiles are batched up to bundle-size and then compressed/encrypted individually and stored sequentially in the bundle. The bundle id and offset of each file is stored in the manifest so files can be retrieved randomly without needing to read the entire bundle. Files are ordered by timestamp descending when being assigned to bundles to reduce the amount of random access that needs to be done. The idea is that bundles with older files can be read in their entirety on restore and only bundles with newer files will get fragmented.\r\n\r\nBundles are a custom format with metadata stored in the manifest. Tar was considered but it is too limited a format, the major issue being that the size of the file must be known in advance and that is very contrary to how pgBackRest works, especially once we introduce page-level incremental backups.\r\n\r\nBundles are stored numbered in the bundle directory. Some files may still end up in pg_data if they are added after the backup is complete. backup_label is an example.\r\n\r\nCurrently, only the backup command works in batches. The restore and verify commands use the offsets to pull individual files out of the bundle. It seems better to finalize how this is going to work before optimizing the other commands. Even as is, this is a major step forward, and all commands function with bundling.\r\n\r\nOne caveat: resume is currently not supported when bundle is enabled."
+    },
+    {
+        "commit": "8046f0630715015d5adcced570c54e9a183c0e73",
+        "date": "2022-02-14 11:07:02 -0600",
+        "subject": "Do not retry fatal errors.",
+        "body": "There is some evidence that retrying fatal errors, especially out of memory errors, may cause lockups. It makes sense to report fatal errors as quickly as possible and bypass retries. This may or not fix the lockup issue but it is worth doing either way.\r\n\r\nFor now, the only fatal errors will be AssertError and MemoryError."
+    },
+    {
+        "commit": "8d0cce66f83abc1ff02a985ec3f0d7e285c09d72",
+        "date": "2022-02-13 15:19:31 -0600",
+        "subject": "Use normal error for protocol module error retry test.",
+        "body": "Asserts will not be retried in a future commit, so adjust this test now to use non-assert errors."
+    },
+    {
+        "commit": "8573a2df14d0bfd5578333b68147cc12c93c6f96",
+        "date": "2022-02-13 15:11:59 -0600",
+        "subject": "Improve protocol module error test for protocolClientFree().",
+        "body": "Using an assert here was never ideal and won't work once we start handling fatal errors differently."
+    },
+    {
+        "commit": "551e5bc6f67c91cf1e11da0cefe24f9650353adc",
+        "date": "2022-02-11 08:11:39 -0600",
+        "subject": "Retry errors in S3 batch file delete.",
+        "body": "If the entire batch failed it would be retried, but individual file errors were not retried. This could cause pgBackRest to terminate during expiration or when removing an unresumable backup.\r\n\r\nRather than retry the entire batch, delete the errored files individually to take advantage of the HTTP retry rather than adding a new retry loop. These errors seem rare enough that it should not be a performance issue."
+    },
+    {
+        "commit": "b26097f8d8a7e2af6e9a21576994cbb47110c6f4",
+        "date": "2022-02-09 10:18:39 -0600",
+        "subject": "Add backup type filter to info command.",
+        "body": "Support --type option in the info command to display only a specific backup type."
+    },
+    {
+        "commit": "cb630ffe3b5c819b5e97ac11d5974000bd44d632",
+        "date": "2022-02-09 09:32:23 -0600",
+        "subject": "Remove logic that tried to determine additional file system compression.",
+        "body": "In theory, the additional stat() call after a file has been copied to the repo can determine if additional compression has been applied by the file system. However, it has been a very long time since we tested this in practice. There are currently no unit tests that accurately test this feature since it requires a compressed file system like ZFS to work, which never seemed worth the extra cost.\r\n\r\nIt can also add a lot of time to backups if there are a large quantity of small files.\r\n\r\nIn addition, it stands as a blocker for combining files for small file support since it is no longer possible to get per-file sizes from the viewpoint of the file system. There are several ways this could be reworked but none of them are easy while at the same time maintaining current info functionality.\r\n\r\nIt doesn't seem worth keeping an untested feature that will only work in some special cases (if it still works) when it is blocking development."
+    },
+    {
+        "commit": "755bfc4d4015a68fa06890d1d62515b8bbbc3a64",
+        "date": "2022-02-07 08:14:28 -0600",
+        "subject": "Fix invalid file descriptor being passed to close().",
+        "body": "Coverity pointed out that a negative number could be passed to close(), which means the lock file would not get closed until the process ended. Proper execution does not require the file to be closed, but it is better to correctly free resources that are no longer needed."
+    },
+    {
+        "commit": "5cbb4a3e6b13598b90cae46fad28c31604f9f094",
+        "date": "2022-02-04 15:55:24 -0600",
+        "subject": "Remove unused backup-standby option from stanza commands."
+    },
+    {
+        "commit": "7dd657b7dd163ded9fbf7caef37eea7e08bc5a37",
+        "date": "2022-02-04 12:48:50 -0600",
+        "subject": "Simplify filename construction in command/verify module.",
+        "body": "Remove some duplicated code by tracking the backup label and constructing the filename only when needed."
+    },
+    {
+        "commit": "b1da4e84e8b1fda0299931dbcb9b057ce0d3ce64",
+        "date": "2022-02-02 14:39:39 -0600",
+        "subject": "Revert Minio to prior release.",
+        "body": "The most recent release of Minio has broken CI builds but there is no logging to indicate what is wrong.\n\nFor now, just use the prior release to get CI builds working again. This kind if breakage is not uncommon for Minio but they usually resolve it in the next release."
+    },
+    {
+        "commit": "9b2f10dbb49a8b869cef2c419d9957ed4c550016",
+        "date": "2022-01-31 16:48:28 -0600",
+        "subject": "Refactor lock code.",
+        "body": "Update lock code to use standard common/io functions and module patterns. This module was developed before the common/io module existed and our patterns had stabilized."
+    },
+    {
+        "commit": "22734eb376b3183924cb7794f9111c1eeb5d92d6",
+        "date": "2022-01-31 10:03:56 -0600",
+        "subject": "Add ioBufferReadNewOpen() and ioBufferWriteNewOpen().",
+        "body": "These are convenience functions to make the code a bit more compact where possible."
+    },
+    {
+        "commit": "e62e6664d3654dd63ae2eda64f981a6936b822d3",
+        "date": "2022-01-26 13:26:22 -0600",
+        "subject": "Remove release note about the default port being provisional.",
+        "body": "The default port has now been approved by IANA."
+    },
+    {
+        "commit": "cf5b3a302f0835be993a7f795038d4d676cd6f01",
+        "date": "2022-01-26 13:22:31 -0600",
+        "subject": "Fix language in rh7 test container for aarch64.",
+        "body": "The /etc/profile.d/lang.sh script was causing issues but it does not exist on amd64, so it seems the easiest thing was to remove it.\n\nFix how 32-bit VMs are determined now that another 64-bit architecture has been added.\n\nAnd remove some obsolete VM hashes."
+    },
+    {
+        "commit": "da0f3a85535df3389c5023afc637124acc6405d3",
+        "date": "2022-01-26 10:15:14 -0600",
+        "subject": "Download correct key on aarch64 in the user guide.",
+        "body": "The default key that gets installed is for amd64. This is only required for RHEL8 it seems, so something is definitely amiss."
+    },
+    {
+        "commit": "e4df5b7d3846134832b9315e22786f679d63a46b",
+        "date": "2022-01-24 15:21:07 -0600",
+        "subject": "Simplify manifest file defaults.",
+        "body": "Previously manifest load required two passes through the file list, one to load the data and one to set the defaults. This required each file to be packed twice.\r\n\r\nInstead simply note that the file value is default and then set the file defaults when they are loaded from the manifest. This is made possible by the different internal/external representations for files so the same method cannot be applied to paths and links.\r\n\r\nThis change seems to resolve the performance issues noted in 61ce586 but there is no obvious reason why."
+    },
+    {
+        "commit": "044138fbb19f02ec433e52c42684b1ecc616c624",
+        "date": "2022-01-23 15:07:13 -0500",
+        "subject": "Centralize common PostgreSQL options in the user guide.",
+        "body": "Centralize these options so they are consistent across clusters.\n\nAlso, there were some options that the user doesn't really need to see, .e.g. log_line_prefix. These can be set in advance so they don't need to be part of the documentation."
+    },
+    {
+        "commit": "13623d6ee50794e87ceac37c61e72ba3a92ad8b6",
+        "date": "2022-01-23 13:53:52 -0500",
+        "subject": "Create create_test_table() function earlier in user guide.",
+        "body": "This function (which creates lots of tables) is generally useful for testing (not just stress testing) so create it as soon as the cluster is created.\n\nAlso add the data parameter which will insert a single row into the table so the file on disk is not zero bytes."
+    },
+    {
+        "commit": "ca13f11b4a3858587c7055b0b2b4a8b396dd8451",
+        "date": "2022-01-22 17:20:25 -0500",
+        "subject": "Optimization for jsonFromStrInternal().",
+        "body": "This is an extremely hot code path when saving the manifest so every little bit helps."
+    },
+    {
+        "commit": "61ce58692f3092b72833b6e9ee87037f45b3b702",
+        "date": "2022-01-21 17:05:07 -0500",
+        "subject": "Pack manifest file structs to save memory.",
+        "body": "Manifests with a very large number of files can use a considerable amount of memory. There are a lot of zeroes in the data so it can be stored more efficiently by using base-128 varint encoding for the integers and storing the strings in the same allocation.\r\n\r\nThe downside is that the data needs to be unpacked in order to be used, but in most cases this seems fast enough (about 10% slower than before) except for saving the manifest, which is 10% slower up to 10 million files and then gets about 5x slower by 100 million (two minutes on my M1 Mac). Profiling does not show this slowdown so I wonder if this is related to the change in memory layout. Curiously, the function that increased most was jsonFromStrInternal(), which was not modified. That gives more weight to the idea that there is some kind of memory issue going on here and one hopes that servers would be less affected. Either way, they largest use cases we have seen are for about 6 million files so if we can improve that case I believe we will be better off.\r\n\r\nFurther analysis showed that most of the time was taken up writing the size and timestamp fields, which makes almost no sense. The same amount of time was used if they were hard-coded to 0, which points to some odd memory issue on the M1 architecture.\r\n\r\nThis change has been planned for a while, but the particular impetus at this time is that small file support requires additional fields that would increase manifest memory usage by about 20%, even if the feature is not used.\r\n\r\nNote that the Pack code has been updated to use the new varint encoder, but the decoder remains separate because it needs to fetch one byte at a time."
+    },
+    {
+        "commit": "575ae77c0dee12b932469d479b2e45dbaf389737",
+        "date": "2022-01-21 15:57:22 -0500",
+        "subject": "Convert varNewUInt64() to VARUINT64() where possible in manifest.",
+        "body": "VARUINT64() does not require memory to be allocated from the mem context so should be used when possible."
+    },
+    {
+        "commit": "4a73a0286387f3f2185f3f193f9c20ed0d7d926d",
+        "date": "2022-01-21 15:22:48 -0500",
+        "subject": "Simplify manifest defaults.",
+        "body": "Manifest defaults for user, group, and mode were previously generated by scanning the data to find the most common values. This was very accurate but slow and complicated. It could also lead to surprising changes in the manifest when a default value suddenly changed.\r\n\r\nInstead, use the $PGDATA path to generate defaults. In the vast majority of cases the same user/group should own all the path/files and the default file mode is easily derived from the path mode. There may be some edge cases where this generates larger manifests, but in general it reduces time and complexity when saving the manifest.\r\n\r\nRemove the MCV code since it is longer longer used."
+    },
+    {
+        "commit": "b0db4b8ff00db913cb69308017a56155d6070830",
+        "date": "2022-01-21 08:52:51 -0500",
+        "subject": "Simplify base path mode in mock/all integration tests.",
+        "body": "Change the mode back to 0700 earlier to reduce churn in the expect logs.\n\nThis will be especially important in a future commit that gets the defaults exclusively from the base path."
+    },
+    {
+        "commit": "8c062e1af824c3dc80ff94b3df8d433f95e88d0f",
+        "date": "2022-01-20 14:01:10 -0500",
+        "subject": "Remove primary flag from manifest.",
+        "body": "This flag was only being used by the backup command after manifestNewBuild() and had no other uses. There was a time when it was important for integration testing but the unit tests now fulfill this role.\r\n\r\nSince backup is the only code concerned with the primary flag, move the code into the backup module.\r\n\r\nWe don't have any cross-version testing but this change was tested manually with the most recent version of pgBackRest to make sure it was tolerant of the missing primary info. When an older version of pgBackRest loads a newer manifest the primary flag will always be set to false, which is fine since it is not used."
+    },
+    {
+        "commit": "16559d9e421c66596d21b047c8afe1b2c96ccd82",
+        "date": "2022-01-20 08:41:05 -0500",
+        "subject": "Use the PG_FILE_POSTMTRPID constant where appropriate.",
+        "body": "Do the same in Perl with the MANIFEST_FILE_POSTMTRPID constant."
+    },
+    {
+        "commit": "4ca0590a51a665535fbba903b8f55e10557b606a",
+        "date": "2022-01-20 08:06:42 -0500",
+        "subject": "Refactor backupProcessQueue() to use BackupJobData struct.",
+        "body": "BackupJobData has several members that backupProcessQueue() needs so it is more efficient to use them rather than passing them separately or getting them from the configuration."
+    },
+    {
+        "commit": "e21ba7c92bc15e9314eefa80cef8f17cf2f0e224",
+        "date": "2022-01-18 17:40:53 -0500",
+        "subject": "Remove extra spaces."
+    },
+    {
+        "commit": "f84909f85f7dfb202ac812c67665cc590a5acad4",
+        "date": "2022-01-18 17:26:30 -0500",
+        "subject": "Fix issue with Posix read offset handling after an error.",
+        "body": "Coverity pointed out that -1 could be passed to lseek() (added in a79034ae) after a file failed to open because it is missing. Overall it seems simpler to enclose the success code in an else block to prevent any repeats of this mistake in the future.\n\nThis was not an active bug because there are currently no cases where we do read offsets in a file that is allowed to be missing.\n\nAlso remove the result flag since it is easier to just check that the file descriptor is valid."
+    },
+    {
+        "commit": "91721e391a4d83a405a0d1be31b854312f9f157d",
+        "date": "2022-01-17 15:39:31 -0500",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "b791f1c82f53fa16866837d4544b58243c682f7f",
+        "date": "2022-01-15 14:33:38 -0500",
+        "subject": "Implement restore ownership without updating manifest internals.",
+        "body": "Updating the manifest this way was not a great idea because it broke abstraction for the object. This meant certain changes to the interface and internals were not possible because the code was modifying internal manifest data.\n\nInstead track the user replacements entirely in the restore module.\n\nThis also has the benefit of eliminating a pass over the manifest path/file/link lists."
+    },
+    {
+        "commit": "3097acd73a21b630aa5352be57a82b031930f96b",
+        "date": "2022-01-13 08:46:14 -0500",
+        "subject": "Add support for AWS S3 server-side encryption using KMS.",
+        "body": "AWS S3 integrates with AWS Key Management Service (AWS KMS) to provide server side encryption of S3 objects. This integration protects objects under encryption keys that never leave AWS KMS unencrypted."
+    },
+    {
+        "commit": "92ea3e05fb43e5272a19fb1e3208412b75008c24",
+        "date": "2022-01-11 19:15:09 -0500",
+        "subject": "cfgOptionGroupName() replacement missed in aced5d47."
+    },
+    {
+        "commit": "a79034ae2f6a8ec66b84c62ab6cd4042d2c1a249",
+        "date": "2022-01-11 14:42:53 -0500",
+        "subject": "Add read range to all storage drivers.",
+        "body": "The range feature allows reading out an arbitrary chunk of a file and will be important for efficient small file support.\r\n\r\nNow that all drivers are required to support ranges remove the storageFeatureLimitRead feature flag that was implemented only by the Posix driver."
+    },
+    {
+        "commit": "2fd100bf12760a4bb1996fb464ae54b5c379988e",
+        "date": "2022-01-10 17:40:18 -0500",
+        "subject": "Rename ConfigOptionGroupData.indexDisplay to indexName.",
+        "body": "This is more consistent with the function name and purpose."
+    },
+    {
+        "commit": "2cddbbdee01391ef0885f9262f3acc488382eee2",
+        "date": "2022-01-10 17:20:48 -0500",
+        "subject": "Remove obsolete cfgOptionHostPort()/cfgOptionIdxHostPort().",
+        "body": "These functions were made obsolete by the refactor in 6a124584."
+    },
+    {
+        "commit": "7c627c12b735345cc3d733ae66a52b1fe0030e47",
+        "date": "2022-01-10 17:00:58 -0500",
+        "subject": "Refactor option and option group config structs.",
+        "body": "This allows individual structs to be assigned to variables to make the code easier to read and perhaps a bit more efficient."
+    },
+    {
+        "commit": "aeecb500f54561f7d52fa1b637f7f6e1f7a668de",
+        "date": "2022-01-10 14:47:29 -0500",
+        "subject": "Improve implementation of cfgOptionIdxName().",
+        "body": "Cache option names after they are generated rather than regenerating them each time."
+    },
+    {
+        "commit": "aced5d47ed8e57ca7f36f92fe068f80b66f81649",
+        "date": "2022-01-10 09:10:06 -0500",
+        "subject": "Replace cfgOptionGroupIdxToKey() with cfgOptionGroupName().",
+        "body": "Do the replacement anywhere cfgOptionGroupIdxToKey() is being used to construct a group name in a message. cfgOptionGroupName() is better for this case since it also includes the name of the group so that it does not need to be repeated in each message."
+    },
+    {
+        "commit": "9657f1b32519272edaaefd379355137afd554e82",
+        "date": "2022-01-09 19:53:05 -0500",
+        "subject": "Dynamically allocate index to key index map.",
+        "body": "Now the config/config module has no notion of max option indexes. The config/parse still needs the max but this will be removed at a later date."
+    },
+    {
+        "commit": "e4b48eb430a564184ab739908df55813dd970aa4",
+        "date": "2022-01-09 19:43:44 -0500",
+        "subject": "Fix inconsistent group display names in messages.",
+        "body": "In other instances there are no dashes, e.g. repo1 or pg1. Make these messages match."
+    },
+    {
+        "commit": "5f78a5fc18120c67cb8a68f83a4fb9bcf96982e2",
+        "date": "2022-01-09 13:19:43 -0500",
+        "subject": "Add ioCopy().",
+        "body": "Functionality to copy from IoRead to IoWrite is frequently used so centralize it. This also simplifies coverage testing in places where a loop was required before."
+    },
+    {
+        "commit": "47954774c6cc70a6fc9a6c8836d82a87e341ea11",
+        "date": "2022-01-09 10:11:00 -0500",
+        "subject": "Combine encrypted backupFile() tests with unencrypted tests.",
+        "body": "This makes it easier to comment out all the tests while developing without getting unused variable errors."
+    },
+    {
+        "commit": "d866dd5c297dc046581134a108032cf9694cae0e",
+        "date": "2022-01-07 14:09:58 -0500",
+        "subject": "Add backup LSNs to info command output.",
+        "body": "The backup LSNs are useful for performing LSN-based PITR. LSNs will not be displayed in the general text output (without --set) because they are probably not useful enough to deserve their own line."
+    },
+    {
+        "commit": "bb4b30ddd3f80c246c565eb4769efc82b9509648",
+        "date": "2022-01-06 15:34:04 -0500",
+        "subject": "Remove support for PostgreSQL 8.3/8.4.",
+        "body": "There is no evidence that users need 8.3/8.4 anymore but it does cost us in terms of development and testing, especially now that we have a number of new backup/restore features planned.\r\n\r\nIt seems to make sense to remove this support now. If there are users who need to use/migrate from these versions they can use an older version of pgBackRest."
+    },
+    {
+        "commit": "ef62ef23799f081582295f1f3e8a92691b628f53",
+        "date": "2022-01-06 14:24:32 -0500",
+        "subject": "Fix comment missed in 6bd280f7."
+    },
+    {
+        "commit": "fdbeb8e7d64754d35dd30e4f871834756c5d77ca",
+        "date": "2022-01-06 14:22:56 -0500",
+        "subject": "Fix typo in error message."
+    },
+    {
+        "commit": "a82f0179cdd5742e5c5b1e0bdfd23166753fdb38",
+        "date": "2022-01-04 16:11:27 -0500",
+        "subject": "Note that replications slots are not restored.",
+        "body": "Update documentation and help to note that replication slots are not restored and reference the PostgreSQL documentation to explain why."
+    },
+    {
+        "commit": "226cfbdcde55ca384e74d7d1348c447eecd079fa",
+        "date": "2022-01-04 15:48:00 -0500",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "591a72c59ec403341d29eaafe3030f4651732192",
+        "date": "2022-01-03 08:57:05 -0500",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "75e4580919ed139f00db7c4c3141dbefc3da131b",
+        "date": "2022-01-03 08:52:25 -0500",
+        "subject": "Begin v2.38 development."
+    },
+    {
         "commit": "f18f2d9991da29533ad8e9859074c4f39185420f",
         "date": "2022-01-03 08:43:55 -0500",
         "subject": "v2.37: TLS Server"
