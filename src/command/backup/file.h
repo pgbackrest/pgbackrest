@@ -23,7 +23,7 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Copy a file from the archive to the specified destination
+// Copy a file from the PostgreSQL data directory to the repository
 typedef struct BackupFile
 {
     const String *pgFile;                                           // Pg file to backup
@@ -36,7 +36,6 @@ typedef struct BackupFile
     bool manifestFileHasReference;                                  // Reference to prior backup, if any
 } BackupFile;
 
-// Copy a file from the PostgreSQL data directory to the repository
 typedef struct BackupFileResult
 {
     const String *manifestFile;                                     // Manifest file
