@@ -190,7 +190,7 @@ backupFile(
             }
         }
 
-        // Are the file compressible during the copy?
+        // Are the files compressible during the copy?
         const bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
 
         // Copy files that need to be copied
