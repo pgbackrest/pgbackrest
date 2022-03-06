@@ -1,5 +1,10 @@
 [
     {
+        "commit": "5249b89a2e94fdbb45461faaf2e1b0304b986ac7",
+        "date": "2022-03-06 10:30:59 -0600",
+        "subject": "v2.38: Minor Bug Fixes and Improvements"
+    },
+    {
         "commit": "59a5373cf85e4ad0057b592bfe855495384dfcbd",
         "date": "2022-03-02 11:38:52 -0600",
         "subject": "Handle TLS servers that do not close connections gracefully.",
