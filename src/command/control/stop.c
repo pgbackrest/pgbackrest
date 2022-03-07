@@ -71,16 +71,12 @@ cmdStop(void)
                 {
                     String *lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(strLstGet(lockPathFileList, lockPathFileIdx)));
 
-                    // Skip any file that is not a lock file
-                    if (!strEndsWithZ(lockFile, LOCK_FILE_EXT))
-                        continue;
-
-                    // Skip non stanza lock files if stanza is provided
-                    if (stanzaProvided)
+                    // Skip any file that is not a lock file. Skip non stanza lock files if stanza is provided
+                    if (!strEndsWithZ(lockFile, LOCK_FILE_EXT) ||
+                        (stanzaProvided && (!strEndsWithZ(lockFile, strZ(lockArchiveFileName)) &&
+                        (!strEndsWithZ(lockFile, strZ(lockBackupFileName))))))
                     {
-                        if (!strEndsWithZ(lockFile, strZ(lockArchiveFileName)) &&
-                           (!strEndsWithZ(lockFile, strZ(lockBackupFileName))))
-                            continue;
+                        continue;
                     }
 
                     // If we cannot open the lock file for any reason then warn and continue to next file
