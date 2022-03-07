@@ -8,6 +8,7 @@ Restore Command
 #include <time.h>
 #include <unistd.h>
 
+#include "command/restore/file.h"
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
 #include "common/crypto/cipherBlock.h"
