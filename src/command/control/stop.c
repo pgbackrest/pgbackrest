@@ -53,17 +53,35 @@ cmdStop(void)
             if (cfgOptionBool(cfgOptForce))
             {
                 const String *lockPath = cfgOptionStr(cfgOptLockPath);
-
-                // If no stanza given, operate on all lock files, else restrict to given stanza's lock files
                 StringList *lockPathFileList = strLstSort(
-                    storageListP(storageLocal(), lockPath, .errorOnMissing = true, .expression =
-                    cfgOptionStrNull(cfgOptStanza) == NULL ? strNewFmt("-.*\%s$", LOCK_FILE_EXT) : strNewFmt("%s-.*\%s$",
-                    strZ(cfgOptionStrNull(cfgOptStanza)), LOCK_FILE_EXT)), sortOrderAsc);
+                    storageListP(storageLocal(), lockPath, .errorOnMissing = true), sortOrderAsc);
+
+                // If stanza is provided, generate lock filenames to match against
+                bool stanzaProvided = cfgOptionTest(cfgOptStanza);
+                const String *lockArchiveFileName = strNew();
+                const String *lockBackupFileName = strNew();
+                if (stanzaProvided)
+                {
+                    lockArchiveFileName = lockFileName(cfgOptionStr(cfgOptStanza), lockTypeArchive);
+                    lockBackupFileName = lockFileName(cfgOptionStr(cfgOptStanza), lockTypeBackup);
+                }
 
                 // Find each lock file and send term signals to the processes
                 for (unsigned int lockPathFileIdx = 0; lockPathFileIdx < strLstSize(lockPathFileList); lockPathFileIdx++)
                 {
                     String *lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(strLstGet(lockPathFileList, lockPathFileIdx)));
+
+                    // Skip any file that is not a lock file
+                    if (!strEndsWithZ(lockFile, LOCK_FILE_EXT))
+                        continue;
+
+                    // Skip non stanza lock files if stanza is provided
+                    if (stanzaProvided)
+                    {
+                        if (!strEndsWithZ(lockFile, strZ(lockArchiveFileName)) &&
+                           (!strEndsWithZ(lockFile, strZ(lockBackupFileName))))
+                            continue;
+                    }
 
                     // If we cannot open the lock file for any reason then warn and continue to next file
                     if ((fd = open(strZ(lockFile), O_RDONLY, 0)) == -1)

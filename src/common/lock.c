@@ -59,6 +59,22 @@ static struct LockLocal
 };
 
 /***********************************************************************************************************************************
+Build/return a lockfile name
+***********************************************************************************************************************************/
+const String *
+lockFileName(const String *const stanza, const LockType lockType)
+{
+    FUNCTION_TEST_BEGIN();
+    FUNCTION_TEST_PARAM(STRING, stanza);
+    FUNCTION_LOG_PARAM(ENUM, lockType);
+    FUNCTION_TEST_END();
+
+     String *result = strNewFmt("%s-%s" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType]);
+
+     FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Read contents of lock file
 
 If a seek is required to get to the beginning of the data, that must be done before calling this function.
