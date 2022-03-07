@@ -2115,7 +2115,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
             {
                 const ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
                 const bool zeroed = restoreFileZeroed(file.name, zeroExp);
-                const bool copy = pckReadBoolP(jobResult);
+                const RestoreResult result = (RestoreResult)pckReadU32P(jobResult);
 
                 String *log = strCatZ(strNew(), "restore");
 
@@ -2126,8 +2126,8 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                 // Add filename
                 strCatFmt(log, " file %s", strZ(restoreFilePgPath(manifest, file.name)));
 
-                // If not copied and not zeroed add details to explain why it was not copied
-                if (!copy && !zeroed)
+                // If preserved add details to explain why it was not copied or zeroed
+                if (result == restoreResultPreserve)
                 {
                     strCatZ(log, " - ");
 

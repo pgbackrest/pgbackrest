@@ -52,7 +52,7 @@ List *restoreFile(
             ASSERT(file->limit == NULL || varType(file->limit) == varTypeUInt64);
 
             RestoreFileResult *const fileResult = lstAdd(
-                result, &(RestoreFileResult){.manifestFile = file->manifestFile, .copy = true});
+                result, &(RestoreFileResult){.manifestFile = file->manifestFile, .result = restoreResultCopy});
 
             // Perform delta if requested. Delta zero-length files to avoid overwriting the file if the timestamp is correct.
             if (delta && !file->zero)
@@ -67,7 +67,7 @@ List *restoreFile(
                     {
                         // Make sure that timestamp/size are equal and that timestamp is before the copy start time of the backup
                         if (info.size == file->size && info.timeModified == file->timeModified && info.timeModified < copyTimeBegin)
-                            fileResult->copy = false;
+                            fileResult->result = restoreResultPreserve;
                     }
                     // Else use size and checksum
                     else
@@ -102,14 +102,14 @@ List *restoreFile(
                                         FileInfoError, "unable to set time for '%s'", strZ(storagePathP(storagePg(), file->name)));
                                 }
 
-                                fileResult->copy = false;
+                                fileResult->result = restoreResultPreserve;
                             }
                         }
                     }
                 }
             }
 
-            if (fileResult->copy && (file->size == 0 || file->zero))
+            if (fileResult->result == restoreResultCopy && (file->size == 0 || file->zero))
             {
                 // Create destination file
                 StorageWrite *pgFileWrite = storageNewWriteP(
@@ -124,12 +124,12 @@ List *restoreFile(
                     THROW_ON_SYS_ERROR_FMT(
                         ftruncate(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)file->size) == -1, FileWriteError,
                         "unable to truncate '%s'", strZ(file->name));
-
-                    // Report the file as not copied
-                    fileResult->copy = false;
                 }
 
                 ioWriteClose(storageWriteIo(pgFileWrite));
+
+                // Report the file as zeroed
+                fileResult->result = restoreResultZero;
             }
         }
 
@@ -140,7 +140,7 @@ List *restoreFile(
             RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
             // Copy file from repository to database
-            if (fileResult->copy && file->size != 0)
+            if (fileResult->result == restoreResultCopy)
             {
                 // Create destination file
                 StorageWrite *pgFileWrite = storageNewWriteP(

@@ -8,6 +8,16 @@ Restore File
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
+Restore file types
+***********************************************************************************************************************************/
+typedef enum
+{
+    restoreResultPreserve,
+    restoreResultZero,
+    restoreResultCopy,
+} RestoreResult;
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Copy a file from the backup to the specified destination
@@ -29,7 +39,7 @@ typedef struct RestoreFile
 typedef struct RestoreFileResult
 {
     const String *manifestFile;                                     // Manifest file
-    bool copy;                                                      // Was the file copied?
+    RestoreResult result;                                           // Restore result (e.g. preserve, copy)
 } RestoreFileResult;
 
 List *restoreFile(

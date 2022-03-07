@@ -72,7 +72,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
             const RestoreFileResult *const fileResult = lstGet(result, resultIdx);
 
             pckWriteStrP(resultPack, fileResult->manifestFile);
-            pckWriteBoolP(resultPack, fileResult->copy);
+            pckWriteU32P(resultPack, fileResult->result);
         }
 
         protocolServerDataPut(server, resultPack);
