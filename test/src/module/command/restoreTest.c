@@ -2353,8 +2353,27 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
                     .reference = NULL, .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "yyy"), .size = 3, .sizeRepo = 3, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 8,
+                    .reference = NULL, .checksumSha1 = "186154712b2d5f6791d85b9a0987b98fa231779c"});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "xxxxx"), .size = 5, .sizeRepo = 5, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 11,
+                    .reference = NULL, .checksumSha1 = "9addbf544119efa4a64223b649750a510f0d463f"});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "zz"), .size = 2, .sizeRepo = 2, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 17,
+                    .reference = NULL, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7"});
             HRN_STORAGE_PUT_Z(
-                storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1", PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\n");
+                storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
+                PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\nyyyxxxxxAzzA");
 
             // base directory
             manifestPathAdd(
@@ -2390,9 +2409,10 @@ testRun(void)
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/1/2", fileBuffer);
 
             // base/1/10
-            fileBuffer = bufNew(8193);
+            fileBuffer = bufNew(8194);
             memset(bufPtr(fileBuffer), 10, bufSize(fileBuffer));
             bufPtr(fileBuffer)[0] = 0xFF;
+            bufPtr(fileBuffer)[8193] = 0xFF;
             bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
             manifestFileAdd(
@@ -2564,6 +2584,9 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), "bogus1/bogus2");
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_GLOBAL "/bogus3");
 
+        // Create yyy file so it is not copied
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "yyy", "yyy", .modeFile = 0600);
+
         // Add a few bogus links to be deleted
         THROW_ON_SYS_ERROR(
             symlink("../wal", strZ(strNewFmt("%s/pg_wal2", strZ(pgPath)))) == -1, FileOpenError,
@@ -2616,6 +2639,12 @@ testRun(void)
                 " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (bundle 1/4, 4B, [PCT]) checksum"
                 " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
+                " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx (bundle 1/11, 5B, [PCT]) checksum"
+                " 9addbf544119efa4a64223b649750a510f0d463f\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/zz (bundle 1/17, 2B, [PCT]) checksum"
+                " d7dacae2c968388960bf8970080a980ed5c5dcb7\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
@@ -2630,7 +2659,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 12");
+            "P00   INFO: restore size = [SIZE], file total = 15");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2655,7 +2684,10 @@ testRun(void)
             "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
             "pg_wal {link, d=../wal}\n"
             "pg_xact {link, d=../xact}\n"
-            "postgresql.conf {link, d=../config/postgresql.conf}\n");
+            "postgresql.conf {link, d=../config/postgresql.conf}\n"
+            "xxxxx {file, s=5, t=1482182860}\n"
+            "yyy {file, s=3, t=1482182860}\n"
+            "zz {file, s=2, t=1482182860}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
@@ -2768,6 +2800,12 @@ testRun(void)
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (bundle 1/4, 4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
+                " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx - exists and matches backup (bundle 1/11, 5B, [PCT]) checksum"
+                " 9addbf544119efa4a64223b649750a510f0d463f\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/zz - exists and matches backup (bundle 1/17, 2B, [PCT]) checksum"
+                " d7dacae2c968388960bf8970080a980ed5c5dcb7\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
@@ -2782,7 +2820,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 12");
+            "P00   INFO: restore size = [SIZE], file total = 15");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);

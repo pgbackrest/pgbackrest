@@ -254,7 +254,7 @@ backupFile(
                     }
 
                     // Copy data from source to destination
-                    ioCopy(storageReadIo(read), storageWriteIo(write));
+                    ioCopyP(storageReadIo(read), storageWriteIo(write));
 
                     // Close the source
                     ioReadClose(storageReadIo(read));

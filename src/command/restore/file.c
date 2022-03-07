@@ -109,6 +109,7 @@ List *restoreFile(
                 }
             }
 
+            // Create zeroed and zero-length files
             if (fileResult->result == restoreResultCopy && (file->size == 0 || file->zero))
             {
                 // Create destination file
@@ -128,20 +129,57 @@ List *restoreFile(
 
                 ioWriteClose(storageWriteIo(pgFileWrite));
 
-                // Report the file as zeroed
+                // Report the file as zeroed or zero-length
                 fileResult->result = restoreResultZero;
             }
         }
 
         // Copy files from repository to database
+        StorageRead *repoFileRead = NULL;
+        uint64_t repoFileLimit = 0;
+
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
             const RestoreFile *const file = lstGet(fileList, fileIdx);
-            RestoreFileResult *const fileResult = lstGet(result, fileIdx);
+            const RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
             // Copy file from repository to database
             if (fileResult->result == restoreResultCopy)
             {
+                // XXX
+                if (repoFileLimit == 0)
+                {
+                    // XXX
+                    if (file->limit != NULL)
+                    {
+                        ASSERT(file->limit != NULL && varUInt64(file->limit) != 0);
+                        repoFileLimit = varUInt64(file->limit);
+
+                        // Determine how many files can be copied with one read
+                        for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
+                        {
+                            if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
+                            {
+                                const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
+                                ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
+
+                                if (fileNext->offset != file->offset + repoFileLimit)
+                                    break;
+
+                                repoFileLimit += varUInt64(fileNext->limit);
+                            }
+                            else
+                                break;
+                        }
+                    }
+
+                    repoFileRead =  storageNewReadP(
+                        storageRepoIdx(repoIdx), repoFile,
+                        .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL, .offset = file->offset,
+                        .limit = repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL);
+                    ioReadOpen(storageReadIo(repoFileRead));
+                }
+
                 // Create destination file
                 StorageWrite *pgFileWrite = storageNewWriteP(
                     storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
@@ -164,12 +202,18 @@ List *restoreFile(
                 ioFilterGroupAdd(filterGroup, ioSizeNew());
 
                 // Copy file
-                storageCopyP(
-                    storageNewReadP(
-                        storageRepoIdx(repoIdx), repoFile,
-                        .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL, .offset = file->offset,
-                        .limit = file->limit),
-                    pgFileWrite);
+                ioWriteOpen(storageWriteIo(pgFileWrite));
+
+                ioCopyP(storageReadIo(repoFileRead), storageWriteIo(pgFileWrite), .limit = file->limit);
+
+                ioWriteClose(storageWriteIo(pgFileWrite));
+
+                // !!!
+                if (repoFileLimit != 0)
+                    repoFileLimit -= varUInt64(file->limit);
+
+                if (repoFileLimit == 0)
+                    storageReadFree(repoFileRead);
 
                 // Validate checksum
                 if (!strEq(file->checksum, pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))))
@@ -179,6 +223,8 @@ List *restoreFile(
                         "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(file->name),
                         strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))), strZ(file->checksum));
                 }
+
+                storageWriteFree(pgFileWrite);
             }
         }
 
