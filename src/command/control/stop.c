@@ -62,8 +62,8 @@ cmdStop(void)
                 const String *lockBackupFileName = strNew();
                 if (stanzaProvided)
                 {
-                    lockArchiveFileName = lockFileName(cfgOptionStr(cfgOptStanza), lockTypeArchive);
-                    lockBackupFileName = lockFileName(cfgOptionStr(cfgOptStanza), lockTypeBackup);
+                    lockArchiveFileName = strNewFmt("/%s", strZ(lockFileName(cfgOptionStr(cfgOptStanza), lockTypeArchive)));
+                    lockBackupFileName = strNewFmt("/%s", strZ(lockFileName(cfgOptionStr(cfgOptStanza), lockTypeBackup)));
                 }
 
                 // Find each lock file and send term signals to the processes
