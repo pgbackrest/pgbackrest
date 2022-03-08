@@ -27,6 +27,19 @@
 
                         <p>Increase precision of percent complete logging for <cmd>backup</cmd> and <cmd>restore</cmd>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1608"/>
+                        <github-pull-request id="1676"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="ragaoua"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve <cmd>stop</cmd> command to honor <br-option>stanza</br-option> option.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -11409,6 +11422,11 @@
         <contributor id="rachid.braum">
             <contributor-name-display>Rachid Broum</contributor-name-display>
             <contributor-id type="github">rachid-casa</contributor-id>
+        </contributor>
+
+        <contributor id="ragaoua">
+            <contributor-name-display>ragaoua</contributor-name-display>
+            <contributor-id type="github">ragaoua</contributor-id>
         </contributor>
 
         <contributor id="rakshitha.br">
