@@ -377,8 +377,7 @@
 
         # Install PGDG PostgreSQL repository
         RUN rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG-10 &amp;&amp; \
-            rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-aarch64/pgdg-redhat-repo-latest.noarch.rpm &amp;&amp; \
-            (([ `uname -m` == aarch64 ] &amp;&amp; wget --quiet -O /etc/pki/rpm-gpg/RPM-GPG-KEY-PGDG https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-AARCH64) || true)
+            rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 
         # Disable default PostgreSQL repository
         RUN command -v dnf >/dev/null 2>&amp;1 &amp;&amp; dnf -qy module disable postgresql || true
@@ -463,6 +462,8 @@
                     echo 'RestartSec=1' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'User={[setup-tls-user]}' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'ExecStart=/usr/bin/pgbackrest server' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'ExecStartPost=/bin/sleep 3' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'ExecStartPost=/bin/bash -c "[ ! -z $MAINPID ]"' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'ExecReload=kill -HUP $MAINPID' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '[Install]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
@@ -2474,10 +2475,10 @@
 
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
 
-                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-type">tls</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-type">tls</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
                 <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-address">*</backrest-config-option>
@@ -2825,10 +2826,10 @@
 
                 <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
 
-                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-type">tls</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
-                <backrest-config-option if="{[protocol-tls]}" section="demo" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-type">tls</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
                 <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}"  section="global" key="tls-server-address">*</backrest-config-option>

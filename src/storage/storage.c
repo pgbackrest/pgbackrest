@@ -115,7 +115,7 @@ storageCopy(StorageRead *source, StorageWrite *destination)
             ioWriteOpen(storageWriteIo(destination));
 
             // Copy data from source to destination
-            ioCopy(storageReadIo(source), storageWriteIo(destination));
+            ioCopyP(storageReadIo(source), storageWriteIo(destination));
 
             // Close the source and destination files
             ioReadClose(storageReadIo(source));

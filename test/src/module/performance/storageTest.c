@@ -271,7 +271,7 @@ testRun(void)
                                                                                                                                    \
             uint64_t benchMarkBegin = timeMSec();                                                                                  \
                                                                                                                                    \
-            ioCopy(read, write);                                                                                                   \
+            ioCopyP(read, write);                                                                                                  \
                                                                                                                                    \
             ioReadClose(read);                                                                                                     \
             ioWriteClose(write);                                                                                                   \

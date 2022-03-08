@@ -2155,10 +2155,6 @@ test/src/module/command/archivePushTest.c:
   class: test/module
   type: c
 
-test/src/module/command/backupCommonTest.c:
-  class: test/module
-  type: c
-
 test/src/module/command/backupTest.c:
   class: test/module
   type: c
@@ -2320,10 +2316,6 @@ test/src/module/common/typeKeyValueTest.c:
   type: c
 
 test/src/module/common/typeListTest.c:
-  class: test/module
-  type: c
-
-test/src/module/common/typeMcvTest.c:
   class: test/module
   type: c
 

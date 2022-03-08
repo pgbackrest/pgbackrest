@@ -100,7 +100,7 @@ lockReadDataFile(const String *const lockFile, const int fd)
         Buffer *const buffer = bufNew(LOCK_BUFFER_SIZE);
         IoWrite *const write = ioBufferWriteNewOpen(buffer);
 
-        ioCopy(ioFdReadNewOpen(lockFile, fd, 0), write);
+        ioCopyP(ioFdReadNewOpen(lockFile, fd, 0), write);
         ioWriteClose(write);
 
         // Parse the file
@@ -139,7 +139,7 @@ lockWriteData(const LockType lockType)
     {
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockType].name, lockLocal.file[lockType].fd, 0);
 
-        ioCopy(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(lockLocal.execId)))), write);
+        ioCopyP(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(lockLocal.execId)))), write);
         ioWriteClose(write);
     }
     MEM_CONTEXT_TEMP_END();
