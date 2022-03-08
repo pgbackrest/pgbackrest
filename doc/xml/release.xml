@@ -28,6 +28,19 @@
                         <p>Increase precision of percent complete logging for <cmd>backup</cmd> and <cmd>restore</cmd>.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Remove redundant restoreFile() test and improve coverage."/>
+                        <commit subject="Add limit parameter to ioCopyP()."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve small file support.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
 
             <release-doc-list>

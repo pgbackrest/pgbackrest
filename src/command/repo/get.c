@@ -157,7 +157,7 @@ storageGetProcess(IoWrite *destination)
             ioWriteOpen(destination);
 
             // Copy data from source to destination
-            ioCopy(source, destination);
+            ioCopyP(source, destination);
 
             // Close the source and destination
             ioReadClose(source);
