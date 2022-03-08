@@ -18,7 +18,7 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
-    if (testBegin("lockAcquireFile(), lockReleaseFile() and lockFileName()"))
+    if (testBegin("lockAcquireFile() and lockReleaseFile()"))
     {
         const String *archiveLock = STRDEF(TEST_PATH "/main-archive" LOCK_FILE_EXT);
         int lockFdTest = -1;
@@ -137,13 +137,6 @@ testRun(void)
             HRN_FORK_PARENT_END();
         }
         HRN_FORK_END();
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("build/return lock file name");
-
-        const String *stanza = STRDEF("test");
-        TEST_RESULT_STR(lockFileName(stanza, lockTypeArchive), STRDEF("test-archive.lock"), "build/return archive lock file name");
-        TEST_RESULT_STR(lockFileName(stanza, lockTypeBackup), STRDEF("test-backup.lock"), "build/return backup lock file name");
     }
 
     // *****************************************************************************************************************************

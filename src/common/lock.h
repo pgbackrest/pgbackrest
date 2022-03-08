@@ -42,7 +42,7 @@ bool lockAcquire(
 // Release a lock
 bool lockRelease(bool failOnNoLock);
 
-// Build/return a lock file name
-const String *lockFileName(const String *stanza, LockType lockType);
+// Build lock file name
+String *lockFileName(const String *stanza, LockType lockType);
 
 #endif

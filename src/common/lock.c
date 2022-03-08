@@ -58,20 +58,16 @@ static struct LockLocal
     .held = lockTypeNone,
 };
 
-/***********************************************************************************************************************************
-Build/return a lockfile name
-***********************************************************************************************************************************/
-const String *
+/**********************************************************************************************************************************/
+String *
 lockFileName(const String *const stanza, const LockType lockType)
 {
     FUNCTION_TEST_BEGIN();
-    FUNCTION_TEST_PARAM(STRING, stanza);
-    FUNCTION_LOG_PARAM(ENUM, lockType);
+        FUNCTION_TEST_PARAM(STRING, stanza);
+        FUNCTION_TEST_PARAM(ENUM, lockType);
     FUNCTION_TEST_END();
 
-     String *result = strNewFmt("%s-%s" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType]);
-
-     FUNCTION_TEST_RETURN(result);
+     FUNCTION_TEST_RETURN(strNewFmt("%s-%s" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType]));
 }
 
 /***********************************************************************************************************************************
@@ -301,7 +297,7 @@ lockAcquire(
     {
         MEM_CONTEXT_BEGIN(lockLocal.memContext)
         {
-            lockLocal.file[lockIdx].name = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
+            lockLocal.file[lockIdx].name = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFileName(stanza, lockIdx)));
         }
         MEM_CONTEXT_END();
 
