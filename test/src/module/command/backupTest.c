@@ -1892,7 +1892,7 @@ testRun(void)
             backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress,
             &currentPercentComplete), "log noop result");
 
-        TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100%)");
+        TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100.00%)");
         TEST_RESULT_VOID(lockRelease(true), "release all locks");
     }
 
@@ -1965,8 +1965,8 @@ testRun(void)
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: --no-online passed and " PG_FILE_POSTMTRPID " exists but --force was passed so backup will continue though"
                 " it looks like " PG_NAME " is running and the backup will probably not be consistent\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100%%) checksum"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99.87%%) checksum %s\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100.00%%) checksum"
                 " e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
@@ -2026,7 +2026,7 @@ testRun(void)
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: incr backup cannot alter 'checksum-page' option to 'true', reset to 'false' from [FULL-1]\n"
             "P00   WARN: backup '[DIFF-1]' cannot be resumed: new backup type 'incr' does not match resumable backup type 'diff'\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100.00%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: new backup label = [INCR-1]\n"
@@ -2055,7 +2055,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100.00%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: new backup label = [DIFF-2]\n"
@@ -2110,7 +2110,7 @@ testRun(void)
             "P00   INFO: repo option not specified, defaulting to repo1\n"
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100.00%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: new backup label = [DIFF-3]\n"
@@ -2133,7 +2133,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdBackup(), "backup");
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100.00%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-2]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-2]\n"
             "P00   INFO: new backup label = [DIFF-4]\n"
@@ -2159,7 +2159,7 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // Replace percent complete and backup size since they can cause a lot of churn when files are added/removed
-        hrnLogReplaceAdd(", [0-9]{1,3}%\\)", "[0-9]+%", "PCT", false);
+        hrnLogReplaceAdd(", [0-9]{1,3}.[0-9]{1,2}%\\)", "[0-9].+%", "PCT", false);
         hrnLogReplaceAdd(" backup size = [0-9]+[A-Z]+", "[^ ]+$", "SIZE", false);
 
         // Replace checksums since they can differ between architectures (e.g. 32/64 bit)

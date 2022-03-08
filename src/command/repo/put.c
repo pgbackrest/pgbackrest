@@ -61,7 +61,7 @@ storagePutProcess(IoRead *source)
         ioWriteOpen(storageWriteIo(destination));
 
         // Copy data from source to destination
-        ioCopy(source, storageWriteIo(destination));
+        ioCopyP(source, storageWriteIo(destination));
 
         // Close the source and destination
         ioReadClose(source);

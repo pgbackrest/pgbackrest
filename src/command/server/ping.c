@@ -37,7 +37,7 @@ cmdServerPing(void)
         // Send ping
         ProtocolClient *const protocolClient = protocolClientNew(
             strNewFmt(PROTOCOL_SERVICE_REMOTE " socket protocol on '%s'", strZ(host)), PROTOCOL_SERVICE_REMOTE_STR,
-            ioSessionIoRead(tlsSession), ioSessionIoWrite(tlsSession));
+            ioSessionIoReadP(tlsSession), ioSessionIoWrite(tlsSession));
         protocolClientNoExit(protocolClient);
         protocolClientNoOp(protocolClient);
         protocolClientFree(protocolClient);

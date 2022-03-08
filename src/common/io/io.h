@@ -16,7 +16,16 @@ Common IO functions.
 Functions
 ***********************************************************************************************************************************/
 // Copy data from source to destination (both must be open and neither will be closed)
-void ioCopy(IoRead *source, IoWrite *destination);
+typedef struct IoCopyParam
+{
+    VAR_PARAM_HEADER;
+    const Variant *limit;                                           // Limit bytes to copy from source
+} IoCopyParam;
+
+#define ioCopyP(source, destination, ...)                                                                                          \
+    ioCopy(source, destination, (IoCopyParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void ioCopy(IoRead *source, IoWrite *destination, IoCopyParam param);
 
 // Read all IO into a buffer
 Buffer *ioReadBuf(IoRead *read);

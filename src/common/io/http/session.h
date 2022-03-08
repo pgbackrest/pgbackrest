@@ -39,7 +39,16 @@ void httpSessionDone(HttpSession *this);
 Getters/Setters
 ***********************************************************************************************************************************/
 // Read interface
-IoRead *httpSessionIoRead(HttpSession *this);
+typedef struct HttpSessionIoReadParam
+{
+    VAR_PARAM_HEADER;
+    bool ignoreUnexpectedEof;
+} HttpSessionIoReadParam;
+
+#define httpSessionIoReadP(this, ...)                                                                                                \
+    httpSessionIoRead(this, (HttpSessionIoReadParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+IoRead *httpSessionIoRead(HttpSession *this, HttpSessionIoReadParam param);
 
 // Write interface
 IoWrite *httpSessionIoWrite(HttpSession *this);

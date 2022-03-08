@@ -61,6 +61,18 @@ static struct LockLocal
     .held = lockTypeNone,
 };
 
+/**********************************************************************************************************************************/
+String *
+lockFileName(const String *const stanza, const LockType lockType)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, stanza);
+        FUNCTION_TEST_PARAM(ENUM, lockType);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(strNewFmt("%s-%s" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType]));
+}
+
 /***********************************************************************************************************************************
 Read contents of lock file
 
@@ -91,7 +103,7 @@ lockReadDataFile(const String *const lockFile, const int fd)
         Buffer *const buffer = bufNew(LOCK_BUFFER_SIZE);
         IoWrite *const write = ioBufferWriteNewOpen(buffer);
 
-        ioCopy(ioFdReadNewOpen(lockFile, fd, 0), write);
+        ioCopyP(ioFdReadNewOpen(lockFile, fd, 0), write);
         ioWriteClose(write);
 
         // Parse the file
@@ -189,7 +201,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         // Write lock file data
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockType].name, lockLocal.file[lockType].fd, 0);
 
-        ioCopy(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))))), write);
+        ioCopyP(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))))), write);
         ioWriteClose(write);
     }
     MEM_CONTEXT_TEMP_END();
@@ -350,7 +362,7 @@ lockAcquire(
     {
         MEM_CONTEXT_BEGIN(lockLocal.memContext)
         {
-            lockLocal.file[lockIdx].name = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
+            lockLocal.file[lockIdx].name = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFileName(stanza, lockIdx)));
         }
         MEM_CONTEXT_END();
 
