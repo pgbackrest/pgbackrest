@@ -120,7 +120,7 @@ ioCopy(IoRead *const source, IoWrite *const destination, const IoCopyParam param
 
                 if (bufferLimit < bufSize(buffer))
                 {
-                    bufLimitSet(buffer, bufferLimit);
+                    bufLimitSet(buffer, (size_t)bufferLimit);
                     limitReached = true;
                 }
             }
