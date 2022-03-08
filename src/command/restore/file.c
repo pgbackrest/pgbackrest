@@ -144,35 +144,42 @@ List *restoreFile(
             const RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
             // Copy file from repository to database
+            ASSERT(file.size != 0);
+
             if (fileResult->result == restoreResultCopy)
             {
-                // XXX
+                // If no repo file is currently open
                 if (repoFileLimit == 0)
                 {
-                    // XXX
+                    // If a limit is specified then we need to use it, even if there is only one pg file to copy, because we might
+                    // be reading from the middle of a repo file containing many pg files
                     if (file->limit != NULL)
                     {
-                        ASSERT(file->limit != NULL && varUInt64(file->limit) != 0);
+                        ASSERT(varUInt64(file->limit) != 0);
                         repoFileLimit = varUInt64(file->limit);
 
                         // Determine how many files can be copied with one read
                         for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
                         {
+                            // Only files that are being copied are considered
                             if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
                             {
                                 const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
                                 ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
 
+                                // Break if the offset is not the first file's offset + the limit of all additional files so far
                                 if (fileNext->offset != file->offset + repoFileLimit)
                                     break;
 
                                 repoFileLimit += varUInt64(fileNext->limit);
                             }
+                            // Else if the file was not copied then there is a gap so break
                             else
                                 break;
                         }
                     }
 
+                    // Create and open the repo file
                     repoFileRead =  storageNewReadP(
                         storageRepoIdx(repoIdx), repoFile,
                         .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL, .offset = file->offset,
@@ -180,7 +187,7 @@ List *restoreFile(
                     ioReadOpen(storageReadIo(repoFileRead));
                 }
 
-                // Create destination file
+                // Create pg file
                 StorageWrite *pgFileWrite = storageNewWriteP(
                     storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                     .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
@@ -203,15 +210,14 @@ List *restoreFile(
 
                 // Copy file
                 ioWriteOpen(storageWriteIo(pgFileWrite));
-
                 ioCopyP(storageReadIo(repoFileRead), storageWriteIo(pgFileWrite), .limit = file->limit);
-
                 ioWriteClose(storageWriteIo(pgFileWrite));
 
-                // !!!
+                // If more than one file is being copied from a single read then decrement the limit
                 if (repoFileLimit != 0)
                     repoFileLimit -= varUInt64(file->limit);
 
+                // Free the repo file when there are no more files to copy from it
                 if (repoFileLimit == 0)
                     storageReadFree(repoFileRead);
 
@@ -224,6 +230,7 @@ List *restoreFile(
                         strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))), strZ(file->checksum));
                 }
 
+                // Free the pg file
                 storageWriteFree(pgFileWrite);
             }
         }

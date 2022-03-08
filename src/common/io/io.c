@@ -113,6 +113,7 @@ ioCopy(IoRead *const source, IoWrite *const destination, const IoCopyParam param
 
         do
         {
+            // If a limit was specified then limit the buffer size on the last iteration
             if (param.limit != NULL)
             {
                 const uint64_t bufferLimit = varUInt64(param.limit) - copied;
@@ -124,8 +125,12 @@ ioCopy(IoRead *const source, IoWrite *const destination, const IoCopyParam param
                 }
             }
 
+            // Copy bytes
             ioRead(source, buffer);
             ioWrite(destination, buffer);
+
+            // Update bytes copied and clear the buffer
+            copied += bufUsed(buffer);
             bufUsedZero(buffer);
         }
         while (!limitReached && !ioReadEof(source));

@@ -480,6 +480,21 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strNewBuf(buffer), "a test string", "check buffer");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("ioCopyP() with limit");
+
+        ioBufferSizeSet(4);
+
+        bufferRead = ioBufferReadNewOpen(BUFSTRDEF("a test string"));
+
+        buffer = bufNew(0);
+        bufferWrite = ioBufferWriteNewOpen(buffer);
+
+        TEST_RESULT_VOID(ioCopyP(bufferRead, bufferWrite, .limit = VARUINT64(6)), "copy buffer");
+        TEST_RESULT_VOID(ioWriteClose(bufferWrite), "close write");
+
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "a test", "check buffer");
+
         // Read IO into a buffer
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(8);
