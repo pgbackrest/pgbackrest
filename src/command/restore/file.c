@@ -144,8 +144,6 @@ List *restoreFile(
             const RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
             // Copy file from repository to database
-            ASSERT(file.size != 0);
-
             if (fileResult->result == restoreResultCopy)
             {
                 // If no repo file is currently open
