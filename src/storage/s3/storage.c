@@ -31,6 +31,9 @@ S3 HTTP headers
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
 STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
+STRING_STATIC(S3_HEADER_IMDSV2_TOKEN_TTL_STR,                       "x-aws-ec2-metadata-token-ttl-seconds");
+STRING_STATIC(S3_HEADER_IMDSV2_TOKEN_TTL_VALUE,                     "21600");
+STRING_STATIC(S3_HEADER_IMDSV2_TOKEN_STR,                           "x-aws-ec2-metadata-token");
 STRING_STATIC(S3_HEADER_SRVSDENC_STR,                               "x-amz-server-side-encryption");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMS_STR,                           "aws:kms");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMSKEYID_STR,                      "x-amz-server-side-encryption-aws-kms-key-id");
@@ -101,6 +104,7 @@ struct StorageS3
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
     const String *credRole;                                         // Role to use for credential requests
+    const String *token;                                            // IMDSv2 token for credential requests
     const String *webIdToken;                                       // Token to use for credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
@@ -262,6 +266,7 @@ Documentation for the response format is found at: https://docs.aws.amazon.com/A
 STRING_STATIC(S3_CREDENTIAL_HOST_STR,                               "169.254.169.254");
 #define S3_CREDENTIAL_PORT                                          80
 #define S3_CREDENTIAL_PATH                                          "/latest/meta-data/iam/security-credentials"
+#define S3_TOKEN_PATH                                               "/latest/api/token"
 #define S3_CREDENTIAL_RENEW_SEC                                     (5 * 60)
 
 VARIANT_STRDEF_STATIC(S3_JSON_TAG_ACCESS_KEY_ID_VAR,                "AccessKeyId");
@@ -280,9 +285,43 @@ storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
         FUNCTION_LOG_PARAM(HTTP_HEADER, header);
     FUNCTION_LOG_END();
 
+    // Retrieve the IMDSv2 token
+    if (this->token == NULL)
+    {
+        // Set IMDSv2 headers
+        HttpHeader *tokenHeader = httpHeaderNew(NULL);
+        httpHeaderAdd(tokenHeader, S3_HEADER_IMDSV2_TOKEN_TTL_STR, S3_HEADER_IMDSV2_TOKEN_TTL_VALUE);
+
+        HttpRequest *request = httpRequestNewP(
+            this->credHttpClient, HTTP_VERB_PUT_STR, STRDEF(S3_TOKEN_PATH), .header = tokenHeader);
+        HttpResponse *response = httpRequestResponse(request, true);
+
+        // Not found likely means the endpoint is not available
+        if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
+        {
+            THROW(
+                ProtocolError,
+                "token not found");
+        }
+        // Else an error that we can't handle
+        else if (!httpResponseCodeOk(response))
+            httpRequestError(request, response);
+        
+        // Get token from the text response
+        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+        {
+            this->token = strNewBuf(httpResponseContent(response));
+        }
+        MEM_CONTEXT_END();
+
+    }
+
     // If the role was not set explicitly or retrieved previously then retrieve it
     if (this->credRole == NULL)
     {
+        // Set IMDSv2 headers
+        httpHeaderAdd(header, S3_HEADER_IMDSV2_TOKEN_STR, this->token);
+
         // Request the role
         HttpRequest *request = httpRequestNewP(
             this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_PATH), .header = header);
