@@ -85,7 +85,7 @@ List *restoreFile(
                                 ioReadDrain(read);
                             }
 
-                            // If the checksum is also equal then no need to copy the file
+                            // If the checksum is also equal (or file is zero size) then no need to copy the file
                             if (file->size == 0 ||
                                 strEq(
                                     file->checksum,
