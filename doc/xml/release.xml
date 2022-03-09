@@ -50,6 +50,7 @@
                             <github-issue id="1149"/>
                             <github-pull-request id="1683"/>
                         </commit>
+                        <commit subject="Add bundle logging to backup command."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
