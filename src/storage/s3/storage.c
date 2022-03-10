@@ -104,7 +104,7 @@ struct StorageS3
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
     const String *credRole;                                         // Role to use for credential requests
-    const String *token;                                            // IMDSv2 token for credential requests
+    const String *metaDataToken;                                    // IMDSv2 token for credential requests
     const String *webIdToken;                                       // Token to use for credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
@@ -278,7 +278,7 @@ VARIANT_STRDEF_STATIC(S3_JSON_TAG_TOKEN_VAR,                        "Token");
 VARIANT_STRDEF_STATIC(S3_JSON_VALUE_SUCCESS_VAR,                    "Success");
 
 static void
-storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
+storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -286,7 +286,7 @@ storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
     FUNCTION_LOG_END();
 
     // Retrieve the IMDSv2 token
-    if (this->token == NULL)
+    if (this->metaDataToken == NULL)
     {
         // Set IMDSv2 headers
         HttpHeader *tokenHeader = httpHeaderNew(NULL);
@@ -296,14 +296,14 @@ storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
             this->credHttpClient, HTTP_VERB_PUT_STR, STRDEF(S3_TOKEN_PATH), .header = tokenHeader);
         HttpResponse *response = httpRequestResponse(request, true);
 
-        // an error that we can't handle
+        // An error that we can't handle
         if (!httpResponseCodeOk(response))
             httpRequestError(request, response);
-        
+
         // Get token from the text response
         MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
         {
-            this->token = strNewBuf(httpResponseContent(response));
+            this->metaDataToken = strNewBuf(httpResponseContent(response));
         }
         MEM_CONTEXT_END();
 
@@ -312,8 +312,8 @@ storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
     // If the role was not set explicitly or retrieved previously then retrieve it
     if (this->credRole == NULL)
     {
-        // Set IMDSv2 headers
-        httpHeaderAdd(header, S3_HEADER_IMDSV2_TOKEN_STR, this->token);
+        // Set IMDSv2 token
+        httpHeaderAdd(header, S3_HEADER_IMDSV2_TOKEN_STR, this->metaDataToken);
 
         // Request the role
         HttpRequest *request = httpRequestNewP(
