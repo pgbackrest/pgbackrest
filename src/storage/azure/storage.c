@@ -742,7 +742,8 @@ storageAzureNew(
             CATCH(FormatError)
             {
                 THROW_FMT(
-                    FormatError, "Error decoding azure repository key (%s)\nHINT: is the provided key valid?", errorMessage());
+                    FormatError, "Error validating base64 azure repository key (%s)\nHINT: ensure that the key is properly formed",
+                    errorMessage());
             }
             TRY_END();
         }
