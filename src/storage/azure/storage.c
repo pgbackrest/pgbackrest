@@ -739,7 +739,7 @@ storageAzureNew(
             {
                 driver->sharedKey = bufNewDecode(encodeBase64, key);
             }
-            CATCH_ANY()
+            CATCH(FormatError)
             {
                 THROW_FMT(
                     FormatError, "Error decoding azure repository key (%s)\nHINT: is the provided key valid?", errorMessage());
