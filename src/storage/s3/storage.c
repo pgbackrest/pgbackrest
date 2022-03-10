@@ -296,15 +296,8 @@ storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
             this->credHttpClient, HTTP_VERB_PUT_STR, STRDEF(S3_TOKEN_PATH), .header = tokenHeader);
         HttpResponse *response = httpRequestResponse(request, true);
 
-        // Not found likely means the endpoint is not available
-        if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
-        {
-            THROW(
-                ProtocolError,
-                "token not found");
-        }
-        // Else an error that we can't handle
-        else if (!httpResponseCodeOk(response))
+        // an error that we can't handle
+        if (!httpResponseCodeOk(response))
             httpRequestError(request, response);
         
         // Get token from the text response
