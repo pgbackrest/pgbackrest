@@ -370,6 +370,14 @@ testRun(void)
         HttpHeader *header = NULL;
         const String *dateTime = STRDEF("Sun, 21 Jun 2020 12:46:19 GMT");
 
+        TEST_ERROR(
+            (StorageAzure *)storageDriver(
+                storageAzureNew(
+                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
+                    STRDEF("badkey"), 16, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000, true, NULL, NULL)),
+            FormatError,
+            "Error decoding azure repository key (base64 size 6 is not evenly divisible by 4)\n"
+            "HINT: is the provided key valid?");
         TEST_ASSIGN(
             storage,
             (StorageAzure *)storageDriver(

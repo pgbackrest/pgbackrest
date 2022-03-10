@@ -734,7 +734,18 @@ storageAzureNew(
 
         // Store shared key or parse sas query
         if (keyType == storageAzureKeyTypeShared)
-            driver->sharedKey = bufNewDecode(encodeBase64, key);
+        {
+            TRY_BEGIN()
+            {
+                driver->sharedKey = bufNewDecode(encodeBase64, key);
+            }
+            CATCH_ANY()
+            {
+                THROW_FMT(
+                    FormatError, "Error decoding azure repository key (%s)\nHINT: is the provided key valid?", errorMessage());
+            }
+            TRY_END();
+        }
         else
             driver->sasKey = httpQueryNewStr(key);
 
