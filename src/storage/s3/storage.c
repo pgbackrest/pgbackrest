@@ -30,10 +30,10 @@ S3 HTTP headers
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
-STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
 STRING_STATIC(S3_HEADER_IMDSV2_TOKEN_TTL_STR,                       "x-aws-ec2-metadata-token-ttl-seconds");
 STRING_STATIC(S3_HEADER_IMDSV2_TOKEN_TTL_VALUE,                     "21600");
 STRING_STATIC(S3_HEADER_IMDSV2_TOKEN_STR,                           "x-aws-ec2-metadata-token");
+STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
 STRING_STATIC(S3_HEADER_SRVSDENC_STR,                               "x-amz-server-side-encryption");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMS_STR,                           "aws:kms");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMSKEYID_STR,                      "x-amz-server-side-encryption-aws-kms-key-id");
@@ -105,6 +105,7 @@ struct StorageS3
     const String *credHost;                                         // Credentials host
     const String *credRole;                                         // Role to use for credential requests
     const String *metaDataToken;                                    // IMDSv2 token for credential requests
+    time_t metaDataTokenExpirationTime;                             // Time the IMDSv2 token expires
     const String *webIdToken;                                       // Token to use for credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
@@ -286,15 +287,15 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
     FUNCTION_LOG_END();
 
     // Retrieve the IMDSv2 token
-    if (this->metaDataToken == NULL)
+    if (this->metaDataToken == NULL || (this->metaDataTokenExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
     {
         // Set IMDSv2 headers
-        HttpHeader *tokenHeader = httpHeaderNew(NULL);
+        HttpHeader *const tokenHeader = httpHeaderDup(header, NULL);
         httpHeaderAdd(tokenHeader, S3_HEADER_IMDSV2_TOKEN_TTL_STR, S3_HEADER_IMDSV2_TOKEN_TTL_VALUE);
 
-        HttpRequest *request = httpRequestNewP(
+        HttpRequest *const request = httpRequestNewP(
             this->credHttpClient, HTTP_VERB_PUT_STR, STRDEF(S3_TOKEN_PATH), .header = tokenHeader);
-        HttpResponse *response = httpRequestResponse(request, true);
+        HttpResponse *const response = httpRequestResponse(request, true);
 
         // An error that we can't handle
         if (!httpResponseCodeOk(response))
@@ -307,13 +308,16 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
         }
         MEM_CONTEXT_END();
 
+        // Set expiration to five hours (six was requested) to be safe
+        this->metaDataTokenExpirationTime = time(NULL) + (5 * 60 * 60);
     }
+
+    // Set IMDSv2 token
+    httpHeaderAdd(header, S3_HEADER_IMDSV2_TOKEN_STR, this->metaDataToken);
 
     // If the role was not set explicitly or retrieved previously then retrieve it
     if (this->credRole == NULL)
     {
-        // Set IMDSv2 token
-        httpHeaderAdd(header, S3_HEADER_IMDSV2_TOKEN_STR, this->metaDataToken);
 
         // Request the role
         HttpRequest *request = httpRequestNewP(
