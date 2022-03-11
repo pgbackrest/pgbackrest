@@ -1787,7 +1787,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
-            .bundle = cfgOptionBool(cfgOptBundle),
+            .bundle = cfgOptionBool(cfgOptRepoBundle),
             .bundleId = 1,
 
             // Build expression to identify files that can be copied from the standby when standby backup is supported
@@ -1800,8 +1800,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 
         if (jobData.bundle)
         {
-            jobData.bundleSize = cfgOptionUInt64(cfgOptBundleSize);
-            jobData.bundleLimit = cfgOptionUInt64(cfgOptBundleLimit);
+            jobData.bundleSize = cfgOptionUInt64(cfgOptRepoBundleSize);
+            jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
         }
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
@@ -2223,7 +2223,7 @@ cmdBackup(void)
         // Build the manifest
         Manifest *manifest = manifestNewBuild(
             backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, cfgOptionBool(cfgOptOnline),
-            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptBundle), strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
+            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
             backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time

@@ -3111,12 +3111,12 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "1");
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             hrnCfgArgRawZ(argList, cfgOptBufferSize, "16K");
-            hrnCfgArgRawBool(argList, cfgOptBundle, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Set to a smaller values than the defaults allow
-            cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
-            cfgOptionSet(cfgOptBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
+            cfgOptionSet(cfgOptRepoBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
+            cfgOptionSet(cfgOptRepoBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
 
             // Zeroed file which passes page checksums
             Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);

@@ -54,9 +54,6 @@ Option constants
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
 #define CFGOPT_BACKUP_STANDBY                                       "backup-standby"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
-#define CFGOPT_BUNDLE                                               "bundle"
-#define CFGOPT_BUNDLE_LIMIT                                         "bundle-limit"
-#define CFGOPT_BUNDLE_SIZE                                          "bundle-size"
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
 #define CFGOPT_CIPHER_PASS                                          "cipher-pass"
 #define CFGOPT_CMD                                                  "cmd"
@@ -104,6 +101,9 @@ Option constants
 #define CFGOPT_RECURSE                                              "recurse"
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
 #define CFGOPT_REPO                                                 "repo"
+#define CFGOPT_REPO_BUNDLE                                          "repo-bundle"
+#define CFGOPT_REPO_BUNDLE_LIMIT                                    "repo-bundle-limit"
+#define CFGOPT_REPO_BUNDLE_SIZE                                     "repo-bundle-size"
 #define CFGOPT_RESUME                                               "resume"
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
 #define CFGOPT_SCK_KEEP_ALIVE                                       "sck-keep-alive"
@@ -368,9 +368,6 @@ typedef enum
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
-    cfgOptBundle,
-    cfgOptBundleLimit,
-    cfgOptBundleSize,
     cfgOptChecksumPage,
     cfgOptCipherPass,
     cfgOptCmd,
@@ -442,6 +439,9 @@ typedef enum
     cfgOptRepoAzureKey,
     cfgOptRepoAzureKeyType,
     cfgOptRepoAzureUriStyle,
+    cfgOptRepoBundle,
+    cfgOptRepoBundleLimit,
+    cfgOptRepoBundleSize,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
     cfgOptRepoGcsBucket,

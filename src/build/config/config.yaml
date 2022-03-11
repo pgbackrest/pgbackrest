@@ -1115,36 +1115,6 @@ option:
     command-role:
       main: {}
 
-  bundle:
-    internal: true
-    section: global
-    type: boolean
-    default: false
-    command:
-      backup: {}
-    command-role:
-      main: {}
-
-  bundle-size:
-    internal: true
-    section: global
-    type: size
-    default: 20MiB
-    allow-range: [1MiB, 1PiB]
-    command:
-      backup: {}
-    command-role:
-      main: {}
-    depend:
-      option: bundle
-      list:
-        - true
-
-  bundle-limit:
-    inherit: bundle-size
-    default: 2MiB
-    allow-range: [8KiB, 1PiB]
-
   checksum-page:
     section: global
     type: boolean
@@ -1760,6 +1730,36 @@ option:
       - path
     command: repo-type
     depend: repo-azure-account
+
+  repo-bundle:
+    internal: true
+    section: global
+    type: boolean
+    default: false
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
+  repo-bundle-size:
+    internal: true
+    section: global
+    type: size
+    default: 20MiB
+    allow-range: [1MiB, 1PiB]
+    command:
+      backup: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-bundle
+      list:
+        - true
+
+  repo-bundle-limit:
+    inherit: repo-bundle-size
+    default: 2MiB
+    allow-range: [8KiB, 1PiB]
 
   repo-cipher-pass:
     section: global
