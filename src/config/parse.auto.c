@@ -4854,6 +4854,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -4880,6 +4882,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
@@ -4919,6 +4923,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_RESET(true),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (

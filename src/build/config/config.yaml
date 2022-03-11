@@ -1734,6 +1734,7 @@ option:
   repo-bundle:
     internal: true
     section: global
+    group: repo
     type: boolean
     default: false
     command:
@@ -1744,6 +1745,7 @@ option:
   repo-bundle-size:
     internal: true
     section: global
+    group: repo
     type: size
     default: 20MiB
     allow-range: [1MiB, 1PiB]
