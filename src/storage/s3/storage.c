@@ -30,9 +30,6 @@ S3 HTTP headers
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
-STRING_STATIC(S3_HEADER_IMDSV2_TOKEN_TTL_STR,                       "x-aws-ec2-metadata-token-ttl-seconds");
-STRING_STATIC(S3_HEADER_IMDSV2_TOKEN_TTL_VALUE,                     "21600");
-STRING_STATIC(S3_HEADER_IMDSV2_TOKEN_STR,                           "x-aws-ec2-metadata-token");
 STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
 STRING_STATIC(S3_HEADER_SRVSDENC_STR,                               "x-amz-server-side-encryption");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMS_STR,                           "aws:kms");
@@ -104,8 +101,6 @@ struct StorageS3
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
     const String *credRole;                                         // Role to use for credential requests
-    const String *metaDataToken;                                    // IMDSv2 token for credential requests
-    time_t metaDataTokenExpirationTime;                             // Time the IMDSv2 token expires
     const String *webIdToken;                                       // Token to use for credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
@@ -263,11 +258,11 @@ storageS3CvtTime(const String *time)
 Automatically get credentials for an associated IAM role
 
 Documentation for the response format is found at: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
+Documentation for IMDSv2 tokens: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_CREDENTIAL_HOST_STR,                               "169.254.169.254");
 #define S3_CREDENTIAL_PORT                                          80
 #define S3_CREDENTIAL_PATH                                          "/latest/meta-data/iam/security-credentials"
-#define S3_TOKEN_PATH                                               "/latest/api/token"
 #define S3_CREDENTIAL_RENEW_SEC                                     (5 * 60)
 
 VARIANT_STRDEF_STATIC(S3_JSON_TAG_ACCESS_KEY_ID_VAR,                "AccessKeyId");
@@ -286,39 +281,26 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
         FUNCTION_LOG_PARAM(HTTP_HEADER, header);
     FUNCTION_LOG_END();
 
-    // Retrieve the IMDSv2 token
-    if (this->metaDataToken == NULL || (this->metaDataTokenExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
-    {
-        // Set IMDSv2 headers
-        HttpHeader *const tokenHeader = httpHeaderDup(header, NULL);
-        httpHeaderAdd(tokenHeader, S3_HEADER_IMDSV2_TOKEN_TTL_STR, S3_HEADER_IMDSV2_TOKEN_TTL_VALUE);
+    // Retrieve the IMDSv2 token. Do not store the token because it will likely be expired by the time the credentials expire since
+    // credentials have a much longer default expiration. The TTL needs to be long enough to survive retries of the two metadata
+    // queries.
+    HttpHeader *const tokenHeader = httpHeaderDup(header, NULL);
+    httpHeaderAdd(
+        tokenHeader, STRDEF("x-aws-ec2-metadata-token-ttl-seconds"),
+        strNewFmt("%" PRIu64, httpClientTimeout(this->credHttpClient) / 1000 * 3));
 
-        HttpRequest *const request = httpRequestNewP(
-            this->credHttpClient, HTTP_VERB_PUT_STR, STRDEF(S3_TOKEN_PATH), .header = tokenHeader);
-        HttpResponse *const response = httpRequestResponse(request, true);
+    HttpRequest *request = httpRequestNewP(
+        this->credHttpClient, HTTP_VERB_PUT_STR, STRDEF("/latest/api/token"), .header = tokenHeader);
+    HttpResponse *response = httpRequestResponse(request, true);
 
-        // An error that we can't handle
-        if (!httpResponseCodeOk(response))
-            httpRequestError(request, response);
-
-        // Get token from the text response
-        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
-        {
-            this->metaDataToken = strNewBuf(httpResponseContent(response));
-        }
-        MEM_CONTEXT_END();
-
-        // Set expiration to five hours (six was requested) to be safe
-        this->metaDataTokenExpirationTime = time(NULL) + (5 * 60 * 60);
-    }
-
-    // Set IMDSv2 token
-    httpHeaderAdd(header, S3_HEADER_IMDSV2_TOKEN_STR, this->metaDataToken);
+    // Set IMDSv2 token on success. If the token request fails for any reason assume that IMDSv2 is not supported. If the instance
+    // only supports IMDSv2 then subsequent metadata requests will fail because of the missing token.
+    if (httpResponseCodeOk(response))
+        httpHeaderAdd(header, STRDEF("x-aws-ec2-metadata-token"), strNewBuf(httpResponseContent(response)));
 
     // If the role was not set explicitly or retrieved previously then retrieve it
     if (this->credRole == NULL)
     {
-
         // Request the role
         HttpRequest *request = httpRequestNewP(
             this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_PATH), .header = header);
@@ -345,9 +327,9 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
     }
 
     // Retrieve the temp credentials
-    HttpRequest *request = httpRequestNewP(
+    request = httpRequestNewP(
         this->credHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(this->credRole)), .header = header);
-    HttpResponse *response = httpRequestResponse(request, true);
+    response = httpRequestResponse(request, true);
 
     // Not found likely means the role is not valid
     if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)

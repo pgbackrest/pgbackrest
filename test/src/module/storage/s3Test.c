@@ -496,38 +496,17 @@ testRun(void)
                 hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error when retrieving metadata token");
-
-                hrnServerScriptAccept(auth);
-
-                testRequestP(auth, NULL, HTTP_VERB_PUT, S3_TOKEN_PATH, .ttl = "21600");
-                testResponseP(auth, .http = "1.0", .code = 301);
-
-                hrnServerScriptClose(auth);
-
-                TEST_ERROR_FMT(
-                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
-                    "HTTP request failed with 301:\n"
-                        "*** Path/Query ***:\n"
-                        "PUT /latest/api/token\n"
-                        "*** Request Headers ***:\n"
-                        "content-length: 0\n"
-                        "host: %s\n"
-                        "x-aws-ec2-metadata-token-ttl-seconds: 21600",
-                    strZ(hrnServerHost()));
-
-                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error when retrieving role");
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_PUT, S3_TOKEN_PATH, .ttl = "21600");
-                testResponseP(auth, .http = "1.0", .content = "XtokenX");
+                testRequestP(auth, NULL, HTTP_VERB_PUT, "/latest/api/token", .ttl = "15");
+                testResponseP(auth, .http = "1.0", .content = "WtokenW");
 
                 hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH, .token = "XtokenX");
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH, .token = "WtokenW");
                 testResponseP(auth, .http = "1.0", .code = 301);
 
                 hrnServerScriptClose(auth);
@@ -540,15 +519,21 @@ testRun(void)
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
                         "host: %s\n"
-                        "x-aws-ec2-metadata-token: XtokenX",
+                        "x-aws-ec2-metadata-token: WtokenW",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("missing role");
+                TEST_TITLE("missing role and token");
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH, .token = "XtokenX");
+                testRequestP(auth, NULL, HTTP_VERB_PUT, "/latest/api/token", .ttl = "15");
+                testResponseP(auth, .http = "1.0", .code = 301);
+
+                hrnServerScriptClose(auth);
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH);
                 testResponseP(auth, .http = "1.0", .code = 404);
 
                 hrnServerScriptClose(auth);
@@ -559,18 +544,23 @@ testRun(void)
                         "HINT: is a valid IAM role associated with this instance?");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error when retrieving temp credentials");
+                TEST_TITLE("error when retrieving temp credentials and missing token");
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH, .token = "XtokenX");
+                testRequestP(auth, NULL, HTTP_VERB_PUT, "/latest/api/token", .ttl = "15");
+                testResponseP(auth, .http = "1.0", .code = 301);
+
+                hrnServerScriptClose(auth);
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH);
                 testResponseP(auth, .http = "1.0", .content = strZ(credRole));
 
                 hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
 
-                testRequestP(
-                    auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))), .token = "XtokenX");
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .code = 300);
 
                 hrnServerScriptClose(auth);
@@ -582,25 +572,21 @@ testRun(void)
                         "GET /latest/meta-data/iam/security-credentials/credrole\n"
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
-                        "host: %s\n"
-                        "x-aws-ec2-metadata-token: XtokenX",
+                        "host: %s",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("invalid temp credentials role");
-
-                // Set metadata token to expire
-                driver->metaDataTokenExpirationTime = 0;
+                TEST_TITLE("invalid temp credentials role and missing token");
 
                 hrnServerScriptAccept(auth);
-                testRequestP(auth, NULL, HTTP_VERB_PUT, S3_TOKEN_PATH, .ttl = "21600");
-                testResponseP(auth, .http = "1.0", .content = "YtokenY");
+
+                testRequestP(auth, NULL, HTTP_VERB_PUT, "/latest/api/token", .ttl = "15");
+                testResponseP(auth, .http = "1.0", .code = 301);
 
                 hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
 
-                testRequestP(
-                    auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))), .token = "YtokenY");
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .code = 404);
 
                 hrnServerScriptClose(auth);
@@ -616,8 +602,14 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
+                testRequestP(auth, NULL, HTTP_VERB_PUT, "/latest/api/token", .ttl = "15");
+                testResponseP(auth, .http = "1.0", .content = "XtokenX");
+
+                hrnServerScriptClose(auth);
+                hrnServerScriptAccept(auth);
+
                 testRequestP(
-                    auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))), .token = "YtokenY");
+                    auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))), .token = "XtokenX");
                 testResponseP(auth, .http = "1.0", .content = "{\"Code\":\"IAM role is not configured\"}");
 
                 hrnServerScriptClose(auth);
@@ -629,6 +621,12 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("non-404 error");
 
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_PUT, "/latest/api/token", .ttl = "15");
+                testResponseP(auth, .http = "1.0", .content = "YtokenY");
+
+                hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
 
                 testRequestP(
@@ -678,8 +676,14 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
+                testRequestP(auth, NULL, HTTP_VERB_PUT, "/latest/api/token", .ttl = "15");
+                testResponseP(auth, .http = "1.0", .content = "ZtokenZ");
+
+                hrnServerScriptClose(auth);
+                hrnServerScriptAccept(auth);
+
                 testRequestP(
-                    auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))), .token = "YtokenY");
+                    auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))), .token = "ZtokenZ");
                 testResponseP(
                     auth,
                     .content = strZ(
